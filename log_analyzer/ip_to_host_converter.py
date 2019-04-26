@@ -3,10 +3,16 @@ import functools
 import socket
 from ipaddress import IPv4Address
 from random import seed, randrange, choice
-from typing import Optional
+from typing import Optional, Callable
 
 
 class IpToHostConverter(metaclass=abc.ABCMeta):
+    """
+    This class is the abstract superclass of any class that has a method 'convert' that converts an ip address
+    to a host name.
+    """
+    RESULT_TYPE = Callable[[IPv4Address], Optional[str]]
+
     @staticmethod
     def get_ip_to_host_converter(uses_reverse_dns: bool, uses_local: bool) -> 'IpToHostConverter':
         """
@@ -17,7 +23,7 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
         elif uses_local:
             return FakeIpToHostConverter()
         else:
-            return NullIpToHostConverter()
+            return NormalIpToHostConverter()
 
     @classmethod
     @functools.lru_cache(maxsize=None)
@@ -31,12 +37,14 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
 
 
 class NullIpToHostConverter(IpToHostConverter):
+    """An IpToHostConverter that just doesn't even bother trying."""
     @classmethod
     def _convert(cls, ip: IPv4Address) -> Optional[str]:
         return None
 
 
 class NormalIpToHostConverter(IpToHostConverter):
+    """An IpToHostConverter that calls gethostbyaddr to attempt to parse its value"""
     @classmethod
     def _convert(cls, ip: IPv4Address) -> Optional[str]:
         try:
@@ -47,6 +55,7 @@ class NormalIpToHostConverter(IpToHostConverter):
 
 
 class FakeIpToHostConverter(IpToHostConverter):
+    """An IpToHostConverter that returns fake, but reproducible names."""
     COMPANIES = ('nasa', 'cia', 'pets', 'whitehouse', 'toysRus', 'sears', 'enron', 'pan-am', 'twa')
     ISPS = ('comcast', 'verizon', 'warner')
     TLDS = ('gov', 'mil', 'us', 'fr', 'uk', 'edu', 'es', 'eu')

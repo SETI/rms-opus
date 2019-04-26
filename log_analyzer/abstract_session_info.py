@@ -1,7 +1,8 @@
 import abc
+import functools
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, Union
 
 from markupsafe import Markup
 
@@ -13,14 +14,21 @@ SESSION_INFO = Tuple[List[str], Optional[str]]
 class AbstractConfiguration(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def create_session_info(self, uses_html: bool = False) -> 'AbstractSessionInfo':
+        """
+        Creates a new user session for parsing log entries.
+        """
         raise Exception()
 
     @abc.abstractmethod
     def additional_template_info(self) -> Dict[str, Any]:
+        """
+        Returns configuration-specific information that must be passed to the Jinja template.
+        """
         raise Exception()
 
     @abc.abstractmethod
-    def show_summary(self, sessions: List['log_parser.Session'], output: TextIO) -> None:
+    def show_summary(self, sessions: List[Any], output: TextIO) -> None:
+        """Implements the --summary operation, whatever that happens to mean for this configuration"""
         raise Exception()
 
 
@@ -42,7 +50,7 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
         return Markup(format_string).format(*args)
 
 
-class ForPattern:
+class PatternRegistry:
     """
     A Decorator used by SessionInfo.
     A method is decorated with the regex of the URLs that it knows how to parse.
@@ -50,13 +58,22 @@ class ForPattern:
 
     METHOD = Callable[[Any, Dict[str, str], Match[str]], SESSION_INFO]
 
-    PATTERNS: List[Tuple[Pattern[str], METHOD]] = []
+    patterns: List[Tuple[Pattern[str], METHOD]]
 
-    def __init__(self, pattern: str):
-        self.pattern = re.compile(pattern + '$')
+    def __init__(self) -> None:
+        self.patterns = []
 
-    def __call__(self, fn: METHOD, *args: Any, **kwargs: Any) -> METHOD:
-        # We leave the function unchanged, but we add the regular expression and the function to our list of
-        # regexp/function pairs
-        ForPattern.PATTERNS.append((self.pattern, fn))
-        return fn
+    def register(self, pattern: str) -> Callable[[METHOD], METHOD]:
+        def decorator_for_pattern(method: PatternRegistry.METHOD) -> PatternRegistry.METHOD:
+            self.patterns.append((re.compile(pattern), method))
+            return method
+        return decorator_for_pattern
+
+    def find_matching_pattern(self, path: str) -> Optional[Tuple[METHOD, Match[str]]]:
+        for (pattern, method) in self.patterns:
+            match = re.match(pattern, path)
+            if match:
+                return method, match
+        return None
+
+

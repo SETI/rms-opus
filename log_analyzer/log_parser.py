@@ -48,9 +48,6 @@ class Session(NamedTuple):
     host_ip: IPv4Address
     entries: List[Entry]
     session_info: AbstractSessionInfo
-    # search_slug_list: List[Tuple[str, bool]]
-    # column_slug_list: List[Tuple[str, bool]]
-    # action_flags: Flag
     id: str
 
     def start_time(self) -> datetime.datetime:
@@ -133,7 +130,6 @@ class LogParser:
 
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
-        output = self._output
         all_sessions = self.__get_session_list(log_entries, uses_html=False)
         self._configuration.show_summary(all_sessions, self._output)
 
