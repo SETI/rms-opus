@@ -1,5 +1,6 @@
 # TODO: Once startobs branch is merged, add __dummy.[fmt] to test_return_formats
 
+from multiprocessing import Pool
 import numpy as np
 import random
 import requests
@@ -9,15 +10,17 @@ import time
 # URL_PREFIX = 'http://127.0.0.1:8000/opus'
 # DEFAULT_URL_PARAMS = {'ignorelog': 1}
 
-URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
-DEFAULT_URL_PARAMS = {}
+# URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
+# DEFAULT_URL_PARAMS = {}
+
+URL_PREFIX = sys.argv[1]
 
 # MAX_TIME = 10.
-# MIN_ITERS = 2
-# MAX_ITERS = 2
-MAX_TIME = 600.
 MIN_ITERS = 3
 MAX_ITERS = 10
+MAX_TIME = 20*60.
+# MIN_ITERS = 3
+# MAX_ITERS = 10
 DUMMY_MIN_ITERS = 10
 DUMMY_MAX_ITERS = 100
 
@@ -56,15 +59,16 @@ def statistical_run(session, url_factory, max_time, min_iters, max_iters):
             if abs(new_std-old_std)/old_std <= STD_TOLERANCE:
                 break
 
-    return (time_list[0], np.mean(time_list[1:]), np.std(time_list[1:]),
-            len(time_list[1:]))
+    return time_list
 
 
 def run_dummy(max_time, min_iters, max_iters):
     def _url_factory():
-        url = URL_PREFIX + '/__dummy.json'
+        # url = URL_PREFIX + '/__dummy.json'
+        url = URL_PREFIX + '/__api/normalizeinput.json'
         while True:
-            params = DEFAULT_URL_PARAMS
+            params = DEFAULT_URL_PARAMS.copy()
+            params['reqno'] = '1'
             yield url, params
 
     session = requests.Session()
@@ -92,6 +96,10 @@ def run_result_count_helper(key, base_params, max_time, min_iters, max_iters):
     for i in range(max_iters):
         params = DEFAULT_URL_PARAMS.copy()
         params.update(base_params)
+        # So we don't get the complete result set, which may make later
+        # searches too easy for MySQL
+        params['time1'] = '1979-01-01T00:00:00.0000'
+        # params['time1'] = '2011-01-01T00:00:00.0000'
         # To get a unique search that includes all the results, we use
         # a large random negative number for observationduration1
         observationduration1 = random.uniform(-1000000., -1.)
@@ -104,6 +112,8 @@ def run_result_count_helper(key, base_params, max_time, min_iters, max_iters):
 
     ret = statistical_run(session, url_factory, max_time, min_iters, max_iters)
     return ret
+
+################################################################################
 
 def run_result_count_1_table(max_time, min_iters, max_iters):
     return run_result_count_helper(
@@ -169,27 +179,18 @@ def run_result_count_4_table_sort(max_time, min_iters, max_iters):
          'wavelength1': '0.'}, # Join obs_wavelength
         max_time, min_iters, max_iters)
 
+################################################################################
+
 def run_dataimages_helper(key, base_params, max_time, min_iters, max_iters):
     def _url_factory():
         url = URL_PREFIX + '/__api/dataimages.json'
         for params in CACHED_PARAMS[key]:
+            params = params.copy()
+            params.update(base_params)
+            params['startobs'] = 1291
+            params['limit'] = 100
+            params['reqno'] = 1
             yield url, params
-
-    # We cache the params we generate here because each URL is unique and
-    # actually doing that initial search can be really slow on the server.
-    # Later when we want to do other things with the same basic search, if
-    # we use the param list we cached here, the server doesn't have to do that
-    # big initial search and we can just benchmark the incremental work we're
-    # asking it to do.
-    param_list = []
-    CACHED_PARAMS[key] = param_list
-    for i in range(max_iters):
-        params = DEFAULT_URL_PARAMS.copy()
-        params.update(base_params)
-        params['startobs'] = 1291
-        params['limit'] = 100
-        params['reqno'] = 1
-        param_list.append(params)
 
     session = requests.Session()
 
@@ -239,12 +240,70 @@ def run_dataimages_8_table(max_time, min_iters, max_iters):
                                                      # and surfacegeo_enceladus
         max_time, min_iters, max_iters)
 
+################################################################################
 
-ret = run_dummy(
-        MAX_TIME, DUMMY_MIN_ITERS, DUMMY_MAX_ITERS)
-overhead_initial, overhead_mean, overhead_std, overhead_len = ret
+def run_endpoints_helper(key, base_params, slug,
+                         max_time, min_iters, max_iters):
+    def _url_factory():
+        url = URL_PREFIX + '/__api/meta/range/endpoints/' + slug + '.json'
+        for params in CACHED_PARAMS[key]:
+            params = params.copy()
+            params.update(base_params)
+            params['reqno'] = 1
+            yield url, params
+
+    session = requests.Session()
+
+    url_factory = _url_factory()
+
+    ret = statistical_run(session, url_factory, max_time, min_iters, max_iters)
+    return ret
+
+def run_endpoints_obsduration(max_time, min_iters, max_iters):
+    return run_endpoints_helper(
+        'result_count_1_table_sort',
+        {},
+        'observationduration',
+        max_time, min_iters, max_iters)
+
+def run_endpoints_ringradius(max_time, min_iters, max_iters):
+    return run_endpoints_helper(
+        'result_count_1_table_sort',
+        {},
+        'RINGGEOringradius',
+        max_time, min_iters, max_iters)
+
+################################################################################
+
+def run_mults_helper(key, base_params, slug,
+                         max_time, min_iters, max_iters):
+    def _url_factory():
+        url = URL_PREFIX + '/__api/meta/mults/' + slug + '.json'
+        for params in CACHED_PARAMS[key]:
+            params = params.copy()
+            params.update(base_params)
+            params['reqno'] = 1
+            yield url, params
+
+    session = requests.Session()
+
+    url_factory = _url_factory()
+
+    ret = statistical_run(session, url_factory, max_time, min_iters, max_iters)
+    return ret
+
+def run_mults_target(max_time, min_iters, max_iters):
+    return run_mults_helper(
+        'result_count_1_table_sort',
+        {},
+        'target',
+        max_time, min_iters, max_iters)
+
+################################################################################
 
 BENCHMARK_FUNCS = (
+    (run_dummy,
+     'overhead'),
     (run_result_count_1_table,
      'result_count 1 table '),
     (run_result_count_2_table,
@@ -273,21 +332,66 @@ BENCHMARK_FUNCS = (
      'dataimages 6 tables'),
     (run_dataimages_8_table,
      'dataimages 8 tables'),
+    (run_endpoints_obsduration,
+     'endpoints observationduration'),
+    (run_endpoints_ringradius,
+     'endpoints RINGGEOringradius'),
+    (run_mults_target,
+     'mults target'),
 )
 
-results = []
+def run_all_benchmarks(proc_num):
+    results = []
 
-for func, title in BENCHMARK_FUNCS:
-    print(f'Running {title}... ', end='')
-    sys.stdout.flush()
-    ret = func(MAX_TIME, MIN_ITERS, MAX_ITERS)
-    results.append((title, ret))
-    print(f'{ret[1]:7.3f}')
+    for func, title in BENCHMARK_FUNCS:
+        print(f'Running {title}... ', end='')
+        sys.stdout.flush()
+        ret = func(MAX_TIME, MIN_ITERS, MAX_ITERS)
+        results.append((title, ret))
+        mean = np.mean(ret[1:])
+        print(f'{mean:7.3f}')
 
-print()
-print(f'{"Test":40s}  Mean      Std    #')
+    return results
 
-for title, ret in results:
-    initial, mean, std, len = ret
-    real_mean = mean-overhead_initial
-    print(f'{title:40s}{real_mean:7.3f} +/- {std:5.3f} ({len})')
+################################################################################
+
+def consolidate_results(results_per_proc):
+    ret = []
+    for bench_num in range(len(BENCHMARK_FUNCS)):
+        time_list = []
+        initial_list = []
+        for result in results_per_proc:
+            initial_list.append(result[bench_num][1][0])
+            time_list.extend(result[bench_num][1][1:])
+        ret.append((np.mean(initial_list),
+                    np.mean(time_list),
+                    np.std(time_list),
+                    len(time_list)))
+    return ret
+
+if __name__ == '__main__':
+    final_results = []
+
+    for num_proc in [1,2,3,4,5,6,7,8]:
+        print(f'Running {num_proc} processors')
+
+        pool = Pool(num_proc)
+        results_per_proc = pool.imap(run_all_benchmarks,
+                                     range(num_proc))
+        pool.close()
+
+        results_per_proc = list(results_per_proc) # Force processes to finish
+
+        final_results.append((num_proc, consolidate_results(results_per_proc)))
+
+    print(f'{"Test":40s}Mean       Std   #')
+
+    for bench_num, (func, title) in enumerate(BENCHMARK_FUNCS):
+        print(title)
+        for num_procs, results in final_results:
+            initial, mean, std, num_calls = results[bench_num]
+            real_mean = mean
+            if bench_num != 0:
+                overhead_mean = results[0][1]
+                real_mean = mean-overhead_mean
+            print(f'  {num_procs:3d} Procs                           {real_mean:7.3f} +/- {std:5.3f} ({num_calls})')
