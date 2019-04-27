@@ -11,13 +11,13 @@ import time
 # DEFAULT_URL_PARAMS = {'ignorelog': 1}
 
 # URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
-# DEFAULT_URL_PARAMS = {}
+DEFAULT_URL_PARAMS = {}
 
 URL_PREFIX = sys.argv[1]
 
 # MAX_TIME = 10.
-MIN_ITERS = 3
-MAX_ITERS = 10
+MIN_ITERS = 1
+MAX_ITERS = 1
 MAX_TIME = 20*60.
 # MIN_ITERS = 3
 # MAX_ITERS = 10
