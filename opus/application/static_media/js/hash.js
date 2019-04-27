@@ -41,26 +41,12 @@ var o_hash = {
                         hash.push(key + "=" + value);
                         break;
 
-                    case "page":
-                        // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-                        // so the curent page depends on the view being shown
-                        // opus.prefs.view = search, browse, cart, or detail
-                        // opus.prefs.browse =  'gallery' or 'dataTable',
-                        let page = o_browse.getCurrentPage();
-                        // Note: page will be removed later on in Debby's repo
-                        hash.push("page=" + page);
-                        break;
-                    // comment out starobs for now
-                    // case "startobs":
-                    //     hash.push("startobs=" + opus.currentObs);
-                    //     break;
                     default:
                         hash.push(key + "=" + opus.prefs[key]);
                 }
             }
         );
-        // console.log("hash from hash.js");
-        // console.log(hash);
+
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');
         }
@@ -83,9 +69,7 @@ var o_hash = {
 
     getHashArray: function() {
         let hashArray = [];
-        // this is a workaround for firefox
-        // when user hit enter in input#page, the url hash will be "", we will remove input#page eventually
-        let hashInfo = this.getHash() ? this.getHash() : o_browse.tempHash;
+        let hashInfo = o_hash.getHash();
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
             hashArray[paramArray[0]] = paramArray[1];
@@ -101,29 +85,34 @@ var o_hash = {
         return hash;
     },
 
-    // part is part of the hash, selections or prefs
-    getSelectionsFromHash: function() {
+    // get both selections and extras (qtype) from hash.
+    getSelectionsExtrasFromHash: function() {
         let hash = o_hash.getHash();
         if (!hash) {
-            return;
+            return [undefined, undefined];
         }
 
         hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
+        let extras = {}; // store qtype from url
+
         $.each(hash, function(index, pair) {
             let slug = pair.split('=')[0];
             let value = pair.split('=')[1];
 
             if (!(slug in opus.prefs) && value) {
-                if (slug in selections) {
-                    selections[slug].push(value);
+
+                if (slug.startsWith("qtype-")) {
+                    // each qtype will only have one value at a time
+                    extras[slug] = [value];
                 } else {
-                    selections[slug] = [value];
+                    selections[slug] = value.replace("+", " ").split(",");
                 }
+
             }
         });
 
-        return selections;
+        return [selections, extras];
     },
 
 
@@ -155,12 +144,10 @@ var o_hash = {
                             opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                             break;
                         case "page":
-                            opus.prefs.page.gallery = parseInt(value, 10);
-                            opus.prefs.page.dataTable = parseInt(value, 10);
+                            // page is no longer supported and should have been normalized out
                             break;
                         case "limit":
                             // limit is no longer supported and is calculated based on screen size, so ignore this param
-                            //opus.prefs[slug] = parseInt(value, 10);
                             break;
                         case "cols":
                             opus.prefs[slug] = value.split(',');

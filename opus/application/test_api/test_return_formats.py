@@ -5,14 +5,14 @@ import requests
 import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
+from django.core.cache import cache
+from rest_framework.test import RequestsClient
+
+from api_test_helper import ApiTestHelper
 
 import settings
 
-##################
-### Test cases ###
-##################
-class ApiReturnFormatTests(TestCase):
+class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
@@ -22,298 +22,231 @@ class ApiReturnFormatTests(TestCase):
             self.client = requests.Session()
         else:
             self.client = RequestsClient()
+        cache.clear()
 
     def tearDown(self):
         logging.disable(logging.NOTSET)
 
-    # FOR DEBUGGING PURPOSE: just run one single api call
-    # def test_api_call_without_runserver(self):
-    #     # client = APIClient()
-    #     # response = client.get('/opus/__api/metadata/co-iss-n1867600335.json', {"cats": "PDS Constraints"})
-    #     client = RequestsClient()
-    #     response = client.get('https://tools.pds-rings.seti.org/opus/__api/metadata/vg-iss-2-s-c4362550.html', params={"cats": "PDS Constraints"})
-    # #     # client = CoreAPIClient()
-    # #     # schema = client.get('https://tools.pds-rings.seti.org/opus/api/metadata/vg-iss-2-s-c4362550.html')
-    # #     # response = client.action(schema, params = {"cats": "PDS Constraints"})
-    # #
-    #     try:
-    #         self.assertEqual(response.status_code, 200)
-    #         # print(response.json())
-    #         print(response.client)
-    #     except Exception as e:
-    #         raise
-
-    ###############################
-    ### API return format tests ###
-    ###############################
-    def test_all_api_calls(self):
-        """[test_return_formats.py] API Calls: check different formats to see if response is 200
-           Raise error when any response status code is NOT 200
-        """
-        api_public = ApiFormats(target=settings.TEST_GO_LIVE)
-        api_internal = ApiFormats(target=settings.TEST_GO_LIVE or "internal")
-        test_dict =  {**api_internal.api_dict, **api_public.api_dict}
-
-        target_dict = test_dict
-        error_flag = None
-
-        for api_url in target_dict:
-            flag = 0
-            for target_format in target_dict[api_url]["support_format"]:
-            # for target_format in ApiFormats.formats:
-
-                try:
-                    self._one_api_call(api_url, target_dict, target_format)
-
-                except Exception as e: # pragma: no cover
-                    error_flag = 1
-                    if not flag:
-                        flag = 1
-                        print("---------------------------------------------------")
-                        print(f"Testing API: {target_dict[api_url]['api']}")
-                    print(f"{target_format}: return format error, status code: {e.args[0]}")
-        if error_flag: # pragma: no cover
-            raise Exception("API return formats test failed")
-
-    ########################
-    ### Helper functions ###
-    ########################
-    def _one_api_call(self, api_url_base, api_dict, format):
-        """Check single api call to see if response is 200.
-           api_url_base: a string of api url
-           api_dict: a dictionary containing the payload
-           format: a return format string that concatenates with api_url_base
-        """
-        if settings.TEST_GO_LIVE: # pragma: no cover
-            client = requests.Session()
-        else:
-            client = RequestsClient()
-
-        api_url = api_url_base + format
-        payload = api_dict[api_url_base]["payload"]
-        print("Testing URL", api_url, "Payload", payload)
-        response = client.get(api_url, params=payload)
-        # response = client.get("https://tools.pds-rings.seti.org/opus/api/meta/mults/planet.json", params={'target': 'Jupiter'})
-
-        try:
-            self.assertEqual(response.status_code, 200)
-            # print(response.url)
-        except Exception as e: # pragma: no cover
-            # print(response.url)
-            raise
+    def _test_return_formats(self, url, good_formats):
+        formats = ('csv', 'json', 'html', 'zip')
+        ret_status_list = []
+        expected_status_list = []
+        for format in formats:
+            actual_url = url.replace('[fmt]', format)
+            print(actual_url)
+            response = self._get_response(actual_url)
+            ret_status_list.append(response.status_code)
+            if format in good_formats:
+                expected_status_list.append(200)
+            else:
+                expected_status_list.append(404)
+        print('Formats:', formats)
+        print('Got:', ret_status_list)
+        print('Expected:', expected_status_list)
+        self.assertEqual(ret_status_list, expected_status_list)
 
 
-########################################
-### Api url and payload for the test ###
-########################################
-class ApiFormats:
-    formats = ["json", "html", "csv", "zip"]
-    # slugs for testing
-    payload_for_result_count = {"planet": "Saturn", "target": "Pan", "limit": 2}
-    payload_for_mults = {"planet": "Jupiter", "target": "Jupiter", "limit": 2}
-    payload_for_endpoints = {"planet": "Jupiter", "target": "Callisto", "limit": 2}
-    payload_for_all_categories = {"planet": "Jupiter", "target": "Callisto", "mission": "Galileo", "limit": 2}
-    payload_for_data = {"planet": "Saturn", "target": "Pan", "instrument": "Cassini ISS", "limit": 2}
-    payload_for_metadata = {"cats": "PDS Constraints"}
-    payload_for_images = {"planet": "Jupiter", "limit": 2}
-    payload_for_files = {"planet": "Jupiter", "limit": 2}
+            ###########################################
+            ######### API Return Format Tests #########
+            ###########################################
 
-    def __init__(self, target="production"):
-        self.target = target
-        self.api_base = self.build_api_base()
-        self.api_data_base = self.build_api_data_base()
-        self.api_images_size_base = self.build_api_images_size_base()
-        self.api_images_base = self.build_api_images_base()
-        self.api_all_files_base = self.build_api_all_files_base()
-        self.api_result_count_base = self.build_api_result_count_base()
-        self.api_mults_base = self.build_api_mults_base()
-        self.api_endpoints_base = self.build_api_endpoints_base()
-        self.api_all_categories_base = self.build_api_all_categories_base()
-        self.api_fields_base = self.build_api_fields_base()
-        self.api_all_fields_base = self.build_api_all_fields_base()
+    # cart/urls.py
 
-        self.api_metadata_base = self.build_api_metadata_base("co-iss-n1867600335")
-        self.api_metadata_v2_base = self.build_api_metadata_v2_base("vg-iss-2-s-c4362550")
-        self.api_images_with_opus_id_base = self.build_api_images_with_opus_id_base("go-ssi-c0349542178")
-        self.api_files_with_opus_id_base = self.build_api_files_with_opus_id_base("vg-iss-2-n-c0898429")
-        self.api_categories_with_opus_id_base = self.build_api_categories_with_opus_id_base("vg-iss-2-s-c4360511")
+    def test__api_retfmt_cart_view(self):
+        "[test_return_formats.py] return formats /__cart/view.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/view.[fmt]', ('html',))
 
-        self.api_dict = self.build_api_dict()
+    def test__api_retfmt_cart_status(self):
+        "[test_return_formats.py] return formats /__cart/status.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/status.[fmt]?reqno=1', ('json',))
 
-    #################
-    ### Build API ###
-    #################
-    def build_api_base(self):
-        """build up base api depending on target site: dev/production
-        """
-        if (not self.target or self.target == "production"
-            or self.target == "internal"): # pragma: no cover
-            return "https://tools.pds-rings.seti.org/opus/api/"
-        elif self.target == "dev": # pragma: no cover
-            return "http://dev.pds-rings.seti.org/opus/api/"
-        else: # pragma: no cover
-            assert False, self.target
+    def test__api_retfmt_cart_data(self):
+        "[test_return_formats.py] return formats /__cart/data.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/data.[fmt]', ('csv',))
 
-    def build_api_data_base(self):
-        """api/data.[fmt]
-        """
-        return self.api_base + "data."
+    def test__api_retfmt_cart_add(self):
+        "[test_return_formats.py] return formats /__cart/add.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/add.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
 
-    def build_api_metadata_base(self, opus_id):
-        """api/metadata/[opus_id].[fmt]
-        """
-        return self.api_base + f"metadata/{opus_id}."
+    def test__api_retfmt_cart_remove(self):
+        "[test_return_formats.py] return formats /__cart/remove.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/remove.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
 
-    def build_api_metadata_v2_base(self, opus_id):
-        """api/metadata_v2/[opus_id].[fmt]
-        """
-        return self.api_base + f"metadata_v2/{opus_id}."
+    def test__api_retfmt_cart_addrange(self):
+        "[test_return_formats.py] return formats /__cart/addrange.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/addrange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
 
-    def build_api_images_size_base(self):
-        """api/images/[size].[fmt]
-        """
-        return self.api_base + "images/thumb."
+    def test__api_retfmt_cart_removerange(self):
+        "[test_return_formats.py] return formats /__cart/removerange.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/removerange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
 
-    def build_api_images_base(self):
-        """api/images.[fmt]
-        """
-        return self.api_base + "images."
+    def test__api_retfmt_cart_addall(self):
+        "[test_return_formats.py] return formats /__cart/addall.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/addall.[fmt]?volumeid=COVIMS_0006&reqno=1', ('json',))
 
-    def build_api_images_with_opus_id_base(self, opus_id):
-        """api/image/[size]/[opus_id].[fmt]
-        """
-        return self.api_base + f"image/full/{opus_id}."
+    def test__api_retfmt_cart_reset(self):
+        "[test_return_formats.py] return formats /__cart/reset.[fmt]"
+        self._test_return_formats('/__cart/reset.[fmt]', ('json',))
 
-    def build_api_files_with_opus_id_base(self, opus_id):
-        """api/files/[opus_id].[fmt]
-        """
-        return self.api_base + f"files/{opus_id}."
+    def test__api_retfmt_cart_download(self):
+        "[test_return_formats.py] return formats /__cart/download.[fmt]"
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/download.[fmt]', ('json',))
 
-    def build_api_all_files_base(self):
-        """api/files.[fmt]
-        """
-        return self.api_base + "files."
+    def test__api_retfmt_cart_download_opusid(self):
+        "[test_return_formats.py] return formats /api/download/opusid.[fmt]"
+        self._test_return_formats('/api/download/co-vims-v1488549680_ir.[fmt]', ('zip',))
 
-    def build_api_result_count_base(self):
-        """api/meta/result_count.[fmt]
-        """
-        return self.api_base + "meta/result_count."
+    def test__api_retfmt_cart_download_opusid_pvt(self):
+        "[test_return_formats.py] return formats /__api/download/opusid.[fmt]"
+        self._test_return_formats('/__api/download/co-vims-v1488549680_ir.[fmt]', ('zip',))
 
-    def build_api_mults_base(self):
-        """api/meta/mults/[param].[fmt]
-        """
-        return self.api_base + "meta/mults/planet." # use planet
+    # help/urls.py
 
-    def build_api_endpoints_base(self):
-        """api/meta/range/endpoints/[param].[fmt]
-        """
-        return self.api_base + "meta/range/endpoints/wavelength1." # use wavelength1
+    def test__api_retfmt_help_about(self):
+        "[test_return_formats.py] return formats /__help/about.[fmt]"
+        self._test_return_formats('/__help/about.[fmt]', ('html',))
 
-    def build_api_categories_with_opus_id_base(self, opus_id):
-        """api/categories/[opus_id].json
-        """
-        return self.api_base + f"categories/{opus_id}."
+    def test__api_retfmt_help_volumes(self):
+        "[test_return_formats.py] return formats /__help/volumes.[fmt]"
+        self._test_return_formats('/__help/volumes.[fmt]', ('html',))
 
-    def build_api_all_categories_base(self):
-        """api/categories.json
-        """
-        return self.api_base + "categories."
+    def test__api_retfmt_help_faq(self):
+        "[test_return_formats.py] return formats /__help/faq.[fmt]"
+        self._test_return_formats('/__help/faq.[fmt]', ('html',))
 
-    def build_api_fields_base(self):
-        """api/fields/[field].[fmt]
-        """
-        return self.api_base + "fields/mission." # use mission
+    def test__api_retfmt_help_tutorial(self):
+        "[test_return_formats.py] return formats /__help/tutorial.[fmt]"
+        self._test_return_formats('/__help/tutorial.[fmt]', ('html',))
 
-    def build_api_all_fields_base(self):
-        """api/fields.[fmt]
-        """
-        return self.api_base + "fields."
+    def test__api_retfmt_help_guide(self):
+        "[test_return_formats.py] return formats /__help/guide.[fmt]"
+        self._test_return_formats('/__help/guide.[fmt]', ('html',))
 
-    def build_api_dict(self):
-        """Test info for each api.
-           ex:
-           {'api': 'api/data.[fmt]',
-            'payload': {'planet': 'Saturn',
-                        'target': 'Pan',
-                        'instrument': 'Cassini ISS',
-                        'limit': 2},
-            'support_format': ['json', 'html', 'csv']
-           }
-        """
-        return {
-            self.api_data_base: {
-                "api": "api/data.[fmt]",
-                "payload": ApiFormats.payload_for_data,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_metadata_base: {
-                "api": "api/metadata/[opus_id].[fmt]",
-                "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_metadata_v2_base: {
-                "api": "api/metadata_v2/[opus_id].[fmt]",
-                "payload": ApiFormats.payload_for_metadata,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_images_size_base: {
-                "api": "api/images/[size].[fmt]",
-                "payload": ApiFormats.payload_for_images,
-                "support_format": ["json", "html"]
-            },
-            self.api_images_base: {
-                "api": "api/images.[fmt]",
-                "payload": ApiFormats.payload_for_images,
-                "support_format": ["json", "html"]
-            },
-            self.api_images_with_opus_id_base: {
-                "api": "api/image/[size]/[opus_id].[fmt]",
-                "payload": None,
-                "support_format": ["json", "html"]
-            },
-            self.api_files_with_opus_id_base: {
-                "api": "api/files/[opus_id].[fmt]",
-                "payload": None,
-                "support_format": ["json"]
-            },
-            self.api_all_files_base: {
-                "api": "api/files.[fmt]",
-                "payload": ApiFormats.payload_for_files,
-                "support_format": ["json"]
-            },
-            self.api_result_count_base: {
-                "api": "api/meta/result_count.[fmt]",
-                "payload": ApiFormats.payload_for_result_count,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_mults_base: {
-                "api": "api/meta/mults/[param].[fmt]",
-                "payload": ApiFormats.payload_for_mults,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_endpoints_base: {
-                "api": "api/meta/range/endpoints/[param].[fmt]",
-                "payload": ApiFormats.payload_for_endpoints,
-                "support_format": ["json", "html", "csv"]
-            },
-            self.api_categories_with_opus_id_base: {
-                "api": "api/categories/[opus_id].json",
-                "payload": None,
-                "support_format": ["json"]
-            },
-            self.api_all_categories_base: {
-                "api": "api/categories.json",
-                "payload": ApiFormats.payload_for_all_categories,
-                "support_format": ["json"]
-            },
-            self.api_fields_base: {
-                "api": "api/fields/[field].[fmt]",
-                "payload": None,
-                "support_format": ["json", "html"]
-            },
-            self.api_all_fields_base: {
-                "api": "api/fields.[fmt]",
-                "payload": None,
-                "support_format": ["json", "html"]
-            },
-        }
+    # metadata/urls.py
+
+    def test__api_retfmt_metadata_result_count(self):
+        "[test_return_formats.py] return formats /api/meta/result_count.[fmt]"
+        self._test_return_formats('/api/meta/result_count.[fmt]?planet=Saturn&target=Pan', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_metadata_result_count_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/result_count.[fmt]"
+        self._test_return_formats('/__api/meta/result_count.[fmt]?planet=Saturn&target=Pan&reqno=1', ('json'))
+
+    def test__api_retfmt_metadata_mults(self):
+        "[test_return_formats.py] return formats /api/meta/mults/slug.[fmt]"
+        self._test_return_formats('/api/meta/mults/planet.[fmt]?target=Jupiter', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_metadata_mults_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/mults/slug.[fmt]"
+        self._test_return_formats('/__api/meta/mults/planet.[fmt]?target=Jupiter&reqno=1', ('json'))
+
+    def test__api_retfmt_metadata_endpoints(self):
+        "[test_return_formats.py] return formats /api/meta/range/endpoints/slug.[fmt]"
+        self._test_return_formats('/api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_metadata_endpoints_pvt(self):
+        "[test_return_formats.py] return formats /__api/meta/range/endpoints/slug.[fmt]"
+        self._test_return_formats('/__api/meta/range/endpoints/wavelength1.[fmt]?planet=Jupiter&target=Callisto&reqno=1', ('json'))
+
+    def test__api_retfmt_metadata_fields_slug(self):
+        "[test_return_formats.py] return formats /api/fields/slug.[fmt]"
+        self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
+
+    def test__api_retfmt_metadata_fields(self):
+        "[test_return_formats.py] return formats /api/fields.[fmt]"
+        self._test_return_formats('/api/fields/mission.[fmt]', ('json', 'csv'))
+
+    # results/urls.py
+
+    def test__api_retfmt_results_dataimages_pvt(self):
+        "[test_return_formats.py] return formats /__api/dataimages.[fmt]"
+        self._test_return_formats('/__api/dataimages.[fmt]?target=Jupiter&limit=2&reqno=1', ('json',))
+
+    def test__api_retfmt_results_data(self):
+        "[test_return_formats.py] return formats /api/data.[fmt]"
+        self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
+
+    def test__api_retfmt_results_metadata(self):
+        "[test_return_formats.py] return formats /api/metadata/opusid.[fmt]"
+        self._test_return_formats('/api/metadata/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_results_metadata_v2(self):
+        "[test_return_formats.py] return formats /api/metadata_v2/opusid.[fmt]"
+        self._test_return_formats('/api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_results_metadata_v2_pvt(self):
+        "[test_return_formats.py] return formats /__api/metadata_v2/opusid.[fmt]"
+        self._test_return_formats('/__api/metadata_v2/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
+
+    def test__api_retfmt_results_images(self):
+        "[test_return_formats.py] return formats /api/images.[fmt]"
+        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json', 'html', 'zip'))
+
+    def test__api_retfmt_results_image(self):
+        "[test_return_formats.py] return formats /api/image/small/opusid.[fmt]"
+        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html', 'zip'))
+
+    def test__api_retfmt_results_files_opusid(self):
+        "[test_return_formats.py] return formats /api/files/opusid.[fmt]"
+        self._test_return_formats('/api/files/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_results_files(self):
+        "[test_return_formats.py] return formats /api/files.[fmt]"
+        self._test_return_formats('/api/files.[fmt]?target=Jupiter&limit=2', ('json',))
+
+    def test__api_retfmt_results_categories_opusid(self):
+        "[test_return_formats.py] return formats /api/categories/opusid.[fmt]"
+        self._test_return_formats('/api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_results_categories_opusid_pvt(self):
+        "[test_return_formats.py] return formats /__api/categories/opusid.[fmt]"
+        self._test_return_formats('/__api/categories/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_results_categories(self):
+        "[test_return_formats.py] return formats /api/categories.[fmt]"
+        self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
+
+    # search/urls.py
+
+    def test__api_retfmt_search_normalizeinput_pvt(self):
+        "[test_return_formats.py] return formats /__api/normalizeinput.[fmt]"
+        self._test_return_formats('/__api/normalizeinput.[fmt]?target=Jupiter&reqno=1', ('json',))
+
+    def test__api_retfmt_search_stringsearchchoices_pvt(self):
+        "[test_return_formats.py] return formats /__api/stringsearchchoices.[fmt]"
+        self._test_return_formats('/__api/stringsearchchoices/volumeid.[fmt]?volumeid=COISS_2002&reqno=1&target=Jupiter', ('json',))
+
+    # ui/urls.py
+
+    def test__api_retfmt_ui_lastblogupdate_pvt(self):
+        "[test_return_formats.py] return formats /__lastblogupdate.[fmt]"
+        self._test_return_formats('/__lastblogupdate.[fmt]', ('json',))
+
+    def test__api_retfmt_ui_menu_pvt(self):
+        "[test_return_formats.py] return formats /__menu.[fmt]"
+        self._test_return_formats('/__menu.[fmt]', ('html',))
+
+    def test__api_retfmt_ui_widget_pvt(self):
+        "[test_return_formats.py] return formats /__forms/widget/slug.[fmt]"
+        self._test_return_formats('/__forms/widget/planet.[fmt]', ('html',))
+
+    def test__api_retfmt_ui_metadataselector_pvt(self):
+        "[test_return_formats.py] return formats /__forms/metadata_selector.[fmt]"
+        self._test_return_formats('/__forms/metadata_selector.[fmt]', ('html',))
+
+    def test__api_retfmt_ui_initdetail_pvt(self):
+        "[test_return_formats.py] return formats /__initdetail/opusid.[fmt]"
+        self._test_return_formats('/__initdetail/vg-iss-2-s-c4362550.[fmt]', ('html',))
+
+    def test__api_retfmt_ui_normalizeurl_pvt(self):
+        "[test_return_formats.py] return formats /__normalizeurl.[fmt]"
+        self._test_return_formats('/__normalizeurl.[fmt]', ('json',))

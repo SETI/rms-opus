@@ -132,8 +132,9 @@ def api_get_widget(request, **kwargs):
     form_vals = {slug: None}
     auto_id = True
     selections = {}
+    extras = {}
 
-    if request and request.GET:
+    if request and request.GET is not None:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
         if selections is None: # XXX Really should throw an error of some kind
@@ -486,6 +487,8 @@ def api_normalize_url(request):
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
+        if slug != pi.slug:
+            old_ui_slug_flag = True
         pi_searchable = pi
         if pi.slug[-1] == '2':
             # We have to look at the '1' version to see if it's searchable
@@ -931,7 +934,7 @@ def api_normalize_url(request):
     for prefix in ('', 'cart_'):
         startobs_val = None
         if prefix+'page' in old_slugs:
-            # XXX old_ui_slug_flag = True
+            old_ui_slug_flag = True
             page_no = 1
             try:
                 page_no = int(old_slugs[prefix+'page'])
@@ -969,8 +972,7 @@ def api_normalize_url(request):
             #        +f'missing; {prefix}startobs has been set to 1.')
             # msg_list.append(msg)
             startobs_val = 1
-        # XXX new_url_suffix_list.append((prefix+'startobs', startobs_val))
-        new_url_suffix_list.append((prefix+'page', (startobs_val-1)//100+1))
+        new_url_suffix_list.append((prefix+'startobs', startobs_val))
 
     ### DETAIL
     detail_val = None

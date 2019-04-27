@@ -215,8 +215,8 @@ var o_search = {
                 }
             }
 
-            if (opus.last_selections && opus.last_selections[slug]) {
-                if (opus.last_selections[slug][0] === $(this).val().trim()) {
+            if (opus.lastSelections && opus.lastSelections[slug]) {
+                if (opus.lastSelections[slug][0] === $(this).val().trim()) {
                     return;
                 }
             }
@@ -392,12 +392,12 @@ var o_search = {
             }
 
             o_hash.updateHash();
-            if (o_utils.areObjectsEqual(opus.selections, opus.last_selections))  {
+            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgets_drawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
-                $("#op-result-count").text(o_utils.addCommas(opus.result_count));
+                $("#op-result-count").text(o_utils.addCommas(opus.resultCount));
             }
             $("input.RANGE").each(function() {
                 if (!$(this).hasClass("input_currently_focused")) {

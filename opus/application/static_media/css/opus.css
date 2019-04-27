@@ -1,6 +1,7 @@
 body {
     overflow: hidden;
 }
+
 .app-body {
     margin-top: 3.8em !important;
     overflow: hidden;
@@ -71,6 +72,7 @@ body {
     padding: 0; margin:0;
     display: none;
 }
+
 #browse {
     background-color: #303030; /* #383838; */
 }
@@ -200,11 +202,11 @@ ul.searchMenu {
     margin: auto;
 }
 
-.thumbnail-container:hover .thumb-overlay {
+.thumbnail-container:hover .op-thumb-overlay {
     height: 30%;
 }
 
-.thumb-overlay {
+.op-thumb-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -217,7 +219,8 @@ ul.searchMenu {
     height: 0;
     transition: .5s ease;
 }
-.thumb-overlay a:hover {
+
+.op-thumb-overlay a:hover {
     color: #097da5;
     /* font-size: 130%; */
 }
@@ -250,10 +253,6 @@ ul.searchMenu {
 #op-confirm-modal {
     border-radius: 6px;
     border-width: 3px;
-}
-
-.modal {
-    top: 4%;
 }
 
 .modal-content {
@@ -309,11 +308,11 @@ tr.modal-show {
     border: 0px solid #000000 !important;
 }
 
-.op-tools {
+.op-thumb-overlay .op-tools {
     text-align: center;
 }
 
-.op-tools > a {
+.op-thumb-overlay .op-tools > a {
     color: white;
     font-size: 20px;
     position: absolute;
@@ -325,23 +324,34 @@ tr.modal-show {
     text-align: center;
 }
 
-.op-tools a:nth-child(1n) {
+.op-thumb-overlay .op-tools a:nth-child(1n) {
     position: relative;
     left: 0;
 }
 
-.op-tools a:nth-child(2n) {
+.op-thumb-overlay .op-tools a:nth-child(2n) {
     margin-right: 0.8em;
     margin-left: 0.8em;
 }
 
-.op-tools a:nth-child(3n) {
+.op-thumb-overlay .op-tools a:nth-child(3n) {
     position: relative;
     right: 0;
 }
 
-td .op-tools {
-    width: 2em;
+td.op-table-tools {
+    width: 3em;
+}
+
+td .form-group {
+    padding: 0px 8px;
+    height: 0.5em;
+    margin-top: -5px;
+}
+
+td .form-group > a {
+    color: white;
+    font-size: 20px;
 }
 
 th.sticky-header {
@@ -379,6 +389,7 @@ th.sticky-header {
 
 #dataTable td {
     white-space: nowrap;
+    min-width: 4.2em;
 }
 
 /* Move y-scrollbar out of container in table view */
@@ -515,6 +526,7 @@ th.sticky-header {
     padding: 5px 0 10px 50px;
     color: green;
 }
+
 .range_hints span {
     margin-right: 5px;
 }
@@ -878,8 +890,6 @@ nav.panel-heading {
     font-size: 95%;
 }
 
-/* Overwrite the default to keep the scrollbar always visiblepadding-top: 1.5em; */
-
 .sidebar_wrapper i.fa-check {
     display: none;
 }
@@ -1169,6 +1179,19 @@ ul.ui-autocomplete a.ui-state-active {
 /* remove that extra space on top when loading table page */
 .op-height-0 {
     height: 0;
+}
+
+.op-noSelect {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+
+    /*
+      Introduced in IE 10.
+      See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+    */
+    -ms-user-select: none;
+    user-select: none;
 }
 
 /* Ripple In */
