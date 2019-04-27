@@ -13,11 +13,20 @@ import time
 # URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
 DEFAULT_URL_PARAMS = {}
 
-URL_PREFIX = sys.argv[1]
+MIN_PROCS = int(sys.argv[1])
+MAX_PROCS = int(sys.argv[2])
+URL_PREFIX = sys.argv[3]
 
+if URL_PREFIX == 'localhost':
+    URL_PREFIX = 'http://127.0.0.1:8000/opus'
+elif URL_PREFIX == 'dev':
+    URL_PREFIX = 'https://dev.pds-rings.seti.org/opus'
+elif URL_PREFIX == 'tools':
+    URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
+    
 # MAX_TIME = 10.
-MIN_ITERS = 1
-MAX_ITERS = 1
+MIN_ITERS = 2
+MAX_ITERS = 2
 MAX_TIME = 20*60.
 # MIN_ITERS = 3
 # MAX_ITERS = 10
@@ -304,34 +313,34 @@ def run_mults_target(max_time, min_iters, max_iters):
 BENCHMARK_FUNCS = (
     (run_dummy,
      'overhead'),
-    (run_result_count_1_table,
-     'result_count 1 table '),
-    (run_result_count_2_table,
-     'result_count 2 tables'),
-    (run_result_count_3_table,
-     'result_count 3 tables'),
-    (run_result_count_4_table,
-     'result_count 4 tables'),
+    # (run_result_count_1_table,
+    #  'result_count 1 table '),
+    # (run_result_count_2_table,
+    #  'result_count 2 tables'),
+    # (run_result_count_3_table,
+    #  'result_count 3 tables'),
+    # (run_result_count_4_table,
+    #  'result_count 4 tables'),
     (run_result_count_1_table_sort,
      'result_count 1 table  w/sort'),
-    (run_result_count_2_table_sort,
-     'result_count 2 tables w/sort'),
-    (run_result_count_3_table_sort,
-     'result_count 3 tables w/sort'),
-    (run_result_count_4_table_sort,
-     'result_count 4 tables w/sort'),
-    (run_dataimages_1_table,
-     'dataimages 1 table '),
-    (run_dataimages_2_table,
-     'dataimages 2 tables'),
-    (run_dataimages_3_table,
-     'dataimages 3 tables'),
-    (run_dataimages_4_table,
-     'dataimages 4 tables'),
-    (run_dataimages_6_table,
-     'dataimages 6 tables'),
-    (run_dataimages_8_table,
-     'dataimages 8 tables'),
+    # (run_result_count_2_table_sort,
+    #  'result_count 2 tables w/sort'),
+    # (run_result_count_3_table_sort,
+    #  'result_count 3 tables w/sort'),
+    # (run_result_count_4_table_sort,
+    #  'result_count 4 tables w/sort'),
+    # (run_dataimages_1_table,
+    #  'dataimages 1 table '),
+    # (run_dataimages_2_table,
+    #  'dataimages 2 tables'),
+    # (run_dataimages_3_table,
+    #  'dataimages 3 tables'),
+    # (run_dataimages_4_table,
+    #  'dataimages 4 tables'),
+    # (run_dataimages_6_table,
+    #  'dataimages 6 tables'),
+    # (run_dataimages_8_table,
+    #  'dataimages 8 tables'),
     (run_endpoints_obsduration,
      'endpoints observationduration'),
     (run_endpoints_ringradius,
@@ -344,7 +353,6 @@ def run_all_benchmarks(proc_num):
     results = []
 
     for func, title in BENCHMARK_FUNCS:
-        print(f'Running {title}... ', end='')
         sys.stdout.flush()
         ret = func(MAX_TIME, MIN_ITERS, MAX_ITERS)
         results.append((title, ret))
@@ -356,33 +364,43 @@ def run_all_benchmarks(proc_num):
 ################################################################################
 
 def consolidate_results(results_per_proc):
-    ret = []
-    for bench_num in range(len(BENCHMARK_FUNCS)):
-        time_list = []
-        initial_list = []
-        for result in results_per_proc:
-            initial_list.append(result[bench_num][1][0])
-            time_list.extend(result[bench_num][1][1:])
-        ret.append((np.mean(initial_list),
-                    np.mean(time_list),
-                    np.std(time_list),
-                    len(time_list)))
-    return ret
+    time_list = []
+    initial_list = []
+    for result in results_per_proc:
+        initial_list.append(result[0])
+        time_list.extend(result[1:])
+
+    return (np.mean(initial_list),
+            np.mean(time_list),
+            np.std(time_list),
+            len(time_list))
+
+def call_a_benchmark(func):
+    return func(MAX_TIME, MIN_ITERS, MAX_ITERS)
 
 if __name__ == '__main__':
     final_results = []
 
-    for num_proc in [1,2,3,4,5,6,7,8]:
-        print(f'Running {num_proc} processors')
+    for num_proc in range(MIN_PROCS, MAX_PROCS+1):
+        print(f'*** {num_proc} processors ***')
 
         pool = Pool(num_proc)
-        results_per_proc = pool.imap(run_all_benchmarks,
-                                     range(num_proc))
+
+        result_list = []
+
+        for func, title in BENCHMARK_FUNCS:
+            print(f'Running {title}... ', end='')
+            results = pool.imap(call_a_benchmark,
+                                [func]*num_proc)
+            # Force processes to finish and flatten result into a single list
+            results = list(results)
+            stats = consolidate_results(results)
+            result_list.append(stats)
+            print(f'{stats[1]:.3f}')
+
         pool.close()
 
-        results_per_proc = list(results_per_proc) # Force processes to finish
-
-        final_results.append((num_proc, consolidate_results(results_per_proc)))
+        final_results.append((num_proc, result_list))
 
     print(f'{"Test":40s}Mean       Std   #')
 
