@@ -25,8 +25,8 @@ elif URL_PREFIX == 'tools':
     URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
 
 # MAX_TIME = 10.
-MIN_ITERS = 2
-MAX_ITERS = 2
+MIN_ITERS = 3
+MAX_ITERS = 10
 MAX_TIME = 20*60.
 # MIN_ITERS = 3
 # MAX_ITERS = 10
@@ -390,6 +390,7 @@ if __name__ == '__main__':
 
         for func, title in BENCHMARK_FUNCS:
             print(f'Running {title}... ', end='')
+            sys.stdout.flush()
             results = pool.imap(call_a_benchmark,
                                 [func]*num_proc)
             # Force processes to finish and flatten result into a single list
@@ -397,6 +398,7 @@ if __name__ == '__main__':
             stats = consolidate_results(results)
             result_list.append(stats)
             print(f'{stats[1]:.3f}')
+            sys.stdout.flush()
 
         pool.close()
 
