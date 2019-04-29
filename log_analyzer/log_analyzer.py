@@ -1,13 +1,18 @@
 import argparse
+import datetime
+import importlib
 import ipaddress
 import operator
-import sys
-from typing import List, Optional
+from argparse import Namespace
 
-import slug
+import pytz
+import sys
+from typing import List, Optional, cast, Tuple
+
+from abstract_session_info import AbstractConfiguration
 from log_entry import LogReader
 from log_parser import LogParser
-from session_info import SessionInfoGenerator
+from ip_to_host_converter import IpToHostConverter
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
 LOCAL_SLUGS_PREFIX = 'file:///users/fy/SETI/pds-opus'
@@ -24,9 +29,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Watch a single log file in realtime')
     group.add_argument('--batch', '-b', action='store_true',
                        help='Print a report on one or more completed log files')
-    group.add_argument('--slug-summary', action='store_true', dest='show_slugs',
+    group.add_argument('--summary', action='store_true', dest='summary',
                        help="Show the slugs that have been used in a log file")
-    group.add_argument('--xxfake', action='store_true', help=argparse.SUPPRESS, dest='fake')  # For testing only
+    group.add_argument('--chron', action='store_true', dest='chron',
+                       help="Used by the chron job to generate a daily summary")
+    group.add_argument('--xxfake-realtime', action='store_true', help=argparse.SUPPRESS, dest='fake_realtime')
 
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument('--by-ip', action='store_true', dest='by_ip',
@@ -58,28 +65,47 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    slugs = slug.ToInfoMap(LOCAL_SLUGS_PREFIX if args.uses_local else args.api_host_url)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
-    ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    session_info_generator = SessionInfoGenerator(slugs, ignored_ips, args.debug_show_all)
-    log_parser = LogParser(session_info_generator, **vars(args))
+    args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
+    # Another fake argument we need
+    args.ip_to_host_converter = IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local)
+
+    module = importlib.import_module("opus.session_info")
+    configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
+    log_parser = LogParser(configuration, **vars(args))
 
     if args.realtime:
         if len(args.log_files) != 1:
             raise Exception("Must specify exactly one file for batch mode.")
         log_entries_realtime = LogReader.read_logs_from_tailed_file(args.log_files[0])
         log_parser.run_realtime(log_entries_realtime)
+    elif args.chron:
+        log_files, outfile = get_chron_file_list(args)
+        log_entries_list = LogReader.read_logs(log_files)
+        args.output = open(outfile, 'w')
+        log_parser.run_batch(log_entries_list)
     else:
         if len(args.log_files) < 1:
             raise Exception("Must specify at least one log file.")
         log_entries_list = LogReader.read_logs(args.log_files)
         if args.batch:
             log_parser.run_batch(log_entries_list)
-        elif args.show_slugs:
-            log_parser.show_slugs(log_entries_list)
-        elif args.fake:
+        elif args.summary:
+            log_parser.run_summary(log_entries_list)
+        elif args.fake_realtime:
             log_entries_list.sort(key=operator.attrgetter('time'))
             log_parser.run_realtime(iter(log_entries_list))
+
+
+IN_FORMAT = '/users/fy/Dropbox/Shared-Frank-Yellin/logs/tools.pds_access_log-%Y-%m-%d'
+OUT_FORMAT = '/tmp/pds-%Y-%m'
+
+def get_chron_file_list(_args: Namespace) -> Tuple[List[str], str]:
+    yesterday = datetime.datetime.now(tz=pytz.utc) - datetime.timedelta(days=1)
+    in_files =  [datetime.datetime(year=yesterday.year, month=yesterday.month, day=day).strftime(IN_FORMAT)
+                 for day in range(1, yesterday.day + 1)]
+    out_file = yesterday.replace(hour=0, minute=0, second=0, microsecond=0).strftime(OUT_FORMAT)
+    return in_files, out_file
 
 
 if __name__ == '__main__':
