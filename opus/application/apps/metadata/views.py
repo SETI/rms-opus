@@ -195,7 +195,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
     # Note we don't actually care here if the cache table even exists, because
     # if it's in the cache, it must exist, and if it's not in the cache, it
     # will be created if necessary by get_user_query_table below.
-    cache_key = (settings.CACHE_KEY_PREFIX + ':mults_' + param_qualified_name
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':mults_' + param_qualified_name
                  + ':' + str(cache_num))
 
     cached_val = cache.get(cache_key)
@@ -411,8 +412,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         user_table = None
 
     # Is this result already cached?
-    cache_key = (settings.CACHE_KEY_PREFIX + ':rangeep:'
-                 + qualified_param_name_no_num)
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':rangeep:' + qualified_param_name_no_num)
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
         if cache_num is None: # pragma: no cover
@@ -577,7 +578,8 @@ def get_result_count_helper(request, api_code):
         ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
         return None, None, ret
 
-    cache_key = settings.CACHE_KEY_PREFIX + ':resultcount:' + table
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':resultcount:' + table)
     count = cache.get(cache_key)
     if count is None:
         cursor = connection.cursor()
@@ -600,8 +602,8 @@ def get_result_count_helper(request, api_code):
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):
     "Helper routine for api_get_fields."
-    cache_key = (settings.CACHE_KEY_PREFIX + ':getFields:field:' + str(slug)
-                 + ':' + str(collapse))
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':getFields:field:' + str(slug) + ':' + str(collapse))
     return_obj = cache.get(cache_key)
     if return_obj is None:
         if slug:
