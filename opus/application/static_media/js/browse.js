@@ -27,9 +27,7 @@ var o_browse = {
     }),
     galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: opus.minimumPSLength,
-        // minScrollbarLength: $(window).height()/5,
-        // maxScrollbarLength: $(window).height()/5,
+        minScrollbarLength: opus.minimumPSLength
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
