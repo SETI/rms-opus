@@ -25,13 +25,12 @@ elif URL_PREFIX == 'tools':
     URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
 
 # MAX_TIME = 10.
+# MIN_ITERS = 2
+# MAX_ITERS = 2
+
+MAX_TIME = 20*60.
 MIN_ITERS = 3
 MAX_ITERS = 10
-MAX_TIME = 20*60.
-# MIN_ITERS = 3
-# MAX_ITERS = 10
-DUMMY_MIN_ITERS = 10
-DUMMY_MAX_ITERS = 100
 
 STD_TOLERANCE = 0.05 # Iterate until std stabilizes within 5%
 
