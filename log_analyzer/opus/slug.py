@@ -65,9 +65,9 @@ class ToInfoMap:
     OBSOLETE_SLUG_INFO = 'obsolete slug'
 
     # Slugs that should be ignored when see them as either a column name or as a search term.
-    SLUGS_NOT_IN_DB = {'browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
+    SLUGS_NOT_IN_DB = {'browse', 'cart_browse', 'cart_startobs', 'col_chooser', 'colls_browse', 'cols', 'detail',
                        'gallery_data_viewer', 'limit', 'loc_type', 'order', 'page',
-                       'range', 'reqno', 'request', 'types', 'view', 'widgets', 'widgets2',
+                       'range', 'reqno', 'request', 'startobs', 'types', 'view', 'widgets', 'widgets2',
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
                        }
