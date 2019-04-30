@@ -1192,14 +1192,20 @@ var o_browse = {
         return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable");
     },
 
+    getStartObsLabel: function() {
+        return (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+    },
+
     // Instantiate infiniteScroll
     initInfiniteScroll: function(selector) {
-        let view = o_browse.getViewInfo();
+        let tab = `#${opus.prefs.view}`;
+        let startObsLabel = o_browse.getStartObsLabel();
+
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    // console.log(`=== PATH ON ${selector}`);
-                    let startObs = opus.prefs[`${view.prefix}startobs`];
+                    console.log(`=== PATH ON ${selector} ===`);
+                    let startObs = opus.prefs[startObsLabel];
 
                     console.log(`${selector} in path - startObs: ${startObs}`);
                     let infiniteScrollData = $(selector).data("infiniteScroll");
@@ -1210,7 +1216,7 @@ var o_browse = {
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
-                        let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
+                        let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
                         startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
 
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
@@ -1222,7 +1228,7 @@ var o_browse = {
                     return path;
                 },
                 responseType: "text",
-                status: `${view.namespace} .page-load-status`,
+                status: `${tab} .page-load-status`,
                 elementScroll: true,
                 history: false,
                 scrollThreshold: 500,
@@ -1252,18 +1258,19 @@ var o_browse = {
     },
 
     loadData: function(startObs) {
-        let view = o_browse.getViewInfo();
+        let tab = `#${opus.prefs.view}`;
+        let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
-        let selector = `${view.namespace} ${contentsView}`;
+        let selector = `${tab} ${contentsView}`;
 
-        startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
+        startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
 
         // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
         if (!o_browse.reRenderData) {
             // if the request is a block far away from current page cache, flush the cache and start over
-            let elem = $(`${view.namespace} [data-obs="${startObs}"]`);
-            let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
-            let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
+            let elem = $(`${tab} [data-obs="${startObs}"]`);
+            let lastObs = $(`${tab} [data-obs]`).last().data("obs");
+            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
 
             // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
             if (lastObs === undefined || firstObs === undefined || elem.length === 0 ||
@@ -1300,12 +1307,12 @@ var o_browse = {
                 $(`${selector} .dataTable`).scrollTop(0);
 
                 // Instantiate infiniteScroll on gallery and table view
-                o_browse.initInfiniteScroll(`${view.namespace} .op-gallery-view`);
-                o_browse.initInfiniteScroll(`${view.namespace} .dataTable`);
+                o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
+                o_browse.initInfiniteScroll(`${tab} .dataTable`);
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(`${view.namespace} .thumbnail-container`).remove();
+            $(`${tab} .thumbnail-container`).remove();
             o_browse.renderGalleryAndTable(data, this.url);
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
