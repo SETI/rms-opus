@@ -118,16 +118,13 @@ var o_hash = {
         // selections, then don't include it at all. This is so that when we
         // compare selections and extras over time, a "lonely" qtype won't be
         // taken into account and trigger a new backend search.
-        let hash = o_hash.getHash();
-        hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
-        let hashSlugs = hash.map(x => x.split('=')[0]);
         let newExtras = {};
         $.each(extras, function(slug, value) {
             if (slug.startsWith("qtype-")) {
                 let qtypeSlug = slug.slice(6);
-                if (hashSlugs.indexOf(qtypeSlug) >= 0 ||
-                    hashSlugs.indexOf(qtypeSlug+'1') >= 0 ||
-                    hashSlugs.indexOf(qtypeSlug+'2') >= 0) {
+                if (qtypeSlug in selections ||
+                    qtypeSlug+'1' in selections ||
+                    qtypeSlug+'2' in selections) {
                     newExtras[slug] = value;
                 }
             }

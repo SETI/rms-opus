@@ -175,6 +175,10 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /api/data.[fmt]"
         self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
 
+    def test__api_retfmt_results_data_pvt(self):
+        "[test_return_formats.py] return formats /__api/data.[fmt]"
+        self._test_return_formats('/__api/data.[fmt]', ('csv',))
+
     def test__api_retfmt_results_metadata(self):
         "[test_return_formats.py] return formats /api/metadata/opusid.[fmt]"
         self._test_return_formats('/api/metadata/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))

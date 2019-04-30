@@ -30,9 +30,10 @@ var o_cart = {
 
      cartBehaviors: function() {
          // nav bar
-         $("#cart").on("click", ".download_csv", function(e) {
-             window.open(`/opus/__cart/data.csv?${o_hash.getHash()}`, '_blank');
-             //$(this).attr("href", "/opus/__cart/data.csv?"+ o_hash.getHash());
+         $("#cart").on("click", ".op-download-csv", function(e) {
+             let colStr = opus.prefs.cols.join(',');
+             let orderStr = opus.prefs.order.join(",");
+             $(this).attr("href", `/opus/__cart/data.csv?cols=${colStr}&order=${orderStr}`);
          });
 
          $("#cart").on("click", ".downloadData", function(e) {
@@ -111,7 +112,7 @@ var o_cart = {
                  if (data.error !== undefined) {
                      $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
                  } else {
-                     $(`<li><a href = "${data.filename}">${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
+                     $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
                  }
                  $(".spinner", "#op-download-links").fadeOut();
              },
