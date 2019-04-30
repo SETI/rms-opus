@@ -62,16 +62,17 @@ var o_browse = {
         $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
             let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
             let tab = `#${opus.prefs.view}`;
+            let contentsView = o_browse.getScrollContainerClass();
             if (opus.prefs[startobs] > 0) {
                 // we need something like this to see if the scroll is in the 'up' direction
                 //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
                 let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
                 if ($(`${tab} .gallery-contents`).scrollTop() === 0 || $(`${tab} .dataTable`).scrollTop() === 0) {
                     opus.prefs[startobs] = (prev > 0 ? prev : 1);
-                    $(`${tab} .op-scroll-container`).infiniteScroll({
+                    $(`${tab} ${contentsView}`).infiniteScroll({
                         "loadPrevPage": true
                     });
-                    $(`${tab} .op-scroll-container`).infiniteScroll("loadNextPage");
+                    $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 }
             }
         });
@@ -536,6 +537,7 @@ var o_browse = {
     loadNextPageIfNeeded: function(opusId) {
         let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
         let tab = `#${opus.prefs.view}`;
+        let contentsView = o_browse.getScrollContainerClass();
         let maxObs = (opus.prefs.view === "browse" ? opus.resultCount : parseInt($("#op-cart-count").html()));
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
@@ -546,7 +548,7 @@ var o_browse = {
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
                 opus.prefs[startobs] = obsNum;
-                $(`${tab} .op-scroll-container`).infiniteScroll("loadNextPage");
+                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             }
         }
     },
@@ -554,6 +556,7 @@ var o_browse = {
     loadPrevPageIfNeeded: function(opusId) {
         let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
         let tab = `#${opus.prefs.view}`;
+        let contentsView = o_browse.getScrollContainerClass();
         o_browse.currentOpusId = opusId;
         // decrement obsNum to see if there is a previous one to retrieve
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") - 1;
@@ -566,7 +569,7 @@ var o_browse = {
                 $("#galleryViewContents").addClass("op-disabled");
                 let startObs = obsNum - o_browse.getLimit();
                 opus.prefs[startobs] = (startObs > 0 ? startObs : 1);
-                $(`${tab} .op-scroll-container`).infiniteScroll("loadNextPage");
+                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             }
         }
     },
@@ -637,6 +640,7 @@ var o_browse = {
 
     checkScroll: function() {
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
+        let contentsView = o_browse.getScrollContainerClass();
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
             if (bottom <= $(document).height()) {
@@ -645,7 +649,7 @@ var o_browse = {
                 if (o_browse.dataNotAvailable) {
                     $(".infinite-scroll-request").hide();
                 }
-                $(`#${opus.prefs.view} .op-scroll-container`).infiniteScroll("loadNextPage");
+                $(`#${opus.prefs.view} ${contentsView}`).infiniteScroll("loadNextPage");
             }
         }
 
@@ -1193,10 +1197,18 @@ var o_browse = {
         return url;
     },
 
+    // return the infiniteScroll container class for either gallery or table view
+    // NOTE: the reason we don't want to use a single unified class is because we have two infiniteScroll instances.
+    // If they share a same class say "op-scroll-container", then later on $(selector).infiniteScroll("loadNextPage") will call load event handler twice (selector selects both container) and render the data twice (duplicated data).
+    getScrollContainerClass: function() {
+        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable");
+    },
+
     loadData: function(startObs) {
         let view = o_browse.getViewInfo();
         // let selector = `${view.namespace} .gallery-contents`;
-        let selector = `${view.namespace} .op-scroll-container`;
+        let contentsView = o_browse.getScrollContainerClass();
+        let selector = `${view.namespace} ${contentsView}`;
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
 
