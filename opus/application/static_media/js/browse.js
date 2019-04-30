@@ -1187,6 +1187,7 @@ var o_browse = {
     },
 
     // return the infiniteScroll container class for either gallery or table view
+    // Maybe convert it to a global variable later...
     getScrollContainerClass: function() {
         return ".op-scroll-container";
     },
@@ -1197,7 +1198,6 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    console.log(`====== LOAD NEW DATA ON ${selector}======`);
                     let startObs = opus.prefs[`${view.prefix}startobs`];
 
                     console.log(`${selector} in path - startObs: ${startObs}`);
@@ -1298,7 +1298,6 @@ var o_browse = {
                 $(`${selector} .dataTable`).scrollTop(0);
 
                 // Instantiate infiniteScroll on gallery and table view
-                console.log("=== Instantiate infiniteScroll ===")
                 o_browse.initInfiniteScroll(`${view.namespace} .op-gallery-view`);
                 o_browse.initInfiniteScroll(`${view.namespace} .dataTable`);
             }
