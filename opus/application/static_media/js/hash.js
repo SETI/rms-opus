@@ -155,6 +155,10 @@ var o_hash = {
                         case "order":
                             opus.prefs[slug] = value.split(',');
                             break;
+                        case "startobs" || "cart_startobs":
+                            // Make sure startobs is stored as integer in opus.prefs
+                            opus.prefs[slug] = parseInt(value);
+                            break;
                         default:
                             opus.prefs[slug] = value;
                     }

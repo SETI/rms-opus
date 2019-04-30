@@ -1177,8 +1177,9 @@ var o_browse = {
         $(`${selector} .dataTable`).scrollTop(0);
     },
 
+    // number of images that can be fit in current window size
     getLimit: function() {
-        o_browse.limit = (o_browse.galleryBoundingRect.x != 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) :  o_browse.limit);
+        o_browse.limit = (o_browse.galleryBoundingRect.x !== 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) : o_browse.limit);
         return o_browse.limit;
     },
 
@@ -1197,6 +1198,62 @@ var o_browse = {
         return url;
     },
 
+    // Instantiate infiniteScroll
+    initInfiniteScroll: function(selector) {
+        let view = o_browse.getViewInfo();
+        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        if (!$(selector).data("infiniteScroll")) {
+            $(selector).infiniteScroll({
+                path: function() {
+                    console.log(`====== LOAD NEW DATA ON ${selector}======`);
+                    let startObs = opus.prefs[`${view.prefix}startobs`];
+
+                    console.log(`${selector} in path - startObs: ${startObs}`);
+                    let infiniteScrollData = $(selector).data("infiniteScroll");
+                    if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
+                        console.log(`loadPrevPage = true`);
+                        infiniteScrollData.options.loadPrevPage = false;
+                    } else {
+                        let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
+                        // console.log("=== lastObs ===");
+                        // console.log($(`${view.namespace} .thumbnail-container`).last());
+                        // console.log(lastObs);
+                        // start from the last observation drawn; if none yet drawn ...???
+                        startObs = (lastObs !== undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                        console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
+                        // console.trace();
+                    }
+                    let path = o_browse.getDataURL(startObs);
+                    console.log(`in path: path: ${path}`);
+                    return path;
+                },
+                responseType: "text",
+                status: `${view.namespace}  .page-load-status`,
+                elementScroll: true,
+                history: false,
+                scrollThreshold: 500,
+                checkLastPage: false,
+                loadPrevPage: false,
+                debug: false,
+            });
+
+            $(selector).on("request.infiniteScroll", function(event, path) {
+                // hide default page status loader if op-page-loading-status loader is spinning
+                // && o_browse.tableSorting
+                $(".infinite-scroll-request").hide();
+            });
+            $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                // remove spinner when scrollThreshold is triggered and last data fetching has no data
+                // Need to revisit this one
+                if (o_browse.dataNotAvailable) {
+                    $(".infinite-scroll-request").hide();
+                }
+                $(selector).infiniteScroll("loadNextPage");
+            });
+            $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+        }
+    },
+
     loadData: function(startObs) {
         let view = o_browse.getViewInfo();
         // console.log("view namespace");
@@ -1212,12 +1269,12 @@ var o_browse = {
         // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
         if (!o_browse.reRenderData) {
             // if the request is a block far away from current page cache, flush the cache and start over
-            let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+            let elem = $(`${view.namespace} [data-obs="${startObs}"]`);
             let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
             let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
 
             // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
-            if (lastObs === undefined || firstObs === undefined || $(elem).length === 0 ||
+            if (lastObs === undefined || firstObs === undefined || elem.length === 0 ||
                 (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
                 o_browse.galleryBegun = false;
             } else {
@@ -1249,52 +1306,10 @@ var o_browse = {
                 $(`${selector}`).scrollTop(0);
                 $(`${selector} .dataTable`).scrollTop(0);
 
-                if (!$(selector).data("infiniteScroll")) {
-                    $(selector).infiniteScroll({
-                        path: function() {
-                            console.log(`====== LOAD NEW DATA ON ${contentsView}======`);
-                            let startObs = opus.prefs[`${view.prefix}startobs`];
-                            console.log(`in path - startObs: ${startObs}`);
-                            let infiniteScrollData = $(selector).data("infiniteScroll");
-                            if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
-                                console.log(`loadPrevPage = true`);
-                                infiniteScrollData.options.loadPrevPage = false;
-                            } else {
-                                let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
-                                // start from the last observation drawn; if none yet drawn ...???
-                                startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
-                                console.log(` - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
-                                console.trace();
-                            }
-                            let path = o_browse.getDataURL(startObs);
-                            console.log(`in path: path: ${path}`);
-                            return path;
-                        },
-                        responseType: "text",
-                        status: `${view.namespace}  .page-load-status`,
-                        elementScroll: true,
-                        history: false,
-                        scrollThreshold: 500,
-                        checkLastPage: false,
-                        loadPrevPage: false,
-                        debug: false,
-                    });
-
-                    $(selector).on("request.infiniteScroll", function(event, path) {
-                        // hide default page status loader if op-page-loading-status loader is spinning
-                        // && o_browse.tableSorting
-                        $(".infinite-scroll-request").hide();
-                    });
-                    $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                        // remove spinner when scrollThreshold is triggered and last data fetching has no data
-                        // Need to revisit this one
-                        if (o_browse.dataNotAvailable) {
-                            $(".infinite-scroll-request").hide();
-                        }
-                        $(selector).infiniteScroll("loadNextPage");
-                    });
-                    $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
-                }
+                // Instantiate infiniteScroll on gallery and table view
+                console.log("=== Instantiate infiniteScroll ===")
+                o_browse.initInfiniteScroll(`${view.namespace} .op-gallery-view`);
+                o_browse.initInfiniteScroll(`${view.namespace} .dataTable`);
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
