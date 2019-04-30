@@ -1228,7 +1228,7 @@ var o_browse = {
                     return path;
                 },
                 responseType: "text",
-                status: `${view.namespace}  .page-load-status`,
+                status: `${view.namespace} .page-load-status`,
                 elementScroll: true,
                 history: false,
                 scrollThreshold: 500,
