@@ -59,25 +59,26 @@ var o_browse = {
 
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
-        // Comment this out while working on scroll down
-        // Because we don't want the event handler for "wheel" to affect scroll down
-        // $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-        //     let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
-        //     let tab = `#${opus.prefs.view}`;
-        //     let contentsView = o_browse.getScrollContainerClass();
-        //     if (opus.prefs[startobs] > 0) {
-        //         // we need something like this to see if the scroll is in the 'up' direction
-        //         //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
-        //         let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
-        //         if ($(`${tab} ${contentsView}`).scrollTop() === 0 || $(`${tab} .dataTable`).scrollTop() === 0) {
-        //             opus.prefs[startobs] = (prev > 0 ? prev : 1);
-        //             $(`${tab} ${contentsView}`).infiniteScroll({
-        //                 "loadPrevPage": true
-        //             });
-        //             $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-        //         }
-        //     }
-        // });
+        $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
+            let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+            let tab = `#${opus.prefs.view}`;
+            let contentsView = o_browse.getScrollContainerClass();
+            if (opus.prefs[startobs] > 0) {
+                // we need something like this to see if the scroll is in the 'up' direction
+                //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
+                let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
+
+                // Comment this out while working on scroll down
+                // Because now we have two infiniteScroll instances (sharing the same .op-scroll-container class), and we haven't add the feature of syncing up scrollbar positions in both gallery and table yet. $(`${tab} ${contentsView}`).scrollTop() === 0 will always be true when switching between gallery and table view, and set "loadPrevPage" to true. This will append duplicated data to the end...
+                if ($(`${tab} ${contentsView}`).scrollTop() === 0) {
+                    // opus.prefs[startobs] = (prev > 0 ? prev : 1);
+                    // $(`${tab} ${contentsView}`).infiniteScroll({
+                    //     "loadPrevPage": true
+                    // });
+                    // $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+                }
+            }
+        });
 
         $("#browse").on("click", ".metadataModal", function() {
             o_browse.hideMenu();
@@ -641,21 +642,6 @@ var o_browse = {
     },
 
     checkScroll: function() {
-        // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
-
-        // Comment out for now. We can remove this because .dataTable now has its own infiniteScroll instance and loadNextPage will be triggered by it's own scrollThreshold event handler
-        // if (opus.prefs.browse == "dataTable") {
-        //     let bottom = $("tbody").offset().top + $("tbody").height();
-        //     if (bottom <= $(document).height()) {
-        //         // remove spinner when scrollThreshold is triggered and last data fetching has no data
-        //         // Need to revisit this one
-        //         if (o_browse.dataNotAvailable) {
-        //             $(".infinite-scroll-request").hide();
-        //         }
-        //         $(`#${opus.prefs.view} ${contentsView}`).infiniteScroll("loadNextPage");
-        //     }
-        // }
-
         o_browse.updateSliderHandle();
         return false;
     },
@@ -1242,7 +1228,7 @@ var o_browse = {
                 loadPrevPage: false,
                 // TODO: store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
-                debug: true,
+                debug: false,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
@@ -1251,7 +1237,7 @@ var o_browse = {
                 $(".infinite-scroll-request").hide();
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                console.log("=== scrollThreshold causing the load next page ===")
+                // console.log("=== scrollThreshold causing the load next page ===");
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
                 if (o_browse.dataNotAvailable) {
