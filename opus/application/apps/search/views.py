@@ -714,8 +714,18 @@ def set_user_search_number(selections, extras):
     qtypes_json = None
     qtypes_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'qtypes' in extras:
-        if len(extras['qtypes']):
-            qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
+        qtypes = extras['qtypes']
+        # Remove qtypes that aren't used for searching because they don't
+        # do anything to make the search unique
+        new_qtypes = {}
+        for qtype, val in qtypes.items():
+            qtype_no_num = strip_numeric_suffix(qtype)
+            if (qtype_no_num in selections or
+                qtype_no_num+'1' in selections or
+                qtype_no_num+'2' in selections):
+                new_qtypes[qtype] = val
+        if len(new_qtypes):
+            qtypes_json = str(json.dumps(sort_dictionary(new_qtypes)))
             qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
 
     units_json = None
