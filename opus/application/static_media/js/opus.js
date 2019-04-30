@@ -114,7 +114,9 @@ var opus = {
         }
 
         // compare selections and last selections, extras and last extras
-        if (o_utils.areObjectsEqual(selections, opus.lastSelections) && o_utils.areObjectsEqual(extras, opus.lastExtras)) {
+        if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
+                                    o_utils.areObjectsEqual(o_hash.extrasWithoutUnusedQtypes(selections, extras),
+                                                            o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras))) {
             if (!opus.force_load) { // so we do only non-reloading pref changes
                 return;
             }
@@ -124,7 +126,9 @@ var opus = {
             opus.prefs.cart_startobs = 1;
 
             // if data in selections !== data in opus.selections or extras !== data in opus.extras, it means selections/qtype are modified manually in url, reload the page (modified url in url bar and hit enter)
-            if (!o_utils.areObjectsEqual(selections, opus.selections) || !o_utils.areObjectsEqual(extras, opus.extras)) {
+            if (!o_utils.areObjectsEqual(selections, opus.selections) ||
+                !o_utils.areObjectsEqual(o_hash.extrasWithoutUnusedQtypes(selections, extras),
+                                         o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras))) {
                 opus.selections = selections;
                 opus.extras = extras;
                 location.reload();
