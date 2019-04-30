@@ -107,7 +107,8 @@ var o_browse = {
             let selectionsHash = [];
             for (let param in opus.selections) {
                 if (opus.selections[param].length) {
-                    selectionsHash.push(param + '=' + opus.selections[param].join(',').replace(/ /g,'+'));
+                    let valueStr = opus.selections[param].join(',').replace(/ /g,'+');
+                    selectionsHash.push(`${param}=${valueStr}`);
                 }
             }
             let selectionsHashStr = selectionsHash.join('&');
