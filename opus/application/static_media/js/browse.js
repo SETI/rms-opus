@@ -57,9 +57,9 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
+        $(".op-gallery-view, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
-        $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
+        $(".op-gallery-view, .dataTable").on('wheel ps-scroll-up', function(event) {
             let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
             let tab = `#${opus.prefs.view}`;
             let contentsView = o_browse.getScrollContainerClass();
@@ -69,7 +69,6 @@ var o_browse = {
                 let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
 
                 // Comment this out while working on scroll down
-                // Because now we have two infiniteScroll instances (sharing the same .op-scroll-container class), and we haven't add the feature of syncing up scrollbar positions in both gallery and table yet. $(`${tab} ${contentsView}`).scrollTop() === 0 will always be true when switching between gallery and table view, and set "loadPrevPage" to true. This will append duplicated data to the end...
                 if ($(`${tab} ${contentsView}`).scrollTop() === 0) {
                     // opus.prefs[startobs] = (prev > 0 ? prev : 1);
                     // $(`${tab} ${contentsView}`).infiniteScroll({
@@ -1187,9 +1186,10 @@ var o_browse = {
     },
 
     // return the infiniteScroll container class for either gallery or table view
-    // Maybe convert it to a global variable later...
+    // NOTE: the reason we don't want to use a single unified class is because we have two infiniteScroll instances.
+    // If they share a same class say "op-scroll-container", then later on $(selector).infiniteScroll("loadNextPage") will call load event handler twice (selector selects both container) and render the data twice (duplicated data).
     getScrollContainerClass: function() {
-        return ".op-scroll-container";
+        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable");
     },
 
     // Instantiate infiniteScroll
@@ -1198,11 +1198,13 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
+                    // console.log(`=== PATH ON ${selector}`);
                     let startObs = opus.prefs[`${view.prefix}startobs`];
 
                     console.log(`${selector} in path - startObs: ${startObs}`);
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
+                        // Direction: scroll up
                         console.log(`loadPrevPage = true`);
                         infiniteScrollData.options.loadPrevPage = false;
                     } else {
