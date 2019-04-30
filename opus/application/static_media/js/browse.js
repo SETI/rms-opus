@@ -64,7 +64,7 @@ var o_browse = {
         // $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
         //     let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
         //     let tab = `#${opus.prefs.view}`;
-        //     let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        //     let contentsView = o_browse.getScrollContainerClass();
         //     if (opus.prefs[startobs] > 0) {
         //         // we need something like this to see if the scroll is in the 'up' direction
         //         //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
@@ -539,7 +539,7 @@ var o_browse = {
     loadNextPageIfNeeded: function(opusId) {
         let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
         let tab = `#${opus.prefs.view}`;
-        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        let contentsView = o_browse.getScrollContainerClass();
         let maxObs = (opus.prefs.view === "browse" ? opus.resultCount : parseInt($("#op-cart-count").html()));
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
@@ -558,7 +558,7 @@ var o_browse = {
     loadPrevPageIfNeeded: function(opusId) {
         let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
         let tab = `#${opus.prefs.view}`;
-        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        let contentsView = o_browse.getScrollContainerClass();
         o_browse.currentOpusId = opusId;
         // decrement obsNum to see if there is a previous one to retrieve
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") - 1;
@@ -642,7 +642,7 @@ var o_browse = {
 
     checkScroll: function() {
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
-        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        let contentsView = o_browse.getScrollContainerClass();
         if (opus.prefs.browse == "dataTable") {
             let bottom = $("tbody").offset().top + $("tbody").height();
             if (bottom <= $(document).height()) {
@@ -1199,10 +1199,16 @@ var o_browse = {
         return url;
     },
 
+    // return the infiniteScroll container class for either gallery or table view
+    // Note: we didn't use a single unified class because they are two different container
+    // If we use the same class for both of them, when infiniteScroll loadNextPage is called, infiniteScrollLoadEventListener will be called twice and data will also be rendered twice (duplicated data)
+    getScrollContainerClass: function() {
+        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable");
+    },
+
     // Instantiate infiniteScroll
     initInfiniteScroll: function(selector) {
         let view = o_browse.getViewInfo();
-        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
@@ -1223,6 +1229,7 @@ var o_browse = {
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
                         // console.trace();
                     }
+
                     let path = o_browse.getDataURL(startObs);
                     console.log(`in path: path: ${path}`);
                     return path;
@@ -1234,7 +1241,8 @@ var o_browse = {
                 scrollThreshold: 500,
                 checkLastPage: false,
                 loadPrevPage: false,
-                obsNum: 1, // the most top left obsNum in gallery / the most top obsNum in table
+                // TODO: store the most top left obsNum in gallery or the most top obsNum in table
+                obsNum: 1,
                 debug: false,
             });
 
@@ -1257,7 +1265,7 @@ var o_browse = {
 
     loadData: function(startObs) {
         let view = o_browse.getViewInfo();
-        let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        let contentsView = o_browse.getScrollContainerClass();
         let selector = `${view.namespace} ${contentsView}`;
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
@@ -1286,6 +1294,7 @@ var o_browse = {
         }
 
         $(".op-page-loading-status > .loader").show();
+        // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
         let url = o_browse.getDataURL(startObs);
 
         // metadata; used for both table and gallery
