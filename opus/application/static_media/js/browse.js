@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* globals $, _, PerfectScrollbar */
 /* globals o_cart, o_hash, o_menu, o_utils, opus */
-/* globals default_pages, default_columns */
+/* globals default_columns */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -102,17 +102,23 @@ var o_browse = {
         });
 
         // browse nav menu - download csv
-        $("#browse").on("click", ".download_csv", function() {
-            let col_str = opus.prefs.cols.join(',');
-            let hash = [];
+        $("#browse").on("click", ".op-download-csv", function() {
+            let colStr = opus.prefs.cols.join(',');
+            let selectionsHash = [];
             for (let param in opus.selections) {
                 if (opus.selections[param].length) {
-                    hash[hash.length] = param + '=' + opus.selections[param].join(',').replace(/ /g,'+');
+                    let valueStr = opus.selections[param].join(',').replace(/ /g,'+');
+                    selectionsHash.push(`${param}=${valueStr}`);
                 }
             }
-            let q_str = hash.join('&');
-            let csv_link = "/opus/__api/data.csv?" + q_str + "&cols=" + col_str + "&limit=" + opus.resultCount.toString() + "&order=" + opus.prefs.order.join(",");
-            $(this).attr("href", csv_link);
+            let selectionsHashStr = selectionsHash.join('&');
+            if (selectionsHashStr !== "") {
+                selectionsHashStr += "&";
+            }
+            let resultCountStr = opus.resultCount.toString();
+            let orderStr = opus.prefs.order.join(",");
+            let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
+            $(this).attr("href", csvLink);
         });
 
         // 1 - click on thumbnail opens modal window
@@ -711,7 +717,9 @@ var o_browse = {
         opus.prefs.detail = opusId;
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
             // handles command click to open in new tab
-            let link = "/opus/#/" + o_hash.getHash();
+            let hashArray = o_hash.getHashArray();
+            hashArray.detail = opusId;
+            let link = "/opus/#/" + o_hash.hashArrayToHashString(hashArray);
             link = link.replace("view=browse", "view=detail");
             window.open(link, '_blank');
         } else {
@@ -789,7 +797,9 @@ var o_browse = {
     // metadata selector behaviors
     addMetadataSelectorBehaviors: function() {
         // Global within this function so behaviors can communicate
+        /* jshint varstmt: false */
         var currentSelectedMetadata = opus.prefs.cols.slice();
+        /* jshint varstmt: true */
 
         $("#metadataSelector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns

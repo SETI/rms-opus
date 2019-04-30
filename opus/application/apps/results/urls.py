@@ -18,6 +18,7 @@ from results.views import (
 urlpatterns = [
     url(r'^__api/dataimages.json$', api_get_data_and_images),
     url(r'^api/data.(?P<fmt>json|html|csv)$', api_get_data),
+    url(r'^__api/data.(?P<fmt>csv)$', api_get_data),
     url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata),
     url(r'^api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata_v2),
     url(r'^__api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata_v2_internal),

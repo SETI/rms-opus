@@ -13,8 +13,9 @@ var o_detail = {
 
     getDetail: function(opusId) {
 
-        $("#detail").on("click", ".download_csv", function() {
-            $(this).attr("href", "/opus/__api/metadata_v2/"+opusId+".csv?"+ o_hash.getHash());
+        $("#detail").on("click", ".op-download-csv", function() {
+            let colStr = opus.prefs.cols.join(',');
+            $(this).attr("href", `/opus/__api/metadata_v2/${opusId}.csv?cols=${colStr}`);
         });
 
         $("#detail").on("click", "a[data-action]", function() {
