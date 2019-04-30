@@ -642,18 +642,19 @@ var o_browse = {
 
     checkScroll: function() {
         // infinite scroll is attached to the gallery, so we have to force a loadData when we are in table mode
-        let contentsView = o_browse.getScrollContainerClass();
-        if (opus.prefs.browse == "dataTable") {
-            let bottom = $("tbody").offset().top + $("tbody").height();
-            if (bottom <= $(document).height()) {
-                // remove spinner when scrollThreshold is triggered and last data fetching has no data
-                // Need to revisit this one
-                if (o_browse.dataNotAvailable) {
-                    $(".infinite-scroll-request").hide();
-                }
-                $(`#${opus.prefs.view} ${contentsView}`).infiniteScroll("loadNextPage");
-            }
-        }
+
+        // Comment out for now. We can remove this because .dataTable now has its own infiniteScroll instance and loadNextPage will be triggered by it's own scrollThreshold event handler
+        // if (opus.prefs.browse == "dataTable") {
+        //     let bottom = $("tbody").offset().top + $("tbody").height();
+        //     if (bottom <= $(document).height()) {
+        //         // remove spinner when scrollThreshold is triggered and last data fetching has no data
+        //         // Need to revisit this one
+        //         if (o_browse.dataNotAvailable) {
+        //             $(".infinite-scroll-request").hide();
+        //         }
+        //         $(`#${opus.prefs.view} ${contentsView}`).infiniteScroll("loadNextPage");
+        //     }
+        // }
 
         o_browse.updateSliderHandle();
         return false;
@@ -1200,10 +1201,8 @@ var o_browse = {
     },
 
     // return the infiniteScroll container class for either gallery or table view
-    // Note: we didn't use a single unified class because they are two different container
-    // If we use the same class for both of them, when infiniteScroll loadNextPage is called, infiniteScrollLoadEventListener will be called twice and data will also be rendered twice (duplicated data)
     getScrollContainerClass: function() {
-        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable");
+        return ".op-scroll-container";
     },
 
     // Instantiate infiniteScroll
@@ -1243,7 +1242,7 @@ var o_browse = {
                 loadPrevPage: false,
                 // TODO: store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
-                debug: false,
+                debug: true,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
@@ -1252,6 +1251,7 @@ var o_browse = {
                 $(".infinite-scroll-request").hide();
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                console.log("=== scrollThreshold causing the load next page ===")
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
                 if (o_browse.dataNotAvailable) {
