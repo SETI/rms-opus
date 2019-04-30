@@ -59,23 +59,25 @@ var o_browse = {
 
         $(".gallery-contents, .dataTable").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
-        $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
-            let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
-            let tab = `#${opus.prefs.view}`;
-            let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
-            if (opus.prefs[startobs] > 0) {
-                // we need something like this to see if the scroll is in the 'up' direction
-                //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
-                let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
-                if ($(`${tab} .gallery-contents`).scrollTop() === 0 || $(`${tab} .dataTable`).scrollTop() === 0) {
-                    opus.prefs[startobs] = (prev > 0 ? prev : 1);
-                    $(`${tab} ${contentsView}`).infiniteScroll({
-                        "loadPrevPage": true
-                    });
-                    $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-                }
-            }
-        });
+        // Comment this out while working on scroll down
+        // Because we don't want the event handler for "wheel" to affect scroll down
+        // $(".gallery-contents, .dataTable").on('wheel ps-scroll-up', function(event) {
+        //     let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+        //     let tab = `#${opus.prefs.view}`;
+        //     let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
+        //     if (opus.prefs[startobs] > 0) {
+        //         // we need something like this to see if the scroll is in the 'up' direction
+        //         //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
+        //         let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
+        //         if ($(`${tab} ${contentsView}`).scrollTop() === 0 || $(`${tab} .dataTable`).scrollTop() === 0) {
+        //             opus.prefs[startobs] = (prev > 0 ? prev : 1);
+        //             $(`${tab} ${contentsView}`).infiniteScroll({
+        //                 "loadPrevPage": true
+        //             });
+        //             $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+        //         }
+        //     }
+        // });
 
         $("#browse").on("click", ".metadataModal", function() {
             o_browse.hideMenu();
@@ -1185,8 +1187,7 @@ var o_browse = {
 
     getDataURL: function(startObs) {
         let base_url = "/opus/__api/dataimages.json?";
-        // this is a workaround for firefox
-        let hashString = (o_hash.getHash() ? o_hash.getHash() : o_browse.tempHash);
+        let hashString = o_hash.getHash();
 
         let reqno = (opus.prefs.view === "browse" ? ++o_browse.lastLoadDataRequestNo : ++o_cart.lastLoadDataRequestNo);
         let url = hashString + '&reqno=' + reqno;
@@ -1214,12 +1215,11 @@ var o_browse = {
                         console.log(`loadPrevPage = true`);
                         infiniteScrollData.options.loadPrevPage = false;
                     } else {
+                        // Direction: scroll down
+                        // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
-                        // console.log("=== lastObs ===");
-                        // console.log($(`${view.namespace} .thumbnail-container`).last());
-                        // console.log(lastObs);
-                        // start from the last observation drawn; if none yet drawn ...???
-                        startObs = (lastObs !== undefined ? lastObs + 1 : startObs + o_browse.getLimit());
+                        startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
+
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
                         // console.trace();
                     }
@@ -1234,6 +1234,7 @@ var o_browse = {
                 scrollThreshold: 500,
                 checkLastPage: false,
                 loadPrevPage: false,
+                obsNum: 1, // the most top left obsNum in gallery / the most top obsNum in table
                 debug: false,
             });
 
@@ -1256,12 +1257,7 @@ var o_browse = {
 
     loadData: function(startObs) {
         let view = o_browse.getViewInfo();
-        // console.log("view namespace");
-        // console.log(view.namespace);
-        // console.log("opus.prefs.browse");
-        // console.log(opus.prefs.browse);
         let contentsView = opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".dataTable";
-        // let selector = `${view.namespace} .gallery-contents`;
         let selector = `${view.namespace} ${contentsView}`;
 
         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
