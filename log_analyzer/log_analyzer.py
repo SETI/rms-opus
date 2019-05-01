@@ -3,7 +3,6 @@ import datetime
 import importlib
 import ipaddress
 import operator
-import os
 import re
 from argparse import Namespace
 from pathlib import Path
@@ -114,8 +113,8 @@ def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
     if not args.output:
         raise Exception("Must specify the output file pattern for cronjob mode")
     run_date = get_virtual_date(args)
-    in_files =  [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(args.log_files[0])
-                 for day in range(1, run_date.day + 1)]
+    in_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(args.log_files[0])
+                for day in range(1, run_date.day + 1)]
     # Rob wants me to silently ignore non-existent files.
     in_files = [file for file in in_files if Path(file).exists()]
     out_file = run_date.strftime(args.output)
@@ -126,22 +125,27 @@ def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
 
 
 def get_virtual_date(args: Namespace) -> datetime.datetime:
+    '''Figure out the date to use, based on the --cronjob_date argument.'''
     cronjob_date = args.cronjob_date
     today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    # if the argument isn't present, use today
     if not cronjob_date:
         return today
+    # if the argument is -<number>, then it means that many days ago
     match = re.match(r'-(\d+)', cronjob_date)
     if match:
         return today - datetime.timedelta(days=int(match.group(1)))
+    # if the argument is dddd-dd, then it is a year and month, and indicates the last day of that month
     match = re.match(r'(\d\d\d\d)-(\d\d)', cronjob_date)
     if match:
         year_month = datetime.datetime(tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=1)
-        sometime_next_month = year_month + datetime.timedelta(days=31)
-        first_next_month = sometime_next_month.replace(day=1)
-        return first_next_month - datetime.timedelta(days=1)
-    match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d)')
+        sometime_following_month = year_month + datetime.timedelta(days=31)
+        return sometime_following_month - datetime.timedelta(days=sometime_following_month.day)
+    # if the argument is dddd-dd-dd, then treat it as year-month-day
+    match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d)', cronjob_date)
     if match:
-        return datetime.datetime(tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
+        return datetime.datetime(
+            tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
     raise Exception('cronjob_date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')
 
 
