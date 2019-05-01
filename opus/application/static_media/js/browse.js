@@ -1368,18 +1368,21 @@ var o_browse = {
 
     getBrowseTab: function() {
         // only draw the navbar if we are in gallery mode... doesn't make sense in cart mode
-        let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
-        $(`${hide}#browse`).hide();
+        // let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
+        // this selector selects nothing, comment it out for now
+        // $(`${hide}#browse`).hide();
 
         // reset range select
         o_browse.undoRangeSelect();
 
-        $(`.${opus.prefs.browse}#browse`).fadeIn();
+        // this selector selects nothing, comment it out for now
+        // $(`.${opus.prefs.browse}#browse`).fadeIn();
         $(".op-page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
-        let startObs = opus.prefs[`${o_browse.getViewInfo().prefix}startobs`];
+        let startObsLabel = o_browse.getStartObsLabel();
+        let startObs = opus.prefs[startObsLabel];
         startObs = (startObs > opus.resultCount ? 1 : startObs);
 
         o_browse.loadData(startObs);
