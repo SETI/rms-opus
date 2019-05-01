@@ -971,6 +971,7 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
+        console.log("=== render gallery and table ===");
         let viewInfo = o_browse.getViewInfo();
         let namespace = viewInfo.namespace;
 
@@ -1172,8 +1173,9 @@ var o_browse = {
 
     // set the scrollbar position in gallery / table view
     setScrollbarPosition: function(selector, obsNum) {
-        $(`${selector}`).scrollTop(0);
-        $(`${selector} .op-dataTable-view`).scrollTop(0);
+        o_browse.setScrollbarOnSlide(obsNum);
+        // $(`${selector}`).scrollTop(0);
+        // $(`${selector} .op-dataTable-view`).scrollTop(0);
     },
 
     // number of images that can be fit in current window size
@@ -1273,6 +1275,9 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
 
+        let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
+        let tableInfiniteScroll = $(`${tab} .op-dataTable-view`).data("infiniteScroll");
+
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
 
         // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
@@ -1292,6 +1297,14 @@ var o_browse = {
                 // if startObs drawn, move the slider to that line, fetch if need be after
                 if (startObs >= firstObs && startObs <= lastObs) {
                     // may need to do a prefetch here...
+                    // $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum
+                    // console.log("=== InfiniteScroll Instance ===")
+                    // console.log(galleryInfiniteScroll);
+                    // console.log(tableInfiniteScroll);
+                    if (galleryInfiniteScroll && tableInfiniteScroll) {
+                        startObs = galleryInfiniteScroll.options.obsNum;
+                    }
+                    console.log(`=== seting scrollbar position ${startObs}=== `);
                     o_browse.setScrollbarPosition(selector, startObs);
                     $(".op-page-loading-status > .loader").hide();
                     return;
@@ -1367,16 +1380,9 @@ var o_browse = {
     },
 
     getBrowseTab: function() {
-        // only draw the navbar if we are in gallery mode... doesn't make sense in cart mode
-        // let hide = opus.prefs.browse == "gallery" ? "dataTable" : "gallery";
-        // this selector selects nothing, comment it out for now
-        // $(`${hide}#browse`).hide();
-
         // reset range select
         o_browse.undoRangeSelect();
 
-        // this selector selects nothing, comment it out for now
-        // $(`.${opus.prefs.browse}#browse`).fadeIn();
         $(".op-page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
