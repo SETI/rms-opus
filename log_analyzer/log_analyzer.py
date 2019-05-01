@@ -3,7 +3,10 @@ import datetime
 import importlib
 import ipaddress
 import operator
+import os
+import re
 from argparse import Namespace
+from pathlib import Path
 
 import pytz
 import sys
@@ -31,7 +34,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                        help='Print a report on one or more completed log files')
     group.add_argument('--summary', action='store_true', dest='summary',
                        help="Show the slugs that have been used in a log file")
-    group.add_argument('--chron', action='store_true', dest='chron',
+    group.add_argument('--cronjob', action='store_true', dest='cronjob',
                        help="Used by the chron job to generate a daily summary")
     group.add_argument('--xxfake-realtime', action='store_true', help=argparse.SUPPRESS, dest='fake_realtime')
 
@@ -44,6 +47,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--html', action='store_true', dest='uses_html',
                         help='Generate html output rather than text output')
 
+    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date')
+
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
     parser.add_argument('--reverse-dns', '--dns', action='store_true', dest='uses_reverse_dns',
@@ -54,7 +59,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout_minutes',
                         help='a session ends after this period (minutes) of inactivity')
 
-    parser.add_argument('--output', '-o', type=argparse.FileType('w'), default=sys.stdout, dest='output',
+    parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout")
 
     # TODO(fy): Temporary hack for when I don't have internet access
@@ -74,13 +79,19 @@ def main(arguments: Optional[List[str]] = None) -> None:
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
     log_parser = LogParser(configuration, **vars(args))
 
+    if not args.cronjob:
+        args.output = sys.stdout if not args.output else open(args.output, "w")
+
     if args.realtime:
         if len(args.log_files) != 1:
-            raise Exception("Must specify exactly one file for batch mode.")
+            raise Exception("Must specify exactly one file for real-time mode.")
         log_entries_realtime = LogReader.read_logs_from_tailed_file(args.log_files[0])
         log_parser.run_realtime(log_entries_realtime)
-    elif args.chron:
+    elif args.cronjob:
         log_files, outfile = get_chron_file_list(args)
+        if not log_files:
+            print("No input files found", file=sys.stderr)
+            return
         log_entries_list = LogReader.read_logs(log_files)
         args.output = open(outfile, 'w')
         log_parser.run_batch(log_entries_list)
@@ -97,15 +108,41 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_realtime(iter(log_entries_list))
 
 
-IN_FORMAT = '/users/fy/Dropbox/Shared-Frank-Yellin/logs/tools.pds_access_log-%Y-%m-%d'
-OUT_FORMAT = '/tmp/pds-%Y-%m'
-
-def get_chron_file_list(_args: Namespace) -> Tuple[List[str], str]:
-    yesterday = datetime.datetime.now(tz=pytz.utc) - datetime.timedelta(days=1)
-    in_files =  [datetime.datetime(year=yesterday.year, month=yesterday.month, day=day).strftime(IN_FORMAT)
-                 for day in range(1, yesterday.day + 1)]
-    out_file = yesterday.replace(hour=0, minute=0, second=0, microsecond=0).strftime(OUT_FORMAT)
+def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
+    if len(args.log_files) != 1:
+        raise Exception("Must specify exactly one log file pattern for cronjob mode")
+    if not args.output:
+        raise Exception("Must specify the output file pattern for cronjob mode")
+    run_date = get_virtual_date(args)
+    in_files =  [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(args.log_files[0])
+                 for day in range(1, run_date.day + 1)]
+    # Rob wants me to silently ignore non-existent files.
+    in_files = [file for file in in_files if Path(file).exists()]
+    out_file = run_date.strftime(args.output)
+    if in_files:
+        # Create all necessary intermediate directories
+        Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     return in_files, out_file
+
+
+def get_virtual_date(args: Namespace) -> datetime.datetime:
+    cronjob_date = args.cronjob_date
+    today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    if not cronjob_date:
+        return today
+    match = re.match(r'-(\d+)', cronjob_date)
+    if match:
+        return today - datetime.timedelta(days=int(match.group(1)))
+    match = re.match(r'(\d\d\d\d)-(\d\d)', cronjob_date)
+    if match:
+        year_month = datetime.datetime(tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=1)
+        sometime_next_month = year_month + datetime.timedelta(days=31)
+        first_next_month = sometime_next_month.replace(day=1)
+        return first_next_month - datetime.timedelta(days=1)
+    match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d)')
+    if match:
+        return datetime.datetime(tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
+    raise Exception('cronjob_date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')
 
 
 if __name__ == '__main__':
