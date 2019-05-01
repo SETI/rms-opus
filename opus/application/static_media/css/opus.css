@@ -416,30 +416,30 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
-.dataTable {
+.op-dataTable-view {
     width: 100%;
     position: relative;
     overflow: hidden;
 }
 
-.dataTable .ps__rail-y {
+.op-dataTable-view .ps__rail-y {
     background-color: transparent !important;
     z-index: 11;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
-.dataTable .ps__rail-x {
+.op-dataTable-view .ps__rail-x {
     background-color: transparent !important;
     opacity: 0.9 !important;
 }
 
 /* change from 1px to 2px to make ps__thumb-y more cnetered */
-.dataTable .ps__thumb-y {
+.op-dataTable-view .ps__thumb-y {
     right: 2px;
 }
 
 /* avoid seeing through ps__rail_x in table view */
-.dataTable .ps__thumb-x {
+.op-dataTable-view .ps__thumb-x {
     bottom: 1px;
 }
 
