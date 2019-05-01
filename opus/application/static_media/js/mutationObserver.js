@@ -203,7 +203,7 @@ var o_mutationObserver = {
         let browseDialogModal = $("#galleryView.modal")[0];
         let galleryView = $(".gallery")[0];
         let tableView = $("#dataTable")[0];
-        let switchGalleryAndTable = $(".op-browse-view")[0]
+        let switchGalleryAndTable = $(".op-browse-view")[0];
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
