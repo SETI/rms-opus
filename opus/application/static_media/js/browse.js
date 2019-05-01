@@ -1245,7 +1245,6 @@ var o_browse = {
                 // $(".infinite-scroll-request").hide();
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                // console.log("=== scrollThreshold causing the load next page ===");
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
                 if (o_browse.dataNotAvailable) {
@@ -1306,8 +1305,6 @@ var o_browse = {
 
                 $(`${tab} .op-gallery-view`).scrollTop(0);
                 $(`${tab} .op-dataTable-view`).scrollTop(0);
-                // $(`${selector}`).scrollTop(0);
-                // $(`${selector} .op-dataTable-view`).scrollTop(0);
 
                 // Instantiate infiniteScroll on gallery and table view
                 o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
