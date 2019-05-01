@@ -156,9 +156,6 @@ var o_hash = {
                             opus.prefs[slug] = value.split(',');
                             break;
                         case "startobs":
-                            // Make sure startobs is stored as integer in opus.prefs
-                            opus.prefs[slug] = parseInt(value);
-                            break;
                         case "cart_startobs":
                             // Make sure cart_startobs is stored as integer in opus.prefs
                             opus.prefs[slug] = parseInt(value);
