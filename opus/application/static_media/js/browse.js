@@ -1241,7 +1241,8 @@ var o_browse = {
             $(selector).on("request.infiniteScroll", function(event, path) {
                 // hide default page status loader if op-page-loading-status loader is spinning
                 // && o_browse.tableSorting
-                $(".infinite-scroll-request").hide();
+                // Comment this out so that we will have spinner displayed
+                // $(".infinite-scroll-request").hide();
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                 // console.log("=== scrollThreshold causing the load next page ===");
@@ -1265,6 +1266,7 @@ var o_browse = {
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
 
         // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
+        // reRenderData true is corresponding to galleryBegun false
         if (!o_browse.reRenderData) {
             // if the request is a block far away from current page cache, flush the cache and start over
             let elem = $(`${tab} [data-obs="${startObs}"]`);

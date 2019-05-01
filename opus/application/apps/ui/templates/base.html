@@ -124,13 +124,13 @@
                     <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
                         <div class="row justify-content-start op-gallery-view mr-0">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
-                            <div class="page-load-status">
+                            <!-- <div class="page-load-status">
                                 <div class="infinite-scroll-request loader-ellips">
                                     <div class='loader'></div>
                                 </div>
                                 <p class="infinite-scroll-last">End of content</p>
                                 <p class="infinite-scroll-error">No more pages to load</p>
-                            </div>
+                            </div> -->
                         </div>
                         <div class="row op-dataTable-view browse-infiniteScroll-element mx-0">
                             <div class="col-lg p-0">
@@ -145,6 +145,14 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                        </div>
+                        <!-- we moved the spinner to the same level as .op-gallery-view and .op-dataTable-view so that it can be shared for both infiniteScroll instances  -->
+                        <div class="page-load-status">
+                            <div class="infinite-scroll-request loader-ellips">
+                                <div class='loader'></div>
+                            </div>
+                            <p class="infinite-scroll-last">End of content</p>
+                            <p class="infinite-scroll-error">No more pages to load</p>
                         </div>
                     </div>
                 </div>
