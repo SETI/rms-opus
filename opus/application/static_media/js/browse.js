@@ -618,6 +618,8 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function() {
+        let tab = `#${opus.prefs.view}`;
+        let contentsView = o_browse.getScrollContainerClass();
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
@@ -636,6 +638,14 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
+                // update obsNum in infiniteScroll instance
+                // store the most top left obsNum in gallery for gallery infiniteScroll instance
+                // store the most top obsNum in table for table infiniteScroll instance
+                $(`${tab} ${contentsView}`).infiniteScroll({
+                    "obsNum": obsNum
+                });
+                console.log(`=== The First obs in ${contentsView} ===`);
+                console.log($(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum);
                 return false;
             }
         });
