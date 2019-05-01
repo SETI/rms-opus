@@ -60,17 +60,18 @@ var o_browse = {
         $(".op-gallery-view, .op-dataTable-view").on('scroll', _.debounce(o_browse.checkScroll, 500));
 
         $(".op-gallery-view, .op-dataTable-view").on('wheel ps-scroll-up', function(event) {
-            let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+            // let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+            let startObsLabel = o_browse.getStartObsLabel();
             let tab = `#${opus.prefs.view}`;
-            // let contentsView = o_browse.getScrollContainerClass();
-            if (opus.prefs[startobs] > 0) {
+            let contentsView = o_browse.getScrollContainerClass();
+            if (opus.prefs[startObsLabel] > 0) {
                 // we need something like this to see if the scroll is in the 'up' direction
                 //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
                 let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
 
                 // Comment this out while working on scroll down
-                if ($(`${tab} .op-${opus.prefs.browse}-view`).scrollTop() === 0) {
-                    // opus.prefs[startobs] = (prev > 0 ? prev : 1);
+                if ($(`${tab} ${contentsView}`).scrollTop() === 0) {
+                    // opus.prefs[startObsLabel] = (prev > 0 ? prev : 1);
                     // $(`${tab} ${contentsView}`).infiniteScroll({
                     //     "loadPrevPage": true
                     // });
@@ -537,9 +538,9 @@ var o_browse = {
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     loadNextPageIfNeeded: function(opusId) {
-        let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
+        let startObsLabel = o_browse.getStartObsLabel();
         let tab = `#${opus.prefs.view}`;
-        // let contentsView = o_browse.getScrollContainerClass();
+        let contentsView = o_browse.getScrollContainerClass();
         let maxObs = (opus.prefs.view === "browse" ? opus.resultCount : parseInt($("#op-cart-count").html()));
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
@@ -549,16 +550,16 @@ var o_browse = {
                 // disable keydown on modal when it's loading
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
-                opus.prefs[startobs] = obsNum;
-                $(`${tab} .op-${opus.prefs.browse}-view`).infiniteScroll("loadNextPage");
+                opus.prefs[startObsLabel] = obsNum;
+                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             }
         }
     },
 
     loadPrevPageIfNeeded: function(opusId) {
-        let startobs = (opus.prefs.view === "cart" ? "cart__startobs" : "startobs");
+        let startObsLabel = o_browse.getStartObsLabel();
         let tab = `#${opus.prefs.view}`;
-        // let contentsView = o_browse.getScrollContainerClass();
+        let contentsView = o_browse.getScrollContainerClass();
         o_browse.currentOpusId = opusId;
         // decrement obsNum to see if there is a previous one to retrieve
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") - 1;
@@ -570,8 +571,8 @@ var o_browse = {
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
                 let startObs = obsNum - o_browse.getLimit();
-                opus.prefs[startobs] = (startObs > 0 ? startObs : 1);
-                $(`${tab} .op-${opus.prefs.browse}-view`).infiniteScroll("loadNextPage");
+                opus.prefs[startObsLabel] = (startObs > 0 ? startObs : 1);
+                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             }
         }
     },
@@ -1185,6 +1186,11 @@ var o_browse = {
         return url;
     },
 
+    // return the infiniteScroll container class for either gallery or table view
+    getScrollContainerClass: function() {
+        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
+    },
+
     getStartObsLabel: function() {
         return (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
     },
@@ -1253,8 +1259,8 @@ var o_browse = {
     loadData: function(startObs) {
         let tab = `#${opus.prefs.view}`;
         let startObsLabel = o_browse.getStartObsLabel();
-        // let contentsView = o_browse.getScrollContainerClass();
-        let selector = `${tab} .op-${opus.prefs.browse}-view`;
+        let contentsView = o_browse.getScrollContainerClass();
+        let selector = `${tab} ${contentsView}`;
 
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
 
@@ -1298,6 +1304,8 @@ var o_browse = {
 
                 $(`${tab} .op-gallery-view`).scrollTop(0);
                 $(`${tab} .op-dataTable-view`).scrollTop(0);
+                // $(`${selector}`).scrollTop(0);
+                // $(`${selector} .op-dataTable-view`).scrollTop(0);
 
                 // Instantiate infiniteScroll on gallery and table view
                 o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
