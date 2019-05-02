@@ -98,7 +98,7 @@
                         <div class="browse-nav-container top_navbar collapse navbar-collapse">
                             <ul class="navbar-nav mr-auto">
                                 <li class="nav-item">
-                                    <a href="#" class="browse_view nav-link"><i class="far fa-list-alt"></i></a>
+                                    <a href="#" class="op-browse-view nav-link"><i class="far fa-list-alt"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
@@ -122,22 +122,11 @@
                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
-                        <div class="row justify-content-start op-height-0 op-gallery-view">
+                        <div class="row justify-content-start op-gallery-view mr-0">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
-                            <div class="page-load-status">
-                                <div class="infinite-scroll-request loader-ellips">
-                                    <div class='loader'></div>
-                                </div>
-                                <p class="infinite-scroll-last">End of content</p>
-                                <p class="infinite-scroll-error">No more pages to load</p>
-                            </div>
                         </div>
-                        <div class="row dataTable browse-infiniteScroll-element mx-0">
+                        <div class="row op-dataTable-view browse-infiniteScroll-element mx-0">
                             <div class="col-lg p-0">
-                            <!-- <div class="col-lg pr-0"> -->
-                                <!-- <div class="op-page-loading-status">
-                                    <div class="loader"></div>
-                                </div> -->
                                 <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect">
                                     <thead>
                                         <tr></tr>
@@ -145,6 +134,14 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                        </div>
+                        <!-- we moved the spinner to the same level as .op-gallery-view and .op-dataTable-view so that it can be shared for both infiniteScroll instances  -->
+                        <div class="page-load-status">
+                            <div class="infinite-scroll-request loader-ellips">
+                                <div class='loader'></div>
+                            </div>
+                            <p class="infinite-scroll-last">End of content</p>
+                            <p class="infinite-scroll-error">No more pages to load</p>
                         </div>
                     </div>
                 </div>

@@ -43,8 +43,8 @@ var opus = {
         "view": "search", // search, browse, cart, detail
         "browse": "gallery", // either 'gallery' or 'data'
         "cart_browse": "gallery",  // which view is showing on the cart page, gallery or data
-        "startobs": 1, // for this branch it will not get updated
-        "cart_startobs": 1, // for this branch it will not get updated
+        "startobs": 1,
+        "cart_startobs": 1,
         "detail": "", // opus_id of detail page content
      }, // pref changes do not trigger load()
 
@@ -283,8 +283,8 @@ var opus = {
 
             case 'browse':
                 if (opus.prefs.browse == 'dataTable') {
-                    $('.gallery','#browse').hide();
-                    $('.data','#browse').show();
+                    $('.op-gallery-view','#browse').hide();
+                    $('.op-dataTable-view','#browse').show();
                 }
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();
