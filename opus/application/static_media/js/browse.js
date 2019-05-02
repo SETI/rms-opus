@@ -599,12 +599,14 @@ var o_browse = {
         // trigger an artificial DOMMouseScroll event with delta -650
         //$( ".gallery-contents" ).trigger( e );
 
-        /* make sure it's scrolled to the correct position in table view
-        let tableTargetTopPosition = $(`#dataTable tbody tr[data-obs='${obsNum}']`).offset().top;
-        let tableContainerTopPosition = $(".op-dataTable-view").offset().top;
-        let tableScrollbarPosition = $(".op-dataTable-view").scrollTop();
-        let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition
-        $(`${namespace} .op-dataTable-view`).scrollTop(tableTargetFinalPosition);*/
+        // make sure it's scrolled to the correct position in table view
+        let tableTargetTopPosition = $(`${tab} #dataTable tbody tr[data-obs='${obsNum}']`).offset().top;
+        let tableContainerTopPosition = $(`${tab} .op-dataTable-view`).offset().top;
+        let tableScrollbarPosition = $(`${tab} .op-dataTable-view`).scrollTop();
+        let tableHeaderHeight = $(`${tab} #dataTable thead th`).outerHeight();
+
+        let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition - tableHeaderHeight;
+        $(`${tab} .op-dataTable-view`).scrollTop(tableTargetFinalPosition);
     },
 
     // called when the slider is moved...
@@ -627,10 +629,15 @@ var o_browse = {
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+
+        // For table view, we have set the topBoxBoundary to be the bottom of thead
+        let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
+
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
-            if (topBox >= $(".gallery-contents").offset().top) {
+            // if (topBox >= $(".gallery-contents").offset().top) {
+            if (topBox >= topBoxBoundary) {
                 let obsNum = $(elem).data("obs");
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
@@ -1311,7 +1318,8 @@ var o_browse = {
                     // console.log(galleryInfiniteScroll);
                     // console.log(tableInfiniteScroll);
                     if (galleryInfiniteScroll && tableInfiniteScroll) {
-                        startObs = galleryInfiniteScroll.options.obsNum;
+                        // startObs = galleryInfiniteScroll.options.obsNum;
+                        startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
                     }
                     console.log(`=== seting scrollbar position ${startObs}=== `);
                     o_browse.setScrollbarPosition(selector, startObs);
