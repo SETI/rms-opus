@@ -104,7 +104,7 @@
                                     <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="#" class="download_csv nav-link" title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
+                                    <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
                                 </li>
                                 <li class="nav-item">
                                     <span class="op-observation-text mr-2">Observation #</span>
@@ -124,20 +124,9 @@
                     <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
                         <div class="row justify-content-start op-gallery-view mr-0">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
-                            <!-- <div class="page-load-status">
-                                <div class="infinite-scroll-request loader-ellips">
-                                    <div class='loader'></div>
-                                </div>
-                                <p class="infinite-scroll-last">End of content</p>
-                                <p class="infinite-scroll-error">No more pages to load</p>
-                            </div> -->
                         </div>
                         <div class="row op-dataTable-view browse-infiniteScroll-element mx-0">
                             <div class="col-lg p-0">
-                            <!-- <div class="col-lg pr-0"> -->
-                                <!-- <div class="op-page-loading-status">
-                                    <div class="loader"></div>
-                                </div> -->
                                 <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect">
                                     <thead>
                                         <tr></tr>
@@ -166,7 +155,7 @@
                             <div class="browse-nav-container top_navbar collapse navbar-collapse">
                                 <ul class="navbar-nav mr-auto">
                                     <li class="nav-item">
-                                        <a href="javascript:void(0)" class="download_csv nav-link" title="Download CSV of selected metadata for all observations in cart" target="_blank"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
+                                        <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                                     </li>
                                     <li class="nav-item">
                                         <div id="create_zip_data_file">
@@ -227,10 +216,10 @@
             <a class="dropdown-item cart-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
             <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
             <a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
-            <a class="dropdown-item" data-action="downloadCSV" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;</a>
-            <a class="dropdown-item" data-action="downloadCSVAll" href="#" target="__blank"><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
-            <a class="dropdown-item" data-action="downloadData" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped data archive&nbsp;</a>
-            <a class="dropdown-item" data-action="downloadURL" href="#" target="__blank"><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadCSV" href="#" download><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadCSVAll" href="#" download><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadData" href="#" download><i class="fas fa-download"></i>Download zipped data archive&nbsp;</a>
+            <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
             <!--a class="dropdown-item" data-action="help" href="#"><i class="far fa-question-circle"></i>Help</a-->
         </div>
 

@@ -74,6 +74,11 @@ SECRET_KEY = '<SECRET_KEY>'
 # Where static files are served from in a production environment
 STATIC_ROOT = '<STATIC_DIR>'
 
+# The prefix to add to all cache keys indicating a unique string for this
+# installation on a server. This allows multiple OPUS installations on the
+# same server without causing memcached cache key conflicts.
+CACHE_SERVER_PREFIX = ''
+
 # Where to put zipped cart files for downloading
 # Needs a TRAILING SLASH
 TAR_FILE_PATH = '<TAR_FILE_PATH>/'

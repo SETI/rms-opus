@@ -581,28 +581,6 @@ class searchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
 
-    # ##  set_user_search_number
-    # def test__set_user_search_number(self):
-    #     no = set_user_search_number(self.selections)
-    #     self.assertTrue(no)
-    #
-    # def test__set_user_search_number_with_times(self):
-    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time1': ['2009-12-23']}
-    #     search_no = set_user_search_number(selections)
-    #     print(search_no)
-    #     self.assertGreater(len(str(search_no)), 0)
-    #
-    #
-    # def test__set_user_search_number_2_planets(self):
-    #     selections = {}
-    #     selections['obs_general.planet_id'] = ['Saturn']
-    #     no = set_user_search_number(selections)
-    #     print(no)
-    #     # breaking this, this test needs to see if there are any rows in the table
-    #     self.assertGreater(no, 0)
-    #
-
-
             ##############################################
             ######### get_range_query UNIT TESTS #########
             ##############################################
@@ -1430,6 +1408,96 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
 
+            #####################################################
+            ######### set_user_search_number UNIT TESTS #########
+            #####################################################
+
+    def test__set_user_search_number_dead_qtype_str(self):
+        "[test_search.py] set_user_search_number: dead qtype string"
+        selections = {'obs_pds.volume_id': ['FRED']}
+        extras = {'qtypes': {'obs_pds.volume_id': ['excludes']},
+                  'order': (['obs_pds.volume_id'], [False])}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {'obs_pds.volume_id': ['excludes'],
+                             'obs_pds.data_set_id': ['matches']}, # goes away
+                  'order': (['obs_pds.volume_id'], [False])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (1, False))
+
+    def test__set_user_search_number_dead_qtype_num_1(self):
+        "[test_search.py] set_user_search_number: dead qtype numeric 1"
+        selections = {'obs_general.declination1': ['1']}
+        extras = {'qtypes': {'obs_general.declination1': ['any']},
+                  'order': (['obs_general.time1'], [False])}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {'obs_general.declination1': ['any'],
+                             'obs_general.right_asc1': ['only']}, # goes away
+                  'order': (['obs_general.time1'], [False])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (1, False))
+
+    def test__set_user_search_number_dead_qtype_num_2(self):
+        "[test_search.py] set_user_search_number: dead qtype numeric 2"
+        selections = {'obs_general.declination2': ['1']}
+        extras = {'qtypes': {'obs_general.declination1': ['any']},
+                  'order': (['obs_general.time1'], [False])}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {'obs_general.declination1': ['any'],
+                             'obs_general.right_asc1': ['only']}, # goes away
+                  'order': (['obs_general.time1'], [False])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (1, False))
+
+    def test__set_user_search_number_qtype_num_1(self):
+        "[test_search.py] set_user_search_number: qtype numeric 1"
+        # No qtype vs. used qtype means different search
+        selections = {'obs_general.declination1': ['1']}
+        extras = {'qtypes': {},
+                  'order': (['obs_general.time1'], [False])}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {'obs_general.declination1': ['any']},
+                  'order': (['obs_general.time1'], [False])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (2, True))
+
+    def test__set_user_search_number_qtype_num_2(self):
+        "[test_search.py] set_user_search_number: qtype numeric 2"
+        # No qtype vs. used qtype means different search
+        selections = {'obs_general.declination2': ['1']}
+        extras = {'qtypes': {},
+                  'order': (['obs_general.time1'], [False])}
+        num1 = set_user_search_number(selections, extras)
+        extras = {'qtypes': {'obs_general.declination1': ['any']},
+                  'order': (['obs_general.time1'], [False])}
+        num2 = set_user_search_number(selections, extras)
+        self.assertEqual(num1, (1, True))
+        self.assertEqual(num2, (2, True))
+
+
+    # ##  set_user_search_number
+    # def test__set_user_search_number(self):
+    #     no = set_user_search_number(self.selections)
+    #     self.assertTrue(no)
+    #
+    # def test__set_user_search_number_with_times(self):
+    #     selections = {'obs_general.planet_id': ['Saturn'], 'obs_general.time_sec2': ['2009-12-28'], 'obs_general.time1': ['2009-12-23']}
+    #     search_no = set_user_search_number(selections)
+    #     print(search_no)
+    #     self.assertGreater(len(str(search_no)), 0)
+    #
+    #
+    # def test__set_user_search_number_2_planets(self):
+    #     selections = {}
+    #     selections['obs_general.planet_id'] = ['Saturn']
+    #     no = set_user_search_number(selections)
+    #     print(no)
+    #     # breaking this, this test needs to see if there are any rows in the table
+    #     self.assertGreater(no, 0)
+    #
     # def test__range_query_time_any(self):
     #     # range query: form type = TIME, qtype any
     #     selections = {}

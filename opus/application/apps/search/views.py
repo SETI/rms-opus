@@ -215,12 +215,13 @@ def api_string_search_choices(request, slug):
     partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
 
     # Is this result already cached?
-    cache_key = (settings.CACHE_KEY_PREFIX + ':stringsearchchoices:' +
-                 param_qualified_name + ':' +
-                 partial_query_hash + ':' +
-                 user_query_table + ':' +
-                 query_qtype + ':' +
-                 str(limit))
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 +':stringsearchchoices:'
+                 +param_qualified_name + ':'
+                 +partial_query_hash + ':'
+                 +user_query_table + ':'
+                 +query_qtype + ':'
+                 +str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         cached_val['reqno'] = reqno
@@ -641,8 +642,8 @@ def get_user_query_table(selections, extras, api_code=None):
     cache_table_name = get_user_search_table_name(cache_table_num)
 
     # Is this key set in the cache?
-    cache_key = (settings.CACHE_KEY_PREFIX + ':cache_table:'
-                 + str(cache_table_num))
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':cache_table:' + str(cache_table_num))
     cached_val = cache.get(cache_key)
     if cached_val:
         return cached_val
@@ -714,8 +715,18 @@ def set_user_search_number(selections, extras):
     qtypes_json = None
     qtypes_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'qtypes' in extras:
-        if len(extras['qtypes']):
-            qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
+        qtypes = extras['qtypes']
+        # Remove qtypes that aren't used for searching because they don't
+        # do anything to make the search unique
+        new_qtypes = {}
+        for qtype, val in qtypes.items():
+            qtype_no_num = strip_numeric_suffix(qtype)
+            if (qtype_no_num in selections or
+                qtype_no_num+'1' in selections or
+                qtype_no_num+'2' in selections):
+                new_qtypes[qtype] = val
+        if len(new_qtypes):
+            qtypes_json = str(json.dumps(sort_dictionary(new_qtypes)))
             qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
 
     units_json = None
@@ -730,7 +741,7 @@ def set_user_search_number(selections, extras):
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
-    cache_key = (settings.CACHE_KEY_PREFIX
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  +':usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)
                  +':units_hash:' + str(units_hash)

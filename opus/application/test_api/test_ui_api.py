@@ -66,6 +66,16 @@ class ApiUITests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 200)
 
 
+            ######################################
+            ######### /__dummy API TESTS #########
+            ######################################
+
+    def test__api_dummy(self):
+        "[test_ui_api.py] /__dummy: normal"
+        url = '/opus/__dummy.json'
+        self._run_status_equal(url, 200)
+
+
             #############################################
             ######### /__normalizeurl API TESTS #########
             #############################################

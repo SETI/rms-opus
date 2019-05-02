@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $ */
-/* globals o_browse, opus */
+/* globals opus */
 
 /* jshint varstmt: false */
 var o_hash = {
@@ -101,20 +101,36 @@ var o_hash = {
             let value = pair.split('=')[1];
 
             if (!(slug in opus.prefs) && value) {
-
                 if (slug.startsWith("qtype-")) {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
                     selections[slug] = value.replace("+", " ").split(",");
                 }
-
             }
         });
 
         return [selections, extras];
     },
 
+    extrasWithoutUnusedQtypes: function(selections, extras) {
+        // If a qtype is present in extras but is not used in the search
+        // selections, then don't include it at all. This is so that when we
+        // compare selections and extras over time, a "lonely" qtype won't be
+        // taken into account and trigger a new backend search.
+        let newExtras = {};
+        $.each(extras, function(slug, value) {
+            if (slug.startsWith("qtype-")) {
+                let qtypeSlug = slug.slice(6);
+                if (qtypeSlug in selections ||
+                    qtypeSlug+'1' in selections ||
+                    qtypeSlug+'2' in selections) {
+                    newExtras[slug] = value;
+                }
+            }
+        });
+        return newExtras;
+    },
 
     initFromHash: function() {
         let hash = o_hash.getHash();

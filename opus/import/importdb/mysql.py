@@ -35,7 +35,8 @@ class ImportDBMySQL(ImportDBSuper):
             self.conn = None
             if self.logger:
                 self.logger.log('info',
-                        f'[SIM] Connected to MySQL server as "{self.db_user}"')
+                        f'[SIM] Connected to MySQL server "{self.db_hostname}" '
+                       +f'as "{self.db_user}"')
         else:
             try:
                 self.conn = MySQLdb.connect(host=self.db_hostname,
@@ -44,12 +45,14 @@ class ImportDBMySQL(ImportDBSuper):
             except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal',
-                            f'Unable to connect to MySQL server: {e.args[1]}')
+                            f'Unable to connect to MySQL server '
+                           +f'"{self.db_hostname}": {e.args[1]}')
                 raise ImportDBException(e)
 
             if self.logger:
                 self.logger.log('info',
-                            f'Connected to MySQL server as "{self.db_user}"')
+                        f'Connected to MySQL server "{self.db_hostname}" '
+                       +f'as "{self.db_user}"')
 
             try:
                 cmd = f'USE `{self.db_schema}`'
