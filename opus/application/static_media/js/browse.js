@@ -654,9 +654,9 @@ var o_browse = {
                 // update obsNum in infiniteScroll instance
                 // store the most top left obsNum in gallery for gallery infiniteScroll instance
                 // store the most top obsNum in table for table infiniteScroll instance
-                $(`${tab} ${contentsView}`).infiniteScroll({
-                    "obsNum": obsNum
-                });
+                // update obsNum in both infiniteScroll instances so they will be in synced up
+                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
+                $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
                 console.log(`=== The First obs in ${contentsView} ===`);
                 console.log($(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum);
                 return false;
@@ -917,6 +917,10 @@ var o_browse = {
     },
 
     updateBrowseNav: function() {
+        let tab = `#${opus.prefs.view}`;
+        let contentsView = o_browse.getScrollContainerClass();
+        let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
+        let tableInfiniteScroll = $(`${tab} .op-dataTable-view`).data("infiniteScroll");
         if (opus.prefs.browse == "gallery") {
             $(".op-dataTable-view", "#browse").hide();
             $(".op-gallery-view", "#browse").fadeIn();
@@ -926,6 +930,12 @@ var o_browse = {
             $(".op-browse-view", "#browse").data("view", "dataTable");
 
             o_browse.galleryScrollbar.settings.suppressScrollY = false;
+
+            if (galleryInfiniteScroll && tableInfiniteScroll) {
+                let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+                console.log(`=== Switching browse view, seting scrollbar position ${startObs}=== `);
+                o_browse.setScrollbarPosition(startObs);
+            }
         } else {
             $(".op-gallery-view", "#browse").hide();
             $(".op-dataTable-view", "#browse").fadeIn();
@@ -935,6 +945,11 @@ var o_browse = {
             $(".op-browse-view", "#browse").data("view", "gallery");
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
+            if (galleryInfiniteScroll && tableInfiniteScroll) {
+                let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+                console.log(`=== Switching browse view, seting scrollbar position ${startObs}=== `);
+                o_browse.setScrollbarPosition(startObs);
+            }
         }
     },
 
@@ -1189,10 +1204,8 @@ var o_browse = {
     },
 
     // set the scrollbar position in gallery / table view
-    setScrollbarPosition: function(selector, obsNum) {
+    setScrollbarPosition: function(obsNum) {
         o_browse.setScrollbarOnSlide(obsNum);
-        // $(`${selector}`).scrollTop(0);
-        // $(`${selector} .op-dataTable-view`).scrollTop(0);
     },
 
     // number of images that can be fit in current window size
@@ -1318,11 +1331,10 @@ var o_browse = {
                     // console.log(galleryInfiniteScroll);
                     // console.log(tableInfiniteScroll);
                     if (galleryInfiniteScroll && tableInfiniteScroll) {
-                        // startObs = galleryInfiniteScroll.options.obsNum;
                         startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
                     }
                     console.log(`=== seting scrollbar position ${startObs}=== `);
-                    o_browse.setScrollbarPosition(selector, startObs);
+                    o_browse.setScrollbarPosition(startObs);
                     $(".op-page-loading-status > .loader").hide();
                     return;
                 }
