@@ -658,15 +658,14 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
-                
+
                 // update obsNum in infiniteScroll instance
                 // store the most top left obsNum in gallery for gallery infiniteScroll instance
                 // store the most top obsNum in table for table infiniteScroll instance
                 // update obsNum in both infiniteScroll instances so they will be in synced up
                 $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
-                console.log(`=== The First obs in ${contentsView} ===`);
-                console.log($(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum);
+                
                 return false;
             }
         });
@@ -1011,7 +1010,6 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
-        console.log("=== render gallery and table ===");
         let viewInfo = o_browse.getViewInfo();
         let namespace = viewInfo.namespace;
 
