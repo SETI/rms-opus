@@ -630,15 +630,22 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
 
-        // For table view, we have set the topBoxBoundary to be the bottom of thead
+        // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
+        // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
         let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
+
+        let currentObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
 
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
-            // if (topBox >= $(".gallery-contents").offset().top) {
             if (topBox >= topBoxBoundary) {
+                // If obsNum stored in infiniteScroll instance is also at the current top row, we don't update the slider with top left obsNum.
                 let obsNum = $(elem).data("obs");
+                if (obsNum < currentObsNum && $(elem).offset().top === $(selector + `[data-obs="${currentObsNum}"]`).offset().top) {
+                    obsNum = currentObsNum;
+                }
+
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
                 // just make the step size the number of the obserations across the page...
@@ -651,6 +658,7 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
+                
                 // update obsNum in infiniteScroll instance
                 // store the most top left obsNum in gallery for gallery infiniteScroll instance
                 // store the most top obsNum in table for table infiniteScroll instance
