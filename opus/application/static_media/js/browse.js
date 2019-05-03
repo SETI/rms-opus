@@ -642,6 +642,7 @@ var o_browse = {
             if (topBox >= topBoxBoundary) {
                 // If obsNum stored in infiniteScroll instance is also at the current top row, we don't update the slider with top left obsNum.
                 let obsNum = $(elem).data("obs");
+                // TODO Need to fix this one
                 if (obsNum < currentObsNum && $(elem).offset().top === $(selector + `[data-obs="${currentObsNum}"]`).offset().top) {
                     obsNum = currentObsNum;
                 }
@@ -659,6 +660,9 @@ var o_browse = {
                     "max": opus.resultCount,
                 });
 
+                console.log("=== Slider step size ===");
+                console.log(o_browse.gallerySliderStep);
+                console.log(o_browse.galleryBoundingRect);
                 // update obsNum in both infiniteScroll instances
                 // store the most top left obsNum in gallery for gallery infiniteScroll instance
                 // store the most top obsNum in table for table infiniteScroll instance
@@ -946,7 +950,7 @@ var o_browse = {
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
         }
-        // sync up scrollbar position 
+        // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
             o_browse.setScrollbarPosition(startObs);
@@ -1413,6 +1417,9 @@ var o_browse = {
         startObs = (startObs > opus.resultCount ? 1 : startObs);
 
         o_browse.loadData(startObs);
+        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        console.log("=== gallery boundary ===");
+        console.log(o_browse.galleryBoundingRect);
     },
 
     countGalleryImages: function() {
@@ -1421,7 +1428,7 @@ var o_browse = {
         let yCount = 0;
 
         if ($(`${tab} .gallery-contents`).length > 0) {
-            xCount = Math.round($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
+            xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
             yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
         }
         return {"x": xCount, "y": yCount};
