@@ -643,9 +643,18 @@ var o_browse = {
                 // If obsNum stored in infiniteScroll instance is also at the current top row, we don't update the slider with top left obsNum.
                 let obsNum = $(elem).data("obs");
                 // TODO Need to fix this one
-                if (obsNum < currentObsNum && $(elem).offset().top === $(selector + `[data-obs="${currentObsNum}"]`).offset().top) {
-                    obsNum = currentObsNum;
+                // if (obsNum < currentObsNum && $(elem).offset().top === $(selector + `[data-obs="${currentObsNum}"]`).offset().top) {
+                //     obsNum = currentObsNum;
+                // }
+                // update obsNum in both infiniteScroll instances
+                // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
+                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
+                if (contentsView === ".op-dataTable-view") {
+                    obsNum = Math.floor((obsNum-1)/o_browse.gallerySliderStep+0.0000001)*o_browse.gallerySliderStep+1;
                 }
+                console.log("=== dataTable view slider obsNum ===");
+                console.log(obsNum);
+                $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
 
                 $("#op-observation-number").html(obsNum);
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
@@ -663,11 +672,6 @@ var o_browse = {
                 console.log("=== Slider step size ===");
                 console.log(o_browse.gallerySliderStep);
                 console.log(o_browse.galleryBoundingRect);
-                // update obsNum in both infiniteScroll instances
-                // store the most top left obsNum in gallery for gallery infiniteScroll instance
-                // store the most top obsNum in table for table infiniteScroll instance
-                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
-                $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
 
                 return false;
             }
