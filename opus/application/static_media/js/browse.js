@@ -1014,7 +1014,7 @@ var o_browse = {
 
             opus.resultCount = data.result_count;
             opus.prefs[startobsLabel] = data.start_obs;
-            
+
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
@@ -1218,19 +1218,28 @@ var o_browse = {
             tableObsElem.eq(index).remove();
         };
 
-        let firstObs = galleryObsElem.first().data("obs");
-        let lastObs = galleryObsElem.last().data("obs")
-        if (lastObs !== undefined && lastObs - firstObs + count > opus.maxBufferSize) {
+        let beginningIndex = galleryObsElem.first().index();
+        let endingIndex = galleryObsElem.last().index();
+        if (beginningIndex < 0 || endingIndex < 0) {
+            // this only happens when there are no elements rendered, so why bother...
+            // probably don't need to check both, but why not...
+            return;
+        }
+
+        let totalObs = endingIndex - beginningIndex;
+        if (totalObs + count > opus.maxBufferSize) {
             // if we are appending, remove from the top
             console.log(`before: ${Object.keys(o_browse.galleryData).length}`);
+            count = (count > endingIndex ? endingIndex : count);
             if (append) {
                 // this is theoretically the faster way to delete lots of data, as jquery selector eval is slow
                 for (let index = 0; index < count ; index++) {
                     deleteCachedObservation(index);
                 }
             } else {
-                let deleteTo = galleryObsElem.last().index() - count;
-                for (let index = galleryObsElem.last().index(); index >= deleteTo; index--) {
+                let deleteTo = endingIndex - count;
+                deleteTo = (deleteTo >= 0 ? deleteTo : 0);
+                for (let index = endingIndex; index >= deleteTo; index--) {
                     deleteCachedObservation(index);
                 }
             }
@@ -1267,7 +1276,7 @@ var o_browse = {
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
-                        let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+                        let lastObs = $(`${tab} .gallery [data-obs]`).last().data("obs");
                         startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
 
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
@@ -1302,7 +1311,7 @@ var o_browse = {
                 if (o_browse.dataNotAvailable) {
                     $(".infinite-scroll-request").hide();
                 }
-                $(selector).infiniteScroll("loadNextPage");
+                //$(selector).infiniteScroll("loadNextPage");
             });
             $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
         }
