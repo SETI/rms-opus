@@ -634,26 +634,19 @@ var o_browse = {
         // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
         let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
 
-        let currentObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
             if (topBox >= topBoxBoundary) {
-                // If obsNum stored in infiniteScroll instance is also at the current top row, we don't update the slider with top left obsNum.
                 let obsNum = $(elem).data("obs");
-                // TODO Need to fix this one
-                // if (obsNum < currentObsNum && $(elem).offset().top === $(selector + `[data-obs="${currentObsNum}"]`).offset().top) {
-                //     obsNum = currentObsNum;
-                // }
+
                 // update obsNum in both infiniteScroll instances
                 // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
                 $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 if (contentsView === ".op-dataTable-view") {
                     obsNum = Math.floor((obsNum-1)/o_browse.gallerySliderStep+0.0000001)*o_browse.gallerySliderStep+1;
                 }
-                console.log("=== dataTable view slider obsNum ===");
-                console.log(obsNum);
+
                 $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
 
                 $("#op-observation-number").html(obsNum);
@@ -668,10 +661,6 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
-
-                console.log("=== Slider step size ===");
-                console.log(o_browse.gallerySliderStep);
-                console.log(o_browse.galleryBoundingRect);
 
                 return false;
             }
@@ -1421,9 +1410,7 @@ var o_browse = {
         startObs = (startObs > opus.resultCount ? 1 : startObs);
 
         o_browse.loadData(startObs);
-        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        console.log("=== gallery boundary ===");
-        console.log(o_browse.galleryBoundingRect);
+        // o_browse.galleryBoundingRect = o_browse.countGalleryImages();
     },
 
     countGalleryImages: function() {
@@ -1445,7 +1432,8 @@ var o_browse = {
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        $("#op-observation-slider").slider("option", "step", o_browse.galleryBoundingRect.x);
+        // make sure slider is updated when window is resized
+        o_browse.updateSliderHandle();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(containerHeight/thumbnailSize));
     },
 
