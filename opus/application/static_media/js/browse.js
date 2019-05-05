@@ -946,7 +946,7 @@ var o_browse = {
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
         }
-        // sync up scrollbar position 
+        // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
             o_browse.setScrollbarPosition(startObs);
@@ -1003,8 +1003,10 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
-        let viewInfo = o_browse.getViewInfo();
-        let namespace = viewInfo.namespace;
+        let tab = `#${opus.prefs.view}`;
+        let startObsLabel = o_browse.getStartObsLabel();
+        console.log("=== renderGalleryAndTable ===");
+        console.log(tab);
 
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
@@ -1031,7 +1033,7 @@ var o_browse = {
                     galleryHtml += 'then click on the cart icon.  </p>';
                     galleryHtml += '</div>';
                 }
-                $(".gallery", namespace).html(galleryHtml);
+                $(".gallery", tab).html(galleryHtml);
             } else {
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
@@ -1042,7 +1044,7 @@ var o_browse = {
             $("#cart .sort-order-container").show();
             opus.resultCount = data.result_count;
 
-            opus.prefs[`${viewInfo.prefix}startobs`] = data.start_obs;
+            opus.prefs[startObsLabel] = data.start_obs;
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
@@ -1069,7 +1071,7 @@ var o_browse = {
                 galleryHtml += '</div></div>';
 
                 // table row
-                if (namespace == "#browse") {   // not yet supported for cart
+                if (tab == "#browse") {   // not yet supported for cart
                     let checked = item.in_cart ? " checked" : "";
                     let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                     let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
@@ -1085,14 +1087,14 @@ var o_browse = {
             galleryHtml += "</div>";
             // wondering if there should be more logic here to determine if the new block of observations
             // is contiguous w/the existing block of observations, not just before/after...
-            if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
-                $(".gallery", namespace).prepend(galleryHtml);
-                if (namespace == "#browse") {   // not yet supported for cart
+            if ($(`${tab} .thumbnail-container`).first().data("obs") > data.start_obs) {
+                $(".gallery", tab).prepend(galleryHtml);
+                if (tab == "#browse") {   // not yet supported for cart
                     $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
             } else {
-                $(".gallery", namespace).append(galleryHtml);
-                if (namespace == "#browse") {   // not yet supported for cart
+                $(".gallery", tab).append(galleryHtml);
+                if (tab == "#browse") {   // not yet supported for cart
                     $(".op-dataTable-view tbody").append(tableHtml);
                 }
             }
@@ -1222,7 +1224,8 @@ var o_browse = {
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
-        url += `&limit=${o_browse.getLimit() * 2}`;
+        let limitNum = o_browse.getLimit() * 2;
+        url += `&limit=${limitNum}`;
 
         return url;
     },
@@ -1252,7 +1255,13 @@ var o_browse = {
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up
                         console.log(`loadPrevPage = true`);
-                        infiniteScrollData.options.loadPrevPage = false;
+                        // we probably have to set this back to false later, not here.
+                        // infiniteScrollData.options.loadPrevPage = false;
+                        if (startObs !== 1) {
+                            let prevStartObs = startObs - o_browse.getLimit() * 2;
+                            startObs = prevStartObs > 0 ? prevStartObs : 1;
+                            console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}`);
+                        }
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
