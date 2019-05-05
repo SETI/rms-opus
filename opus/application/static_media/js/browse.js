@@ -1005,6 +1005,11 @@ var o_browse = {
         // render the gallery and table at the same time.
         let tab = `#${opus.prefs.view}`;
         let startObsLabel = o_browse.getStartObsLabel();
+        let contentsView = o_browse.getScrollContainerClass();
+        let selector = `${tab} ${contentsView}`;
+        let infiniteScrollData = $(selector).data("infiniteScroll");
+        // TODO: we will reset infiniteScrollData.options.loadPrevPage back to false here if it's loading prev obsNum
+
         console.log("=== renderGalleryAndTable ===");
         console.log(tab);
 
@@ -1015,7 +1020,7 @@ var o_browse = {
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #cart tabs
-            if (data.start_obs == 1) {
+            if (data.start_obs == 1 && infiniteScrollData.options.loadPrevPage !== true) {
                 if (opus.prefs.view == "browse") {
                     // note: this only displays in gallery view; might want to gray out option for table view when no search results.
                     galleryHtml += '<div class="thumbnail-message">';
@@ -1037,6 +1042,8 @@ var o_browse = {
             } else {
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
+                // TODO: do we have to reset both infiniteScroll instances loadPrevPage to false?
+                infiniteScrollData.options.loadPrevPage = false;
                 return;
             }
         } else {
@@ -1224,6 +1231,7 @@ var o_browse = {
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
+        // TODO: find a way to set limitNum to 0 if we don't have any data to load in up scroll
         let limitNum = o_browse.getLimit() * 2;
         url += `&limit=${limitNum}`;
 
