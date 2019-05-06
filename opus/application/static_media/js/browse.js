@@ -36,6 +36,7 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
+    maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
     limit: 100,  // results per page
     lastLoadDataRequestNo: 0,
@@ -1006,7 +1007,6 @@ var o_browse = {
         } else {
             let startobsLabel = o_browse.getStartObsLabel();
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
-            console.log(`append: ${append}`);
 
             o_browse.manageObservationCache(data.count, append);
             $(`${tab} .navbar`).show();
@@ -1205,8 +1205,8 @@ var o_browse = {
     // Two functions; one to delete single elements, just a tool for the main one, manageObservationCache, to loop.
     manageObservationCache: function(count, append) {
         let tab = `#${opus.prefs.view}`;
-        var galleryObsElem =  $(`${tab} .gallery [data-obs]`);
-        var tableObsElem = $(`${tab} .op-dataTable-view [data-obs]`);
+        let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+        let tableObsElem = $(`${tab} .op-dataTable-view [data-obs]`);
 
         function deleteCachedObservation(index) {
             // don't delete the metadata if the observation is in the cart
@@ -1216,34 +1216,30 @@ var o_browse = {
             }
             galleryObsElem.eq(index).remove();
             tableObsElem.eq(index).remove();
-        };
+        }
 
-        let beginningIndex = galleryObsElem.first().index();
-        let endingIndex = galleryObsElem.last().index();
-        if (beginningIndex < 0 || endingIndex < 0) {
+        if (galleryObsElem.length === 0) {
             // this only happens when there are no elements rendered, so why bother...
             // probably don't need to check both, but why not...
             return;
         }
 
-        let totalObs = endingIndex - beginningIndex;
-        if (totalObs + count > opus.maxBufferSize) {
+        let lastIndex = galleryObsElem.last().index();
+        let totalCachedObservations = lastIndex + 1;
+        if (totalCachedObservations + count > o_browse.maxCachedObservations) {
             // if we are appending, remove from the top
-            console.log(`before: ${Object.keys(o_browse.galleryData).length}`);
-            count = (count > endingIndex ? endingIndex : count);
+            count = Math.min(count, totalCachedObservations);
             if (append) {
                 // this is theoretically the faster way to delete lots of data, as jquery selector eval is slow
                 for (let index = 0; index < count ; index++) {
                     deleteCachedObservation(index);
                 }
             } else {
-                let deleteTo = endingIndex - count;
-                deleteTo = (deleteTo >= 0 ? deleteTo : 0);
-                for (let index = endingIndex; index >= deleteTo; index--) {
+                let deleteTo = totalCachedObservations - count;
+                for (let index = lastIndex; index >= deleteTo; index--) {
                     deleteCachedObservation(index);
                 }
             }
-            console.log(`after: ${Object.keys(o_browse.galleryData).length}`);
         }
     },
 

@@ -60,7 +60,6 @@ var opus = {
     lastSelections: {},   // last_ are used to monitor changes
     lastExtras: {},
     resultCount: 0,
-    maxBufferSize: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
     qtype_default: 'any',
     force_load: true, // set this to true to force load() when selections haven't changed
