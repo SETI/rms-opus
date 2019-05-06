@@ -589,6 +589,8 @@ var o_browse = {
 
     setScrollbarOnSlide: function(obsNum) {
         let tab = `#${opus.prefs.view}`;
+        console.log("=== setScrollbarOnSlide obsNum ===");
+        console.log(obsNum);
         let galleryTargetTopPosition = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
         let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
         let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
@@ -1022,7 +1024,7 @@ var o_browse = {
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #cart tabs
-            if (data.start_obs == 1 && infiniteScrollData.options.loadPrevPage !== true) {
+            if (data.start_obs == 1) {
                 if (opus.prefs.view == "browse") {
                     // note: this only displays in gallery view; might want to gray out option for table view when no search results.
                     galleryHtml += '<div class="thumbnail-message">';
@@ -1271,24 +1273,23 @@ var o_browse = {
                 path: function() {
                     console.log(`=== PATH ON ${selector} ===`);
                     let startObs = opus.prefs[startObsLabel];
-                    let costomizedLimitNum;
+                    let customizedLimitNum;
 
                     console.log(`${selector} in path - startObs: ${startObs}`);
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up
                         console.log(`loadPrevPage = true`);
-                        // we probably have to set this back to false later, not here.
-                        infiniteScrollData.options.loadPrevPage = false;
+                        // infiniteScrollData.options.loadPrevPage = false;
                         if (startObs !== 1) {
                             let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
                             let prevStartObs = originalStartObs - o_browse.getLimit() * 2;
                             startObs = prevStartObs > 0 ? prevStartObs : 1;
-                            costomizedLimitNum = startObs === 1 ? originalStartObs - 1 : costomizedLimitNum;
+                            customizedLimitNum = startObs === 1 ? originalStartObs - 1 : customizedLimitNum;
                         } else {
-                            costomizedLimitNum = 0;
+                            customizedLimitNum = 0;
                         }
-                        console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}, costomizedLimitNum: ${costomizedLimitNum}`);
+                        console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}, customizedLimitNum: ${customizedLimitNum}`);
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
@@ -1299,7 +1300,7 @@ var o_browse = {
                         // console.trace();
                     }
 
-                    let path = o_browse.getDataURL(startObs, costomizedLimitNum);
+                    let path = o_browse.getDataURL(startObs, customizedLimitNum);
                     console.log(`in path: path: ${path}`);
                     return path;
                 },
@@ -1312,14 +1313,24 @@ var o_browse = {
                 loadPrevPage: false,
                 // TODO: store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
-                debug: false,
+                debug: true,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
                 // hide default page status loader if op-page-loading-status loader is spinning
                 // && o_browse.tableSorting
                 // Comment this out so that we will have spinner displayed
-                // $(".infinite-scroll-request").hide();
+                let tab = `#${opus.prefs.view}`;
+                let contentsView = o_browse.getScrollContainerClass();
+                let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
+                let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
+                let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+                if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) || (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false)) {
+                    $(".infinite-scroll-request").hide();
+                }
+                $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
+                $(`${tab} .op-dataTable-view`).infiniteScroll({"loadPrevPage": false});
+                // infiniteScrollData.options.loadPrevPage = false;
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                 console.log("=== triggered by scroll threshold ===");
