@@ -61,21 +61,25 @@ var o_browse = {
 
         $(".op-gallery-view, .op-dataTable-view").on('wheel ps-scroll-up', function(event) {
             // let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+            console.log("=== scrolling up ===");
             let startObsLabel = o_browse.getStartObsLabel();
             let tab = `#${opus.prefs.view}`;
             let contentsView = o_browse.getScrollContainerClass();
             if (opus.prefs[startObsLabel] > 0) {
                 // we need something like this to see if the scroll is in the 'up' direction
                 //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
-                let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit();
-
+                let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit() * 2;
+                let firstStartObs = $(`${tab} [data-obs]`).first().data("obs");
+                console.log("=== prev ===");
+                console.log(prev);
+                console.log(firstStartObs);
                 // Comment this out while working on scroll down
-                if ($(`${tab} ${contentsView}`).scrollTop() === 0) {
+                if ($(`${tab} ${contentsView}`).scrollTop() === 0 && firstStartObs !== 1) {
                     // opus.prefs[startObsLabel] = (prev > 0 ? prev : 1);
-                    // $(`${tab} ${contentsView}`).infiniteScroll({
-                    //     "loadPrevPage": true
-                    // });
-                    // $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+                    $(`${tab} ${contentsView}`).infiniteScroll({
+                        "loadPrevPage": true
+                    });
+                    $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 }
             }
         });
@@ -1011,7 +1015,6 @@ var o_browse = {
         // TODO: we will reset infiniteScrollData.options.loadPrevPage back to false here if it's loading prev obsNum
 
         console.log("=== renderGalleryAndTable ===");
-        console.log(tab);
 
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
@@ -1040,9 +1043,11 @@ var o_browse = {
                 }
                 $(".gallery", tab).html(galleryHtml);
             } else {
+                console.log("=== No more data ===");
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
                 // TODO: do we have to reset both infiniteScroll instances loadPrevPage to false?
+                // Need to do something to avoid spinner when there is no more data
                 infiniteScrollData.options.loadPrevPage = false;
                 return;
             }
@@ -1222,7 +1227,7 @@ var o_browse = {
         return o_browse.limit;
     },
 
-    getDataURL: function(startObs) {
+    getDataURL: function(startObs, customizedLimitNum=undefined) {
         let base_url = "/opus/__api/dataimages.json?";
         let hashString = o_hash.getHash();
 
@@ -1232,7 +1237,7 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         // TODO: find a way to set limitNum to 0 if we don't have any data to load in up scroll
-        let limitNum = o_browse.getLimit() * 2;
+        let limitNum = customizedLimitNum === undefined ? o_browse.getLimit() * 2 : customizedLimitNum;
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1257,6 +1262,7 @@ var o_browse = {
                 path: function() {
                     console.log(`=== PATH ON ${selector} ===`);
                     let startObs = opus.prefs[startObsLabel];
+                    let costomizedLimitNum;
 
                     console.log(`${selector} in path - startObs: ${startObs}`);
                     let infiniteScrollData = $(selector).data("infiniteScroll");
@@ -1264,12 +1270,16 @@ var o_browse = {
                         // Direction: scroll up
                         console.log(`loadPrevPage = true`);
                         // we probably have to set this back to false later, not here.
-                        // infiniteScrollData.options.loadPrevPage = false;
+                        infiniteScrollData.options.loadPrevPage = false;
                         if (startObs !== 1) {
-                            let prevStartObs = startObs - o_browse.getLimit() * 2;
+                            let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
+                            let prevStartObs = originalStartObs - o_browse.getLimit() * 2;
                             startObs = prevStartObs > 0 ? prevStartObs : 1;
-                            console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}`);
+                            costomizedLimitNum = startObs === 1 ? originalStartObs - 1 : costomizedLimitNum;
+                        } else {
+                            costomizedLimitNum = 0;
                         }
+                        console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}, costomizedLimitNum: ${costomizedLimitNum}`);
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
@@ -1280,7 +1290,7 @@ var o_browse = {
                         // console.trace();
                     }
 
-                    let path = o_browse.getDataURL(startObs);
+                    let path = o_browse.getDataURL(startObs, costomizedLimitNum);
                     console.log(`in path: path: ${path}`);
                     return path;
                 },
@@ -1303,6 +1313,7 @@ var o_browse = {
                 // $(".infinite-scroll-request").hide();
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                console.log("=== triggered by scroll threshold ===");
                 // remove spinner when scrollThreshold is triggered and last data fetching has no data
                 // Need to revisit this one
                 if (o_browse.dataNotAvailable) {
