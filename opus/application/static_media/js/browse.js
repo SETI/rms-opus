@@ -70,8 +70,7 @@ var o_browse = {
                 //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
                 let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit() * 2;
                 let firstStartObs = $(`${tab} [data-obs]`).first().data("obs");
-                console.log("=== prev ===");
-                console.log(prev);
+                console.log("=== first start obs in scroll up ===");
                 console.log(firstStartObs);
                 // Comment this out while working on scroll down
                 if ($(`${tab} ${contentsView}`).scrollTop() === 0 && firstStartObs !== 1) {
@@ -627,6 +626,11 @@ var o_browse = {
             o_browse.setScrollbarOnSlide(value);
         } else {
             o_browse.loadData(value);
+            // console.log("=== trigger a ps scroll up ===")
+            // console.log(`onUpdateSliderValue: ${value}`)
+            // let tab = `#${opus.prefs.view}`;
+            // let contentsView = o_browse.getScrollContainerClass();
+            // $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
     },
 
@@ -641,6 +645,9 @@ var o_browse = {
         let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
 
         let currentObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+        console.log("=== currentObsNum in updateSliderHandle ===");
+        console.log(currentObsNum);
+        console.log($(selector + `[data-obs="${currentObsNum}"]`))
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -1247,7 +1254,6 @@ var o_browse = {
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
-        // TODO: find a way to set limitNum to 0 if we don't have any data to load in up scroll
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit() * 2 : customizedLimitNum;
         url += `&limit=${limitNum}`;
 
@@ -1311,15 +1317,13 @@ var o_browse = {
                 scrollThreshold: 500,
                 checkLastPage: false,
                 loadPrevPage: false,
-                // TODO: store the most top left obsNum in gallery or the most top obsNum in table
+                // store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
                 debug: true,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
-                // hide default page status loader if op-page-loading-status loader is spinning
-                // && o_browse.tableSorting
-                // Comment this out so that we will have spinner displayed
+                // Remove spinner when infiniteScroll reaches to both ends
                 let tab = `#${opus.prefs.view}`;
                 let contentsView = o_browse.getScrollContainerClass();
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
@@ -1328,9 +1332,9 @@ var o_browse = {
                 if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) || (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false)) {
                     $(".infinite-scroll-request").hide();
                 }
+                // Restore loadPrevPage to false in both infiniteScroll instances
                 $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
                 $(`${tab} .op-dataTable-view`).infiniteScroll({"loadPrevPage": false});
-                // infiniteScrollData.options.loadPrevPage = false;
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                 console.log("=== triggered by scroll threshold ===");
@@ -1421,6 +1425,11 @@ var o_browse = {
                 o_browse.galleryBegun = true;
             }
             o_browse.reRenderData = false;
+
+            // When scrolling slider, we will like to prefetch some more data ahead of current obsNum.
+            // That way scrollbar will stay in the middle when slider is scrolled.
+            console.log("=== trigger ps scroll up in loadData");
+            $(selector).trigger("ps-scroll-up");
         });
     },
 
