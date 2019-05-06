@@ -639,7 +639,6 @@ var o_browse = {
         let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
 
         let currentObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -1048,7 +1047,7 @@ var o_browse = {
                 $(".op-page-loading-status > .loader").hide();
                 // TODO: do we have to reset both infiniteScroll instances loadPrevPage to false?
                 // Need to do something to avoid spinner when there is no more data
-                infiniteScrollData.options.loadPrevPage = false;
+                // infiniteScrollData.options.loadPrevPage = false;
                 return;
             }
         } else {
@@ -1056,6 +1055,11 @@ var o_browse = {
             $("#cart .sort-order-container").show();
             opus.resultCount = data.result_count;
 
+            // if (!infiniteScrollData.options.loadPrevPage) {
+            //     opus.prefs[startObsLabel] = data.start_obs;
+            // } else {
+            //     infiniteScrollData.options.loadPrevPage = false;
+            // }
             opus.prefs[startObsLabel] = data.start_obs;
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
@@ -1104,6 +1108,11 @@ var o_browse = {
                 if (tab == "#browse") {   // not yet supported for cart
                     $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
+                console.log("=== infiniteScrollData.options.obsNum ===");
+                console.log(infiniteScrollData.options.obsNum);
+                // set the scrollbar position so that scrollbar is not moving all the way up to the first obs
+                // symmetric to scroll down
+                o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
             } else {
                 $(".gallery", tab).append(galleryHtml);
                 if (tab == "#browse") {   // not yet supported for cart
