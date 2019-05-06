@@ -36,6 +36,7 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
+    maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
     limit: 100,  // results per page
     lastLoadDataRequestNo: 0,
@@ -43,7 +44,6 @@ var o_browse = {
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
-    loadPrevPage: false,
     currentOpusId: "",
     tempHash: "",
     dataNotAvailable: false,
@@ -971,8 +971,7 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
-        let viewInfo = o_browse.getViewInfo();
-        let namespace = viewInfo.namespace;
+        let tab = `#${opus.prefs.view}`;
 
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
@@ -999,18 +998,23 @@ var o_browse = {
                     galleryHtml += 'then click on the cart icon.  </p>';
                     galleryHtml += '</div>';
                 }
-                $(".gallery", namespace).html(galleryHtml);
+                $(".gallery", tab).html(galleryHtml);
             } else {
                 // we've hit the end of the infinite scroll.
                 $(".op-page-loading-status > .loader").hide();
                 return;
             }
         } else {
-            $("#cart .navbar").show();
-            $("#cart .sort-order-container").show();
-            opus.resultCount = data.result_count;
+            let startobsLabel = o_browse.getStartObsLabel();
+            let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
 
-            opus.prefs[`${viewInfo.prefix}startobs`] = data.start_obs;
+            o_browse.manageObservationCache(data.count, append);
+            $(`${tab} .navbar`).show();
+            $(`${tab} .sort-order-container`).show();
+
+            opus.resultCount = data.result_count;
+            opus.prefs[startobsLabel] = data.start_obs;
+
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
@@ -1037,7 +1041,7 @@ var o_browse = {
                 galleryHtml += '</div></div>';
 
                 // table row
-                if (namespace == "#browse") {   // not yet supported for cart
+                if (opus.prefs.view == "browse") {   // not yet supported for cart
                     let checked = item.in_cart ? " checked" : "";
                     let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                     let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
@@ -1053,15 +1057,15 @@ var o_browse = {
             galleryHtml += "</div>";
             // wondering if there should be more logic here to determine if the new block of observations
             // is contiguous w/the existing block of observations, not just before/after...
-            if ($(`${namespace} .thumbnail-container`).first().data("obs") > data.start_obs) {
-                $(".gallery", namespace).prepend(galleryHtml);
-                if (namespace == "#browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").prepend(tableHtml);
+            if (append) {
+                $(".gallery", tab).append(galleryHtml);
+                if (opus.prefs.view == "browse") {   // not yet supported for cart
+                    $(".op-dataTable-view tbody").append(tableHtml);
                 }
             } else {
-                $(".gallery", namespace).append(galleryHtml);
-                if (namespace == "#browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").append(tableHtml);
+                $(".gallery", tab).prepend(galleryHtml);
+                if (opus.prefs.view == "browse") {   // not yet supported for cart
+                    $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
             }
         }
@@ -1196,6 +1200,49 @@ var o_browse = {
         return url;
     },
 
+    // check the cache of both rendered elements and variable o_browse.galleryData; remove 'far away' observations
+    // from cache to avoid buildup of too much data in the browser which slows things down
+    // Two functions; one to delete single elements, just a tool for the main one, manageObservationCache, to loop.
+    manageObservationCache: function(count, append) {
+        let tab = `#${opus.prefs.view}`;
+        let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+        let tableObsElem = $(`${tab} .op-dataTable-view [data-obs]`);
+
+        function deleteCachedObservation(index) {
+            // don't delete the metadata if the observation is in the cart
+            if (!galleryObsElem.eq(index).hasClass("in")) {
+                let delOpusId = galleryObsElem.eq(index).data("id");
+                delete o_browse.galleryData[delOpusId];
+            }
+            galleryObsElem.eq(index).remove();
+            tableObsElem.eq(index).remove();
+        }
+
+        if (galleryObsElem.length === 0) {
+            // this only happens when there are no elements rendered, so why bother...
+            // probably don't need to check both, but why not...
+            return;
+        }
+
+        let lastIndex = galleryObsElem.last().index();
+        let totalCachedObservations = lastIndex + 1;
+        if (totalCachedObservations + count > o_browse.maxCachedObservations) {
+            // if we are appending, remove from the top
+            count = Math.min(count, totalCachedObservations);
+            if (append) {
+                // this is theoretically the faster way to delete lots of data, as jquery selector eval is slow
+                for (let index = 0; index < count ; index++) {
+                    deleteCachedObservation(index);
+                }
+            } else {
+                let deleteTo = totalCachedObservations - count;
+                for (let index = lastIndex; index >= deleteTo; index--) {
+                    deleteCachedObservation(index);
+                }
+            }
+        }
+    },
+
     // return the infiniteScroll container class for either gallery or table view
     getScrollContainerClass: function() {
         return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
@@ -1225,7 +1272,7 @@ var o_browse = {
                     } else {
                         // Direction: scroll down
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
-                        let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+                        let lastObs = $(`${tab} .gallery [data-obs]`).last().data("obs");
                         startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
 
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
@@ -1260,7 +1307,7 @@ var o_browse = {
                 if (o_browse.dataNotAvailable) {
                     $(".infinite-scroll-request").hide();
                 }
-                $(selector).infiniteScroll("loadNextPage");
+                //$(selector).infiniteScroll("loadNextPage");
             });
             $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
         }
