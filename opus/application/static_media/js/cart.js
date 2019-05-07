@@ -417,7 +417,8 @@ var o_cart = {
                 }
                 // reload data
                 // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
-                o_browse.reRenderData = true;
+                // o_browse.reRenderData = true;
+                o_browse.galleryBegun = false;
                 o_browse.loadData();
             }
             // we only update the cart badge result count from the latest request

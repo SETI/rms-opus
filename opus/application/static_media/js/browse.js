@@ -19,7 +19,6 @@ var o_browse = {
 /* jshint varstmt: true */
     selectedImageID: "",
 
-    reRenderData: false,
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .op-dataTable-view", {
@@ -311,7 +310,8 @@ var o_browse = {
             let isDescending = true;
             let orderIndicator = $(this).find("span:last");
             let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`);
-            o_browse.reRenderData = true;
+            // o_browse.reRenderData = true;
+            o_browse.galleryBegun = false;
 
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -340,7 +340,8 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.reRenderData = true;
+            // o_browse.reRenderData = true;
+            o_browse.galleryBegun = false;
 
             if (descending == "true") {
                 slug = "-"+slug;
@@ -370,7 +371,8 @@ var o_browse = {
             let descending = $(this).parent().attr("data-descending");
             let headerOrderIndicator = $(`.op-dataTable-view th a[data-slug="${slug}"]`).find("span:last");
             let pillOrderIndicator = $(this);
-            o_browse.reRenderData = true;
+            // o_browse.reRenderData = true;
+            o_browse.galleryBegun = false;
 
             let new_slug = slug;
             if (descending == "true") {
@@ -635,6 +637,7 @@ var o_browse = {
             // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page (will be used to set scrollbar position in renderGalleryAndTable, so need to update them before loadData).
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
+            o_browse.galleryBegun = false; 
             o_browse.loadData(startObs, customizedLimitNum);
         }
     },
@@ -1358,7 +1361,9 @@ var o_browse = {
 
         // TODO - need to resolve what reRenderData is vs. galleryBegun - and comment, etc...
         // reRenderData true is corresponding to galleryBegun false
-        if (!o_browse.reRenderData) {
+        // reRenderData false is corresponding to galleryBegun true
+        // if (!o_browse.reRenderData) {
+        if (o_browse.galleryBegun) {
             // if the request is a block far away from current page cache, flush the cache and start over
             let elem = $(`${tab} [data-obs="${startObs}"]`);
             let lastObs = $(`${tab} [data-obs]`).last().data("obs");
@@ -1420,7 +1425,7 @@ var o_browse = {
                 //o_browse.updateSliderHandle();        -- i think this is causing grief
                 o_browse.galleryBegun = true;
             }
-            o_browse.reRenderData = false;
+            // o_browse.reRenderData = false;
 
             // When scrolling slider, we will like to prefetch some more data ahead of current obsNum.
             // That way scrollbar will stay in the middle when slider is scrolled.
