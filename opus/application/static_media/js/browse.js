@@ -46,7 +46,6 @@ var o_browse = {
     loadPrevPage: false,
     currentOpusId: "",
     tempHash: "",
-    dataNotAvailable: false,
     onRenderData: false,
 
     /**
@@ -589,8 +588,6 @@ var o_browse = {
 
     setScrollbarOnSlide: function(obsNum) {
         let tab = `#${opus.prefs.view}`;
-        console.log("=== setScrollbarOnSlide obsNum ===");
-        console.log(obsNum);
         let galleryTargetTopPosition = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
         let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
         let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
@@ -618,8 +615,7 @@ var o_browse = {
     onUpdateSlider: function(value) {
         let tab = `#${opus.prefs.view}`;
         let elem = $(`#${opus.prefs.view} .thumbnail-container[data-obs="${value}"]`);
-        console.log(`Is element with obsNum: ${value} exists??`)
-        console.log(elem.length);
+
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
             // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page. (will be used to set scrollbar position in renderGalleryAndTable). This is for the case when above o_browse.setScrollbarOnSlide(value) trigger infiniteScroll load event.
@@ -630,14 +626,11 @@ var o_browse = {
             let prevStartObs = value - o_browse.getLimit();
             let startObs = prevStartObs > 0 ? prevStartObs : 1;
             let customizedLimitNum = startObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
-            console.log("=== Update Slider ===");
-            console.log(startObs);
-            console.log(customizedLimitNum);
-            console.log(value);
+
             // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page (will be used to set scrollbar position in renderGalleryAndTable, so need to update them before loadData).
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
-            o_browse.galleryBegun = false; 
+            o_browse.galleryBegun = false;
             o_browse.loadData(startObs, customizedLimitNum);
         }
     },
@@ -1023,7 +1016,6 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
-        console.log("=== renderGalleryAndTable ===");
 
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
@@ -1125,8 +1117,7 @@ var o_browse = {
                 }
             }
         }
-        console.log("=== infiniteScrollData.options.obsNum in renderGalleryAndTable ===");
-        console.log(infiniteScrollData.options.obsNum);
+
         o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
@@ -1275,16 +1266,12 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    console.log(`=== PATH ON ${selector} ===`);
                     let startObs = opus.prefs[startObsLabel];
                     let customizedLimitNum;
 
-                    console.log(`${selector} in path - startObs: ${startObs}`);
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
-                        // Direction: scroll up
-                        console.log(`loadPrevPage = true`);
-                        // infiniteScrollData.options.loadPrevPage = false;
+                        // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (startObs !== 1) {
                             let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
                             // prefetch o_browse.getLimit() items ahead of current obsNum
@@ -1294,19 +1281,16 @@ var o_browse = {
                         } else {
                             customizedLimitNum = 0;
                         }
-                        console.log(`${selector} - startObs: ${startObs}, getLimit: ${o_browse.getLimit()}, customizedLimitNum: ${customizedLimitNum}`);
                     } else {
-                        // Direction: scroll down
+                        // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
+                        // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
                         startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
                         customizedLimitNum = o_browse.getLimit();
-                        console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
-                        // console.trace();
                     }
 
                     let path = o_browse.getDataURL(startObs, customizedLimitNum);
-                    console.log(`in path: path: ${path}`);
                     return path;
                 },
                 responseType: "text",
@@ -1323,6 +1307,7 @@ var o_browse = {
 
             $(selector).on("request.infiniteScroll", function(event, path) {
                 // Remove spinner when infiniteScroll reaches to both ends
+                console.log("=== request infiniteScroll ===")
                 let contentsView = o_browse.getScrollContainerClass();
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
@@ -1335,14 +1320,7 @@ var o_browse = {
                 $(`${tab} .op-dataTable-view`).infiniteScroll({"loadPrevPage": false});
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                console.log("=== triggered by scroll threshold ===");
-                // remove spinner when scrollThreshold is triggered and last data fetching has no data
-                // Need to revisit this one
-                if (o_browse.dataNotAvailable) {
-                    $(".infinite-scroll-request").hide();
-                }
-                // TODO: don't do loadNextPage if lastObs is there already
-                $(selector).infiniteScroll("loadNextPage");
+
             });
             $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
         }
@@ -1391,7 +1369,6 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
         let url = o_browse.getDataURL(startObs, customizedLimitNum);
-        console.log(`loadData url: ${url}`);
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < o_browse.lastLoadDataRequestNo) {
@@ -1438,7 +1415,7 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function(event, response, path) {
         $(".op-page-loading-status > .loader").show();
-        let data = JSON.parse( response );
+        let data = JSON.parse(response);
 
         o_browse.renderGalleryAndTable(data, path);
 
