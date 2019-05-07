@@ -487,7 +487,9 @@ def api_normalize_url(request):
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
-        if slug != pi.slug:
+        # Search slugs might have numeric suffixes but single column ranges
+        # don't so just ignore all the numbers.
+        if strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug):
             old_ui_slug_flag = True
         pi_searchable = pi
         if pi.slug[-1] == '2':
@@ -795,6 +797,7 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         widgets_list.append(widget_name)
+        # Widget names never have numeric suffixes even for two-column ranges
         if widget != strip_numeric_suffix(pi.slug):
             old_ui_slug_flag = True
     for widget in required_widgets_list:
