@@ -619,11 +619,25 @@ var o_browse = {
     },
 
     onUpdateSlider: function(value) {
+        let tab = `#${opus.prefs.view}`;
+        let contentsView = o_browse.getScrollContainerClass();
+        let selector = `${tab} ${contentsView}`;
+        let infiniteScrollData = $(selector).data("infiniteScroll");
         let elem = $(`#${opus.prefs.view} .thumbnail-container[data-obs="${value}"]`);
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
         } else {
-            o_browse.loadData(value);
+            let prevStartObs = value - o_browse.getLimit();
+            let startObs = prevStartObs > 0 ? prevStartObs : 1;
+            let customizedLimitNum = startObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
+            console.log("=== Update Slider ===")
+            console.log(startObs);
+            console.log(customizedLimitNum);
+            console.log(value);
+            $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
+            $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
+            o_browse.loadData(startObs, customizedLimitNum);
+            // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
             // console.log("=== trigger a ps scroll up ===")
             // console.log(`onUpdateSliderValue: ${value}`)
             // let tab = `#${opus.prefs.view}`;
@@ -1108,11 +1122,11 @@ var o_browse = {
                 if (tab == "#browse") {   // not yet supported for cart
                     $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
-                console.log("=== infiniteScrollData.options.obsNum ===");
-                console.log(infiniteScrollData.options.obsNum);
+                // console.log("=== infiniteScrollData.options.obsNum ===");
+                // console.log(infiniteScrollData.options.obsNum);
                 // set the scrollbar position so that scrollbar is not moving all the way up to the first obs
                 // symmetric to scroll down
-                o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
+                // o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
             } else {
                 $(".gallery", tab).append(galleryHtml);
                 if (tab == "#browse") {   // not yet supported for cart
@@ -1120,7 +1134,9 @@ var o_browse = {
                 }
             }
         }
-
+        console.log("=== infiniteScrollData.options.obsNum in renderGalleryAndTable ===");
+        console.log(infiniteScrollData.options.obsNum);
+        o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
         o_hash.updateHash(true);
@@ -1341,7 +1357,7 @@ var o_browse = {
         }
     },
 
-    loadData: function(startObs) {
+    loadData: function(startObs, customizedLimitNum=undefined) {
         let tab = `#${opus.prefs.view}`;
         let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
@@ -1381,7 +1397,7 @@ var o_browse = {
 
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
-        let url = o_browse.getDataURL(startObs);
+        let url = o_browse.getDataURL(startObs, customizedLimitNum);
 
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
@@ -1420,10 +1436,15 @@ var o_browse = {
 
             // When scrolling slider, we will like to prefetch some more data ahead of current obsNum.
             // That way scrollbar will stay in the middle when slider is scrolled.
-            if (startObs !== 1) {
-                console.log("=== trigger ps scroll up in loadData");
-                $(selector).trigger("ps-scroll-up");
-            }
+            // if (startObs !== 1) {
+            //     console.log("=== trigger ps scroll up in loadData");
+            //     $(selector).trigger("ps-scroll-up");
+            // }
+
+            // let infiniteScrollData = $(selector).data("infiniteScroll");
+            // console.log("=== Current infiniteScroll obsNum in loadData for setting scrollbar position ===");
+            // console.log(infiniteScrollData.options.obsNum);
+            // o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
         });
     },
 
