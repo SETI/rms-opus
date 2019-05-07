@@ -1420,8 +1420,10 @@ var o_browse = {
 
             // When scrolling slider, we will like to prefetch some more data ahead of current obsNum.
             // That way scrollbar will stay in the middle when slider is scrolled.
-            console.log("=== trigger ps scroll up in loadData");
-            $(selector).trigger("ps-scroll-up");
+            if (startObs !== 1) {
+                console.log("=== trigger ps scroll up in loadData");
+                $(selector).trigger("ps-scroll-up");
+            }
         });
     },
 
