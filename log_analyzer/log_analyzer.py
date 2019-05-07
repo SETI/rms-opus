@@ -17,8 +17,6 @@ from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
 
 DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
-LOCAL_SLUGS_PREFIX = 'file:///users/fy/SETI/pds-opus'
-
 
 def main(arguments: Optional[List[str]] = None) -> None:
     def parse_ignored_ips(x: str) -> List[ipaddress.IPv4Network]:
@@ -46,7 +44,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--html', action='store_true', dest='uses_html',
                         help='Generate html output rather than text output')
 
-    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date')
+    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
+                        help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
@@ -59,7 +58,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='a session ends after this period (minutes) of inactivity')
 
     parser.add_argument('--output', '-o', dest='output',
-                        help="output file.  default is stdout")
+                        help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
@@ -112,7 +111,7 @@ def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
         raise Exception("Must specify exactly one log file pattern for cronjob mode")
     if not args.output:
         raise Exception("Must specify the output file pattern for cronjob mode")
-    run_date = get_virtual_date(args)
+    run_date = parse_cronjob_date_arg(args)
     in_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(args.log_files[0])
                 for day in range(1, run_date.day + 1)]
     # Rob wants me to silently ignore non-existent files.
@@ -124,16 +123,17 @@ def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
     return in_files, out_file
 
 
-def get_virtual_date(args: Namespace) -> datetime.datetime:
+def parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
     '''Figure out the date to use, based on the --cronjob_date argument.'''
     cronjob_date = args.cronjob_date
-    today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     # if the argument isn't present, use today
     if not cronjob_date:
+        today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         return today
     # if the argument is -<number>, then it means that many days ago
     match = re.match(r'-(\d+)', cronjob_date)
     if match:
+        today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         return today - datetime.timedelta(days=int(match.group(1)))
     # if the argument is dddd-dd, then it is a year and month, and indicates the last day of that month
     match = re.match(r'(\d\d\d\d)-(\d\d)', cronjob_date)
