@@ -618,31 +618,28 @@ var o_browse = {
         $("#op-observation-number").html(value);
     },
 
+    // This function will be called when we scroll the slide to a target value
     onUpdateSlider: function(value) {
         let tab = `#${opus.prefs.view}`;
-        let contentsView = o_browse.getScrollContainerClass();
-        let selector = `${tab} ${contentsView}`;
-        let infiniteScrollData = $(selector).data("infiniteScroll");
         let elem = $(`#${opus.prefs.view} .thumbnail-container[data-obs="${value}"]`);
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
+            // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page. (will be used to set scrollbar position in renderGalleryAndTable). This is for the case when above o_browse.setScrollbarOnSlide(value) trigger infiniteScroll load event.
+            $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
+            $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
         } else {
+            // when scrolling on slider and loadData is called, we will fetch 3 * getLimit items (one current page, one next page, and one previous page).
             let prevStartObs = value - o_browse.getLimit();
             let startObs = prevStartObs > 0 ? prevStartObs : 1;
             let customizedLimitNum = startObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
-            console.log("=== Update Slider ===")
+            console.log("=== Update Slider ===");
             console.log(startObs);
             console.log(customizedLimitNum);
             console.log(value);
+            // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page (will be used to set scrollbar position in renderGalleryAndTable, so need to update before loadData).
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
             o_browse.loadData(startObs, customizedLimitNum);
-            // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
-            // console.log("=== trigger a ps scroll up ===")
-            // console.log(`onUpdateSliderValue: ${value}`)
-            // let tab = `#${opus.prefs.view}`;
-            // let contentsView = o_browse.getScrollContainerClass();
-            // $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
     },
 
@@ -1122,11 +1119,6 @@ var o_browse = {
                 if (tab == "#browse") {   // not yet supported for cart
                     $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
-                // console.log("=== infiniteScrollData.options.obsNum ===");
-                // console.log(infiniteScrollData.options.obsNum);
-                // set the scrollbar position so that scrollbar is not moving all the way up to the first obs
-                // symmetric to scroll down
-                // o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
             } else {
                 $(".gallery", tab).append(galleryHtml);
                 if (tab == "#browse") {   // not yet supported for cart
@@ -1309,7 +1301,7 @@ var o_browse = {
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
                         startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
-
+                        customizedLimitNum = o_browse.getLimit();
                         console.log(`${selector} - startObs: ${startObs}, lastObs: ${lastObs}, getLimit: ${o_browse.getLimit()}`);
                         // console.trace();
                     }
