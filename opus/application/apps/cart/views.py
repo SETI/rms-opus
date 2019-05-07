@@ -28,8 +28,11 @@ import pdsfile
 
 import settings
 
-from django.db import connection
-from django.http import HttpResponse, HttpResponseNotFound, Http404
+from django.db import connection, DatabaseError
+from django.http import (HttpResponse,
+                         HttpResponseNotFound,
+                         HttpResponseServerError,
+                         Http404)
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
@@ -761,6 +764,11 @@ def _edit_cart_range(request, session_id, action, api_code):
     temp_table_name = None
 
     if request.GET.get('view', 'browse') == 'cart':
+        # addrange for cart is not implemented because we don't have any
+        # way to figure out what the UI thinks is in this range.
+        if action == 'addrange':
+            return ('Internal Error: addrange is not implemented for '+
+                    'view=cart')
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
@@ -783,9 +791,21 @@ def _edit_cart_range(request, session_id, action, api_code):
         params = []
         temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
         temp_sql = 'CREATE TEMPORARY TABLE '+q(temp_table_name)
-        temp_sql += ' SELECT @a := @a+1 AS '+q('sort_order')+', '
+        temp_sql += '(sort_order INT NOT NULL AUTO_INCREMENT, '
+        temp_sql += 'PRIMARY KEY(sort_order), id INT UNSIGNED, '
+        temp_sql += 'UNIQUE KEY(id)) SELECT '
         temp_sql += q('obs_general')+'.'+q('id')
-        temp_sql += ' FROM (SELECT @a := -1) AS dummy, '+q('obs_general')
+        # Now JOIN all the obs_ tables together
+        temp_sql += ' FROM '+q('obs_general')
+        for table in sorted(order_obs_tables):
+            if table == 'obs_general':
+                continue
+            temp_sql += ' LEFT JOIN '+q(table)+' ON '+q('obs_general')+'.'+q('id')
+            temp_sql += '='+q(table)+'.'+q('obs_general_id')
+        # And JOIN all the mult_ tables together
+        for mult_table, category in sorted(order_mult_tables):
+            temp_sql += ' LEFT JOIN '+q(mult_table)+' ON '+q(category)+'.'
+            temp_sql += q(mult_table)+'='+q(mult_table)+'.'+q('id')
         temp_sql += ' INNER JOIN '+q('cart')
         temp_sql += ' ON '+q('obs_general')+'.'+q('id')+'='
         temp_sql += q('cart')+'.'+q('obs_general_id')
@@ -845,7 +865,8 @@ def _edit_cart_range(request, session_id, action, api_code):
         if len(results) == 0:
             log.error('_edit_cart_range: No OPUS ID "%s" in obs_general',
                       opus_id)
-            return 'opusid not found'
+            return (f'An OPUS ID was given to {action} that was not found '
+                    +'using the supplied search criteria')
         sort_orders.append(results[0][0])
 
     sql_where  = ' WHERE '
@@ -929,6 +950,12 @@ def _edit_cart_range(request, session_id, action, api_code):
 
 def _edit_cart_addall(request, session_id, api_code):
     "Add all results from a search into the cart table."
+    view = request.GET.get('view', 'browse')
+    if view != 'browse':
+        # addall for cart is not implemented because it doesn't make sense.
+        return ('Internal Error: addall is not implemented for '+
+                f'view={view}')
+
     count, user_query_table, err = get_result_count_helper(request, api_code)
     if err is not None:
         return err
