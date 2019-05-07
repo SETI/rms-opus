@@ -337,6 +337,7 @@ var o_cart = {
             let length = toIndex - fromIndex+1;
             let elementArray = $(`${tab} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
+            let addOpusIdList = [];
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
@@ -348,13 +349,19 @@ var o_cart = {
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
-                // this is here because the cart doesn't have support for add/remove range, so we will do them one at a time
-                if (opus.prefs.view == "cart") {
-                    o_cart.editCart(opusId, action.replace("range", ""));
+                // If we remove items from the cart on the cart page, the "ghosts" still stick around in the UI
+                // but the backend doesn't know about them. This means you can't do an addrange in the UI that
+                // includes ghosts because the backend won't know what you want to add. So for all addranges
+                // we have to just add the observations one at a time, since we know what needs to be done here.
+                if (action === "addrange" && opus.prefs.view === "cart") {
+                    addOpusIdList.push(opusId);
                 }
             });
-            // temporary hack; cart has already been committed in loop so only do this for browse.
-            if (opus.prefs.view != "cart") {
+            if (addOpusIdList.length !== 0) {
+                for (let addOpusIdIdx = 0; addOpusIdIdx < addOpusIdList.length; addOpusIdIdx++) {
+                    o_cart.editCart(addOpusIdList[addOpusIdIdx], "add", addOpusIdIdx === addOpusIdList.length-1);
+                }
+            } else {
                 o_cart.editCart(opusIdRange, action);
             }
             o_browse.undoRangeSelect(tab);
@@ -372,7 +379,10 @@ var o_cart = {
     },
 
     // action = add/remove/addrange/removerange/addall
-    editCart: function(opusId, action) {
+    editCart: function(opusId, action, updateBadges=true) {
+        // If updateBadges is false, we set the spinners in motion but don't actually update them
+        // This is used when we want to do a lot of cart operations in a row and only update
+        // at the end
         o_cart.cartChange = true;
 
         let url = "/opus/__cart/" + action + ".json?";
@@ -387,15 +397,15 @@ var o_cart = {
                 url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
-          case "addall":
-              url += o_hash.getHash();
-              break;
+            case "addall":
+                url += o_hash.getHash();
+                break;
         }
 
         // Minor performance check - if we don't need a total download size, don't bother
-        // Only the selection tab is interested in updating that count at this time.
+        // Only the cart tab is interested in updating that count at this time.
         let add_to_url = "";
-        if (opus.prefs.view == "cart") {
+        if (opus.prefs.view === "cart" && updateBadges) {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
@@ -421,7 +431,7 @@ var o_cart = {
                 o_browse.loadData();
             }
             // we only update the cart badge result count from the latest request
-            if (statusData.reqno < o_cart.lastRequestNo) {
+            if (statusData.reqno < o_cart.lastRequestNo || !updateBadges) {
                 return;
             }
 

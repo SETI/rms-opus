@@ -41,7 +41,9 @@ from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
 from search.views import (url_to_search_params,
-                          get_user_query_table)
+                          get_user_query_table,
+                          parse_order_slug,
+                          create_order_by_sql)
 from cart.models import Cart
 from tools.app_utils import *
 from tools.file_utils import *
@@ -754,29 +756,80 @@ def _edit_cart_range(request, session_id, action, api_code):
         exit_api_call(api_code, ret)
         raise ret
 
-    # Find the index in the cache table for the min and max opus_ids
+    q = connection.ops.quote_name
 
-    (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
-        log.error('_edit_cart_range: Could not find selections for'
-                  +' request %s', request.GET)
-        ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
-        exit_api_call(api_code, ret)
-        raise ret
+    temp_table_name = None
 
-    user_query_table = get_user_query_table(selections, extras,
-                                            api_code=api_code)
-    if not user_query_table:
-        log.error('_edit_cart_range: get_user_query_table failed '
-                  +'*** Selections %s *** Extras %s',
-                  str(selections), str(extras))
-        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
-        return ret
+    if request.GET.get('view', 'browse') == 'cart':
+        # This is for the cart page - we don't have any pre-done sort order
+        # so we have to do it ourselves here
+        all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
+        if not all_order:
+            all_order = settings.DEFAULT_SORT_ORDER
+        order_params, order_descending_params = parse_order_slug(all_order)
+        (order_sql, order_mult_tables,
+         order_obs_tables) = create_order_by_sql(order_params,
+                                                 order_descending_params)
+
+        cursor = connection.cursor()
+
+        # First we create a temporary table that contains the ids of
+        # observations in the cart, appropriately sorted, with a unique
+        # incrementing sort_id. This is just like a user_query_table, but
+        # short-lived, and we use it in the same way.
+        pid_sfx = str(os.getpid())
+        time1 = time.time()
+        time_sfx = ('%.6f' % time1).replace('.', '_')
+        params = []
+        temp_table_name = 'temp_'+session_id+'_'+pid_sfx+'_'+time_sfx
+        temp_sql = 'CREATE TEMPORARY TABLE '+q(temp_table_name)
+        temp_sql += ' SELECT @a := @a+1 AS '+q('sort_order')+', '
+        temp_sql += q('obs_general')+'.'+q('id')
+        temp_sql += ' FROM (SELECT @a := -1) AS dummy, '+q('obs_general')
+        temp_sql += ' INNER JOIN '+q('cart')
+        temp_sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+        temp_sql += q('cart')+'.'+q('obs_general_id')
+        temp_sql += ' AND '
+        temp_sql += q('cart')+'.'+q('session_id')+'=%s'
+        params.append(session_id)
+        temp_sql += order_sql
+        try:
+            cursor.execute(temp_sql, params)
+        except DatabaseError as e:
+            log.error('_edit_cart_range: "%s" "%s" returned %s',
+                      temp_sql, params, str(e))
+            ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+            return ret
+        log.debug('_edit_cart_range SQL (%.2f secs): %s %s',
+                  time.time()-time1, temp_sql, params)
+
+        user_query_table = temp_table_name
+    else:
+        # This is for the browse page - everything is based on the
+        # user_query_table
+
+        # Find the index in the cache table for the min and max opus_ids
+
+        (selections, extras) = url_to_search_params(request.GET)
+        if selections is None:
+            log.error('_edit_cart_range: Could not find selections for'
+                      +' request %s', request.GET)
+            ret = Http404(settings.HTTP404_SEARCH_PARAMS_INVALID)
+            exit_api_call(api_code, ret)
+            raise ret
+
+        user_query_table = get_user_query_table(selections, extras,
+                                                api_code=api_code)
+        if not user_query_table:
+            log.error('_edit_cart_range: get_user_query_table failed '
+                      +'*** Selections %s *** Extras %s',
+                      str(selections), str(extras))
+            ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+            return ret
 
     cursor = connection.cursor()
 
     sort_orders = []
-    q = connection.ops.quote_name
     for opus_id in ids:
         sql = 'SELECT '+q('sort_order')+' FROM '+q('obs_general')
         # INNER JOIN because we only want rows that exist in the
@@ -860,6 +913,16 @@ def _edit_cart_range(request, session_id, action, api_code):
 
     log.debug('_edit_cart_range SQL: %s %s', sql, values)
     cursor.execute(sql, values)
+
+    if temp_table_name:
+        sql = 'DROP TABLE '+q(temp_table_name)
+        try:
+            cursor.execute(sql)
+        except DatabaseError as e:
+            log.error('_edit_cart_range: "%s" returned %s',
+                      sql, str(e))
+            ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+            return ret
 
     return False
 
