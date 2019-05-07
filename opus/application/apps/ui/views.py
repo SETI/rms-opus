@@ -15,6 +15,7 @@ from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from dictionary.models import *
