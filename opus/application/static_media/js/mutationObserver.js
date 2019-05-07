@@ -165,6 +165,8 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
+                    console.log("=== last mutation in gallery view ===");
+                    console.log(mutation);
                     adjustBrowseHeight();
                 }
             });

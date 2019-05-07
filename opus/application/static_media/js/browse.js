@@ -57,10 +57,10 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        $(".op-gallery-view, .op-dataTable-view").on('scroll', _.debounce(o_browse.checkScroll, 500));
+        $(".op-gallery-view, .op-dataTable-view").on("scroll", _.debounce(o_browse.checkScroll, 500));
 
-        $(".op-gallery-view, .op-dataTable-view").on('wheel ps-scroll-up', function(event) {
-            // let startobs = (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+        // mouse wheel up will also trigger ps-scroll-up
+        $(".op-gallery-view, .op-dataTable-view").on("ps-scroll-up", function(event) {
             console.log("=== scrolling up ===");
             let startObsLabel = o_browse.getStartObsLabel();
             let tab = `#${opus.prefs.view}`;
@@ -70,9 +70,7 @@ var o_browse = {
                 //if (event.originalEvent.deltaY !== undefined && event.originalEvent.deltaY < 0)
                 let prev = $(`${tab} [data-obs]`).first().data("obs") - o_browse.getLimit() * 2;
                 let firstStartObs = $(`${tab} [data-obs]`).first().data("obs");
-                console.log("=== first start obs in scroll up ===");
-                console.log(firstStartObs);
-                // Comment this out while working on scroll down
+
                 if ($(`${tab} ${contentsView}`).scrollTop() === 0 && firstStartObs !== 1) {
                     // opus.prefs[startObsLabel] = (prev > 0 ? prev : 1);
                     $(`${tab} ${contentsView}`).infiniteScroll({
@@ -642,7 +640,7 @@ var o_browse = {
 
         // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
         // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-        let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(".gallery-contents").offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(".gallery-contents").offset().top;
+        let topBoxBoundary = (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
 
         $(selector).each(function(index, elem) {
             // compare the image .top + half its height in order to make sure we account for partial images
@@ -1015,8 +1013,6 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
-        // TODO: we will reset infiniteScrollData.options.loadPrevPage back to false here if it's loading prev obsNum
-
         console.log("=== renderGalleryAndTable ===");
 
         // this is the list of all observations requested from dataimages.json
@@ -1284,9 +1280,10 @@ var o_browse = {
                         // infiniteScrollData.options.loadPrevPage = false;
                         if (startObs !== 1) {
                             let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
-                            let prevStartObs = originalStartObs - o_browse.getLimit() * 2;
+                            // prefetch o_browse.getLimit() items ahead of current obsNum
+                            let prevStartObs = originalStartObs - o_browse.getLimit();
                             startObs = prevStartObs > 0 ? prevStartObs : 1;
-                            customizedLimitNum = startObs === 1 ? originalStartObs - 1 : customizedLimitNum;
+                            customizedLimitNum = startObs === 1 ? originalStartObs - 1 : o_browse.getLimit();
                         } else {
                             customizedLimitNum = 0;
                         }
@@ -1314,7 +1311,7 @@ var o_browse = {
                 loadPrevPage: false,
                 // store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
-                debug: true,
+                debug: false,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
