@@ -1499,8 +1499,6 @@ var o_browse = {
     getBrowseTab: function() {
         // init o_browse.galleryBoundingRect
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        // console.log("=== countGalleryImages in getBrowseTab ===");
-        // console.log(o_browse.galleryBoundingRect);
         // reset range select
         o_browse.undoRangeSelect();
 
@@ -1532,26 +1530,24 @@ var o_browse = {
 
     adjustBrowseHeight: function() {
         let tab = `#${opus.prefs.view}`;
-        // let containerHeight = $(window).height()-120;
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(".panel-heading").outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
         let containerHeight = $(window).height()-totalNonGalleryHeight;
-        console.log("=== adjustBrowseHeight ===");
-        console.log(footerHeight);
-        console.log(mainNavHeight);
-        console.log(navbarHeight);
-        console.log(`Total: ${totalNonGalleryHeight}`);
+        // console.log("=== adjustBrowseHeight ===");
+        // console.log(footerHeight);
+        // console.log(mainNavHeight);
+        // console.log(navbarHeight);
+        // console.log(`Total: ${totalNonGalleryHeight}`);
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
-        console.log(`.gallery-contents height: ${containerHeight}`)
-        console.log(`window height: ${$(window).height()}`)
-        console.log(`.gallery-contents height: ${$(`${tab} .gallery-contents`).height()}`)
+        // console.log(`.gallery-contents height: ${containerHeight}`)
+        // console.log(`window height: ${$(window).height()}`)
+        // console.log(`.gallery-contents height: ${$(`${tab} .gallery-contents`).height()}`)
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        // console.log("=== countGalleryImages in adjustBrowseHeight ===");
-        // console.log(o_browse.galleryBoundingRect);
+
         // make sure slider is updated when window is resized
         o_browse.updateSliderHandle();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(containerHeight/thumbnailSize));
@@ -1560,7 +1556,7 @@ var o_browse = {
     adjustTableSize: function() {
         let tab = `#${opus.prefs.view}`;
         let containerWidth = $(`${tab} .gallery-contents`).width();
-        let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").height() + 8;
+        let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-dataTable-view`).width(containerWidth);
         $(`${tab} .op-dataTable-view`).height(containerHeight);
         o_browse.tableScrollbar.update();
