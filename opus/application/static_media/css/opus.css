@@ -1050,6 +1050,10 @@ footer {
     top: 2em;
 }
 
+.op-about-table table, th, td {
+    border: 1px solid black;
+}
+
 .op-header-text {
     display: inline-block;
 }
