@@ -73,8 +73,8 @@ var o_browse = {
                 let contentsView = o_browse.getScrollContainerClass();
 
                 if (opus.prefs[startObsLabel] > 0) {
-                    let fristObs = $(`${tab} [data-obs]`).first().data("obs");
-                    if ($(`${tab} ${contentsView}`).scrollTop() < 100 && fristObs !== 1) {
+                    let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+                    if ($(`${tab} ${contentsView}`).scrollTop() < 100 && firstObs !== 1) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -1327,19 +1327,18 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    let startObs = opus.prefs[startObsLabel];
+                    let obsNum = opus.prefs[startObsLabel];
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
-                        if (startObs !== 1) {
+                        if (obsNum !== 1) {
                             let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
                             // prefetch o_browse.getLimit() items ahead of current obsNum
-                            let prevStartObs = originalStartObs - o_browse.getLimit();
-                            startObs = prevStartObs > 0 ? prevStartObs : 1;
-                            customizedLimitNum = startObs === 1 ? originalStartObs - 1 : o_browse.getLimit();
+                            obsNum = Math.max(originalStartObs - o_browse.getLimit(), 1)
+                            customizedLimitNum = obsNum === 1 ? originalStartObs - 1 : o_browse.getLimit();
                         } else {
                             customizedLimitNum = 0;
                         }
@@ -1347,11 +1346,11 @@ var o_browse = {
                         // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
-                        startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
+                        obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit();
                     }
 
-                    let path = o_browse.getDataURL(startObs, customizedLimitNum);
+                    let path = o_browse.getDataURL(obsNum, customizedLimitNum);
                     return path;
                 },
                 responseType: "text",
