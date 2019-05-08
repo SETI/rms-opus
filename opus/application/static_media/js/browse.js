@@ -544,6 +544,10 @@ var o_browse = {
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
     loadNextPageIfNeeded: function(opusId) {
+        // opusId will be empty at the end of the observations, so just return out.
+        if (opusId === "") {
+            return;
+        }
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
@@ -563,6 +567,10 @@ var o_browse = {
     },
 
     loadPrevPageIfNeeded: function(opusId) {
+        // if opusId is ever empty, return out.
+        if (opusId === "") {
+            return;
+        }
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
@@ -1534,7 +1542,7 @@ var o_browse = {
 
     getNextPrevHandles: function(opusId) {
         let tab = `#${opus.prefs.view}`;
-        let idArray = $(`${tab} .thumbnail-container[data-id]`).map(function() {
+        let idArray = $(`${tab} .thumbnail-container[data-obs]`).map(function() {
             return $(this).data("id");
         });
         let next = $.inArray(opusId, idArray) + 1;
