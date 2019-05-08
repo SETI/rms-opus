@@ -9,8 +9,9 @@ import os
 
 import oyaml as yaml # Cool package that preserves key order
 
-from django.shortcuts import render
 from django.http import Http404, HttpResponse, HttpRequest
+from django.shortcuts import render
+from django.views.decorators.cache import never_cache
 
 from metadata.views import get_fields_info
 from search.views import ObsGeneral, MultObsGeneralInstrumentId
@@ -25,6 +26,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+@never_cache
 def api_about(request):
     """Renders the about page.
 
@@ -43,6 +45,7 @@ def api_about(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
 def api_volumes(request):
     """Renders the volumes page.
 
@@ -73,6 +76,7 @@ def api_volumes(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
 def api_faq(request):
     """Renders the faq page.
 
@@ -105,6 +109,7 @@ def api_faq(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
 def api_tutorial(request):
     """Renders the tutorial page.
 

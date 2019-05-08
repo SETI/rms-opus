@@ -137,7 +137,7 @@ var o_search = {
             if (currentValue) {
                 opus.selections[slug] = [currentValue];
             } else {
-                delete opus.selections[slug]
+                delete opus.selections[slug];
             }
             let newHash = o_hash.updateHash(false);
             /*
@@ -195,7 +195,7 @@ var o_search = {
                 if (values.length && values[0]) {
                     opus.selections[slugNoNum + '1'] = values;
                 } else {
-                    delete opus.selections[slugNoNum + '1']
+                    delete opus.selections[slugNoNum + '1'];
                 }
                 // max
                 values = [];
@@ -211,7 +211,7 @@ var o_search = {
                 if (values.length && values[0]) {
                     opus.selections[slugNoNum + '2'] = values;
                 } else {
-                    delete opus.selections[slugNoNum + '2']
+                    delete opus.selections[slugNoNum + '2'];
                 }
             }
 
