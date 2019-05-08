@@ -35,6 +35,7 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
+    maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
     // set default to 200 so loadData will fetch enough number of data for the first time in large screen
     limit: 200,  // results per page
@@ -43,7 +44,6 @@ var o_browse = {
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
-    loadPrevPage: false,
     currentOpusId: "",
     tempHash: "",
     onRenderData: false,
@@ -1063,9 +1063,15 @@ var o_browse = {
                 return;
             }
         } else {
-            $("#cart .navbar").show();
-            $("#cart .sort-order-container").show();
+            let startobsLabel = o_browse.getStartObsLabel();
+            let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
+
+            o_browse.manageObservationCache(data.count, append);
+            $(`${tab} .navbar`).show();
+            $(`${tab} .sort-order-container`).show();
+
             opus.resultCount = data.result_count;
+            opus.prefs[startobsLabel] = data.start_obs;
 
             opus.prefs[startObsLabel] = data.start_obs;
             $.each(data.page, function(index, item) {
@@ -1110,15 +1116,15 @@ var o_browse = {
             galleryHtml += "</div>";
             // wondering if there should be more logic here to determine if the new block of observations
             // is contiguous w/the existing block of observations, not just before/after...
-            if ($(`${tab} .thumbnail-container`).first().data("obs") > data.start_obs) {
-                $(".gallery", tab).prepend(galleryHtml);
-                if (tab == "#browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").prepend(tableHtml);
+            if (append) {
+                $(".gallery", tab).append(galleryHtml);
+                if (opus.prefs.view == "browse") {   // not yet supported for cart
+                    $(".op-dataTable-view tbody").append(tableHtml);
                 }
             } else {
-                $(".gallery", tab).append(galleryHtml);
-                if (tab == "#browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").append(tableHtml);
+                $(".gallery", tab).prepend(galleryHtml);
+                if (opus.prefs.view == "browse") {   // not yet supported for cart
+                    $(".op-dataTable-view tbody").prepend(tableHtml);
                 }
             }
         }
@@ -1258,6 +1264,49 @@ var o_browse = {
         url += `&limit=${limitNum}`;
 
         return url;
+    },
+
+    // check the cache of both rendered elements and variable o_browse.galleryData; remove 'far away' observations
+    // from cache to avoid buildup of too much data in the browser which slows things down
+    // Two functions; one to delete single elements, just a tool for the main one, manageObservationCache, to loop.
+    manageObservationCache: function(count, append) {
+        let tab = `#${opus.prefs.view}`;
+        let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+        let tableObsElem = $(`${tab} .op-dataTable-view [data-obs]`);
+
+        function deleteCachedObservation(index) {
+            // don't delete the metadata if the observation is in the cart
+            if (!galleryObsElem.eq(index).hasClass("in")) {
+                let delOpusId = galleryObsElem.eq(index).data("id");
+                delete o_browse.galleryData[delOpusId];
+            }
+            galleryObsElem.eq(index).remove();
+            tableObsElem.eq(index).remove();
+        }
+
+        if (galleryObsElem.length === 0) {
+            // this only happens when there are no elements rendered, so why bother...
+            // probably don't need to check both, but why not...
+            return;
+        }
+
+        let lastIndex = galleryObsElem.last().index();
+        let totalCachedObservations = lastIndex + 1;
+        if (totalCachedObservations + count > o_browse.maxCachedObservations) {
+            // if we are appending, remove from the top
+            count = Math.min(count, totalCachedObservations);
+            if (append) {
+                // this is theoretically the faster way to delete lots of data, as jquery selector eval is slow
+                for (let index = 0; index < count ; index++) {
+                    deleteCachedObservation(index);
+                }
+            } else {
+                let deleteTo = totalCachedObservations - count;
+                for (let index = lastIndex; index >= deleteTo; index--) {
+                    deleteCachedObservation(index);
+                }
+            }
+        }
     },
 
     // return the infiniteScroll container class for either gallery or table view

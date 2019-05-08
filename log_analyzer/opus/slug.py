@@ -101,7 +101,11 @@ class ToInfoMap:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
-    def get_info_for_search_slug(self, slug: str, create: bool = True) -> Optional[Info]:
+    def get_info_for_search_slug(self, slug: str, value: str) -> Optional[Info]:
+        return self._get_info_for_search_slug(slug, True, value)
+
+
+    def _get_info_for_search_slug(self, slug: str, create: bool = True, value: str = '') -> Optional[Info]:
         """
         Returns information about a slug that appears as part of a search term in a query
         """
@@ -130,11 +134,11 @@ class ToInfoMap:
 
         if slug[-1] in '12':
             slug_root = slug[:-1]
-            base_result = cast(Info, self.get_info_for_search_slug(slug_root, True))
+            base_result = cast(Info, self._get_info_for_search_slug(slug_root, True))
             family = Family(label=base_result.label, min='min', max='max')
-            for value, family_type in ((1, FamilyType.MIN), (2, FamilyType.MAX)):
-                search_map[f'{slug_root}{value}'] = Info(
-                    canonical_name=f'{base_result.canonical_name}{value}',
+            for suffix, family_type in (('1', FamilyType.MIN), ('2', FamilyType.MAX)):
+                search_map[f'{slug_root}{suffix}'] = Info(
+                    canonical_name=f'{base_result.canonical_name}{suffix}',
                     label=f'{base_result.label} ({family_type.name.title()})',
                     flags=base_result.flags,
                     family=family, family_type=family_type)
@@ -143,19 +147,24 @@ class ToInfoMap:
 
         if slug.startswith('qtype-'):
             # Look to see if the slug with the qtype- removed, but 1 or 2 added does exist
-            base_result = next((self.get_info_for_search_slug(slug[6:] + i, False) for i in '12'), None)
-            if base_result:
-                assert base_result.family
-                assert base_result.canonical_name[-1] in '12'
-                result = search_map[slug] = Info(
-                    canonical_name='qtype-' + base_result.canonical_name[:-1],
-                    label=base_result.family.label + self.QTYPE_SUFFIX,
-                    flags=base_result.flags,
-                    family=base_result.family, family_type=FamilyType.QTYPE)
-                return result
+            is_numeric = value in ('any', 'all', 'only')
+            if is_numeric:
+                base_result = next((self._get_info_for_search_slug(slug[6:] + i, False) for i in '12'), None)
+                if base_result:
+                    assert base_result.family
+                    assert base_result.canonical_name[-1] in '12'
+                    result = search_map[slug] = Info(
+                        canonical_name='qtype-' + base_result.canonical_name[:-1],
+                        label=base_result.family.label + self.QTYPE_SUFFIX,
+                        flags=base_result.flags,
+                        family=base_result.family, family_type=FamilyType.QTYPE)
+                    return result
             # Okay.  We have a qtype- slug.  Create whatever kind of slug we can without the qtype- and guess.
-            base_result = cast(Info, self.get_info_for_search_slug(slug[6:], True))
-            family = Family(label=base_result.label, min='min', max='max')
+            base_result = cast(Info, self._get_info_for_search_slug(slug[6:], True))
+            if is_numeric:
+                family = Family(label=base_result.label, min='min', max='max')
+            else:
+                family = Family(label=base_result.label, min='', max='')
             result = search_map[slug] = Info(
                 canonical_name='qtype-' + base_result.canonical_name,
                 label=base_result.label + self.QTYPE_SUFFIX,
