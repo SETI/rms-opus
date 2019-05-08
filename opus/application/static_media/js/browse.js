@@ -1333,6 +1333,7 @@ var o_browse = {
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
+                        console.log("=== InfiniteScroll loadPrevPage=true scroll up ===");
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
                             let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
@@ -1343,14 +1344,17 @@ var o_browse = {
                             customizedLimitNum = 0;
                         }
                     } else {
+                        console.log("=== InfiniteScroll scroll down ===");
                         // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit();
                     }
-
                     let path = o_browse.getDataURL(obsNum, customizedLimitNum);
+                    console.log("=== in path ===");
+                    console.log(path);
+                    console.log(`obsNum: ${obsNum}, customizedLimitNum: ${customizedLimitNum}`);
                     return path;
                 },
                 responseType: "text",
@@ -1367,6 +1371,7 @@ var o_browse = {
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {
+                console.log("=== request.infiniteScroll ===");
                 // Remove spinner when infiniteScroll reaches to both ends
                 let contentsView = o_browse.getScrollContainerClass();
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
@@ -1376,7 +1381,10 @@ var o_browse = {
                     $(".infinite-scroll-request").hide();
                 }
             });
-
+            $(selector).on("scrollThreshold.infiniteScroll", function(event) {
+                console.log("=== scrollThreshold.infiniteScroll ===");
+                $(selector).infiniteScroll("loadNextPage");
+            });
             $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
         }
     },
@@ -1457,6 +1465,7 @@ var o_browse = {
     },
 
     infiniteScrollLoadEventListener: function(event, response, path) {
+        console.log("=== load.infiniteScroll ===");
         $(".op-page-loading-status > .loader").show();
         let data = JSON.parse(response);
 
@@ -1490,8 +1499,8 @@ var o_browse = {
     getBrowseTab: function() {
         // init o_browse.galleryBoundingRect
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        console.log("=== countGalleryImages in getBrowseTab ===");
-        console.log(o_browse.galleryBoundingRect);
+        // console.log("=== countGalleryImages in getBrowseTab ===");
+        // console.log(o_browse.galleryBoundingRect);
         // reset range select
         o_browse.undoRangeSelect();
 
@@ -1513,8 +1522,9 @@ var o_browse = {
         let yCount = 0;
 
         if ($(`${tab} .gallery-contents`).length > 0) {
-            console.log("=== Calculating gallery bound ===")
+            // console.log("=== Calculating gallery bound ===");
             xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
+            // yCount = Math.ceil(($(`${tab} .gallery-contents`).height() - $(".app-footer").height()) /o_browse.imageSize);   // images are 100px
             yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
         }
         return {"x": xCount, "y": yCount};
@@ -1522,13 +1532,26 @@ var o_browse = {
 
     adjustBrowseHeight: function() {
         let tab = `#${opus.prefs.view}`;
-        let containerHeight = $(window).height()-120;
+        // let containerHeight = $(window).height()-120;
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let navbarHeight = $(".panel-heading").outerHeight();
+        let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
+        let containerHeight = $(window).height()-totalNonGalleryHeight;
+        console.log("=== adjustBrowseHeight ===");
+        console.log(footerHeight);
+        console.log(mainNavHeight);
+        console.log(navbarHeight);
+        console.log(`Total: ${totalNonGalleryHeight}`);
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
+        console.log(`.gallery-contents height: ${containerHeight}`)
+        console.log(`window height: ${$(window).height()}`)
+        console.log(`.gallery-contents height: ${$(`${tab} .gallery-contents`).height()}`)
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
-        console.log("=== countGalleryImages in adjustBrowseHeight ===");
-        console.log(o_browse.galleryBoundingRect);
+        // console.log("=== countGalleryImages in adjustBrowseHeight ===");
+        // console.log(o_browse.galleryBoundingRect);
         // make sure slider is updated when window is resized
         o_browse.updateSliderHandle();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(containerHeight/thumbnailSize));
