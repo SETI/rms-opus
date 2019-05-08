@@ -38,7 +38,7 @@ var o_browse = {
     maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
     // set default to 200 so loadData will fetch enough number of data for the first time in large screen
-    limit: 200,  // results per page
+    // limit: 200,  // results per page
     lastLoadDataRequestNo: 0,
 
     galleryBoundingRect: {'x': 0, 'y': 0},
@@ -968,6 +968,7 @@ var o_browse = {
 
             o_browse.galleryScrollbar.settings.suppressScrollY = true;
         }
+
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
@@ -1246,8 +1247,9 @@ var o_browse = {
 
     // number of images that can be fit in current window size
     getLimit: function() {
-        o_browse.limit = (o_browse.galleryBoundingRect.x !== 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) : o_browse.limit);
-        return o_browse.limit;
+        // o_browse.limit = (o_browse.galleryBoundingRect.x !== 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) : o_browse.limit);
+        // return o_browse.limit;
+        return (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y);
     },
 
     getDataURL: function(startObs, customizedLimitNum=undefined) {
@@ -1487,6 +1489,10 @@ var o_browse = {
     },
 
     getBrowseTab: function() {
+        // init o_browse.galleryBoundingRect
+        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        console.log("=== countGalleryImages in getBrowseTab ===");
+        console.log(o_browse.galleryBoundingRect);
         // reset range select
         o_browse.undoRangeSelect();
 
@@ -1498,6 +1504,7 @@ var o_browse = {
         let startObs = opus.prefs[startObsLabel];
         startObs = (startObs > opus.resultCount ? 1 : startObs);
 
+
         o_browse.loadData(startObs);
     },
 
@@ -1507,6 +1514,7 @@ var o_browse = {
         let yCount = 0;
 
         if ($(`${tab} .gallery-contents`).length > 0) {
+            console.log("=== Calculating gallery bound ===")
             xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
             yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
         }
@@ -1520,6 +1528,8 @@ var o_browse = {
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        console.log("=== countGalleryImages in adjustBrowseHeight ===");
+        console.log(o_browse.galleryBoundingRect);
         // make sure slider is updated when window is resized
         o_browse.updateSliderHandle();
         //opus.limit =  (floor($(window).width()/thumbnailSize) * floor(containerHeight/thumbnailSize));
