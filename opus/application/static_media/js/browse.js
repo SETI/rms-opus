@@ -585,25 +585,29 @@ var o_browse = {
 
     setScrollbarOnSlide: function(obsNum) {
         let tab = `#${opus.prefs.view}`;
-        let galleryTargetTopPosition = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`).offset().top;
-        let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
-        let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
-
-        let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
+        let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
+        let tableTarget = $(`${tab} #dataTable tbody tr[data-obs='${obsNum}']`);
         console.log("=== setScrollbarOnSlide ===");
-        console.log(galleryTargetTopPosition);
-        console.log(galleryContainerTopPosition);
-        console.log(galleryScrollbarPosition);
-        $(`${tab} .gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
+        console.log(galleryTarget);
+        console.log(tableTarget);
+        // Make sure obsNum is rendered before setting scrollbar position
+        if (galleryTarget.length && tableTarget.length) {
+            let galleryTargetTopPosition = galleryTarget.offset().top;
+            let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
+            let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
 
-        // make sure it's scrolled to the correct position in table view
-        let tableTargetTopPosition = $(`${tab} #dataTable tbody tr[data-obs='${obsNum}']`).offset().top;
-        let tableContainerTopPosition = $(`${tab} .op-dataTable-view`).offset().top;
-        let tableScrollbarPosition = $(`${tab} .op-dataTable-view`).scrollTop();
-        let tableHeaderHeight = $(`${tab} #dataTable thead th`).outerHeight();
+            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
+            $(`${tab} .gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
 
-        let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition - tableHeaderHeight;
-        $(`${tab} .op-dataTable-view`).scrollTop(tableTargetFinalPosition);
+            // make sure it's scrolled to the correct position in table view
+            let tableTargetTopPosition = tableTarget.offset().top;
+            let tableContainerTopPosition = $(`${tab} .op-dataTable-view`).offset().top;
+            let tableScrollbarPosition = $(`${tab} .op-dataTable-view`).scrollTop();
+            let tableHeaderHeight = $(`${tab} #dataTable thead th`).outerHeight();
+
+            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition - tableHeaderHeight;
+            $(`${tab} .op-dataTable-view`).scrollTop(tableTargetFinalPosition);
+        }
     },
 
     // called when the slider is moved...
@@ -624,10 +628,17 @@ var o_browse = {
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
         } else {
             // when scrolling on slider and loadData is called, we will fetch 3 * getLimit items (one current page, one next page, and one previous page).
-            // let prevPageObs = value - o_browse.getLimit();
-            // let startObs = prevPageObs > 0 ? prevPageObs : 1;
             // firstObs will be the very first obsNum for data rendering this time
-            let firstObs = Math.max(value - o_browse.getLimit(), 1)
+            let firstObs = Math.max(value - o_browse.getLimit(), 1);
+
+            // if value + 2 * getLimit is larger than result counts, we will prefetch more data ahead of firstObs
+            if ((value + 2 * o_browse.getLimit() + 1) > opus.resultCount) {
+                let extraObs = value + 2 * o_browse.getLimit() - 1 - opus.resultCount;
+                firstObs = Math.max(firstObs - extraObs, 1);
+                console.log("=== extra Obs===");
+                console.log(extraObs);
+            }
+            
             let customizedLimitNum = firstObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             console.log("=== update slider ===");
             console.log(value);
@@ -637,7 +648,7 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
             o_browse.galleryBegun = false;
-            o_browse.loadData(firstObs, customizedLimitNum);
+            o_browse.loadData(firstObs, customizedLimitNum, true);
         }
     },
 
@@ -1345,7 +1356,7 @@ var o_browse = {
         }
     },
 
-    loadData: function(startObs, customizedLimitNum=undefined) {
+    loadData: function(startObs, customizedLimitNum=undefined, setScrollbar=false) {
         let tab = `#${opus.prefs.view}`;
         let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
@@ -1408,7 +1419,6 @@ var o_browse = {
             $(`${tab} .thumbnail-container`).remove();
 
             // If loadData is called from onUpdateSlider (render 3 pages), we want to set scrollbar position to the middle page
-            let setScrollbar = customizedLimitNum === undefined ? false : true;
             o_browse.renderGalleryAndTable(data, this.url, setScrollbar);
 
             if (o_browse.currentOpusId != "") {
