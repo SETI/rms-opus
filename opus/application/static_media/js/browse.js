@@ -62,7 +62,7 @@ var o_browse = {
         // NOTE: We put both wheel and ps-scroll-up here for a corner case like this:
         // 1. Scroll slider to the very end (scrollbar will be at the bottom and is fairly long)
         // 2. When moving scrollbar around scroll threshold point at the bottom end, it will keep triggering infiniteScroll request and load with 0 returned data (We haven't found a proper way to avoid this yet, so for now we leave it like that).
-        // 3. In above step, at the time when infiniteScroll request (we call it request A here) is triggered but before the load, if we move the scrollbar all the way up to the top in a very fast manner, the loadPrevPage will be triggered with url in request A. This means we will have 0 returned data prepend. So we do the followings to fix this issue:
+        // 3. In above step, at the time when infiniteScroll request (we call it request A here) is triggered but before the load, if we move the scrollbar all the way up to the top in a very fast manner, the loadPrevPage will be triggered with url in request A. This means we will have 0 returned data prepended. So we do the followings to fix this issue:
         // - Prefetch more data ahead of startObs if the current (middle) page has reached to the bottom end of the data.
         // - Lower the scroll threshold point in infiniteScroll.
         // - Adding wheel event: because wheel event can (ps-scroll-up can't) trigger another loadNextPage with correct url if we reach to the top end in that corner case.
@@ -1073,7 +1073,6 @@ var o_browse = {
             opus.resultCount = data.result_count;
             opus.prefs[startobsLabel] = data.start_obs;
 
-            opus.prefs[startObsLabel] = data.start_obs;
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
