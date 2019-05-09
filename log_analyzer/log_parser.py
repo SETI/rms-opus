@@ -85,14 +85,14 @@ class LogParser:
     _id_generator: Iterator[str]
 
     def __init__(self, configuration: AbstractConfiguration, *,
-                 session_timeout_minutes: int, output: TextIO,
+                 session_timeout_minutes: int, output: str,
                  uses_html: bool, by_ip: bool,
                  ip_to_host_converter: IpToHostConverter,
                  ignored_ips: List[ipaddress.IPv4Network],
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
-        self._output = output
+        self._output = open(output, "w")
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
