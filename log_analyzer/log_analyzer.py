@@ -68,6 +68,13 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
+    if args.cronjob:
+        # Fix up the arguments to match what everyone else wants
+        convert_cronjob_to_batchjob(args)
+        if not args.log_files:
+            print("No log files found.")
+            return
+
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     # Another fake argument we need
@@ -77,22 +84,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
     log_parser = LogParser(configuration, **vars(args))
 
-    if not args.cronjob:
-        args.output = sys.stdout if not args.output else open(args.output, "w")
-
     if args.realtime:
         if len(args.log_files) != 1:
             raise Exception("Must specify exactly one file for real-time mode.")
         log_entries_realtime = LogReader.read_logs_from_tailed_file(args.log_files[0])
         log_parser.run_realtime(log_entries_realtime)
-    elif args.cronjob:
-        log_files, outfile = get_chron_file_list(args)
-        if not log_files:
-            print("No input files found", file=sys.stderr)
-            return
-        log_entries_list = LogReader.read_logs(log_files)
-        args.output = open(outfile, 'w')
-        log_parser.run_batch(log_entries_list)
     else:
         if len(args.log_files) < 1:
             raise Exception("Must specify at least one log file.")
@@ -106,21 +102,28 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_realtime(iter(log_entries_list))
 
 
-def get_chron_file_list(args: Namespace) -> Tuple[List[str], str]:
+def convert_cronjob_to_batchjob(args: Namespace) -> None:
     if len(args.log_files) != 1:
         raise Exception("Must specify exactly one log file pattern for cronjob mode")
-    if not args.output:
+    log_file_pattern = args.log_files[0]
+    if '%' not in log_file_pattern:
+        raise Exception("Must specify a log file pattern, rather than a log file")
+
+    output_file_pattern = args.output
+    if not output_file_pattern:
         raise Exception("Must specify the output file pattern for cronjob mode")
     run_date = parse_cronjob_date_arg(args)
-    in_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(args.log_files[0])
+    log_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(log_file_pattern)
                 for day in range(1, run_date.day + 1)]
     # Rob wants me to silently ignore non-existent files.
-    in_files = [file for file in in_files if Path(file).exists()]
-    out_file = run_date.strftime(args.output)
-    if in_files:
+    log_files = [file for file in log_files if Path(file).exists()]
+    output_file = run_date.strftime(output_file_pattern)
+    if log_files:
         # Create all necessary intermediate directories
-        Path(out_file).parent.mkdir(parents=True, exist_ok=True)
-    return in_files, out_file
+        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    args.log_files = log_files
+    args.output = output_file
+    args.batch = True
 
 
 def parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
