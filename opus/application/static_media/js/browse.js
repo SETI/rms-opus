@@ -654,6 +654,7 @@ var o_browse = {
             console.log(firstObs);
             console.log(value);
             console.log(customizedLimitNum);
+            console.log(o_browse.getLimit());
             o_browse.loadData(firstObs, customizedLimitNum, true);
         }
     },
@@ -696,7 +697,7 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
-
+                console.log(`=== updateSliderHandle obsNum: ${obsNum} ===`);
                 return false;
             }
         });
@@ -1336,23 +1337,27 @@ var o_browse = {
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
+                // TODO: TRY to UPDATE infiniteScroll instances obsNUm here and set scrollbar position in renderGalleryAndTable for scrolldown as well and see what happen.......let's go
                 path: function() {
                     let obsNum = opus.prefs[startObsLabel];
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+                    let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         console.log("=== InfiniteScroll loadPrevPage=true scroll up ===");
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
-                            let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
                             // prefetch o_browse.getLimit() items ahead of current obsNum
                             obsNum = Math.max(originalStartObs - o_browse.getLimit(), 1)
                             customizedLimitNum = obsNum === 1 ? originalStartObs - 1 : o_browse.getLimit();
+                            // $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": originalStartObs});
+                            // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": originalStartObs});
                         } else {
                             customizedLimitNum = 0;
                         }
+                        o_browse.updateSliderHandle();
                     } else {
                         console.log("=== InfiniteScroll scroll down ===");
                         // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
@@ -1360,6 +1365,10 @@ var o_browse = {
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit();
+
+                        // $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": originalStartObs});
+                        // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": originalStartObs});
+                        o_browse.updateSliderHandle();
                     }
                     let path = o_browse.getDataURL(obsNum, customizedLimitNum);
                     console.log("=== in path ===");
@@ -1482,8 +1491,8 @@ var o_browse = {
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
         let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
-        let setScrollbar = infiniteScrollData.options.loadPrevPage;
-        // let setScrollbar = true;
+        // let setScrollbar = infiniteScrollData.options.loadPrevPage;
+        let setScrollbar = true;
         console.log(`setScrollbar in infiniteScroll load event handler: ${setScrollbar}`);
         console.log(`current obsNum in inf instance: ${infiniteScrollData.options.obsNum}`);
         o_browse.renderGalleryAndTable(data, path, setScrollbar);
@@ -1511,6 +1520,8 @@ var o_browse = {
     getBrowseTab: function() {
         // init o_browse.galleryBoundingRect
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        console.log("=== countGalleryImages in getBrowseTab ===");
+        console.log(o_browse.galleryBoundingRect);
         // reset range select
         o_browse.undoRangeSelect();
 
