@@ -1028,7 +1028,6 @@ var o_browse = {
     renderGalleryAndTable: function(data, url) {
         // render the gallery and table at the same time.
         let tab = `#${opus.prefs.view}`;
-        let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
@@ -1337,7 +1336,7 @@ var o_browse = {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
                             // prefetch o_browse.getLimit() items ahead of current obsNum
-                            obsNum = Math.max(originalStartObs - o_browse.getLimit(), 1)
+                            obsNum = Math.max(originalStartObs - o_browse.getLimit(), 1);
                             customizedLimitNum = obsNum === 1 ? originalStartObs - 1 : o_browse.getLimit();
 
                             // Update the obsNum in infiniteScroll instances with originalStartObs
@@ -1386,9 +1385,7 @@ var o_browse = {
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
                 let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
-                console.log(lastObs);
-                console.log(opus.resultCount);
-                console.log(infiniteScrollData.options.loadPrevPage);
+
                 if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) || (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false)) {
                     $(".infinite-scroll-request").hide();
                 }
@@ -1477,8 +1474,6 @@ var o_browse = {
         let data = JSON.parse(response);
 
         let tab = `#${opus.prefs.view}`;
-        let contentsView = o_browse.getScrollContainerClass();
-        let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
 
         o_browse.renderGalleryAndTable(data, path);
         $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
@@ -1487,7 +1482,6 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (!$("#galleryViewContents .prev").data("id") && $("#galleryViewContents .prev").hasClass("op-button-disabled")) {
-            // TODO
             let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
             while (prev.hasClass("table-page")) {
                 prev = prev.prev("tr");
