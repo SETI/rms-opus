@@ -67,10 +67,11 @@ var o_browse = {
         // - Lower the scroll threshold point in infiniteScroll.
         // - Adding wheel event: because wheel event can (ps-scroll-up can't) trigger another loadNextPage with correct url if we reach to the top end in that corner case.
         $(".op-gallery-view, .op-dataTable-view").on("wheel ps-scroll-up", function(event) {
+            let startObsLabel = o_browse.getStartObsLabel();
+            let tab = `#${opus.prefs.view}`;
+            let contentsView = o_browse.getScrollContainerClass();
+
             if (event.originalEvent.type === "ps-scroll-up" || (event.originalEvent.type === "wheel" && event.originalEvent.deltaY < 0)) {
-                let startObsLabel = o_browse.getStartObsLabel();
-                let tab = `#${opus.prefs.view}`;
-                let contentsView = o_browse.getScrollContainerClass();
 
                 if (opus.prefs[startObsLabel] > 0) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
@@ -83,6 +84,11 @@ var o_browse = {
                     }
                 }
             }
+            // } else if (event.originalEvent.type === "wheel" && event.originalEvent.deltaY > 0) {
+            //     console.log("=== wheel down scrollbar position ===");
+            //     console.log($(`${tab} ${contentsView}`).scrollTop());
+            //     console.log($(`${tab} ${contentsView}`).height());
+            // }
         });
 
         $("#browse").on("click", ".metadataModal", function() {
@@ -644,6 +650,10 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
             o_browse.galleryBegun = false;
+            console.log("=== Update slider ===");
+            console.log(firstObs);
+            console.log(value);
+            console.log(customizedLimitNum);
             o_browse.loadData(firstObs, customizedLimitNum, true);
         }
     },
@@ -1383,7 +1393,7 @@ var o_browse = {
             });
             $(selector).on("scrollThreshold.infiniteScroll", function(event) {
                 console.log("=== scrollThreshold.infiniteScroll ===");
-                $(selector).infiniteScroll("loadNextPage");
+                // $(selector).infiniteScroll("loadNextPage");
             });
             $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
         }
@@ -1473,7 +1483,9 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
         let setScrollbar = infiniteScrollData.options.loadPrevPage;
-
+        // let setScrollbar = true;
+        console.log(`setScrollbar in infiniteScroll load event handler: ${setScrollbar}`);
+        console.log(`current obsNum in inf instance: ${infiniteScrollData.options.obsNum}`);
         o_browse.renderGalleryAndTable(data, path, setScrollbar);
         $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
         $(`${tab} .op-dataTable-view`).infiniteScroll({"loadPrevPage": false});
@@ -1535,16 +1547,9 @@ var o_browse = {
         let navbarHeight = $(".panel-heading").outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
         let containerHeight = $(window).height()-totalNonGalleryHeight;
-        // console.log("=== adjustBrowseHeight ===");
-        // console.log(footerHeight);
-        // console.log(mainNavHeight);
-        // console.log(navbarHeight);
-        // console.log(`Total: ${totalNonGalleryHeight}`);
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
-        // console.log(`.gallery-contents height: ${containerHeight}`)
-        // console.log(`window height: ${$(window).height()}`)
-        // console.log(`.gallery-contents height: ${$(`${tab} .gallery-contents`).height()}`)
+
         o_browse.galleryScrollbar.update();
         o_browse.galleryBoundingRect = o_browse.countGalleryImages();
 
