@@ -140,6 +140,7 @@ class QueryHandler:
         return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
+        """Handles info for the contents of search slugs"""
         all_search_families = set(old_info.keys()).union(new_info.keys())
 
         if not new_info:
@@ -164,10 +165,12 @@ class QueryHandler:
         result.extend(changed_searches)
 
     def __handle_search_remove(self, result: List[str], family: slug.Family) -> None:
+        """handle a search term that has been removed"""
         self._session_info.changed_search_slugs()
         result.append(f'Remove Search: "{family.label}"')
 
     def __handle_search_add(self, result: List[str], family: slug.Family, new_info: SearchSlugInfo) -> None:
+        """handle a search term that has been added"""
         self._session_info.changed_search_slugs()
         if family.is_singleton():
             new_value, new_qtype, flags = self.__parse_search_family_string(new_info[family])
@@ -181,27 +184,24 @@ class QueryHandler:
                 return
             else:
                 fields = [('value', new_value), ('qtype', new_qtype)]
-                # continued below
+                # continued below, after the else
         else:
             new_min, new_max, new_qtype, flags = self.__parse_search_family_numeric(new_info[family])
             postscript = self.__get_postscript(flags)  # is html-aware
             fields = [(family.min, new_min), (family.max, new_max), ('qtype', new_qtype)]
 
         if self._uses_html:
-            infos = Markup(', ').join(
+            joined_info = Markup(', ').join(
                 self.safe_format('<mark><ins>{}:{}</ins></mark>', name, self.__format_search_value(value))
                 for (name, value) in fields)
-            result.append(self.safe_format('Add Search: &quot;{}&quot; = ({}){}', family.label, infos, postscript))
+            result.append(self.safe_format('Add Search: &quot;{}&quot; = ({}){}',
+                                           family.label, joined_info, postscript))
         else:
-            infos = ", ".join(f'{name.upper()}:{self.__format_search_value(value)}' for (name, value) in fields)
-            result.append(f'Add Search:    "{family.label}" = ({infos}){postscript}')
+            joined_info = ", ".join(f'{name.upper()}:{self.__format_search_value(value)}' for (name, value) in fields)
+            result.append(f'Add Search:    "{family.label}" = ({joined_info}){postscript}')
 
     def __handle_search_change(self, result: List[str], family: slug.Family, old_info: SearchSlugInfo,
                                new_info: SearchSlugInfo) -> None:
-        def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
-            fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
-            return self.safe_format(fmt, tag, self.__format_search_value(new))
-
         if family.is_singleton():
             old_value, old_qtype, _ = self.__parse_search_family_string(old_info[family])
             new_value, new_qtype, _ = self.__parse_search_family_string(new_info[family])
@@ -220,12 +220,18 @@ class QueryHandler:
                 fields = [(family.min, old_min, new_min), (family.max, old_max, new_max), ('qtype', old_qtype, new_qtype)]
 
         if self._uses_html:
-            infos = Markup(', ').join(maybe_mark(name, old, new) for (name, old, new) in fields)
-            result.append(
-                    self.safe_format('Change Search: &quot;{}&quot;: ({})', family.label, infos))
+            def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
+                fmt = '{}:{}' if old == new else '<mark>{}:{}</mark>'
+                return self.safe_format(fmt, tag, self.__format_search_value(new))
+
+            joined_info = Markup(', ').join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
+            result.append(self.safe_format('Change Search: &quot;{}&quot;: ({})', family.label, joined_info))
         else:
-            infos = ', '.join(f'{name if old == new else name.upper()}:{self.__format_search_value(new)}' for (name, old, new) in fields)
-            result.append(f'Change Search: "{family.label}" = ({infos})')
+            def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
+                return f'{tag if old == new else tag.upper()}:{self.__format_search_value(new)}'
+
+            joined_info = ', '.join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
+            result.append(f'Change Search: "{family.label}" = ({joined_info})')
 
     def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo,
                           result: List[str]) -> None:

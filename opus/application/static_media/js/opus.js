@@ -282,10 +282,6 @@ var opus = {
                 break;
 
             case 'browse':
-                if (opus.prefs.browse == 'dataTable') {
-                    $('.op-gallery-view','#browse').hide();
-                    $('.op-dataTable-view','#browse').show();
-                }
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();
 
