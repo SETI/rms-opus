@@ -335,13 +335,15 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
-        if (resetMetadata && !o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
-            opus.prefs.cols = [];
-            o_browse.resetMetadata(default_columns.split(','), true);
-            $(".op-reset-button button").prop("disabled", true);
-        } else if (!o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
-            $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
-            $(".op-reset-button .op-reset-search").prop("disabled", true);
+        if (!o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
+            if (resetMetadata) {
+                opus.prefs.cols = [];
+                o_browse.resetMetadata(default_columns.split(','), true);
+                $(".op-reset-button button").prop("disabled", true);
+            } else {
+                $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+                $(".op-reset-button .op-reset-search").prop("disabled", true);
+            }
         } else {
             $(".op-reset-button button").prop("disabled", true);
         }
@@ -351,7 +353,7 @@ var opus = {
         let deferredArr = [];
         $.each(opus.default_widgets.slice().reverse(), function(index, slug) {
             deferredArr.push($.Deferred());
-            o_widgets.getWidget(slug,"#op-search-widgets",deferredArr[index]);
+            o_widgets.getWidget(slug, "#op-search-widgets", deferredArr[index]);
         });
 
         // start the main timer again
