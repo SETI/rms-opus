@@ -8,8 +8,7 @@ from argparse import Namespace
 from pathlib import Path
 
 import pytz
-import sys
-from typing import List, Optional, cast, Tuple
+from typing import List, Optional, cast
 
 from abstract_session_info import AbstractConfiguration
 from log_entry import LogReader
