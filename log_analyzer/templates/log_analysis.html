@@ -199,7 +199,7 @@ because it requires that all the navigation tabs be within a single unordered li
 {% for host_info in host_infos_by_ip %}
     {% for session in host_info.sessions %}
     <div id="{{ session.id }}" class="SessionInfo tab-pane">
-        <h3>{{ host_info.hostname() }} at {{ host_info.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
+        <h3>{{ host_info.hostname() }} at {{ session.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
         {{ print_slugs(session) }}
         <hr/>
         {{ print_session_entries(session) }}
