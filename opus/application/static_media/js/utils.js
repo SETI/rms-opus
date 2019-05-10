@@ -32,3 +32,28 @@ var o_utils = {
 
 
 };
+
+
+
+/**
+ * returns true if an element is visible, with decent performance
+ * @param [scope] scope of the render-window instance; 
+ * @returns {boolean}
+ */
+$.fn.isOnScreen = function(scope){
+    let element = this;
+    if (!element || !scope) {
+        return;
+    }
+    let target = $(element);
+    if (target.is(':visible') === false) {
+        return false;
+    }
+    scope = $(scope);
+    let top = scope.offset().top;
+    let bottom = top + scope.height();
+    let elementTop = target.offset().top;
+    let elementBottom = elementTop + target.outerHeight();
+
+    return ((elementBottom <= bottom) && (elementTop >= top));
+};

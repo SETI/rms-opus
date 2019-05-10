@@ -553,15 +553,22 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let maxObs = (opus.prefs.view === "browse" ? opus.resultCount : parseInt($("#op-cart-count").html()));
 
-        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
+        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
         if (obsNum <= maxObs) {
-            let nextElem = $(`${tab} .thumbnail-container[data-obs=${obsNum}]`);
+            let nextElem = (contentsView === ".op-gallery-view" ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
             if (nextElem.length === 0) {
                 // disable keydown on modal when it's loading
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
                 opus.prefs[startObsLabel] = obsNum;
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+            } else {
+                // make sure the current element that the modal is displaying is viewable; if not, scroll til it is
+                let scope = $(`${tab} ${contentsView}`);
+                if (!nextElem.isOnScreen($(`${tab} .gallery-contents`))) {
+                    let newPosition = scope.scrollTop() + nextElem.height();
+                    scope.scrollTop(newPosition);
+                }
             }
         }
     },
@@ -576,9 +583,9 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         o_browse.currentOpusId = opusId;
         // decrement obsNum to see if there is a previous one to retrieve
-        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") - 1;
+        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
         if (obsNum > 0) {
-            let prevElem = $(`${tab} .thumbnail-container[data-obs=${obsNum}]`);
+            let prevElem = (contentsView === ".op-gallery-view" ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
             // if it's not there go retrieve it...
             if (prevElem.length === 0) {
                 // disable keydown on modal when it's loading
@@ -587,6 +594,13 @@ var o_browse = {
                 let startObs = obsNum - o_browse.getLimit();
                 opus.prefs[startObsLabel] = (startObs > 0 ? startObs : 1);
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+            } else {
+                // make sure the current element that the modal is displaying is viewable; if not, scroll til it is
+                let scope = $(`${tab} ${contentsView}`);
+                if (!prevElem.isOnScreen($(`${tab} .gallery-contents`))) {
+                    let newPosition = scope.scrollTop() - prevElem.height();
+                    scope.scrollTop(newPosition);
+                }
             }
         }
     },
