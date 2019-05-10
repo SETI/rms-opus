@@ -1246,8 +1246,6 @@ var o_browse = {
 
     // number of images that can be fit in current window size
     getLimit: function() {
-        // o_browse.limit = (o_browse.galleryBoundingRect.x !== 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) : o_browse.limit);
-        // return o_browse.limit;
         return (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y);
     },
 
