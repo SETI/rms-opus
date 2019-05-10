@@ -142,7 +142,7 @@ class SessionInfo(AbstractSessionInfo):
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
             return [], None
-        if entry.agent and "bot" in entry.agent.lower():
+        if entry.agent and ("bot" in entry.agent.lower() or "spider" in entry.agent.lower()):
             return [], None
         path = entry.url.path
         if not path.startswith('/opus/__'):
