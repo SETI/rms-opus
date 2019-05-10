@@ -328,7 +328,8 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $("#search_widgets").empty(); // remove all widgets on the screen
+        // $("#search_widgets").empty(); // remove all widgets on the screen
+        $("#op-search-widgets").empty(); // remove all widgets on the screen
 
         // reset the search query
         opus.selections = {};
@@ -357,9 +358,12 @@ var opus = {
         o_menu.markDefaultMenuItem();
 
         let deferredArr = [];
-        $.each(opus.default_widgets, function(index, slug) {
+        $.each(opus.default_widgets.slice().reverse(), function(index, slug) {
             deferredArr.push($.Deferred());
-            o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
+            // o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
+            o_widgets.getWidget(slug,"#op-search-widgets",deferredArr[index]);
+            console.log("=== opus.prefs.widgets ===");
+            console.log(opus.prefs.widgets);
         });
 
         // start the main timer again
@@ -558,10 +562,6 @@ var opus = {
             let targetModal = $(this).data("target");
             console.log("=== click reset buttons ===");
             console.log(targetModal);
-            console.log("=== opus.selections ===");
-            console.log(opus.selections);
-            console.log(!$.isEmptyObject(opus.selections));
-            console.log(!opus.areDrawnWidgetsDefault());
 
             if (!$.isEmptyObject(opus.selections) || !opus.areDrawnWidgetsDefault()) {
                 $(targetModal).modal("show");
