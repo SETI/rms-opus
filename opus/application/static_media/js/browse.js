@@ -457,6 +457,7 @@ var o_browse = {
             },
             stop: function(event, ui) {
                 o_browse.onUpdateSlider(ui.value);
+                $("#galleryView").modal('hide');
             }
         });
 
@@ -572,7 +573,10 @@ var o_browse = {
                 // make sure the current element that the modal is displaying is viewable; if not, scroll til it is
                 let scope = $(`${tab} ${contentsView}`);
                 if (!nextElem.isOnScreen($(`${tab} .gallery-contents`))) {
-                    let newPosition = scope.scrollTop() + nextElem.height();
+                    let bottom = scope.offset().top + scope.height();
+                    let elemHeight = nextElem.height();
+                    let offset = Math.max(nextElem.offset().top + elemHeight - bottom, elemHeight);
+                    let newPosition = scope.scrollTop() + offset;
                     scope.scrollTop(newPosition);
                 }
             }
@@ -675,13 +679,13 @@ var o_browse = {
     updateSliderHandle: function() {
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
-        let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        let selector = (o_browse.isGalleryView() ?  `#${opus.prefs.view} .gallery .thumbnail-container` : `#${opus.prefs.view} #dataTable tbody tr`);
         let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
 
         $(selector).each(function(index, elem) {
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-            topBoxBoundary = topBoxBoundary || (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
+            topBoxBoundary = topBoxBoundary || (o_browse.isGalleryView()  ? $(`${tab} .gallery-contents`).offset().top : $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight());
 
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -759,11 +763,11 @@ var o_browse = {
                             `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
-        let namespace = `#${opus.prefs.view}`;
+        let tab = `#${opus.prefs.view}`;
         let menu = {"height":$("#op-obs-menu").innerHeight(), "width":$("#op-obs-menu").innerWidth()};
 
-        let top = ($(namespace).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
-        let left = ($(namespace).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
+        let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
+        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
 
         $("#op-obs-menu").css({
             display: "block",
@@ -1331,9 +1335,14 @@ var o_browse = {
         }
     },
 
+    isGalleryView: function() {
+        return (opus.prefs.view === "browse" ? opus.prefs.browse === "gallery" : opus.prefs.cart_browse === "gallery" );
+    },
+
     // return the infiniteScroll container class for either gallery or table view
     getScrollContainerClass: function() {
-        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
+        let browse = (opus.prefs.view === "cart_" ? "cart_browse" : "browse");
+        return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
     },
 
     getStartObsLabel: function() {
@@ -1692,14 +1701,11 @@ var o_browse = {
     },
 
     updateGalleryView: function(opusId) {
-        // while modal is up, highlight the image/table row shown
-        // right here need to add a CSS bit!!
-        //////o_browse.toggleGalleryViewHighlight(opusId);
-        let namespace = o_browse.getViewInfo().namespace;
-        $(namespace).find(".modal-show").removeClass("modal-show");
-        $(namespace).find(`[data-id='${opusId}'] div.modal-overlay`).addClass("modal-show");
-        $(namespace).find(`tr[data-id='${opusId}']`).addClass("modal-show");
-        let imageURL = $(namespace).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
+        let tab = `#${opus.prefs.view}`;
+        $(tab).find(".modal-show").removeClass("modal-show");
+        $(tab).find(`[data-id='${opusId}'] div.modal-overlay`).addClass("modal-show");
+        $(tab).find(`tr[data-id='${opusId}']`).addClass("modal-show");
+        let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
         o_browse.updateMetaGalleryView(opusId, imageURL);
     },
 
