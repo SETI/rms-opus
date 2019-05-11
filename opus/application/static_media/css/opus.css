@@ -900,7 +900,6 @@ nav.panel-heading {
 }
 
 .op-widget-column {
-    overflow: auto;
     position: relative;
     padding: 0 20px;
     margin: 0 10px;
@@ -908,7 +907,7 @@ nav.panel-heading {
     margin-top: 5px;
     /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
     max-width: 740px;
-    min-width: 400px;
+    min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
