@@ -21,7 +21,7 @@ var o_search = {
         minScrollbarLength: opus.minimumPSLength
     }),
     widgetScrollbar: new PerfectScrollbar("#widget-container" , {
-        suppressScrollX: true,
+        // suppressScrollX: true,
         minScrollbarLength: opus.minimumPSLength
     }),
 
@@ -443,7 +443,10 @@ var o_search = {
     },
 
     adjustSearchWidgetHeight: function() {
-        let containerHeight = $("#search").height() - 80;
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
+        let containerHeight = $("#search").outerHeight() - totalNonSearchAreaHeight;
         let searchWidgetHeight = $("#op-search-widgets").height();
         $(".op-widget-column").height(containerHeight);
 

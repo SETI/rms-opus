@@ -893,14 +893,9 @@ nav.panel-heading {
     display: none;
 }
 
-/* This will prevent search widget area from being moved to the bottom of search sidebar */
-.op-search-row {
-    flex-wrap: nowrap;
-}
-
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
-    overflow: auto !important;
+    overflow-x: auto !important;
     overflow-y: hidden !important;
 }
 
