@@ -239,7 +239,13 @@ class SessionInfo(AbstractSessionInfo):
     def __create_archive(self, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         has_url = query.get('urlonly') not in [None, '0']
-        text = f'Download {"URL" if has_url else "Data"} Archive for Cart'
+
+        if self._previous_product_info_type is not None:
+            joined_new_ptypes = self.quote_and_join_list(self._previous_product_info_type)
+        else:
+            joined_new_ptypes = 'Unknown'
+
+        text = f'Download {"URL" if has_url else "Data"} Archive for Cart: {joined_new_ptypes}'
         return [text], None
 
     # Note that the __collections/ and the __cart/ are different.
