@@ -149,7 +149,7 @@ Not sure if this is the desired behavior
     overflow: auto;
     margin-top: 5px;
     position: relative;
-    height: 500px; /* matches .widget_column */
+    height: 500px; /* matches .op-widget-column */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -903,7 +903,7 @@ nav.panel-heading {
     overflow-y: hidden !important;
 }
 
-.widget_column {
+.op-widget-column {
     overflow: auto;
     position: relative;
     padding 0 20px;

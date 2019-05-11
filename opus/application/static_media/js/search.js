@@ -445,7 +445,7 @@ var o_search = {
     adjustSearchWidgetHeight: function() {
         let containerHeight = $("#search").height() - 80;
         let searchWidgetHeight = $("#op-search-widgets").height();
-        $(".widget_column").height(containerHeight);
+        $(".op-widget-column").height(containerHeight);
 
         if (containerHeight > searchWidgetHeight) {
             if (!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
