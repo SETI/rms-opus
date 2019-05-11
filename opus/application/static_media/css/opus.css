@@ -893,6 +893,7 @@ nav.panel-heading {
     display: none;
 }
 
+/* This will prevent search widget area from being moved to the bottom of search sidebar*/
 .op-search-row {
     flex-wrap: nowrap;
 }
