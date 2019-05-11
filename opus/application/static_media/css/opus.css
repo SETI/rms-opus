@@ -902,7 +902,7 @@ nav.panel-heading {
 .op-widget-column {
     overflow: auto;
     position: relative;
-    padding 0 20px;
+    padding: 0 20px;
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
