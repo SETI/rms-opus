@@ -444,7 +444,7 @@ var o_search = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
-        let containerHeight = $("#search").outerHeight() - totalNonSearchAreaHeight;
+        let containerHeight = $("#search").height() - totalNonSearchAreaHeight;
         let searchWidgetHeight = $("#op-search-widgets").height();
         $(".op-widget-column").height(containerHeight);
 
