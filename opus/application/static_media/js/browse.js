@@ -1551,7 +1551,7 @@ var o_browse = {
     adjustTableSize: function() {
         let tab = `#${opus.prefs.view}`;
         let containerWidth = $(`${tab} .gallery-contents`).width();
-        let containerHeight = $(`${tab} .gallery-contents`).height();
+        let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").outerHeight();
         $(`${tab} .op-dataTable-view`).width(containerWidth);
         $(`${tab} .op-dataTable-view`).height(containerHeight);
         //todo:  this only applies to #browse
