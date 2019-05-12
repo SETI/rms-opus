@@ -149,7 +149,9 @@
 
             <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
-                    <div class="col cart_details pr-0"></div>
+                    <div class="col cart_details pr-0">
+                        <div id="op-download-options-container" class="sidebar_wrapper pr-0"></div>
+                    </div>
                     <div class="col pl-0 cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container top_navbar collapse navbar-collapse">
@@ -184,11 +186,24 @@
                                 <ul class="sort-contents list-inline"></ul>
                             </div>
                         </nav>
-                        <div class="panel-body gallery-contents container-fluid    pr-2">
-                            <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
+                        <div class="panel-body gallery-contents container-fluid">
+                            <div class="row justify-content-start op-gallery-view mr-0 ml-1">
+                                <div class="mr-0 thumb gallery gallery-scroll"></div>
+                            </div>
+                            <div class="row op-dataTable-view mx-0">
+                                <div class="col-lg p-0">
+                                    <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect mb-0">
+                                        <thead>
+                                            <tr></tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- we moved the spinner to the same level as .op-gallery-view and .op-dataTable-view so that it can be shared for both infiniteScroll instances  -->
                             <div class="page-load-status">
                                 <div class="infinite-scroll-request loader-ellips">
-                                    <!--div class='loader'></div-->
+                                    <div class='loader'></div>
                                 </div>
                                 <p class="infinite-scroll-last">End of content</p>
                                 <p class="infinite-scroll-error">No more pages to load</p>
