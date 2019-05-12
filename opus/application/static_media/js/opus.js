@@ -73,6 +73,8 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout: 0,
 
+    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
+
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer: false,
     main_timer_interval: 1000,
@@ -453,6 +455,11 @@ var opus = {
         });
 
         o_mutationObserver.observePerfectScrollbar();
+
+        for (let tab of ["#browse", "#cart"]) {
+            o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
+            o_browse.initInfiniteScroll(`${tab} .op-dataTable-view`);
+        }
 
         // add the navbar clicking behaviors, selecting which tab to view:
         // see triggerNavbarClick

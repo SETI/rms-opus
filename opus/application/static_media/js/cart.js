@@ -12,11 +12,21 @@ var o_cart = {
     // cart
     cartChange: true, // cart has changed since last load of cart_tab
     lastRequestNo: 0,
-    lastLoadDataRequestNo: 0,
     downloadInProcess: false,
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
+
+    tableScrollbar: new PerfectScrollbar("#cart .op-dataTable-view", {
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    galleryScrollbar: new PerfectScrollbar("#cart .op-gallery-view", {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
+        minScrollbarLength: opus.minimumPSLength
+    }),
 
     /**
      *
@@ -42,10 +52,6 @@ var o_cart = {
 
         $("#cart").on("click", ".downloadURL", function(e) {
             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
-        });
-
-        $("#cart").on("click", ".metadataModal", function(e) {
-
         });
 
         // check an input on selected products and images updates file_info
@@ -127,22 +133,19 @@ var o_cart = {
 
         // The following steps will hide the y-scrollbar when it's not needed.
         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-        if (o_cart.downloadOptionsScrollbar) {
-            if (downloadOptionsContainer > cartSummaryHeight) {
-                if (!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
-                    o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
-                }
-            } else {
-                $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
-                o_cart.downloadOptionsScrollbar.settings.suppressScrollY = false;
+        if (downloadOptionsContainer > cartSummaryHeight) {
+            if (!$("#op-download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $("#op-download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
+                o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
             }
-            o_cart.downloadOptionsScrollbar.update();
+        } else {
+            $("#op-download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_cart.downloadOptionsScrollbar.settings.suppressScrollY = false;
         }
 
-        if (o_cart.cartGalleryScrollbar) {
-            o_cart.cartGalleryScrollbar.update();
-        }
+        o_cart.downloadOptionsScrollbar.update();
+        o_cart.galleryScrollbar.update();
+        o_cart.tableScrollbar.update();
     },
 
     updateCartStatus: function(status) {
@@ -170,79 +173,6 @@ var o_cart = {
        });
     },
 
-    loadCartData: function(startObs) {
-        let view = o_browse.getViewInfo();
-        let selector = `${view.namespace} .gallery-contents`;
-
-        startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
-
-        // if the request is a block far away from current page cache, flush the cache and start over
-        let elem = $(`${view.namespace} [data-obs=${startObs}]`);
-        let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
-        let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
-
-        $(".op-page-loading-status > .loader").show();
-        let url = o_browse.getDataURL(startObs);
-
-        // metadata; used for both table and gallery
-        $.getJSON(url, function(data) {
-            if (data.reqno < o_cart.lastLoadDataRequestNo) {
-                // make sure to remove spinner before return
-                $(".op-page-loading-status > .loader").hide();
-                return;
-            }
-            if (opus.colLabels.length === 0) {
-                opus.colLabels = data.columns;
-                opus.colLabelsNoUnits = data.columns_no_units;
-            }
-            o_browse.renderGalleryAndTable(data, this.url);
-            o_browse.updateSortOrder(data);
-
-            if (o_cart.cartChange) {
-                // for infinite scroll
-                $(selector).infiniteScroll({
-                    path: function() {
-                        let startObs = opus.prefs[`${view.prefix}startobs`];
-                        let lastObs = $(`${view.namespace} .thumbnail-container`).last().data("obs");
-                        // start from the last observation drawn; if none yet drawn ...???
-                        startObs = (lastObs != undefined ? lastObs + 1 : startObs + o_browse.getLimit());
-                        let path = o_browse.getDataURL(startObs);
-                        return path;
-                    },
-                    responseType: "text",
-                    status: `${view.namespace} .page-load-status`,
-                    elementScroll: true,
-                    history: false,
-                    debug: false,
-                });
-                $(selector).on("request.infiniteScroll", function(event, path) {
-                    // hide default page status loader if op-page-loading-status loader is spinning
-                    // && o_browse.tableSorting
-                    $(".infinite-scroll-request").hide();
-                });
-                $(selector).on("scrollThreshold.infiniteScroll", function(event) {
-                    // remove spinner when scrollThreshold is triggered and last data fetching has no data
-                    // Need to revisit this one
-                    if (o_cart.dataNotAvailable !== undefined && o_cart.dataNotAvailable) {
-                        $(".infinite-scroll-request").hide();
-                    }
-                    $(selector).infiniteScroll("loadNextPage");
-                });
-                $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
-                o_cart.cartChange = false;
-            }
-
-            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
-            $(`${view.namespace} .thumbnail-container`).detach();
-            o_browse.renderGalleryAndTable(data, this.url);
-/*            if (o_browse.currentOpusId != "") {
-                o_browse.metadataboxHtml(o_browse.currentOpusId);
-            }
-            o_browse.updateSortOrder(data);
-*/
-        });
-    },
-
     // get Cart tab
     getCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
@@ -252,43 +182,31 @@ var o_cart = {
             // don't forget to remove existing stuff before append
             $(".gallery", "#cart").html("");
 
-            $(".cart_details", "#cart").html(opus.spinner);
-
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
                 success: function(html) {
                     // this div lives in the in the nav menu template
-                    $(".cart_details", "#cart").hide().html(html).fadeIn();
+                    $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
 
                     if (o_cart.downloadInProcess) {
                         $(".spinner", "#cart_summary").fadeIn();
                     }
 
-                    o_cart.loadCartData();
+                    let startObsLabel = o_browse.getStartObsLabel();
+                    let startObs = opus.prefs[startObsLabel];
+                    startObs = (startObs > parseInt($("#op-cart-count").html()) ? 1 : startObs);
+                    o_browse.loadData(startObs);
 
                     if (zippedFiles_html) {
                         $(".zippedFiles", "#cart").html(zippedFiles_html);
                     }
-
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar("#download-options-container", {
-                        minScrollbarLength: opus.minimumPSLength
-                    });
-
-                    if (!o_cart.cartGalleryScrollbar) {
-                        o_cart.cartGalleryScrollbar = new PerfectScrollbar("#cart .gallery-contents", {
-                            suppressScrollX: true,
-                            minScrollbarLength: opus.minimumPSLength
-                        });
-                    }
                 }
             });
-        } else {
-            return;
         }
     },
 
     isIn: function(opusId) {
-        return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("in");
+        return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("op-in-cart");
     },
 
     emptyCart: function(returnToSearch=false) {
@@ -306,8 +224,8 @@ var o_cart = {
         });
 
         let buttonInfo = o_browse.cartButtonInfo("in");
-        $(".thumbnail-container.in [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(".thumbnail-container.in").removeClass("in");
+        $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
         $("#dataTable input").prop("checked", false);
     },
 
@@ -316,8 +234,8 @@ var o_cart = {
 
         // handle it as range
         if (toOpusId != undefined) {
-            let tab = o_browse.getViewInfo().namespace;
-            let action = (fromElem.hasClass("in") ? "removerange" : "addrange");
+            let tab = `#${opus.prefs.view}`;
+            let action = (fromElem.hasClass("op-in-cart") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
             let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);
             let toIndex = $(`${tab} .thumbnail-container`).index(toElem);
@@ -327,6 +245,7 @@ var o_cart = {
                 [fromIndex, toIndex] = [toIndex, fromIndex];
             }
             let length = toIndex - fromIndex+1;
+            /// NOTE: we need to mark the elements on BOTH browse and cart page
             let elementArray = $(`${tab} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
             let addOpusIdList = [];
@@ -334,10 +253,11 @@ var o_cart = {
                 let opusId = $(elem).data("id");
                 let status = "in";
                 if (action == "addrange") {
-                    $(elem).addClass("in");
+                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
                     status = "out"; // this is only so that we can make sure the icon is a trash can
                 } else {
-                    $(elem).removeClass("in");
+                    $(`.thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
@@ -360,10 +280,12 @@ var o_cart = {
             o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
-            let action = (fromElem.hasClass("in") ? "remove" : "add");
+            let action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
 
-            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("in");
+            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
             $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
+
+            $(`#cart .thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
 
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
@@ -421,7 +343,7 @@ var o_cart = {
                 // reload data
                 // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
                 o_browse.galleryBegun = false;
-                o_browse.loadData();
+                o_browse.loadData(1);
             }
             // we only update the cart badge result count from the latest request
             if (statusData.reqno < o_cart.lastRequestNo || !updateBadges) {

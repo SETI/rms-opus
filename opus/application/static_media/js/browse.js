@@ -37,10 +37,6 @@ var o_browse = {
     imageSize: 100,     // default
     maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
-    // set default to 200 so loadData will fetch enough number of data for the first time in large screen
-    // limit: 200,  // results per page
-    lastLoadDataRequestNo: 0,
-
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
@@ -1089,7 +1085,7 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                galleryHtml += `<div class="thumbnail-container ${(item.in_cart ? ' in' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
+                galleryHtml += `<div class="thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
                 galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${item.obs_num} - ${opusId}\r\nClick to enlarge">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
@@ -1108,17 +1104,15 @@ var o_browse = {
                 galleryHtml += '</div></div>';
 
                 // table row
-                if (tab == "#browse") {   // not yet supported for cart
-                    let checked = item.in_cart ? " checked" : "";
-                    let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
-                    let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                    let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
-                    let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
-                    $.each(item.metadata, function(index, cell) {
-                        row += `<td>${cell}</td>`;
-                    });
-                    tableHtml += `${tr}${row}</tr>`;
-                }
+                let checked = item.in_cart ? " checked" : "";
+                let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
+                let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
+                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
+                $.each(item.metadata, function(index, cell) {
+                    row += `<td>${cell}</td>`;
+                });
+                tableHtml += `${tr}${row}</tr>`;
             });
 
             galleryHtml += "</div>";
@@ -1126,14 +1120,10 @@ var o_browse = {
             // is contiguous w/the existing block of observations, not just before/after...
             if (append) {
                 $(".gallery", tab).append(galleryHtml);
-                if (opus.prefs.view == "browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").append(tableHtml);
-                }
+                $(".op-dataTable-view tbody", tab).append(tableHtml);
             } else {
                 $(".gallery", tab).prepend(galleryHtml);
-                if (opus.prefs.view == "browse") {   // not yet supported for cart
-                    $(".op-dataTable-view tbody").prepend(tableHtml);
-                }
+                $(".op-dataTable-view tbody", tab).prepend(tableHtml);
             }
         }
 
@@ -1263,8 +1253,7 @@ var o_browse = {
         let base_url = "/opus/__api/dataimages.json?";
         let hashString = o_hash.getHash();
 
-        let reqno = (opus.prefs.view === "browse" ? ++o_browse.lastLoadDataRequestNo : ++o_cart.lastLoadDataRequestNo);
-        let url = hashString + '&reqno=' + reqno;
+        let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[opus.prefs.view];
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
@@ -1319,7 +1308,8 @@ var o_browse = {
 
     // return the infiniteScroll container class for either gallery or table view
     getScrollContainerClass: function() {
-        return (opus.prefs.browse === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
+        let browse = (opus.prefs.view === "cart_" ? "cart_browse" : "browse");
+        return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
     },
 
     getStartObsLabel: function() {
@@ -1443,7 +1433,7 @@ var o_browse = {
         let url = o_browse.getDataURL(startObs, customizedLimitNum);
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
-            if (data.reqno < o_browse.lastLoadDataRequestNo) {
+            if (data.reqno < opus.lastLoadDataRequestNo[opus.prefs.view]) {
                 // make sure to remove spinner before return
                 $(".op-page-loading-status > .loader").hide();
                 return;
@@ -1454,10 +1444,6 @@ var o_browse = {
 
                 $(`${tab} .op-gallery-view`).scrollTop(0);
                 $(`${tab} .op-dataTable-view`).scrollTop(0);
-
-                // Instantiate infiniteScroll on gallery and table view
-                o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
-                o_browse.initInfiniteScroll(`${tab} .op-dataTable-view`);
             }
 
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
@@ -1518,7 +1504,6 @@ var o_browse = {
         let startObs = opus.prefs[startObsLabel];
         startObs = (startObs > opus.resultCount ? 1 : startObs);
 
-
         o_browse.loadData(startObs);
     },
 
@@ -1559,6 +1544,7 @@ var o_browse = {
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-dataTable-view`).width(containerWidth);
         $(`${tab} .op-dataTable-view`).height(containerHeight);
+        //todo:  this only applies to #browse
         o_browse.tableScrollbar.update();
     },
 
