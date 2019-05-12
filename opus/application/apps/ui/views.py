@@ -87,6 +87,7 @@ def api_last_blog_update(request):
 
 
 @render_to('menu.html')
+@never_cache
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -102,6 +103,7 @@ def api_get_menu(request):
     return ret
 
 
+@never_cache
 def api_get_widget(request, **kwargs):
     """Create a search widget and return its HTML.
 
@@ -299,6 +301,7 @@ def api_get_widget(request, **kwargs):
     return ret
 
 
+@never_cache
 def api_get_metadata_selector(request):
     """Create the metadata selector list.
 
@@ -330,6 +333,7 @@ def api_get_metadata_selector(request):
     return ret
 
 
+@never_cache
 def api_init_detail_page(request, **kwargs):
     """Render the top part of the Details tab.
 
