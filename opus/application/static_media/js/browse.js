@@ -82,7 +82,7 @@ var o_browse = {
             }
         });
 
-        $("#browse").on("click", ".metadataModal", function() {
+        $("#browse").on("click", ".op-metadataModal", function() {
             o_browse.hideMenu();
             o_browse.renderMetadataSelector();
         });
@@ -94,9 +94,10 @@ var o_browse = {
         });
 
         // browse nav menu - the gallery/table toggle
-        $("#browse").on("click", ".op-browse-view", function() {
+        $("#browse, #cart").on("click", ".op-browse-view", function() {
             o_browse.hideMenu();
-            opus.prefs.browse = $(this).data("view");
+            let browse = (opus.prefs.view === "browse" ? "browse" : "cart_browse");
+            opus.prefs[browse] = $(this).data("view");
 
             o_hash.updateHash();
             o_browse.updateBrowseNav();
@@ -951,27 +952,36 @@ var o_browse = {
 
     updateBrowseNav: function() {
         let tab = `#${opus.prefs.view}`;
+        let browse = (opus.prefs.view === "browse" ? "browse" : "cart_browse");
         let contentsView = o_browse.getScrollContainerClass();
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-dataTable-view`).data("infiniteScroll");
-        if (opus.prefs.browse == "gallery") {
-            $(".op-dataTable-view", "#browse").hide();
-            $(".op-gallery-view", "#browse").fadeIn();
 
-            $(".op-browse-view", "#browse").html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            $(".op-browse-view", "#browse").attr("title", "View sortable metadata table");
-            $(".op-browse-view", "#browse").data("view", "dataTable");
+        let suppressScrollY = false;
 
-            o_browse.galleryScrollbar.settings.suppressScrollY = false;
+        if (opus.prefs[browse] == "gallery") {
+            $(".op-dataTable-view", tab).hide();
+            $(".op-gallery-view", tab).fadeIn();
+
+            $(".op-browse-view", tab).html("<i class='far fa-list-alt'></i>&nbsp;View Table");
+            $(".op-browse-view", tab).attr("title", "View sortable metadata table");
+            $(".op-browse-view", tab).data("view", "dataTable");
+
+            suppressScrollY = false;
         } else {
-            $(".op-gallery-view", "#browse").hide();
-            $(".op-dataTable-view", "#browse").fadeIn();
+            $(".op-gallery-view", tab).hide();
+            $(".op-dataTable-view", tab).fadeIn();
 
-            $(".op-browse-view", "#browse").html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            $(".op-browse-view", "#browse").attr("title", "View sortable thumbnail gallery");
-            $(".op-browse-view", "#browse").data("view", "gallery");
+            $(".op-browse-view", tab).html("<i class='far fa-images'></i>&nbsp;View Gallery");
+            $(".op-browse-view", tab).attr("title", "View sortable thumbnail gallery");
+            $(".op-browse-view", tab).data("view", "gallery");
 
-            o_browse.galleryScrollbar.settings.suppressScrollY = true;
+            suppressScrollY = true;
+        }
+        if (opus.prefs.view === "browse") {
+            o_browse.galleryScrollbar.settings.suppressScrollY = suppressScrollY;
+        } else {
+            o_cart.galleryScrollbar.settings.suppressScrollY = suppressScrollY;
         }
 
         // sync up scrollbar position
