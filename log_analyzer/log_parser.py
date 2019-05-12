@@ -1,6 +1,7 @@
 import datetime
 import ipaddress
 import itertools
+import sys
 from collections import deque
 from ipaddress import IPv4Address
 from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
@@ -92,7 +93,7 @@ class LogParser:
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
-        self._output = open(output, "w")
+        self._output = open(output, "w") if output else sys.stdout
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
