@@ -87,15 +87,6 @@ var o_browse = {
         });
 
         $("#browse").on("click", ".metadataModal", function() {
-            o_browse.hideMenu();
-            o_browse.renderMetadataSelector();
-
-            // Do the fake API call to write in the Apache log files that
-            // we invoked the metadata selector so log_analyzer has something to
-            // go on
-            let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
-            $.getJSON(fakeUrl, function(data) {
-            });
         });
 
         $("#metadataSelector").modal({
@@ -889,6 +880,16 @@ var o_browse = {
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
+
+            o_browse.hideMenu();
+            o_browse.renderMetadataSelector();
+
+            // Do the fake API call to write in the Apache log files that
+            // we invoked the metadata selector so log_analyzer has something to
+            // go on
+            let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
+            $.getJSON(fakeUrl, function(data) {
+            });
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
