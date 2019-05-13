@@ -116,11 +116,11 @@ class QueryHandler:
             else:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
+            viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
             if current_state != previous_state or browse[is_browsing] != previous_browse:
-                viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
                 result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
             elif info:
-                what = f'{browse_or_cart} Data {page_type}'
+                what = f'{browse_or_cart} {viewed} {page_type}'
                 limit = query.get('limit', '???')
                 result.append(f'Fetch {what.title()} {info} Limit {limit}')
 
