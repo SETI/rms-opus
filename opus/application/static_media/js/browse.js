@@ -1320,6 +1320,7 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
+                    // startObs is the starting obs that we will pass into url, the starting obsNum we will get from this batch of returned data
                     let startObs = opus.prefs[startObsLabel];
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
@@ -1329,8 +1330,11 @@ var o_browse = {
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (startObs !== 1) {
-                            // prefetch o_browse.getLimit() items ahead of current startObs
+                            // prefetch o_browse.getLimit() items ahead of firstCachedObs, update the startObs to be passed into url
                             startObs = Math.max(firstCachedObs - o_browse.getLimit(), 1);
+
+                            // If startObs to be passed into url is 1, we will pass firstCachedObs - 1 as limit in url
+                            // else we'll pass o_browse.getLimit() as limit in url
                             customizedLimitNum = startObs === 1 ? firstCachedObs - 1 : o_browse.getLimit();
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
