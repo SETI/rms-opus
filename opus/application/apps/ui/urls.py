@@ -22,5 +22,6 @@ urlpatterns = [
     url(r'^__forms/metadata_selector.html$', api_get_metadata_selector),
     url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
     url(r'^__normalizeurl.json$', api_normalize_url),
-    url(r'^__dummy.json$', api_dummy)
+    url(r'^__dummy.json$', api_dummy),
+    url(r'^__fake/__api/viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy)
 ]

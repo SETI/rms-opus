@@ -1109,7 +1109,7 @@ def api_normalize_url(request):
 
 
 @never_cache
-def api_dummy(request):
+def api_dummy(request, *args, **kwargs):
     """This API does nothing and is used for network performance testing.
 
     This is a PRIVATE API.
