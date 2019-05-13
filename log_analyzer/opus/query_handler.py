@@ -48,6 +48,7 @@ class QueryHandler:
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
         self._previous_pages = ['', '']
         self._previous_startobss = ['', '']
+        self._previous_browses = ['', '']
         self._previous_state = State.RESET
 
     def handle_query(self, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
@@ -106,6 +107,7 @@ class QueryHandler:
             page = query.get('page', '')
             startobs = query.get('cart_startobs', ''), query.get('startobs', '')
             browse = query.get('cart_browse', ''), query.get('browse', '')
+            previous_browse = self._previous_browses[is_browsing]
 
             if startobs[is_browsing]:
                 page_type, info, previous_info = 'Starting Observation', startobs[is_browsing], self._previous_startobss
@@ -114,15 +116,16 @@ class QueryHandler:
             else:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
-            if current_state != previous_state:
+            if current_state != previous_state or browse != previous_browse:
                 viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
-                result.append(f'View {viewed}: {browse_or_cart} {page_type} {info}')
+                result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
             elif info:
                 what = f'{browse_or_cart} Data {page_type}'
                 limit = query.get('limit', '???')
                 result.append(f'Fetch {what.title()} {info} Limit {limit}')
 
             previous_info[is_browsing] = info
+            self._previous_browses[is_browsing] = browse[is_browsing]
 
         self._previous_state = current_state
 
@@ -372,4 +375,3 @@ class QueryHandler:
 
     def safe_format(self, format_string: str, *args: Any) -> str:
         return cast(str, self._session_info.safe_format(format_string, *args))
-
