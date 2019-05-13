@@ -158,6 +158,8 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_colls_browse_gallery(self):
         "[test_ui_api.py] /__normalizeurl: colls_browse gallery"
+        # This is really just testing the default, because we don't pay
+        # attention to colls_browse in normalizeurl
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?colls_browse=gallery'
         new_slugs['cart_browse'] = 'gallery'
@@ -168,7 +170,6 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?colls_browse=data'
         new_slugs['cart_browse'] = 'gallery'
-        # new_slugs['cart_browse'] = 'data'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_colls_browse_badval(self):
@@ -191,8 +192,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: cart_browse data"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cart_browse=data'
-        new_slugs['cart_browse'] = 'gallery'
-        # new_slugs['cart_browse'] = 'data'
+        new_slugs['cart_browse'] = 'data'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_cart_browse_badval(self):
