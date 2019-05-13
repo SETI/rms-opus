@@ -103,9 +103,9 @@ var opus = {
             return;
         }
 
-        if (!$.isEmptyObject(selections) || !opus.areDrawnWidgetsDefault()) {
+        if (!$.isEmptyObject(selections) || !opus.isWidgetsDefault()) {
             $(".op-reset-button button").prop("disabled", false);
-        } else if (!opus.areSelectedMetadataDefault()) {
+        } else if (!opus.isMetadataDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
             $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
@@ -378,12 +378,12 @@ var opus = {
     },
 
     // check if current drawn widgets are default ones
-    areDrawnWidgetsDefault: function() {
+    isWidgetsDefault: function() {
         return o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets);
     },
 
     // check if current cols (metadata) are default ones
-    areSelectedMetadataDefault: function() {
+    isMetadataDefault: function() {
         return o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','));
     },
 
@@ -530,9 +530,9 @@ var opus = {
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
 
-            if (!$.isEmptyObject(opus.selections) || !opus.areDrawnWidgetsDefault()) {
+            if (!$.isEmptyObject(opus.selections) || !opus.isWidgetsDefault()) {
                 $(targetModal).modal("show");
-            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.areSelectedMetadataDefault()) {
+            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.isMetadataDefault()) {
                 $(targetModal).modal("show");
             }
         });
