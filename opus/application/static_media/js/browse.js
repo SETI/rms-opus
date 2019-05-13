@@ -37,8 +37,6 @@ var o_browse = {
     imageSize: 100,     // default
     maxCachedObservations: 1000,    // max number of obserations to store in cache; at some point, we can probably figure this out dynamically
 
-    // set default to 200 so loadData will fetch enough number of data for the first time in large screen
-    // limit: 200,  // results per page
     lastLoadDataRequestNo: 0,
 
     galleryBoundingRect: {'x': 0, 'y': 0},
