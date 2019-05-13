@@ -82,7 +82,7 @@ var o_browse = {
             }
         });
 
-        $("#browse").on("click", ".op-metadataModal", function() {
+        $("#browse, #cart").on("click", ".op-metadataModal", function() {
             o_browse.hideMenu();
             o_browse.renderMetadataSelector();
         });
@@ -165,7 +165,7 @@ var o_browse = {
         });
 
         // data_table - clicking a table row adds to cart
-        $("#dataTable").on("click", ":checkbox", function(e) {
+        $(".op-data-table").on("click", ":checkbox", function(e) {
             if ($(this).val() == "all") {
                 // checkbox not currently implemented
                 // pop up a warning if selection total is > 100 items,
@@ -192,7 +192,7 @@ var o_browse = {
             }
         });
 
-        $("#dataTable").on("click", "td:not(:first-child)", function(e) {
+        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
             e.preventDefault();
             o_browse.hideMenu();
@@ -219,7 +219,7 @@ var o_browse = {
         });
 
         // thumbnail overlay tools
-        $('.gallery, #dataTable').on("click", ".op-tools a", function(e) {
+        $('.gallery, .op-data-table').on("click", ".op-tools a", function(e) {
           //snipe the id off of the image..
           let opusId = $(this).parent().data("id");
 
@@ -299,7 +299,7 @@ var o_browse = {
         });
 
         // click table column header to reorder by that column
-        $("#browse").on("click", ".op-dataTable-view th a",  function() {
+        $("#browse #cart").on("click", ".op-dataTable-view th a",  function() {
             // show this spinner right away when table is clicked
             // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
             $(".op-page-loading-status > .loader").show();
@@ -521,7 +521,7 @@ var o_browse = {
             let orderEntrySlug = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
             // retrieve label from either displayed header's data-label attribute or displayed pill's text
-            let label = $(`#browse .op-dataTable-view th a[data-slug="${orderEntrySlug}"]`).data("label") || $(`#browse .sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text();
+            let label = $(`.op-dataTable-view th a[data-slug="${orderEntrySlug}"]`).data("label") || $(`.sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text();
 
             listHtml += "<li class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntrySlug}" data-descending="${isPillOrderDesc}">`;
@@ -597,7 +597,7 @@ var o_browse = {
     setScrollbarOnSlide: function(obsNum) {
         let tab = `#${opus.prefs.view}`;
         let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
-        let tableTarget = $(`${tab} #dataTable tbody tr[data-obs='${obsNum}']`);
+        let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${obsNum}']`);
 
         // Make sure obsNum is rendered before setting scrollbar position
         if (galleryTarget.length && tableTarget.length) {
@@ -612,7 +612,7 @@ var o_browse = {
             let tableTargetTopPosition = tableTarget.offset().top;
             let tableContainerTopPosition = $(`${tab} .op-dataTable-view`).offset().top;
             let tableScrollbarPosition = $(`${tab} .op-dataTable-view`).scrollTop();
-            let tableHeaderHeight = $(`${tab} #dataTable thead th`).outerHeight();
+            let tableHeaderHeight = $(`${tab} .op-data-table thead th`).outerHeight();
 
             let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition - tableHeaderHeight;
             $(`${tab} .op-dataTable-view`).scrollTop(tableTargetFinalPosition);
@@ -658,13 +658,13 @@ var o_browse = {
     updateSliderHandle: function() {
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
-        let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        let selector = (opus.prefs[browse] === "dataTable") ? `#${opus.prefs.view} .op-data-table tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
 
         $(selector).each(function(index, elem) {
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-            topBoxBoundary = topBoxBoundary || (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
+            topBoxBoundary = topBoxBoundary || (opus.prefs[browse]  === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
 
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -777,7 +777,7 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`#dataTable div[data-id=${opusId}]`).parent();
+        return $(`.op-data-table div[data-id=${opusId}]`).parent();
     },
 
     startRangeSelect: function(opusId) {
@@ -1186,7 +1186,7 @@ var o_browse = {
     },
 
     initResizableColumn: function() {
-        $("#dataTable th div").resizable({
+        $(".op-data-table th div").resizable({
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
@@ -1486,7 +1486,7 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (!$("#galleryViewContents .prev").data("id") && $("#galleryViewContents .prev").hasClass("op-button-disabled")) {
-            let prev = $(`#browse tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
+            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
             while (prev.hasClass("table-page")) {
                 prev = prev.prev("tr");
             }
@@ -1693,7 +1693,7 @@ var o_browse = {
 
 
     resetData: function() {
-        $("#dataTable > tbody").empty();  // yes all namespaces
+        $(".op-data-table > tbody").empty();  // yes all namespaces
         $(".gallery").empty();
         o_browse.galleryData = {};
         o_cart.cartChange = true;  // forces redraw of cart tab

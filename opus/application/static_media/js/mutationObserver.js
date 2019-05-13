@@ -202,7 +202,7 @@ var o_mutationObserver = {
         let metadataSelectorContents = $("#metadataSelectorContents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
         let galleryView = $(".gallery")[0];
-        let tableView = $("#dataTable")[0];
+        let tableView = $(".op-data-table")[0];
         let switchGalleryAndTable = $(".op-browse-view")[0];
 
         // Note:

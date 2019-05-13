@@ -362,11 +362,11 @@ th.sticky-header {
     background-color: black;
 }
 
-#dataTable  {
+.op-data-table  {
     padding: 0;
 }
 
-#dataTable th {
+.op-data-table th {
     vertical-align: middle;
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
@@ -374,33 +374,33 @@ th.sticky-header {
     /* padding-right: 10px; */
 }
 
-#dataTable th a {
+.op-data-table th a {
     display: block;
     text-align: center;
     text-decoration: none;
 }
 
-#dataTable .column_ordering {
+.op-data-table .column_ordering {
     margin: 0 10px;
     /* display: inline-flex; */
     /* float: right; */
 }
 
-#dataTable td {
+.op-data-table td {
     white-space: nowrap;
     min-width: 4.2em;
 }
 
 /* Move y-scrollbar out of container in table view */
-#dataTable th:last-child {
+.op-data-table th:last-child {
     border-right-width: 15px;
 }
 
-#dataTable tr > td:last-child {
+.op-data-table tr > td:last-child {
     border-right-width: 15px;
 }
 
-#dataTable th > div {
+.op-data-table th > div {
     vertical-align: middle;
     display: inline-block;
     width: 100%;
@@ -410,7 +410,7 @@ th.sticky-header {
 }
 
 /* vertically center the resizable handle */
-#dataTable th > div div {
+.op-data-table th > div div {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
