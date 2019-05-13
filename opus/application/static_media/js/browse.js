@@ -13,6 +13,7 @@ const pillSortDownArrow = "fas fa-arrow-circle-down";
 const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
+const infiniteScrollUpThreshold = 100;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -73,7 +74,7 @@ var o_browse = {
 
                 if (opus.prefs[startObsLabel] > 0) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-                    if ($(`${tab} ${contentsView}`).scrollTop() < 100 && firstObs !== 1) {
+                    if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold && firstObs !== 1) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -629,21 +630,18 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
         } else {
-            // when scrolling on slider and loadData is called, we will fetch 3 * getLimit items (one current page, one next page, and one previous page).
-            // firstObs will be the very first obsNum for data rendering this time
-            let firstObs = Math.max(value - o_browse.getLimit(), 1);
+            // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items (one current page, one next page, and one previous page) starting from startObs.
+            // startObs will be the very first obs for data rendering this time
+            let startObs = Math.max(value - o_browse.getLimit(), 1);
 
-            // if value + 1 * getLimit is larger than result counts, we will prefetch more data ahead of firstObs
-            if ((value + o_browse.getLimit() - 1) > opus.resultCount) {
-                firstObs = Math.max(firstObs - o_browse.getLimit(), 1);
-            }
-
-            let customizedLimitNum = firstObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
+            // If startObs is 1, previous page will have value - 1 items, so we render value - 1 + 2 * o_browse.getLimit() items
+            // else we render 2 * o_browse.getLimit() items.
+            let customizedLimitNum = startObs === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page (will be used to set scrollbar position in renderGalleryAndTable, so need to update them before loadData).
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
             o_browse.galleryBegun = false;
-            o_browse.loadData(firstObs, customizedLimitNum, true);
+            o_browse.loadData(startObs, customizedLimitNum);
         }
     },
 
@@ -1322,24 +1320,24 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    let obsNum = opus.prefs[startObsLabel];
+                    let startObs = opus.prefs[startObsLabel];
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
-                    let originalStartObs = $(`${tab} .thumbnail-container`).first().data("obs");
+                    let firstCachedObs = $(`${tab} .thumbnail-container`).first().data("obs");
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
-                        if (obsNum !== 1) {
-                            // prefetch o_browse.getLimit() items ahead of current obsNum
-                            obsNum = Math.max(originalStartObs - o_browse.getLimit(), 1);
-                            customizedLimitNum = obsNum === 1 ? originalStartObs - 1 : o_browse.getLimit();
+                        if (startObs !== 1) {
+                            // prefetch o_browse.getLimit() items ahead of current startObs
+                            startObs = Math.max(firstCachedObs - o_browse.getLimit(), 1);
+                            customizedLimitNum = startObs === 1 ? firstCachedObs - 1 : o_browse.getLimit();
 
-                            // Update the obsNum in infiniteScroll instances with originalStartObs
+                            // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
                             if (infiniteScrollData) {
-                                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": originalStartObs});
-                                $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": originalStartObs});
+                                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": firstCachedObs});
+                                $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": firstCachedObs});
                             }
                         } else {
                             customizedLimitNum = 0;
@@ -1348,9 +1346,9 @@ var o_browse = {
                         // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
-                        obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
+                        startObs = (lastObs !== undefined ? lastObs + 1 : startObs);
                         customizedLimitNum = o_browse.getLimit();
-                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit() - o_browse.galleryBoundingRect.x, 1);
+                        let scrollbarObsNum = Math.max(startObs - o_browse.getLimit() - o_browse.galleryBoundingRect.x, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
@@ -1359,7 +1357,7 @@ var o_browse = {
                             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": scrollbarObsNum});
                         }
                     }
-                    let path = o_browse.getDataURL(obsNum, customizedLimitNum);
+                    let path = o_browse.getDataURL(startObs, customizedLimitNum);
                     return path;
                 },
                 responseType: "text",
