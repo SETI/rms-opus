@@ -87,7 +87,6 @@ def api_last_blog_update(request):
 
 
 @render_to('menu.html')
-@never_cache
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
