@@ -21,7 +21,7 @@ var o_search = {
         minScrollbarLength: opus.minimumPSLength
     }),
     widgetScrollbar: new PerfectScrollbar("#widget-container" , {
-        // suppressScrollX: true,
+        suppressScrollX: true,
         minScrollbarLength: opus.minimumPSLength
     }),
 
