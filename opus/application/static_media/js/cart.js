@@ -45,7 +45,12 @@ var o_cart = {
         });
 
         $("#cart").on("click", ".metadataModal", function(e) {
-
+            // Do the fake API call to write in the Apache log files that
+            // we invoked the metadata selector so log_analyzer has something to
+            // go on
+            let fakeUrl = "/opus/__fake/__api/selectmetadatamodal.json";
+            $.getJSON(fakeUrl, function(data) {
+            });
         });
 
         // check an input on selected products and images updates file_info

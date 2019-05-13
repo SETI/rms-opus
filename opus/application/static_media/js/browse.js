@@ -96,7 +96,6 @@ var o_browse = {
             let fakeUrl = "/opus/__fake/__api/selectmetadatamodal.json";
             $.getJSON(fakeUrl, function(data) {
             });
-
         });
 
         $("#metadataSelector").modal({
