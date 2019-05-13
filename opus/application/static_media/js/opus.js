@@ -103,9 +103,9 @@ var opus = {
             return;
         }
 
-        if (!$.isEmptyObject(selections) || !o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets)) {
+        if (!$.isEmptyObject(selections) || !opus.areDrawnWidgetsDefault()) {
             $(".op-reset-button button").prop("disabled", false);
-        } else if (!o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
+        } else if (!opus.areSelectedMetadataDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
             $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
@@ -320,7 +320,10 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $("#op-search-widgets").empty(); // remove all widgets on the screen
+        // remove all widgets on the screen
+        $.each($("#op-search-widgets .widget"), function(idx, widget) {
+            widget.remove();
+        });
 
         // reset the search query
         opus.selections = {};
@@ -372,6 +375,16 @@ var opus = {
         o_cart.cartBehaviors();
         o_search.searchBehaviors();
         return;
+    },
+
+    // check if current drawn widgets are default ones
+    areDrawnWidgetsDefault: function() {
+        return o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets);
+    },
+
+    // check if current cols (metadata) are default ones
+    areSelectedMetadataDefault: function() {
+        return o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','));
     },
 
     hideHelpPanel: function() {
@@ -517,9 +530,9 @@ var opus = {
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
 
-            if (!$.isEmptyObject(opus.selections) || !o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets)) {
+            if (!$.isEmptyObject(opus.selections) || !opus.areDrawnWidgetsDefault()) {
                 $(targetModal).modal("show");
-            } else if (targetModal === "#op-reset-search-metadata-modal" && !o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
+            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.areSelectedMetadataDefault()) {
                 $(targetModal).modal("show");
             }
         });
