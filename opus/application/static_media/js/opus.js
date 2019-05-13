@@ -103,7 +103,7 @@ var opus = {
             return;
         }
 
-        if (!$.isEmptyObject(selections) || !opus.isWidgetsDefault()) {
+        if (!$.isEmptyObject(selections) || !opus.isDrawnWidgetsListDefault()) {
             $(".op-reset-button button").prop("disabled", false);
         } else if (!opus.isMetadataDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
@@ -378,7 +378,7 @@ var opus = {
     },
 
     // check if current drawn widgets are default ones
-    isWidgetsDefault: function() {
+    isDrawnWidgetsListDefault: function() {
         return o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets);
     },
 
@@ -530,7 +530,7 @@ var opus = {
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
 
-            if (!$.isEmptyObject(opus.selections) || !opus.isWidgetsDefault()) {
+            if (!$.isEmptyObject(opus.selections) || !opus.isDrawnWidgetsListDefault()) {
                 $(targetModal).modal("show");
             } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.isMetadataDefault()) {
                 $(targetModal).modal("show");
