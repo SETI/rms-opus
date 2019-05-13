@@ -93,7 +93,7 @@ var o_browse = {
             // Do the fake API call to write in the Apache log files that
             // we invoked the metadata selector so log_analyzer has something to
             // go on
-            let fakeUrl = "/opus/__fake/__api/selectmetadatamodal.json";
+            let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
             $.getJSON(fakeUrl, function(data) {
             });
         });
@@ -731,7 +731,7 @@ var o_browse = {
         // we won't get separate log entries as the user navigates through
         // the obs using the arrows because we don't want to overload the
         // network with an entry for each opus id.
-        let fakeUrl = `/opus/__fake/__api/viewmetadatamodal/${opusId}.json`;
+        let fakeUrl = `/opus/__fake/__viewmetadatamodal/${opusId}.json`;
         $.getJSON(fakeUrl, function(data) {
         });
 

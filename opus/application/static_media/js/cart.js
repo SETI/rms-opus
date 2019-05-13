@@ -45,10 +45,13 @@ var o_cart = {
         });
 
         $("#cart").on("click", ".metadataModal", function(e) {
+            o_browse.hideMenu();
+            o_browse.renderMetadataSelector();
+
             // Do the fake API call to write in the Apache log files that
             // we invoked the metadata selector so log_analyzer has something to
             // go on
-            let fakeUrl = "/opus/__fake/__api/selectmetadatamodal.json";
+            let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
             $.getJSON(fakeUrl, function(data) {
             });
         });

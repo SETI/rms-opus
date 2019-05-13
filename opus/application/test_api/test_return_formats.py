@@ -171,6 +171,10 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__api/dataimages.[fmt]"
         self._test_return_formats('/__api/dataimages.[fmt]?target=Jupiter&limit=2&reqno=1', ('json',))
 
+    def test__api_retfmt_results_dataimages_fake_pvt(self):
+        "[test_return_formats.py] return formats /__fake/__api/dataimages.[fmt]"
+        self._test_return_formats('/__fake/__api/dataimages.[fmt]?target=Jupiter&limit=2&reqno=1', ('json',))
+
     def test__api_retfmt_results_data(self):
         "[test_return_formats.py] return formats /api/data.[fmt]"
         self._test_return_formats('/api/data.[fmt]', ('json', 'html', 'csv'))
@@ -254,3 +258,11 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def test__api_retfmt_ui_normalizeurl_pvt(self):
         "[test_return_formats.py] return formats /__normalizeurl.[fmt]"
         self._test_return_formats('/__normalizeurl.[fmt]', ('json',))
+
+    def test__api_retfmt_ui_fake_viewmetadatamodal_pvt(self):
+        "[test_return_formats.py] return formats /__fake/__viewmetadatamodal/opusid.[fmt]"
+        self._test_return_formats('/__fake/__viewmetadatamodal/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_ui_fake_selectmetadatamodal_pvt(self):
+        "[test_return_formats.py] return formats /__fake/__selectmetadatamodal.[fmt]"
+        self._test_return_formats('/__fake/__selectmetadatamodal.[fmt]', ('json',))

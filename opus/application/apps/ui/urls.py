@@ -23,6 +23,6 @@ urlpatterns = [
     url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
     url(r'^__normalizeurl.json$', api_normalize_url),
     url(r'^__dummy.json$', api_dummy),
-    url(r'^__fake/__api/viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy),
-    url(r'^__fake/__api/selectmetadatamodal.json$', api_dummy)
+    url(r'^__fake/__viewmetadatamodal/(?P<opus_id>[-\w]+).json$', api_dummy),
+    url(r'^__fake/__selectmetadatamodal.json$', api_dummy)
 ]
