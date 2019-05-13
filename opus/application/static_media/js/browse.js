@@ -1449,7 +1449,7 @@ var o_browse = {
                 return;
             }
 
-            if (!o_browse.galleryBegun) {
+            if (!o_browse.galleryBegun || (opus.prefs.view === "cart" && o_cart.cartChange)) {
                 o_browse.initTable(data.columns, data.columns_no_units);
 
                 $(`${tab} .op-gallery-view`).scrollTop(0);
