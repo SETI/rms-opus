@@ -698,6 +698,8 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
+
+                // update startobs in url when scrolling 
                 o_hash.updateHash(true);
                 return false;
             }
