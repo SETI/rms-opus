@@ -698,7 +698,7 @@ var o_browse = {
                     "step": o_browse.gallerySliderStep,
                     "max": opus.resultCount,
                 });
-
+                o_hash.updateHash(true);
                 return false;
             }
         });
