@@ -1,9 +1,10 @@
 import datetime
 import ipaddress
 import itertools
+import sys
 from collections import deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -85,14 +86,14 @@ class LogParser:
     _id_generator: Iterator[str]
 
     def __init__(self, configuration: AbstractConfiguration, *,
-                 session_timeout_minutes: int, output: TextIO,
+                 session_timeout_minutes: int, output: str,
                  uses_html: bool, by_ip: bool,
                  ip_to_host_converter: IpToHostConverter,
                  ignored_ips: List[ipaddress.IPv4Network],
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
-        self._output = output
+        self._output = open(output, "w") if output else sys.stdout
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
@@ -116,7 +117,12 @@ class LogParser:
                           for sessions in sessions_list
                           for ip in [sessions[0].host_ip]]
             if by_ip:
-                host_infos.sort(key=lambda host_info: (1, host_info.name) if host_info.name else (2, host_info.ip))
+                def sort_key(host_info: HostInfo) -> Tuple[int, Any]:
+                    if host_info.name:
+                        return 1, tuple(reversed(host_info.name.split('.')))
+                    else:
+                        return 2, host_info.ip
+                host_infos.sort(key=sort_key)
             return host_infos
 
         output = self._output
@@ -230,10 +236,13 @@ class LogParser:
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
 
-                sessions.append(Session(host_ip=session_host_ip,
-                                        entries=current_session_entries,
-                                        session_info=session_info,
-                                        id=next(self._id_generator)))
+                if session_info.get_session_flags():
+                    # We ignore sessions that don't actually do anything.
+                    sessions.append(Session(host_ip=session_host_ip,
+                                            entries=current_session_entries,
+                                            session_info=session_info,
+                                            id=next(self._id_generator)))
+
         return sessions
 
     def __generate_batch_text_output(self, host_infos: List[HostInfo]) -> None:

@@ -29,184 +29,172 @@ var o_cart = {
      **/
 
      cartBehaviors: function() {
-         // nav bar
-         $("#cart").on("click", ".op-download-csv", function(e) {
-             let colStr = opus.prefs.cols.join(',');
-             let orderStr = opus.prefs.order.join(",");
-             $(this).attr("href", `/opus/__cart/data.csv?cols=${colStr}&order=${orderStr}`);
-         });
+        // nav bar
+        $("#cart").on("click", ".op-download-csv", function(e) {
+            let colStr = opus.prefs.cols.join(',');
+            let orderStr = opus.prefs.order.join(",");
+            $(this).attr("href", `/opus/__cart/data.csv?cols=${colStr}&order=${orderStr}`);
+        });
 
-         $("#cart").on("click", ".downloadData", function(e) {
-             o_cart.downloadZip("create_zip_data_file", "Internal error creating data zip file");
-         });
+        $("#cart").on("click", ".downloadData", function(e) {
+            o_cart.downloadZip("create_zip_data_file", "Internal error creating data zip file");
+        });
 
-         $("#cart").on("click", ".downloadURL", function(e) {
-             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
-         });
+        $("#cart").on("click", ".downloadURL", function(e) {
+            o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
+        });
 
-         $("#cart").on("click", ".metadataModal", function(e) {
+        // check an input on selected products and images updates file_info
+        $("#cart").on("click","#download_options input", function() {
+            $("#op-total-download-size").hide();
+            $(".op-total-size .spinner").addClass("op-show-spinner");
 
-         });
+            let add_to_url = o_cart.getDownloadFiltersChecked();
+            o_cart.lastRequestNo++;
+            let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
+            $.getJSON(url, function(info) {
+                if (info.reqno < o_cart.lastRequestNo) {
+                    return;
+                }
+                $(".op-total-size .spinner").removeClass("op-show-spinner");
+                $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
+            });
+        });
 
-         // check an input on selected products and images updates file_info
-         $("#cart").on("click","#download_options input", function() {
-             $("#op-total-download-size").hide();
-             $(".op-total-size .spinner").addClass("op-show-spinner");
+        // Display the whole series of modals.
+        // This will keep displaying multiple error message modals one after another when the previous modal is closed.
+        $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
+            if (o_cart.statusDataErrorCollector.length !== 0) {
+                $("#op-cart-status-error-msg .modal-body").text(o_cart.statusDataErrorCollector.pop());
+                $("#op-cart-status-error-msg").modal("show");
+            }
+        });
+    },
 
-             let add_to_url = o_cart.getDownloadFiltersChecked();
-             o_cart.lastRequestNo++;
-             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
-             $.getJSON(url, function(info) {
-                 if (info.reqno < o_cart.lastRequestNo) {
-                     return;
-                 }
-                 $(".op-total-size .spinner").removeClass("op-show-spinner");
-                 $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
-             });
-         });
+    // download filters
+    getDownloadFiltersChecked: function() {
+        // returned as url string
+        let productTypes = [];
+        $("ul#product_types input:checkbox:checked").each(function() {
+            productTypes.push($(this).val());
+        });
+        return "types="+productTypes.join(',');
+    },
 
-         // Display the whole series of modals.
-         // This will keep displaying multiple error message modals one after another when the previous modal is closed.
-         $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
-             if (o_cart.statusDataErrorCollector.length !== 0) {
-                 $("#op-cart-status-error-msg .modal-body").text(o_cart.statusDataErrorCollector.pop());
-                 $("#op-cart-status-error-msg").modal("show");
-             }
-         });
-     },
-
-     // download filters
-     getDownloadFiltersChecked: function() {
-         // returned as url string
-         let product_types = [];
-         let add_to_url = [];
-         $("ul#product_types input:checkbox:checked").each(function() {
-             product_types.push($(this).val());
-         });
-         let checked_filters = {"types":product_types};
-
-         for (let filter_name in checked_filters) {
-             if (checked_filters[filter_name].length) {
-                 add_to_url.push(filter_name + "=" + checked_filters[filter_name].join(','));
-             }
+    downloadZip: function(type, errorMsg) {
+        if (o_cart.downloadInProcess) {
+            return false;
         }
-        return add_to_url.join('&');
-     },
 
-     downloadZip: function(type, errorMsg) {
-         if (o_cart.downloadInProcess) {
-             return false;
-         }
+        $("#op-download-links").show();
+        opus.downloadInProcess = true;
+        $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
 
-         $("#op-download-links").show();
-         opus.downloadInProcess = true;
-         $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
+        let add_to_url = o_cart.getDownloadFiltersChecked();
+        let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
+        url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
+        $.ajax({
+            url: url,
+            dataType: "json",
+            success: function(data) {
+                if (data.error !== undefined) {
+                    $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
+                } else {
+                    $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
+                }
+                $(".spinner", "#op-download-links").fadeOut();
+            },
+            error: function(e) {
+                $(".spinner", "#op-download-links").fadeOut();
+                $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
+            },
+            complete: function() {
+                o_cart.downloadInProcess = false;
+            }
+        });
+    },
 
-         let add_to_url = o_cart.getDownloadFiltersChecked();
-         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
-         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
-         $.ajax({
-             url: url,
-             dataType: "json",
-             success: function(data) {
-                 if (data.error !== undefined) {
-                     $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
-                 } else {
-                     $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
-                 }
-                 $(".spinner", "#op-download-links").fadeOut();
-             },
-             error: function(e) {
-                 $(".spinner", "#op-download-links").fadeOut();
-                 $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
-             },
-             complete: function() {
-                 o_cart.downloadInProcess = false;
-             }
-         });
-     },
+    adjustProductInfoHeight: function() {
+        let containerHeight = $(window).height()-120;
+        let downloadOptionsContainer = $(window).height()-90;
+        let cartSummaryHeight = $("#cart_summary").height();
+        $("#cart .sidebar_wrapper").height(downloadOptionsContainer);
+        $("#cart .gallery-contents").height(containerHeight);
 
-     adjustProductInfoHeight: function() {
-         let containerHeight = $(window).height()-120;
-         let downloadOptionsContainer = $(window).height()-90;
-         let cartSummaryHeight = $("#cart_summary").height();
-         $("#cart .sidebar_wrapper").height(downloadOptionsContainer);
-         $("#cart .gallery-contents").height(containerHeight);
+        // The following steps will hide the y-scrollbar when it's not needed.
+        // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
+        if (o_cart.downloadOptionsScrollbar) {
+            if (downloadOptionsContainer > cartSummaryHeight) {
+                if (!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_cart.downloadOptionsScrollbar.settings.suppressScrollY = false;
+            }
+            o_cart.downloadOptionsScrollbar.update();
+        }
 
-         // The following steps will hide the y-scrollbar when it's not needed.
-         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-         if (o_cart.downloadOptionsScrollbar) {
-             if (downloadOptionsContainer > cartSummaryHeight) {
-                 if (!$("#download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                     $("#download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
-                     o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
-                 }
-             } else {
-                 $("#download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
-                 o_cart.downloadOptionsScrollbar.settings.suppressScrollY = false;
-             }
-             o_cart.downloadOptionsScrollbar.update();
-         }
+        if (o_cart.cartGalleryScrollbar) {
+            o_cart.cartGalleryScrollbar.update();
+        }
+    },
 
-         if (o_cart.cartGalleryScrollbar) {
-             o_cart.cartGalleryScrollbar.update();
-         }
-     },
+    updateCartStatus: function(status) {
+        if (status.reqno < o_cart.lastRequestNo) {
+            return;
+        }
+        let count = status.count;
+        $("#op-cart-count").html(count);
+        if (status.total_download_size_pretty !== undefined) {
+            $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
+        }
+    },
 
-     updateCartStatus: function(status) {
-         if (status.reqno < o_cart.lastRequestNo) {
-             return;
-         }
-         let count = status.count;
-         $("#op-cart-count").html(count);
-         if (status.total_download_size_pretty !== undefined) {
-             $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
-         }
-     },
+    // init an existing cart on page load
+    initCart: function() {
+       // display cart badge spinner, it will get updated after the return of status.json
+       $("#op-cart-count").html(opus.spinner);
+       // returns any user cart saved in session
+       o_cart.lastRequestNo++;
+       $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
+           if (statusData.reqno < o_cart.lastRequestNo) {
+               return;
+           }
+           o_cart.updateCartStatus(statusData);
+       });
+    },
 
-     // init an existing cart on page load
-     initCart: function() {
-        // display cart badge spinner, it will get updated after the return of status.json
-        $("#op-cart-count").html(opus.spinner);
-        // returns any user cart saved in session
-        o_cart.lastRequestNo++;
-        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
-            if (statusData.reqno < o_cart.lastRequestNo) {
+    loadCartData: function(startObs) {
+        let view = o_browse.getViewInfo();
+        let selector = `${view.namespace} .gallery-contents`;
+
+        startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
+
+        // if the request is a block far away from current page cache, flush the cache and start over
+        let elem = $(`${view.namespace} [data-obs=${startObs}]`);
+        let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
+        let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
+
+        $(".op-page-loading-status > .loader").show();
+        let url = o_browse.getDataURL(startObs);
+
+        // metadata; used for both table and gallery
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastLoadDataRequestNo) {
+                // make sure to remove spinner before return
+                $(".op-page-loading-status > .loader").hide();
                 return;
             }
-            o_cart.updateCartStatus(statusData);
-        });
-     },
+            if (opus.colLabels.length === 0) {
+                opus.colLabels = data.columns;
+                opus.colLabelsNoUnits = data.columns_no_units;
+            }
+            o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.updateSortOrder(data);
 
-     loadCartData: function(startObs) {
-         let view = o_browse.getViewInfo();
-         let selector = `${view.namespace} .gallery-contents`;
-
-         startObs = (startObs === undefined ? opus.prefs[`${view.prefix}startobs`] : startObs);
-
-         // if the request is a block far away from current page cache, flush the cache and start over
-         let elem = $(`${view.namespace} [data-obs=${startObs}]`);
-         let lastObs = $(`${view.namespace} [data-obs]`).last().data("obs");
-         let firstObs = $(`${view.namespace} [data-obs]`).first().data("obs");
-
-         $(".op-page-loading-status > .loader").show();
-         let url = o_browse.getDataURL(startObs);
-
-         // metadata; used for both table and gallery
-         $.getJSON(url, function(data) {
-             if (data.reqno < o_cart.lastLoadDataRequestNo) {
-                 // make sure to remove spinner before return
-                 $(".op-page-loading-status > .loader").hide();
-                 return;
-             }
-             if (opus.colLabels.length === 0) {
-                 opus.colLabels = data.columns;
-                 opus.colLabelsNoUnits = data.columns_no_units;
-             }
-             o_browse.renderGalleryAndTable(data, this.url);
-             o_browse.updateSortOrder(data);
-
-             if (o_cart.cartChange) {
+            if (o_cart.cartChange) {
                 // for infinite scroll
                 $(selector).infiniteScroll({
                     path: function() {
@@ -337,6 +325,7 @@ var o_cart = {
             let length = toIndex - fromIndex+1;
             let elementArray = $(`${tab} .thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
+            let addOpusIdList = [];
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
@@ -348,13 +337,20 @@ var o_cart = {
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
-                // this is here because the cart doesn't have support for add/remove range, so we will do them one at a time
-                if (opus.prefs.view == "cart") {
-                    o_cart.editCart(opusId, action.replace("range", ""));
+                // If we remove items from the cart on the cart page, the "ghosts" still stick around in the UI
+                // but the backend doesn't know about them. This means you can't do an addrange in the UI that
+                // includes ghosts because the backend won't know what you want to add. So for all addranges
+                // we have to just add the observations one at a time, since we know what needs to be done here.
+                if (action === "addrange" && opus.prefs.view === "cart") {
+                    addOpusIdList.push(opusId);
                 }
             });
-            // temporary hack; cart has already been committed in loop so only do this for browse.
-            if (opus.prefs.view != "cart") {
+            if (addOpusIdList.length !== 0) {
+                let lastAddOpusId = addOpusIdList[addOpusIdList.length-1];
+                for (const addOpusId of addOpusIdList) {
+                    o_cart.editCart(addOpusId, "add", addOpusId === lastAddOpusId);
+                }
+            } else {
                 o_cart.editCart(opusIdRange, action);
             }
             o_browse.undoRangeSelect(tab);
@@ -372,7 +368,10 @@ var o_cart = {
     },
 
     // action = add/remove/addrange/removerange/addall
-    editCart: function(opusId, action) {
+    editCart: function(opusId, action, updateBadges=true) {
+        // If updateBadges is false, we set the spinners in motion but don't actually update them
+        // This is used when we want to do a lot of cart operations in a row and only update
+        // at the end
         o_cart.cartChange = true;
 
         let url = "/opus/__cart/" + action + ".json?";
@@ -387,15 +386,15 @@ var o_cart = {
                 url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
-          case "addall":
-              url += o_hash.getHash();
-              break;
+            case "addall":
+                url += o_hash.getHash();
+                break;
         }
 
         // Minor performance check - if we don't need a total download size, don't bother
-        // Only the selection tab is interested in updating that count at this time.
+        // Only the cart tab is interested in updating that count at this time.
         let add_to_url = "";
-        if (opus.prefs.view == "cart") {
+        if (opus.prefs.view === "cart" && updateBadges) {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
@@ -421,7 +420,7 @@ var o_cart = {
                 o_browse.loadData();
             }
             // we only update the cart badge result count from the latest request
-            if (statusData.reqno < o_cart.lastRequestNo) {
+            if (statusData.reqno < o_cart.lastRequestNo || !updateBadges) {
                 return;
             }
 

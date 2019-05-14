@@ -15,6 +15,7 @@ from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from dictionary.models import *
@@ -101,6 +102,7 @@ def api_get_menu(request):
     return ret
 
 
+@never_cache
 def api_get_widget(request, **kwargs):
     """Create a search widget and return its HTML.
 
@@ -298,6 +300,7 @@ def api_get_widget(request, **kwargs):
     return ret
 
 
+@never_cache
 def api_get_metadata_selector(request):
     """Create the metadata selector list.
 
@@ -329,6 +332,7 @@ def api_get_metadata_selector(request):
     return ret
 
 
+@never_cache
 def api_init_detail_page(request, **kwargs):
     """Render the top part of the Details tab.
 
@@ -487,7 +491,9 @@ def api_normalize_url(request):
                    +'it has been ignored.')
             msg_list.append(msg)
             continue
-        if slug != pi.slug:
+        # Search slugs might have numeric suffixes but single column ranges
+        # don't so just ignore all the numbers.
+        if strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug):
             old_ui_slug_flag = True
         pi_searchable = pi
         if pi.slug[-1] == '2':
@@ -795,6 +801,7 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         widgets_list.append(widget_name)
+        # Widget names never have numeric suffixes even for two-column ranges
         if widget != strip_numeric_suffix(pi.slug):
             old_ui_slug_flag = True
     for widget in required_widgets_list:
@@ -889,46 +896,26 @@ def api_normalize_url(request):
         view_val = 'search'
     new_url_suffix_list.append(('view', view_val))
 
-    ### BROWSE
-    browse_val = None
-    if 'browse' in old_slugs:
-        if old_slugs['browse'] not in ('gallery', 'data'):
-            msg = ('The value for "browse" was not either "gallery" or "data"; '
-                   +'it has been set to "gallery".')
-            msg_list.append(msg)
+    ### BROWSE and CART_BROWSE
+    # Note: there used to be a colls_browse, but since we never supported the
+    # table in the cart anyway, we're just going to ignore colls_browse as
+    # a possibility here.
+    for prefix in ('', 'cart_'):
+        browse_val = None
+        if prefix+'browse' in old_slugs:
+            if old_slugs[prefix+'browse'] not in ('gallery', 'data'):
+                msg = (f'The value for "{prefix}browse" was not either '
+                       +'"gallery" or "data"; it has been set to "gallery".')
+                msg_list.append(msg)
+                browse_val = 'gallery'
+            else:
+                browse_val = old_slugs[prefix+'browse']
+            del old_slugs[prefix+'browse']
+        if browse_val is None:
+            # msg = 'The "browse" field is missing; it has been set to the default.'
+            # msg_list.append(msg)
             browse_val = 'gallery'
-        else:
-            browse_val = old_slugs['browse']
-        del old_slugs['browse']
-    if browse_val is None:
-        # msg = 'The "browse" field is missing; it has been set to the default.'
-        # msg_list.append(msg)
-        browse_val = 'gallery'
-    new_url_suffix_list.append(('browse', browse_val))
-
-    ### CART_BROWSE
-    cart_browse_val = None
-    if 'colls_browse' in old_slugs or 'cart_browse' in old_slugs:
-        temp_val = (old_slugs.get('cart_browse', None) or
-                    old_slugs.get('colls_browse', None))
-        # Force it to always be "gallery" for now since we don't support the
-        # table view!
-        # if temp_val not in ('gallery', 'data'):
-        #     msg = ('The value for "cart_browse" was not either "gallery" or '
-        #            +'"data"; it has been set to "gallery".')
-        if temp_val != 'gallery':
-            msg = ('The value for "cart_browse" was not "gallery"; '
-                   +'it has been set to "gallery".')
-            msg_list.append(msg)
-        else:
-            cart_browse_val = temp_val
-        if 'colls_browse' in old_slugs:
-            del old_slugs['colls_browse']
-        if 'cart_browse' in old_slugs:
-            del old_slugs['cart_browse']
-    if cart_browse_val is None: # pragma: no cover
-        cart_browse_val = 'gallery'
-    new_url_suffix_list.append(('cart_browse', cart_browse_val))
+        new_url_suffix_list.append((prefix+'browse', browse_val))
 
     ### PAGE and STARTOBS (and CART_PAGE and CART_STARTOBS)
     for prefix in ('', 'cart_'):
@@ -1101,7 +1088,7 @@ def api_normalize_url(request):
 
 
 @never_cache
-def api_dummy(request):
+def api_dummy(request, *args, **kwargs):
     """This API does nothing and is used for network performance testing.
 
     This is a PRIVATE API.

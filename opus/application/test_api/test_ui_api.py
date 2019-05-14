@@ -158,6 +158,8 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     def test__api_normalizeurl_colls_browse_gallery(self):
         "[test_ui_api.py] /__normalizeurl: colls_browse gallery"
+        # This is really just testing the default, because we don't pay
+        # attention to colls_browse in normalizeurl
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?colls_browse=gallery'
         new_slugs['cart_browse'] = 'gallery'
@@ -168,7 +170,6 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?colls_browse=data'
         new_slugs['cart_browse'] = 'gallery'
-        # new_slugs['cart_browse'] = 'data'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_colls_browse_badval(self):
@@ -191,8 +192,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: cart_browse data"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cart_browse=data'
-        new_slugs['cart_browse'] = 'gallery'
-        # new_slugs['cart_browse'] = 'data'
+        new_slugs['cart_browse'] = 'data'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_cart_browse_badval(self):
@@ -1584,6 +1584,12 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: real 5"
         url = '/opus/__normalizeurl.json?mission=Voyager&observationtype=Image&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&startobs=1&cart_browse=gallery&detail='
         expected = {'new_url': 'mission=Voyager&observationtype=Image&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=', 'new_slugs': [{'mission': 'Voyager'}, {'observationtype': 'Image'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': ''}], 'msg': None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeurl_real_6(self):
+        "[test_ui_api.py] /__normalizeurl: real 6"
+        url = '/opus/__normalizeurl.json?SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&surfacegeometrytargetname=Pluto&qtype-SURFACEGEOplutophase=any&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
+        expected = {"new_url": "SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&qtype-SURFACEGEOplutophase=any&surfacegeometrytargetname=Pluto&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"SURFACEGEOplutocenterresolution2": "5.00000"}, {"SURFACEGEOplutophase1": "160.000"}, {"qtype-SURFACEGEOplutophase": "any"}, {"surfacegeometrytargetname": "Pluto"}, {"cols": "opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2"}, {"widgets": "SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
 # http://pds-rings-tools.seti.org/opus/#/planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_VG1_ISS_3353709_N
