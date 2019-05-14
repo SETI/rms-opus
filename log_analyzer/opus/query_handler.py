@@ -9,6 +9,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 from markupsafe import Markup
 
 from opus import slug as slug
+from opus.slug import FamilyType
 
 SearchSlugInfo = Dict[slug.Family, List[Tuple[slug.Info, str]]]
 ColumnSlugInfo = Dict[slug.Family, slug.Info]
@@ -69,13 +70,7 @@ class QueryHandler:
             if (previous_state, current_state) == (State.FETCHING, State.SEARCHING):
                 result.append('Refining Previous Search')
 
-        search_slug_info: SearchSlugInfo = defaultdict(list)
-        for slug, value in query.items():
-            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
-            if slug_info:
-                family = slug_info.family
-                search_slug_info[family].append((slug_info, value))
-                self._session_info.add_search_slug(slug, slug_info)
+        search_slug_info = self.__get_search_slug_info(query)
 
         if uses_columns:
             columns_query = query.get('cols')
@@ -138,6 +133,21 @@ class QueryHandler:
             self._session_info.fetched_gallery()
 
         return result, url
+
+    def __get_search_slug_info(self, query):
+        search_slug_info: SearchSlugInfo = defaultdict(list)
+        for slug, value in query.items():
+            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
+            if slug_info:
+                family = slug_info.family
+                search_slug_info[family].append((slug_info, value))
+                self._session_info.add_search_slug(slug, slug_info)
+        # If the only item in a family is QTYPE, then discard it.
+        for family, slug_info_value_list in list(search_slug_info.items()):
+            if len(slug_info_value_list) == 1:
+                if slug_info_value_list[0][0].family_type == FamilyType.QTYPE:
+                    del search_slug_info[family]
+        return search_slug_info
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         """Handles info for the contents of search slugs"""
