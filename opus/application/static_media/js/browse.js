@@ -699,7 +699,7 @@ var o_browse = {
                     "max": opus.resultCount,
                 });
 
-                // update startobs in url when scrolling 
+                // update startobs in url when scrolling
                 o_hash.updateHash(true);
                 return false;
             }
@@ -868,9 +868,7 @@ var o_browse = {
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
                 o_browse.initTable(opus.colLabels, opus.colLabelsNoUnits);
-                opus.prefs.startobs = 1;
-                opus.prefs.cart_startobs = 1;
-                o_browse.loadData(1);
+                o_browse.loadData();
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
                 $(".op-page-loading-status > .loader").hide();
