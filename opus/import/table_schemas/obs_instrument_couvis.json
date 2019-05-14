@@ -152,7 +152,7 @@
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "OCCULTATION_PORT_STATE",
-        "definition": "The state of the occultation port. Values are Open or Closed.",
+        "definition": "The state of the occultation port. Values are Open and Closed.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
