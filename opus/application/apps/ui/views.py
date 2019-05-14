@@ -102,6 +102,7 @@ def api_get_menu(request):
     return ret
 
 
+@never_cache
 def api_get_widget(request, **kwargs):
     """Create a search widget and return its HTML.
 
@@ -299,6 +300,7 @@ def api_get_widget(request, **kwargs):
     return ret
 
 
+@never_cache
 def api_get_metadata_selector(request):
     """Create the metadata selector list.
 
@@ -330,6 +332,7 @@ def api_get_metadata_selector(request):
     return ret
 
 
+@never_cache
 def api_init_detail_page(request, **kwargs):
     """Render the top part of the Details tab.
 
@@ -1085,7 +1088,7 @@ def api_normalize_url(request):
 
 
 @never_cache
-def api_dummy(request):
+def api_dummy(request, *args, **kwargs):
     """This API does nothing and is used for network performance testing.
 
     This is a PRIVATE API.

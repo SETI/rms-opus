@@ -58,6 +58,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+@never_cache
 def api_get_data_and_images(request):
     """Return a page of data and images for a given search.
 
@@ -232,6 +233,7 @@ def api_get_data_and_images(request):
     return ret
 
 
+@never_cache
 def api_get_data(request, fmt):
     """Return a page of data for a given search.
 
@@ -345,6 +347,7 @@ def api_get_data(request, fmt):
     return ret
 
 
+@never_cache
 def api_get_metadata(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
@@ -371,6 +374,7 @@ def api_get_metadata(request, opus_id, fmt):
     return get_metadata(request, opus_id, fmt,
                         'api_get_metadata', True, False)
 
+@never_cache
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
@@ -750,6 +754,7 @@ def api_get_images(request, fmt):
     return ret
 
 
+@never_cache
 def api_get_image(request, opus_id, size='med', fmt='raw'):
     """Return info about a preview image for the given opus_id and size.
 
@@ -805,6 +810,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     return ret
 
 
+@never_cache
 def api_get_files(request, opus_id=None):
     """Return all files for a given opus_id or search results.
 
@@ -879,6 +885,7 @@ def api_get_files(request, opus_id=None):
     return ret
 
 
+@never_cache
 def api_get_categories_for_opus_id(request, opus_id):
     """Return a JSON list of all cateories (tables) this opus_id appears in.
 
@@ -932,6 +939,7 @@ def api_get_categories_for_opus_id(request, opus_id):
     return ret
 
 
+@never_cache
 def api_get_categories_for_search(request):
     """Return a JSON list of all cateories (tables) triggered by this search.
 

@@ -86,11 +86,6 @@ var o_browse = {
             }
         });
 
-        $("#browse").on("click", ".metadataModal", function() {
-            o_browse.hideMenu();
-            o_browse.renderMetadataSelector();
-        });
-
         $("#metadataSelector").modal({
             keyboard: false,
             backdrop: 'static',
@@ -107,6 +102,13 @@ var o_browse = {
 
             // reset scroll position
             window.scrollTo(0, 0); // restore previous scroll position
+
+            // Do the fake API call to write in the Apache log files that
+            // we changed views so log_analyzer has something to go on
+            let hashString = o_hash.getHash();
+            let fakeUrl = `/opus/__fake/__api/dataimages.json?${hashString}`;
+            $.getJSON(fakeUrl, function(data) {
+            });
 
             return false;
         });
@@ -710,6 +712,17 @@ var o_browse = {
         o_browse.loadPrevPageIfNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
+
+        // Do the fake API call to write in the Apache log files that
+        // we showed the modal for this OPUSID. This is what the previous
+        // version of OPUS did so the log_analyzer already handles it. Note that
+        // we won't get separate log entries as the user navigates through
+        // the obs using the arrows because we don't want to overload the
+        // network with an entry for each opus id.
+        let fakeUrl = `/opus/__fake/__viewmetadatamodal/${opusId}.json`;
+        $.getJSON(fakeUrl, function(data) {
+        });
+
     },
 
     hideMenu: function() {
@@ -864,6 +877,16 @@ var o_browse = {
         $("#metadataSelector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
+
+            o_browse.hideMenu();
+            o_browse.renderMetadataSelector();
+
+            // Do the fake API call to write in the Apache log files that
+            // we invoked the metadata selector so log_analyzer has something to
+            // go on
+            let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
+            $.getJSON(fakeUrl, function(data) {
+            });
         });
 
         $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
