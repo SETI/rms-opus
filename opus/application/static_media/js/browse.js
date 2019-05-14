@@ -658,13 +658,13 @@ var o_browse = {
     updateSliderHandle: function() {
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
-        let selector = (opus.prefs[browse] === "dataTable") ? `#${opus.prefs.view} .op-data-table tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
+        let selector = (opus.prefs[browse] === "gallery") ?  `#${opus.prefs.view} .gallery .thumbnail-container` : `#${opus.prefs.view} .op-data-table tbody tr`;
         let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
 
         $(selector).each(function(index, elem) {
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-            topBoxBoundary = topBoxBoundary || (opus.prefs[browse]  === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
+            topBoxBoundary = topBoxBoundary || (opus.prefs[browse]  === "gallery") ? $(`${tab} .gallery-contents`).offset().top : $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight();
 
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -684,8 +684,9 @@ var o_browse = {
                 $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
                 // just make the step size the number of the obserations across the page...
                 // if the observations have not yet been rendered, leave the default, it will get changed later
-                if (o_browse.galleryBoundingRect.x > 0) {
-                    o_browse.gallerySliderStep = o_browse.galleryBoundingRect.x;
+                let galleryBoundingRect = opus.namespaceDict[opus.prefs.view].galleryBoundingRect;
+                if (galleryBoundingRect.x > 0) {
+                    o_browse.gallerySliderStep = galleryBoundingRect.x;
                 }
                 $("#op-observation-slider").slider({
                     "value": obsNum,
@@ -978,11 +979,7 @@ var o_browse = {
 
             suppressScrollY = true;
         }
-        if (opus.prefs.view === "browse") {
-            o_browse.galleryScrollbar.settings.suppressScrollY = suppressScrollY;
-        } else {
-            o_cart.galleryScrollbar.settings.suppressScrollY = suppressScrollY;
-        }
+        opus.namespaceDict[opus.prefs.view].galleryScrollbar.settings.suppressScrollY = suppressScrollY;
 
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
@@ -1256,7 +1253,8 @@ var o_browse = {
     getLimit: function() {
         // o_browse.limit = (o_browse.galleryBoundingRect.x !== 0 ? (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y) : o_browse.limit);
         // return o_browse.limit;
-        return (o_browse.galleryBoundingRect.x * o_browse.galleryBoundingRect.y);
+        let galleryBoundingRect = opus.namespaceDict[opus.prefs.view].galleryBoundingRect;
+        return (galleryBoundingRect.x * galleryBoundingRect.y);
     },
 
     getDataURL: function(startObs, customizedLimitNum=undefined) {
@@ -1362,7 +1360,7 @@ var o_browse = {
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit();
-                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit() - o_browse.galleryBoundingRect.x, 1);
+                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit() - opus.namespaceDict[opus.prefs.view].galleryBoundingRect.x, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
@@ -1502,7 +1500,7 @@ var o_browse = {
 
     getBrowseTab: function() {
         // init o_browse.galleryBoundingRect
-        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        opus.namespaceDict[opus.prefs.view].galleryBoundingRect = o_browse.countGalleryImages();
         // reset range select
         o_browse.undoRangeSelect();
 
@@ -1540,8 +1538,8 @@ var o_browse = {
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
 
-        o_browse.galleryScrollbar.update();
-        o_browse.galleryBoundingRect = o_browse.countGalleryImages();
+        opus.namespaceDict[opus.prefs.view].galleryScrollbar.update();
+        opus.namespaceDict[opus.prefs.view].galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
         o_browse.updateSliderHandle();
@@ -1554,8 +1552,8 @@ var o_browse = {
         let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").outerHeight();
         $(`${tab} .op-dataTable-view`).width(containerWidth);
         $(`${tab} .op-dataTable-view`).height(containerHeight);
-        //todo:  this only applies to #browse
-        o_browse.tableScrollbar.update();
+
+        opus.namespaceDict[opus.prefs.view].tableScrollbar.update();
     },
 
     adjustMetadataSelectorMenuPS: function() {

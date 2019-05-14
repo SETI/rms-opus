@@ -610,6 +610,10 @@ var opus = {
  *
  */
 $(document).ready(function() {
+    // just for browse and cart, as we need to abstract some functions easier
+    // needs to be done in the document.ready because o_cart & o_browse need to be defined first
+    opus.namespaceDict = { "cart": o_cart, "browse": o_browse };
+    
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
     opus.normalizedURLAPICall();

@@ -35,17 +35,9 @@ var o_hash = {
             }
         }
         $.each(opus.prefs, function(key, value) {
-                switch (key) {
-                    case "browse":
-                        value = (value == "dataTable" ? "data" : value);
-                        hash.push(key + "=" + value);
-                        break;
-
-                    default:
-                        hash.push(key + "=" + opus.prefs[key]);
-                }
-            }
-        );
+            value = (value == "dataTable" ? "data" : value);
+            hash.push(key + "=" + value);
+        });
 
         if (updateURL) {
             window.location.hash = '/' + hash.join('&');

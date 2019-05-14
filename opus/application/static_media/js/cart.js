@@ -16,6 +16,7 @@ var o_cart = {
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
+    galleryBoundingRect: {'x': 0, 'y': 0},
 
     tableScrollbar: new PerfectScrollbar("#cart .op-dataTable-view", {
         minScrollbarLength: opus.minimumPSLength
