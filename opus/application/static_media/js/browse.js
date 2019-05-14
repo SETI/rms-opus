@@ -560,7 +560,7 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
-        let maxObs = (opus.prefs.view === "cart" ? parseInt($("#op-cart-count").html()) : opus.resultCount);
+        let maxObs = (opus.prefs.view === "cart" ? o_cart.cartCount : opus.resultCount);
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs") + 1;
         if (obsNum <= maxObs) {

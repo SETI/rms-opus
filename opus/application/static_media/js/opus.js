@@ -290,15 +290,10 @@ var opus = {
 
             case 'detail':
                 $('#detail').fadeIn();
-
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
             case 'cart':
-                if (opus.prefs.cart_browse == 'data') {
-                    $('.data_table','#cart').show();
-                    $('.gallery','#cart').hide();
-                }
                 $('#cart').fadeIn();
                 o_cart.getCartTab();
                 break;

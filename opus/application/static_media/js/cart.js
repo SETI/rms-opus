@@ -13,6 +13,7 @@ var o_cart = {
     cartChange: true, // cart has changed since last load of cart_tab
     lastRequestNo: 0,
     downloadInProcess: false,
+    cartCount: 0,
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
@@ -153,8 +154,8 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        let count = status.count;
-        $("#op-cart-count").html(count);
+        o_cart.cartCount = status.count;
+        $("#op-cart-count").html(o_cart.cartCount);
         if (status.total_download_size_pretty !== undefined) {
             $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
         }
@@ -181,7 +182,8 @@ var o_cart = {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
-            $(".gallery", "#cart").html("");
+            $("#cart .op-data-table > tbody").empty();  // yes all namespaces
+            $("#cart .gallery").empty();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -195,7 +197,7 @@ var o_cart = {
 
                     let startObsLabel = o_browse.getStartObsLabel();
                     let startObs = opus.prefs[startObsLabel];
-                    startObs = (startObs > parseInt($("#op-cart-count").html()) ? 1 : startObs);
+                    startObs = (startObs > o_cart.cartCount ? 1 : startObs);
                     o_browse.loadData(startObs);
 
                     if (zippedFiles_html) {
