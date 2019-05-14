@@ -71,13 +71,13 @@ def create_import_definitions_table():
                     definition = column['definition'+suffix]
                     if column.get('pi_dict_name'+suffix, None) is None:
                         logger.log('error',
-                           'Missing term for "{definition}" in "{file_name}"')
+                           f'Missing term for "{definition}" in "{file_name}"')
                         bad_db = True
                         continue
                     term = column['pi_dict_name'+suffix]
                     if column.get('pi_dict_context'+suffix, None) is None:
                         logger.log('error',
-                          'Missing context for "{definition}" in "{file_name}"')
+                         f'Missing context for "{definition}" in "{file_name}"')
                         bad_db = True
                         continue
                     context = column['pi_dict_context'+suffix]
