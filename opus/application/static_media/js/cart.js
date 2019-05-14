@@ -235,7 +235,7 @@ var o_cart = {
 
         // handle it as range
         if (toOpusId != undefined) {
-            let tab = `#${opus.prefs.view}`;
+            let tab = opus.getViewTab();
             let action = (fromElem.hasClass("op-in-cart") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
             let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);

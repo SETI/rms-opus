@@ -73,7 +73,7 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout: 0,
 
-    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
+    lastLoadDataRequestNo: { "#cart": 0, "#browse": 0 },
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer: false,
@@ -403,6 +403,16 @@ var opus = {
         }
     },
 
+    // return either o_browse or o_cart, default to o_browse object
+    getViewNamespace: function() {
+        return (opus.prefs.view === "cart" ? o_cart : o_browse);
+    },
+
+    // return either #browse or #cart, default to #browse
+    getViewTab: function() {
+        return (opus.prefs.view === "cart" ? "#cart" : "#browse");
+    },
+
     // OPUS initialization process after document.ready and normalized url api call
     opusInitialization: function() {
         /* displays a list of the included css for debug only!
@@ -596,10 +606,6 @@ var opus = {
  *
  */
 $(document).ready(function() {
-    // just for browse and cart, as we need to abstract some functions easier
-    // needs to be done in the document.ready because o_cart & o_browse need to be defined first
-    opus.namespaceDict = { "cart": o_cart, "browse": o_browse };
-    
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
     opus.normalizedURLAPICall();
