@@ -19,7 +19,7 @@ var o_cart = {
     statusDataErrorCollector: [],
     galleryBoundingRect: {'x': 0, 'y': 0},
 
-    tableScrollbar: new PerfectScrollbar("#cart .op-dataTable-view", {
+    tableScrollbar: new PerfectScrollbar("#cart .op-data-table-view", {
         minScrollbarLength: opus.minimumPSLength
     }),
     galleryScrollbar: new PerfectScrollbar("#cart .op-gallery-view", {

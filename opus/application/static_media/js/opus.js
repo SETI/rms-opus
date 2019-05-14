@@ -449,7 +449,7 @@ var opus = {
 
         for (let tab of ["#browse", "#cart"]) {
             o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
-            o_browse.initInfiniteScroll(`${tab} .op-dataTable-view`);
+            o_browse.initInfiniteScroll(`${tab} .op-data-table-view`);
         }
 
         // add the navbar clicking behaviors, selecting which tab to view:
