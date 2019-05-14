@@ -29,6 +29,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
 from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.shortcuts import render_to_response
+from django.views.decorators.cache import never_cache
 
 from paraminfo.models import ParamInfo
 from search.models import *
@@ -49,6 +50,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+@never_cache
 def api_get_result_count(request, fmt, internal=False):
     """Return the result count for a given search.
 
@@ -120,6 +122,7 @@ def api_get_result_count_internal(request):
     return api_get_result_count(request, 'json', internal=True)
 
 
+@never_cache
 def api_get_mult_counts(request, slug, fmt, internal=False):
     """Return the mults for a given slug along with result counts.
 
@@ -304,6 +307,7 @@ def api_get_mult_counts_internal(request, slug):
     return api_get_mult_counts(request, slug, 'json', internal=True)
 
 
+@never_cache
 def api_get_range_endpoints(request, slug, fmt, internal=False):
     """Compute and return range widget endpoints (min, max, nulls)
 
@@ -499,6 +503,7 @@ def api_get_range_endpoints_internal(request, slug):
     return api_get_range_endpoints(request, slug, 'json', internal=True)
 
 
+@never_cache
 def api_get_fields(request, fmt='json', slug=None):
     """Return information about fields in the database (slugs).
 

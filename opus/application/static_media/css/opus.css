@@ -139,7 +139,7 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    width: 400px;
+    max-width: 400px;
 }
 
 .sidebar_wrapper {
@@ -149,7 +149,7 @@ Not sure if this is the desired behavior
     overflow: auto;
     margin-top: 5px;
     position: relative;
-    height: 500px; /* matches .widget_column */
+    height: 500px; /* matches .op-widget-column */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -895,19 +895,19 @@ nav.panel-heading {
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
-    overflow: auto !important;
+    overflow-x: auto !important;
     overflow-y: hidden !important;
 }
 
-.widget_column {
-    overflow: auto;
+.op-widget-column {
     position: relative;
-    padding 0 20px;
+    padding: 0 20px;
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
-    width: 740px;
-    max-width: 97%;
+    /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
+    max-width: 740px;
+    min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;

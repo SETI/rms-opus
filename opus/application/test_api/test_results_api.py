@@ -36,24 +36,30 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     # reqno
 
     def test__api_dataimages_no_results_default(self):
-        "/__api/dataimages: no results default cols"
+        "[test_results_api.py] /__api/dataimages: no results default cols"
         url = '/opus/__api/dataimages.json?opusid=notgoodid'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_dataimages_no_results_default_reqno(self):
-        "/__api/dataimages: no results default cols reqno"
+        "[test_results_api.py] /__api/dataimages: no results default cols reqno"
         url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=5'
         self._run_status_equal(url, 200)
 
     def test__api_dataimages_no_results_default_reqno_bad(self):
-        "/__api/dataimages: no results default cols reqno bad"
+        "[test_results_api.py] /__api/dataimages: no results default cols reqno bad"
         url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=-1'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
     def test__api_dataimages_no_results_default_reqno_bad_2(self):
-        "/__api/dataimages: no results default cols reqno bad 2"
+        "[test_results_api.py] /__api/dataimages: no results default cols reqno bad 2"
         url = '/opus/__api/dataimages.json?opusid=notgoodid&reqno=1.0'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
+
+    # fake
+    def test__api_dataimages_no_results_default_reqno(self):
+        "[test_results_api.py] /__fake/__api/dataimages: no results default cols reqno"
+        url = '/opus/__fake/__api/dataimages.json?opusid=notgoodid&reqno=5'
+        self._run_status_equal(url, 200)
 
 
             #######################################
