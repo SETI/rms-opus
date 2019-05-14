@@ -458,11 +458,11 @@ th.sticky-header {
     display: inline-grid;
 }
 
-#metadataSelector i.fa-check {
+#op-metadata-selector i.fa-check {
     display: inline-block;
 }
 
-#metadataSelector ul li {
+#op-metadata-selector ul li {
     text-decoration: none;
 }
 
@@ -565,7 +565,7 @@ img.preview {
     z-index: 999;
 }
 
-#galleryView button.close, #metadataSelector button.close {
+#galleryView button.close, #op-metadata-selector button.close {
     position: absolute;
     float: right;
     top: .8em;

@@ -83,7 +83,7 @@ var o_browse = {
             }
         });
 
-        $("#metadataSelector").modal({
+        $("#op-metadata-selector").modal({
             keyboard: false,
             backdrop: 'static',
             show: false,
@@ -92,7 +92,7 @@ var o_browse = {
         // browse nav menu - the gallery/table toggle
         $("#browse, #cart").on("click", ".op-browse-view", function() {
             o_browse.hideMenu();
-            let browse = (opus.prefs.view === "browse" ? "browse" : "cart_browse");
+            let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
 
             o_hash.updateHash();
@@ -304,7 +304,7 @@ var o_browse = {
         });
 
         // click table column header to reorder by that column
-        $("#browse #cart").on("click", ".op-dataTable-view th a",  function() {
+        $("#browse, #cart").on("click", ".op-dataTable-view th a",  function() {
             // show this spinner right away when table is clicked
             // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
             $(".op-page-loading-status > .loader").show();
@@ -468,7 +468,7 @@ var o_browse = {
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 $("#galleryView").modal('hide');
-                $("#metadataSelector").modal('hide');
+                $("#op-metadata-selector").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
                 opus.hideHelpPanel();
@@ -664,7 +664,7 @@ var o_browse = {
     updateSliderHandle: function() {
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
-        let browse = (opus.prefs.view === "browse" ? "browse" : "cart_browse");
+        let browse = o_browse.getBrowseView();
         let selector = (opus.prefs[browse] === "gallery") ?  `${tab} .gallery .thumbnail-container` : `${tab} .op-data-table tbody tr`;
         let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
         let startObsLabel = o_browse.getStartObsLabel();
@@ -835,7 +835,7 @@ var o_browse = {
     },
 
     addColumn: function(slug) {
-        let elem = $(`#metadataSelector .allMetadata a[data-slug=${slug}]`);
+        let elem = $(`#op-metadata-selector .allMetadata a[data-slug=${slug}]`);
         elem.find("i.fa-check").fadeIn().css("display", "inline-block");
 
         let label = elem.data("qualifiedlabel");
@@ -848,14 +848,14 @@ var o_browse = {
         opus.prefs.cols = cols.slice();
 
         if (closeModal == true) {
-            $("#metadataSelector").modal('hide');
+            $("#op-metadata-selector").modal('hide');
         }
 
         // uncheck all on left; we will check them as we go
-        $("#metadataSelector .allMetadata .fa-check").hide();
+        $("#op-metadata-selector .allMetadata .fa-check").hide();
 
         // remove all from selected column
-        $("#metadataSelector .selectedMetadata li").remove();
+        $("#op-metadata-selector .selectedMetadata li").remove();
 
         // add them back and set the check
         $.each(cols, function(index, slug) {
@@ -870,7 +870,7 @@ var o_browse = {
         var currentSelectedMetadata = opus.prefs.cols.slice();
         /* jshint varstmt: true */
 
-        $("#metadataSelector").on("hide.bs.modal", function(e) {
+        $("#op-metadata-selector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 o_browse.resetData();
@@ -882,7 +882,7 @@ var o_browse = {
             }
         });
 
-        $("#metadataSelector").on("show.bs.modal", function(e) {
+        $("#op-metadata-selector").on("show.bs.modal", function(e) {
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
 
@@ -897,7 +897,7 @@ var o_browse = {
             });
         });
 
-        $('#metadataSelector .allMetadata').on("click", '.submenu li a', function() {
+        $('#op-metadata-selector .allMetadata').on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
@@ -923,7 +923,7 @@ var o_browse = {
         });
 
         // removes chosen column
-        $("#metadataSelector .selectedMetadata").on("click", "li .unselect", function() {
+        $("#op-metadata-selector .selectedMetadata").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
                 return;     // prevent user from removing all the columns
             }
@@ -935,13 +935,13 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
-                $(`#metadataSelector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
+                $(`#op-metadata-selector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
             }
             return false;
         });
 
         // buttons
-        $("#metadataSelector").on("click", ".btn", function() {
+        $("#op-metadata-selector").on("click", ".btn", function() {
             switch($(this).attr("type")) {
                 case "reset":
                     opus.prefs.cols = [];
@@ -986,7 +986,7 @@ var o_browse = {
 
     updateBrowseNav: function() {
         let tab = opus.getViewTab();
-        let browse = (opus.prefs.view === "browse" ? "browse" : "cart_browse");
+        let browse = o_browse.getBrowseView();
         let contentsView = o_browse.getScrollContainerClass();
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-dataTable-view`).data("infiniteScroll");
@@ -1039,7 +1039,7 @@ var o_browse = {
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
 
                 o_browse.metadataSelectorDrawn = true;  // bc this gets saved not redrawn
-                $("#metadataSelector .op-reset-button").hide(); // we are not using this
+                $("#op-metadata-selector .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu, we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li", "unselect");
@@ -1052,10 +1052,10 @@ var o_browse = {
 
                 o_browse.addMetadataSelectorBehaviors();
 
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .allMetadata", {
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .allMetadata", {
                     minScrollbarLength: opus.minimumPSLength
                 });
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#metadataSelectorContents .selectedMetadata", {
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .selectedMetadata", {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
@@ -1346,9 +1346,13 @@ var o_browse = {
         }
     },
 
+    getBrowseView: function () {
+        return (opus.prefs.view === "cart" ? "cart_browse" : "browse");
+    },
+
     // return the infiniteScroll container class for either gallery or table view
     getScrollContainerClass: function() {
-        let browse = (opus.prefs.view === "cart" ? "cart_browse" : "browse");
+        let browse = o_browse.getBrowseView();
         return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-dataTable-view");
     },
 
