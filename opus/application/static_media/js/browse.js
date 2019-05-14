@@ -86,9 +86,6 @@ var o_browse = {
             }
         });
 
-        $("#browse").on("click", ".metadataModal", function() {
-        });
-
         $("#metadataSelector").modal({
             keyboard: false,
             backdrop: 'static',
