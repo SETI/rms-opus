@@ -1356,14 +1356,15 @@ var o_browse = {
         return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-data-table-view");
     },
 
-    getStartObsLabel: function() {
-        return (opus.prefs.view === "cart" ? "cart_startobs" : "startobs");
+    getStartObsLabel: function(tab) {
+        tab = (tab === undefined ? opus.prefs.view : tab);
+        return (tab === "cart" ? "cart_startobs" : "startobs");
     },
 
     // Instantiate infiniteScroll
-    initInfiniteScroll: function(selector) {
-        let tab = opus.getViewTab();
-        let startObsLabel = o_browse.getStartObsLabel();
+    initInfiniteScroll: function(view, selector) {
+        let tab = `#${view}`;
+        let startObsLabel = o_browse.getStartObsLabel(view);
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
