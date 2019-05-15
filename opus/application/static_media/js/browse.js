@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* globals $, _, PerfectScrollbar */
 /* globals o_cart, o_hash, o_menu, o_utils, opus */
-/* globals default_columns */
+/* globals DEFAULT_COLUMNS */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -835,13 +835,13 @@ var o_browse = {
     },
 
     addColumn: function(slug) {
-        let elem = $(`#op-metadata-selector .allMetadata a[data-slug=${slug}]`);
+        let elem = $(`#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`);
         elem.find("i.fa-check").fadeIn().css("display", "inline-block");
 
         let label = elem.data("qualifiedlabel");
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
-        $(".selectedMetadata > ul").append(html);
+        $(".op-selected-metadata-column > ul").append(html);
     },
 
     resetMetadata: function(cols, closeModal) {
@@ -852,10 +852,10 @@ var o_browse = {
         }
 
         // uncheck all on left; we will check them as we go
-        $("#op-metadata-selector .allMetadata .fa-check").hide();
+        $("#op-metadata-selector .op-all-metadata-column .fa-check").hide();
 
         // remove all from selected column
-        $("#op-metadata-selector .selectedMetadata li").remove();
+        $("#op-metadata-selector .op-selected-metadata-column li").remove();
 
         // add them back and set the check
         $.each(cols, function(index, slug) {
@@ -897,7 +897,7 @@ var o_browse = {
             });
         });
 
-        $('#op-metadata-selector .allMetadata').on("click", '.submenu li a', function() {
+        $("#op-metadata-selector .op-all-metadata-column").on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
@@ -911,7 +911,7 @@ var o_browse = {
             if ($(chosenSlugSelector).length === 0) {
                 selectedMetadata.fadeIn();
                 // this slug was previously unselected, add to cols
-                $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".selectedMetadata > ul").fadeIn();
+                $(`<li id = "${chosenSlugSelector.substr(1)}">${label}<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span><span class="unselect"><i class="far fa-trash-alt"></span></li>`).hide().appendTo(".op-selected-metadata-column > ul").fadeIn();
                 opus.prefs.cols.push(slug);
             } else {
                 selectedMetadata.hide();
@@ -923,7 +923,7 @@ var o_browse = {
         });
 
         // removes chosen column
-        $("#op-metadata-selector .selectedMetadata").on("click", "li .unselect", function() {
+        $("#op-metadata-selector .op-selected-metadata-column").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
                 return;     // prevent user from removing all the columns
             }
@@ -935,7 +935,7 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
-                $(`#op-metadata-selector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
+                $(`#op-metadata-selector .op-all-metadata-column [data-slug=${slug}]`).find("i.fa-check").hide();
             }
             return false;
         });
@@ -945,7 +945,7 @@ var o_browse = {
             switch($(this).attr("type")) {
                 case "reset":
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(default_columns.split(','));
+                    o_browse.resetMetadata(DEFAULT_COLUMNS.split(','));
                     break;
                 case "submit":
                     $(".op-page-loading-status > .loader").show();
@@ -1052,15 +1052,15 @@ var o_browse = {
 
                 o_browse.addMetadataSelectorBehaviors();
 
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .allMetadata", {
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-all-metadata-column", {
                     minScrollbarLength: opus.minimumPSLength
                 });
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .selectedMetadata", {
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-selected-metadata-column", {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
                 // dragging to reorder the chosen
-                $( ".selectedMetadata > ul").sortable({
+                $( ".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.metadataDragged(this); }
@@ -1601,32 +1601,32 @@ var o_browse = {
     },
 
     adjustMetadataSelectorMenuPS: function() {
-        let containerHeight = $(".allMetadata").height();
-        let menuHeight = $(".allMetadata .searchMenu").height();
+        let containerHeight = $(".op-all-metadata-column").height();
+        let menuHeight = $(".op-all-metadata-column .searchMenu").height();
 
         if (containerHeight > menuHeight) {
-            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+            if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
                 o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
             }
         } else {
-            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
             o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
         }
         o_browse.allMetadataScrollbar.update();
     },
 
     adjustSelectedMetadataPS: function() {
-        let containerHeight = $(".selectedMetadata").height();
-        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
+        let containerHeight = $(".op-selected-metadata-column").height();
+        let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
 
         if (containerHeight > selectedMetadataHeight) {
-            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+            if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
                 o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
             }
         } else {
-            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
             o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
         }
         o_browse.selectedMetadataScrollbar.update();

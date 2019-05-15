@@ -239,7 +239,7 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    updateLastBlogUpdate: function() {
+    updateLastBlogDate: function() {
         $.getJSON("/opus/__lastblogupdate.json", function(data) {
             if (data.lastupdate !== null) {
                 let lastUpdateDate = new Date(data.lastupdate);
@@ -267,7 +267,7 @@ var opus = {
         $("#galleryView").modal('hide');
         opus.prefs.view = tab ? tab : opus.prefs.view;
         o_hash.updateHash();
-        opus.updateLastBlogUpdate();
+        opus.updateLastBlogDate();
 
         switch(opus.prefs.view) {
 
@@ -347,7 +347,7 @@ var opus = {
         // reset the search query
         opus.selections = {};
         opus.extras = {};
-        o_browse.resetQuery();
+        o_browse.resetData();
         opus.changeTab('search');
 
         // resets widgets drawn back to system default
@@ -357,10 +357,10 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
-        if (!o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
+        if (!o_utils.areObjectsEqual(opus.prefs.cols, DEFAULT_COLUMNS.split(','))) {
             if (resetMetadata) {
                 opus.prefs.cols = [];
-                o_browse.resetMetadata(default_columns.split(','), true);
+                o_browse.resetMetadata(DEFAULT_COLUMNS.split(','), true);
                 $(".op-reset-button button").prop("disabled", true);
             } else {
                 $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
@@ -403,7 +403,7 @@ var opus = {
 
     // check if current cols (metadata) are default ones
     isMetadataDefault: function() {
-        return o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','));
+        return o_utils.areObjectsEqual(opus.prefs.cols, DEFAULT_COLUMNS.split(','));
     },
 
     hideHelpPanel: function() {
@@ -446,7 +446,7 @@ var opus = {
 
         opus.prefs.widgets = [];
         o_widgets.updateWidgetCookies();
-        opus.lastBlogUpdate();
+        opus.updateLastBlogDate();
         opus.addAllBehaviors();
 
         o_hash.initFromHash(); // just returns null if no hash

@@ -326,7 +326,7 @@ def api_get_metadata_selector(request):
         "all_slugs_info": all_slugs_info,
         "menu": menu
     }
-    ret = render(request, "select_metadata.html", context)
+    ret = render(request, "ui/select_metadata.html", context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -426,7 +426,7 @@ def api_init_detail_page(request, **kwargs):
         'opus_id': opus_id,
         'instrument_id': instrument_id
     }
-    ret = render(request, 'detail.html', context)
+    ret = render(request, 'ui/detail.html', context)
     exit_api_call(api_code, ret)
     return ret
 
