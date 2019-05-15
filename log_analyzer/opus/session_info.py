@@ -179,8 +179,8 @@ class SessionInfo(AbstractSessionInfo):
     # API
     #
 
-    @pattern_registry.register(r'/__api/(data)\.json')  # is this correct?
-    @pattern_registry.register(r'/__api/(data)\.html')  # is this correct?
+    @pattern_registry.register(r'/__api/(data)\.json')
+    @pattern_registry.register(r'/__api/(data)\.html')
     @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
@@ -188,6 +188,7 @@ class SessionInfo(AbstractSessionInfo):
         return self._query_handler.handle_query(query, match.group(1))
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
+    @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
     def __view_metadata(self, _: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
@@ -228,14 +229,15 @@ class SessionInfo(AbstractSessionInfo):
     def __collections_view_cart(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         return ['View Cart'], None
 
-    @pattern_registry.register(r'/__collections/data.csv')
-    @pattern_registry.register(r'/__cart/data.csv')
+    @pattern_registry.register(r'/__collections/data\.csv')
+    @pattern_registry.register(r'/__cart/data\.csv')
     def __download_cart_metadata_csv(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         return ["Download CSV of Selected Metadata for Cart"], None
 
-    @pattern_registry.register(r'/__collections/download.json')
-    @pattern_registry.register(r'/__cart/download.json')
+    @pattern_registry.register(r'/__collections/download\.(json|zip)')
+    @pattern_registry.register(r'/__collections/download/default\.zip')
+    @pattern_registry.register(r'/__cart/download\.json')
     def __create_archive(self, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         has_url = query.get('urlonly') not in [None, '0']
@@ -247,6 +249,7 @@ class SessionInfo(AbstractSessionInfo):
 
     # Note that the __collections/ and the __cart/ are different.
     @pattern_registry.register(r'/__collections/(view)\.json')
+    @pattern_registry.register(r'/__collections/default/(view)\.json')
     @pattern_registry.register(r'/__cart/(status)\.json')
     def __download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         if match.group(1) == 'status' and query.get('download') != '1':
@@ -279,11 +282,13 @@ class SessionInfo(AbstractSessionInfo):
         return result, None
 
     @pattern_registry.register(r'/__collections/reset\.(html|json)')
+    @pattern_registry.register(r'/__collections/default/reset\.(html|json)')
     @pattern_registry.register(r'/__cart/reset\.(html|json)')
     def __reset_cart(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         return ['Empty Cart'], None
 
     @pattern_registry.register(r'/__collections/(add|remove)\.json')
+    @pattern_registry.register(r'/__collections/default/(add|remove)\.json')
     @pattern_registry.register(r'/__cart/(add|remove)\.json')
     def __add_remove_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         opus_id = query.get('opusid') or query.get('opus_id')  # opusid is new name, opus_id is old
@@ -293,15 +298,17 @@ class SessionInfo(AbstractSessionInfo):
         else:
             return [f'Cart {selection.title() + ":":<7} {opus_id or "???"}'], None
 
-    @pattern_registry.register(r'/__collections/(add|remove)range.json')
-    @pattern_registry.register(r'/__cart/(add|remove)range.json')
+    @pattern_registry.register(r'/__collections/(add|remove)range\.json')
+    @pattern_registry.register(r'/__collections/default/(add|remove)range\.json')
+    @pattern_registry.register(r'/__cart/(add|remove)range\.json')
     def __add_remove_range_to_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         selection = match.group(1).title()
         query_range = query.get('range', '???').replace(',', ', ')
         return [f'Cart {selection} Range: {query_range}'], None
 
-    @pattern_registry.register(r'/__collections/addall.json')
-    @pattern_registry.register(r'/__cart/addall.json')
+    @pattern_registry.register(r'/__collections/addall\.json')
+    @pattern_registry.register(r'/__collections/default/addall\.json')
+    @pattern_registry.register(r'/__cart/addall\.json')
     def __add_all_to_cart(self, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         query_range = query.get('range', None)
         if query_range:
@@ -315,6 +322,7 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__forms/column_chooser\.html')
+    @pattern_registry.register(r'/__selectmetadatamodal\.json')
     def __column_chooser(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         return ['Metadata Selector'], None
 
