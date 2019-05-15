@@ -14,6 +14,8 @@ const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
+// Fix scrollbar length for gallery & table view
+const galleryAndTabPSLength = 75;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -23,11 +25,13 @@ var o_browse = {
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .op-dataTable-view", {
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: galleryAndTabPSLength,
+        maxScrollbarLength: galleryAndTabPSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: galleryAndTabPSLength,
+        maxScrollbarLength: galleryAndTabPSLength,
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
@@ -635,15 +639,13 @@ var o_browse = {
         let elem = $(`#${opus.prefs.view} .thumbnail-container[data-obs="${value}"]`);
         let startObsLabel = o_browse.getStartObsLabel();
 
-        opus.prefs[startObsLabel] = value;
+        // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page. (will be used to set scrollbar position in renderGalleryAndTable).
         $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
         $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
+        opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
             o_browse.setScrollbarOnSlide(value);
-            // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page. (will be used to set scrollbar position in renderGalleryAndTable). This is for the case when above o_browse.setScrollbarOnSlide(value) trigger infiniteScroll load event.
-            // $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
-            // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
         } else {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items (one current page, one next page, and one previous page) starting from obsNum.
             // obsNum will be the very first obs for data rendering this time
@@ -652,9 +654,6 @@ var o_browse = {
             // If obsNum is 1, previous page will have value - 1 items, so we render value - 1 + 2 * o_browse.getLimit() items
             // else we render 2 * o_browse.getLimit() items.
             let customizedLimitNum = obsNum === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
-            // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page (will be used to set scrollbar position in renderGalleryAndTable, so need to update them before loadData).
-            // $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
-            // $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": value});
             o_browse.galleryBegun = false;
             o_browse.loadData(obsNum, customizedLimitNum);
         }
