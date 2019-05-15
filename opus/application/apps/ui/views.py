@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
 class main_site(TemplateView):
-    template_name = "base.html"
+    template_name = "ui/base.html"
 
     def get_context_data(self, **kwargs):
         context = super(main_site, self).get_context_data(**kwargs)
@@ -86,7 +86,7 @@ def api_last_blog_update(request):
     return ret
 
 
-@render_to('menu.html')
+@render_to('ui/menu.html')
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -282,7 +282,7 @@ def api_get_widget(request, **kwargs):
     intro = param_info.intro
     units = param_info.get_units()
 
-    template = "widget.html"
+    template = "ui/widget.html"
     context = {
         "slug": slug,
         "label": label,

@@ -1741,13 +1741,4 @@ var o_browse = {
         o_browse.galleryBegun = false;
         o_hash.updateHash();
     },
-
-    resetQuery: function() {
-        /*
-        when the user changes the query and all this stuff is already drawn
-        need to reset all of it (todo: replace with framework!)
-        */
-        o_browse.metadataSelectorDrawn = false;
-        o_browse.resetData();
-    },
 };

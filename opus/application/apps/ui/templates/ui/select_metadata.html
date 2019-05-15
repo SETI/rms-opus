@@ -1,10 +1,10 @@
-{% extends "menu.html" %}
+{% extends "ui/menu.html" %}
 
 {% block menu %}
 <div class="row">
   <div class="allMetadata col">
     {% with 'menu' as expectedVarName %}
-      {{ block.super }} {# renders menu.html #}
+      {{ block.super }} {# renders ui/menu.html #}
     {% endwith %}
   </div>
 
