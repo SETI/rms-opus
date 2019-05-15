@@ -216,7 +216,7 @@ var opus = {
         $("#browse_tab").fadeIn();
         opus.updateResultCount(resultCountData.data[0].result_count);
 
-        o_menu.getMenu();
+        o_menu.updateSearchMenu();
 
         $.each(opus.prefs.widgets, function(index, slug) {
             o_search.getHinting(slug);
@@ -332,11 +332,7 @@ var opus = {
     },
 
     startOver: function(resetMetadata=false) {
-        // handles the 'start over' buttons which has 2 selections
-        // if keep_set_widgets is true it will leave the current selected widgets alone
-        // and just redraw them with no selections in them
-        // if keep_set_widgets is false it will remove all widgets and restore
-        // the application default widgets
+        // handles the 'Reset Search' and 'Reset Search and Metadata' buttons
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
         // remove all widgets on the screen
@@ -351,8 +347,6 @@ var opus = {
         opus.changeTab('search');
 
         // resets widgets drawn back to system default
-        // in the 2 tier button this was the 'start over and restore defaults' behavior
-        // note: this is the current deployed behavior for the single 'start over' button
         opus.prefs.widgets = [];
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
@@ -370,7 +364,7 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
-        o_menu.markDefaultMenuItem();
+        o_menu.markDefaultMenuItems();
 
         let deferredArr = [];
         $.each(opus.default_widgets.slice().reverse(), function(index, slug) {

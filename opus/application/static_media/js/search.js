@@ -470,7 +470,7 @@ var o_search = {
             opus.prefs.widgets = $.cookie("widgets").split(',');
         }
         // get menu
-        o_menu.getMenu();
+        o_menu.updateSearchMenu();
 
         // find and place the widgets
         if (!opus.prefs.widgets.length) {

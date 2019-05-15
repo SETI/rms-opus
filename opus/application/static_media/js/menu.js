@@ -23,7 +23,7 @@ var o_menu = {
 
              let slug = $(this).data("slug");
              if (!slug) { return; }
-             if ($.inArray(slug, opus.widgets_drawn)>-1) {
+             if ($.inArray(slug, opus.widgets_drawn) > -1) {
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it
@@ -38,7 +38,7 @@ var o_menu = {
                   o_menu.markMenuItem(this);
                   o_widgets.getWidget(slug,'#op-search-widgets');
              }
-             
+
              o_hash.updateHash();
              return false;
          });
@@ -62,7 +62,7 @@ var o_menu = {
         });
      },
 
-     getMenu: function() {
+     updateSearchMenu: function() {
         $('.op-menu-text.spinner').addClass("op-show-spinner");
 
         let hash = o_hash.getHash();
@@ -82,12 +82,12 @@ var o_menu = {
             $("#sidebar").toggleClass("op-redraw-menu");
             $(".menu_spinner").fadeOut("fast");
 
-            o_menu.markCurrentMenuItem();
+            o_menu.markCurrentMenuItems();
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
         });
      },
-     markDefaultMenuItem: function() {
+     markDefaultMenuItems: function() {
          o_menu.markMenuItem(".submenu li a", "unselect");
          $.each(opus.default_widgets, function(index, slug) {
              o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
@@ -104,8 +104,8 @@ var o_menu = {
       }
      },
 
-     markCurrentMenuItem: function() {
-         $.each(opus.widgets_drawn, function(index, slug) {
+     markCurrentMenuItems: function() {
+         $.each(opus.widgets, function(index, slug) {
              o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
          });
      },
