@@ -15,7 +15,7 @@ const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
 // Fixed scrollbar length for gallery & table view
-const galleryAndTabPSLength = 75;
+const galleryAndTabPSLength = 100;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -74,22 +74,11 @@ var o_browse = {
             let startObsLabel = o_browse.getStartObsLabel();
             let tab = `#${opus.prefs.view}`;
             let contentsView = o_browse.getScrollContainerClass();
-            // if (event.originalEvent.type === "ps-scroll-up" || (event.originalEvent.type === "wheel" && event.originalEvent.deltaY < 0)) {
-            if (event.type === "ps-scroll-up" || (event.type === "wheel" && event.originalEvent.deltaY < 0)) {
-                // console.log("=== pressing page up ===");
-                if (opus.prefs[startObsLabel] > 1) {
-                    // console.log("=== scrollbar location ===");
-                    // console.log($(`${tab} ${contentsView}`).scrollTop())
-                    let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-                    console.log(`FirstObs when scrolling up: ${firstObs}`);
-                    // if ($(`${tab} ${contentsView}`).scrollTop() === 0 && firstObs === opus.prefs["startobs"]) {
-                    //     console.log("=== Reach to start end, trigger another ps scroll up ===");
-                    //     $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
-                    //     return;
-                    // }
 
+            if (event.type === "ps-scroll-up" || (event.type === "wheel" && event.originalEvent.deltaY < 0)) {
+                if (opus.prefs[startObsLabel] > 1) {
+                    let firstObs = $(`${tab} [data-obs]`).first().data("obs");
                     if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold && firstObs !== 1) {
-                        // TODO: update the infiniteScroll instances obsNum
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -722,6 +711,7 @@ var o_browse = {
     },
 
     checkScroll: function() {
+        // this will make sure ps-scroll-up is triggered to prefetch previous data when scrollbar reaches to up scroll threshold point
         let tab = `#${opus.prefs.view}`;
         let contentsView = o_browse.getScrollContainerClass();
         if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
@@ -1184,9 +1174,6 @@ var o_browse = {
         // - scroll up: when we scroll up and a new page is fetched, we want to keep scrollbar position at the current startObs, instead of at the first item in newly fetched page.
         // - scroll slider: when we load 3 * getLimit items, we want to keep scrollbar in the middle page.
         // - scroll down: theoretically, infiniteScroll will take care of scrollbar position, but we still have to manually set it for the case when cached data is removed so that scrollbar position is always correct (and never reaches to the end until it reaches to the end of the data)
-        console.log("=== renderGalleryAndTable set scrollbar obsNum ===");
-        console.log(infiniteScrollData.options.obsNum);
-        console.log(opus.prefs["startobs"]);
         o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
 
         $(".op-page-loading-status > .loader").hide();
@@ -1384,16 +1371,8 @@ var o_browse = {
                     let firstCachedObs = $(`${tab} .thumbnail-container`).first().data("obs");
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
-
-                    // TODO: either move this block to ps-scroll-up handler or
-                    // find a way to trigger scroll up in ps-scroll-up handler when it reaches to the top end
-                    console.log("=== ON PATH ===");
-                    if (infiniteScrollData) {
-                        console.log(infiniteScrollData.options.loadPrevPage);
-                    }
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
-                        console.log("ON PATH SCROLL UP");
                         if (obsNum !== 1) {
                             // prefetch o_browse.getLimit() items ahead of firstCachedObs, update the startObs to be passed into url
                             obsNum = Math.max(firstCachedObs - o_browse.getLimit(), 1);
@@ -1413,7 +1392,6 @@ var o_browse = {
                             customizedLimitNum = 0;
                         }
                     } else {
-                        console.log("ON PATH SCROLL DOWN");
                         // Direction: scroll down, we prefetch 1 * o_browse.getLimit() items (symmetric to scroll up)
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
@@ -1430,9 +1408,6 @@ var o_browse = {
                         }
                     }
                     let path = o_browse.getDataURL(obsNum, customizedLimitNum);
-                    console.log(`ON PATH: ${path}`);
-                    console.log(`obsNum: ${obsNum}`);
-                    console.log(`limit: ${customizedLimitNum}`);
                     return path;
                 },
                 responseType: "text",
