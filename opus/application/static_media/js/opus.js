@@ -270,7 +270,6 @@ var opus = {
         opus.updateLastBlogDate();
 
         switch(opus.prefs.view) {
-
             case 'search':
                 window.scrollTo(0,0);
                 $('#search').fadeIn();
@@ -280,7 +279,6 @@ var opus = {
             case 'browse':
                 $('#browse').fadeIn();
                 o_browse.getBrowseTab();
-
                 break;
 
             case 'detail':
@@ -295,7 +293,6 @@ var opus = {
 
             default:
                 o_search.getSearchTab();
-
         } // end switch
 
     },
@@ -303,27 +300,19 @@ var opus = {
     // Normalize all input fields and check them for validity
     normalizedURLAPICall: function() {
         let hash = o_hash.getHash();
-        // Note: We don't need a reqno here.
-        // Because in our implementation, this api is called at the beginning of document ready
+        // Note: We don't need a reqno here because this api is called at the beginning of document ready
         // (or on reload), and every time this event is triggered, it means everything is reloaded.
-        // If we put reqno here, reqno will always be 1, so we don't need reqno.
+        // If we put reqno here, reqno will always be 1 anyway, so there's no point.
         let url = "/opus/__normalizeurl.json?" + hash;
-        $.getJSON(url, function(normalizeurlData) {
-            // Comment out action of updating startobs
-            // $.each(normalizeurlData.new_slugs, function(idx, slug) {
-            //     if (slug.startobs) {
-            //         opus.currentObs = slug.startobs;
-            //     }
-            // });
-
-            // display returned message in the modal
-            if (normalizeurlData.msg) {
-                $("#op-update-url .modal-body").html(normalizeurlData.msg);
+        $.getJSON(url, function(normalizeURLData) {
+            // display returned message, if any, in the modal
+            if (normalizeURLData.msg) {
+                $("#op-update-url .modal-body").html(normalizeURLData.msg);
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
-            // update URL
-            window.location.hash = "/" + normalizeurlData.new_url.replace(" ", "+");
+            // update URL in browser
+            window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "+");
             // perform rest of initialization process
             opus.opusInitialization();
             // watch the url for changes, this runs continuously
@@ -378,7 +367,6 @@ var opus = {
         o_hash.updateHash();
 
         return false;
-
     },
 
     addAllBehaviors: function() {

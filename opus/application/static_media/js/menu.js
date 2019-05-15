@@ -105,7 +105,7 @@ var o_menu = {
      },
 
      markCurrentMenuItems: function() {
-         $.each(opus.widgets, function(index, slug) {
+         $.each(opus.widgets_drawn, function(index, slug) {
              o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
          });
      },
