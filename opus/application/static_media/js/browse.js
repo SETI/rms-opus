@@ -72,7 +72,7 @@ var o_browse = {
 
             if (event.originalEvent.type === "ps-scroll-up" || (event.originalEvent.type === "wheel" && event.originalEvent.deltaY < 0)) {
 
-                if (opus.prefs[startObsLabel] > 0) {
+                if (opus.prefs[startObsLabel] > 1) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
                     if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold && firstObs !== 1) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
@@ -699,7 +699,7 @@ var o_browse = {
                     "max": opus.resultCount,
                 });
 
-                // update startobs in url when scrolling 
+                // update startobs in url when scrolling
                 o_hash.updateHash(true);
                 return false;
             }
