@@ -72,7 +72,7 @@ var o_browse = {
 
                 if (opus.prefs[startObsLabel] > 0) {
                     let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-                    if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold && firstObs !== 1) {
+                    if (firstObs !== undefined && firstObs !== 1 && $(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
@@ -1565,6 +1565,8 @@ var o_browse = {
             xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
             // yCount = Math.ceil(($(`${tab} .gallery-contents`).height() - $(".app-footer").height()) /o_browse.imageSize);   // images are 100px
             yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
+        } else {
+            console.log("countGalleryImages: This should never happen.");
         }
         return {"x": xCount, "y": yCount};
     },
