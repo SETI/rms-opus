@@ -473,9 +473,9 @@ var opus = {
 
         o_mutationObserver.observePerfectScrollbar();
 
-        for (let tab of ["#browse", "#cart"]) {
-            o_browse.initInfiniteScroll(`${tab} .op-gallery-view`);
-            o_browse.initInfiniteScroll(`${tab} .op-data-table-view`);
+        for (let tab of ["browse", "cart"]) {
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
         }
 
         // add the navbar clicking behaviors, selecting which tab to view:
