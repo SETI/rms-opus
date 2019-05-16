@@ -1036,7 +1036,7 @@ var o_browse = {
         // remove any existing view= slug or startobs= slug
         let slug = "view";
         url = $.grep(url.split('&'), function(pair, index) {
-            return !pair.startsWith("slug");
+            return !pair.startsWith(slug);
         }).join('&');
 
         url += `&${slug}=${view}`;
