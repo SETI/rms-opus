@@ -82,7 +82,6 @@ var o_browse = {
                         $(`${tab} ${contentsView}`).infiniteScroll({
                             "loadPrevPage": true,
                         });
-                        console.log(`=== load previous page with current startObs ${opus.prefs["startobs"]} ===`);
                         $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                         o_browse.updateSliderHandle();
                     }
@@ -671,43 +670,22 @@ var o_browse = {
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
             let firstCachedObsTop = $(selector).first().offset().top;
-            let calculatedFirstObs = firstCachedObs;
-            // let calculatedFirstObs = Math.floor((firstCachedObs - 1)/o_browse.galleryBoundingRect.x+0.0000001) * o_browse.galleryBoundingRect.x + 1;
             topBoxBoundary = topBoxBoundary || (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
 
-            // table: obsNum = calculatedFirstObs + number of row
-            // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
+            // table: obsNum = firstCachedObs + number of row
+            // gallery: obsNum = firstCachedObs + number of row * number of obs in a row
             let obsNumDiff = (opus.prefs.browse === "dataTable") ? Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) : Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * o_browse.galleryBoundingRect.x;
-            let obsNum = obsNumDiff + calculatedFirstObs;
-
-            console.log("=== updateSliderHandle firstCachedObs ===");
-            console.log(firstCachedObs);
-            console.log("=== galleryBoundingRect ===");
-            console.log(o_browse.galleryBoundingRect);
-            console.log("=== calculateFirstObs ===");
-            console.log(calculatedFirstObs);
-            // console.log("=== FirstObs top ===");
-            // console.log(firstCachedObsTop);
-            // console.log("=== topBoxBoundary ===");
-            // console.log(topBoxBoundary);
-            console.log("=== Row height ===");
-            console.log(obsNumDiff);
-            console.log("=== startObs ===");
-            console.log(obsNum);
-            console.log(`=== slider step: ${o_browse.gallerySliderStep} ===`);
+            let obsNum = obsNumDiff + firstCachedObs;
 
             // update obsNum in both infiniteScroll instances
             // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
             if (contentsView === ".op-dataTable-view") {
                 obsNum = Math.floor((obsNum-firstCachedObs)/o_browse.galleryBoundingRect.x+0.0000001)*o_browse.galleryBoundingRect.x+firstCachedObs;
-                // obsNum = Math.floor((obsNum-1)/o_browse.gallerySliderStep+0.0000001)*o_browse.gallerySliderStep+1;
             }
 
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
             $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
             opus.prefs[startObsLabel] = obsNum;
-            console.log("=== startObs after convert ===");
-            console.log(obsNum);
 
             $("#op-observation-number").html(obsNum);
             $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
@@ -725,46 +703,6 @@ var o_browse = {
             // update startobs in url when scrolling
             o_hash.updateHash(true);
         }
-
-        // $(selector).each(function(index, elem) {
-        //     // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
-        //     // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-        //     topBoxBoundary = topBoxBoundary || (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
-        //
-        //     // compare the image .top + half its height in order to make sure we account for partial images
-        //     let topBox = $(elem).offset().top + $(elem).height()/2;
-        //     if (topBox >= topBoxBoundary) {
-        //         let obsNum = $(elem).data("obs");
-        //         console.log(`obsNum in loop: ${obsNum}`);
-        //
-        //         // update obsNum in both infiniteScroll instances
-        //         // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
-        //         if (contentsView === ".op-dataTable-view") {
-        //             obsNum = Math.floor((obsNum-1)/o_browse.gallerySliderStep+0.0000001)*o_browse.gallerySliderStep+1;
-        //         }
-        //         console.log(`obsNum after convert in loop: ${obsNum}`);
-        //         $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
-        //         $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
-        //         opus.prefs[startObsLabel] = obsNum;
-        //
-        //         $("#op-observation-number").html(obsNum);
-        //         $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
-        //         // just make the step size the number of the obserations across the page...
-        //         // if the observations have not yet been rendered, leave the default, it will get changed later
-        //         if (o_browse.galleryBoundingRect.x > 0) {
-        //             o_browse.gallerySliderStep = o_browse.galleryBoundingRect.x;
-        //         }
-        //         $("#op-observation-slider").slider({
-        //             "value": obsNum,
-        //             "step": o_browse.gallerySliderStep,
-        //             "max": opus.resultCount,
-        //         });
-        //
-        //         // update startobs in url when scrolling
-        //         o_hash.updateHash(true);
-        //         return false;
-        //     }
-        // });
     },
 
     checkScroll: function() {
@@ -1072,8 +1010,6 @@ var o_browse = {
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-            console.log("=== startObs when switching between table and gallery");
-            console.log(startObs);
             o_browse.setScrollbarPosition(startObs);
         }
     },
@@ -1165,7 +1101,6 @@ var o_browse = {
                 return;
             }
         } else {
-            let startobsLabel = o_browse.getStartObsLabel();
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
 
             o_browse.manageObservationCache(data.count, append);
