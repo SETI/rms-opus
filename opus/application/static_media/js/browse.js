@@ -667,6 +667,28 @@ var o_browse = {
         let selector = (opus.prefs.browse === "dataTable") ? `#${opus.prefs.view} #dataTable tbody tr` : `#${opus.prefs.view} .gallery .thumbnail-container`;
         let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
         let startObsLabel = o_browse.getStartObsLabel();
+        if ($(selector).length > 0) {
+            // this will work to get the top left obsNum for gallery view
+            let firstObs = (opus.prefs.browse === "dataTable") ? $(`${tab} tbody tr`).first().data("obs") : $(`${tab} [data-obs]`).first().data("obs");
+            console.log("=== updateSliderHandle firstObs ===");
+            console.log(firstObs);
+            let calculateFirstObs = Math.floor((firstObs - 1)/o_browse.galleryBoundingRect.x) * o_browse.galleryBoundingRect.x + 1;
+            console.log(calculateFirstObs);
+            console.log("=== FirstObs top ===");
+            let firstObsTop = (opus.prefs.browse === "dataTable") ? $(`${tab} tbody tr`).first().offset().top : $(`${tab} [data-obs]`).first().offset().top;
+            console.log(firstObsTop);
+            topBoxBoundary = topBoxBoundary || (opus.prefs.browse === "dataTable") ? $(`${tab} .gallery-contents`).offset().top + $(`${tab} #dataTable thead th`).outerHeight() : $(`${tab} .gallery-contents`).offset().top;
+            console.log("=== topBoxBoundary ===");
+            console.log(topBoxBoundary);
+            // number of row * number of obs in a row
+            let obsNumDiff = (opus.prefs.browse === "dataTable") ? Math.round((topBoxBoundary - firstObsTop)/$(`${tab} tbody tr`).outerHeight()) : Math.round((topBoxBoundary - firstObsTop)/o_browse.imageSize) * o_browse.galleryBoundingRect.x;
+            console.log("=== Row height ===");
+            console.log(obsNumDiff);
+            console.log("=== startObs ===");
+            console.log(obsNumDiff + calculateFirstObs);
+
+        }
+
 
         $(selector).each(function(index, elem) {
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
