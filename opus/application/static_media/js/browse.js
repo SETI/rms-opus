@@ -15,7 +15,7 @@ const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
 // Fixed scrollbar length for gallery & table view
-const galleryAndTabPSLength = 100;
+const galleryAndTablePSLength = 100;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -25,13 +25,13 @@ var o_browse = {
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .op-dataTable-view", {
-        minScrollbarLength: galleryAndTabPSLength,
-        maxScrollbarLength: galleryAndTabPSLength,
+        minScrollbarLength: galleryAndTablePSLength,
+        maxScrollbarLength: galleryAndTablePSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: galleryAndTabPSLength,
-        maxScrollbarLength: galleryAndTabPSLength,
+        minScrollbarLength: galleryAndTablePSLength,
+        maxScrollbarLength: galleryAndTablePSLength,
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
