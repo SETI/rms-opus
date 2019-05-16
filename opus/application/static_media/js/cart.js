@@ -44,10 +44,6 @@ var o_cart = {
             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
         });
 
-        $("#cart").on("click", ".metadataModal", function(e) {
-
-        });
-
         // check an input on selected products and images updates file_info
         $("#cart").on("click","#download_options input", function() {
             $("#op-total-download-size").hide();

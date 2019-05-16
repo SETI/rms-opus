@@ -14,9 +14,11 @@ from results.views import (
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
 )
+from ui.views import api_dummy
 
 urlpatterns = [
     url(r'^__api/dataimages.json$', api_get_data_and_images),
+    url(r'^__fake/__api/dataimages.json$', api_dummy),
     url(r'^api/data.(?P<fmt>json|html|csv)$', api_get_data),
     url(r'^__api/data.(?P<fmt>csv)$', api_get_data),
     url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata),
