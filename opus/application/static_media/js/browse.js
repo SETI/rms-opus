@@ -1081,9 +1081,6 @@ var o_browse = {
 
     renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
-        if (view !== undefined && view != opus.prefs.view) {
-            console.log("mismatch "+url);
-        }
         let tab = opus.getViewTab(view);
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
@@ -1313,9 +1310,6 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
-        if (limitNum === 0) {
-            console.log("getDataURL: limitNum === 0");
-        }
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1583,8 +1577,8 @@ var o_browse = {
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
 
-        let xCount = Math.floor(width/o_browse.imageSize);   // images are 100px
-        let yCount = Math.ceil(height/o_browse.imageSize);   // images are 100px
+        let xCount = Math.floor(width/o_browse.imageSize);
+        let yCount = Math.ceil(height/o_browse.imageSize);
 
         return {"x": xCount, "y": yCount};
     },
