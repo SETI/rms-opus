@@ -471,7 +471,6 @@ var o_browse = {
                 $("#op-metadata-selector").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
-                opus.hideHelpPanel();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal

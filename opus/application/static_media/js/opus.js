@@ -644,8 +644,10 @@ var opus = {
         });
 
         $(document).on("keydown click", function(e) {
-            if ((e.which || e.keyCode) == 27) { // esc - close modals
+            if ((e.which || e.keyCode) == 27) {
+                // ESC key - close modals and help panel
                 $(".op-confirm-modal").modal('hide');
+                opus.hideHelpPanel();
             }
         });
 
