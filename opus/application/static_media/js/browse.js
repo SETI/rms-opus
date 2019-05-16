@@ -50,7 +50,7 @@ var o_browse = {
     *  all the things that happen on the browse tab
     *
     **/
-    browseBehaviors: function() {
+    addBrowseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", _.debounce(o_browse.checkScroll, 500));
@@ -945,7 +945,7 @@ var o_browse = {
             switch($(this).attr("type")) {
                 case "reset":
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(DEFAULT_COLUMNS.split(','));
+                    o_browse.resetMetadata(opus.defaultColumns);
                     break;
                 case "submit":
                     $(".op-page-loading-status > .loader").show();
@@ -1479,7 +1479,7 @@ var o_browse = {
         }
 
         $(".op-page-loading-status > .loader").show();
-        // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
+        // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(tab, startObs, customizedLimitNum);
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
@@ -1540,7 +1540,7 @@ var o_browse = {
         $("#galleryViewContents").removeClass("op-disabled");
     },
 
-    getBrowseTab: function() {
+    activateBrowseTab: function() {
         // init o_browse.galleryBoundingRect
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
         // reset range select

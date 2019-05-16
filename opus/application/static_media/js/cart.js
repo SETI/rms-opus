@@ -40,7 +40,7 @@ var o_cart = {
      *
      **/
 
-     cartBehaviors: function() {
+     addCartBehaviors: function() {
         // nav bar
         $("#cart").on("click", ".op-download-csv", function(e) {
             let colStr = opus.prefs.cols.join(',');
@@ -176,7 +176,7 @@ var o_cart = {
     },
 
     // get Cart tab
-    getCartTab: function() {
+    activateCartTab: function() {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (o_cart.cartChange) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();

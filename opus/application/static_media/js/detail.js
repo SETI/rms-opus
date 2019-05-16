@@ -11,7 +11,7 @@
 var o_detail = {
 /* jshint varstmt: true */
 
-    getDetail: function(opusId) {
+    activateDetailTab: function(opusId) {
 
         $("#detail").on("click", ".op-download-csv", function() {
             let colStr = opus.prefs.cols.join(',');
@@ -100,7 +100,7 @@ var o_detail = {
                 });
             } // /detail.load
         );
-    }, // / getDetail
+    }, // / activateDetailTab
 
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {

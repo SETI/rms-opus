@@ -17,13 +17,13 @@ var o_menu = {
      *
      **/
 
-     menuBehaviors: function() {
+     addMenuBehaviors: function() {
          // click param in menu get new widget
          $("#sidebar").on("click", ".submenu li a", function() {
 
              let slug = $(this).data("slug");
              if (!slug) { return; }
-             if ($.inArray(slug, opus.widgets_drawn) > -1) {
+             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it
@@ -51,18 +51,18 @@ var o_menu = {
             let category = $(this).data( "cat" );
             let groupElem = $(`#sidebar #submenu-${category}`);
             if ($(groupElem).hasClass("show")) {
-                opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
+                opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
             } else {
-                if ($.inArray(category, opus.menu_state.cats) >= 0 ) {
+                if ($.inArray(category, opus.menuState.cats) >= 0 ) {
                     console.log(`submenu ${category } state already in array`);
                 } else {
-                    opus.menu_state.cats.push(category);
+                    opus.menuState.cats.push(category);
                 }
             }
         });
      },
 
-     updateSearchMenu: function() {
+     getNewSearchMenu: function() {
         $('.op-menu-text.spinner').addClass("op-show-spinner");
 
         let hash = o_hash.getHash();
@@ -70,13 +70,13 @@ var o_menu = {
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
             $("#sidebar").toggleClass("op-redraw-menu");
-            $.each(opus.menu_state.cats, function(key, category) {
+            $.each(opus.menuState.cats, function(key, category) {
                 if ($(`#submenu-${category}`).length != 0) {
                     $(`#submenu-${category}`).collapse("show");
                 } else {
                     // this is if the surface geometry target is no longer applicable so it's not
-                    // on the menu, remove from the menu_state
-                    opus.menu_state.cats.splice(opus.menu_state.cats.indexOf(category), 1);
+                    // on the menu, remove from the menuState
+                    opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
                 }
             });
             $("#sidebar").toggleClass("op-redraw-menu");
@@ -86,12 +86,6 @@ var o_menu = {
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
         });
-     },
-     markDefaultMenuItems: function() {
-         o_menu.markMenuItem(".submenu li a", "unselect");
-         $.each(opus.default_widgets, function(index, slug) {
-             o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
-         });
      },
 
      markMenuItem: function(selector, selected) {
@@ -104,11 +98,11 @@ var o_menu = {
       }
      },
 
-     markCurrentMenuItems: function() {
-         $.each(opus.widgets_drawn, function(index, slug) {
-             o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
-         });
-     },
+    markCurrentMenuItems: function() {
+        $.each(opus.prefs.widgets, function(index, slug) {
+            o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
+        });
+    },
 
      // type = cat/group
      getCatGroupFromSlug: function(slug) {

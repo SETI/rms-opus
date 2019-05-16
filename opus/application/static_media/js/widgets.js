@@ -92,12 +92,12 @@ var o_widgets = {
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
         }
 
-        if ($.inArray(slug,opus.widgets_drawn) > -1) {
-            opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
+        if ($.inArray(slug,opus.widgetsDrawn) > -1) {
+            opus.widgetsDrawn.splice(opus.widgetsDrawn.indexOf(slug), 1);
         }
 
-        if ($.inArray(slug, opus.widget_elements_drawn) > -1) {
-            opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1);
+        if ($.inArray(slug, opus.widgetElementsDrawn) > -1) {
+            opus.widgetElementsDrawn.splice(opus.widgetElementsDrawn.indexOf(slug), 1);
         }
 
         if (slug in opus.selections) {
@@ -358,30 +358,30 @@ var o_widgets = {
              let html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#op-search-widgets ');
              // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
-             opus.widget_elements_drawn.push(slug);
+             opus.widgetElementsDrawn.push(slug);
          }
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
-    getWidget: function(slug, formscolumn, deferredObj=null) {
+    getWidget: function(slug, formscolumn) {
 
         if (!slug) {
             return;
         }
 
-        if ($.inArray(slug, opus.widgets_drawn) > -1) {
+        if ($.inArray(slug, opus.widgetsDrawn) > -1) {
             return; // widget already drawn
         }
-        if ($.inArray(slug, opus.widgets_fetching) > -1) {
+        if ($.inArray(slug, opus.widgetsFetching) > -1) {
             return; // widget being fetched
         }
 
         let widget = 'widget__' + slug;
 
-        opus.widgets_fetching.push(slug);
+        opus.widgetsFetching.push(slug);
 
         // add the div that will hold the widget
-        if ($.inArray(slug,opus.widget_elements_drawn) < 0) {
+        if ($.inArray(slug,opus.widgetElementsDrawn) < 0) {
 
             opus.prefs.widgets.unshift(slug);
 
@@ -389,7 +389,7 @@ var o_widgets = {
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             let html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
-            opus.widget_elements_drawn.unshift(slug);
+            opus.widgetElementsDrawn.unshift(slug);
 
         }
         $.ajax({
@@ -547,22 +547,17 @@ var o_widgets = {
             } catch(e) { } // these only apply to mult widgets
 
 
-            if ($.inArray(slug,opus.widgets_fetching) > -1) {
-                opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
+            if ($.inArray(slug,opus.widgetsFetching) > -1) {
+                opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);
             }
 
             if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             }
-            opus.widgets_drawn.unshift(slug);
+            opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
             o_search.getHinting(slug);
-
-            if (deferredObj) {
-                deferredObj.resolve();
-            }
-
         }); // end callback for .done()
     }, // end getWidget function
 
