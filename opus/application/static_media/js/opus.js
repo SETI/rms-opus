@@ -430,6 +430,7 @@ var opus = {
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
 
         $(window).on("resize", function() {
+            console.log("@@@@ window resize is triggered @@@");
             adjustSearchHeightDB();
             adjustBrowseHeightDB();
             adjustTableSizeDB();

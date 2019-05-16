@@ -672,7 +672,7 @@ var o_browse = {
             let firstObs = (opus.prefs.browse === "dataTable") ? $(`${tab} tbody tr`).first().data("obs") : $(`${tab} [data-obs]`).first().data("obs");
             console.log("=== updateSliderHandle firstObs ===");
             console.log(firstObs);
-            let calculateFirstObs = Math.floor((firstObs - 1)/o_browse.galleryBoundingRect.x) * o_browse.galleryBoundingRect.x + 1;
+            let calculateFirstObs = Math.floor((firstObs - 1)/o_browse.galleryBoundingRect.x+0.0000001) * o_browse.galleryBoundingRect.x + 1;
             console.log(calculateFirstObs);
             console.log("=== FirstObs top ===");
             let firstObsTop = (opus.prefs.browse === "dataTable") ? $(`${tab} tbody tr`).first().offset().top : $(`${tab} [data-obs]`).first().offset().top;
@@ -686,7 +686,6 @@ var o_browse = {
             console.log(obsNumDiff);
             console.log("=== startObs ===");
             console.log(obsNumDiff + calculateFirstObs);
-
         }
 
 
@@ -699,14 +698,16 @@ var o_browse = {
             let topBox = $(elem).offset().top + $(elem).height()/2;
             if (topBox >= topBoxBoundary) {
                 let obsNum = $(elem).data("obs");
+                console.log(`obsNum in loop: ${obsNum}`);
 
                 // update obsNum in both infiniteScroll instances
                 // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
-                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
+                // $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 if (contentsView === ".op-dataTable-view") {
                     obsNum = Math.floor((obsNum-1)/o_browse.gallerySliderStep+0.0000001)*o_browse.gallerySliderStep+1;
                 }
-
+                console.log(`obsNum after convert in loop: ${obsNum}`);
+                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 $(`${tab} .op-dataTable-view`).infiniteScroll({"obsNum": obsNum});
                 opus.prefs[startObsLabel] = obsNum;
                 // console.log("=== obsNum in updateSliderHandle ===");
@@ -1037,6 +1038,8 @@ var o_browse = {
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+            console.log("=== startObs when switching between table and gallery");
+            console.log(startObs);
             o_browse.setScrollbarPosition(startObs);
         }
     },
