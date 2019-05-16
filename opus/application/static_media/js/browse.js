@@ -1021,15 +1021,25 @@ var o_browse = {
         }
     },
 
-    updateStartobsInUrl: function(url, startObs) {
-        let viewInfo = o_browse.getViewInfo();
-        let obsStr = `${viewInfo.prefix}startobs`;
-        // remove any existing page= slug or startobs= slug
+    updateStartobsInUrl: function(view, url, startObs) {
+        let obsStr = o_browse.getStartObsLabel(view);
+        // remove any existing startobs= slug
         url = $.grep(url.split('&'), function(pair, index) {
             return !pair.startsWith(obsStr);
         }).join('&');
 
         url += `&${obsStr}=${startObs}`;
+        return url;
+    },
+
+    updateViewInUrl: function(view, url) {
+        // remove any existing view= slug or startobs= slug
+        let slug = "view";
+        url = $.grep(url.split('&'), function(pair, index) {
+            return !pair.startsWith("slug");
+        }).join('&');
+
+        url += `&${slug}=${view}`;
         return url;
     },
 
@@ -1069,9 +1079,12 @@ var o_browse = {
         }
     },
 
-    renderGalleryAndTable: function(data, url) {
+    renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
-        let tab = opus.getViewTab();
+        if (view !== undefined && view != opus.prefs.view) {
+            console.log("mismatch "+url);
+        }
+        let tab = opus.getViewTab(view);
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
@@ -1283,21 +1296,26 @@ var o_browse = {
     },
 
     // number of images that can be fit in current window size
-    getLimit: function() {
+    getLimit: function(view) {
         // default the function to use to be the one in o_browse because there is not one available in o_search
-        let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
+        let galleryBoundingRect = opus.getViewNamespace(view).galleryBoundingRect;
         return (galleryBoundingRect.x * galleryBoundingRect.y);
     },
 
-    getDataURL: function(tab, startObs, customizedLimitNum=undefined) {
+    getDataURL: function(view, startObs, customizedLimitNum=undefined) {
         let base_url = "/opus/__api/dataimages.json?";
         let hashString = o_hash.getHash();
 
-        let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[tab];
-        url = base_url + o_browse.updateStartobsInUrl(url, startObs);
+        //TODO: we should be able to combine these url tweaker functions into a single function, perhaps in hash.js
+        let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[view];
+        url = o_browse.updateViewInUrl(view, url);
+        url = base_url + o_browse.updateStartobsInUrl(view, url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
-        let limitNum = customizedLimitNum === undefined ? o_browse.getLimit() * 2 : customizedLimitNum;
+        let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
+        if (limitNum === 0) {
+            console.log("getDataURL: limitNum === 0");
+        }
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1365,6 +1383,7 @@ var o_browse = {
     initInfiniteScroll: function(view, selector) {
         let tab = `#${view}`;
         let startObsLabel = o_browse.getStartObsLabel(view);
+        opus.getViewNamespace(view).galleryBoundingRect = o_browse.countGalleryImages(view);
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1379,11 +1398,11 @@ var o_browse = {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
                             // prefetch o_browse.getLimit() items ahead of firstCachedObs, update the startObs to be passed into url
-                            obsNum = Math.max(firstCachedObs - o_browse.getLimit(), 1);
+                            obsNum = Math.max(firstCachedObs - o_browse.getLimit(view), 1);
 
                             // If obsNum to be passed into api url is 1, we will pass firstCachedObs - 1 as limit
                             // else we'll pass in o_browse.getLimit() as limit
-                            customizedLimitNum = obsNum === 1 ? firstCachedObs - 1 : o_browse.getLimit();
+                            customizedLimitNum = obsNum === 1 ? firstCachedObs - 1 : o_browse.getLimit(view);
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
@@ -1400,8 +1419,8 @@ var o_browse = {
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
-                        customizedLimitNum = o_browse.getLimit();
-                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit() - opus.getViewNamespace().galleryBoundingRect.x, 1);
+                        customizedLimitNum = o_browse.getLimit(view);
+                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit(view) - opus.getViewNamespace(view).galleryBoundingRect.x, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
@@ -1411,7 +1430,7 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
-                    let path = o_browse.getDataURL(tab, obsNum, customizedLimitNum);
+                    let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
                     return path;
                 },
                 responseType: "text",
@@ -1445,6 +1464,7 @@ var o_browse = {
 
     loadData: function(startObs, customizedLimitNum=undefined) {
         let tab = opus.getViewTab();
+        let view = opus.prefs.view;
         let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
 
@@ -1480,10 +1500,11 @@ var o_browse = {
 
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
-        let url = o_browse.getDataURL(tab, startObs, customizedLimitNum);
+        let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
+
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
-            if (data.reqno < opus.lastLoadDataRequestNo[tab]) {
+            if (data.reqno < opus.lastLoadDataRequestNo[view]) {
                 // make sure to remove spinner before return
                 $(".op-page-loading-status > .loader").hide();
                 return;
@@ -1499,7 +1520,7 @@ var o_browse = {
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
             $(`${tab} .thumbnail-container`).remove();
 
-            o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
@@ -1557,28 +1578,45 @@ var o_browse = {
         o_browse.loadData(startObs);
     },
 
-    countGalleryImages: function() {
-        let tab = opus.getViewTab();
-        let xCount = 0;
-        let yCount = 0;
+    countGalleryImages: function(view) {
+        let tab = opus.getViewTab(view);
 
-        if ($(`${tab} .gallery-contents`).length > 0) {
-            xCount = Math.floor($(`${tab} .gallery-contents`).width()/o_browse.imageSize);   // images are 100px
-            // yCount = Math.ceil(($(`${tab} .gallery-contents`).height() - $(".app-footer").height()) /o_browse.imageSize);   // images are 100px
-            yCount = Math.ceil($(`${tab} .gallery-contents`).height()/o_browse.imageSize);   // images are 100px
-        } else {
-            console.log("countGalleryImages: This should never happen.");
-        }
+        let width = o_browse.calculateGalleryWidth(view);
+        let height = o_browse.calculateGalleryHeight(view);
+
+        let xCount = Math.floor(width/o_browse.imageSize);   // images are 100px
+        let yCount = Math.ceil(height/o_browse.imageSize);   // images are 100px
+
         return {"x": xCount, "y": yCount};
     },
 
-    adjustBrowseHeight: function() {
-        let tab = opus.getViewTab();
+
+    // calculate the height of the gallery by removing all the non-gallery contaniner elements
+    calculateGalleryHeight: function(view) {
+        let tab = opus.getViewTab(view);
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(".panel-heading").outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
-        let containerHeight = $(window).height()-totalNonGalleryHeight;
+        return  $(window).height()-totalNonGalleryHeight;
+    },
+
+    calculateGalleryWidth: function(view) {
+        let tab = opus.getViewTab(view);
+        let width = $(`${tab} .gallery-contents`).width();
+        if (width === 0) {
+            width = $(window).width();
+            if (tab === "#cart") {
+                let leftPanelWidth = $(".cart_details").css("min-width");
+                width -= leftPanelWidth;
+            }
+        }
+        return width;
+    },
+
+    adjustBrowseHeight: function() {
+        let tab = opus.getViewTab();
+        let containerHeight = o_browse.calculateGalleryHeight;
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
 

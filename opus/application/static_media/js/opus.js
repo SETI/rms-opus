@@ -43,7 +43,7 @@ var opus = {
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
     waitingForAllNormalizedAPI: false,
-    lastLoadDataRequestNo: { "#cart": 0, "#browse": 0 },
+    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // client side prefs, changes to these *do not trigger results to refresh*
     // prefs key:value pair order has been re-organized to match up with normalized url
@@ -465,21 +465,24 @@ var opus = {
         return o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns);
     },
 
-    getViewNamespace: function() {
+    getViewNamespace: function(view) {
         /**
-         * Return the namespace object corresponding to the current view.
+         * Return the namespace object corresponding to the given view, or the
+         * current view if none is given.
          * Default to o_browse if the view isn't one of "browse" or "cart".
          */
-        return (opus.prefs.view === "cart" ? o_cart : o_browse);
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? o_cart : o_browse);
     },
 
-    // return either #browse or #cart, default to #browse
-    getViewTab: function() {
+    getViewTab: function(view) {
         /**
-         * Return the DOM ID corresponding to the current view.
+         * Return the DOM ID corresponding to the given view, or the
+         * current view if none is given.
          * Default to #browse if the view isn't one of "browse" or "cart".
          */
-        return (opus.prefs.view === "cart" ? "#cart" : "#browse");
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "#cart" : "#browse");
     },
 
 
