@@ -1021,15 +1021,25 @@ var o_browse = {
         }
     },
 
-    updateStartobsInUrl: function(url, startObs) {
-        let viewInfo = o_browse.getViewInfo();
-        let obsStr = `${viewInfo.prefix}startobs`;
-        // remove any existing page= slug or startobs= slug
+    updateStartobsInUrl: function(view, url, startObs) {
+        let obsStr = o_browse.getStartObsLabel(view);
+        // remove any existing startobs= slug
         url = $.grep(url.split('&'), function(pair, index) {
             return !pair.startsWith(obsStr);
         }).join('&');
 
         url += `&${obsStr}=${startObs}`;
+        return url;
+    },
+
+    updateViewInUrl: function(view, url) {
+        // remove any existing view= slug or startobs= slug
+        let slug = "view";
+        url = $.grep(url.split('&'), function(pair, index) {
+            return !pair.startsWith("slug");
+        }).join('&');
+
+        url += `&${slug}=${view}`;
         return url;
     },
 
@@ -1296,8 +1306,10 @@ var o_browse = {
         let base_url = "/opus/__api/dataimages.json?";
         let hashString = o_hash.getHash();
 
+        //TODO: we should be able to combine these url tweaker functions into a single function, perhaps in hash.js
         let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[view];
-        url = base_url + o_browse.updateStartobsInUrl(url, startObs);
+        url = o_browse.updateViewInUrl(view, url);
+        url = base_url + o_browse.updateStartobsInUrl(view, url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
