@@ -1310,6 +1310,9 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
+        if (limitNum === 0 || isNaN(limitNum)) {
+            console.log(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
+        }
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1600,7 +1603,7 @@ var o_browse = {
         if (width === 0) {
             width = $(window).width();
             if (tab === "#cart") {
-                let leftPanelWidth = $(".cart_details").css("min-width");
+                let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
                 width -= leftPanelWidth;
             }
         }
