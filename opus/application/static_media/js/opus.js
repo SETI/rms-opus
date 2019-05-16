@@ -399,13 +399,15 @@ var opus = {
     },
 
     // return either o_browse or o_cart, default to o_browse object
-    getViewNamespace: function() {
-        return (opus.prefs.view === "cart" ? o_cart : o_browse);
+    getViewNamespace: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? o_cart : o_browse);
     },
 
     // return either #browse or #cart, default to #browse
-    getViewTab: function() {
-        return (opus.prefs.view === "cart" ? "#cart" : "#browse");
+    getViewTab: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "#cart" : "#browse");
     },
 
     // OPUS initialization process after document.ready and normalized url api call
