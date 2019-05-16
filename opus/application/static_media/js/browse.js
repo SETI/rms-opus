@@ -1069,9 +1069,12 @@ var o_browse = {
         }
     },
 
-    renderGalleryAndTable: function(data, url) {
+    renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
-        let tab = opus.getViewTab();
+        if (view !== undefined && view != opus.prefs.view) {
+            console.log("mismatch "+url);
+        }
+        let tab = opus.getViewTab(view);
         let contentsView = o_browse.getScrollContainerClass();
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
@@ -1283,21 +1286,21 @@ var o_browse = {
     },
 
     // number of images that can be fit in current window size
-    getLimit: function() {
+    getLimit: function(view) {
         // default the function to use to be the one in o_browse because there is not one available in o_search
-        let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
+        let galleryBoundingRect = opus.getViewNamespace(view).galleryBoundingRect;
         return (galleryBoundingRect.x * galleryBoundingRect.y);
     },
 
-    getDataURL: function(tab, startObs, customizedLimitNum=undefined) {
+    getDataURL: function(view, startObs, customizedLimitNum=undefined) {
         let base_url = "/opus/__api/dataimages.json?";
         let hashString = o_hash.getHash();
 
-        let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[tab];
+        let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[view];
         url = base_url + o_browse.updateStartobsInUrl(url, startObs);
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
-        let limitNum = customizedLimitNum === undefined ? o_browse.getLimit() * 2 : customizedLimitNum;
+        let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
         if (limitNum === 0) {
             console.log("getDataURL: limitNum === 0");
         }
@@ -1368,7 +1371,7 @@ var o_browse = {
     initInfiniteScroll: function(view, selector) {
         let tab = `#${view}`;
         let startObsLabel = o_browse.getStartObsLabel(view);
-        opus.getViewNamespace(view).galleryBoundingRect = o_browse.countGalleryImages();
+        opus.getViewNamespace(view).galleryBoundingRect = o_browse.countGalleryImages(view);
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1383,11 +1386,11 @@ var o_browse = {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
                             // prefetch o_browse.getLimit() items ahead of firstCachedObs, update the startObs to be passed into url
-                            obsNum = Math.max(firstCachedObs - o_browse.getLimit(), 1);
+                            obsNum = Math.max(firstCachedObs - o_browse.getLimit(view), 1);
 
                             // If obsNum to be passed into api url is 1, we will pass firstCachedObs - 1 as limit
                             // else we'll pass in o_browse.getLimit() as limit
-                            customizedLimitNum = obsNum === 1 ? firstCachedObs - 1 : o_browse.getLimit();
+                            customizedLimitNum = obsNum === 1 ? firstCachedObs - 1 : o_browse.getLimit(view);
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
@@ -1404,8 +1407,8 @@ var o_browse = {
                         // NOTE: we can change the number of prefetch items by changing customizedLimitNum
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
-                        customizedLimitNum = o_browse.getLimit();
-                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit() - opus.getViewNamespace().galleryBoundingRect.x, 1);
+                        customizedLimitNum = o_browse.getLimit(view);
+                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit(view) - opus.getViewNamespace(view).galleryBoundingRect.x, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
@@ -1415,7 +1418,7 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
-                    let path = o_browse.getDataURL(tab, obsNum, customizedLimitNum);
+                    let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
                     return path;
                 },
                 responseType: "text",
@@ -1449,6 +1452,7 @@ var o_browse = {
 
     loadData: function(startObs, customizedLimitNum=undefined) {
         let tab = opus.getViewTab();
+        let view = opus.prefs.view;
         let startObsLabel = o_browse.getStartObsLabel();
         let contentsView = o_browse.getScrollContainerClass();
 
@@ -1484,10 +1488,10 @@ var o_browse = {
 
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
-        let url = o_browse.getDataURL(tab, startObs, customizedLimitNum);
+        let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
-            if (data.reqno < opus.lastLoadDataRequestNo[tab]) {
+            if (data.reqno < opus.lastLoadDataRequestNo[view]) {
                 // make sure to remove spinner before return
                 $(".op-page-loading-status > .loader").hide();
                 return;
@@ -1503,7 +1507,7 @@ var o_browse = {
             // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
             $(`${tab} .thumbnail-container`).remove();
 
-            o_browse.renderGalleryAndTable(data, this.url);
+            o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (o_browse.currentOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.currentOpusId);
@@ -1561,11 +1565,11 @@ var o_browse = {
         o_browse.loadData(startObs);
     },
 
-    countGalleryImages: function() {
-        let tab = opus.getViewTab();
+    countGalleryImages: function(view) {
+        let tab = opus.getViewTab(view);
 
-        let width = o_browse.calculateGalleryWidth();
-        let height = o_browse.calculateGalleryHeight();
+        let width = o_browse.calculateGalleryWidth(view);
+        let height = o_browse.calculateGalleryHeight(view);
 
         let xCount = Math.floor(width/o_browse.imageSize);   // images are 100px
         let yCount = Math.ceil(height/o_browse.imageSize);   // images are 100px
@@ -1575,8 +1579,8 @@ var o_browse = {
 
 
     // calculate the height of the gallery by removing all the non-gallery contaniner elements
-    calculateGalleryHeight: function() {
-        let tab = opus.getViewTab();
+    calculateGalleryHeight: function(view) {
+        let tab = opus.getViewTab(view);
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(".panel-heading").outerHeight();
@@ -1584,8 +1588,8 @@ var o_browse = {
         return  $(window).height()-totalNonGalleryHeight;
     },
 
-    calculateGalleryWidth: function() {
-        let tab = opus.getViewTab();
+    calculateGalleryWidth: function(view) {
+        let tab = opus.getViewTab(view);
         let width = $(`${tab} .gallery-contents`).width();
         if (width === 0) {
             width = $(window).width();

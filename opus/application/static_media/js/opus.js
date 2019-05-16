@@ -73,7 +73,7 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout: 0,
 
-    lastLoadDataRequestNo: { "#cart": 0, "#browse": 0 },
+    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer: false,
