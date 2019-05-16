@@ -873,8 +873,9 @@ var o_browse = {
         $("#op-metadata-selector").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
+                let tab = opus.getViewTab();
                 o_browse.resetData();
-                o_browse.initTable(opus.colLabels, opus.colLabelsNoUnits);
+                o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData();
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
@@ -1188,10 +1189,10 @@ var o_browse = {
         o_hash.updateHash(true);
     },
 
-    initTable: function(columns, columnsNoUnits) {
+    initTable: function(tab, columns, columnsNoUnits) {
         // prepare table and headers...
-        $(".op-data-table-view thead > tr > th").remove();
-        $(".op-data-table-view tbody > tr").remove();
+        $(`${tab} .op-data-table > thead`).empty();
+        $(`${tab} .op-data-table > tbody`).empty();
 
         // NOTE:  At some point, ORDER needs to be identified in the table, as to which column we are ordering on
 
@@ -1207,7 +1208,8 @@ var o_browse = {
 
         // check all box
         //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
-        $(".op-data-table-view thead tr").append("<th scope='col' class='sticky-header'></th>");
+        $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
+        $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
         $.each(columns, function(index, header) {
             let slug = slugs[index];
 
@@ -1219,14 +1221,14 @@ var o_browse = {
             let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
             let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
 
-            $(".op-data-table-view thead tr").append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
-        o_browse.initResizableColumn();
+        o_browse.initResizableColumn(tab);
     },
 
-    initResizableColumn: function() {
-        $(".op-data-table th div").resizable({
+    initResizableColumn: function(tab) {
+        $(`${tab} .op-data-table th div`).resizable({
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
@@ -1506,8 +1508,8 @@ var o_browse = {
                 return;
             }
 
-            if (!o_browse.galleryBegun || (opus.prefs.view === "cart" && o_cart.cartChange)) {
-                o_browse.initTable(data.columns, data.columns_no_units);
+            if (!o_browse.galleryBegun || (view === "cart" && o_cart.cartChange)) {
+                o_browse.initTable(tab, data.columns, data.columns_no_units);
 
                 $(`${tab} .op-gallery-view`).scrollTop(0);
                 $(`${tab} .op-data-table-view`).scrollTop(0);
@@ -1526,6 +1528,9 @@ var o_browse = {
             // prefill next page
             if (!o_browse.galleryBegun) {
                 o_browse.galleryBegun = true;
+            }
+            if (view === "cart") {
+                o_cart.cartChange = false;
             }
         });
     },
