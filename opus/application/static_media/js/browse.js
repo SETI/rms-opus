@@ -1670,7 +1670,7 @@ var o_browse = {
 
     adjustBrowseHeight: function(resize=false) {
         let tab = opus.getViewTab();
-        let containerHeight = o_browse.calculateGalleryHeight;
+        let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
 
@@ -1685,7 +1685,8 @@ var o_browse = {
     adjustTableSize: function() {
         let tab = opus.getViewTab();
         let containerWidth = $(`${tab} .gallery-contents`).width();
-        let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").outerHeight();
+        // let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").outerHeight();
+        let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
 
