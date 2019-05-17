@@ -1406,7 +1406,7 @@ var o_browse = {
         }
     },
 
-    deleteCachedObservation: function (galleryObsElem, tableObsElem, index) {
+    deleteCachedObservation: function(galleryObsElem, tableObsElem, index) {
         // don't delete the metadata if the observation is in the cart
         if (!galleryObsElem.eq(index).hasClass("in")) {
             let delOpusId = galleryObsElem.eq(index).data("id");
