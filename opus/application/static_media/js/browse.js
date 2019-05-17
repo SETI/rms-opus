@@ -685,6 +685,8 @@ var o_browse = {
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
             let firstCachedObsTop = $(selector).first().offset().top;
+            let calculatedFirstObs = (Math.floor((firstCachedObs - 1)/o_browse.galleryBoundingRect.x + 0.0000001) *
+                                      galleryBoundingRect.x + 1);
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead
             // (account for height of thead)
@@ -693,21 +695,29 @@ var o_browse = {
                               $(`${tab} .gallery-contents`).offset().top :
                               $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight());
 
-            // table: obsNum = firstCachedObs + number of row
-            // gallery: obsNum = firstCachedObs + number of row * number of obs in a row
+            // table: obsNum = calculatedFirstObs + number of row
+            // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
             let obsNumDiff = ((opus.prefs[browse] === "dataTable") ?
                               Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) :
                               Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * galleryBoundingRect.x);
-            let obsNum = obsNumDiff + firstCachedObs;
+            let obsNum = obsNumDiff + calculatedFirstObs;
+            console.log("=== updateSliderHandle firstObs ===");
+            console.log(firstCachedObs);
+            console.log(calculatedFirstObs);
+            console.log("=== Row height ===");
+            console.log(obsNumDiff);
+            console.log("=== startObs ===");
+            console.log(obsNum);
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
             if (contentsView === ".op-data-table-view") {
-                obsNum = (Math.floor((obsNum - firstCachedObs)/galleryBoundingRect.x + 0.0000001) *
-                          galleryBoundingRect.x + firstCachedObs);
+                obsNum = (Math.floor((obsNum - 1)/galleryBoundingRect.x + 0.0000001) *
+                          galleryBoundingRect.x + 1);
             }
-
+            console.log("=== obsNum after convert ===");
+            console.log(obsNum);
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
             $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
             opus.prefs[startObsLabel] = obsNum;
