@@ -73,6 +73,8 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout: 0,
 
+    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
+
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer: false,
     main_timer_interval: 1000,
@@ -288,15 +290,10 @@ var opus = {
 
             case 'detail':
                 $('#detail').fadeIn();
-
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
             case 'cart':
-                if (opus.prefs.cart_browse == 'data') {
-                    $('.data_table','#cart').show();
-                    $('.gallery','#cart').hide();
-                }
                 $('#cart').fadeIn();
                 o_cart.getCartTab();
                 break;
@@ -401,6 +398,18 @@ var opus = {
         }
     },
 
+    // return either o_browse or o_cart, default to o_browse object
+    getViewNamespace: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? o_cart : o_browse);
+    },
+
+    // return either #browse or #cart, default to #browse
+    getViewTab: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "#cart" : "#browse");
+    },
+
     // OPUS initialization process after document.ready and normalized url api call
     opusInitialization: function() {
         /* displays a list of the included css for debug only!
@@ -439,6 +448,11 @@ var opus = {
         });
 
         o_mutationObserver.observePerfectScrollbar();
+
+        for (let tab of ["browse", "cart"]) {
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
+        }
 
         // add the navbar clicking behaviors, selecting which tab to view:
         // see triggerNavbarClick
