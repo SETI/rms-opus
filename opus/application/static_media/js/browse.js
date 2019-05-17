@@ -36,7 +36,7 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
-    maxCachedObservations: 750,    // max number of obserations to store in cache;
+    maxCachedObservations: 750,    // max number of observations to store in cache;
                                     // at some point, we can probably figure this out dynamically
 
     galleryBoundingRect: {'x': 0, 'y': 0},
@@ -682,10 +682,10 @@ var o_browse = {
         $(selector).each(function(index, elem) {
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
-            topBoxBoundary = topBoxBoundary ||
-                            (opus.prefs[browse]  === "gallery") ?
+            topBoxBoundary = (topBoxBoundary ||
+                             (opus.prefs[browse]  === "gallery") ?
                                 $(`${tab} .gallery-contents`).offset().top :
-                                $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight();
+                                $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight());
 
             // compare the image .top + half its height in order to make sure we account for partial images
             let topBox = $(elem).offset().top + $(elem).height()/2;
@@ -1052,7 +1052,7 @@ var o_browse = {
     },
 
     updateViewInUrl: function(view, url) {
-        // remove any existing view= slug or startobs= slug
+        // remove any existing view= slug
         let slug = "view";
         url = $.grep(url.split('&'), function(pair, index) {
             return !pair.startsWith(slug);
