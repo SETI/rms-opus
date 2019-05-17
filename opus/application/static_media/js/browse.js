@@ -706,37 +706,15 @@ var o_browse = {
 
             let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
             galleryBoundingRect.x);
-            console.log("=== numToDelete ===");
-            console.log(numToDelete);
-            // let tab = opus.getViewTab();
+
             let galleryObsElem = $(`${tab} .gallery [data-obs]`);
             let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
             // delete first "numToDelete" obs if row size is changed
             if (numToDelete !== 0) {
                 for (let count = 0; count < numToDelete; count++) {
-                    // o_browse.deleteCachedObservation(i);
-
-                    // don't delete the metadata if the observation is in the cart
-                    // if (!galleryObsElem.eq(i).hasClass("op-in-cart")) {
-                    //     let delOpusId = galleryObsElem.eq(i).data("id");
-                    //     delete o_browse.galleryData[delOpusId];
-                    // }
-                    // galleryObsElem.eq(i).remove();
-                    // tableObsElem.eq(i).remove();
                     o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count);
                 }
             }
-
-            console.log("=== updateSliderHandle firstObs ===");
-            console.log(firstCachedObs);
-            console.log(calculatedFirstObs);
-            console.log("=== Row height ===");
-            console.log(obsNumDiff);
-            console.log("=== startObs ===");
-            console.log(obsNum);
-            console.log("=== galleryBoundingRect ===");
-            console.log(galleryBoundingRect);
-
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
@@ -745,8 +723,7 @@ var o_browse = {
                 obsNum = (Math.floor((obsNum - 1)/galleryBoundingRect.x + 0.0000001) *
                           galleryBoundingRect.x + 1);
             }
-            console.log("=== obsNum after convert in table view ===");
-            console.log(obsNum);
+
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
             $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
             opus.prefs[startObsLabel] = obsNum;
