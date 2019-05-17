@@ -674,7 +674,9 @@ var o_browse = {
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
         let browse = o_browse.getBrowseView();
-        let selector = (opus.prefs[browse] === "gallery") ?  `${tab} .gallery .thumbnail-container` : `${tab} .op-data-table tbody tr`;
+        let selector = ((opus.prefs[browse] === "gallery") ?
+                        `${tab} .gallery .thumbnail-container` :
+                        `${tab} .op-data-table tbody tr`);
         let topBoxBoundary;
         let startObsLabel = o_browse.getStartObsLabel();
 
@@ -685,7 +687,7 @@ var o_browse = {
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
             let firstCachedObsTop = $(selector).first().offset().top;
-            let calculatedFirstObs = (Math.floor((firstCachedObs - 1)/o_browse.galleryBoundingRect.x + 0.0000001) *
+            let calculatedFirstObs = (Math.floor((firstCachedObs - 1)/galleryBoundingRect.x + 0.0000001) *
                                       galleryBoundingRect.x + 1);
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
             // For table view, we will set the topBoxBoundary to be the bottom of thead
@@ -701,6 +703,30 @@ var o_browse = {
                               Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) :
                               Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * galleryBoundingRect.x);
             let obsNum = obsNumDiff + calculatedFirstObs;
+
+            let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
+            galleryBoundingRect.x);
+            console.log("=== numToDelete ===");
+            console.log(numToDelete);
+            // let tab = opus.getViewTab();
+            let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+            let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
+            // delete first "numToDelete" obs if row size is changed
+            if (numToDelete !== 0) {
+                for (let count = 0; count < numToDelete; count++) {
+                    // o_browse.deleteCachedObservation(i);
+
+                    // don't delete the metadata if the observation is in the cart
+                    // if (!galleryObsElem.eq(i).hasClass("op-in-cart")) {
+                    //     let delOpusId = galleryObsElem.eq(i).data("id");
+                    //     delete o_browse.galleryData[delOpusId];
+                    // }
+                    // galleryObsElem.eq(i).remove();
+                    // tableObsElem.eq(i).remove();
+                    o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count);
+                }
+            }
+
             console.log("=== updateSliderHandle firstObs ===");
             console.log(firstCachedObs);
             console.log(calculatedFirstObs);
@@ -708,6 +734,9 @@ var o_browse = {
             console.log(obsNumDiff);
             console.log("=== startObs ===");
             console.log(obsNum);
+            console.log("=== galleryBoundingRect ===");
+            console.log(galleryBoundingRect);
+
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
@@ -716,7 +745,7 @@ var o_browse = {
                 obsNum = (Math.floor((obsNum - 1)/galleryBoundingRect.x + 0.0000001) *
                           galleryBoundingRect.x + 1);
             }
-            console.log("=== obsNum after convert ===");
+            console.log("=== obsNum after convert in table view ===");
             console.log(obsNum);
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
             $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
@@ -734,6 +763,8 @@ var o_browse = {
                 "step": o_browse.gallerySliderStep,
                 "max": opus.resultCount,
             });
+
+            // TODO: if resize, we re-render:
 
             // update startobs in url when scrolling
             o_hash.updateHash(true);
@@ -1371,15 +1402,15 @@ var o_browse = {
         let galleryObsElem = $(`${tab} .gallery [data-obs]`);
         let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
 
-        function deleteCachedObservation(index) {
-            // don't delete the metadata if the observation is in the cart
-            if (!galleryObsElem.eq(index).hasClass("in")) {
-                let delOpusId = galleryObsElem.eq(index).data("id");
-                delete o_browse.galleryData[delOpusId];
-            }
-            galleryObsElem.eq(index).remove();
-            tableObsElem.eq(index).remove();
-        }
+        // function deleteCachedObservation(index) {
+        //     // don't delete the metadata if the observation is in the cart
+        //     if (!galleryObsElem.eq(index).hasClass("op-in-cart")) {
+        //         let delOpusId = galleryObsElem.eq(index).data("id");
+        //         delete o_browse.galleryData[delOpusId];
+        //     }
+        //     galleryObsElem.eq(index).remove();
+        //     tableObsElem.eq(index).remove();
+        // }
 
         if (galleryObsElem.length === 0) {
             // this only happens when there are no elements rendered, so why bother...
@@ -1395,15 +1426,25 @@ var o_browse = {
             if (append) {
                 // this is theoretically the faster way to delete lots of data, as jquery selector eval is slow
                 for (let index = 0; index < count ; index++) {
-                    deleteCachedObservation(index);
+                    o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, index);
                 }
             } else {
                 let deleteTo = totalCachedObservations - count;
                 for (let index = lastIndex; index >= deleteTo; index--) {
-                    deleteCachedObservation(index);
+                    o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, index);
                 }
             }
         }
+    },
+
+    deleteCachedObservation: function (galleryObsElem, tableObsElem, index) {
+        // don't delete the metadata if the observation is in the cart
+        if (!galleryObsElem.eq(index).hasClass("in")) {
+            let delOpusId = galleryObsElem.eq(index).data("id");
+            delete o_browse.galleryData[delOpusId];
+        }
+        galleryObsElem.eq(index).remove();
+        tableObsElem.eq(index).remove();
     },
 
     getBrowseView: function () {
