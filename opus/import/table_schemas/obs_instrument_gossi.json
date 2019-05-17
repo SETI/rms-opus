@@ -106,7 +106,7 @@
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FILTER_NAME",
-        "definition": "The optical filter used for the image: Clear, Green, Red, Violet, Metane [7270] (originally IR-7270), Continuum (originally IR-7560), Methane [8890] (originally IR-8890), and Infrared (originally IR-9680).",
+        "definition": "The optical filter used for the image: Clear, Green, Red, Violet, Methane [IR-7270, 0.727 micron], Continuum [IR-7560, 0.756 micron], Methane [IR-8890, 0.889 micron], and Infrared [IR-9680, 0.968 micron].",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -121,14 +121,14 @@
         "pi_units": null,
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
-              [   0,    "CLEAR",           "Clear",   10, "Y", null],
-              [   1,   "VIOLET",          "Violet",   20, "Y", null],
-              [   2,    "GREEN",           "Green",   30, "Y", null],
-              [   3,      "RED",             "Red",   40, "Y", null],
-              [   4,   "IR-7270", "Methane [7270]",   50, "Y", null],
-              [   5,   "IR-7560",      "Continuum",   60, "Y", null],
-              [   6,   "IR-8890", "Methane [8890]",   70, "Y", null],
-              [   7,   "IR-9680",       "Infrared",   80, "Y", null]
+              [   0,    "CLEAR",                        "Clear",   10, "Y", null],
+              [   1,   "VIOLET",                       "Violet",   20, "Y", null],
+              [   2,    "GREEN",                        "Green",   30, "Y", null],
+              [   3,      "RED",                          "Red",   40, "Y", null],
+              [   4,   "IR-7270",           "Methane [IR-7270]",   50, "Y", null],
+              [   5,   "IR-7560", "Methane Continuum [IR-7560]",   60, "Y", null],
+              [   6,   "IR-8890",           "Methane [IR-8890]",   70, "Y", null],
+              [   7,   "IR-9680",          "Infrared [IR-9680]",   80, "Y", null]
           ]
     },
     {
@@ -265,7 +265,7 @@
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "COMPRESSION_TYPE",
-        "definition": "The type of compression used for the image. Values are BARC (Block-Adaptive Rate-Controlled, which is lossy and returns a fixed number of 2,592 bits per line), Huffman (lossless), Integer Cosine Transform (lossy), and None.",
+        "definition": "The type of compression used for the image. Values are BARC (Block-Adaptive Rate-Controlled, which is lossy and returns a fixed number of 2,592 bits per line), Huffman (lossless), Integer Cosine Transform (lossy), and None. Compressed images (BARC and ICT) tend to have artifacts that make them unsuitable for astrometry.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
