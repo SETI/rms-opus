@@ -430,10 +430,8 @@ var o_search = {
         $("#search .sidebar_wrapper").height(containerHeight);
 
         if (containerHeight > searchMenuHeight) {
-            if (!$("#sidebar-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
-                o_search.searchScrollbar.settings.suppressScrollY = true;
-            }
+            $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
+            o_search.searchScrollbar.settings.suppressScrollY = true;
         } else {
             $("#sidebar-container .ps__rail-y").removeClass("hide_ps__rail-y");
             o_search.searchScrollbar.settings.suppressScrollY = false;
@@ -443,15 +441,16 @@ var o_search = {
     },
 
     adjustSearchWidgetHeight: function() {
-        let containerHeight = $("#search").height() - 80;
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
+        let containerHeight = $("#search").height() - totalNonSearchAreaHeight;
         let searchWidgetHeight = $("#op-search-widgets").height();
-        $(".widget_column").height(containerHeight);
+        $(".op-widget-column").height(containerHeight);
 
         if (containerHeight > searchWidgetHeight) {
-            if (!$("#widget-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
-                o_search.widgetScrollbar.settings.suppressScrollY = true;
-            }
+            $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
+            o_search.widgetScrollbar.settings.suppressScrollY = true;
         } else {
             $("#widget-container .ps__rail-y").removeClass("hide_ps__rail-y");
             o_search.widgetScrollbar.settings.suppressScrollY = false;

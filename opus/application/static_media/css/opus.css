@@ -139,7 +139,7 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    width: 400px;
+    max-width: 400px;
 }
 
 .sidebar_wrapper {
@@ -149,7 +149,7 @@ Not sure if this is the desired behavior
     overflow: auto;
     margin-top: 5px;
     position: relative;
-    height: 500px; /* matches .widget_column */
+    height: 500px; /* matches .op-widget-column */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -224,7 +224,7 @@ ul.searchMenu {
     /* font-size: 130%; */
 }
 
-#browse .in {
+#browse .op-in-cart {
     -webkit-box-shadow: inset 0px 0px 0px 10px #097da5;
     -moz-box-shadow: inset 0px 0px 0px 10px #097da5;
     box-shadow: inset 0px 0px 0px 10px #097da5
@@ -362,11 +362,11 @@ th.sticky-header {
     background-color: black;
 }
 
-#dataTable  {
+.op-data-table  {
     padding: 0;
 }
 
-#dataTable th {
+.op-data-table th {
     vertical-align: middle;
     /* Fix the hidden th left/right border in firebox */
     background-clip: padding-box;
@@ -374,33 +374,33 @@ th.sticky-header {
     /* padding-right: 10px; */
 }
 
-#dataTable th a {
+.op-data-table th a {
     display: block;
     text-align: center;
     text-decoration: none;
 }
 
-#dataTable .column_ordering {
+.op-data-table .column_ordering {
     margin: 0 10px;
     /* display: inline-flex; */
     /* float: right; */
 }
 
-#dataTable td {
+.op-data-table td {
     white-space: nowrap;
     min-width: 4.2em;
 }
 
 /* Move y-scrollbar out of container in table view */
-#dataTable th:last-child {
+.op-data-table th:last-child {
     border-right-width: 15px;
 }
 
-#dataTable tr > td:last-child {
+.op-data-table tr > td:last-child {
     border-right-width: 15px;
 }
 
-#dataTable th > div {
+.op-data-table th > div {
     vertical-align: middle;
     display: inline-block;
     width: 100%;
@@ -410,36 +410,36 @@ th.sticky-header {
 }
 
 /* vertically center the resizable handle */
-#dataTable th > div div {
+.op-data-table th > div div {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
 }
 
-.op-dataTable-view {
+.op-data-table-view {
     width: 100%;
     position: relative;
     overflow: hidden;
 }
 
-.op-dataTable-view .ps__rail-y {
+.op-data-table-view .ps__rail-y {
     background-color: transparent !important;
     z-index: 11;
 }
 
 /* Make sure x-scrollbar in dataTable is always at the left and visible */
-.op-dataTable-view .ps__rail-x {
+.op-data-table-view .ps__rail-x {
     background-color: transparent !important;
     opacity: 0.9 !important;
 }
 
 /* change from 1px to 2px to make ps__thumb-y more cnetered */
-.op-dataTable-view .ps__thumb-y {
+.op-data-table-view .ps__thumb-y {
     right: 2px;
 }
 
 /* avoid seeing through ps__rail_x in table view */
-.op-dataTable-view .ps__thumb-x {
+.op-data-table-view .ps__thumb-x {
     bottom: 1px;
 }
 
@@ -458,11 +458,11 @@ th.sticky-header {
     display: inline-grid;
 }
 
-#metadataSelector i.fa-check {
+#op-metadata-selector i.fa-check {
     display: inline-block;
 }
 
-#metadataSelector ul li {
+#op-metadata-selector ul li {
     text-decoration: none;
 }
 
@@ -565,7 +565,7 @@ img.preview {
     z-index: 999;
 }
 
-#galleryView button.close, #metadataSelector button.close {
+#galleryView button.close, #op-metadata-selector button.close {
     position: absolute;
     float: right;
     top: .8em;
@@ -895,19 +895,19 @@ nav.panel-heading {
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
-    overflow: auto !important;
+    overflow-x: auto !important;
     overflow-y: hidden !important;
 }
 
-.widget_column {
-    overflow: auto;
+.op-widget-column {
     position: relative;
-    padding 0 20px;
+    padding: 0 20px;
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
-    width: 740px;
-    max-width: 97%;
+    /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
+    max-width: 740px;
+    min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;

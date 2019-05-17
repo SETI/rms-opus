@@ -73,6 +73,8 @@ var opus = {
     default_widgets: default_widgets.split(','),
     widget_click_timeout: 0,
 
+    lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
+
     // these are for the process that detects there was a change in the selection criteria and updates things
     main_timer: false,
     main_timer_interval: 1000,
@@ -103,10 +105,9 @@ var opus = {
             return;
         }
 
-        // if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault() || !opus.checkIfMetadataAreDefault()) {
-        if ($.isEmptyObject(selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+        if (!$.isEmptyObject(selections) || !opus.isDrawnWidgetsListDefault()) {
             $(".op-reset-button button").prop("disabled", false);
-        } else  if (!opus.checkIfMetadataAreDefault()) {
+        } else if (!opus.isMetadataDefault()) {
             $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
             $(".op-reset-button .op-reset-search").prop("disabled", true);
         } else {
@@ -289,15 +290,10 @@ var opus = {
 
             case 'detail':
                 $('#detail').fadeIn();
-
                 o_detail.getDetail(opus.prefs.detail);
                 break;
 
             case 'cart':
-                if (opus.prefs.cart_browse == 'data') {
-                    $('.data_table','#cart').show();
-                    $('.gallery','#cart').hide();
-                }
                 $('#cart').fadeIn();
                 o_cart.getCartTab();
                 break;
@@ -317,7 +313,10 @@ var opus = {
         // the application default widgets
 
         clearInterval(opus.main_timer);  // stop polling for UI changes for a moment
-        $("#search_widgets").empty(); // remove all widgets on the screen
+        // remove all widgets on the screen
+        $.each($("#op-search-widgets .widget"), function(idx, widget) {
+            widget.remove();
+        });
 
         // reset the search query
         opus.selections = {};
@@ -332,13 +331,15 @@ var opus = {
         opus.widgets_drawn = [];
         opus.widget_elements_drawn = [];
 
-        if (resetMetadata && !opus.checkIfMetadataAreDefault()) {
-            opus.prefs.cols = [];
-            o_browse.resetMetadata(default_columns.split(','), true);
-            $(".op-reset-button button").prop("disabled", true);
-        } else if (!opus.checkIfMetadataAreDefault()) {
-            $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
-            $(".op-reset-button .op-reset-search").prop("disabled", true);
+        if (!o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','))) {
+            if (resetMetadata) {
+                opus.prefs.cols = [];
+                o_browse.resetMetadata(default_columns.split(','), true);
+                $(".op-reset-button button").prop("disabled", true);
+            } else {
+                $(".op-reset-button .op-reset-search-metadata").prop("disabled", false);
+                $(".op-reset-button .op-reset-search").prop("disabled", true);
+            }
         } else {
             $(".op-reset-button button").prop("disabled", true);
         }
@@ -346,9 +347,9 @@ var opus = {
         o_menu.markDefaultMenuItem();
 
         let deferredArr = [];
-        $.each(opus.default_widgets, function(index, slug) {
+        $.each(opus.default_widgets.slice().reverse(), function(index, slug) {
             deferredArr.push($.Deferred());
-            o_widgets.getWidget(slug,"#search_widgets",deferredArr[index]);
+            o_widgets.getWidget(slug, "#op-search-widgets", deferredArr[index]);
         });
 
         // start the main timer again
@@ -370,31 +371,13 @@ var opus = {
     },
 
     // check if current drawn widgets are default ones
-    checkIfDrawnWidgetsAreDefault: function() {
-        if (opus.prefs.widgets.length !== opus.default_widgets.length) {
-            return false;
-        }
-        let reversedDefaultWidgets = new Array(...opus.default_widgets);
-        reversedDefaultWidgets.reverse();
-        let defaultWidgetsString = JSON.stringify(reversedDefaultWidgets);
-        let drawnWidgetsString = JSON.stringify(opus.prefs.widgets);
-        if (defaultWidgetsString !== drawnWidgetsString) {
-            return false;
-        }
-        return true;
+    isDrawnWidgetsListDefault: function() {
+        return o_utils.areObjectsEqual(opus.prefs.widgets, opus.default_widgets);
     },
 
     // check if current cols (metadata) are default ones
-    checkIfMetadataAreDefault: function() {
-        if (opus.prefs.cols.length !== default_columns.split(',').length) {
-            return false;
-        }
-        let defaultColsString = JSON.stringify(default_columns.split(','));
-        let selectedColsString = JSON.stringify(opus.prefs.cols);
-        if (defaultColsString !== selectedColsString) {
-            return false;
-        }
-        return true;
+    isMetadataDefault: function() {
+        return o_utils.areObjectsEqual(opus.prefs.cols, default_columns.split(','));
     },
 
     hideHelpPanel: function() {
@@ -413,6 +396,18 @@ var opus = {
             $("#op-help-panel .card-body").scrollTop(0);
             opus.helpScrollbar.update();
         }
+    },
+
+    // return either o_browse or o_cart, default to o_browse object
+    getViewNamespace: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? o_cart : o_browse);
+    },
+
+    // return either #browse or #cart, default to #browse
+    getViewTab: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "#cart" : "#browse");
     },
 
     // OPUS initialization process after document.ready and normalized url api call
@@ -453,6 +448,11 @@ var opus = {
         });
 
         o_mutationObserver.observePerfectScrollbar();
+
+        for (let tab of ["browse", "cart"]) {
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
+            o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
+        }
 
         // add the navbar clicking behaviors, selecting which tab to view:
         // see triggerNavbarClick
@@ -540,9 +540,9 @@ var opus = {
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
 
-            if (!$.isEmptyObject(opus.selections) || !opus.checkIfDrawnWidgetsAreDefault()) {
+            if (!$.isEmptyObject(opus.selections) || !opus.isDrawnWidgetsListDefault()) {
                 $(targetModal).modal("show");
-            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.checkIfMetadataAreDefault()) {
+            } else if (targetModal === "#op-reset-search-metadata-modal" && !opus.isMetadataDefault()) {
                 $(targetModal).modal("show");
             }
         });
