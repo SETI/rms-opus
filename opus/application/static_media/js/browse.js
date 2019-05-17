@@ -705,14 +705,13 @@ var o_browse = {
             let obsNum = obsNumDiff + calculatedFirstObs;
 
             if (resize) {
+                // At this point of time, galleryBoundingRect is updated with new row size
+                // from countGalleryImages in adjustBrowseHeight.
                 let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
                 galleryBoundingRect.x);
 
-                console.log("=== numToDelete ===");
-                console.log(numToDelete);
                 let galleryObsElem = $(`${tab} .gallery [data-obs]`);
                 let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
-                console.log(galleryObsElem);
                 // delete first "numToDelete" obs if row size is changed
                 if (numToDelete !== 0) {
                     for (let count = 0; count < numToDelete; count++) {
@@ -720,14 +719,6 @@ var o_browse = {
                     }
                 }
             }
-            console.log(galleryBoundingRect);
-            console.log("=== updateSliderHandle firstObs ===");
-            console.log(firstCachedObs);
-            console.log(calculatedFirstObs);
-            console.log("=== Row height ===");
-            console.log(obsNumDiff);
-            console.log("=== startObs ===");
-            console.log(obsNum);
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
@@ -1423,8 +1414,6 @@ var o_browse = {
         }
         galleryObsElem.eq(index).remove();
         tableObsElem.eq(index).remove();
-        console.log("=== galleryObsElm id being removed ===");
-        console.log(galleryObsElem.eq(index).data("obs"));
     },
 
     getBrowseView: function () {
@@ -1679,7 +1668,7 @@ var o_browse = {
         return width;
     },
 
-    adjustBrowseHeight: function() {
+    adjustBrowseHeight: function(resize=false) {
         let tab = opus.getViewTab();
         let containerHeight = o_browse.calculateGalleryHeight;
         $(`${tab} .gallery-contents`).height(containerHeight);
@@ -1690,7 +1679,7 @@ var o_browse = {
         namespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(true);
+        o_browse.updateSliderHandle(resize);
     },
 
     adjustTableSize: function() {
