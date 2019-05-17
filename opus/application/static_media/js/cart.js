@@ -230,7 +230,7 @@ var o_cart = {
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
-        $(".dataTable input").prop("checked", false);
+        $(".op-data-table-view input").prop("checked", false);
     },
 
     toggleInCart: function(fromOpusId, toOpusId) {

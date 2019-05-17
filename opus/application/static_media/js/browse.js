@@ -670,9 +670,8 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function() {
+    updateSliderHandle: function(resize=false) {
         let tab = opus.getViewTab();
-        let contentsView = o_browse.getScrollContainerClass();
         let browse = o_browse.getBrowseView();
         let selector = ((opus.prefs[browse] === "gallery") ?
                         `${tab} .gallery .thumbnail-container` :
@@ -699,27 +698,41 @@ var o_browse = {
 
             // table: obsNum = calculatedFirstObs + number of row
             // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
-            let obsNumDiff = ((opus.prefs[browse] === "dataTable") ?
-                              Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) :
-                              Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * galleryBoundingRect.x);
+            let obsNumDiff = ((opus.prefs[browse] === "gallery") ?
+                              Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
+                              galleryBoundingRect.x :
+                              Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
             let obsNum = obsNumDiff + calculatedFirstObs;
 
-            let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
-                               galleryBoundingRect.x);
+            if (resize) {
+                let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
+                galleryBoundingRect.x);
 
-            let galleryObsElem = $(`${tab} .gallery [data-obs]`);
-            let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
-            // delete first "numToDelete" obs if row size is changed
-            if (numToDelete !== 0) {
-                for (let count = 0; count < numToDelete; count++) {
-                    o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count);
+                console.log("=== numToDelete ===");
+                console.log(numToDelete);
+                let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+                let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
+                console.log(galleryObsElem);
+                // delete first "numToDelete" obs if row size is changed
+                if (numToDelete !== 0) {
+                    for (let count = 0; count < numToDelete; count++) {
+                        o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count);
+                    }
                 }
             }
+            console.log(galleryBoundingRect);
+            console.log("=== updateSliderHandle firstObs ===");
+            console.log(firstCachedObs);
+            console.log(calculatedFirstObs);
+            console.log("=== Row height ===");
+            console.log(obsNumDiff);
+            console.log("=== startObs ===");
+            console.log(obsNum);
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
-            if (contentsView === ".op-data-table-view") {
+            if (opus.prefs[browse] !== "gallery") {
                 obsNum = (Math.floor((obsNum - 1)/galleryBoundingRect.x + 0.0000001) *
                           galleryBoundingRect.x + 1);
             }
@@ -1047,7 +1060,7 @@ var o_browse = {
 
             $(".op-browse-view", tab).html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             $(".op-browse-view", tab).attr("title", "View sortable metadata table");
-            $(".op-browse-view", tab).data("view", "dataTable");
+            $(".op-browse-view", tab).data("view", "data");
 
             suppressScrollY = false;
         } else {
@@ -1410,6 +1423,8 @@ var o_browse = {
         }
         galleryObsElem.eq(index).remove();
         tableObsElem.eq(index).remove();
+        console.log("=== galleryObsElm id being removed ===");
+        console.log(galleryObsElem.eq(index).data("obs"));
     },
 
     getBrowseView: function () {
@@ -1675,7 +1690,7 @@ var o_browse = {
         namespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle();
+        o_browse.updateSliderHandle(true);
     },
 
     adjustTableSize: function() {
