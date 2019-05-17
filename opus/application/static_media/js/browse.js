@@ -705,7 +705,7 @@ var o_browse = {
             let obsNum = obsNumDiff + calculatedFirstObs;
 
             let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
-            galleryBoundingRect.x);
+                               galleryBoundingRect.x);
 
             let galleryObsElem = $(`${tab} .gallery [data-obs]`);
             let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
@@ -740,8 +740,6 @@ var o_browse = {
                 "step": o_browse.gallerySliderStep,
                 "max": opus.resultCount,
             });
-
-            // TODO: if resize, we re-render:
 
             // update startobs in url when scrolling
             o_hash.updateHash(true);
@@ -1378,16 +1376,6 @@ var o_browse = {
         let tab = opus.getViewTab();
         let galleryObsElem = $(`${tab} .gallery [data-obs]`);
         let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
-
-        // function deleteCachedObservation(index) {
-        //     // don't delete the metadata if the observation is in the cart
-        //     if (!galleryObsElem.eq(index).hasClass("op-in-cart")) {
-        //         let delOpusId = galleryObsElem.eq(index).data("id");
-        //         delete o_browse.galleryData[delOpusId];
-        //     }
-        //     galleryObsElem.eq(index).remove();
-        //     tableObsElem.eq(index).remove();
-        // }
 
         if (galleryObsElem.length === 0) {
             // this only happens when there are no elements rendered, so why bother...
