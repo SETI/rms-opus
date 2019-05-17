@@ -106,8 +106,12 @@ var o_mutationObserver = {
 
         // ps in cart page
         let cartObserver = new MutationObserver(function(mutationsList) {
-                // in cart page, we only need to detect element change. We don't need to worry about attribute change (no expanding/collapsing event). Whenever there is an element added/removed in cart page, o_cart.cartGalleryScrollbar and o_cart.downloadOptionsScrollbar are updated.
-                adjustProductInfoHeight();
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                if (idx === lastMutationIdx) {
+                    adjustProductInfoHeight();
+                }
+            });
         });
 
         // ps in help page
@@ -198,11 +202,11 @@ var o_mutationObserver = {
         let searchSidebar = $("#sidebar")[0];
         let searchWidget = $("#op-search-widgets")[0];
         let helpPanel = $("#op-help-panel")[0];
-        let metadataSelector = $("#metadataSelector")[0];
-        let metadataSelectorContents = $("#metadataSelectorContents")[0];
+        let metadataSelector = $("#op-metadata-selector")[0];
+        let metadataSelectorContents = $("#op-metadata-selector-contents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
         let galleryView = $(".gallery")[0];
-        let tableView = $("#dataTable")[0];
+        let tableView = $(".op-data-table")[0];
         let switchGalleryAndTable = $(".op-browse-view")[0];
 
         // Note:

@@ -101,7 +101,7 @@
                                     <a href="#" class="op-browse-view nav-link"><i class="far fa-list-alt"></i></a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                    <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for ALL observations in current results"><i class="fas fa-download"></i>&nbsp;Download CSV (all results)</a>
@@ -125,17 +125,15 @@
                         <div class="row justify-content-start op-gallery-view mr-0">
                             <div class="mr-0 thumb gallery gallery-scroll"></div>
                         </div>
-                        <div class="row op-dataTable-view browse-infiniteScroll-element mx-0">
+                        <div class="row op-data-table-view browse-infiniteScroll-element mx-0">
                             <div class="col-lg p-0">
-                                <table id="dataTable" class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect mb-0">
-                                    <thead>
-                                        <tr></tr>
-                                    </thead>
+                                <table class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect op-data-table mb-0">
+                                    <thead></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
                         </div>
-                        <!-- we moved the spinner to the same level as .op-gallery-view and .op-dataTable-view so that it can be shared for both infiniteScroll instances  -->
+                        <!-- we moved the spinner to the same level as .op-gallery-view and .op-data-table-view so that it can be shared for both infiniteScroll instances  -->
                         <div class="page-load-status">
                             <div class="infinite-scroll-request loader-ellips">
                                 <div class='loader'></div>
@@ -149,7 +147,9 @@
 
             <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
-                    <div class="col cart_details pr-0"></div>
+                    <div class="col cart_details pr-0">
+                        <div id="op-download-options-container" class="sidebar_wrapper pr-0"></div>
+                    </div>
                     <div class="col pl-0 cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container top_navbar collapse navbar-collapse">
@@ -169,11 +169,14 @@
                                     </li>
                                     <li class="nav-item">
                                         <div class="b-l-1">
-                                            <a href="#" class="metadataModal nav-link" data-toggle="modal" data-target="#metadataSelector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                            <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="dataTable" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
                                         </div>
                                     </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                    </li>
                                     <li class="nav-item ">
-                                        <a href="#" class="emptyCart nav-link" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
+                                        <a href="#" class="nav-link" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
                                     </li>
                                 </ul>
                             </div>
@@ -184,11 +187,22 @@
                                 <ul class="sort-contents list-inline"></ul>
                             </div>
                         </nav>
-                        <div class="panel-body gallery-contents container-fluid    pr-2">
-                            <div class="row mr-0 mt-0 thumb gallery gallery-scroll"></div>
+                        <div class="panel-body gallery-contents container-fluid">
+                            <div class="row justify-content-start op-gallery-view mr-0 ml-1">
+                                <div class="mr-0 thumb gallery gallery-scroll"></div>
+                            </div>
+                            <div class="row op-data-table-view mx-0">
+                                <div class="col-lg p-0">
+                                    <table class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect op-data-table mb-0">
+                                        <thead></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- we moved the spinner to the same level as .op-gallery-view and .op-data-table-view so that it can be shared for both infiniteScroll instances  -->
                             <div class="page-load-status">
                                 <div class="infinite-scroll-request loader-ellips">
-                                    <!--div class='loader'></div-->
+                                    <div class='loader'></div>
                                 </div>
                                 <p class="infinite-scroll-last">End of content</p>
                                 <p class="infinite-scroll-error">No more pages to load</p>
@@ -261,7 +275,7 @@
         </div>
 
         <!--modal dialog for the metadata selector -->
-        <div id="metadataSelector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="metadataSelectorLabel" aria-hidden="true">
+        <div id="op-metadata-selector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="op-metadata-selectorLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
@@ -270,7 +284,7 @@
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
-                    <div class="modal-body metadata" id="metadataSelectorContents"></div>
+                    <div class="modal-body metadata" id="op-metadata-selector-contents"></div>
                     <div class="modal-footer">
                         <div class="left-container">
                             <button type="reset" class="btn btn-info">Reset to Default</button>

@@ -1,43 +1,41 @@
-<div id="download-options-container" class="sidebar_wrapper pr-0">
-    <div id="cart-sidebar">
-        <div id="cart_summary" class="well well-lg">
-            <div id="op-download-links">
-                <h1>Zipped File Links</h1>
-                <ul class="zippedFiles"></ul>
-                <span class="spinner">&nbsp;</span>
-            </div>
-            <h1>Download Options</h1>
-            <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-            <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
-            <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
+<div id="cart-sidebar">
+    <div id="cart_summary" class="well well-lg">
+        <div id="op-download-links">
+            <h1>Zipped File Links</h1>
+            <ul class="zippedFiles"></ul>
+            <span class="spinner">&nbsp;</span>
+        </div>
+        <h1>Download Options</h1>
+        <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
+        <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
+        <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
 
-            <div id="download_options">
-                {% for product_cat, product_list in product_cat_list %}
-                    <h4>{{ product_cat }}</h4>
-                    <ul id="product_types" class="list-inline">
-                        {% for product_info in product_list %}
-                            <li>
-                                <input type="checkbox" value="{{ product_info.slug_name }}"
-                                    {% if product_info.product_count > 0 %}
-                                        checked
-                                    {% endif %}
-                                >
-                                <span
-                                    {% if product_info.product_count == 0 %}
-                                        class="fadey"
-                                    {% endif %}
-                                >
-                                    {{ product_info.product_type }}
-                                    {% if product_info.tooltip %}
-                                        <i class="fa fa-info-circle" title="{{ product_info.tooltip }}"></i>
-                                    {% endif %}
-                                    <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
-                                </span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endfor %}
-            </div>
+        <div id="download_options">
+            {% for product_cat, product_list in product_cat_list %}
+                <h4>{{ product_cat }}</h4>
+                <ul id="product_types" class="list-inline">
+                    {% for product_info in product_list %}
+                        <li>
+                            <input type="checkbox" value="{{ product_info.slug_name }}"
+                                {% if product_info.product_count > 0 %}
+                                    checked
+                                {% endif %}
+                            >
+                            <span
+                                {% if product_info.product_count == 0 %}
+                                    class="fadey"
+                                {% endif %}
+                            >
+                                {{ product_info.product_type }}
+                                {% if product_info.tooltip %}
+                                    <i class="fa fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                {% endif %}
+                                <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
         </div>
     </div>
-</div><!-- /cart_summary  -->
+</div>
