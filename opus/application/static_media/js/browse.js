@@ -58,7 +58,6 @@ var o_browse = {
     browseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
-        // $(".op-gallery-view, .op-data-table-view").on("scroll", _.debounce(o_browse.checkScroll, 500));
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
 
         // Mouse wheel up will also trigger ps-scroll-up.
@@ -628,7 +627,8 @@ var o_browse = {
             let tableScrollbarPosition = $(`${tab} .op-data-table-view`).scrollTop();
             let tableHeaderHeight = $(`${tab} .op-data-table thead th`).outerHeight();
 
-            let tableTargetFinalPosition = tableTargetTopPosition - tableContainerTopPosition + tableScrollbarPosition - tableHeaderHeight;
+            let tableTargetFinalPosition = (tableTargetTopPosition - tableContainerTopPosition +
+                                            tableScrollbarPosition - tableHeaderHeight);
             $(`${tab} .op-data-table-view`).scrollTop(tableTargetFinalPosition);
         }
     },
@@ -646,7 +646,9 @@ var o_browse = {
         let elem = $(`${tab} .thumbnail-container[data-obs="${value}"]`);
         let startObsLabel = o_browse.getStartObsLabel();
 
-        // Update obsNum in infiniteScroll instances, and this obsNum is the first item in current page. (will be used to set scrollbar position in renderGalleryAndTable).
+        // Update obsNum in infiniteScroll instances.
+        // This obsNum is the first item in current page
+        // (will be used to set scrollbar position in renderGalleryAndTable).
         $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": value});
         $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": value});
         opus.prefs[startObsLabel] = value;
@@ -673,17 +675,19 @@ var o_browse = {
         let contentsView = o_browse.getScrollContainerClass();
         let browse = o_browse.getBrowseView();
         let selector = (opus.prefs[browse] === "gallery") ?  `${tab} .gallery .thumbnail-container` : `${tab} .op-data-table tbody tr`;
-        let topBoxBoundary; // assign value in the each loop below to avoid getting type error in views other than #browse and #cart
+        let topBoxBoundary;
         let startObsLabel = o_browse.getStartObsLabel();
 
         if ($(selector).length > 0) {
             let namespace = opus.getViewNamespace();
             let galleryBoundingRect = namespace.galleryBoundingRect;
+
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
             let firstCachedObsTop = $(selector).first().offset().top;
             // Fot gallery view, the topBoxBoundary is the top of .gallery-contents
-            // For table view, we will set the topBoxBoundary to be the bottom of thead (account for height of thead)
+            // For table view, we will set the topBoxBoundary to be the bottom of thead
+            // (account for height of thead)
             topBoxBoundary = (topBoxBoundary ||
                               (opus.prefs[browse]  === "gallery") ?
                               $(`${tab} .gallery-contents`).offset().top :
@@ -691,13 +695,17 @@ var o_browse = {
 
             // table: obsNum = firstCachedObs + number of row
             // gallery: obsNum = firstCachedObs + number of row * number of obs in a row
-            let obsNumDiff = (opus.prefs.browse === "dataTable") ? Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) : Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * galleryBoundingRect.x;
+            let obsNumDiff = ((opus.prefs[browse] === "dataTable") ?
+                              Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()) :
+                              Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) * galleryBoundingRect.x);
             let obsNum = obsNumDiff + firstCachedObs;
 
-            // update obsNum in both infiniteScroll instances
-            // store the most top left obsNum in gallery for both infiniteScroll instances, this will be used to updated slider obsNum
+            // Update obsNum in both infiniteScroll instances.
+            // Store the most top left obsNum in gallery for both infiniteScroll instances
+            // (this will be used to updated slider obsNum).
             if (contentsView === ".op-data-table-view") {
-                obsNum = Math.floor((obsNum-firstCachedObs)/galleryBoundingRect.x+0.0000001)*galleryBoundingRect.x+firstCachedObs;
+                obsNum = (Math.floor((obsNum - firstCachedObs)/galleryBoundingRect.x + 0.0000001) *
+                          galleryBoundingRect.x + firstCachedObs);
             }
 
             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
@@ -723,8 +731,9 @@ var o_browse = {
     },
 
     checkScroll: function() {
-        // this will make sure ps-scroll-up is triggered to prefetch previous data when scrollbar reaches to up scroll threshold point
-        let tab = `#${opus.prefs.view}`;
+        // this will make sure ps-scroll-up is triggered to prefetch
+        // previous data when scrollbar reaches to up scroll threshold point.
+        let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
         if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
