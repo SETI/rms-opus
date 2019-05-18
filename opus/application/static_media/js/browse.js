@@ -1650,7 +1650,10 @@ var o_browse = {
         let tab = opus.getViewTab(view);
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
-        let navbarHeight = $(".panel-heading").outerHeight();
+        // we need to specify the tab here
+        // otherwise in cart tab the selector will select the navbar in browse
+        // and outerHeight will be 0.
+        let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
         return  $(window).height()-totalNonGalleryHeight;
     },
@@ -1684,12 +1687,12 @@ var o_browse = {
 
     adjustTableSize: function() {
         let tab = opus.getViewTab();
+        console.log(tab);
         let containerWidth = $(`${tab} .gallery-contents`).width();
-        // let containerHeight = $(`${tab} .gallery-contents`).height() - $(".app-footer").outerHeight();
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
-
+        console.log(opus.getViewNamespace().tableScrollbar);
         opus.getViewNamespace().tableScrollbar.update();
     },
 
