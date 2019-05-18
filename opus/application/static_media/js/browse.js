@@ -1687,12 +1687,10 @@ var o_browse = {
 
     adjustTableSize: function() {
         let tab = opus.getViewTab();
-        console.log(tab);
         let containerWidth = $(`${tab} .gallery-contents`).width();
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
-        console.log(opus.getViewNamespace().tableScrollbar);
         opus.getViewNamespace().tableScrollbar.update();
     },
 
