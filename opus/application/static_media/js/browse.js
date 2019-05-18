@@ -1507,7 +1507,7 @@ var o_browse = {
 
                 if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) ||
                     (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false) ||
-                     (lastObs === o_cart.cartCount && infiniteScrollData.options.loadPrevPage === false)) {
+                    (lastObs === o_cart.cartCount && infiniteScrollData.options.loadPrevPage === false)) {
                     $(".infinite-scroll-request").hide();
                 }
             });
