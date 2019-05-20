@@ -704,7 +704,7 @@ var o_browse = {
                               Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
             let obsNum = obsNumDiff + calculatedFirstObs;
 
-            if (resize) {
+            if (browserResized) {
                 // At this point of time, galleryBoundingRect is updated with new row size
                 // from countGalleryImages in adjustBrowseHeight.
                 let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
