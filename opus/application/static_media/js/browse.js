@@ -670,7 +670,7 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(resize=false) {
+    updateSliderHandle: function(browserResized=false) {
         let tab = opus.getViewTab();
         let browse = o_browse.getBrowseView();
         let selector = ((opus.prefs[browse] === "gallery") ?
@@ -708,7 +708,7 @@ var o_browse = {
                 // At this point of time, galleryBoundingRect is updated with new row size
                 // from countGalleryImages in adjustBrowseHeight.
                 let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
-                galleryBoundingRect.x);
+                                   galleryBoundingRect.x);
 
                 let galleryObsElem = $(`${tab} .gallery [data-obs]`);
                 let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
@@ -1651,9 +1651,6 @@ var o_browse = {
         let tab = opus.getViewTab(view);
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
-        // we need to specify the tab here
-        // otherwise in cart tab the selector will select the navbar in browse
-        // and outerHeight will be 0.
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
         return  $(window).height()-totalNonGalleryHeight;
@@ -1672,7 +1669,7 @@ var o_browse = {
         return width;
     },
 
-    adjustBrowseHeight: function(resize=false) {
+    adjustBrowseHeight: function(browserResized=false) {
         let tab = opus.getViewTab();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
@@ -1683,7 +1680,7 @@ var o_browse = {
         namespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(resize);
+        o_browse.updateSliderHandle(browserResized);
     },
 
     adjustTableSize: function() {
