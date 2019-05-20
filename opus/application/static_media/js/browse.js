@@ -40,7 +40,7 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
-    maxCachedObservations: 750,    // max number of observations to store in cache;
+    maxCachedObservations: 1000,    // max number of observations to store in cache;
                                     // at some point, we can probably figure this out dynamically
 
     galleryBoundingRect: {'x': 0, 'y': 0},
