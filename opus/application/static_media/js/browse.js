@@ -607,7 +607,7 @@ var o_browse = {
         }
     },
 
-    setScrollbarOnSlide: function(obsNum) {
+    setScrollbarPosition: function(obsNum) {
         let tab = opus.getViewTab();
         let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${obsNum}']`);
@@ -654,7 +654,7 @@ var o_browse = {
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
-            o_browse.setScrollbarOnSlide(value);
+            o_browse.setScrollbarPosition(value);
         } else {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
             // (one current page, one next page, and one previous page) starting from obsNum.
@@ -1066,10 +1066,13 @@ var o_browse = {
         }
         opus.getViewNamespace().galleryScrollbar.settings.suppressScrollY = suppressScrollY;
 
+        console.log(`=== switching between table and gallery in ${tab} ===`)
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+            console.log(`obsNum: ${startObs}`);
             o_browse.setScrollbarPosition(startObs);
+
         }
     },
 
@@ -1340,11 +1343,6 @@ var o_browse = {
         });
         $(".sort-contents").html(listHtml);
         o_hash.updateHash();
-    },
-
-    // set the scrollbar position in gallery / table view
-    setScrollbarPosition: function(obsNum) {
-        o_browse.setScrollbarOnSlide(obsNum);
     },
 
     // number of images that can be fit in current window size
