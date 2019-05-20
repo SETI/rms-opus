@@ -1066,13 +1066,10 @@ var o_browse = {
         }
         opus.getViewNamespace().galleryScrollbar.settings.suppressScrollY = suppressScrollY;
 
-        console.log(`=== switching between table and gallery in ${tab} ===`)
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-            console.log(`obsNum: ${startObs}`);
             o_browse.setScrollbarPosition(startObs);
-
         }
     },
 
@@ -1503,10 +1500,15 @@ var o_browse = {
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
                 let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
 
-                if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) ||
-                    (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false) ||
-                    (lastObs === o_cart.cartCount && infiniteScrollData.options.loadPrevPage === false)) {
-                    $(".infinite-scroll-request").hide();
+                if (infiniteScrollData.options.loadPrevPage === true) {
+                    if (firstObs === 1) {
+                        $(".infinite-scroll-request").hide();
+                    }
+                } else {
+                    if ((tab === "#browse" && lastObs === opus.resultCount) ||
+                        (tab === "#cart" && lastObs === o_cart.cartCount)) {
+                        $(".infinite-scroll-request").hide();
+                    }
                 }
             });
 
