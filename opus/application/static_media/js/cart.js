@@ -127,15 +127,17 @@ var o_cart = {
     },
 
     adjustProductInfoHeight: function() {
-        let containerHeight = $(window).height()-120;
-        let downloadOptionsContainer = $(window).height()-90;
+        let containerHeight = o_browse.calculateGalleryHeight();
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cartSummaryHeight = $("#cart_summary").height();
-        $("#cart .sidebar_wrapper").height(downloadOptionsContainer);
         $("#cart .gallery-contents").height(containerHeight);
+        $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
 
         // The following steps will hide the y-scrollbar when it's not needed.
         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-        if (downloadOptionsContainer > cartSummaryHeight) {
+        if (downloadOptionsHeight > cartSummaryHeight) {
             if (!$("#op-download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#op-download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
@@ -177,6 +179,7 @@ var o_cart = {
 
     // get Cart tab
     activateCartTab: function() {
+        let view = opus.prefs.view;
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (o_cart.cartChange) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
@@ -198,7 +201,7 @@ var o_cart = {
                     let startObsLabel = o_browse.getStartObsLabel();
                     let startObs = opus.prefs[startObsLabel];
                     startObs = (startObs > o_cart.cartCount ? 1 : startObs);
-                    o_browse.loadData(startObs);
+                    o_browse.loadData(view, startObs);
 
                     if (zippedFiles_html) {
                         $(".zippedFiles", "#cart").html(zippedFiles_html);
@@ -229,7 +232,7 @@ var o_cart = {
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
-        $(".dataTable input").prop("checked", false);
+        $(".op-data-table-view input").prop("checked", false);
     },
 
     toggleInCart: function(fromOpusId, toOpusId) {
@@ -301,6 +304,7 @@ var o_cart = {
         // If updateBadges is false, we set the spinners in motion but don't actually update them
         // This is used when we want to do a lot of cart operations in a row and only update
         // at the end
+        let view = opus.prefs.view;
         o_cart.cartChange = true;
 
         let url = "/opus/__cart/" + action + ".json?";
@@ -323,7 +327,7 @@ var o_cart = {
         // Minor performance check - if we don't need a total download size, don't bother
         // Only the cart tab is interested in updating that count at this time.
         let add_to_url = "";
-        if (opus.prefs.view === "cart" && updateBadges) {
+        if (view === "cart" && updateBadges) {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
@@ -346,7 +350,7 @@ var o_cart = {
                 // reload data
                 // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
                 o_browse.galleryBegun = false;
-                o_browse.loadData(1);
+                o_browse.loadData(view, 1);
             }
             // we only update the cart badge result count from the latest request
             if (statusData.reqno < o_cart.lastRequestNo || !updateBadges) {

@@ -791,7 +791,7 @@ nav.panel-heading {
 
 .panel-body .gallery-contents {
     position: fixed !important;
-    overflow-y: auto
+    overflow-y: auto;
 }
 
 .page-load-status {
