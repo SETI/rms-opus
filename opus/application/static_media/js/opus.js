@@ -502,6 +502,10 @@ var opus = {
                     url += "tutorial.html";
                     header = "A Brief Tutorial";
                     break;
+                case "gettingstarted":
+                    url += "gettingstarted.html";
+                    header = "Getting Started";
+                    break;
                 case "feedback":
                     url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
                     header = "Questions/Feedback";

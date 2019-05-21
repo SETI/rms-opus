@@ -111,3 +111,21 @@ class helpTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_tutorial(request)
+
+
+            #################################################
+            ######### api_gettingstarted UNIT TESTS #########
+            #################################################
+
+    def test__api_gettingstarted_no_request(self):
+        "[test_help.py] api_gettingstarted: no request"
+        with self.assertRaises(Http404):
+            api_gettingstarted(None)
+
+    def test__api_gettingstarted_no_get(self):
+        "[test_help.py] api_gettingstarted: no GET"
+        c = Client()
+        request = self.factory.get('__help/gettingstarted.html')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_gettingstarted(request)
