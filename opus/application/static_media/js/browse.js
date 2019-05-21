@@ -49,7 +49,7 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     onRenderData: false,
-
+    fading: false,  // used to prevent additional clicks until the fade animation complete
     /**
     *
     *  all the things that happen on the browse tab
@@ -99,6 +99,10 @@ var o_browse = {
 
         // browse nav menu - the gallery/table toggle
         $("#browse, #cart").on("click", ".op-browse-view", function() {
+            if (o_browse.fading) {
+                return false;
+            }
+
             o_browse.hideMenu();
             let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
@@ -607,7 +611,7 @@ var o_browse = {
         }
     },
 
-    setScrollbarOnSlide: function(obsNum) {
+    setScrollbarPosition: function(obsNum) {
         let tab = opus.getViewTab();
         let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${obsNum}']`);
@@ -654,7 +658,7 @@ var o_browse = {
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
-            o_browse.setScrollbarOnSlide(value);
+            o_browse.setScrollbarPosition(value);
         } else {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
             // (one current page, one next page, and one previous page) starting from obsNum.
@@ -670,7 +674,7 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(resize=false) {
+    updateSliderHandle: function(browserResized=false) {
         let tab = opus.getViewTab();
         let browse = o_browse.getBrowseView();
         let selector = ((opus.prefs[browse] === "gallery") ?
@@ -704,11 +708,11 @@ var o_browse = {
                               Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
             let obsNum = obsNumDiff + calculatedFirstObs;
 
-            if (resize) {
+            if (browserResized) {
                 // At this point of time, galleryBoundingRect is updated with new row size
                 // from countGalleryImages in adjustBrowseHeight.
                 let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
-                galleryBoundingRect.x);
+                                   galleryBoundingRect.x);
 
                 let galleryObsElem = $(`${tab} .gallery [data-obs]`);
                 let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
@@ -720,6 +724,11 @@ var o_browse = {
                 }
             }
 
+            let dataResultCount = tab === "#browse" ? opus.resultCount : o_cart.cartCount;
+            let firstObsInLastRow = (Math.floor((dataResultCount - 1)/galleryBoundingRect.x + 0.0000001) *
+                                galleryBoundingRect.x + 1);
+            let maxSliderVal = firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.y - 1);
+
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
@@ -728,23 +737,25 @@ var o_browse = {
                           galleryBoundingRect.x + 1);
             }
 
-            $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
-            $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
-            opus.prefs[startObsLabel] = obsNum;
+            if (maxSliderVal >= obsNum) {
+                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
+                $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
+                opus.prefs[startObsLabel] = obsNum;
 
-            $("#op-observation-number").html(obsNum);
-            $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
-            // just make the step size the number of the obserations across the page...
-            // if the observations have not yet been rendered, leave the default, it will get changed later
-            if (galleryBoundingRect.x > 0) {
-                o_browse.gallerySliderStep = galleryBoundingRect.x;
+                $("#op-observation-number").html(obsNum);
+                $(".op-slider-pointer").css("width", `${maxSliderVal.toString().length*0.7}em`);
+                // $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
+                // just make the step size the number of the obserations across the page...
+                // if the observations have not yet been rendered, leave the default, it will get changed later
+                if (galleryBoundingRect.x > 0) {
+                    o_browse.gallerySliderStep = galleryBoundingRect.x;
+                }
+                $("#op-observation-slider").slider({
+                    "value": obsNum,
+                    "step": o_browse.gallerySliderStep,
+                    "max": maxSliderVal,
+                });
             }
-            $("#op-observation-slider").slider({
-                "value": obsNum,
-                "step": o_browse.gallerySliderStep,
-                "max": opus.resultCount,
-            });
-
             // update startobs in url when scrolling
             o_hash.updateHash(true);
         }
@@ -1047,7 +1058,7 @@ var o_browse = {
 
         if (opus.prefs[browse] == "gallery") {
             $(".op-data-table-view", tab).hide();
-            $(".op-gallery-view", tab).fadeIn();
+            $(".op-gallery-view", tab).fadeIn("done", function() {o_browse.fading = false;});
 
             $(".op-browse-view", tab).html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             $(".op-browse-view", tab).attr("title", "View sortable metadata table");
@@ -1056,7 +1067,7 @@ var o_browse = {
             suppressScrollY = false;
         } else {
             $(".op-gallery-view", tab).hide();
-            $(".op-data-table-view", tab).fadeIn();
+            $(".op-data-table-view", tab).fadeIn("done", function() {o_browse.fading = false;});
 
             $(".op-browse-view", tab).html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".op-browse-view", tab).attr("title", "View sortable thumbnail gallery");
@@ -1135,7 +1146,7 @@ var o_browse = {
     renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
         let tab = opus.getViewTab(view);
-        let contentsView = o_browse.getScrollContainerClass();
+        let contentsView = o_browse.getScrollContainerClass(view);
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
 
@@ -1342,11 +1353,6 @@ var o_browse = {
         o_hash.updateHash();
     },
 
-    // set the scrollbar position in gallery / table view
-    setScrollbarPosition: function(obsNum) {
-        o_browse.setScrollbarOnSlide(obsNum);
-    },
-
     // number of images that can be fit in current window size
     getLimit: function(view) {
         // default the function to use to be the one in o_browse because there is not one available in o_search
@@ -1416,13 +1422,15 @@ var o_browse = {
         tableObsElem.eq(index).remove();
     },
 
-    getBrowseView: function () {
-        return (opus.prefs.view === "cart" ? "cart_browse" : "browse");
+    getBrowseView: function(tab) {
+        tab = (tab === undefined ? opus.prefs.view : tab);
+        return (tab === "cart" ? "cart_browse" : "browse");
     },
 
     // return the infiniteScroll container class for either gallery or table view
-    getScrollContainerClass: function() {
-        let browse = o_browse.getBrowseView();
+    getScrollContainerClass: function(tab) {
+        tab = (tab === undefined ? opus.prefs.view : tab);
+        let browse = o_browse.getBrowseView(tab);
         return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-data-table-view");
     },
 
@@ -1505,10 +1513,15 @@ var o_browse = {
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
                 let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
 
-                if ((firstObs === 1 && infiniteScrollData.options.loadPrevPage === true) ||
-                    (lastObs === opus.resultCount && infiniteScrollData.options.loadPrevPage === false) ||
-                    (lastObs === o_cart.cartCount && infiniteScrollData.options.loadPrevPage === false)) {
-                    $(".infinite-scroll-request").hide();
+                if (infiniteScrollData.options.loadPrevPage === true) {
+                    if (firstObs === 1) {
+                        $(".infinite-scroll-request").hide();
+                    }
+                } else {
+                    if ((tab === "#browse" && lastObs === opus.resultCount) ||
+                        (tab === "#cart" && lastObs === o_cart.cartCount)) {
+                        $(".infinite-scroll-request").hide();
+                    }
                 }
             });
 
@@ -1518,8 +1531,8 @@ var o_browse = {
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
         let tab = opus.getViewTab(view);
-        let startObsLabel = o_browse.getStartObsLabel();
-        let contentsView = o_browse.getScrollContainerClass();
+        let startObsLabel = o_browse.getStartObsLabel(view);
+        let contentsView = o_browse.getScrollContainerClass(view);
 
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
@@ -1640,7 +1653,8 @@ var o_browse = {
         let height = o_browse.calculateGalleryHeight(view);
 
         let xCount = Math.floor(width/o_browse.imageSize);
-        let yCount = Math.ceil(height/o_browse.imageSize);
+        let yCount = Math.round(height/o_browse.imageSize);
+        // let yCount = Math.ceil(height/o_browse.imageSize);
 
         return {"x": xCount, "y": yCount};
     },
@@ -1651,9 +1665,6 @@ var o_browse = {
         let tab = opus.getViewTab(view);
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
-        // we need to specify the tab here
-        // otherwise in cart tab the selector will select the navbar in browse
-        // and outerHeight will be 0.
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
         return  $(window).height()-totalNonGalleryHeight;
@@ -1672,7 +1683,7 @@ var o_browse = {
         return width;
     },
 
-    adjustBrowseHeight: function(resize=false) {
+    adjustBrowseHeight: function(browserResized=false) {
         let tab = opus.getViewTab();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
@@ -1683,7 +1694,7 @@ var o_browse = {
         namespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(resize);
+        o_browse.updateSliderHandle(browserResized);
     },
 
     adjustTableSize: function() {
