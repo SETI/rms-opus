@@ -611,8 +611,8 @@ var o_browse = {
         }
     },
 
-    setScrollbarPosition: function(obsNum) {
-        let tab = opus.getViewTab();
+    setScrollbarPosition: function(obsNum, view) {
+        let tab = opus.getViewTab(view);
         let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${obsNum}']`);
 
@@ -1048,6 +1048,7 @@ var o_browse = {
     },
 
     updateBrowseNav: function() {
+        o_browse.fading = true;
         let tab = opus.getViewTab();
         let browse = o_browse.getBrowseView();
         let contentsView = o_browse.getScrollContainerClass();
@@ -1184,7 +1185,7 @@ var o_browse = {
         } else {
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
 
-            o_browse.manageObservationCache(data.count, append);
+            o_browse.manageObservationCache(data.count, append, view);
             $(`${tab} .navbar`).show();
             $(`${tab} .sort-order-container`).show();
 
@@ -1246,7 +1247,7 @@ var o_browse = {
         // - scroll down: theoretically, infiniteScroll will take care of scrollbar position, but we still have to manually set
         //   it for the case when cached data is removed so that scrollbar position is always correct (and never reaches to the
         //   end until it reaches to the end of the data)
-        o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum);
+        o_browse.setScrollbarPosition(infiniteScrollData.options.obsNum, view);
 
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
@@ -1382,8 +1383,8 @@ var o_browse = {
     // check the cache of both rendered elements and variable o_browse.galleryData; remove 'far away' observations
     // from cache to avoid buildup of too much data in the browser which slows things down
     // Two functions; one to delete single elements, just a tool for the main one, manageObservationCache, to loop.
-    manageObservationCache: function(count, append) {
-        let tab = opus.getViewTab();
+    manageObservationCache: function(count, append, view) {
+        let tab = opus.getViewTab(view);
         let galleryObsElem = $(`${tab} .gallery [data-obs]`);
         let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
 
@@ -1422,21 +1423,21 @@ var o_browse = {
         tableObsElem.eq(index).remove();
     },
 
-    getBrowseView: function(tab) {
-        tab = (tab === undefined ? opus.prefs.view : tab);
-        return (tab === "cart" ? "cart_browse" : "browse");
+    getBrowseView: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "cart_browse" : "browse");
     },
 
     // return the infiniteScroll container class for either gallery or table view
-    getScrollContainerClass: function(tab) {
-        tab = (tab === undefined ? opus.prefs.view : tab);
-        let browse = o_browse.getBrowseView(tab);
+    getScrollContainerClass: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        let browse = o_browse.getBrowseView(view);
         return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-data-table-view");
     },
 
-    getStartObsLabel: function(tab) {
-        tab = (tab === undefined ? opus.prefs.view : tab);
-        return (tab === "cart" ? "cart_startobs" : "startobs");
+    getStartObsLabel: function(view) {
+        view = (view === undefined ? opus.prefs.view : view);
+        return (view === "cart" ? "cart_startobs" : "startobs");
     },
 
     // Instantiate infiniteScroll
@@ -1508,7 +1509,7 @@ var o_browse = {
 
             $(selector).on("request.infiniteScroll", function(event, path) {
                 // Remove spinner when infiniteScroll reaches to both ends
-                let contentsView = o_browse.getScrollContainerClass();
+                let contentsView = o_browse.getScrollContainerClass(view);
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
                 let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
@@ -1557,7 +1558,7 @@ var o_browse = {
                     if (galleryInfiniteScroll && tableInfiniteScroll) {
                         startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
                     }
-                    o_browse.setScrollbarPosition(startObs);
+                    o_browse.setScrollbarPosition(startObs, view);
                     $(".op-page-loading-status > .loader").hide();
                     return;
                 }
@@ -1588,7 +1589,7 @@ var o_browse = {
             o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (o_browse.currentOpusId != "") {
-                o_browse.metadataboxHtml(o_browse.currentOpusId);
+                o_browse.metadataboxHtml(o_browse.currentOpusId, view);
             }
             o_browse.updateSortOrder(data);
 
@@ -1777,8 +1778,8 @@ var o_browse = {
         }
     },
 
-    getNextPrevHandles: function(opusId) {
-        let tab = opus.getViewTab();
+    getNextPrevHandles: function(opusId, view) {
+        let tab = opus.getViewTab(view);
         let idArray = $(`${tab} .thumbnail-container[data-obs]`).map(function() {
             return $(this).data("id");
         });
@@ -1791,7 +1792,7 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
-    metadataboxHtml: function(opusId) {
+    metadataboxHtml: function(opusId, view) {
         o_browse.currentOpusId = opusId;
 
         // list columns + values
@@ -1803,7 +1804,7 @@ var o_browse = {
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
 
-        let nextPrevHandles = o_browse.getNextPrevHandles(opusId);
+        let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
         let status = o_cart.isIn(opusId) ? "" : "in";
         let buttonInfo = o_browse.cartButtonInfo(status);
 
