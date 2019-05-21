@@ -724,6 +724,11 @@ var o_browse = {
                 }
             }
 
+            let dataResultCount = tab === "#browse" ? opus.resultCount : o_cart.cartCount;
+            let firstObsInLastRow = (Math.floor((dataResultCount - 1)/galleryBoundingRect.x + 0.0000001) *
+                                galleryBoundingRect.x + 1);
+            let maxSliderVal = firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.y - 1);
+
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
@@ -732,23 +737,25 @@ var o_browse = {
                           galleryBoundingRect.x + 1);
             }
 
-            $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
-            $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
-            opus.prefs[startObsLabel] = obsNum;
+            if (maxSliderVal >= obsNum) {
+                $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
+                $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
+                opus.prefs[startObsLabel] = obsNum;
 
-            $("#op-observation-number").html(obsNum);
-            $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
-            // just make the step size the number of the obserations across the page...
-            // if the observations have not yet been rendered, leave the default, it will get changed later
-            if (galleryBoundingRect.x > 0) {
-                o_browse.gallerySliderStep = galleryBoundingRect.x;
+                $("#op-observation-number").html(obsNum);
+                $(".op-slider-pointer").css("width", `${maxSliderVal.toString().length*0.7}em`);
+                // $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
+                // just make the step size the number of the obserations across the page...
+                // if the observations have not yet been rendered, leave the default, it will get changed later
+                if (galleryBoundingRect.x > 0) {
+                    o_browse.gallerySliderStep = galleryBoundingRect.x;
+                }
+                $("#op-observation-slider").slider({
+                    "value": obsNum,
+                    "step": o_browse.gallerySliderStep,
+                    "max": maxSliderVal,
+                });
             }
-            $("#op-observation-slider").slider({
-                "value": obsNum,
-                "step": o_browse.gallerySliderStep,
-                "max": opus.resultCount,
-            });
-
             // update startobs in url when scrolling
             o_hash.updateHash(true);
         }
@@ -1646,7 +1653,8 @@ var o_browse = {
         let height = o_browse.calculateGalleryHeight(view);
 
         let xCount = Math.floor(width/o_browse.imageSize);
-        let yCount = Math.ceil(height/o_browse.imageSize);
+        let yCount = Math.round(height/o_browse.imageSize);
+        // let yCount = Math.ceil(height/o_browse.imageSize);
 
         return {"x": xCount, "y": yCount};
     },
