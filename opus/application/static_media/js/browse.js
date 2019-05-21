@@ -1159,7 +1159,7 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #cart tabs
             if (data.start_obs == 1) {
-                if (opus.prefs.view == "browse") {
+                if (view === "browse") {
                     // note: this only displays in gallery view; might want to gray out option for table view when no search results.
                     galleryHtml += '<div class="thumbnail-message">';
                     galleryHtml += '<h2>Your search produced no results</h2>';
@@ -1526,7 +1526,10 @@ var o_browse = {
                 }
             });
 
-            $(selector).on("load.infiniteScroll", o_browse.infiniteScrollLoadEventListener);
+            function eventListenerWithView(event, response, path) {
+                o_browse.infiniteScrollLoadEventListener(event, response, path, view);
+            }
+            $(selector).on("load.infiniteScroll", eventListenerWithView);
         }
     },
 
@@ -1603,11 +1606,11 @@ var o_browse = {
         });
     },
 
-    infiniteScrollLoadEventListener: function(event, response, path) {
+    infiniteScrollLoadEventListener: function(event, response, path, view) {
         $(".op-page-loading-status > .loader").show();
         let data = JSON.parse(response);
 
-        let tab = opus.getViewTab();
+        let tab = opus.getViewTab(view);
 
         o_browse.renderGalleryAndTable(data, path);
         $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
