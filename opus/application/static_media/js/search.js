@@ -261,7 +261,7 @@ var o_search = {
 
                // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {
-                    let surface_loading = '<li style = "margin-left:50%; display:none" class = "opus.spinner">&nbsp;</li>';
+                    let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
                     $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
                }
 
@@ -542,7 +542,7 @@ var o_search = {
     },
 
     getValidMults: function(slug) {
-        // turn on opus.spinner
+        // turn on spinner
         $(`#widget__${slug} .spinner`).fadeIn();
 
         o_search.lastMultsRequestNo++;
