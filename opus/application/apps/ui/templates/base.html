@@ -98,7 +98,7 @@
                         <div class="browse-nav-container top_navbar collapse navbar-collapse">
                             <ul class="navbar-nav mr-auto">
                                 <li class="nav-item">
-                                    <a href="#" class="op-browse-view nav-link"><i class="far fa-list-alt"></i></a>
+                                    <a href="#" class="op-browse-view nav-link" data-view="data"><i class="far fa-list-alt"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
@@ -148,7 +148,7 @@
             <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
                     <div class="col cart_details pr-0">
-                        <div id="op-download-options-container" class="sidebar_wrapper pr-0"></div>
+                        <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
                     </div>
                     <div class="col pl-0 cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
@@ -169,7 +169,7 @@
                                     </li>
                                     <li class="nav-item">
                                         <div class="b-l-1">
-                                            <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="dataTable" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
+                                            <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
                                         </div>
                                     </li>
                                     <li class="nav-item">
@@ -253,7 +253,7 @@
 
         <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <i class="far fa-times-circle fa-lg text-info"></i>

@@ -127,15 +127,17 @@ var o_cart = {
     },
 
     adjustProductInfoHeight: function() {
-        let containerHeight = $(window).height()-120;
-        let downloadOptionsContainer = $(window).height()-90;
+        let containerHeight = o_browse.calculateGalleryHeight();
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cartSummaryHeight = $("#cart_summary").height();
-        $("#cart .sidebar_wrapper").height(downloadOptionsContainer);
         $("#cart .gallery-contents").height(containerHeight);
+        $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
 
         // The following steps will hide the y-scrollbar when it's not needed.
         // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-        if (downloadOptionsContainer > cartSummaryHeight) {
+        if (downloadOptionsHeight > cartSummaryHeight) {
             if (!$("#op-download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
                 $("#op-download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
                 o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
@@ -230,7 +232,7 @@ var o_cart = {
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
-        $(".dataTable input").prop("checked", false);
+        $(".op-data-table-view input").prop("checked", false);
     },
 
     toggleInCart: function(fromOpusId, toOpusId) {

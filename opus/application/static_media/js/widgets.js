@@ -383,7 +383,7 @@ var o_widgets = {
         opus.widgets_fetching.push(slug);
 
         // add the div that will hold the widget
-        if ($.inArray(slug,opus.widget_elements_drawn) < 0) {
+        if ($.inArray(slug, opus.widget_elements_drawn) < 0) {
 
             opus.prefs.widgets.unshift(slug);
 

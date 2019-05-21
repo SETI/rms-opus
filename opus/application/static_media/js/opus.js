@@ -432,7 +432,7 @@ var opus = {
         }
 
         let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
-        let adjustBrowseHeightDB = _.debounce(o_browse.adjustBrowseHeight, 200);
+        let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);

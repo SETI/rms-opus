@@ -35,7 +35,6 @@ var o_hash = {
             }
         }
         $.each(opus.prefs, function(key, value) {
-            value = (value == "dataTable" ? "data" : value);
             hash.push(key + "=" + value);
         });
 
@@ -145,9 +144,6 @@ var o_hash = {
                 // look for prefs
                 else if (slug in opus.prefs) {
                     switch (slug) {
-                        case "browse":
-                            opus.prefs[slug] = (value == "data" ? "dataTable" : value);
-                            break;
                         case "widgets":
                             opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
                             break;
