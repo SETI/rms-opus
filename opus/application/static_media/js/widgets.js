@@ -17,6 +17,7 @@ var o_widgets = {
      *
      **/
 
+    lastStringSearchRequestNo: 0,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -91,12 +92,12 @@ var o_widgets = {
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
         }
 
-        if ($.inArray(slug,opus.widgets_drawn) > -1) {
-            opus.widgets_drawn.splice(opus.widgets_drawn.indexOf(slug), 1);
+        if ($.inArray(slug,opus.widgetsDrawn) > -1) {
+            opus.widgetsDrawn.splice(opus.widgetsDrawn.indexOf(slug), 1);
         }
 
-        if ($.inArray(slug, opus.widget_elements_drawn) > -1) {
-            opus.widget_elements_drawn.splice(opus.widget_elements_drawn.indexOf(slug), 1);
+        if ($.inArray(slug, opus.widgetElementsDrawn) > -1) {
+            opus.widgetElementsDrawn.splice(opus.widgetElementsDrawn.indexOf(slug), 1);
         }
 
         if (slug in opus.selections) {
@@ -214,9 +215,6 @@ var o_widgets = {
 
 
     minimizeWidget: function(slug, widget) {
-        // grab the current height of the widget, we'll need it later to restore it
-        opus.widget_full_sizes[slug] = $('#' + widget).height();
-
         // the minimized text version of the contstrained param = like "planet=Saturn"
         $('.minimize_widget', '#' + widget).toggleClass('opened_triangle');
         $('.minimize_widget', '#' + widget).toggleClass('closed_triangle');
@@ -269,7 +267,7 @@ var o_widgets = {
                  try {
                      qtypes = opus.extras['qtype-' + slugNoNum];
                  } catch(e) {
-                     qtypes = [opus.qtype_default];
+                     qtypes = [opus.qtypeRangeDefault];
                  }
 
                  let length = (opus.selections[slugMin].length > opus.selections[slugMax].length) ? opus.selections[slugMin].length : opus.selections[slugMax].length;
@@ -284,7 +282,7 @@ var o_widgets = {
                          try {
                              qtype = qtypes[0];
                          } catch(e) {
-                             qtype = opus.qtype_default;
+                             qtype = opus.qtypeRangeDefault;
                          }
                      }
 
@@ -320,7 +318,7 @@ var o_widgets = {
                      try {
                          qtype = opus.extras['qtype-'+slug][key];
                      } catch(err) {
-                         qtype = 'contains';
+                         qtype = opus.qtypeStringDefault;
                      }
                      if (key==0) {
                          s_arr[s_arr.length] = label + " " + qtype + ": " + value;
@@ -360,38 +358,37 @@ var o_widgets = {
              let html = '<li id = "' + widget + '" class = "widget"></li>';
              $(html).appendTo('#op-search-widgets ');
              // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
-             opus.widget_elements_drawn.push(slug);
+             opus.widgetElementsDrawn.push(slug);
          }
      },
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
-    getWidget: function(slug, formscolumn, deferredObj=null) {
+    getWidget: function(slug, formscolumn) {
 
         if (!slug) {
             return;
         }
 
-        if ($.inArray(slug, opus.widgets_drawn) > -1) {
+        if ($.inArray(slug, opus.widgetsDrawn) > -1) {
             return; // widget already drawn
         }
-        if ($.inArray(slug, opus.widgets_fetching) > -1) {
+        if ($.inArray(slug, opus.widgetsFetching) > -1) {
             return; // widget being fetched
         }
 
         let widget = 'widget__' + slug;
 
-        opus.widgets_fetching.push(slug);
+        opus.widgetsFetching.push(slug);
 
         // add the div that will hold the widget
-        if ($.inArray(slug, opus.widget_elements_drawn) < 0) {
-
+        if ($.inArray(slug, opus.widgetElementsDrawn) < 0) {
             opus.prefs.widgets.unshift(slug);
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             let html = '<li id = "' + widget + '" class = "widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
-            opus.widget_elements_drawn.unshift(slug);
+            opus.widgetElementsDrawn.unshift(slug);
 
         }
         $.ajax({
@@ -420,8 +417,8 @@ var o_widgets = {
                     let currentValue = request.term;
                     let values = [];
 
-                    opus.lastRequestNo++;
-                    o_search.slugStringSearchChoicesReqno[slug] = opus.lastRequestNo;
+                    o_widgets.lastStringSearchRequestNo++;
+                    o_search.slugStringSearchChoicesReqno[slug] = o_widgets.lastStringSearchRequestNo;
 
                     values.push(currentValue);
                     opus.selections[slug] = values;
@@ -439,7 +436,7 @@ var o_widgets = {
                     if (!opus.allInputsValid) {
                         return;
                     }
-                    let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + opus.lastRequestNo;
+                    let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
                     $.getJSON(url, function(stringSearchChoicesData) {
                         if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slug]) {
                             return;
@@ -549,22 +546,17 @@ var o_widgets = {
             } catch(e) { } // these only apply to mult widgets
 
 
-            if ($.inArray(slug,opus.widgets_fetching) > -1) {
-                opus.widgets_fetching.splice(opus.widgets_fetching.indexOf(slug), 1);
+            if ($.inArray(slug,opus.widgetsFetching) > -1) {
+                opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);
             }
 
             if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             }
-            opus.widgets_drawn.unshift(slug);
+            opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
             o_search.getHinting(slug);
-
-            if (deferredObj) {
-                deferredObj.resolve();
-            }
-
         }); // end callback for .done()
     }, // end getWidget function
 

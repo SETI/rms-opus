@@ -466,49 +466,49 @@ th.sticky-header {
     text-decoration: none;
 }
 
-.allMetadata, .selectedMetadata {
+.op-all-metadata-column, .op-selected-metadata-column {
     height: 450px;
     overflow: scroll;
     overflow-x: auto;
 }
 
-.allMetadata ul li {
+.op-all-metadata-column ul li {
     padding-bottom: 3px;
 
 }
 
-.allMetadata .cat_label {
+.op-all-metadata-column .cat_label {
     margin-top: 15px;
     margin-bottom: -5px;
 }
 
-.selectedMetadata ul {
+.op-selected-metadata-column ul {
     padding-inline-start: 0.5em;
     padding-inline-end: 1em;
 }
 
-.selectedMetadata ul li:hover {
+.op-selected-metadata-column ul li:hover {
     cursor: grab;
 }
 
-.selectedMetadata ul li .unselect:hover {
+.op-selected-metadata-column ul li .unselect:hover {
     cursor: default;
 }
 
-.selectedMetadata ul li .info:hover {
+.op-selected-metadata-column ul li .info:hover {
     cursor: default;
 }
 
-.selectedMetadata .unselect {
+.op-selected-metadata-column .unselect {
     float: right;
 }
 
-.selectedMetadata {
+.op-selected-metadata-column {
     border: 0;
     z-index: 9999;
 }
 
-.selectedMetadata ul li {
+.op-selected-metadata-column ul li {
     padding: 5px 15px;
     border: 1px dotted gray;
     list-style-type: none;

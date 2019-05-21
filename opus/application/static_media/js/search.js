@@ -41,7 +41,7 @@ var o_search = {
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
-    searchBehaviors: function() {
+    addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
@@ -261,7 +261,7 @@ var o_search = {
 
                // special menu behavior for surface geo, slide in a loading indicator..
                if (id == 'surfacetarget') {
-                    let surface_loading = '<li style = "margin-left:50%; display:none" class = "spinner">&nbsp;</li>';
+                    let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
                     $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
                }
 
@@ -394,7 +394,7 @@ var o_search = {
             o_hash.updateHash();
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
-                opus.widgets_drawn.forEach(function(eachSlug) {
+                opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
                 $("#op-result-count").text(o_utils.addCommas(opus.resultCount));
@@ -459,7 +459,7 @@ var o_search = {
         o_search.widgetScrollbar.update();
     },
 
-    getSearchTab: function() {
+    activateSearchTab: function() {
 
         if (o_search.searchTabDrawn) {
             return;
@@ -470,7 +470,7 @@ var o_search = {
             opus.prefs.widgets = $.cookie("widgets").split(',');
         }
         // get menu
-        o_menu.getMenu();
+        o_menu.getNewSearchMenu();
 
         // find and place the widgets
         if (!opus.prefs.widgets.length) {
@@ -480,7 +480,7 @@ var o_search = {
             o_widgets.getWidget("planet","#op-search-widgets");
             o_widgets.getWidget("target","#op-search-widgets");
         } else {
-            if (!opus.widget_elements_drawn.length) {
+            if (!opus.widgetElementsDrawn.length) {
                 o_widgets.placeWidgetContainers();
             }
         }
@@ -489,7 +489,7 @@ var o_search = {
 
         for (let key in opus.prefs.widgets) {  // fetch each widget
             let slug = opus.prefs.widgets[key];
-            if ($.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
+            if ($.inArray(slug, opus.widgetsDrawn) < 0) {  // only draw if not already drawn
                 o_widgets.getWidget(slug,"#op-search-widgets");
             }
         }
@@ -497,15 +497,15 @@ var o_search = {
         o_search.searchTabDrawn = true;
     },
 
-    getHinting: function(slug, deferredObj) {
+    getHinting: function(slug) {
 
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
-            o_search.getRangeEndpoints(slug, deferredObj);
+            o_search.getRangeEndpoints(slug);
 
         } else if ($(".widget__" + slug).hasClass("mult-widget")) {
             // this is a mult field
-            o_search.getValidMults(slug, deferredObj);
+            o_search.getValidMults(slug);
         } else {
           $(`#widget__${slug} .spinner`).fadeOut();
         }

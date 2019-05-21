@@ -1,14 +1,14 @@
-{% extends "menu.html" %}
+{% extends "ui/menu.html" %}
 
 {% block menu %}
 <div class="row">
-  <div class="allMetadata col">
+  <div class="op-all-metadata-column col">
     {% with 'menu' as expectedVarName %}
-      {{ block.super }} {# renders menu.html #}
+      {{ block.super }} {# renders ui/menu.html #}
     {% endwith %}
   </div>
 
-  <div class="selectedMetadata col">
+  <div class="op-selected-metadata-column col">
   	<ul>
   		{% for slug, param_info in all_slugs_info.items %}
   		    <li id="cchoose__{{ slug }}">

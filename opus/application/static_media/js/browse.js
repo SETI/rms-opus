@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* globals $, _, PerfectScrollbar */
 /* globals o_cart, o_hash, o_menu, o_utils, opus */
-/* globals default_columns */
+/* globals DEFAULT_COLUMNS */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -55,7 +55,7 @@ var o_browse = {
     *  all the things that happen on the browse tab
     *
     **/
-    browseBehaviors: function() {
+    addBrowseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
@@ -482,7 +482,6 @@ var o_browse = {
                 $("#op-metadata-selector").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
-                opus.hideHelpPanel();
             }
             if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow while in the modal
@@ -892,13 +891,13 @@ var o_browse = {
     },
 
     addColumn: function(slug) {
-        let elem = $(`#op-metadata-selector .allMetadata a[data-slug=${slug}]`);
+        let elem = $(`#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`);
         elem.find("i.fa-check").fadeIn().css("display", "inline-block");
 
         let label = elem.data("qualifiedlabel");
         let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
         let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
-        $(".selectedMetadata > ul").append(html);
+        $(".op-selected-metadata-column > ul").append(html);
     },
 
     resetMetadata: function(cols, closeModal) {
@@ -909,10 +908,10 @@ var o_browse = {
         }
 
         // uncheck all on left; we will check them as we go
-        $("#op-metadata-selector .allMetadata .fa-check").hide();
+        $("#op-metadata-selector .op-all-metadata-column .fa-check").hide();
 
         // remove all from selected column
-        $("#op-metadata-selector .selectedMetadata li").remove();
+        $("#op-metadata-selector .op-selected-metadata-column li").remove();
 
         // add them back and set the check
         $.each(cols, function(index, slug) {
@@ -955,7 +954,7 @@ var o_browse = {
             });
         });
 
-        $('#op-metadata-selector .allMetadata').on("click", '.submenu li a', function() {
+        $("#op-metadata-selector .op-all-metadata-column").on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
@@ -986,7 +985,7 @@ var o_browse = {
         });
 
         // removes chosen column
-        $("#op-metadata-selector .selectedMetadata").on("click", "li .unselect", function() {
+        $("#op-metadata-selector .op-selected-metadata-column").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
                 return;     // prevent user from removing all the columns
             }
@@ -998,7 +997,7 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
-                $(`#op-metadata-selector .allMetadata [data-slug=${slug}]`).find("i.fa-check").hide();
+                $(`#op-metadata-selector .op-all-metadata-column [data-slug=${slug}]`).find("i.fa-check").hide();
             }
             return false;
         });
@@ -1008,7 +1007,7 @@ var o_browse = {
             switch($(this).attr("type")) {
                 case "reset":
                     opus.prefs.cols = [];
-                    o_browse.resetMetadata(default_columns.split(','));
+                    o_browse.resetMetadata(opus.defaultColumns);
                     break;
                 case "submit":
                     $(".op-page-loading-status > .loader").show();
@@ -1127,15 +1126,15 @@ var o_browse = {
 
                 o_browse.addMetadataSelectorBehaviors();
 
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .allMetadata", {
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-all-metadata-column", {
                     minScrollbarLength: opus.minimumPSLength
                 });
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .selectedMetadata", {
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-selected-metadata-column", {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
                 // dragging to reorder the chosen
-                $( ".selectedMetadata > ul").sortable({
+                $( ".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.metadataDragged(this); }
@@ -1569,8 +1568,9 @@ var o_browse = {
         }
 
         $(".op-page-loading-status > .loader").show();
-        // Note: when browse page is refreshed, startObs passed in (from getBrowseTab) will start from 1
+        // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
+
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
@@ -1633,7 +1633,7 @@ var o_browse = {
         $("#galleryViewContents").removeClass("op-disabled");
     },
 
-    getBrowseTab: function() {
+    activateBrowseTab: function() {
         // init o_browse.galleryBoundingRect
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
         // reset range select
@@ -1711,32 +1711,32 @@ var o_browse = {
     },
 
     adjustMetadataSelectorMenuPS: function() {
-        let containerHeight = $(".allMetadata").height();
-        let menuHeight = $(".allMetadata .searchMenu").height();
+        let containerHeight = $(".op-all-metadata-column").height();
+        let menuHeight = $(".op-all-metadata-column .searchMenu").height();
 
         if (containerHeight > menuHeight) {
-            if (!$(".allMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".allMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+            if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
                 o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
             }
         } else {
-            $(".allMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
             o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
         }
         o_browse.allMetadataScrollbar.update();
     },
 
     adjustSelectedMetadataPS: function() {
-        let containerHeight = $(".selectedMetadata").height();
-        let selectedMetadataHeight = $(".selectedMetadata .ui-sortable").height();
+        let containerHeight = $(".op-selected-metadata-column").height();
+        let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
 
         if (containerHeight > selectedMetadataHeight) {
-            if (!$(".selectedMetadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".selectedMetadata .ps__rail-y").addClass("hide_ps__rail-y");
+            if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
                 o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
             }
         } else {
-            $(".selectedMetadata .ps__rail-y").removeClass("hide_ps__rail-y");
+            $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
             o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
         }
         o_browse.selectedMetadataScrollbar.update();
@@ -1851,14 +1851,5 @@ var o_browse = {
         o_cart.cartChange = true;  // forces redraw of cart tab
         o_browse.galleryBegun = false;
         o_hash.updateHash();
-    },
-
-    resetQuery: function() {
-        /*
-        when the user changes the query and all this stuff is already drawn
-        need to reset all of it (todo: replace with framework!)
-        */
-        o_browse.metadataSelectorDrawn = false;
-        o_browse.resetData();
     },
 };

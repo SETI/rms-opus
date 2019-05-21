@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-{% include "header.html" %}
+{% include "ui/header.html" %}
 
 <body class="app header-fixed sidebar-fixed aside-menu-fixed sidebar-lg-show">
     <div class="app-body container-fluid">
@@ -32,7 +32,7 @@
                     </li>
                     <li class="nav-item external-link blogspot">
                         <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
-                            <div id="last_blog_update_date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
+                            <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
                                 <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
                             </div>
                         </a>
@@ -72,7 +72,7 @@
                     <div class="col pr-0 sidebar-area border-right">
                         <div id="sidebar-container" class = "sidebar_wrapper ps-scrollbar">
                             <div id = "sidebar">
-                                {% include "menu.html" %}
+                                {% include "ui/menu.html" %}
                             </div>
                         </div>
                         <hr class="shadow-divider my-0 ml-0 mr-3">
@@ -298,7 +298,7 @@
             </div>
         </div>
 
-        {% include "confirm_modal.html" with
+        {% include "ui/confirm_modal.html" with
             id_name="op-reset-search-modal"
             confirm_title="Confirm Reset Search"
             confirm_msg="This will delete any search constraints you have selected and reset the set of search fields back to the default. The selected metadata fields and the contents of your cart will not be affected. Are you sure you want to reset your search?"
@@ -306,7 +306,7 @@
             yes_text="Yes"
             no_text="No"
         %}
-        {% include "confirm_modal.html" with
+        {% include "ui/confirm_modal.html" with
             id_name="op-reset-search-metadata-modal"
             confirm_title="Confirm Reset Search and Metadata"
             confirm_msg="This will delete any search constraints you have selected and reset the set of search fields and selected metadata back to the default. The contents of your cart will not be affected. Are you sure you want to reset your search and metadata?"
@@ -314,7 +314,7 @@
             yes_text="Yes"
             no_text="No"
         %}
-        {% include "confirm_modal.html" with
+        {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from your cart?"
@@ -322,14 +322,14 @@
             yes_text="Yes"
             no_text="No"
         %}
-        {% include "confirm_modal.html" with
+        {% include "ui/confirm_modal.html" with
             id_name="op-cart-status-error-msg"
             confirm_title="Failed to Add Observations to Cart"
             confirm_msg=""
             target="op-cart-status-error-msg"
             yes_text="OK"
         %}
-        {% include "confirm_modal.html" with
+        {% include "ui/confirm_modal.html" with
             id_name="op-update-url"
             confirm_title="Message About Your URL"
             confirm_msg=""
@@ -357,7 +357,7 @@
     </div>
     <div class="op-overlay"></div>
 
-    {% include "footer.html" %}
+    {% include "ui/footer.html" %}
     <div id = "range_query_widget_helper_html">
         <p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
 
