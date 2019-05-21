@@ -359,6 +359,11 @@ def populate_obs_wavelength_GOSSI_polarization_type(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY GALILEO INSTRUMENT
 ################################################################################
 
+def populate_obs_mission_galileo_GOSSI_orbit_number(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    orbit_number = index_row['ORBIT_NUMBER']
+    return str(orbit_number)
 
 
 ################################################################################
