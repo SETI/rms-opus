@@ -1379,7 +1379,7 @@ class ObsMissionGalileo(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
-    orbit_number = models.IntegerField()
+    orbit_number = models.CharField(max_length=2)
     spacecraft_clock_count1 = models.FloatField()
     spacecraft_clock_count2 = models.FloatField()
     mult_obs_mission_galileo_orbit_number = models.ForeignKey(MultObsMissionGalileoOrbitNumber, models.DO_NOTHING, db_column='mult_obs_mission_galileo_orbit_number')
