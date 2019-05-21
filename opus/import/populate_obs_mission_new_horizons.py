@@ -35,7 +35,7 @@ def helper_new_horizons_target_name(**kwargs):
     if len(target_name_info) == 3:
         return target_name, target_name_info[2]
 
-    return (target_name, target_name.title())
+    return (target_name, import_util.cleanup_target_name(target_name))
 
 def helper_new_horizons_planet_id(**kwargs):
     metadata = kwargs['metadata']
