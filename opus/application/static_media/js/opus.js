@@ -36,7 +36,7 @@ var opus = {
     defaultColumns: DEFAULT_COLUMNS.split(","),
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
-    main_timer_interval: 1000,
+    mainTimerInterval: 1000,
 
 
     // avoiding race conditions in ajax calls
@@ -87,7 +87,7 @@ var opus = {
 
     // these are for the process that detects there was a change in the selection criteria and
     // updates things
-    main_timer: false,
+    mainTimer: false,
 
 
     //------------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ var opus = {
          */
 
         // Stop polling for UI changes for a moment
-        clearInterval(opus.main_timer);
+        clearInterval(opus.mainTimer);
 
         // Reset the search query and return to the Search tab
         opus.selections = {};
@@ -448,7 +448,7 @@ var opus = {
         o_hash.updateHash();
 
         // Start the main timer again
-        opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+        opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
     },
 
     isDrawnWidgetsListDefault: function() {
@@ -514,7 +514,7 @@ var opus = {
             // Perform rest of initialization process
             opus.opusInitialization();
             // Watch the hash and URL for changes; this runs continuously
-            opus.main_timer = setInterval(opus.load, opus.main_timer_interval);
+            opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
         });
     },
 
