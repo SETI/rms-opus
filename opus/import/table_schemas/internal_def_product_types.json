@@ -2,22 +2,22 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "browse-thumb",
-        "definition": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
+        "definition": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "browse-small",
-        "definition": "Small-size (often 256x256) non-linearly stretched preview JPEGs of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
+        "definition": "Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "browse-medium",
-        "definition": "Medium-size (often 512x512) non-linearly stretched preview JPEGs of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
+        "definition": "Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "browse-full",
-        "definition": "Full-size non-linearly stretched preview JPEGs of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
+        "definition": "Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -62,7 +62,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-raw",
-        "definition": "Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image."
+        "definition": "Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -72,42 +72,42 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-thumb",
-        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-medium",
-        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-full",
-        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "couvis-raw",
-        "definition": "COUVIS Raw Data"
+        "definition": "Raw image files (*.DAT) for Cassini UVIS. Observations are in binary format, uncalibrated, and contain raw data counts from the associated detector. Associated labels (*.LBL) are text files that contain information about the observation, including how to interpret the binary data."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims-raw",
-        "definition": "COVIMS Raw Data"
+        "definition": "Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims-thumb",
-        "definition": "COVIMS Thumb"
+        "definition": "Thumbnail-size (131x69) JPEGs (*.jpeg_small) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims-medium",
-        "definition": "COVIMS Medium"
+        "definition": "Medium-size (786x414) JPEGs (*.jpeg) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims-full",
-        "definition": "COVIMS Full"
+        "definition": "Full-size (131x69) TIFFs (*.tiff) supplied by the Cassini VIMS team, showing the recorded spectra of both the VIS and IR channels in grey scale. This representation is different from that provided by the PDS Ring-Moon System Node preview images, which attempt to color-code the observations in a way that emphasizes certain important spectral ranges, including wavelengths seen by the human eye."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -122,37 +122,37 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi-raw",
-        "definition": "Galileo SSI Raw Image"
+        "definition": "Raw image files (*.IMG) for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-spec",
-        "definition": "Calibrated Interferograms"
+        "definition": "Calibrated interferograms (SPEC*.DAT) for Cassini CIRS. Files are in binary format and contain re-gridded, interpolated spectra. Associated labels (SPEC*.LBL) are text files that contain information about the data files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-geo",
-        "definition": "System Geometry"
+        "definition": "Text files (GEO*_XXX.TAB) that tabulate the planetary system geometry for every body (identified by its NAIF ID, XXX) that appeared inside any CIRS spectrum within the time frame of an observation. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files. Also included is GEODATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-ispm",
-        "definition": "Observation Metadata"
+        "definition": "Text files (ISPM*_DDD.TAB) that tabulate the instrument parameters and timing information for each of the interferograms in an observation for detector DDD. Associated labels (ISPM*_DDD.LBL) are text files that contain information about the table files. Also included is ISPMDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-poi",
-        "definition": "Footprint Geometry on Bodies"
+        "definition": "Text files (POI*_DDD.TAB) that tabulate the footprint geometry on a body for each of the interferograms in an observation for detector DDD. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is POIDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-rin",
-        "definition": "Footprint Geometry on Rings"
+        "definition": "Text files (RIN*_DDD.TAB) that tabulate the footprint geometry on the rings for each of the interferograms in this observation for detector DDD. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is RINDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-tar",
-        "definition": "Target Body Identifications"
+        "definition": "Text files (TAR*_DDD.TAB) that tabulate which objects fall within the field of view for detector DDD. Associated labels (TAR*_XXX.LBL) are text files that contain information about the table files. Also included is TARDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -297,31 +297,31 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-raw",
-        "definition": "Raw Image"
+        "definition": "Raw image files (*_RAW.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-cleaned",
-        "definition": "Cleaned Image"
+        "definition": "Cleaned image files (*_CLEANED.IMG) for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-calib",
-        "definition": "Calibrated Image"
+        "definition": "Calibrated image files (*_CALIB.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG)."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-geomed",
-        "definition": "Geometrically Corrected Image"
+        "definition": "Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG)."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-resloc",
-        "definition": "Reseau Table"
+        "definition": "Files describing the determined location of the reseau markings for an image. Locations are provided in VICAR format (*_RESLOC.DAT) and text format (*_RESLOC.TAB). An associated label (*_RESLOC.LBL) is a text file that contains information about the *.DAT and *.TAB files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss-geoma",
-        "definition": "Geometric Tiepoint Table"
+        "definition": "Files describing the nominal and measured reseau mark locations used to geometrically correct the image. Locations are provided in VICAR format (*_GEOMA.DAT) and text format (*_GEOMA.TAB). An associated label (*_GEOMA.LBL) is a text file that contains information about the *.DAT and *.TAB files."
     }
 ]

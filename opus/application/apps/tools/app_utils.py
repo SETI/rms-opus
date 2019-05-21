@@ -244,7 +244,7 @@ def enter_api_call(name, request, kwargs=None):
             s += ' ' + json.dumps(request.GET, sort_keys=True,
                                   indent=4,
                                   separators=(',', ': '))
-        log.debug(s)
+        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
 
@@ -271,7 +271,7 @@ def exit_api_call(api_code, ret):
             s += '\n' + ret.content.decode()[:240]
         if delay_amount:
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
-        log.debug(s)
+        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
     if delay_amount:
