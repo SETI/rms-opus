@@ -286,8 +286,8 @@ var o_browse = {
             return false;
         });
 
-        $('#galleryView').on("click", "a.prev,a.next", function(e) {
-            let action = $(this).hasClass("prev") ? "prev" : "next";
+        $('#galleryView').on("click", "a.op-prev,a.op-next", function(e) {
+            let action = $(this).hasClass("op-prev") ? "prev" : "next";
             let opusId = $(this).data("id");
 
             if (opusId) {
@@ -490,11 +490,11 @@ var o_browse = {
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 39:  // next
-                        opusId = $("#galleryView").find(".next").data("id");
+                        opusId = $("#galleryView").find(".op-next").data("id");
                         o_browse.loadNextPageIfNeeded(opusId);
                         break;
                     case 37:  // prev
-                        opusId = $("#galleryView").find(".prev").data("id");
+                        opusId = $("#galleryView").find(".op-prev").data("id");
                         o_browse.loadPrevPageIfNeeded(opusId);
                         break;
                 }
@@ -1592,15 +1592,15 @@ var o_browse = {
 
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
-        if (!$("#galleryViewContents .prev").data("id") && $("#galleryViewContents .prev").hasClass("op-button-disabled")) {
-            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
+        if (!$("#galleryViewContents .op-prev").data("id") && $("#galleryViewContents .op-prev").hasClass("op-button-disabled")) {
+            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).op-prev("tr");
             while (prev.hasClass("table-page")) {
                 prev = prev.prev("tr");
             }
             prev = (prev.data("id") ? prev.data("id") : "");
 
-            $("#galleryViewContents .prev").data("id", prev);
-            $("#galleryViewContents .prev").removeClass("op-button-disabled");
+            $("#galleryViewContents .op-prev").data("id", prev);
+            $("#galleryViewContents .op-prev").removeClass("op-button-disabled");
         }
 
         // if left/right arrow are disabled, make them clickable again
@@ -1775,6 +1775,9 @@ var o_browse = {
         // list columns + values
         let html = "<dl>";
         $.each(opus.colLabels, function(index, columnLabel) {
+            if (opusId === "" || o_browse.galleryData[opusId] === undefined || o_browse.galleryData[opusId][index] === undefined) {
+                console.log("uh oh");
+            }
             let value = o_browse.galleryData[opusId][index];
             html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
@@ -1787,11 +1790,11 @@ var o_browse = {
 
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
-        html += `<div class="col text-center">`;
+        html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev}"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        html += `<a href="#" class="next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next}"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev}"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next}"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
