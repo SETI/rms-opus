@@ -49,7 +49,7 @@ var o_browse = {
     currentOpusId: "",
     tempHash: "",
     onRenderData: false,
-
+    fading: false,  // used to prevent additional clicks until the fade animation complete
     /**
     *
     *  all the things that happen on the browse tab
@@ -99,6 +99,10 @@ var o_browse = {
 
         // browse nav menu - the gallery/table toggle
         $("#browse, #cart").on("click", ".op-browse-view", function() {
+            if (o_browse.fading) {
+                return false;
+            }
+
             o_browse.hideMenu();
             let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
@@ -1047,7 +1051,7 @@ var o_browse = {
 
         if (opus.prefs[browse] == "gallery") {
             $(".op-data-table-view", tab).hide();
-            $(".op-gallery-view", tab).fadeIn();
+            $(".op-gallery-view", tab).fadeIn("done", function() {o_browse.fading = false;});
 
             $(".op-browse-view", tab).html("<i class='far fa-list-alt'></i>&nbsp;View Table");
             $(".op-browse-view", tab).attr("title", "View sortable metadata table");
@@ -1056,7 +1060,7 @@ var o_browse = {
             suppressScrollY = false;
         } else {
             $(".op-gallery-view", tab).hide();
-            $(".op-data-table-view", tab).fadeIn();
+            $(".op-data-table-view", tab).fadeIn("done", function() {o_browse.fading = false;});
 
             $(".op-browse-view", tab).html("<i class='far fa-images'></i>&nbsp;View Gallery");
             $(".op-browse-view", tab).attr("title", "View sortable thumbnail gallery");
@@ -1135,7 +1139,7 @@ var o_browse = {
     renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
         let tab = opus.getViewTab(view);
-        let contentsView = o_browse.getScrollContainerClass();
+        let contentsView = o_browse.getScrollContainerClass(view);
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
 
@@ -1411,13 +1415,15 @@ var o_browse = {
         tableObsElem.eq(index).remove();
     },
 
-    getBrowseView: function () {
-        return (opus.prefs.view === "cart" ? "cart_browse" : "browse");
+    getBrowseView: function(tab) {
+        tab = (tab === undefined ? opus.prefs.view : tab);
+        return (tab === "cart" ? "cart_browse" : "browse");
     },
 
     // return the infiniteScroll container class for either gallery or table view
-    getScrollContainerClass: function() {
-        let browse = o_browse.getBrowseView();
+    getScrollContainerClass: function(tab) {
+        tab = (tab === undefined ? opus.prefs.view : tab);
+        let browse = o_browse.getBrowseView(tab);
         return (opus.prefs[browse] === "gallery" ? ".op-gallery-view" : ".op-data-table-view");
     },
 
@@ -1518,8 +1524,8 @@ var o_browse = {
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
         let tab = opus.getViewTab(view);
-        let startObsLabel = o_browse.getStartObsLabel();
-        let contentsView = o_browse.getScrollContainerClass();
+        let startObsLabel = o_browse.getStartObsLabel(view);
+        let contentsView = o_browse.getScrollContainerClass(view);
 
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
