@@ -362,7 +362,7 @@
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "ACTIVITY_NAME",
-        "definition": "A 9-character code name for a set of data products taken during a given time interval. It is an expression of the science planners’ intentions. Names were often reused for observations that have similar purposes, though they can also be idiosyncratic. It is extracted from the third component of the observation name, but the disambiguating number at the end is omitted. Examples: GLOBAL, 2x2MOSAIC, FMOVIE.",
+        "definition": "A 9-character code name for a set of data products taken during a given time interval. It is an expression of the science planners' intentions. Names were often reused for observations that have similar purposes, though they can also be idiosyncratic. It is extracted from the third component of the observation name, but the disambiguating number at the end is omitted. Examples: GLOBAL, 2x2MOSAIC, FMOVIE.",
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,

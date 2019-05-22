@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
 class main_site(TemplateView):
-    template_name = "base.html"
+    template_name = "ui/base.html"
 
     def get_context_data(self, **kwargs):
         context = super(main_site, self).get_context_data(**kwargs)
@@ -86,7 +86,7 @@ def api_last_blog_update(request):
     return ret
 
 
-@render_to('menu.html')
+@render_to('ui/menu.html')
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -282,7 +282,7 @@ def api_get_widget(request, **kwargs):
     intro = param_info.intro
     units = param_info.get_units()
 
-    template = "widget.html"
+    template = "ui/widget.html"
     context = {
         "slug": slug,
         "label": label,
@@ -326,7 +326,7 @@ def api_get_metadata_selector(request):
         "all_slugs_info": all_slugs_info,
         "menu": menu
     }
-    ret = render(request, "select_metadata.html", context)
+    ret = render(request, "ui/select_metadata.html", context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -426,7 +426,7 @@ def api_init_detail_page(request, **kwargs):
         'opus_id': opus_id,
         'instrument_id': instrument_id
     }
-    ret = render(request, 'detail.html', context)
+    ret = render(request, 'ui/detail.html', context)
     exit_api_call(api_code, ret)
     return ret
 
