@@ -1432,6 +1432,11 @@ var o_browse = {
         // don't delete the metadata if the observation is in the cart
         if (!galleryObsElem.eq(index).hasClass("in")) {
             let delOpusId = galleryObsElem.eq(index).data("id");
+            if ($("#galleryView").hasClass("show")) {
+                if (delOpusId === $("#galleryViewContents .select").data("id")) {
+                    $("#galleryView").modal('hide');
+                }
+            }
             delete o_browse.galleryData[delOpusId];
         }
         galleryObsElem.eq(index).remove();
@@ -1638,14 +1643,20 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (!$("#galleryViewContents .op-prev").data("id") && $("#galleryViewContents .op-prev").hasClass("op-button-disabled")) {
-            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).op-prev("tr");
-            while (prev.hasClass("table-page")) {
-                prev = prev.prev("tr");
-            }
+            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
             prev = (prev.data("id") ? prev.data("id") : "");
 
             $("#galleryViewContents .op-prev").data("id", prev);
             $("#galleryViewContents .op-prev").removeClass("op-button-disabled");
+        }
+
+        // Update to make next button appear when prefetching next page is done
+        if (!$("#galleryViewContents .op-next").data("id") && $("#galleryViewContents .op-next").hasClass("op-button-disabled")) {
+            let next = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).next("tr");
+            next = (next.data("id") ? next.data("id") : "");
+
+            $("#galleryViewContents .op-next").data("id", next);
+            $("#galleryViewContents .op-next").removeClass("op-button-disabled");
         }
 
         // if left/right arrow are disabled, make them clickable again
