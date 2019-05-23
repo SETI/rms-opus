@@ -343,10 +343,17 @@
             allow_close=True
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-browser-warning"
+            id_name="op-browser-version-msg"
             confirm_title="Message About Your Browser Version"
-            confirm_msg="Please update your browser. We support Firefox (66+), Chrome (74+), Safari (12.1+), Opera (58+), and Microsoft Edge (18+)."
-            target="op-browser-warning"
+            confirm_msg="Please update your browser. OPUS supports Firefox (66+), Chrome (74+), Safari (12.1+), Opera (58+), and Microsoft Edge (18+)."
+            target="op-browser-version-msg"
+            allow_close=False
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-browser-size-msg"
+            confirm_title="Message About Your Browser Size"
+            confirm_msg="Please resize your browser. OPUS works best with a browser width of at least 1280px."
+            target="op-browser-size-msg"
             allow_close=False
         %}
 

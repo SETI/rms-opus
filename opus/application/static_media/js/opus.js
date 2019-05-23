@@ -552,6 +552,7 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
+            opus.checkBrowserSize();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
@@ -727,6 +728,10 @@ var opus = {
     },
 
     checkBrowserVersion: function() {
+        /**
+         * Check supported browser versions and display a modal to
+         * inform the user if that version is not supprted.
+         */
         let browserName, browserVersion, matchObj;
         let userAgent = navigator.userAgent;
         if (userAgent.indexOf("Firefox") > -1) {
@@ -771,39 +776,49 @@ var opus = {
         switch (browserName) {
             case "Firefox":
                 if (parseFloat(browserVersion) < 66) {
-                    $("#op-browser-warning").modal("show");
+                    $("#op-browser-version-msg").modal("show");
                 }
                 break;
             case "Edge":
                 if (parseFloat(browserVersion) < 18) {
-                    $("#op-browser-warning").modal("show");
+                    $("#op-browser-version-msg").modal("show");
                 }
                 break;
             case "Opera":
                 if (parseFloat(browserVersion) < 58) {
-                    $("#op-browser-warning").modal("show");
+                    $("#op-browser-version-msg").modal("show");
                 }
                 break;
             case "Chrome":
                 if (parseFloat(browserVersion) < 74) {
-                    $("#op-browser-warning").modal("show");
+                    $("#op-browser-version-msg").modal("show");
                 }
                 break;
             case "Safari":
                 if (parseFloat(browserVersion) < 12.1) {
-                    $("#op-browser-warning").modal("show");
+                    $("#op-browser-version-msg").modal("show");
                 }
                 break;
             default:
-                $("#op-browser-warning").modal("show");
+                $("#op-browser-version-msg").modal("show");
+        }
+    },
+
+    checkBrowserSize: function() {
+        /**
+         * Check if browser width is less than 1280px. If so, display a
+         * modal to inform the user to resize the browser width.
+         */
+        if ($(window).width() < 1280) {
+            $("#op-browser-size-msg").modal("show");
+        } else {
+            $("#op-browser-size-msg").modal("hide");
         }
     }
 
 }; // end opus namespace
 
 $(document).ready(function() {
-    // check supported browser version and display a modal if version is
-    // not supprted. 
     opus.checkBrowserVersion();
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
