@@ -801,12 +801,24 @@ var opus = {
         } else {
             $("#op-browser-size-msg").modal("hide");
         }
-    }
+    },
 
+    checkCookies: function() {
+        /**
+         * Check widgets cookie to determine if the user is a first time
+         * visitor. If so, we display a guide page.
+         * Note: we will call __help/splash.html api in the future to
+         * display the guide page. For now, we just show a modal.
+         */
+        if ($.cookie("widgets") === undefined) {
+            $("#op-guide").modal("show");
+        }
+    }
 }; // end opus namespace
 
 $(document).ready(function() {
     opus.checkBrowserVersion();
+    opus.checkCookies();
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
     opus.normalizedURLAPICall();

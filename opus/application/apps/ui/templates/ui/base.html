@@ -356,6 +356,14 @@
             target="op-browser-size-msg"
             allow_close=False
         %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-guide"
+            confirm_title="Welcome to OPUS3"
+            confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
+            target="op-guide"
+            yes_text="OK"
+            allow_close=True
+        %}
 
         {% endblock %}
 
