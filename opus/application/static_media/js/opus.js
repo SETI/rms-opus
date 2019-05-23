@@ -724,11 +724,87 @@ var opus = {
         };
 
         opus.triggerNavbarClick();
+    },
+
+    checkBrowserVersion: function() {
+        let browserName, browserVersion, matchObj;
+        let userAgent = navigator.userAgent;
+        if (userAgent.indexOf("Firefox") > -1) {
+            // Example output:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0)
+            // Gecko/20100101 Firefox/66.0
+            matchObj = userAgent.match(/Firefox\/(\d+.\d+)/);
+            browserName = "Firefox";
+            browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("Edge") > -1 || userAgent.indexOf("Edg") > -1) {
+            // userAgent example output:
+            // Windows: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko)
+            // Chrome/42.0.2311.135 Safari/537.36 Edge/12.10136
+            // Mac: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/76.0.3800.0 Safari/537.36 Edg/76.0.167.0
+            matchObj = userAgent.match(/Edge\/(\d+.\d+)/) || userAgent.match(/Edg\/(\d+.\d+)/);
+            browserName = "Edge";
+            browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("OPR") > -1) {
+            // userAgent example output:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 OPR/60.0.3255.95
+            matchObj = userAgent.match(/OPR\/(\d+.\d+)/);
+            browserName = "Opera";
+            browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("Chrome") > -1) {
+            // userAgent example output:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
+            matchObj = userAgent.match(/Chrome\/(\d+.\d+)/);
+            browserName = "Chrome";
+            browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("Version") > -1) {
+            // userAgent example output:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15
+            // (KHTML, like Gecko) Version/12.1 Safari/605.1.15
+            matchObj = userAgent.match(/Version\/(\d+.\d+)/);
+            browserName = "Safari";
+            browserVersion = matchObj[1];
+        }
+
+        switch (browserName) {
+            case "Firefox":
+                if (parseFloat(browserVersion) < 66) {
+                    $("#op-browser-warning").modal("show");
+                }
+                break;
+            case "Edge":
+                if (parseFloat(browserVersion) < 18) {
+                    $("#op-browser-warning").modal("show");
+                }
+                break;
+            case "Opera":
+                if (parseFloat(browserVersion) < 58) {
+                    $("#op-browser-warning").modal("show");
+                }
+                break;
+            case "Chrome":
+                if (parseFloat(browserVersion) < 74) {
+                    $("#op-browser-warning").modal("show");
+                }
+                break;
+            case "Safari":
+                if (parseFloat(browserVersion) < 12.1) {
+                    $("#op-browser-warning").modal("show");
+                }
+                break;
+            default:
+                $("#op-browser-warning").modal("show");
+        }
     }
 
 }; // end opus namespace
 
 $(document).ready(function() {
+    // check supported browser version and display a modal if version is
+    // not supprted. 
+    opus.checkBrowserVersion();
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
     opus.normalizedURLAPICall();
