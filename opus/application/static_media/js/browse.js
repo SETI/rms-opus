@@ -174,7 +174,7 @@ var o_browse = {
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
-                o_browse.showModal(opusId);
+                o_browse.showGalleryViewModal(opusId);
             }
         });
 
@@ -230,7 +230,7 @@ var o_browse = {
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
-                o_browse.showModal(opusId);
+                o_browse.showGalleryViewModal(opusId);
             }
         });
 
@@ -471,7 +471,7 @@ var o_browse = {
             },
             stop: function(event, ui) {
                 o_browse.onUpdateSlider(ui.value);
-                $("#galleryView").modal('hide');
+                o_browse.hideGalleyViewModal();
             }
         });
 
@@ -479,7 +479,7 @@ var o_browse = {
             o_browse.hideMenu();
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
-                $("#galleryView").modal('hide');
+                o_browse.hideGalleyViewModal();
                 $("#op-metadata-selector").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
@@ -575,7 +575,7 @@ var o_browse = {
 
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
         if (obsNum <= maxObs) {
-            let nextElem = (contentsView === ".op-gallery-view" ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
+            let nextElem = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
             if (nextElem.length === 0) {
                 // disable keydown on modal when it's loading
                 // this will make sure we have correct html elements displayed for prev observation
@@ -608,7 +608,7 @@ var o_browse = {
         // decrement obsNum to see if there is a previous one to retrieve
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
         if (obsNum > 0) {
-            let prevElem = (contentsView === ".op-gallery-view" ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
+            let prevElem = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
             // if it's not there go retrieve it...
             if (prevElem.length === 0) {
                 // disable keydown on modal when it's loading
@@ -790,7 +790,7 @@ var o_browse = {
         return false;
     },
 
-    showModal: function(opusId) {
+    showGalleryViewModal: function(opusId) {
         o_browse.loadPrevPageIfNeeded(opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
@@ -805,6 +805,11 @@ var o_browse = {
         $.getJSON(fakeUrl, function(data) {
         });
 
+    },
+
+    hideGalleyViewModal: function() {
+        $("#galleryView").modal("hide");
+        o_browse.currentOpusId = "";
     },
 
     hideMenu: function() {
@@ -895,7 +900,7 @@ var o_browse = {
     },
 
     openDetailTab: function() {
-        $("#galleryView").modal("hide");
+        o_browse.hideGalleyViewModal();
         opus.changeTab("detail");
     },
 
@@ -1030,7 +1035,6 @@ var o_browse = {
                     $(".op-page-loading-status > .loader").show();
                     break;
                 case "cancel":
-                    $('#myModal').modal('hide');
                     opus.prefs.cols = [];
                     o_browse.resetMetadata(currentSelectedMetadata, true);
                     break;
@@ -1184,6 +1188,7 @@ var o_browse = {
                 } else {
                     $("#cart .navbar").hide();
                     $("#cart .sort-order-container").hide();
+                    $("#cart .op-data-table-view").hide();
                     galleryHtml += '<div class="thumbnail-message">';
                     galleryHtml += '<h2>Your cart is empty</h2>';
                     galleryHtml += '<p>To add observations to the cart, click on the Browse Results tab ';
@@ -1430,11 +1435,11 @@ var o_browse = {
 
     deleteCachedObservation: function(galleryObsElem, tableObsElem, index) {
         // don't delete the metadata if the observation is in the cart
-        if (!galleryObsElem.eq(index).hasClass("in")) {
+        if (!galleryObsElem.eq(index).hasClass("op-in-cart")) {
             let delOpusId = galleryObsElem.eq(index).data("id");
             if ($("#galleryView").hasClass("show")) {
                 if (delOpusId === $("#galleryViewContents .select").data("id")) {
-                    $("#galleryView").modal('hide');
+                    o_browse.hideGalleyViewModal();
                 }
             }
             delete o_browse.galleryData[delOpusId];
@@ -1445,7 +1450,7 @@ var o_browse = {
 
     isGalleryView: function(view) {
         let browse = o_browse.getBrowseView(view);
-        return opus.prefs[browse] === "gallery" ;
+        return opus.prefs[browse] === "gallery";
     },
 
     getBrowseView: function(view) {
@@ -1610,8 +1615,15 @@ var o_browse = {
                 $(`${tab} .op-data-table-view`).scrollTop(0);
             }
 
-            // Because we redraw from the beginning or user inputted page, we need to remove previous drawn thumb-pages
+            // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
+            $(`${tab} .thumbnail-container`).each(function() {
+                if (!$(this).hasClass("op-in-cart")) {
+                    let delOpusId = $(this).data("id");
+                    delete o_browse.galleryData[delOpusId];
+                }
+            });
             $(`${tab} .thumbnail-container`).remove();
+            o_browse.hideGalleyViewModal();
 
             o_browse.renderGalleryAndTable(data, this.url, view);
 
@@ -1832,10 +1844,11 @@ var o_browse = {
         let html = "<dl>";
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || o_browse.galleryData[opusId] === undefined || o_browse.galleryData[opusId][index] === undefined) {
-                console.log("uh oh");
+                opus.logError(`metadataboxHtml: in each, galleryData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
+            } else {
+                let value = o_browse.galleryData[opusId][index];
+                html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
             }
-            let value = o_browse.galleryData[opusId][index];
-            html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
         });
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
