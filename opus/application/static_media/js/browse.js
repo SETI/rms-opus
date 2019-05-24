@@ -297,12 +297,7 @@ var o_browse = {
             let opusId = $(this).data("id");
 
             if (opusId) {
-                if (action === "next") {
-                    o_browse.loadNextPageIfNeeded(opusId);
-                } else {
-                    o_browse.loadPrevPageIfNeeded(opusId);
-                }
-
+                o_browse.loadPageIfNeeded(action, opusId);
                 o_browse.updateGalleryView(opusId);
             }
             return false;
@@ -496,11 +491,11 @@ var o_browse = {
                 switch (e.which || e.keyCode) {
                     case 39:  // next
                         opusId = $("#galleryView").find(".op-next").data("id");
-                        o_browse.loadNextPageIfNeeded(opusId);
+                        o_browse.loadPageIfNeeded("next", opusId);
                         break;
                     case 37:  // prev
                         opusId = $("#galleryView").find(".op-prev").data("id");
-                        o_browse.loadPrevPageIfNeeded(opusId);
+                        o_browse.loadPageIfNeeded("prev", opusId);
                         break;
                 }
                 if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
@@ -562,8 +557,7 @@ var o_browse = {
         o_browse.loadData(opus.prefs.view, 1);
     },
 
-    // check if we need infiniteScroll to load next page when there is no more prefected data
-    loadNextPageIfNeeded: function(opusId) {
+    loadPageIfNeeded: function(direction, opusId) {
         // opusId will be empty at the end of the observations, so just return out.
         if (opusId === "") {
             return;
@@ -571,58 +565,36 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
-        let maxObs = (opus.prefs.view === "cart" ? o_cart.cartCount : opus.resultCount);
-
-        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
-        if (obsNum <= maxObs) {
-            let nextElem = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
-            if (nextElem.length === 0) {
-                // disable keydown on modal when it's loading
-                // this will make sure we have correct html elements displayed for prev observation
-                $("#galleryViewContents").addClass("op-disabled");
-                opus.prefs[startObsLabel] = obsNum;
-                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-            } else {
-                // make sure the current element that the modal is displaying is viewable; if not, scroll til it is
-                let scope = $(`${tab} ${contentsView}`);
-                if (!nextElem.isOnScreen($(`${tab} .gallery-contents`))) {
-                    let bottom = scope.offset().top + scope.height();
-                    let elemHeight = nextElem.height();
-                    let offset = Math.max(nextElem.offset().top + elemHeight - bottom, elemHeight);
-                    let newPosition = scope.scrollTop() + offset;
-                    scope.scrollTop(newPosition);
-                }
-            }
-        }
-    },
-
-    loadPrevPageIfNeeded: function(opusId) {
-        // if opusId is ever empty, return out.
-        if (opusId === "") {
-            return;
-        }
-        let startObsLabel = o_browse.getStartObsLabel();
-        let tab = opus.getViewTab();
-        let contentsView = o_browse.getScrollContainerClass();
         o_browse.currentOpusId = opusId;
-        // decrement obsNum to see if there is a previous one to retrieve
+
+        let maxObs = (opus.prefs.view === "cart" ? o_cart.cartCount : opus.resultCount);
         let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
-        if (obsNum > 0) {
-            let prevElem = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
-            // if it's not there go retrieve it...
-            if (prevElem.length === 0) {
+
+        let checkView = (direction === "next" ? obsNum <= maxObs : obsNum > 0);
+
+        if (checkView) {
+            let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
+            if (element.length === 0) {
                 // disable keydown on modal when it's loading
                 // this will make sure we have correct html elements displayed for prev observation
                 $("#galleryViewContents").addClass("op-disabled");
-                let startObs = obsNum - o_browse.getLimit();
-                opus.prefs[startObsLabel] = (startObs > 0 ? startObs : 1);
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+
+                if (direction === "prev") {
+                    let startObs = obsNum - o_browse.getLimit();
+                    opus.prefs[startObsLabel] = (startObs > 0 ? startObs : 1);
+                } else {
+                    opus.prefs[startObsLabel] = obsNum;
+                }
             } else {
-                // make sure the current element that the modal is displaying is viewable; if not, scroll til it is
-                let scope = $(`${tab} ${contentsView}`);
-                if (!prevElem.isOnScreen($(`${tab} .gallery-contents`))) {
-                    let newPosition = scope.scrollTop() - prevElem.height();
-                    scope.scrollTop(newPosition);
+                // make sure the current element that the modal is displaying is viewable
+                if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
+                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+                    let rowCount = opus.getViewNamespace().galleryBoundingRect.x;
+                    let newStartObs = startObs + Math.floor((obsNum - startObs) / rowCount) * rowCount;
+                    let jsElement = $(`${tab} .thumbnail-container[data-id=${opusId}]`)[0];
+                    jsElement.scrollIntoView();
+                    o_browse.onUpdateSlider(newStartObs);
                 }
             }
         }
@@ -791,7 +763,7 @@ var o_browse = {
     },
 
     showGalleryViewModal: function(opusId) {
-        o_browse.loadPrevPageIfNeeded(opusId);
+        o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
 
