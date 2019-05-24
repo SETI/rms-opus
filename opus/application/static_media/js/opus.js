@@ -787,11 +787,14 @@ var opus = {
 
         if (opus.browserSupport[browserName] === undefined) {
             $("#op-browser-version-msg").modal("show");
+            return false;
         } else {
             if (parseFloat(browserVersion) < opus.browserSupport[browserName]) {
                 $("#op-browser-version-msg").modal("show");
+                return false;
             }
         }
+        return true;
     },
 
     checkBrowserSize: function() {
@@ -822,10 +825,11 @@ var opus = {
 }; // end opus namespace
 
 $(document).ready(function() {
-    opus.checkBrowserVersion();
-    opus.checkBrowserSize();
-    opus.checkCookies();
-    // Call normalized url api first
-    // Rest of initialization prcoess will be performed afterwards
-    opus.normalizedURLAPICall();
+    if (opus.checkBrowserVersion()) {
+        opus.checkBrowserSize();
+        opus.checkCookies();
+        // Call normalized url api first
+        // Rest of initialization prcoess will be performed afterwards
+        opus.normalizedURLAPICall();
+    }
 });

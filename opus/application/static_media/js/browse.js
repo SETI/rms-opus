@@ -275,6 +275,12 @@ var o_browse = {
             }
         });
 
+        // Disable draggable for these infomation modals
+        // If draggable is enabled, once modal is dragged, it will not stay in the center.
+        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-guide"]) {
+            $(`${id} .modal-dialog`).draggable("disable");
+        }
+
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
             $(namespace).find(".modal-show").removeClass("modal-show");
