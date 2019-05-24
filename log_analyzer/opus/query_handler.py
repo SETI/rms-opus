@@ -137,28 +137,13 @@ class QueryHandler:
 
         return result, url
 
-    def __get_search_slug_info(self, query):
-        search_slug_info: SearchSlugInfo = defaultdict(list)
-        for slug, value in query.items():
-            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
-            if slug_info:
-                family = slug_info.family
-                search_slug_info[family].append((slug_info, value))
-                self._session_info.add_search_slug(slug, slug_info)
-        # If the only item in a family is QTYPE, then discard it.
-        for family, slug_info_value_list in list(search_slug_info.items()):
-            if len(slug_info_value_list) == 1:
-                if slug_info_value_list[0][0].family_type == FamilyType.QTYPE:
-                    del search_slug_info[family]
-        return search_slug_info
-
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         """Handles info for the contents of search slugs"""
         all_search_families = set(old_info.keys()).union(new_info.keys())
 
         if not new_info:
             if old_info:
-                result.append('Reset Search')
+                result.append('Reset Search Slugs')
             return
 
         removed_searches: List[str] = []
@@ -330,6 +315,20 @@ class QueryHandler:
             joined_old_values = ', '.join(formatted_old_values)
             joined_new_values = ', '.join(formatted_new_values)
             result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
+
+    def __get_search_slug_info(self, query):
+        search_slug_info: SearchSlugInfo = defaultdict(list)
+        for slug, value in query.items():
+            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
+            if slug_info:
+                family = slug_info.family
+                search_slug_info[family].append((slug_info, value))
+                self._session_info.add_search_slug(slug, slug_info)
+        # If the only item in a family is QTYPE, then discard the family.
+        for family, slug_info_value_list in list(search_slug_info.items()):
+            if len(slug_info_value_list) == 1 and slug_info_value_list[0][0].family_type == FamilyType.QTYPE:
+                del search_slug_info[family]
+        return search_slug_info
 
     @staticmethod
     def get_column_slug_info(slugs: List[str], slug_map: slug.ToInfoMap,

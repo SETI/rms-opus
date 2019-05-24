@@ -188,7 +188,7 @@ class SessionInfo(AbstractSessionInfo):
         return self._query_handler.handle_query(query, match.group(1))
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
-    @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
+    @pattern_registry.register(r'/__api/viewmetadatamodal/(.*)\.json')
     def __view_metadata(self, _: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
