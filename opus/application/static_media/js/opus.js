@@ -29,6 +29,8 @@ var opus = {
 
     // Minimum height of any scrollbar
     minimumPSLength: 30,
+    // Fixed scrollbar length for gallery & table view
+    galleryAndTablePSLength: 100,
 
     qtypeRangeDefault: "any",
     qtypeStringDefault: "contains",
