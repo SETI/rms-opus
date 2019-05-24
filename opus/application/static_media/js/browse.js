@@ -46,7 +46,7 @@ var o_browse = {
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
-    currentOpusId: "",
+    metadataDetailOpusId: "",
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
@@ -174,7 +174,7 @@ var o_browse = {
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
-                o_browse.showGalleryViewModal(opusId);
+                o_browse.showMetadataDetailModal(opusId);
             }
         });
 
@@ -230,7 +230,7 @@ var o_browse = {
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
-                o_browse.showGalleryViewModal(opusId);
+                o_browse.showMetadataDetailModal(opusId);
             }
         });
 
@@ -565,37 +565,23 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
-        o_browse.currentOpusId = opusId;
+        o_browse.metadataDetailOpusId = opusId;
 
         let maxObs = (opus.prefs.view === "cart" ? o_cart.cartCount : opus.resultCount);
-        let obsNum = $(`${tab} .thumbnail-container[data-id=${opusId}]`).data("obs");
+        let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
+        let obsNum = $(element).data("obs");
 
         let checkView = (direction === "next" ? obsNum <= maxObs : obsNum > 0);
 
         if (checkView) {
-            let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-obs=${obsNum}]`) : $(`${tab} tr[data-obs=${obsNum}]`));
-            if (element.length === 0) {
-                // disable keydown on modal when it's loading
-                // this will make sure we have correct html elements displayed for prev observation
-                $("#galleryViewContents").addClass("op-disabled");
-                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-
-                if (direction === "prev") {
-                    let startObs = obsNum - o_browse.getLimit();
-                    opus.prefs[startObsLabel] = (startObs > 0 ? startObs : 1);
-                } else {
-                    opus.prefs[startObsLabel] = obsNum;
-                }
-            } else {
-                // make sure the current element that the modal is displaying is viewable
-                if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
-                    let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-                    let rowCount = opus.getViewNamespace().galleryBoundingRect.x;
-                    let newStartObs = startObs + Math.floor((obsNum - startObs) / rowCount) * rowCount;
-                    let jsElement = $(`${tab} .thumbnail-container[data-id=${opusId}]`)[0];
-                    jsElement.scrollIntoView();
-                    o_browse.onUpdateSlider(newStartObs);
-                }
+            // make sure the current element that the modal is displaying is viewable
+            if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
+                let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+                let rowCount = opus.getViewNamespace().galleryBoundingRect.x;
+                let newStartObs = startObs + Math.floor((obsNum - startObs) / rowCount) * rowCount;
+                let jsElement = $(`${tab} .thumbnail-container[data-id=${opusId}]`)[0];
+                jsElement.scrollIntoView();
+                o_browse.onUpdateSlider(newStartObs);
             }
         }
     },
@@ -762,7 +748,7 @@ var o_browse = {
         return false;
     },
 
-    showGalleryViewModal: function(opusId) {
+    showMetadataDetailModal: function(opusId) {
         o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId);
         $("#galleryView").modal("show");
@@ -781,7 +767,7 @@ var o_browse = {
 
     hideGalleyViewModal: function() {
         $("#galleryView").modal("hide");
-        o_browse.currentOpusId = "";
+        o_browse.metadataDetailOpusId = "";
     },
 
     hideMenu: function() {
@@ -1599,8 +1585,8 @@ var o_browse = {
 
             o_browse.renderGalleryAndTable(data, this.url, view);
 
-            if (o_browse.currentOpusId != "") {
-                o_browse.metadataboxHtml(o_browse.currentOpusId, view);
+            if (o_browse.metadataDetailOpusId != "") {
+                o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
             }
             o_browse.updateSortOrder(data);
 
@@ -1627,7 +1613,7 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (!$("#galleryViewContents .op-prev").data("id") && $("#galleryViewContents .op-prev").hasClass("op-button-disabled")) {
-            let prev = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).prev("tr");
+            let prev = $(`${tab} tr[data-id=${o_browse.metadataDetailOpusId}]`).prev("tr");
             prev = (prev.data("id") ? prev.data("id") : "");
 
             $("#galleryViewContents .op-prev").data("id", prev);
@@ -1636,7 +1622,7 @@ var o_browse = {
 
         // Update to make next button appear when prefetching next page is done
         if (!$("#galleryViewContents .op-next").data("id") && $("#galleryViewContents .op-next").hasClass("op-button-disabled")) {
-            let next = $(`${tab} tr[data-id=${o_browse.currentOpusId}]`).next("tr");
+            let next = $(`${tab} tr[data-id=${o_browse.metadataDetailOpusId}]`).next("tr");
             next = (next.data("id") ? next.data("id") : "");
 
             $("#galleryViewContents .op-next").data("id", next);
@@ -1810,7 +1796,7 @@ var o_browse = {
     },
 
     metadataboxHtml: function(opusId, view) {
-        o_browse.currentOpusId = opusId;
+        o_browse.metadataDetailOpusId = opusId;
 
         // list columns + values
         let html = "<dl>";
