@@ -99,6 +99,7 @@ var opus = {
         "edge": 18,
         "safari": 12.1,
         "width": 1280,
+        "height": 275
     },
 
     //------------------------------------------------------------------------------------
@@ -795,10 +796,12 @@ var opus = {
 
     checkBrowserSize: function() {
         /**
-         * Check if browser width is less than 1280px. If so, display a
-         * modal to inform the user to resize the browser width.
+         * Check if browser width is less than 1280px or height is less
+         * than 275px. If so, display a modal to inform the user to
+         * resize the browser size.
          */
-        if ($(window).width() < opus.browserSupport.width) {
+        if ($(window).width() < opus.browserSupport.width ||
+            $(window).height() < opus.browserSupport.height) {
             $("#op-browser-size-msg").modal("show");
         } else {
             $("#op-browser-size-msg").modal("hide");
@@ -820,6 +823,7 @@ var opus = {
 
 $(document).ready(function() {
     opus.checkBrowserVersion();
+    opus.checkBrowserSize();
     opus.checkCookies();
     // Call normalized url api first
     // Rest of initialization prcoess will be performed afterwards
