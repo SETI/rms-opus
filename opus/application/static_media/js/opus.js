@@ -739,7 +739,7 @@ var opus = {
         opus.triggerNavbarClick();
     },
 
-    checkBrowserVersion: function() {
+    isBrowserSupported: function() {
         /**
          * Check supported browser versions and display a modal to
          * inform the user if that version is not supprted.
@@ -751,7 +751,7 @@ var opus = {
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0)
             // Gecko/20100101 Firefox/66.0
             matchObj = userAgent.match(/Firefox\/(\d+.\d+)/);
-            browserName = "firefox";
+            browserName = "Firefox";
             browserVersion = matchObj[1];
         } else if (userAgent.indexOf("Edge") > -1 || userAgent.indexOf("Edg") > -1) {
             // userAgent example output:
@@ -760,30 +760,37 @@ var opus = {
             // Mac: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
             // (KHTML, like Gecko) Chrome/76.0.3800.0 Safari/537.36 Edg/76.0.167.0
             matchObj = userAgent.match(/Edge\/(\d+.\d+)/) || userAgent.match(/Edg\/(\d+.\d+)/);
-            browserName = "edge";
+            browserName = "Edge";
             browserVersion = matchObj[1];
         } else if (userAgent.indexOf("OPR") > -1) {
             // userAgent example output:
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
             // (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 OPR/60.0.3255.95
             matchObj = userAgent.match(/OPR\/(\d+.\d+)/);
-            browserName = "opera";
+            browserName = "Opera";
             browserVersion = matchObj[1];
         } else if (userAgent.indexOf("Chrome") > -1) {
             // userAgent example output:
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
             // (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
             matchObj = userAgent.match(/Chrome\/(\d+.\d+)/);
-            browserName = "chrome";
+            browserName = "Chrome";
             browserVersion = matchObj[1];
         } else if (userAgent.indexOf("Version") > -1) {
             // userAgent example output:
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15
             // (KHTML, like Gecko) Version/12.1 Safari/605.1.15
             matchObj = userAgent.match(/Version\/(\d+.\d+)/);
-            browserName = "safari";
+            browserName = "Safari";
             browserVersion = matchObj[1];
         }
+
+        let modalMsg = (`Your current browser is ${browserName} ${browserVersion}.
+                        Please update the browser. OPUS supports Firefox (66+),
+                        Chrome (74+), Safari (12.1+), Opera (58+), and Microsoft Edge
+                        (18+).`);
+        $("#op-browser-version-msg .modal-body").html(modalMsg);
+        browserName = browserName.toLowerCase();
 
         if (opus.browserSupport[browserName] === undefined) {
             $("#op-browser-version-msg").modal("show");
@@ -825,9 +832,9 @@ var opus = {
 }; // end opus namespace
 
 $(document).ready(function() {
-    if (opus.checkBrowserVersion()) {
-        opus.checkBrowserSize();
+    if (opus.isBrowserSupported()) {
         opus.checkCookies();
+        opus.checkBrowserSize();
         // Call normalized url api first
         // Rest of initialization prcoess will be performed afterwards
         opus.normalizedURLAPICall();
