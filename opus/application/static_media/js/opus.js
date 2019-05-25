@@ -659,13 +659,17 @@ var opus = {
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
-                $(".op-confirm-modal").modal('hide');
+                // But don't close "#op-browser-version-msg" and "#op-browser-size-msg"
+                if (!$(".op-confirm-modal").is("#op-browser-version-msg") &&
+                    !$(".op-confirm-modal").is("#op-browser-size-msg")) {
+                    $(".op-confirm-modal").modal("hide");
+                }
                 opus.hideHelpPanel();
             }
         });
 
         // Handle the Submit or Cancel buttons for the various confirm modals we can pop up
-        $(".op-confirm-modal").on("click", ".btn", function() {
+        $(".op-confirm-modal").on("click", ".btn", function(event) {
             let target = $(this).data("target");
             switch ($(this).attr("type")) {
                 case "submit":
@@ -680,7 +684,7 @@ var opus = {
                             o_cart.emptyCart();
                             break;
                     }
-                    $(".modal").modal("hide");
+                    $(`#${target}`).modal("hide");
                     break;
 
                 case "cancel":
@@ -825,7 +829,9 @@ var opus = {
          * Note: we will call __help/splash.html api in the future to
          * display the guide page. For now, we just show a modal.
          */
-        if ($.cookie("widgets") === undefined) {
+        if ($.cookie("visited") === undefined) {
+            // set the cookie for the first time user
+            $.cookie("visited", true, { expires: 28});  // days
             $("#op-guide").modal("show");
         }
     }
