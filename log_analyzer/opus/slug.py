@@ -224,8 +224,6 @@ class ToInfoMap:
 
         if slug in self._slug_to_column_label:
             label = self._slug_to_column_label[slug]
-            # label = label.replace(' (Min)', '').replace(' (Max)', '')
-
             result = column_map[slug] = create_slug(slug, label, Flags.NONE)
             return result
 
