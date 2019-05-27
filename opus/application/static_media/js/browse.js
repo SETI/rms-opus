@@ -619,7 +619,7 @@ var o_browse = {
     // called when the slider is moved...
     onUpdateSliderHandle: function(value) {
         value = (value == undefined? 1 : value);
-        $("#op-observation-number").html(value);
+        $("#op-observation-number").html(o_utils.addCommas(value));
     },
 
     // This function will be called when we scroll the slide to a target value
@@ -721,8 +721,8 @@ var o_browse = {
                 $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
                 opus.prefs[startObsLabel] = obsNum;
 
-                $("#op-observation-number").html(obsNum);
-                $(".op-slider-pointer").css("width", `${maxSliderVal.toString().length*0.7}em`);
+                $("#op-observation-number").html(o_utils.addCommas(obsNum));
+                $(".op-slider-pointer").css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
                 // $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
                 // just make the step size the number of the obserations across the page...
                 // if the observations have not yet been rendered, leave the default, it will get changed later
