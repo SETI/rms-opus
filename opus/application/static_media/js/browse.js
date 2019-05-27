@@ -583,7 +583,7 @@ var o_browse = {
                 // if the binoculars have scrolled up, then reset the screen to the top;
                 // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
                 if (obsNum > startObs) {    // the binoculars have scrolled off bottom
-                    obsNum += -Math.max(galleryBoundingRect.x * (galleryBoundingRect.y - 1), 1);
+                    obsNum -= Math.max(galleryBoundingRect.x * (galleryBoundingRect.y - 1), 1);
                 }
                 o_browse.onUpdateSlider(obsNum);
             }
