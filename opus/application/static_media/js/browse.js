@@ -579,13 +579,13 @@ var o_browse = {
 
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
                 let rowCount = galleryBoundingRect.x;
-                let newStartObs = startObs + o_utils.floor((obsNum - startObs) / rowCount) * rowCount;
 
                 // if the binoculars have scrolled up, then reset the screen to the top;
                 // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
                 if (obsNum > startObs) {    // the binoculars have scrolled off bottom
-                    // update the newStartObs by subtracting the number of rows visible.
-                    newStartObs -= (galleryBoundingRect.x * (galleryBoundingRect.y - 1));
+                    startObs -= (galleryBoundingRect.x * (galleryBoundingRect.y - 1));
+                } else {
+                    startObs += o_utils.floor((obsNum - startObs) / rowCount) * rowCount;
                 }
                 o_browse.onUpdateSlider(newStartObs);
             }
