@@ -466,7 +466,6 @@ var o_browse = {
             },
             stop: function(event, ui) {
                 o_browse.onUpdateSlider(ui.value);
-                o_browse.hideGalleyViewModal();
             }
         });
 
@@ -576,11 +575,18 @@ var o_browse = {
         if (checkView) {
             // make sure the current element that the modal is displaying is viewable
             if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
+                let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
+
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-                let rowCount = opus.getViewNamespace().galleryBoundingRect.x;
-                let newStartObs = startObs + Math.floor((obsNum - startObs) / rowCount) * rowCount;
-                let jsElement = $(`${tab} .thumbnail-container[data-id=${opusId}]`)[0];
-                jsElement.scrollIntoView();
+                let rowCount = galleryBoundingRect.x;
+                let newStartObs = startObs + o_utils.floor((obsNum - startObs) / rowCount) * rowCount;
+
+                // if the binoculars have scrolled up, then reset the screen to the top;
+                // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
+                if (obsNum > startObs) {    // the binoculars have scrolled off bottom
+                    // update the newStartObs by subtracting the number of rows visible.
+                    newStartObs -= (galleryBoundingRect.x * (galleryBoundingRect.y - 1));
+                }
                 o_browse.onUpdateSlider(newStartObs);
             }
         }
@@ -665,7 +671,7 @@ var o_browse = {
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
             let firstCachedObsTop = $(selector).first().offset().top;
-            let calculatedFirstObs = (Math.floor((firstCachedObs - 1)/galleryBoundingRect.x + 0.0000001) *
+            let calculatedFirstObs = (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
                                       galleryBoundingRect.x + 1);
             // For gallery view, the topBoxBoundary is the top of .gallery-contents
 
@@ -700,7 +706,7 @@ var o_browse = {
             }
 
             let dataResultCount = tab === "#browse" ? opus.resultCount : o_cart.cartCount;
-            let firstObsInLastRow = (Math.floor((dataResultCount - 1)/galleryBoundingRect.x + 0.0000001) *
+            let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                 galleryBoundingRect.x + 1);
             let maxSliderVal = firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.y - 1);
 
@@ -708,7 +714,7 @@ var o_browse = {
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
             if (o_browse.isGalleryView()) {
-                obsNum = (Math.floor((obsNum - 1)/galleryBoundingRect.x + 0.0000001) *
+                obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
                           galleryBoundingRect.x + 1);
             }
 
@@ -1656,7 +1662,7 @@ var o_browse = {
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
 
-        let xCount = Math.floor(width/o_browse.imageSize);
+        let xCount = o_utils.floor(width/o_browse.imageSize);
         let yCount = Math.round(height/o_browse.imageSize);
         // let yCount = Math.ceil(height/o_browse.imageSize);
 

@@ -29,7 +29,14 @@ var o_utils = {
           return num.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
     },
 
+    // account for FP non-integer inprecision math in javascript
+    floor: function(num) {
+        return Math.floor(num + 0.0000001);
+    },
 
+    ceil: function(num) {
+        return Math.ceil(num + 0.0000001);
+    },
 
 };
 
