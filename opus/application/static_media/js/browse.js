@@ -40,8 +40,8 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
-    maxCachedObservations: 1000,    // max number of observations to store in cache;
-                                    // at some point, we can probably figure this out dynamically
+    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
+    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
 
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
@@ -1659,6 +1659,13 @@ var o_browse = {
         let xCount = Math.floor(width/o_browse.imageSize);
         let yCount = Math.round(height/o_browse.imageSize);
         // let yCount = Math.ceil(height/o_browse.imageSize);
+
+        // update the number of cached observations based on screen size
+        // for now, only bother when we update the browse tab...
+        // rounding because the factor value can be a FP number.
+        if (tab === "#browse") {
+            o_browse.maxCachedObservations = Math.round(xCount * yCount * o_browse.cachedObservationFactor);
+        }
 
         return {"x": xCount, "y": yCount};
     },
