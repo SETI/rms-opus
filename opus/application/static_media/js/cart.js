@@ -73,6 +73,18 @@ var o_cart = {
             });
         });
 
+        $("#cart").on("click", ".op-cart-select-btn, .op-cart-deselect-btn", function(event) {
+            console.log(event.target);
+            console.log($(event.target).data("category"));
+            console.log($(event.target).hasClass("op-cart-select-btn"));
+            // $('input:checkbox').prop('checked')
+            if ($(event.target).hasClass("op-cart-select-btn")) {
+                console.log("Clicking on select all button");
+            } else if ($(event.target).hasClass("op-cart-deselect-btn")) {
+                console.log("Clicking on deselect all button");
+            }
+        });
+
         // Display the whole series of modals.
         // This will keep displaying multiple error message modals one after another when the previous modal is closed.
         $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
