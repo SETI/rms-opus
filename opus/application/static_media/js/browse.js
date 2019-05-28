@@ -1177,8 +1177,17 @@ var o_browse = {
                 }
                 $(".gallery", tab).html(galleryHtml);
             } else {
-                // we've hit the end of the infinite scroll.
-                $(".op-page-loading-status > .loader").hide();
+                if (data.start_obs > data.result_count) {
+                    // handle a corner case where a user has changed the startobs to be greater than result_count
+                    // just reset back to 1 and get a new page
+                    opus.prefs[o_browse.getStartObsLabel()] = 1;
+                    o_hash.updateHash();
+                    $("#galleryViewContents").addClass("op-disabled");
+                    $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+                } else {
+                    // we've hit the end of the infinite scroll.
+                    $(".op-page-loading-status > .loader").hide();
+                }
                 return;
             }
         } else {
