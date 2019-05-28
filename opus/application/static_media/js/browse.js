@@ -557,8 +557,9 @@ var o_browse = {
         opus.prefs.cart_startobs = 1;
 
         o_browse.galleryBegun = false;     // so that we redraw from the beginning
+        o_cart.cartChange = true;
         o_browse.galleryData = {};
-        o_browse.loadData(opus.prefs.view, 1);
+        o_browse.loadData(opus.prefs.view);
     },
 
     // check if we need infiniteScroll to load next page when there is no more prefected data
