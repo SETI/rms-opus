@@ -7,6 +7,9 @@ from typing import Optional, Dict, Any, NamedTuple, cast
 
 import requests
 
+SEARCH_LABEL = 'full_search_label'
+COLUMN_LABEL = 'full_label'
+
 
 class Family(NamedTuple):
     label: str  # The long name for this slug
@@ -81,15 +84,23 @@ class ToInfoMap:
         raw_json = self.__read_json(url_prefix)
         json_data: Dict[str, Any] = raw_json['data']
 
-        def create_dictionary(label: str) -> Dict[str, str]:
-            return {slug_info['slug'].lower(): value
-                    for slug_info in json_data.values()
-                    for value in [slug_info.get(label)] if value
-                    }
+        slug_to_search_label = {}
+        slug_to_column_label = {}
+        for slug_info in json_data.values():
+            slug_name = slug_info['slug'].lower()
+            slug_search_value = slug_info.get(SEARCH_LABEL, None)
+            slug_column_value = slug_info.get(COLUMN_LABEL, None)
+            if slug_search_value:
+                slug_to_search_label[slug_name] = slug_search_value
+            if slug_column_value:
+                category: str = slug_info.get('category', None)
+                if category and category.endswith(' Constraints'):
+                    slug_column_value = f'{slug_column_value} [{category[:-12]}]'
+                slug_to_column_label[slug_name] = slug_column_value
+        self._slug_to_search_label = slug_to_search_label
+        self._slug_to_column_label = slug_to_column_label
 
         # Fill in all the normal slugs
-        self._slug_to_search_label = create_dictionary('full_search_label')
-        self._slug_to_column_label = create_dictionary('full_label')
 
         self._old_slug_to_new_slug = {
             old_slug_info.lower(): slug_info['slug'].lower()
@@ -213,7 +224,6 @@ class ToInfoMap:
 
         if slug in self._slug_to_column_label:
             label = self._slug_to_column_label[slug]
-            label = label.replace(' (Min)', '').replace(' (Max)', '')
             result = column_map[slug] = create_slug(slug, label, Flags.NONE)
             return result
 
