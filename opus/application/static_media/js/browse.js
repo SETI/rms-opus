@@ -1643,11 +1643,7 @@ var o_browse = {
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
 
-        let startObsLabel = o_browse.getStartObsLabel();
-        let startObs = opus.prefs[startObsLabel];
-        startObs = (startObs > opus.resultCount ? 1 : startObs);
-
-        o_browse.loadData(opus.prefs.view, startObs);
+        o_browse.loadData(opus.prefs.view);
     },
 
     countGalleryImages: function(view) {

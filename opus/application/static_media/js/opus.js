@@ -695,6 +695,8 @@ var opus = {
         opus.prefs.widgets = [];
         o_widgets.updateWidgetCookies();
 
+        // set these to the current hash on opus init
+        [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
 
         // Initialize opus.prefs from the URL hash
         o_hash.initFromHash();
