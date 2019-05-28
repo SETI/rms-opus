@@ -99,7 +99,7 @@ var opus = {
         "edge": 18,
         "safari": 12.1,
         "width": 1280,
-        "height": 275
+        "height": 720
     },
 
     //------------------------------------------------------------------------------------
@@ -814,6 +814,10 @@ var opus = {
          * than 275px. If so, display a modal to inform the user to
          * resize the browser size.
          */
+        let modalMsg = (`Please resize your browser. OPUS works best with a browser
+                        size of at least ${opus.browserSupport.width} pixels by
+                        ${opus.browserSupport.height} pixels.`);
+        $("#op-browser-size-msg .modal-body").html(modalMsg);
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             $("#op-browser-size-msg").modal("show");
@@ -831,7 +835,7 @@ var opus = {
          */
         if ($.cookie("visited") === undefined) {
             // set the cookie for the first time user
-            $.cookie("visited", true, { expires: 28});  // days
+            $.cookie("visited", true);
             $("#op-guide").modal("show");
         }
     }
