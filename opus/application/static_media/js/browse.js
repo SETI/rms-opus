@@ -40,8 +40,8 @@ var o_browse = {
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
     imageSize: 100,     // default
-    maxCachedObservations: 1000,    // max number of observations to store in cache;
-                                    // at some point, we can probably figure this out dynamically
+    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
+    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
 
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
@@ -323,7 +323,6 @@ var o_browse = {
             let isDescending = true;
             let orderIndicator = $(this).find("span:last");
             let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`);
-            o_browse.galleryBegun = false;
 
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -352,7 +351,6 @@ var o_browse = {
             $(".op-page-loading-status > .loader").show();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
-            o_browse.galleryBegun = false;
 
             if (descending == "true") {
                 slug = "-"+slug;
@@ -382,7 +380,6 @@ var o_browse = {
             let descending = $(this).parent().attr("data-descending");
             let headerOrderIndicator = $(`.op-data-table-view th a[data-slug="${slug}"]`).find("span:last");
             let pillOrderIndicator = $(this);
-            o_browse.galleryBegun = false;
 
             let new_slug = slug;
             if (descending == "true") {
@@ -552,8 +549,9 @@ var o_browse = {
         opus.prefs.cart_startobs = 1;
 
         o_browse.galleryBegun = false;     // so that we redraw from the beginning
+        o_cart.cartChange = true;
         o_browse.galleryData = {};
-        o_browse.loadData(opus.prefs.view, 1);
+        o_browse.loadData(opus.prefs.view);
     },
 
     loadPageIfNeeded: function(direction, opusId) {
@@ -1663,6 +1661,13 @@ var o_browse = {
         let xCount = o_utils.floor(width/o_browse.imageSize);
         let yCount = Math.round(height/o_browse.imageSize);
         // let yCount = Math.ceil(height/o_browse.imageSize);
+
+        // update the number of cached observations based on screen size
+        // for now, only bother when we update the browse tab...
+        // rounding because the factor value can be a FP number.
+        if (tab === "#browse") {
+            o_browse.maxCachedObservations = Math.round(xCount * yCount * o_browse.cachedObservationFactor);
+        }
 
         return {"x": xCount, "y": yCount};
     },
