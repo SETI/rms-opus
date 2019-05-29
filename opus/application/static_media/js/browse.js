@@ -3,9 +3,8 @@
 /* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
-/* globals $, _, PerfectScrollbar */
+/* globals $, PerfectScrollbar */
 /* globals o_cart, o_hash, o_menu, o_utils, opus */
-/* globals DEFAULT_COLUMNS */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -560,7 +559,6 @@ var o_browse = {
         if (opusId === "") {
             return;
         }
-        let startObsLabel = o_browse.getStartObsLabel();
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
         o_browse.metadataDetailOpusId = opusId;
@@ -577,7 +575,6 @@ var o_browse = {
                 let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
 
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
-                let rowCount = galleryBoundingRect.x;
 
                 // if the binoculars have scrolled up, then reset the screen to the top;
                 // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
@@ -655,7 +652,6 @@ var o_browse = {
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function(browserResized=false) {
         let tab = opus.getViewTab();
-        let viewNamespace = opus.getViewNamespace();
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .thumbnail-container` :
                         `${tab} .op-data-table tbody tr`);
@@ -1655,7 +1651,6 @@ var o_browse = {
     },
 
     countGalleryImages: function(view) {
-        let tab = opus.getViewTab(view);
         let viewNamespace = opus.getViewNamespace(view);
 
         let width = o_browse.calculateGalleryWidth(view);
