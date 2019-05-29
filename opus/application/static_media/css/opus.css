@@ -560,6 +560,19 @@ img.preview {
     }
 }
 
+#op-metadata-selector {
+    /* prevent weird browser y-scrollbar */
+    overflow-y: hidden;
+
+}
+
+#op-metadata-selector .modal-dialog {
+    /* make modal width shrink smoothly with screen */
+    max-width: 1100px;
+    /* height: auto; */
+    /* max-height: 100%; */
+}
+
 #galleryView {
     pointer-events: none;
     z-index: 999;
