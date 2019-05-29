@@ -736,6 +736,9 @@ var o_browse = {
                           galleryBoundingRect.x + 1);
             }
 
+            console.log("=== updateSliderHandle ===");
+            console.log(`=== maxSliderVal: ${maxSliderVal} ===`);
+            console.log(`=== obsNum: ${obsNum} ===`);
             if (maxSliderVal >= obsNum) {
                 $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
