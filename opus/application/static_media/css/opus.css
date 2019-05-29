@@ -124,7 +124,7 @@ body {
     height: 100%;
 }
 
-#sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
+#sidebar .submenu {
     margin-left: 15px;
 }
 
@@ -480,6 +480,10 @@ th.sticky-header {
 .allMetadata .cat_label {
     margin-top: 15px;
     margin-bottom: -5px;
+}
+
+.allMetadata .submenu {
+    margin-left: 15px;
 }
 
 .selectedMetadata ul {
