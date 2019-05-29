@@ -93,13 +93,12 @@ var opus = {
 
     // store the browser version and width supported by OPUS
     browserSupport: {
-        "firefox": 66,
-        "chrome": 74,
-        "opera": 58,
-        "edge": 18,
-        "safari": 12.1,
-        "width": 1280,
-        "height": 720
+        "firefox": 59,
+        "chrome": 56,
+        "opera": 42,
+        "safari": 10.1,
+        "width": 600,
+        "height": 200
     },
 
     //------------------------------------------------------------------------------------
@@ -752,21 +751,13 @@ var opus = {
          */
         let browserName, browserVersion, matchObj;
         let userAgent = navigator.userAgent;
+
         if (userAgent.indexOf("Firefox") > -1) {
             // Example output:
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0)
             // Gecko/20100101 Firefox/66.0
             matchObj = userAgent.match(/Firefox\/(\d+.\d+)/);
             browserName = "Firefox";
-            browserVersion = matchObj[1];
-        } else if (userAgent.indexOf("Edge") > -1 || userAgent.indexOf("Edg") > -1) {
-            // userAgent example output:
-            // Windows: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36
-            // (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10136
-            // Mac: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
-            // (KHTML, like Gecko) Chrome/76.0.3800.0 Safari/537.36 Edg/76.0.167.0
-            matchObj = userAgent.match(/Edge\/(\d+.\d+)/) || userAgent.match(/Edg\/(\d+.\d+)/);
-            browserName = "Edge";
             browserVersion = matchObj[1];
         } else if (userAgent.indexOf("OPR") > -1) {
             // userAgent example output:
@@ -775,7 +766,8 @@ var opus = {
             matchObj = userAgent.match(/OPR\/(\d+.\d+)/);
             browserName = "Opera";
             browserVersion = matchObj[1];
-        } else if (userAgent.indexOf("Chrome") > -1) {
+        } else if (userAgent.indexOf("Chrome") > -1 && userAgent.indexOf("Edge") === -1 &&
+                   userAgent.indexOf("Edg") === -1) {
             // userAgent example output:
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36
             // (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36
@@ -794,10 +786,16 @@ var opus = {
             browserVersion = "0.0";
         }
 
-        let modalMsg = (`Your current browser is ${browserName} ${browserVersion}.
-                        Please update the browser. OPUS supports Firefox (66+),
-                        Chrome (74+), Safari (12.1+), Opera (58+), and Microsoft Edge
-                        (18+).`);
+        let browser = `${browserName} ${browserVersion}`;
+        if (browserName === "unsupported") {
+            browser = browserName;
+        }
+        let modalMsg = (`Your current browser is ${browser}.
+                        Please update the browser. OPUS supports
+                        Firefox (${opus.browserSupport.firefox}+),
+                        Chrome (${opus.browserSupport.chrome}+),
+                        Safari (${opus.browserSupport.safari}+),
+                        and Opera (${opus.browserSupport.opera}+).`);
         $("#op-browser-version-msg .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
 
