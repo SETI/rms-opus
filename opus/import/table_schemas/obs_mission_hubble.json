@@ -180,7 +180,7 @@
         "pi_dict_name": "PUBLICATION_DATE",
         "definition": "The date when the data was last updated by Space Telescope Science Institute. Although many formats are supported, the standard is YYYY-MM-DD[Thh:mm:ss.sss].",
         "pi_dict_context_results": "HST",
-        "pi_dict_name_results": "PUBLICATION_DATE",
+        "pi_dict_name_results": "PUBLICATION_DATE_RESULTS",
         "definition_results": "The date when the data was last updated by Space Telescope Science Institute.",
         "pi_disp_order": 180,
         "pi_display": 1,
