@@ -185,7 +185,7 @@ var o_cart = {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
-            $("#cart .op-data-table > tbody").empty();  // yes all namespaces
+            $("#cart .op-data-table > tbody").empty();
             $("#cart .gallery").empty();
 
             // redux: and nix this big thing:
