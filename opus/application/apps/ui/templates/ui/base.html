@@ -306,6 +306,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-reset-search-metadata-modal"
@@ -315,6 +316,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
@@ -324,6 +326,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-cart-status-error-msg"
@@ -332,6 +335,7 @@
             target="op-cart-status-error-msg"
             yes_text="OK"
             allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-update-url"
@@ -341,6 +345,7 @@
             yes_text="Keep Message"
             no_text="Discard Message"
             allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-browser-version-msg"
@@ -363,6 +368,7 @@
             target="op-guide"
             yes_text="OK"
             allow_close=True
+            close_by_keyboard="esc"
         %}
 
         {% endblock %}

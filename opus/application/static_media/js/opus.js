@@ -659,17 +659,19 @@ var opus = {
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
-                // But don't close "#op-browser-version-msg" and "#op-browser-size-msg"
-                if (!$(".op-confirm-modal").is("#op-browser-version-msg") &&
-                    !$(".op-confirm-modal").is("#op-browser-size-msg")) {
-                    $(".op-confirm-modal").modal("hide");
-                }
+                // Don't close "#op-browser-version-msg" and "#op-browser-size-msg"
+                $.each($(".op-confirm-modal"), function(idx, confirmModal) {
+                    if ($(confirmModal).data("action") === "esc") {
+                        $(confirmModal).modal("hide");
+                    }
+                });
+
                 opus.hideHelpPanel();
             }
         });
 
         // Handle the Submit or Cancel buttons for the various confirm modals we can pop up
-        $(".op-confirm-modal").on("click", ".btn", function(event) {
+        $(".op-confirm-modal").on("click", ".btn", function() {
             let target = $(this).data("target");
             switch ($(this).attr("type")) {
                 case "submit":
@@ -695,7 +697,7 @@ var opus = {
                             $(".op-user-msg").removeClass("op-show-msg");
                             break;
                     }
-                    $(".modal").modal("hide");
+                    $(`#${target}`).modal("hide");
                     break;
             }
         });
@@ -787,6 +789,9 @@ var opus = {
             matchObj = userAgent.match(/Version\/(\d+.\d+)/);
             browserName = "Safari";
             browserVersion = matchObj[1];
+        } else {
+            browserName = "unsupported";
+            browserVersion = "0.0";
         }
 
         let modalMsg = (`Your current browser is ${browserName} ${browserVersion}.
