@@ -129,3 +129,21 @@ class helpTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_gettingstarted(request)
+
+
+            #########################################
+            ######### api_splash UNIT TESTS #########
+            #########################################
+
+    def test__api_splash_no_request(self):
+        "[test_help.py] api_splash: no request"
+        with self.assertRaises(Http404):
+            api_splash(None)
+
+    def test__api_splash_no_get(self):
+        "[test_help.py] api_splash: no GET"
+        c = Client()
+        request = self.factory.get('__help/splash.html')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_splash(request)
