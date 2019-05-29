@@ -786,12 +786,11 @@ var opus = {
             browserVersion = "0.0";
         }
 
-        let browser = `${browserName} ${browserVersion}`;
+        let browser = `${browserName} ${browserVersion}. Please update your browser`;
         if (browserName === "unsupported") {
             browser = browserName;
         }
-        let modalMsg = (`Your current browser is ${browser}.
-                        Please update the browser. OPUS supports
+        let modalMsg = (`Your current browser is ${browser}. OPUS supports
                         Firefox (${opus.browserSupport.firefox}+),
                         Chrome (${opus.browserSupport.chrome}+),
                         Safari (${opus.browserSupport.safari}+),
