@@ -50,7 +50,7 @@
             "obs_mission_voyager_ert"
         ],
         "data_source_order": 10,
-        "definition": "Time at which image data was received on earth, in the format yyyy-mm-ddThh:mm:ss. The time system is Universal Time (UTC). 'yyy' = year, 'mm' = month, 'dd' = day of month, 'hh' = hour, 'mm' = minute, 'ss' = second.",
+        "definition": "Time at which image data was received on earth (UTC). Although many formats are supported, the standard is YYYY-MM-DD[Thh:mm:ss.sss].",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
         "pi_dict_name": "EARTH_RECEIVED_TIME",
