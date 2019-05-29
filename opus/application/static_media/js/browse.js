@@ -14,8 +14,6 @@ const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
-// Fixed scrollbar length for gallery & table view
-const galleryAndTablePSLength = 100;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -25,13 +23,13 @@ var o_browse = {
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .op-data-table-view", {
-        minScrollbarLength: galleryAndTablePSLength,
-        maxScrollbarLength: galleryAndTablePSLength,
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: galleryAndTablePSLength,
-        maxScrollbarLength: galleryAndTablePSLength,
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
@@ -276,6 +274,12 @@ var o_browse = {
                 o_browse.hideMenu();
             }
         });
+
+        // Disable draggable for these infomation modals
+        // If draggable is enabled, once modal is dragged, it will not stay in the center.
+        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-guide"]) {
+            $(`${id} .modal-dialog`).draggable("disable");
+        }
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
