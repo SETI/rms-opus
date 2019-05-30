@@ -93,7 +93,7 @@
                 </div>
             </div><!-- /search -->
 
-            <div id="browse" class="tab-pane fade" role="tabpanel" aria-labelledby="browse-tab">
+            <div id="browse" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="browse-tab">
                 <div class="panel panel-default">
                     <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                         <div class="browse-nav-container top_navbar collapse navbar-collapse">
@@ -128,7 +128,7 @@
                         </div>
                         <div class="row op-data-table-view browse-infiniteScroll-element mx-0">
                             <div class="col-lg p-0">
-                                <table class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect op-data-table mb-0">
+                                <table class="table table-hover table-bordered table-striped table-dark table-sm op-data-table mb-0">
                                     <thead></thead>
                                     <tbody></tbody>
                                 </table>
@@ -194,7 +194,7 @@
                             </div>
                             <div class="row op-data-table-view mx-0">
                                 <div class="col-lg p-0">
-                                    <table class="table table-hover table-bordered table-striped table-dark table-sm op-noSelect op-data-table mb-0">
+                                    <table class="table table-hover table-bordered table-striped table-dark table-sm op-no-select op-data-table mb-0">
                                         <thead></thead>
                                         <tbody></tbody>
                                     </table>
@@ -254,14 +254,14 @@
 
         <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <i class="far fa-times-circle fa-lg text-info"></i>
                     </button>
                     <div id="galleryViewContents" class="modal-body bg-dark">
                         <div class="row">
-                            <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center"></div>
+                            <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
                             <div class="right col-lg-5 col-sm">
                                 <div class="metadata">
                                     <div class="contents"></div>
@@ -306,6 +306,8 @@
             target="op-reset-search-modal"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-reset-search-metadata-modal"
@@ -314,6 +316,8 @@
             target="op-reset-search-metadata-modal"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
@@ -322,6 +326,8 @@
             target="op-empty-cart"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-cart-status-error-msg"
@@ -329,6 +335,8 @@
             confirm_msg=""
             target="op-cart-status-error-msg"
             yes_text="OK"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-update-url"
@@ -337,6 +345,31 @@
             target="op-update-url"
             yes_text="Keep Message"
             no_text="Discard Message"
+            allow_close=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-browser-version-msg"
+            confirm_title="Message About Your Browser Version"
+            confirm_msg=""
+            target="op-browser-version-msg"
+            allow_close=False
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-browser-size-msg"
+            confirm_title="Message About Your Browser Size"
+            confirm_msg=""
+            target="op-browser-size-msg"
+            allow_close=False
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-guide"
+            confirm_title="Welcome to OPUS3"
+            confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
+            target="op-guide"
+            yes_text="OK"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
 
         {% endblock %}

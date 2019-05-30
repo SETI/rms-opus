@@ -124,7 +124,7 @@ body {
     height: 100%;
 }
 
-#sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
+#sidebar .submenu {
     margin-left: 15px;
 }
 
@@ -482,6 +482,10 @@ th.sticky-header {
     margin-bottom: -5px;
 }
 
+.allMetadata .submenu {
+    margin-left: 15px;
+}
+
 .op-selected-metadata-column ul {
     padding-inline-start: 0.5em;
     padding-inline-end: 1em;
@@ -578,14 +582,18 @@ img.preview {
 }
 
 #galleryView .bottom {
-    position: fixed;
-    right: 2.5em;
-    bottom: 1.5em;
-    width: 40%;
+    position: absolute;
+    padding-right: 1em;
+    bottom: 0;
+    width: 100%;
     z-index: 1030;
 }
 
-#galleryView .prev > i {
+#galleryView .op-obs-direction {
+    width: 20em;
+}
+
+#galleryView .op-prev > i {
     margin-right: .4em;
 }
 
@@ -602,7 +610,7 @@ img.preview {
 }
 
 #galleryViewContents .left {
-    min-height: 590px;
+    height: 590px;
 }
 
 #galleryView .modal-dialog:hover {
@@ -1179,7 +1187,7 @@ ul.ui-autocomplete a.ui-state-active {
     background-color: #F9F6F6;
 }
 
-.op-noSelect {
+.op-no-select {
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
