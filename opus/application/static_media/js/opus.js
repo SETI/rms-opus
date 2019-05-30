@@ -841,7 +841,7 @@ var opus = {
          */
         if ($.cookie("visited") === undefined) {
             // set the cookie for the first time user
-            //$.cookie("visited", true);
+            $.cookie("visited", true);
             let url = "/opus/__help/splash.html";
             $.ajax({
                 url: url,
