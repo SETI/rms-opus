@@ -674,7 +674,6 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function(browserResized=false) {
-        console.log("=== updateSliderHandle ===");
         let tab = opus.getViewTab();
         let browse = o_browse.getBrowseView();
         let selector = ((opus.prefs[browse] === "gallery") ?
@@ -702,26 +701,12 @@ var o_browse = {
 
             // table: obsNum = calculatedFirstObs + number of row
             // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
-            // let obsNumDiff = ((opus.prefs[browse] === "gallery") ?
-            //                   Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
-            //                   galleryBoundingRect.x :
-            //                   Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
-            let obsNumDiff;
-            if (opus.prefs[browse] === "gallery") {
-                console.log("gallery?");
-                obsNumDiff = Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
-                galleryBoundingRect.x;
-            } else {
-                console.log("table???");
-                obsNumDiff = Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight());
-            }
+            let obsNumDiff = ((opus.prefs[browse] === "gallery") ?
+                              Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
+                              galleryBoundingRect.x :
+                              Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
+
             let obsNum = obsNumDiff + calculatedFirstObs;
-            console.log(`topBoxBoundary: ${topBoxBoundary}`);
-            console.log(`firstCachedObsTop: ${firstCachedObsTop}`);
-            console.log(`firstCachedObs: ${firstCachedObs}`);
-            console.log(`obsNumDiff: ${obsNumDiff}`);
-            console.log(`calculatedFirstObs: ${calculatedFirstObs}`);
-            console.log(`obsNum before converting: ${obsNum}`);
             if (browserResized) {
                 // At this point of time, galleryBoundingRect is updated with new row size
                 // from countGalleryImages in adjustBrowseHeight.
@@ -751,9 +736,6 @@ var o_browse = {
                           galleryBoundingRect.x + 1);
             }
 
-
-            console.log(`maxSliderVal: ${maxSliderVal}`);
-            console.log(`obsNum: ${obsNum}`);
             if (maxSliderVal >= obsNum) {
                 $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
                 $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});

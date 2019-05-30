@@ -466,10 +466,40 @@ th.sticky-header {
     text-decoration: none;
 }
 
+/* prevent weird browser y-scrollbar */
+#op-metadata-selector {
+    overflow-y: hidden;
+}
+
+/* make modal width shrink smoothly with screen */
+#op-metadata-selector .modal-dialog {
+    max-width: 1100px;
+}
+
+/* Make both "Save Changes" and "Discard Changes" stay in one line */
+#op-metadata-selector .right-container {
+    display: flex;
+}
+
+/* Make white space (padding) in metadata selector menu responsive */
+#op-metadata-selector .searchMenu {
+    padding-right: 7%;
+}
+
+/* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column, .op-selected-metadata-column {
-    /* height: 450px; */
+    padding-left: 1.5%;
+    padding-right: 1.5%;
+    max-height: 50vh;
     overflow: scroll;
     overflow-x: auto;
+}
+
+/* this will make sure modal footer not be covered when screen is short */
+@media (max-height: 500px) {
+    .op-all-metadata-column, .op-selected-metadata-column {
+        max-height: calc(50vh - 50px);
+    }
 }
 
 .op-all-metadata-column ul li {
@@ -558,39 +588,6 @@ img.preview {
         max-width: 600px !important;
         max-height: 600px !important;
     }
-}
-
-#op-metadata-selector {
-    /* prevent weird browser y-scrollbar */
-    overflow-y: hidden;
-
-}
-
-#op-metadata-selector .modal-dialog {
-    /* make modal width shrink smoothly with screen */
-    max-width: 1100px;
-    /* height: auto; */
-    /* max-height: calc(100vh - 120px); */
-}
-
-#op-metadata-selector .modal-body {
-    /* height: auto; */
-    /* max-height: 100%; */
-}
-/* Make both "Save Changes" and "Discard Changes" stay in one line */
-#op-metadata-selector .right-container {
-    display: flex;
-}
-
-/* Make white space (padding) in metadata selector menu responsive */
-#op-metadata-selector .searchMenu {
-    padding-right: 7%;
-}
-
-/* Make white space (padding) in metadata selector responsive */
-.op-all-metadata-column, .op-selected-metadata-column {
-    padding-left: 1.5%;
-    padding-right: 1.5%;
 }
 
 #galleryView {
