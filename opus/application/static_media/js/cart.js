@@ -10,7 +10,10 @@
 var o_cart = {
 /* jshint varstmt: true */
     // cart
-    cartChange: true, // cart has changed since last load of cart_tab
+    reloadObservationData: true, // start over by reloading all data
+    observationData: {},  // holds observation column data
+    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
+    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     lastRequestNo: 0,
     downloadInProcess: false,
     totalObsCount : undefined,
@@ -183,7 +186,7 @@ var o_cart = {
     activateCartTab: function() {
         let view = opus.prefs.view;
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
-        if (o_cart.cartChange) {
+        if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
@@ -221,7 +224,8 @@ var o_cart = {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
             $("#op-cart-count").html("0");
-            o_cart.cartChange = true;
+            o_cart.reloadObservationData = true;
+            o_cart.observationData = {};
             $("#cart .navbar").hide();
             $("#cart .sort-order-container").hide();
             if (!returnToSearch) {
@@ -307,7 +311,15 @@ var o_cart = {
         // This is used when we want to do a lot of cart operations in a row and only update
         // at the end
         let view = opus.prefs.view;
-        o_cart.cartChange = true;
+        o_cart.reloadObservationData = true;
+        // Note we intentionally don't set o_cart.observationData = {} here.
+        // This is because we allow users to add/remove while on the cart page
+        // without updating the window. If we erased the cached data, then
+        // the user would be unable to click on an obs they had removed and
+        // see the metadata dialog. The penalty we pay for this is there will
+        // be old cruft in the cache table that won't go away easily until there's
+        // a hard flush like a page reload. Yes, manageObservationCache will try,
+        // but if the browser has been resized it may not get it all.
 
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
