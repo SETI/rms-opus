@@ -552,13 +552,7 @@ var o_browse = {
     },
 
     renderSortedDataFromBeginning: function() {
-        opus.prefs.startobs = 1; // reset startobs to 1 when col ordering changes
-        opus.prefs.cart_startobs = 1;
-
-        o_cart.reloadObservationData = true;  // forces redraw of cart tab
-        o_cart.observationData = {};
-        o_browse.reloadObservationData = true;  // forces redraw of browse tab
-        o_browse.observationData = {};
+        o_browse.clearObservationData();
         o_browse.loadData(opus.prefs.view);
     },
 
@@ -921,7 +915,8 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 let tab = opus.getViewTab();
-                o_browse.resetData();
+                o_browse.clearObservationData();
+                o_hash.updateHash(); // This makes the changes visible to the user
                 o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData(opus.prefs.view);
             } else {
@@ -1544,7 +1539,7 @@ var o_browse = {
 
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
 
-        if (viewNamespace.reloadObservationData) {
+        if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
             let elem = $(`${tab} [data-obs="${startObs}"]`);
             let lastObs = $(`${tab} [data-obs]`).last().data("obs");
@@ -1661,15 +1656,10 @@ var o_browse = {
         o_browse.loadData(opus.prefs.view, startObs);
     },
 
-<<<<<<< HEAD
-    countGalleryImages: function(view) {
-        let viewNamespace = opus.getViewNamespace(view);
-=======
     countTableRows: function(view) {
         let tab = opus.getViewTab(view);
         let height = o_browse.calculateGalleryHeight(view);
         let trCount = 1;
->>>>>>> new_ui
 
         if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
             trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
@@ -1680,6 +1670,7 @@ var o_browse = {
 
     countGalleryImages: function(view) {
         let tab = opus.getViewTab(view);
+        let viewNamespace = opus.getViewNamespace(view);
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
 
@@ -1882,14 +1873,12 @@ var o_browse = {
         o_browse.metadataboxHtml(opusId);
     },
 
-
-    resetData: function() {
-        $(".op-data-table > tbody").empty();  // yes all namespaces
-        $(".gallery").empty();
+    clearObservationData: function() {
+        opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
+        opus.prefs.cart_startobs = 1;
         o_cart.reloadObservationData = true;  // forces redraw of cart tab
         o_cart.observationData = {};
         o_browse.reloadObservationData = true;  // forces redraw of browse tab
         o_browse.observationData = {};
-        o_hash.updateHash();
     },
 };

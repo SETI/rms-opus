@@ -183,7 +183,7 @@ var opus = {
             } else {
                 // Otherwise, this was just a user change to one of the search criteria inside
                 // the UI, so erase the previous data and reload the results.
-                o_browse.resetData();
+                o_browse.clearObservationData();
             }
         }
 
@@ -422,7 +422,7 @@ var opus = {
         // Reset the search query and return to the Search tab
         opus.selections = {};
         opus.extras = {};
-        o_browse.resetData();
+        o_browse.clearObservationData();
         opus.changeTab('search');
 
         // Enable or disable the 'Reset Search' and 'Reset Search and Metadata' buttons
