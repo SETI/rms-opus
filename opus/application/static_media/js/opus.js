@@ -72,7 +72,6 @@ var opus = {
     extras: {},            // extras to the query: qtypes
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
-    resultCount: 0,
 
     allInputsValid: true,
 
@@ -287,9 +286,9 @@ var opus = {
          * badge(s).
          */
 
-        opus.resultCount = resultCount;
+        o_browse.totalObsCount = resultCount;
         $("#op-result-count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.resultCount)).fadeIn("fast");
+            $(this).html(o_utils.addCommas(o_browse.totalObsCount )).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },

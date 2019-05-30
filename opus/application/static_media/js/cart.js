@@ -13,7 +13,7 @@ var o_cart = {
     cartChange: true, // cart has changed since last load of cart_tab
     lastRequestNo: 0,
     downloadInProcess: false,
-    cartCount: 0,
+    totalObsCount : undefined,
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
@@ -158,8 +158,8 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        o_cart.cartCount = status.count;
-        $("#op-cart-count").html(o_cart.cartCount);
+        o_cart.totalObsCount  = status.count;
+        $("#op-cart-count").html(o_cart.totalObsCount );
         if (status.total_download_size_pretty !== undefined) {
             $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
         }
@@ -202,7 +202,7 @@ var o_cart = {
 
                     let startObsLabel = o_browse.getStartObsLabel();
                     let startObs = opus.prefs[startObsLabel];
-                    startObs = (startObs > o_cart.cartCount ? 1 : startObs);
+                    startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
                     o_browse.loadData(view, startObs);
 
                     if (zippedFiles_html) {

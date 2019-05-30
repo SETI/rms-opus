@@ -37,6 +37,7 @@ var o_browse = {
 
     galleryBegun: false, // have we started the gallery view
     galleryData: {},  // holds gallery column data
+    totalObsCount : undefined,
     imageSize: 100,     // default
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
@@ -138,7 +139,7 @@ var o_browse = {
             if (selectionsHashStr !== "") {
                 selectionsHashStr += "&";
             }
-            let resultCountStr = opus.resultCount.toString();
+            let resultCountStr = o_browse.totalObsCount.toString();
             let orderStr = opus.prefs.order.join(",");
             let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
             $(this).attr("href", csvLink);
@@ -572,9 +573,10 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
+        let viewNamespace = opus.getViewNamespace();
         o_browse.metadataDetailOpusId = opusId;
 
-        let maxObs = (opus.prefs.view === "cart" ? o_cart.cartCount : opus.resultCount);
+        let maxObs = viewNamespace.totalObsCount;
         let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
         let obsNum = $(element).data("obs");
 
@@ -673,8 +675,8 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
 
         if ($(selector).length > 0) {
-            let namespace = opus.getViewNamespace();
-            let galleryBoundingRect = namespace.galleryBoundingRect;
+            let viewNamespace = opus.getViewNamespace();
+            let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
             // this will get the top left obsNum for gallery view or the top obsNum for table view
             let firstCachedObs = $(selector).first().data("obs");
@@ -713,7 +715,7 @@ var o_browse = {
                 }
             }
 
-            let dataResultCount = tab === "#browse" ? opus.resultCount : o_cart.cartCount;
+            let dataResultCount = viewNamespace.totalObsCount;
             let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                 galleryBoundingRect.x + 1);
             let maxSliderVal = firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.y - 1);
@@ -733,7 +735,7 @@ var o_browse = {
 
                 $("#op-observation-number").html(o_utils.addCommas(obsNum));
                 $(".op-slider-pointer").css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
-                // $(".op-slider-pointer").css("width", `${opus.resultCount.toString().length*0.7}em`);
+
                 // just make the step size the number of the obserations across the page...
                 // if the observations have not yet been rendered, leave the default, it will get changed later
                 if (galleryBoundingRect.x > 0) {
@@ -1139,6 +1141,7 @@ var o_browse = {
         // render the gallery and table at the same time.
         let tab = opus.getViewTab(view);
         let contentsView = o_browse.getScrollContainerClass(view);
+        let viewNamespace = opus.getViewNamespace(view);
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollData = $(selector).data("infiniteScroll");
 
@@ -1170,8 +1173,8 @@ var o_browse = {
                 }
                 $(".gallery", tab).html(galleryHtml);
             } else {
-                if (data.start_obs > data.result_count) {
-                    // handle a corner case where a user has changed the startobs to be greater than result_count
+                if (data.start_obs > data.total_obs_count) {
+                    // handle a corner case where a user has changed the startobs to be greater than total_obs_count
                     // just reset back to 1 and get a new page
                     opus.prefs[o_browse.getStartObsLabel()] = 1;
                     o_hash.updateHash();
@@ -1190,7 +1193,7 @@ var o_browse = {
             $(`${tab} .navbar`).show();
             $(`${tab} .sort-order-container`).show();
 
-            opus.resultCount = data.result_count;
+            viewNamespace.totalObsCount = data.total_obs_count;
 
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
@@ -1374,7 +1377,7 @@ var o_browse = {
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
         if (limitNum === 0 || isNaN(limitNum)) {
-            console.log(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
+            opus.logError(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
         }
         url += `&limit=${limitNum}`;
 
@@ -1453,7 +1456,8 @@ var o_browse = {
     initInfiniteScroll: function(view, selector) {
         let tab = `#${view}`;
         let startObsLabel = o_browse.getStartObsLabel(view);
-        opus.getViewNamespace(view).galleryBoundingRect = o_browse.countGalleryImages(view);
+        let viewNamespace = opus.getViewNamespace(view);
+        viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1500,8 +1504,12 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
-                    let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
-                    return path;
+                    // if totalObsCount is not yet defined, we still need to init the infinite scroll...
+                    if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
+                        let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
+                        return path;
+                    }
+                    // returning no value indicates end of infinite scroll...
                 },
                 responseType: "text",
                 status: `${tab} .page-load-status`,
@@ -1519,6 +1527,7 @@ var o_browse = {
             $(selector).on("request.infiniteScroll", function(event, path) {
                 // Remove spinner when infiniteScroll reaches to both ends
                 let contentsView = o_browse.getScrollContainerClass(view);
+                let viewNamespace = opus.getViewNamespace(view);
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
                 let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
                 let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
@@ -1528,8 +1537,7 @@ var o_browse = {
                         $(".infinite-scroll-request").hide();
                     }
                 } else {
-                    if ((tab === "#browse" && lastObs === opus.resultCount) ||
-                        (tab === "#cart" && lastObs === o_cart.cartCount)) {
+                    if (lastObs === viewNamespace.totalObsCount) {
                         $(".infinite-scroll-request").hide();
                     }
                 }
