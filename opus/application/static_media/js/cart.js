@@ -20,11 +20,13 @@ var o_cart = {
     galleryBoundingRect: {'x': 0, 'y': 0},
 
     tableScrollbar: new PerfectScrollbar("#cart .op-data-table-view", {
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#cart .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
         minScrollbarLength: opus.minimumPSLength
@@ -185,7 +187,7 @@ var o_cart = {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
 
             // don't forget to remove existing stuff before append
-            $("#cart .op-data-table > tbody").empty();  // yes all namespaces
+            $("#cart .op-data-table > tbody").empty();
             $("#cart .gallery").empty();
 
             // redux: and nix this big thing:

@@ -93,9 +93,6 @@ class ToInfoMap:
             if slug_search_value:
                 slug_to_search_label[slug_name] = slug_search_value
             if slug_column_value:
-                category: str = slug_info.get('category', None)
-                if category and category.endswith(' Constraints'):
-                    slug_column_value = f'{slug_column_value} [{category[:-12]}]'
                 slug_to_column_label[slug_name] = slug_column_value
         self._slug_to_search_label = slug_to_search_label
         self._slug_to_column_label = slug_to_column_label
