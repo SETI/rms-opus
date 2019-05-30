@@ -509,12 +509,12 @@ var o_browse = {
                     // the || is for cross-browser support; firefox does not support keyCode
                     switch (e.which || e.keyCode) {
                         case 39:  // next
-                            opusId = $("#galleryView").find(".next").data("id");
-                            o_browse.loadNextPageIfNeeded(opusId);
+                            opusId = $("#galleryView").find(".op-next").data("id");
+                            o_browse.loadPageIfNeeded("next", opusId);
                             break;
                         case 37:  // prev
-                            opusId = $("#galleryView").find(".prev").data("id");
-                            o_browse.loadPrevPageIfNeeded(opusId);
+                            opusId = $("#galleryView").find(".op-prev").data("id");
+                            o_browse.loadPageIfNeeded("prev", opusId);
                             break;
                     }
                     if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
