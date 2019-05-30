@@ -17,9 +17,8 @@ const infiniteScrollUpThreshold = 100;
 /* jshint varstmt: false */
 var o_browse = {
 /* jshint varstmt: true */
-    selectedImageID: "",
-
     metadataSelectorDrawn: false,
+    metadataDetailOpusId: "",
 
     tableScrollbar: new PerfectScrollbar("#browse .op-data-table-view", {
         minScrollbarLength: opus.galleryAndTablePSLength,
@@ -43,7 +42,6 @@ var o_browse = {
     galleryBoundingRect: {'x': 0, 'y': 0},
     gallerySliderStep: 10,
 
-    metadataDetailOpusId: "",
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
@@ -237,27 +235,38 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery, .op-data-table').on("click", ".op-tools a", function(e) {
-          //snipe the id off of the image..
-          let opusId = $(this).parent().data("id");
+            //snipe the id off of the image..
+            let opusId = $(this).parent().data("id");
 
-          switch ($(this).data("icon")) {
-              case "info":  // detail page
-                  o_browse.hideMenu();
-                  o_browse.showDetail(e, opusId);
-                  break;
+            switch ($(this).data("icon")) {
+                case "info":  // detail page
+                    o_browse.hideMenu();
+                    o_browse.showDetail(e, opusId);
+                    break;
 
-              case "cart":   // add to cart
-                  o_browse.hideMenu();
-                  // clicking on the cart/trash can aborts range select
-                  o_browse.undoRangeSelect();
+                case "cart":   // add to cart
+                    o_browse.hideMenu();
 
-                  let action = o_cart.toggleInCart(opusId);
-                  o_browse.updateCartIcon(opusId, action);
-                  break;
+                    if (e.shiftKey) {
+                        let startElem = $(e.delegateTarget).find(".selected");
+                        if (startElem.length == 0) {
+                            o_browse.startRangeSelect(opusId);
+                        } else {
+                            let fromOpusId = $(startElem).data("id");
+                            o_cart.toggleInCart(fromOpusId, opusId);
+                        }
+                    } else {
+                        // clicking on the cart/trash can aborts range select
+                        o_browse.undoRangeSelect();
 
-              case "menu":  // expand, same as click on image
-                  o_browse.showMenu(e, opusId);
-                  break;
+                        let action = o_cart.toggleInCart(opusId);
+                        o_browse.updateCartIcon(opusId, action);
+                    }
+                    break;
+
+                case "menu":  // expand, same as click on image
+                    o_browse.showMenu(e, opusId);
+                    break;
             }
             return false;
         }); // end click a browse tools icon
@@ -483,26 +492,34 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                /*  Catch the right/left arrow while in the modal
+                /*  Catch the right/left arrow and spacebar while in the modal
                     Up: 38
                     Down: 40
                     Right: 39
-                    Left: 37 */
-                let opusId;
+                    Left: 37
+                    Space: 32 */
 
-                // the || is for cross-browser support; firefox does not support keyCode
-                switch (e.which || e.keyCode) {
-                    case 39:  // next
-                        opusId = $("#galleryView").find(".op-next").data("id");
-                        o_browse.loadPageIfNeeded("next", opusId);
-                        break;
-                    case 37:  // prev
-                        opusId = $("#galleryView").find(".op-prev").data("id");
-                        o_browse.loadPageIfNeeded("prev", opusId);
-                        break;
-                }
-                if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(opusId);
+                if ((e.which || e.keyCode) === 32) {
+                    if (o_browse.metadataDetailOpusId !== "") {
+                        o_browse.undoRangeSelect();
+                        o_cart.toggleInCart(o_browse.metadataDetailOpusId);
+                    }
+                } else {
+                    let opusId;
+                    // the || is for cross-browser support; firefox does not support keyCode
+                    switch (e.which || e.keyCode) {
+                        case 39:  // next
+                            opusId = $("#galleryView").find(".next").data("id");
+                            o_browse.loadNextPageIfNeeded(opusId);
+                            break;
+                        case 37:  // prev
+                            opusId = $("#galleryView").find(".prev").data("id");
+                            o_browse.loadPrevPageIfNeeded(opusId);
+                            break;
+                    }
+                    if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                        o_browse.updateGalleryView(opusId);
+                    }
                 }
             }
             // don't return false here or it will snatch all the user input!
