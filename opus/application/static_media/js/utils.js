@@ -29,6 +29,39 @@ var o_utils = {
           return num.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
     },
 
+    // account for FP non-integer inprecision math in javascript
+    floor: function(num) {
+        return Math.floor(num + 0.0000001);
+    },
 
+    ceil: function(num) {
+        return Math.ceil(num + 0.0000001);
+    },
 
+};
+
+/**
+ * returns true if an element is visible
+ */
+$.fn.isOnScreen = function(scope) {
+    if (!this || !scope) {
+        return;
+    }
+    let target = $(this);
+    if (target.is(':visible') === false) {
+        return false;
+    }
+    scope = $(scope);
+    let top = scope.offset().top;
+    let bottom = top + scope.height();
+    let elementHeight = target.outerHeight();
+    let offset = elementHeight * .50;   // allow 50% of the observation to be half visible
+    let elementTop = target.offset().top;
+    let elementBottom = elementTop + elementHeight;
+    // hack to take care of table header height
+    if (this.is("tr")) {
+        top += $("th").outerHeight();
+    }
+
+    return (elementTop + offset <= bottom) && (elementTop >= top);
 };
