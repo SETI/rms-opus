@@ -55,9 +55,13 @@ $.fn.isOnScreen = function(scope) {
     let top = scope.offset().top;
     let bottom = top + scope.height();
     let elementHeight = target.outerHeight();
-    let offset = elementHeight * .50;   // allow 50% of the observation to be half visable
+    let offset = elementHeight * .50;   // allow 50% of the observation to be half visible
     let elementTop = target.offset().top;
     let elementBottom = elementTop + elementHeight;
+    // hack to take care of table header height
+    if (this.is("tr")) {
+        top += $("th").outerHeight();
+    }
 
     return (elementTop + offset <= bottom) && (elementTop >= top);
 };

@@ -13,8 +13,6 @@ const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
 const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
-// Fixed scrollbar length for gallery & table view
-const galleryAndTablePSLength = 100;
 
 /* jshint varstmt: false */
 var o_browse = {
@@ -24,13 +22,13 @@ var o_browse = {
     metadataSelectorDrawn: false,
 
     tableScrollbar: new PerfectScrollbar("#browse .op-data-table-view", {
-        minScrollbarLength: galleryAndTablePSLength,
-        maxScrollbarLength: galleryAndTablePSLength,
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#browse .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: galleryAndTablePSLength,
-        maxScrollbarLength: galleryAndTablePSLength,
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
@@ -105,6 +103,10 @@ var o_browse = {
             o_browse.hideMenu();
             let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
+            if (!o_browse.isGalleryView()) {
+                // update this when we switch to table view
+                o_browse.countTableRows();
+            }
 
             o_hash.updateHash();
             o_browse.updateBrowseNav();
@@ -275,6 +277,12 @@ var o_browse = {
                 o_browse.hideMenu();
             }
         });
+
+        // Disable draggable for these infomation modals
+        // If draggable is enabled, once modal is dragged, it will not stay in the center.
+        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-guide"]) {
+            $(`${id} .modal-dialog`).draggable("disable");
+        }
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
@@ -469,7 +477,7 @@ var o_browse = {
             o_browse.hideMenu();
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
-                o_browse.hideGalleyViewModal();
+                o_browse.hideGalleryViewModal();
                 $("#op-metadata-selector").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
@@ -579,7 +587,11 @@ var o_browse = {
                 // if the binoculars have scrolled up, then reset the screen to the top;
                 // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
                 if (obsNum > startObs) {    // the binoculars have scrolled off bottom
-                    obsNum -= Math.max(galleryBoundingRect.x * (galleryBoundingRect.y - 1), 1);
+                    if (o_browse.isGalleryView()) {
+                        obsNum = Math.max(obsNum - (galleryBoundingRect.x * (galleryBoundingRect.y - 1)), 1);
+                    } else {
+                        obsNum = Math.max(obsNum - galleryBoundingRect.tr + 1, 1);
+                    }
                 }
                 o_browse.onUpdateSlider(obsNum);
             }
@@ -655,7 +667,6 @@ var o_browse = {
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .thumbnail-container` :
                         `${tab} .op-data-table tbody tr`);
-        let topBoxBoundary;
         let startObsLabel = o_browse.getStartObsLabel();
 
         if ($(selector).length > 0) {
@@ -671,7 +682,7 @@ var o_browse = {
 
             // For table view, we will set the topBoxBoundary to be the bottom of thead
             // (account for height of thead)
-            topBoxBoundary = (topBoxBoundary || o_browse.isGalleryView() ?
+            let topBoxBoundary = (o_browse.isGalleryView() ?
                               $(`${tab} .gallery-contents`).offset().top :
                               $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight());
 
@@ -765,7 +776,7 @@ var o_browse = {
 
     },
 
-    hideGalleyViewModal: function() {
+    hideGalleryViewModal: function() {
         $("#galleryView").modal("hide");
         o_browse.metadataDetailOpusId = "";
     },
@@ -858,7 +869,7 @@ var o_browse = {
     },
 
     openDetailTab: function() {
-        o_browse.hideGalleyViewModal();
+        o_browse.hideGalleryViewModal();
         opus.changeTab("detail");
     },
 
@@ -1583,7 +1594,7 @@ var o_browse = {
                 delete viewNamespace.observationData[delOpusId];
             });
             $(`${tab} .thumbnail-container`).remove();
-            o_browse.hideGalleyViewModal();
+            o_browse.hideGalleryViewModal();
 
             o_browse.renderGalleryAndTable(data, this.url, view);
 
@@ -1615,7 +1626,7 @@ var o_browse = {
             prev = (prev.data("id") ? prev.data("id") : "");
 
             $("#galleryViewContents .op-prev").data("id", prev);
-            $("#galleryViewContents .op-prev").removeClass("op-button-disabled");
+            $("#galleryViewContents .op-prev").toggleClass("op-button-disabled", (prev === ""));
         }
 
         // Update to make next button appear when prefetching next page is done
@@ -1626,7 +1637,7 @@ var o_browse = {
             next = (next.data("id") ? next.data("id") : "");
 
             $("#galleryViewContents .op-next").data("id", next);
-            $("#galleryViewContents .op-next").removeClass("op-button-disabled");
+            $("#galleryViewContents .op-next").toggleClass("op-button-disabled", (next === ""));
         }
 
         // if left/right arrow are disabled, make them clickable again
@@ -1650,11 +1661,32 @@ var o_browse = {
         o_browse.loadData(opus.prefs.view, startObs);
     },
 
+<<<<<<< HEAD
     countGalleryImages: function(view) {
         let viewNamespace = opus.getViewNamespace(view);
+=======
+    countTableRows: function(view) {
+        let tab = opus.getViewTab(view);
+        let height = o_browse.calculateGalleryHeight(view);
+        let trCount = 1;
+>>>>>>> new_ui
 
+        if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
+            trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+        }
+        opus.getViewNamespace(view).galleryBoundingRect.tr = trCount;
+        return trCount;
+    },
+
+    countGalleryImages: function(view) {
+        let tab = opus.getViewTab(view);
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
+
+        let trCount = 1;
+        if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
+            trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+        }
 
         let xCount = o_utils.floor(width/o_browse.imageSize);
         let yCount = Math.round(height/o_browse.imageSize);
@@ -1665,7 +1697,7 @@ var o_browse = {
         // rounding because the factor value can be a FP number.
         viewNamespace.maxCachedObservations = Math.round(xCount * yCount * viewNamespace.cachedObservationFactor);
 
-        return {"x": xCount, "y": yCount};
+        return {"x": xCount, "y": yCount, "tr": trCount};
     },
 
 

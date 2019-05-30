@@ -305,6 +305,8 @@
             target="op-reset-search-modal"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-reset-search-metadata-modal"
@@ -313,6 +315,8 @@
             target="op-reset-search-metadata-modal"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
@@ -321,6 +325,8 @@
             target="op-empty-cart"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-cart-status-error-msg"
@@ -328,6 +334,8 @@
             confirm_msg=""
             target="op-cart-status-error-msg"
             yes_text="OK"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-update-url"
@@ -336,6 +344,31 @@
             target="op-update-url"
             yes_text="Keep Message"
             no_text="Discard Message"
+            allow_close=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-browser-version-msg"
+            confirm_title="Message About Your Browser Version"
+            confirm_msg=""
+            target="op-browser-version-msg"
+            allow_close=False
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-browser-size-msg"
+            confirm_title="Message About Your Browser Size"
+            confirm_msg=""
+            target="op-browser-size-msg"
+            allow_close=False
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-guide"
+            confirm_title="Welcome to OPUS3"
+            confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
+            target="op-guide"
+            yes_text="OK"
+            allow_close=True
+            close_by_keyboard="esc"
         %}
 
         {% endblock %}
