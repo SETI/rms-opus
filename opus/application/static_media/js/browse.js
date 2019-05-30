@@ -280,7 +280,7 @@ var o_browse = {
 
         // Disable draggable for these infomation modals
         // If draggable is enabled, once modal is dragged, it will not stay in the center.
-        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-guide"]) {
+        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-new-user-msg"]) {
             $(`${id} .modal-dialog`).draggable("disable");
         }
 

@@ -841,8 +841,16 @@ var opus = {
          */
         if ($.cookie("visited") === undefined) {
             // set the cookie for the first time user
-            $.cookie("visited", true);
-            $("#op-guide").modal("show");
+            //$.cookie("visited", true);
+            let url = "/opus/__help/splash.html";
+            $.ajax({
+                url: url,
+                dataType: "html",
+                success: function(page) {
+                    $("#op-new-user-msg .modal-body").html(page);
+                    $("#op-new-user-msg").modal("show");
+                }
+            });
         }
     }
 }; // end opus namespace
