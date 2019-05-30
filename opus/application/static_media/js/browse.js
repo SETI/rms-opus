@@ -1627,7 +1627,7 @@ var o_browse = {
             prev = (prev.data("id") ? prev.data("id") : "");
 
             $("#galleryViewContents .op-prev").data("id", prev);
-            $("#galleryViewContents .op-prev").removeClass("op-button-disabled");
+            $("#galleryViewContents .op-prev").toggleClass("op-button-disabled", (prev === ""));
         }
 
         // Update to make next button appear when prefetching next page is done
@@ -1636,7 +1636,7 @@ var o_browse = {
             next = (next.data("id") ? next.data("id") : "");
 
             $("#galleryViewContents .op-next").data("id", next);
-            $("#galleryViewContents .op-next").removeClass("op-button-disabled");
+            $("#galleryViewContents .op-next").toggleClass("op-button-disabled", (next === ""));
         }
 
         // if left/right arrow are disabled, make them clickable again
