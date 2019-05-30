@@ -467,7 +467,7 @@ th.sticky-header {
 }
 
 .op-all-metadata-column, .op-selected-metadata-column {
-    height: 450px;
+    /* height: 450px; */
     overflow: scroll;
     overflow-x: auto;
 }
@@ -570,7 +570,27 @@ img.preview {
     /* make modal width shrink smoothly with screen */
     max-width: 1100px;
     /* height: auto; */
+    /* max-height: calc(100vh - 120px); */
+}
+
+#op-metadata-selector .modal-body {
+    /* height: auto; */
     /* max-height: 100%; */
+}
+/* Make both "Save Changes" and "Discard Changes" stay in one line */
+#op-metadata-selector .right-container {
+    display: flex;
+}
+
+/* Make white space (padding) in metadata selector menu responsive */
+#op-metadata-selector .searchMenu {
+    padding-right: 7%;
+}
+
+/* Make white space (padding) in metadata selector responsive */
+.op-all-metadata-column, .op-selected-metadata-column {
+    padding-left: 1.5%;
+    padding-right: 1.5%;
 }
 
 #galleryView {
