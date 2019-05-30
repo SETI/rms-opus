@@ -544,6 +544,8 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
+        let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
+        let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
 
         $(window).on("resize", function() {
             adjustSearchHeightDB();
@@ -552,6 +554,8 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
+            adjustMetadataSelectorMenuPS();
+            adjustSelectedMetadataPS();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
