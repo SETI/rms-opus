@@ -161,7 +161,6 @@ var o_browse = {
             o_browse.hideMenu();
 
             let opusId = $(this).parent().data("id");
-            let startElem = $(e.delegateTarget).find(".selected");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -170,13 +169,7 @@ var o_browse = {
             }
             // Detecting shift key
             else if (e.shiftKey) {
-                if (startElem.length == 0) {
-                    o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
-                } else {
-                    let fromOpusId = $(startElem).data("id");
-                    o_cart.toggleInCart(fromOpusId, opusId);
-                }
+                o_browse.cartShiftKeyHandler(e, opusId);
             } else {
                 o_browse.showMetadataDetailModal(opusId);
             }
@@ -253,13 +246,7 @@ var o_browse = {
                     o_browse.hideMenu();
 
                     if (e.shiftKey) {
-                        let startElem = $(e.delegateTarget).find(".selected");
-                        if (startElem.length == 0) {
-                            o_browse.startRangeSelect(opusId);
-                        } else {
-                            let fromOpusId = $(startElem).data("id");
-                            o_cart.toggleInCart(fromOpusId, opusId);
-                        }
+                        o_browse.cartShiftKeyHandler(e, opusId);
                     } else {
                         // clicking on the cart/trash can aborts range select
                         o_browse.undoRangeSelect();
@@ -504,32 +491,41 @@ var o_browse = {
                     Left: 37
                     Space: 32 */
 
-                if ((e.which || e.keyCode) === 32) {
-                    if (o_browse.metadataDetailOpusId !== "") {
-                        o_browse.undoRangeSelect();
-                        o_cart.toggleInCart(o_browse.metadataDetailOpusId);
-                    }
-                } else {
-                    let opusId;
-                    // the || is for cross-browser support; firefox does not support keyCode
-                    switch (e.which || e.keyCode) {
-                        case 39:  // next
-                            opusId = $("#galleryView").find(".op-next").data("id");
-                            o_browse.loadPageIfNeeded("next", opusId);
-                            break;
-                        case 37:  // prev
-                            opusId = $("#galleryView").find(".op-prev").data("id");
-                            o_browse.loadPageIfNeeded("prev", opusId);
-                            break;
-                    }
-                    if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                        o_browse.updateGalleryView(opusId);
-                    }
+                let detailOpusId;
+                // the || is for cross-browser support; firefox does not support keyCode
+                switch (e.which || e.keyCode) {
+                    case 32:  // spacebar
+                        if (o_browse.metadataDetailOpusId !== "") {
+                            o_browse.undoRangeSelect();
+                            o_cart.toggleInCart(o_browse.metadataDetailOpusId);
+                        }
+                        break;
+                    case 39:  // next
+                        detailOpusId = $("#galleryView").find(".op-next").data("id");
+                        o_browse.loadPageIfNeeded("next", detailOpusId);
+                        break;
+                    case 37:  // prev
+                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
+                        o_browse.loadPageIfNeeded("prev", detailOpusId);
+                        break;
+                }
+                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                    o_browse.updateGalleryView(detailOpusId);
                 }
             }
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    cartShiftKeyHandler: function(e, opusId) {
+        let startElem = $(e.delegateTarget).find(".selected");
+        if (startElem.length == 0) {
+            o_browse.startRangeSelect(opusId);
+        } else {
+            let fromOpusId = $(startElem).data("id");
+            o_cart.toggleInCart(fromOpusId, opusId);
+        }
+    },
 
     // update order arrows right away when user clicks on sorting arrows in pill or table header
     // sync up arrows in both sorting pill and table header
@@ -1840,7 +1836,7 @@ var o_browse = {
         let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
-            $(modalCartSelector).prop("title", buttonInfo.title);
+            $(modalCartSelector).prop("title", `${buttonInfo.title} (spacebar)`);
         }
     },
 
@@ -1880,7 +1876,7 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
