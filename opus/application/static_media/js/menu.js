@@ -63,8 +63,8 @@ var o_menu = {
      },
 
      getNewSearchMenu: function() {
-        $('.op-menu-text.spinner').addClass("op-show-spinner");
-
+        let spinnerTimer = setTimeout(function() {
+             $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
@@ -85,6 +85,7 @@ var o_menu = {
             o_menu.markCurrentMenuItems();
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
+            clearTimeout(spinnerTimer);
         });
      },
 
