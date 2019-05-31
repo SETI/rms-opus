@@ -39,7 +39,7 @@ var opus = {
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
     mainTimerInterval: 1000,
-
+    spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
