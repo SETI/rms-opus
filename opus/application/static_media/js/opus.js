@@ -559,6 +559,7 @@ var opus = {
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
         let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
         let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         $(window).on("resize", function() {
             adjustSearchHeightDB();
@@ -569,6 +570,7 @@ var opus = {
             adjustHelpPanelHeightDB();
             adjustMetadataSelectorMenuPS();
             adjustSelectedMetadataPS();
+            adjustBrowseDialogPS();
             opus.checkBrowserSize();
         });
 

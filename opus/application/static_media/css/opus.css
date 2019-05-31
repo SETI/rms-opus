@@ -497,13 +497,6 @@ th.sticky-header {
     overflow-x: auto;
 }
 
-/* this will make sure modal footer not be covered when screen is short */
-@media (max-height: 500px) {
-    .op-all-metadata-column, .op-selected-metadata-column {
-        /* max-height: calc(75vh - 150px); */
-    }
-}
-
 .op-all-metadata-column ul li {
     padding-bottom: 3px;
 
@@ -593,26 +586,51 @@ th.sticky-header {
 
 /* make image preview in the modal strechable when screen is resized */
 img.preview {
+    /* make image responsive to horizontal shrinking */
     max-width: 100% !important;
-    max-height: 100% !important;
+    /* make image responsive to vertical shrinking */
+    max-height: 60vh !important;
 }
 
 /* make modal width shrink smoothly with screen */
 #galleryView .modal-dialog {
-    max-width: 1100px;
+    max-width: 92%;
 }
 
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
 #galleryView .op-obs-direction {
-    flex-grow: 2;
-}
-#galleryView .left, #galleryView .right {
-    /* max-height: 100%; */
-    min-height: 400px;
+    flex-grow: 3;
 }
 
+/* prevent modal from shirnking to a too small window when resizing horizontally */
+#galleryView .left, #galleryView .right {
+    min-height: calc(75vh - 150px);
+}
+
+#galleryViewContents .metadata {
+    overflow-y: auto;
+    /* Make #galleryView modal right contents shrink vertically
+    90% for the metadata info, 10% for the bottom icons */
+    height: 90%;
+    width: 100%;
+    /* make ps stick to the right of the modal when screen is resizing */
+    position: absolute;
+    right: 0;
+}
+
+@media (max-height: 300px) {
+    #galleryViewContents .metadata {
+        height: 85%;
+    }
+    #galleryView .bottom {
+        height: 15%;
+    }
+}
+
+/* prevent weird browser y-scrollbar */
 #galleryView {
+    overflow-y: hidden;
     pointer-events: none;
     z-index: 999;
 }
@@ -635,6 +653,13 @@ when window sized is narrow */
     bottom: 0;
     width: 100%;
     z-index: 1030;
+    /* All icons in metadata display will stay at the bottom */
+    align-items: flex-end;
+    /* align-item for Safari */
+    -webkit-align-items: end;
+    /* Right container in metadata display
+    90% for the metadata info, 10% for the bottom icons */
+    height: 10%;
 }
 
 #galleryView .op-obs-direction {
@@ -648,13 +673,6 @@ when window sized is narrow */
 #galleryViewContents {
     position: relative;
     /* height: 625px; */
-}
-
-#galleryViewContents .metadata {
-    overflow-y: auto;
-    max-height: 500px;
-    width: 440px;
-    position: fixed;
 }
 
 #galleryViewContents .left {

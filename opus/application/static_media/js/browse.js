@@ -771,6 +771,8 @@ var o_browse = {
     showMetadataDetailModal: function(opusId) {
         o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId);
+        // this is to make sure modal is at its original position when open again
+        $("#galleryView .modal-dialog").css({top: 0, left: 0});
         $("#galleryView").modal("show");
 
         // Do the fake API call to write in the Apache log files that
