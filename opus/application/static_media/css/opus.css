@@ -473,7 +473,8 @@ th.sticky-header {
 
 /* make modal width shrink smoothly with screen */
 #op-metadata-selector .modal-dialog {
-    max-width: 1100px;
+    /* max-width: 1100px; */
+    max-width: 92%;
 }
 
 /* Make both "Save Changes" and "Discard Changes" stay in one line */
@@ -491,7 +492,7 @@ th.sticky-header {
     padding-left: 1.5%;
     padding-right: 1.5%;
     /* make metadata selector modal height responsive */
-    max-height: 50vh;
+    max-height: calc(75vh - 150px);
     overflow: scroll;
     overflow-x: auto;
 }
@@ -499,7 +500,7 @@ th.sticky-header {
 /* this will make sure modal footer not be covered when screen is short */
 @media (max-height: 500px) {
     .op-all-metadata-column, .op-selected-metadata-column {
-        max-height: calc(50vh - 50px);
+        /* max-height: calc(75vh - 150px); */
     }
 }
 
