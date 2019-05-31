@@ -607,7 +607,7 @@ var opus = {
                     url += "tutorial.html";
                     header = "A Brief Tutorial";
                     break;
-                case "gettingstarted":
+                case "gettingStarted":
                     url += "gettingstarted.html";
                     header = "Getting Started";
                     break;
