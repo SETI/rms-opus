@@ -44,10 +44,9 @@ var o_browse = {
     gallerySliderStep: 10,
     imageSize: 100,     // default
 
-    selectedImageID: "",
+    metadataDetailOpusId: "",
     metadataSelectorDrawn: false,
 
-    metadataDetailOpusId: "",
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
@@ -162,7 +161,6 @@ var o_browse = {
             o_browse.hideMenu();
 
             let opusId = $(this).parent().data("id");
-            let startElem = $(e.delegateTarget).find(".selected");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -171,13 +169,7 @@ var o_browse = {
             }
             // Detecting shift key
             else if (e.shiftKey) {
-                if (startElem.length == 0) {
-                    o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
-                } else {
-                    let fromOpusId = $(startElem).data("id");
-                    o_cart.toggleInCart(fromOpusId, opusId);
-                }
+                o_browse.cartShiftKeyHandler(e, opusId);
             } else {
                 o_browse.showMetadataDetailModal(opusId);
             }
@@ -241,27 +233,32 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery, .op-data-table').on("click", ".op-tools a", function(e) {
-          //snipe the id off of the image..
-          let opusId = $(this).parent().data("id");
+            //snipe the id off of the image..
+            let opusId = $(this).parent().data("id");
 
-          switch ($(this).data("icon")) {
-              case "info":  // detail page
-                  o_browse.hideMenu();
-                  o_browse.showDetail(e, opusId);
-                  break;
+            switch ($(this).data("icon")) {
+                case "info":  // detail page
+                    o_browse.hideMenu();
+                    o_browse.showDetail(e, opusId);
+                    break;
 
-              case "cart":   // add to cart
-                  o_browse.hideMenu();
-                  // clicking on the cart/trash can aborts range select
-                  o_browse.undoRangeSelect();
+                case "cart":   // add to cart
+                    o_browse.hideMenu();
 
-                  let action = o_cart.toggleInCart(opusId);
-                  o_browse.updateCartIcon(opusId, action);
-                  break;
+                    if (e.shiftKey) {
+                        o_browse.cartShiftKeyHandler(e, opusId);
+                    } else {
+                        // clicking on the cart/trash can aborts range select
+                        o_browse.undoRangeSelect();
 
-              case "menu":  // expand, same as click on image
-                  o_browse.showMenu(e, opusId);
-                  break;
+                        let action = o_cart.toggleInCart(opusId);
+                        o_browse.updateCartIcon(opusId, action);
+                    }
+                    break;
+
+                case "menu":  // expand, same as click on image
+                    o_browse.showMenu(e, opusId);
+                    break;
             }
             return false;
         }); // end click a browse tools icon
@@ -483,31 +480,48 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                /*  Catch the right/left arrow while in the modal
+                /*  Catch the right/left arrow and spacebar while in the modal
                     Up: 38
                     Down: 40
                     Right: 39
-                    Left: 37 */
-                let opusId;
+                    Left: 37
+                    Space: 32 */
 
+                let detailOpusId;
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
+                    case 32:  // spacebar
+                        if (o_browse.metadataDetailOpusId !== "") {
+                            o_browse.undoRangeSelect();
+                            o_cart.toggleInCart(o_browse.metadataDetailOpusId);
+                        }
+                        break;
                     case 39:  // next
-                        opusId = $("#galleryView").find(".op-next").data("id");
-                        o_browse.loadPageIfNeeded("next", opusId);
+                        detailOpusId = $("#galleryView").find(".op-next").data("id");
+                        o_browse.loadPageIfNeeded("next", detailOpusId);
                         break;
                     case 37:  // prev
-                        opusId = $("#galleryView").find(".op-prev").data("id");
-                        o_browse.loadPageIfNeeded("prev", opusId);
+                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
+                        o_browse.loadPageIfNeeded("prev", detailOpusId);
                         break;
                 }
-                if (opusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(opusId);
+                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                    o_browse.updateGalleryView(detailOpusId);
                 }
             }
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    cartShiftKeyHandler: function(e, opusId) {
+        let startElem = $(e.delegateTarget).find(".selected");
+        if (startElem.length == 0) {
+            o_browse.startRangeSelect(opusId);
+        } else {
+            let fromOpusId = $(startElem).data("id");
+            o_cart.toggleInCart(fromOpusId, opusId);
+        }
+    },
 
     // update order arrows right away when user clicks on sorting arrows in pill or table header
     // sync up arrows in both sorting pill and table header
@@ -1818,7 +1832,7 @@ var o_browse = {
         let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
-            $(modalCartSelector).prop("title", buttonInfo.title);
+            $(modalCartSelector).prop("title", `${buttonInfo.title} (spacebar)`);
         }
     },
 
@@ -1858,7 +1872,7 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
