@@ -871,12 +871,10 @@ var opus = {
         }
     },
 
-    checkCookies: function() {
+    checkVisitedCookie: function() {
         /**
-         * Check widgets cookie to determine if the user is a first time
-         * visitor. If so, we display a guide page.
-         * Note: we will call __help/splash.html api in the future to
-         * display the guide page. For now, we just show a modal.
+         * Check visited cookie to determine if the user is a first time
+         * or newer visitor. If so, we display a welcome message.
          */
         if ($.cookie("visited") === undefined ||
             $.cookie("visited") < opus.splashVersion) {
@@ -889,7 +887,7 @@ var opus = {
 
 $(document).ready(function() {
     if (opus.isBrowserSupported()) {
-        opus.checkCookies();
+        opus.checkVisitedCookie();
         opus.checkBrowserSize();
         // Call normalized url api first
         // Rest of initialization prcoess will be performed afterwards
