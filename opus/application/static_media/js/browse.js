@@ -926,6 +926,8 @@ var o_browse = {
         });
 
         $("#op-metadata-selector").on("show.bs.modal", function(e) {
+            // this is to make sure modal is back to it original position when open again
+            $("#op-metadata-selector .modal-dialog").css({top: 0, left: 0});
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
 

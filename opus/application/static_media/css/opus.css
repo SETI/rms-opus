@@ -490,6 +490,7 @@ th.sticky-header {
 .op-all-metadata-column, .op-selected-metadata-column {
     padding-left: 1.5%;
     padding-right: 1.5%;
+    /* make metadata selector modal height responsive */
     max-height: 50vh;
     overflow: scroll;
     overflow-x: auto;
@@ -578,11 +579,6 @@ th.sticky-header {
     display: none;
 }
 
-img.preview {
-    max-width: 400px !important;
-    max-height: 400px !important;
-}
-
 @media (min-width: 1200px) {
     .modal-lg {
         max-width: 1100px !important;
@@ -592,6 +588,27 @@ img.preview {
         max-width: 600px !important;
         max-height: 600px !important;
     }
+}
+
+/* make image preview in the modal strechable when screen is resized */
+img.preview {
+    max-width: 100% !important;
+    max-height: 100% !important;
+}
+
+/* make modal width shrink smoothly with screen */
+#galleryView .modal-dialog {
+    max-width: 1100px;
+}
+
+/* make sure left/right hand icon in metadata dialog stay in the same line
+when window sized is narrow */
+#galleryView .op-obs-direction {
+    flex-grow: 2;
+}
+#galleryView .left, #galleryView .right {
+    /* max-height: 100%; */
+    min-height: 400px;
 }
 
 #galleryView {
@@ -629,7 +646,7 @@ img.preview {
 
 #galleryViewContents {
     position: relative;
-    height: 625px;
+    /* height: 625px; */
 }
 
 #galleryViewContents .metadata {
@@ -640,7 +657,7 @@ img.preview {
 }
 
 #galleryViewContents .left {
-    height: 590px;
+    /* height: 590px; */
 }
 
 #galleryView .modal-dialog:hover {
