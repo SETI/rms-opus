@@ -9,21 +9,7 @@
 /* jshint varstmt: false */
 var o_cart = {
 /* jshint varstmt: true */
-    // cart
-    reloadObservationData: true, // start over by reloading all data
-    observationData: {},  // holds observation column data
-    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
-    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-    lastRequestNo: 0,
-    downloadInProcess: false,
-    cartCount: 0,
-    cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
-    downloadSizeSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
-
-    // collector for all cart status error messages
-    statusDataErrorCollector: [],
-    galleryBoundingRect: {'x': 0, 'y': 0},
-
+    // tableScrollbar and galleryScrollbar are common vars w/browse.js
     tableScrollbar: new PerfectScrollbar("#cart .op-data-table-view", {
         minScrollbarLength: opus.galleryAndTablePSLength,
         maxScrollbarLength: opus.galleryAndTablePSLength,
@@ -33,10 +19,27 @@ var o_cart = {
         minScrollbarLength: opus.galleryAndTablePSLength,
         maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
+    // o_cart only...
     downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
         minScrollbarLength: opus.minimumPSLength
     }),
 
+    // these vars are common w/o_browse
+    reloadObservationData: true, // start over by reloading all data
+    observationData: {},  // holds observation column data
+    totalObsCount : undefined,
+    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
+    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
+    galleryBoundingRect: {'x': 0, 'y': 0},
+
+    // unique to o_cart
+    lastRequestNo: 0,
+    downloadInProcess: false,
+    cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
+    downloadSizeSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
+
+    // collector for all cart status error messages
+    statusDataErrorCollector: [],
     /**
      *
      *  managing cart communication between server and client and
@@ -160,7 +163,7 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        o_cart.cartCount = status.count;
+        o_cart.totalObsCount = status.count;
         o_cart.hideCartCountSpinner(o_cart.cartCount);
         if (status.total_download_size_pretty !== undefined) {
             o_cart.hideDownloadSizeSpinner(status.total_download_size_pretty);
@@ -204,7 +207,7 @@ var o_cart = {
 
                     let startObsLabel = o_browse.getStartObsLabel();
                     let startObs = opus.prefs[startObsLabel];
-                    startObs = (startObs > o_cart.cartCount ? 1 : startObs);
+                    startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
                     o_browse.loadData(view, startObs);
 
                     if (zippedFiles_html) {

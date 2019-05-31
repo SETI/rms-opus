@@ -31,6 +31,7 @@ from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.views.decorators.cache import never_cache
 
+from cart.models import Cart
 from paraminfo.models import ParamInfo
 from search.models import *
 from search.views import (get_param_info_by_slug,
@@ -603,6 +604,10 @@ def get_result_count_helper(request, api_code):
 
     return count, table, None
 
+def get_cart_count(session_id):
+    "Return the number of items in the current cart."
+    count = Cart.objects.filter(session_id__exact=session_id).count()
+    return count
 
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):
