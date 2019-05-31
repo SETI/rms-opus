@@ -266,12 +266,6 @@ var o_browse = {
             return false;
         }); // end click a browse tools icon
 
-        $("#gallerylView").modal({
-            keyboard: false,
-            backdrop: 'static',
-            show: false,
-        });
-
         // do we need an on.resize for when the user makes the screen tiny?
 
         $(".modal-dialog").draggable({
@@ -283,10 +277,12 @@ var o_browse = {
         });
 
         // Disable draggable for these infomation modals
-        // If draggable is enabled, once modal is dragged, it will not stay in the center.
-        for (let id of ["#op-browser-version-msg", "#op-browser-size-msg", "#op-new-user-msg"]) {
-            $(`${id} .modal-dialog`).draggable("disable");
-        }
+        $.each($(".op-confirm-modal"), function(idx, dialog) {
+            if ($(dialog).data("draggable") === "False") {
+                let id = $(dialog).attr("id");
+                $(`#${id} .modal-dialog`).draggable("disable");
+            }
+        });
 
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
