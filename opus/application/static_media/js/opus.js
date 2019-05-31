@@ -100,6 +100,9 @@ var opus = {
         "height": 200
     },
 
+    // current splash page version for storing in the visited cookie
+    splashVersion: 1,
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
@@ -607,6 +610,10 @@ var opus = {
                     url += "tutorial.html";
                     header = "A Brief Tutorial";
                     break;
+                case "gettingStarted":
+                    url += "gettingstarted.html";
+                    header = "Getting Started";
+                    break;
                 case "feedback":
                     url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
                     header = "Questions/Feedback";
@@ -839,10 +846,19 @@ var opus = {
          * Note: we will call __help/splash.html api in the future to
          * display the guide page. For now, we just show a modal.
          */
-        if ($.cookie("visited") === undefined) {
+        if ($.cookie("visited") === undefined ||
+            $.cookie("visited") < opus.splashVersion) {
             // set the cookie for the first time user
-            $.cookie("visited", true);
-            $("#op-guide").modal("show");
+            $.cookie("visited", opus.splashVersion);
+            let url = "/opus/__help/splash.html";
+            $.ajax({
+                url: url,
+                dataType: "html",
+                success: function(page) {
+                    $("#op-new-user-msg .modal-body").html(page);
+                    $("#op-new-user-msg").modal("show");
+                }
+            });
         }
     }
 }; // end opus namespace

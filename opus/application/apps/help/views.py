@@ -128,6 +128,44 @@ def api_tutorial(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
+def api_gettingstarted(request):
+    """Renders the getting started page.
+
+    This is a PRIVATE API.
+
+    Format: __help/gettingstarted.html
+    """
+    api_code = enter_api_call('api_gettingstarted', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    ret = render(request, 'help/gettingstarted.html')
+    exit_api_call(api_code, ret)
+    return ret
+
+@never_cache
+def api_splash(request):
+    """Renders the splash page.
+
+    This is a PRIVATE API.
+
+    Format: __help/splash.html
+    """
+    api_code = enter_api_call('api_splash', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    ret = render(request, 'help/splash.html')
+    exit_api_call(api_code, ret)
+    return ret
+
 def api_guide(request):
     """Renders the API guide at opus/api.
 

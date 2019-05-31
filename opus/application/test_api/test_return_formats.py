@@ -127,6 +127,14 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/tutorial.[fmt]"
         self._test_return_formats('/__help/tutorial.[fmt]', ('html',))
 
+    def test__api_retfmt_help_gettingstarted(self):
+        "[test_return_formats.py] return formats /__help/gettingstarted.[fmt]"
+        self._test_return_formats('/__help/gettingstarted.[fmt]', ('html',))
+
+    def test__api_retfmt_help_splash(self):
+        "[test_return_formats.py] return formats /__help/splash.[fmt]"
+        self._test_return_formats('/__help/splash.[fmt]', ('html',))
+
     def test__api_retfmt_help_guide(self):
         "[test_return_formats.py] return formats /__help/guide.[fmt]"
         self._test_return_formats('/__help/guide.[fmt]', ('html',))
