@@ -964,7 +964,7 @@ var o_browse = {
                 html +=      `<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span>`;
                 html +=      `<span class="unselect"><i class="far fa-trash-alt"></span>`;
                 html +=    `</li>`;
-                $(".selectedMetadata > ul").append(html).fadeIn();
+                $(".op-selected-metadata-column > ul").append(html).fadeIn();
                 opus.prefs.cols.push(slug);
             } else {
                 selectedMetadata.hide();
@@ -1168,21 +1168,17 @@ var o_browse = {
                 }
                 $(".gallery", tab).html(galleryHtml);
             } else {
-                // this code is commented out because there is a bug in infinite-scroll - this is a hack such that
-                // we set the start_obs in the request to something greater than the total obs number so it returns nothing
-                // The issue is that if a user types in a bad obsNum into the url/hash, it's unclear why there may be no observation.
-
-                /* if (data.start_obs > data.total_obs_count) {
+                if (opus.prefs[o_browse.getStartObsLabel()] > data.total_obs_count) {
                     // handle a corner case where a user has changed the startobs to be greater than total_obs_count
                     // just reset back to 1 and get a new page
                     opus.prefs[o_browse.getStartObsLabel()] = 1;
                     o_hash.updateHash();
                     $("#galleryViewContents").addClass("op-disabled");
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-                } else { */
+                } else {
                     // we've hit the end of the infinite scroll.
                     $(".op-page-loading-status > .loader").hide();
-                //}
+                }
                 return;
             }
         } else {
