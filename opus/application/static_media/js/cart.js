@@ -164,7 +164,7 @@ var o_cart = {
             return;
         }
         o_cart.totalObsCount = status.count;
-        o_cart.hideCartCountSpinner(o_cart.cartCount);
+        o_cart.hideCartCountSpinner(o_cart.totalObsCount);
         if (status.total_download_size_pretty !== undefined) {
             o_cart.hideDownloadSizeSpinner(status.total_download_size_pretty);
         }
