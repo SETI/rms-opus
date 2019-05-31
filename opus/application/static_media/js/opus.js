@@ -39,7 +39,7 @@ var opus = {
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
     mainTimerInterval: 1000,
-
+    spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
@@ -72,7 +72,6 @@ var opus = {
     extras: {},            // extras to the query: qtypes
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
-    resultCount: 0,
 
     allInputsValid: true,
 
@@ -100,6 +99,9 @@ var opus = {
         "width": 600,
         "height": 200
     },
+
+    // current splash page version for storing in the visited cookie
+    splashVersion: 1,
 
     //------------------------------------------------------------------------------------
     // Debugging support
@@ -287,9 +289,9 @@ var opus = {
          * badge(s).
          */
 
-        opus.resultCount = resultCount;
+        o_browse.totalObsCount = resultCount;
         $("#op-result-count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.resultCount)).fadeIn("fast");
+            $(this).html(o_utils.addCommas(o_browse.totalObsCount)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },
@@ -612,6 +614,10 @@ var opus = {
                     url += "tutorial.html";
                     header = "A Brief Tutorial";
                     break;
+                case "gettingStarted":
+                    url += "gettingstarted.html";
+                    header = "Getting Started";
+                    break;
                 case "feedback":
                     url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
                     header = "Questions/Feedback";
@@ -717,6 +723,11 @@ var opus = {
         opus.prefs.widgets = [];
         o_widgets.updateWidgetCookies();
 
+        // probably not needed, just added as a precaution.
+        opus.force_load = true;
+
+        // set these to the current hash on opus init
+        [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
 
         // Initialize opus.prefs from the URL hash
         o_hash.initFromHash();
@@ -839,10 +850,19 @@ var opus = {
          * Note: we will call __help/splash.html api in the future to
          * display the guide page. For now, we just show a modal.
          */
-        if ($.cookie("visited") === undefined) {
+        if ($.cookie("visited") === undefined ||
+            $.cookie("visited") < opus.splashVersion) {
             // set the cookie for the first time user
-            $.cookie("visited", true);
-            $("#op-guide").modal("show");
+            $.cookie("visited", opus.splashVersion);
+            let url = "/opus/__help/splash.html";
+            $.ajax({
+                url: url,
+                dataType: "html",
+                success: function(page) {
+                    $("#op-new-user-msg .modal-body").html(page);
+                    $("#op-new-user-msg").modal("show");
+                }
+            });
         }
     }
 }; // end opus namespace

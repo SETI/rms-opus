@@ -55,8 +55,9 @@
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="op-help-menu">
                             <a class="dropdown-item op-help-item" data-action="about" href="#">About</a>
-                            <a class="dropdown-item op-help-item" data-action="volumes" href="#">Data Volumes</a>
+                            <a class="dropdown-item op-help-item" data-action="gettingStarted" href="#">Getting Started</a>
                             <a class="dropdown-item op-help-item" data-action="faq" href="#">FAQ</a>
+                            <a class="dropdown-item op-help-item" data-action="volumes" href="#">Data Volumes</a>
                             <a class="dropdown-item op-help-item" data-action="guide" href="#">API Guide</a>
                             <!--<a class="dropdown-item op-help-item" data-action="tutorial" href="#">Tutorial</a>-->
                             <!--a class="dropdown-item op-help-item" data-action="feedback" href="#">Questions/Feedback</a>-->
@@ -306,6 +307,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
@@ -316,6 +318,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
@@ -326,6 +329,7 @@
             yes_text="Yes"
             no_text="No"
             allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
@@ -335,6 +339,7 @@
             target="op-cart-status-error-msg"
             yes_text="OK"
             allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
@@ -345,6 +350,7 @@
             yes_text="Keep Message"
             no_text="Discard Message"
             allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
@@ -353,6 +359,7 @@
             confirm_msg=""
             target="op-browser-version-msg"
             allow_close=False
+            draggable=False
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-browser-size-msg"
@@ -360,14 +367,16 @@
             confirm_msg=""
             target="op-browser-size-msg"
             allow_close=False
+            draggable=False
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-guide"
+            id_name="op-new-user-msg"
             confirm_title="Welcome to OPUS3"
             confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
-            target="op-guide"
+            target="op-new-user-msg"
             yes_text="OK"
             allow_close=True
+            draggable=False
             close_by_keyboard="esc"
         %}
 
