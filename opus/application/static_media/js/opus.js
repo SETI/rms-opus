@@ -712,6 +712,9 @@ var opus = {
         opus.prefs.widgets = [];
         o_widgets.updateWidgetCookies();
 
+        // probably not needed, just added as a precaution.
+        opus.force_load = true;
+
         // set these to the current hash on opus init
         [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
 

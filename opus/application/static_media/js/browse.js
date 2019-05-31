@@ -17,10 +17,7 @@ const infiniteScrollUpThreshold = 100;
 /* jshint varstmt: false */
 var o_browse = {
 /* jshint varstmt: true */
-    selectedImageID: "",
-
-    metadataSelectorDrawn: false,
-
+    // tableScrollbar and galleryScrollbar are common vars w/cart.js
     tableScrollbar: new PerfectScrollbar("#browse .op-data-table-view", {
         minScrollbarLength: opus.galleryAndTablePSLength,
         maxScrollbarLength: opus.galleryAndTablePSLength,
@@ -30,19 +27,25 @@ var o_browse = {
         minScrollbarLength: opus.galleryAndTablePSLength,
         maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
+    // only in o_browse
     modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
         minScrollbarLength: opus.minimumPSLength
     }),
 
+    // these vars are common w/o_cart
     reloadObservationData: true, // start over by reloading all data
     observationData: {},  // holds observation column data
     totalObsCount: undefined,
-    imageSize: 100,     // default
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-
     galleryBoundingRect: {'x': 0, 'y': 0},
+
+    // unique to o_browse
     gallerySliderStep: 10,
+    imageSize: 100,     // default
+
+    selectedImageID: "",
+    metadataSelectorDrawn: false,
 
     metadataDetailOpusId: "",
     tempHash: "",
@@ -1165,18 +1168,22 @@ var o_browse = {
                 }
                 $(".gallery", tab).html(galleryHtml);
             } else {
-                if (data.start_obs > data.total_obs_count) {
+                // this code is commented out because there is a bug in infinite-scroll - this is a hack such that
+                // we set the start_obs in the request to something greater than the total obs number so it returns nothing
+                // The issue is that if a user types in a bad obsNum into the url/hash, it's unclear why there may be no observation.
+
+                /* if (data.start_obs > data.total_obs_count) {
                     // handle a corner case where a user has changed the startobs to be greater than total_obs_count
                     // just reset back to 1 and get a new page
                     opus.prefs[o_browse.getStartObsLabel()] = 1;
                     o_hash.updateHash();
                     $("#galleryViewContents").addClass("op-disabled");
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-                } else {
+                } else { */
                     // we've hit the end of the infinite scroll.
                     $(".op-page-loading-status > .loader").hide();
-                }
-                return;
+                //}
+                //return;
             }
         } else {
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
@@ -1499,11 +1506,13 @@ var o_browse = {
                         }
                     }
                     // if totalObsCount is not yet defined, we still need to init the infinite scroll...
-                    if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
+                    //if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
                         let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
                         return path;
-                    }
-                    // returning no value indicates end of infinite scroll...
+                    //}
+                    // returning no value indicates end of infinite scroll... but apparently doesn't work at moment.
+                    // NOTE: leaving this commented out code in place with the hope that we will find a solution.
+                    //return null;
                 },
                 responseType: "text",
                 status: `${tab} .page-load-status`,
