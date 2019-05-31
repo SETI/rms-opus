@@ -36,7 +36,8 @@ from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
-from metadata.views import get_result_count_helper
+from metadata.views import (get_cart_count,
+                            get_result_count_helper)
 from paraminfo.models import *
 from search.models import *
 from search.views import (get_param_info_by_slug,
@@ -105,7 +106,10 @@ def api_get_data_and_images(request):
          'columns':             columns with units
                                 (corresponds to <col1> etc. in 'metadata'),
          'columns_no_units':    columns without units,
-         'result_count':    result count as returned by result_count.json,
+         'total_obs_count':     for view=browse, result count as returned by
+                                    api/meta/result_count.json
+                                for view=cart, cart count as returned by
+                                    __cart/status.json
          'reqno':               reqno
         }
     """
@@ -200,10 +204,13 @@ def api_get_data_and_images(request):
                        'removeable': removeable}
         order_list.append(order_entry)
 
-    count, _, err = get_result_count_helper(request, api_code)
-    if err is not None: # pragma: no cover
-        exit_api_call(api_code, err)
-        return err
+    if request.GET.get('view', 'browse') == 'cart':
+        count = get_cart_count(session_id)
+    else:
+        count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
 
     reqno = get_reqno(request)
     if reqno is None:
@@ -219,7 +226,7 @@ def api_get_data_and_images(request):
             'order_list':       order_list,
             'columns':          labels,
             'columns_no_units': labels_no_units,
-            'result_count': count,
+            'total_obs_count':  count,
             'reqno':            reqno
            }
 

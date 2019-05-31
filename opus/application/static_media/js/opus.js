@@ -39,7 +39,7 @@ var opus = {
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
     mainTimerInterval: 1000,
-
+    spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
@@ -72,7 +72,6 @@ var opus = {
     extras: {},            // extras to the query: qtypes
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
-    resultCount: 0,
 
     allInputsValid: true,
 
@@ -287,9 +286,9 @@ var opus = {
          * badge(s).
          */
 
-        opus.resultCount = resultCount;
+        o_browse.totalObsCount = resultCount;
         $("#op-result-count").fadeOut("fast", function() {
-            $(this).html(o_utils.addCommas(opus.resultCount)).fadeIn("fast");
+            $(this).html(o_utils.addCommas(o_browse.totalObsCount)).fadeIn("fast");
             $(this).removeClass("browse_results_invalid");
         });
     },
@@ -713,6 +712,11 @@ var opus = {
         opus.prefs.widgets = [];
         o_widgets.updateWidgetCookies();
 
+        // probably not needed, just added as a precaution.
+        opus.force_load = true;
+
+        // set these to the current hash on opus init
+        [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
 
         // Initialize opus.prefs from the URL hash
         o_hash.initFromHash();
