@@ -1183,7 +1183,7 @@ var o_browse = {
                     // we've hit the end of the infinite scroll.
                     $(".op-page-loading-status > .loader").hide();
                 //}
-                //return;
+                return;
             }
         } else {
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
