@@ -589,7 +589,7 @@ img.preview {
     /* make image responsive to horizontal shrinking */
     max-width: 100% !important;
     /* make image responsive to vertical shrinking */
-    max-height: 60vh !important;
+    max-height: 70vh !important;
 }
 
 /* make modal width shrink smoothly with screen */
