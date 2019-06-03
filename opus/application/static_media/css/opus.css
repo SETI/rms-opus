@@ -25,7 +25,7 @@ body {
     width: 3em !important;
 }
 
-@media(max-width: 992px) {
+@media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
         display: block;
@@ -139,7 +139,45 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    max-width: 400px;
+    max-width: 380px;
+    /* Make left space of search left pane shrink when window is
+    narrower */
+    padding-left: 1%;
+}
+
+@media (max-width: 830px) {
+    /* Remove the left space of search menu area, and allow search menu
+    to shrink proportionally when screen width is narrower */
+    .sidebar-area {
+        max-width: 50%;
+        padding-left: 0;
+    }
+
+    /* Make sure scrollbar is not covered by search menu item when search
+    menu item is hovered over */
+    #sidebar-container .ps__rail-y {
+        z-index: 999;
+    }
+
+    /* Make sure widget area can take up at least 50% of screen when
+    screen width is less than 830px */
+    #widget-container {
+        min-width: 50%;
+    }
+
+    /* Make sure left space in each widget can shrink proportionally when
+    window is narrower  */
+    #op-search-widgets ul {
+        padding-left: 5%;
+    }
+}
+
+@media (max-width: 635px) {
+    /* Make sure left space in each widget is all taken up by widget
+    contents when screen is very narrow  */
+    #op-search-widgets ul {
+        padding-left: 1%;
+    }
 }
 
 .sidebar_wrapper {
@@ -927,7 +965,10 @@ nav.panel-heading {
 
 #op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
-    padding-right: 2em;
+    /* Make left/right space of widgets are shrink proportionally when
+    screen is narrower */
+    padding-right: 3%;
+    padding-left: 3%;
 }
 
 .widget-main .range-qtype-helper {
@@ -975,11 +1016,14 @@ nav.panel-heading {
 
 .op-widget-column {
     position: relative;
-    padding: 0 20px;
+    /* Make left/right space of widgets are shrink proportionally when
+    screen is narrower */
+    padding: 0 3%;
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
-    /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
+    /* Widget container can shrink to a minimum width = min-width when
+    browser width is shrinking */
     max-width: 740px;
     min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */

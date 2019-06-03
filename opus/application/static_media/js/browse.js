@@ -1773,48 +1773,54 @@ var o_browse = {
         let containerHeight = $(".op-all-metadata-column").height();
         let menuHeight = $(".op-all-metadata-column .searchMenu").height();
 
-        if (containerHeight > menuHeight) {
-            if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+        if (o_browse.allMetadataScrollbar) {
+            if (containerHeight > menuHeight) {
+                if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+            o_browse.allMetadataScrollbar.update();
         }
-        o_browse.allMetadataScrollbar.update();
     },
 
     adjustSelectedMetadataPS: function() {
         let containerHeight = $(".op-selected-metadata-column").height();
         let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
 
-        if (containerHeight > selectedMetadataHeight) {
-            if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+        if (o_browse.selectedMetadataScrollbar) {
+            if (containerHeight > selectedMetadataHeight) {
+                if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+            o_browse.selectedMetadataScrollbar.update();
         }
-        o_browse.selectedMetadataScrollbar.update();
     },
 
     adjustBrowseDialogPS: function() {
         let containerHeight = $("#galleryViewContents .metadata").height();
         let browseDialogHeight = $(".metadata .contents").height();
 
-        if (containerHeight > browseDialogHeight) {
-            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.modalScrollbar.settings.suppressScrollY = true;
+        if (o_browse.modalScrollbar) {
+            if (containerHeight > browseDialogHeight) {
+                if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.modalScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.modalScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.modalScrollbar.settings.suppressScrollY = false;
+            o_browse.modalScrollbar.update();
         }
-        o_browse.modalScrollbar.update();
     },
 
     cartButtonInfo: function(status) {
