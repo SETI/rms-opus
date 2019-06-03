@@ -139,7 +139,7 @@ class QueryHandler:
 
         if not new_info:
             if old_info:
-                result.append('Reset Search Slugs')
+                result.append('Reset Search')
             return
 
         removed_searches: List[str] = []
