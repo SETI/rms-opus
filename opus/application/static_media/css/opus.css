@@ -142,9 +142,6 @@ Not sure if this is the desired behavior
 */
 .sidebar-area {
     max-width: 380px;
-    /* Make left space of search left pane shrink when window is
-    narrower */
-    padding-left: 1%;
 }
 
 /* As long as q-type shrink to the 2nd line, we set text input width
@@ -156,12 +153,11 @@ to 100%, this will make the shrinking look smoother */
     }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 860px) {
     /* Remove the left space of search menu area, and allow search menu
     to shrink proportionally when screen width is narrower */
     .sidebar-area {
-        max-width: 50%;
-        padding-left: 0;
+        max-width: 44%;
     }
 
     /* Make sure scrollbar is not covered by search menu item when search
@@ -172,22 +168,7 @@ to 100%, this will make the shrinking look smoother */
 
     /* Make sure widget area can take up at least 50% of screen */
     #widget-container {
-        min-width: 100%;
-    }
-
-    /* Make sure left space in each widget can shrink proportionally when
-    window is narrower  */
-    #op-search-widgets ul {
-        padding-left: 5%;
-    }
-}
-
-@media (max-width: 665px) {
-    /* Make sure left space in each widget is all taken up by widget
-    contents when screen is very narrow. Without this, widgets will
-    still shrink, but adding this will make it looks more smooth */
-    #op-search-widgets ul {
-        padding-left: 1%;
+        min-width: 50%;
     }
 }
 
@@ -963,6 +944,11 @@ nav.panel-heading {
     border-top: 0 none;
 }
 
+/* Reduce left space in each widget (from 50px to 10px) */
+#op-search-widgets ul {
+    padding-left: 10px;
+}
+
 #op-search-widgets li {
     display: inline;
     list-style-type: none;
@@ -1027,9 +1013,7 @@ nav.panel-heading {
 
 .op-widget-column {
     position: relative;
-    /* Make left/right space of widgets are shrink proportionally when
-    screen is narrower */
-    padding: 0 3%;
+    padding: 0 20px;
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
