@@ -37,7 +37,11 @@ body {
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
     }
+    #op-main-nav-collapse {
+
+    }
 }
+
 
 .op-user-msg {
     display: none;
@@ -168,6 +172,34 @@ to 100%, this will make the shrinking look smoother */
     /* Make sure widget area can take up at least 50% of screen */
     #widget-container {
         min-width: 50%;
+    }
+}
+
+@media (max-width: 720px) {
+    /* Make both reset buttons stay in one line when screen is narrow */
+    .op-reset-button {
+        display: flex;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Make sure all left menu contents not cut off when screen is narrow */
+    .searchMenu > li {
+        width: 80%;
+    }
+    /* Remove left space of search menu when screen width is narrower */
+    .sidebar-area {
+        /* max-width: 50%; */
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 670px) {
+    /* Remove button padding so both reset buttons can stay in one line
+    when window width is about 600px*/
+    .op-reset-button button {
+        padding-left: 1px;
+        padding-right: 1px;
     }
 }
 
