@@ -714,6 +714,7 @@ nav.panel-heading {
 
 .browse-nav-container {
     height: 1.5em;
+    width: 100%;
 }
 
 .browse-nav-container li {

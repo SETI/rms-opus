@@ -156,6 +156,12 @@
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container top_navbar collapse navbar-collapse">
                                 <ul class="navbar-nav mr-auto">
+                                    <li class="nav-item flex-column flex-sm-row">
+                                        <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                    </li>
                                     <li class="nav-item">
                                         <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                                     </li>
@@ -169,16 +175,14 @@
                                             <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
                                         </div>
                                     </li>
+                                </ul>
+                                <ul class="nav navbar-nav flex-column flex-sm-row">
                                     <li class="nav-item">
-                                        <div class="b-l-1">
-                                            <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
+                                        <div class="pt-3">
+                                            <button type="button" class="btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart">
+                                                <i class="fas fa-trash-alt"></i>&nbsp;Empty Cart
+                                            </button>
                                         </div>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a href="#" class="nav-link" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>&nbsp;Empty Cart</a>
                                     </li>
                                 </ul>
                             </div>
