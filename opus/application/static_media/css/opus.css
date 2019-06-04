@@ -57,7 +57,9 @@ body {
     position: absolute;
     left: 0;
     margin: 0;
-
+    /* Make the whole search page shrink proportionally when window
+    is narrower */
+    width: 100%;
 }
 
 #search .add_input {
@@ -145,7 +147,16 @@ Not sure if this is the desired behavior
     padding-left: 1%;
 }
 
-@media (max-width: 830px) {
+/* As long as q-type shrink to the 2nd line, we set text input width
+to 100%, this will make the shrinking look smoother */
+@media (max-width: 970px) {
+    /* Make text input shrink proportionally when window is narrow */
+    #op-search-widgets input[type="text"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 850px) {
     /* Remove the left space of search menu area, and allow search menu
     to shrink proportionally when screen width is narrower */
     .sidebar-area {
@@ -159,10 +170,9 @@ Not sure if this is the desired behavior
         z-index: 999;
     }
 
-    /* Make sure widget area can take up at least 50% of screen when
-    screen width is less than 830px */
+    /* Make sure widget area can take up at least 50% of screen */
     #widget-container {
-        min-width: 50%;
+        min-width: 100%;
     }
 
     /* Make sure left space in each widget can shrink proportionally when
@@ -172,9 +182,10 @@ Not sure if this is the desired behavior
     }
 }
 
-@media (max-width: 635px) {
+@media (max-width: 665px) {
     /* Make sure left space in each widget is all taken up by widget
-    contents when screen is very narrow  */
+    contents when screen is very narrow. Without this, widgets will
+    still shrink, but adding this will make it looks more smooth */
     #op-search-widgets ul {
         padding-left: 1%;
     }
