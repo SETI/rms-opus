@@ -47,13 +47,12 @@ var o_search = {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             if (o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "") {
-              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_original");
             } else {
-              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_invalid");
-              $(this).removeClass("search_input_invalid_no_focus");
             }
+            $(this).addClass("input_currently_focused");
+            $(this).removeClass("search_input_invalid_no_focus");
         });
 
         /*
@@ -348,6 +347,7 @@ var o_search = {
                     } else {
                         currentInput.val(value);
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        opus.selections[eachSlug] = [value];
                         // No color border if the input value is valid
                         currentInput.addClass("search_input_original");
                         currentInput.removeClass("search_input_invalid_no_focus");
@@ -358,7 +358,9 @@ var o_search = {
             }
         });
 
-        if (!opus.allInputsValid) {
+        if (opus.allInputsValid) {
+            o_hash.updateHash();
+        } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
