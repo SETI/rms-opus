@@ -7,10 +7,10 @@
     <div class="app-body container-fluid">
         <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info">
             <a class="navbar-brand" href="/opus">OPUS3</a>
-            <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#op-main-nav-collapse" aria-controls="op-main-nav-collapse" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#op-main-nav-collapse" aria-controls="op-main-nav-collapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
-            </button> -->
-            <!-- <div class="collapse navbar-collapse" id="op-main-nav-collapse"> -->
+            </button>
+            <div class="collapse navbar-collapse" id="op-main-nav-collapse">
                 <ul id="op-tab" class="nav navbar-nav mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
@@ -29,6 +29,23 @@
                         <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">
                             <i class="fas fa-info-circle"></i> Detail
                         </a>
+                    </li>
+                    <li class="nav-item external-link blogspot">
+                        <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
+                            <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
+                                <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item external-link">
+                        <a class="nav-link" href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank" aria-controls="feedback">
+                            <div class="container align-items-center d-flex h-100 my-auto">
+                                Questions/Feedback
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav flex-column flex-sm-row">
@@ -248,7 +265,7 @@
                         <i class="far fa-times-circle fa-lg text-info"></i>
                     </button>
                     <div id="galleryViewContents" class="modal-body bg-dark">
-                        <div class="row flex-nowrap">
+                        <div class="row">
                             <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
                             <div class="right col-lg-5 col-sm">
                                 <div class="metadata">
@@ -265,7 +282,7 @@
 
         <!--modal dialog for the metadata selector -->
         <div id="op-metadata-selector" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="op-metadata-selectorLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
@@ -279,7 +296,7 @@
                             <button type="reset" class="btn btn-info">Reset to Default</button>
                         </div>
                         <div class="right-container">
-                            <button type="submit" class="btn btn-primary mr-1" data-dismiss="modal">Save Changes</button>
+                            <button type="submit" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
                             <button type="cancel" class="btn btn-danger">Discard Changes</button>
                         </div>
                     </div>
