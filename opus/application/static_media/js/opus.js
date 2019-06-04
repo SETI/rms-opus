@@ -593,61 +593,7 @@ var opus = {
         });
 
         $(".op-help-item").on("click", function() {
-            let url = "/opus/__help/";
-            let header = "";
-            switch ($(this).data("action")) {
-                case "about":
-                    url += "about.html";
-                    header = "About OPUS";
-                    break;
-                case "volumes":
-                    url += "volumes.html";
-                    header = "Volumes Available for Searching with OPUS";
-                    break;
-                case "faq":
-                    url += "faq.html";
-                    header = "Frequently Asked Questions (FAQ)";
-                    break;
-                case "guide":
-                    url += "guide.html";
-                    header = "OPUS API Guide";
-                    break;
-                case "tutorial":
-                    url += "tutorial.html";
-                    header = "A Brief Tutorial";
-                    break;
-                case "gettingStarted":
-                    url += "gettingstarted.html";
-                    header = "Getting Started";
-                    break;
-                case "feedback":
-                    url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
-                    header = "Questions/Feedback";
-                    break;
-            }
-
-            $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
-            $("#op-help-panel .op-card-contents").html("Loading... please wait.");
-            $("#op-help-panel .loader").show();
-            // We only need one perfectScrollbar because the pane is reused
-            if (!opus.helpScrollbar) {
-                opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
-                    suppressScrollX: true,
-                    minScrollbarLength: opus.minimumPSLength
-                });
-            }
-            $("#op-help-panel").toggle("slide", {direction:"right"}, function() {
-                $(".op-overlay").addClass("active");
-            });
-            $.ajax({
-                url: url,
-                dataType: "html",
-                success: function(page) {
-                    $("#op-help-panel .loader").hide();
-                    $("#op-help-panel .op-card-contents").html(page);
-                    opus.helpPanelOpen = true;
-                }
-            });
+            opus.displayHelpPane($(this).data("action"));
         });
 
         // Clicking on the "X" in the corner of the help pane
@@ -710,6 +656,92 @@ var opus = {
                     }
                     $(`#${target}`).modal("hide");
                     break;
+            }
+        });
+    },
+
+    displayHelpPane: function(action) {
+        /**
+         * Given the name of a help menu entry, open the help pane and load the
+         * help contents.
+         */
+        let url = "/opus/__help/";
+        let header = "";
+        switch (action) {
+            case "about":
+                url += "about.html";
+                header = "About OPUS";
+                break;
+            case "volumes":
+                url += "volumes.html";
+                header = "Volumes Available for Searching with OPUS";
+                break;
+            case "faq":
+                url += "faq.html";
+                header = "Frequently Asked Questions (FAQ)";
+                break;
+            case "guide":
+                url += "guide.html";
+                header = "OPUS API Guide";
+                break;
+            case "tutorial":
+                url += "tutorial.html";
+                header = "A Brief Tutorial";
+                break;
+            case "gettingStarted":
+                url += "gettingstarted.html";
+                header = "Getting Started";
+                break;
+            case "feedback":
+                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
+                header = "Questions/Feedback";
+                break;
+            case "splash":
+                opus.displaySplashDialog();
+                return;
+        }
+
+        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
+        $("#op-help-panel .op-card-contents").html("Loading... please wait.");
+        $("#op-help-panel .loader").show();
+        // We only need one perfectScrollbar because the pane is reused
+        if (!opus.helpScrollbar) {
+            opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
+                suppressScrollX: true,
+                minScrollbarLength: opus.minimumPSLength
+            });
+        }
+        $("#op-help-panel").toggle("slide", {direction:"right"}, function() {
+            $(".op-overlay").addClass("active");
+        });
+        $.ajax({
+            url: url,
+            dataType: "html",
+            success: function(page) {
+                $("#op-help-panel .loader").hide();
+                $("#op-help-panel .op-card-contents").html(page);
+                opus.helpPanelOpen = true;
+            }
+        });
+    },
+
+    displaySplashDialog: function() {
+        let url = "/opus/__help/splash.html";
+        $.ajax({
+            url: url,
+            dataType: "html",
+            success: function(page) {
+                $("#op-new-user-msg .modal-body").html(page);
+                $(".op-open-getting-started").on("click", function() {
+                    $("#op-new-user-msg").modal("hide");
+                    opus.displayHelpPane("gettingStarted");
+                });
+
+                $(".op-open-faq").on("click", function() {
+                    $("#op-new-user-msg").modal("hide");
+                    opus.displayHelpPane("faq");
+                });
+                $("#op-new-user-msg").modal("show");
             }
         });
     },
@@ -845,33 +877,23 @@ var opus = {
         }
     },
 
-    checkCookies: function() {
+    checkVisitedCookie: function() {
         /**
-         * Check widgets cookie to determine if the user is a first time
-         * visitor. If so, we display a guide page.
-         * Note: we will call __help/splash.html api in the future to
-         * display the guide page. For now, we just show a modal.
+         * Check visited cookie to determine if the user is a first time
+         * or newer visitor. If so, we display a welcome message.
          */
         if ($.cookie("visited") === undefined ||
             $.cookie("visited") < opus.splashVersion) {
             // set the cookie for the first time user
             $.cookie("visited", opus.splashVersion);
-            let url = "/opus/__help/splash.html";
-            $.ajax({
-                url: url,
-                dataType: "html",
-                success: function(page) {
-                    $("#op-new-user-msg .modal-body").html(page);
-                    $("#op-new-user-msg").modal("show");
-                }
-            });
+            opus.displaySplashDialog();
         }
     }
 }; // end opus namespace
 
 $(document).ready(function() {
     if (opus.isBrowserSupported()) {
-        opus.checkCookies();
+        opus.checkVisitedCookie();
         opus.checkBrowserSize();
         // Call normalized url api first
         // Rest of initialization prcoess will be performed afterwards

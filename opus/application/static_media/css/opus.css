@@ -841,6 +841,7 @@ nav.panel-heading {
 
 .browse-nav-container {
     height: 1.5em;
+    width: 100%;
 }
 
 .browse-nav-container li {
@@ -1258,6 +1259,12 @@ footer {
 
 .op-reset-button button:disabled {
     pointer-events: none;
+}
+
+/* Remove the reddish focus outline on Linux Chrome that makes it look like an
+   invalid value using our color scheme. This color is what is used on Macs. */
+input:focus {
+    outline: auto #5E9ED6;
 }
 
 input[type="text"].search_input_original {
