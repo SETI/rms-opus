@@ -154,8 +154,7 @@ to 100%, this will make the shrinking look smoother */
 }
 
 @media (max-width: 860px) {
-    /* Remove the left space of search menu area, and allow search menu
-    to shrink proportionally when screen width is narrower */
+    /* Make search menu shrink proportionally when screen width is narrower */
     .sidebar-area {
         max-width: 44%;
     }
