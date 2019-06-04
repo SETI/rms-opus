@@ -83,7 +83,6 @@ class QueryHandler:
         else:
             column_slug_info = {}
 
-
         self.__handle_search_info(self._previous_search_slug_info, search_slug_info, result)
         self._previous_search_slug_info = search_slug_info
 
@@ -127,9 +126,6 @@ class QueryHandler:
         url: Optional[str] = None
         if result and self._uses_html:
             query.pop('reqno', None)  # Remove if there, but okay if not
-            if query_type != 'result_count':
-                query['view'] = 'browse'
-                query['browse'] = 'gallery'
             url = self.safe_format('/opus/#/{}', urllib.parse.urlencode(query, False))
 
         if result and query_type != 'result_count':
@@ -215,7 +211,8 @@ class QueryHandler:
             if (old_min, old_max, old_qtype) == (new_min, new_max, new_qtype):
                 return
             else:
-                fields = [(family.min, old_min, new_min), (family.max, old_max, new_max), ('qtype', old_qtype, new_qtype)]
+                fields = [(family.min, old_min, new_min), (family.max, old_max, new_max),
+                          ('qtype', old_qtype, new_qtype)]
 
         if self._uses_html:
             def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
@@ -380,7 +377,6 @@ class QueryHandler:
             mapping.get(slug.FamilyType.SINGLETON), mapping.get(slug.FamilyType.QTYPE),
             reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
         )
-
 
     def safe_format(self, format_string: str, *args: Any) -> str:
         return cast(str, self._session_info.safe_format(format_string, *args))
