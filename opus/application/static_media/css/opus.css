@@ -1125,6 +1125,12 @@ footer {
     pointer-events: none;
 }
 
+/* Remove the reddish focus outline on Linux Chrome that makes it look like an
+   invalid value using our color scheme. This color is what is used on Macs. */
+input:focus {
+    outline: auto #5E9ED6;
+}
+
 input[type="text"].search_input_original {
     border: 1px solid #D5D5D5;
 }
