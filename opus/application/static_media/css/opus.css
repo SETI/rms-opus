@@ -175,18 +175,18 @@ to 100%, this will make the shrinking look smoother */
     }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 725px) {
     /* Make both reset buttons stay in one line when screen is narrow */
     .op-reset-button {
         display: flex;
     }
-}
-
-@media (max-width: 700px) {
     /* Make sure all left menu contents not cut off when screen is narrow */
     .searchMenu > li {
         width: 80%;
     }
+}
+
+@media (max-width: 700px) {
     /* Remove left space of search menu when screen width is narrower */
     .sidebar-area {
         /* max-width: 50%; */
