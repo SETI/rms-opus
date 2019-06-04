@@ -302,12 +302,12 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-1d-spectrum",
-        "definition": "Preview JPEGs (*_X1D.JPG) of observations supplied by the STScI showing a 1-D spectrum plot (wavelength vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Preview JPEGs (*_X1D.JPG or *_SX1.JPG) of observations supplied by the STScI showing a 1-D spectrum plot (wavelength vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-2d-spectrum",
-        "definition": "Preview JPEGs (*_X2D.JPG) of observations supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Preview JPEGs (*_X2D.JPG or *_SX2.JPG) of observations supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
