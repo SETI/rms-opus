@@ -1233,6 +1233,12 @@ nav.panel-heading {
     }
 }
 
+/* Set max width of flexbox container so that detail image will keep close
+to the left pane when screen is getting too wide */
+.op-detail-content {
+    max-width: 1800px;
+}
+
 @media (max-width: 768px) {
     /* Move the detail image on top of the left pane */
     .op-detail-content {
