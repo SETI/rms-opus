@@ -887,9 +887,11 @@ nav.panel-heading {
         flex: 1 0 33%;
     }
 
-    /* When slider is at the 2nd line, make it take up 100% of width */
+    /* When slider is at the 2nd line, make it take up 75% of width.
+    Note that if we set to 100% the slider bar will be cut off when it's
+    moved to the end of the slider */
     #op-observation-slider.ui-slider {
-        width: 100% !important;
+        width: 75% !important;
     }
 }
 
@@ -1202,19 +1204,61 @@ nav.panel-heading {
 
 /* detail tab */
 .detail-metadata {
-    position:fixed !important;
-    max-width: 700px;
-    top: 4.15em;
-    bottom: 3em;
-    overflow-y: hidden;
+    /* Make detail left pane shrink proportionally when window is narrow
+    and set its min width to be 470px (+ padding left/right: 30px) */
+    position: relative;
+    min-width: 470px;
+    max-width: 800px;
 }
 
-@media (min-width: 768px) {
-    .metadata-container {
-        flex-basis: 800px !important;
-        -webkit-flex-basis: 800px !important;
-        max-width: 800px !important;
+/* Make detail left pane takes up 50% of width */
+.metadata-container {
+    flex: 1 0 50%;
+}
+
+/* Make detail right pane (img) takes up 50% of width */
+.detail_img {
+    flex: 1 1 50%;
+}
+
+@media (max-height: 500px) {
+    /* Make detail image fit the screen when its height is short */
+    .detail_img img {
+        max-height: 60vh !important;
     }
+
+    /* Reduce the top space above the detail image when screen is short */
+    .detail_img {
+        padding-top: 1% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Set detail image size when it's above the left pane */
+    .detail_img img {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Reduce the top space above the detail image when screen */
+    .detail_img {
+        padding-top: 0 !important;
+    }
+}
+
+/* Make detail image shrink proportionally when screen is resized, and
+also set its min width to be 150px */
+.detail_img img {
+    max-width: 100%;
+    min-width: 150px;
+    max-height: 70vh;
 }
 
 /* TODO: use @media to fine tune the heights of footer & nav bar
