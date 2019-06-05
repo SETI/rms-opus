@@ -896,7 +896,7 @@ nav.panel-heading {
 .browse-nav-container {
     height: 1.5em;
     width: 100%;
-    /* display for the 2nd navbar in browse view */
+    /* display the 2nd navbar in browse view */
     display: flex;
 }
 
