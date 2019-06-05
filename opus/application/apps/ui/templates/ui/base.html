@@ -7,29 +7,31 @@
     <div class="app-body container-fluid">
         <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info">
             <a class="navbar-brand" href="/opus">OPUS3</a>
+            <ul id="op-tab" class="nav navbar-nav mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#browse" data-toggle="tab" role="tab" aria-controls="browse" aria-selected="false">
+                        Browse Results <span id="op-result-count" class="badge badge-primary">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#cart" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
+                        <i class="fas fa-shopping-cart"></i> Cart <span id="op-cart-count" class="badge badge-primary">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">
+                        <i class="fas fa-info-circle"></i> Detail
+                    </a>
+                </li>
+            </ul>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#op-main-nav-collapse" aria-controls="op-main-nav-collapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="op-main-nav-collapse">
                 <ul id="op-tab" class="nav navbar-nav mr-auto main_site_tabs flex-column flex-sm-row" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#browse" data-toggle="tab" role="tab" aria-controls="browse" aria-selected="false">
-                            Browse Results <span id="op-result-count" class="badge badge-primary">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#cart" data-toggle="tab" role="tab" aria-controls="cart" aria-selected="false">
-                            <i class="fas fa-shopping-cart"></i> Cart <span id="op-cart-count" class="badge badge-primary">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#detail" data-toggle="tab" role="tab" aria-controls="detail" aria-selected="false">
-                            <i class="fas fa-info-circle"></i> Detail
-                        </a>
-                    </li>
                     <li class="nav-item external-link blogspot">
                         <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
                             <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
@@ -97,7 +99,8 @@
             <div id="browse" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="browse-tab">
                 <div class="panel panel-default">
                     <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
-                        <div class="browse-nav-container top_navbar collapse navbar-collapse">
+                        <!-- <div class="browse-nav-container top_navbar collapse navbar-collapse"> -->
+                        <div class="browse-nav-container top_navbar">
                             <ul class="navbar-nav mr-auto">
                                 <li class="nav-item">
                                     <a href="#" class="op-browse-view nav-link" data-view="data"><i class="far fa-list-alt"></i></a>

@@ -37,11 +37,20 @@ body {
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
     }
-    #op-main-nav-collapse {
 
+    /* Make items in hamburger stay in one line, not sure if we want this? */
+    #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
+        display: flex;
     }
 }
 
+@media (max-width: 992px) {
+    /* Add spaces between each nav-link item */
+    #op-tab .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
 
 .op-user-msg {
     display: none;
@@ -839,14 +848,63 @@ nav.panel-heading {
     align-items: flex-start;
 }
 
+@media (max-width: 992px) {
+    /* keep the 2nd navbar in a row when window is narrow */
+    .browse-nav-container .navbar-nav {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 1050px) {
+    /* Remove the left space of Observation # */
+    .op-observation-text {
+        margin-left: 0px !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    /* Move down the sort pill area so that slider can be moved down
+    to the 2nd line */
+    .sort-order-container {
+        padding-top: 3.5em;
+    }
+
+    /* Move the last item in flexbox to the 2nd line */
+    .browse-nav-container .navbar-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Last item in flex box (slider) will take up 100% of spaces in the
+     2nd line */
+    .browse-nav-container .nav-item:last-child {
+        flex-basis: 100%;
+    }
+
+    /* The first 3 items in flexbox will share the 1st line evenly, 33%
+    for each item */
+    .browse-nav-container .nav-item:nth-child(-n+3) {
+        flex: 1 0 33%;
+    }
+
+    /* When slider is at the 2nd line, make it take up 100% of width */
+    #op-observation-slider.ui-slider {
+        width: 100% !important;
+    }
+}
+
 .browse-nav-container {
     height: 1.5em;
     width: 100%;
+    /* display for the 2nd navbar in browse view */
+    display: flex;
 }
 
 .browse-nav-container li {
     display: flex;
     align-items: center;
+    /* This will make text stay in one line without wrapping */
+    white-space: nowrap;
 }
 
 .browse-nav-container li input {
