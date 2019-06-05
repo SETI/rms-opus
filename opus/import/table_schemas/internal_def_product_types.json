@@ -72,17 +72,17 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-thumb",
-        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-medium",
-        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-full",
-        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -272,42 +272,52 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-tiff",
-        "definition": "Full-size raw preview TIFFs (*_RAW.TIF) of observations supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size raw preview 16-bit TIFFs (*_RAW.TIF) of observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-raw",
-        "definition": "Full-size raw preview JPEGs (*_RAW.JPG) of observations supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size raw preview JPEGs (*_RAW.JPG) of observations, supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-calib",
-        "definition": "Full-size calibrated preview JPEGs (*_FLT.JPG) of observations supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size calibrated preview JPEGs (*_FLT.JPG) of observations, supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-summed",
+        "definition": "Full-size preview JPEGs (*_SFL.JPG) of summed observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-cosmic-ray",
+        "definition": "Full-size preview JPEGs (*_CRJ.JPG) of cosmic-ray-cleaned observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-drizzled",
-        "definition": "Full-size preview JPEGs (*_DRZ.JPG) of observations corrected for geometric distortion, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size preview JPEGs (*_DRZ.JPG) of calibrated observations corrected for geometric distortion, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-ima",
-        "definition": "Full-size preview JPEGs (*_IMA.JPG) of the intermediate step in creating a mosaic from multiple observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size preview JPEGs (*_IMA.JPG) of the intermediate step in creating a mosaic from multiple calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-mosaic",
-        "definition": "Full-size preview JPEGs (*_MOS.JPG) of completed mosaics supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size preview JPEGs (*_MOS.JPG) of completed calibrated mosaics, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-1d-spectrum",
-        "definition": "Preview JPEGs (*_X1D.JPG or *_SX1.JPG) of observations supplied by the STScI showing a 1-D spectrum plot (wavelength vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Preview JPEGs (*_X1D.JPG or *_SX1.JPG) of observations, supplied by the STScI showing a 1-D spectrum plot (wavelength vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-2d-spectrum",
-        "definition": "Preview JPEGs (*_X2D.JPG or *_SX2.JPG) of observations supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Preview JPEGs (*_X2D.JPG or *_SX2.JPG) of observations, supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
