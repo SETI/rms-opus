@@ -187,9 +187,9 @@ ul.searchMenu {
     display: inline-block;
     float: left;
     position: relative;
-    margin: .10em;
-    min-width: 100px;
-    min-height: 100px;
+    margin: 1px;
+    min-width: 98px;  /* This gives us a 100x100 thumbnail including margin */
+    min-height: 98px;
     border: medium solid transparent;
 }
 
