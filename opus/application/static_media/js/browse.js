@@ -1738,6 +1738,12 @@ var o_browse = {
                 let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
                 width -= leftPanelWidth;
             }
+        } else {
+            // We don't know why, but the .gallery-contents container is always
+            // a little bit too wide, but it's consistent between browsers.
+            // It's like there's a hidden margin that the browser is using to
+            // compute reflow. This hack fixes that.
+            width -= (tab === "#cart" ? 4 : 6);
         }
         return width;
     },
