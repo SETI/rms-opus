@@ -187,9 +187,10 @@ ul.searchMenu {
     display: inline-block;
     float: left;
     position: relative;
-    padding: .10em;
+    margin: .10em;
     min-width: 100px;
     min-height: 100px;
+    border: medium solid transparent;
 }
 
 .thumbnail-container .img-thumbnail {
@@ -199,6 +200,9 @@ ul.searchMenu {
     bottom: 0;
     left: 0;
     margin: auto;
+    padding: 0px !important;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .thumbnail-container:hover .op-thumb-overlay {
@@ -225,9 +229,7 @@ ul.searchMenu {
 }
 
 #browse .op-in-cart {
-    -webkit-box-shadow: inset 0px 0px 0px 10px #097da5;
-    -moz-box-shadow: inset 0px 0px 0px 10px #097da5;
-    box-shadow: inset 0px 0px 0px 10px #097da5
+    border: medium solid #097da5;
 }
 
 #cart .remove {
