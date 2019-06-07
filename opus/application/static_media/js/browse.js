@@ -964,20 +964,19 @@ var o_browse = {
 
             //CHANGE THESE TO USE DATA-ICON=
             let def = $(this).find('i.fa-info-circle').attr("title");
-            let selectedMetadata = $(this).find("i.fa-check");
 
             if ($(chosenSlugSelector).length === 0) {
-                selectedMetadata.fadeIn();
+                o_menu.markMenuItem(this);
                 // this slug was previously unselected, add to cols
-                let html = `<li id = "${chosenSlugSelector.substr(1)}">`;
+                let html = `<li id="${chosenSlugSelector.substr(1)}">`;
+                html +=      `<span class="info op-search-param-checkmark op-search-param-checkmark-on"><i class="fas fa-info-circle" title="${def}"></i></span>`;
                 html +=      `${label}`;
-                html +=      `<span class="info">&nbsp;<i class = "fas fa-info-circle" title = "${def}"></i>&nbsp;&nbsp;&nbsp;</span>`;
                 html +=      `<span class="unselect"><i class="far fa-trash-alt"></span>`;
                 html +=    `</li>`;
                 $(".op-selected-metadata-column > ul").append(html).fadeIn();
                 opus.prefs.cols.push(slug);
             } else {
-                selectedMetadata.hide();
+                o_menu.markMenuItem(this, "unselected");
                 // slug had been checked, remove from the chosen
                 opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
                 $(chosenSlugSelector).remove();
@@ -1115,12 +1114,11 @@ var o_browse = {
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
                 // we need to unhighlight the selected widgets
-                o_menu.markMenuItem(".modal-body.metadata li", "unselect");
+                o_menu.markMenuItem(".modal-body.metadata li a", "unselect");
 
-                // we keep these all open in the metadata selector, they are all closed by default
                 // disply check next to any default columns
                 $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
-                    $(`.modal-body.metadata li > [data-slug="${col}"]`).find("i.fa-check").fadeIn().css('display', 'inline-block');
+                    o_menu.markMenuItem(`.modal-body.metadata li > [data-slug="${col}"]`);
                 });
 
                 o_browse.addMetadataSelectorBehaviors();

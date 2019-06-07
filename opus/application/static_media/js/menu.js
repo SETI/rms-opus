@@ -91,12 +91,18 @@ var o_menu = {
 
      markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
-            $(selector).css("background", "gainsboro");
-            $(selector).find("i.fa-check").fadeIn().css("display", "inline-block");
+            $(selector).removeClass("op-search-param-off");
+            $(selector).addClass("op-search-param-on");
+            // We use find() here instead of just adding to the selector because
+            // selector might be a string or it might be an actual DOM object
+            $(selector).find(".op-search-param-checkmark").removeClass("op-search-param-checkmark-off");
+            $(selector).find(".op-search-param-checkmark").addClass("op-search-param-checkmark-on");
         } else {
-            $(selector).css("background", "initial");
-            $(selector).find("i.fa-check").hide();
-      }
+            $(selector).removeClass("op-search-param-on");
+            $(selector).addClass("op-search-param-off");
+            $(selector).find(".op-search-param-checkmark").removeClass("op-search-param-checkmark-on");
+            $(selector).find(".op-search-param-checkmark").addClass("op-search-param-checkmark-off");
+        }
      },
 
     markCurrentMenuItems: function() {

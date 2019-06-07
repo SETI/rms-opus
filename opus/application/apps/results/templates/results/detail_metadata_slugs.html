@@ -1,7 +1,7 @@
 <dl>
-  {% for entry in data %}
-    {% for param, value in entry.items %}
-      <dt>{{ param }}</dt><dd>{{ value }}</dd>
+    {% for entry in data %}
+        {% for param, value in entry.items %}
+            <dt>{{ param }}</dt><dd>{{ value }}</dd>
+        {% endfor %}
     {% endfor %}
-  {% endfor %}
 </dl>

@@ -64,7 +64,7 @@ body {
     display: none;
 }
 
-#search .search-param {
+#search .op-search-param {
     font-size: 90%;
 }
 
@@ -169,6 +169,41 @@ hr.shadow-divider {
 ul.searchMenu {
     padding-right: 2em;
 }
+
+/* Add or remove background and checkmark when a search item is active.
+   This is both for the main search tab and the select metadata dialog. */
+.op-search-param-off {
+    background: initial;
+    transition: background .4s;
+    -moz-transition: background .4s;
+    -webkit-transition: background .4s;
+}
+
+.op-search-param-on {
+    background: gainsboro;
+    transition: background .4s;
+    -moz-transition: background .4s;
+    -webkit-transition: background .4s;
+}
+
+.op-search-param-checkmark {
+    display: inline-block;
+}
+
+.op-search-param-checkmark-on {
+    opacity: 1;
+    transition: opacity .4s;
+    -moz-transition: opacity .4s;
+    -webkit-transition: opacity: .4s;
+}
+
+.op-search-param-checkmark-off {
+    opacity: 0;
+    transition: opacity .4s;
+    -moz-transition: opacity .4s;
+    -webkit-transition: opacity: .4s;
+}
+
 
 .card-header .icon-action {
     transition: .3s transform ease-in-out;
@@ -484,7 +519,7 @@ th.sticky-header {
     margin-bottom: -5px;
 }
 
-.allMetadata .submenu {
+.op-all-metadata-column .submenu {
     margin-left: 15px;
 }
 
@@ -836,14 +871,14 @@ nav.panel-heading {
     text-decoration: none;
 }
 
-.searchMenu a.search-param {
+.searchMenu a.op-search-param {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 70;
     color: initial;
 }
 
-.searchMenu a.search-param:hover {
+.searchMenu a.op-search-param:hover {
     text-decoration: none;
 }
 
@@ -898,10 +933,6 @@ nav.panel-heading {
 
 .widget-main label {
     font-size: 95%;
-}
-
-.sidebar_wrapper i.fa-check {
-    display: none;
 }
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
@@ -1017,8 +1048,30 @@ nav.panel-heading {
     overflow-y: hidden;
 }
 
+/* For the individual metadata categories - removes list bullet and
+   makes indent look like it did with bullet. Same for the product
+   type list. */
+.op-detail-category-metadata, .op-detail-product-list {
+    list-style: none;
+    padding-left: 22px;
+}
+
+/* For the product type list at the top of the detail page -
+   make each line wrap with the name of the product, not the tooltip. */
+.op-detail-product-entry {
+    display: flex;
+}
+
+.op-detail-product-entry-icon {
+    line-height: 21px;
+}
+
+.op-detail-file-list {
+    display: inline;
+}
+
 @media (min-width: 768px) {
-    .metadata-container {
+    .op-detail-metadata-container {
         flex-basis: 800px !important;
         -webkit-flex-basis: 800px !important;
         max-width: 800px !important;
