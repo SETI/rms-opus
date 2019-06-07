@@ -220,7 +220,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata2_vg_iss_2_s_c4360845_default_html_private(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 default html private"
         url = '/opus/__api/metadata_v2/vg-iss-2-s-c4360845.html'
-        expected = b'<ul id="detail__data_general_constraints">\n<li>\nPlanet: Saturn\n<i class="fa fa-info-circle"'
+        expected = b'<ul id="detail__data_general_constraints" class="op-detail-category-metadata">\n<li>\n<i class="fa fa-info-circle" data-toggle="tooltip"\ntitle="'
         self._run_html_startswith(url, expected)
 
     def test__api_metadata_vg_iss_2_s_c4360845_default_csv(self):
@@ -311,7 +311,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_html_private(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html private"
         url = '/opus/__api/metadata_v2/vg-iss-2-s-c4360845.html?cols=opusid'
-        expected = b'<ul class="op-detail-category-metadata">\n<li>\nOPUS ID: vg-iss-2-s-c4360845\n<i class="fa fa-info-circle" data-toggle="tooltip"\n'
+        expected = b'<ul class="op-detail-category-metadata">\n<li>\n<i class="fa fa-info-circle" data-toggle="tooltip"\ntitle="A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS. The OPUS ID is useful for referencing specific observations in a mission-independent manner but should never be used outside of OPUS. To reference an observation outside of OPUS, use the Volume ID, Product ID, and/or Primary File Spec. Note: The format of the OPUS ID is not guaranteed to remain the same over time."></i>\nOPUS ID: vg-iss-2-s-c4360845\n</li>\n</ul>'
         self._run_html_startswith(url, expected)
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_csv(self):
