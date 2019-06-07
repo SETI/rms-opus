@@ -969,7 +969,7 @@ var o_browse = {
                 o_menu.markMenuItem(this);
                 // this slug was previously unselected, add to cols
                 let html = `<li id="${chosenSlugSelector.substr(1)}">`;
-                html +=      `<span class="info op-search-param-checkmark op-search-param-checkmark-on"><i class="fas fa-info-circle" title="${def}"></i></span>`;
+                html +=      `<span class="info"><i class="fas fa-info-circle" title="${def}"></i></span>`;
                 html +=      `${label}`;
                 html +=      `<span class="unselect"><i class="far fa-trash-alt"></span>`;
                 html +=    `</li>`;

@@ -172,15 +172,8 @@ ul.searchMenu {
 
 /* Add or remove background and checkmark when a search item is active.
    This is both for the main search tab and the select metadata dialog. */
-.op-search-param-off {
+.op-search-param {
     background: initial;
-    transition: background .4s;
-    -moz-transition: background .4s;
-    -webkit-transition: background .4s;
-}
-
-.op-search-param-on {
-    background: gainsboro;
     transition: background .4s;
     -moz-transition: background .4s;
     -webkit-transition: background .4s;
@@ -188,22 +181,11 @@ ul.searchMenu {
 
 .op-search-param-checkmark {
     display: inline-block;
-}
-
-.op-search-param-checkmark-on {
-    opacity: 1;
-    transition: opacity .4s;
-    -moz-transition: opacity .4s;
-    -webkit-transition: opacity: .4s;
-}
-
-.op-search-param-checkmark-off {
     opacity: 0;
     transition: opacity .4s;
     -moz-transition: opacity .4s;
     -webkit-transition: opacity: .4s;
 }
-
 
 .card-header .icon-action {
     transition: .3s transform ease-in-out;
