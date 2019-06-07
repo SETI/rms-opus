@@ -879,7 +879,7 @@ var opus = {
         if ($.cookie("visited") === undefined ||
             $.cookie("visited") < opus.splashVersion) {
             // set the cookie for the first time user
-            $.cookie("visited", opus.splashVersion);
+            $.cookie("visited", opus.splashVersion, {expires: 1000000});
             opus.displaySplashDialog();
         }
     }
