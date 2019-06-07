@@ -6,6 +6,10 @@
 /* globals $, PerfectScrollbar */
 /* globals o_browse, o_hash, opus */
 
+// The download options left pane will become a slide panel when screen width
+// is equal to or less than the threshold point.
+const cartLeftPaneThreshold = 900;
+
 /* jshint varstmt: false */
 var o_cart = {
 /* jshint varstmt: true */
@@ -23,7 +27,6 @@ var o_cart = {
     downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
         minScrollbarLength: opus.minimumPSLength
     }),
-
     // these vars are common w/o_browse
     reloadObservationData: true, // start over by reloading all data
     observationData: {},  // holds observation column data
@@ -88,6 +91,36 @@ var o_cart = {
                 $("#op-cart-status-error-msg").modal("show");
             }
         });
+
+        // Click to open the download options panel when that nav-link is availabe
+        $("#cart").on("click", ".slideLeftPane", function(e) {
+            o_cart.displayCartLeftPane();
+            $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
+                $(".op-overlay").addClass("active");
+            });
+        });
+
+        // Clicking on the "X" in the corner of the download options panel
+        $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
+            $("#op-cart-download-panel").toggle("slide", {direction: "left"});
+            $(".op-overlay").removeClass("active");
+            return false;
+        });
+    },
+
+    displayCartLeftPane: function() {
+        /**
+         * Move download options elements between original left pane and slide panel
+         * depending on the screen width
+         */
+        // We use detach here to keep the event handlers attached to elements
+        let html = $("#op-download-options-container").detach();
+        if ($(window).width() <= cartLeftPaneThreshold) {
+            $("#op-cart-download-panel .op-card-contents").html(html);
+        } else {
+            $(".cart_details").html(html);
+        }
+        o_cart.adjustProductInfoHeight();
     },
 
     // download filters
@@ -139,7 +172,12 @@ var o_cart = {
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cartSummaryHeight = $("#cart_summary").height();
+        let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         $("#cart .gallery-contents").height(containerHeight);
+        
+        if ($(window).width() < cartLeftPaneThreshold) {
+            downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
+        }
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
 
         // The following steps will hide the y-scrollbar when it's not needed.
@@ -200,6 +238,9 @@ var o_cart = {
                 success: function(html) {
                     // this div lives in the in the nav menu template
                     $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
+                    // Depending on the screen width, we move download options elements
+                    // to either original left pane or slide panel
+                    o_cart.displayCartLeftPane();
 
                     if (o_cart.downloadInProcess) {
                         $(".spinner", "#cart_summary").fadeIn();

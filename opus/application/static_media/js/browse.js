@@ -267,7 +267,7 @@ var o_browse = {
 
         $(".modal-dialog").draggable({
             handle: ".modal-content",
-            cancel: ".metadata",
+            cancel: ".contents",   // Change from ".metadata" to ".contents"
             drag: function(event, ui) {
                 o_browse.hideMenu();
             }

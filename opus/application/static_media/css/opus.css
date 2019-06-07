@@ -850,7 +850,7 @@ nav.panel-heading {
 
 @media (max-width: 992px) {
     /* keep the 2nd navbar in a row when window is narrow */
-    .browse-nav-container .navbar-nav {
+    #browse .browse-nav-container .navbar-nav {
         flex-direction: row;
     }
 }
@@ -862,28 +862,29 @@ nav.panel-heading {
     }
 }
 
+/* Browse view navbar responsiveness  */
 @media (max-width: 1000px) {
     /* Move down the sort pill area so that slider can be moved down
     to the 2nd line */
-    .sort-order-container {
-        padding-top: 3.5em;
+    #browse .sort-order-container {
+        margin-top: 3.5em;
     }
 
     /* Move the last item in flexbox to the 2nd line */
-    .browse-nav-container .navbar-nav {
+    #browse .browse-nav-container .navbar-nav {
         flex-wrap: wrap;
         width: 100%;
     }
 
     /* Last item in flex box (slider) will take up 100% of spaces in the
      2nd line */
-    .browse-nav-container .nav-item:last-child {
+    #browse .browse-nav-container .nav-item:last-child {
         flex-basis: 100%;
     }
 
     /* The first 3 items in flexbox will share the 1st line evenly, 33%
     for each item */
-    .browse-nav-container .nav-item:nth-child(-n+3) {
+    #browse .browse-nav-container .nav-item:nth-child(-n+3) {
         flex: 1 0 33%;
     }
 
@@ -913,6 +914,85 @@ nav.panel-heading {
     height: 1.6em;
     width: 4.2em;
     text-align: center;
+}
+
+/* Cart view navbar responsiveness */
+@media (max-width: 1100px) {
+    /*  keep the 2nd navbar in a row and move some options to the 2nd
+    line when screen is narrow */
+    #cart .browse-nav-container .navbar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make the 2nd navbar options take up 80% of width when screen is
+    narrow */
+    #cart .browse-nav-container .navbar-nav:first-child {
+        flex: 1 0 80%;
+    }
+
+    /* Make empty cart button take up 20% of width when screen is narrow */
+    #cart .browse-nav-container .navbar-nav:nth-child(2) {
+        flex: 1 0 20%;
+    }
+
+    /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 3.5em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #cart .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Hide download options pane when screen is narrow */
+    .cart_details {
+        display: none;
+        max-width: 40%;
+        min-width: 10%;
+        padding-left: 0px;
+
+    }
+
+    /* Add a nav-link option for user to open the donwload options panel
+    when screen is narrow */
+    .op-toggle-left-pane {
+        display: flex !important;
+    }
+
+    /* Make sure gallery-contents not cut off by the right edge of the
+    screen */
+    #cart .gallery-contents {
+        padding-left: 10px;
+    }
+
+    /* Remove the white space at the bottom of gallery-contents when screen
+    is narrow */
+    #cart .cart-gallery-side {
+        height: 100vh;
+    }
+}
+
+/* Remove the nav-link for opening up download options panel when screen
+is wide enough */
+@media (min-width: 901px) {
+    .op-toggle-left-pane {
+        display: none !important;
+    }
+}
+
+/* download options panel */
+#op-cart-download-panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    z-index: 9999;
+    top: 2em;
 }
 
 .sort-order-container {
@@ -1069,6 +1149,7 @@ nav.panel-heading {
     display: none;
     width: 500px;
 }
+
 .widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }

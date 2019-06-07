@@ -557,9 +557,10 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
-        let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
-        let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let adjustMetadataSelectorMenuPSDB = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
+        let adjustSelectedMetadataPSDB = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
             adjustSearchHeightDB();
@@ -568,9 +569,10 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            adjustMetadataSelectorMenuPS();
-            adjustSelectedMetadataPS();
-            adjustBrowseDialogPS();
+            adjustMetadataSelectorMenuPSDB();
+            adjustSelectedMetadataPSDB();
+            adjustBrowseDialogPSDB();
+            displayCartLeftPaneDB();
             opus.checkBrowserSize();
         });
 
