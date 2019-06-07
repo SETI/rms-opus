@@ -45,18 +45,20 @@
                                                         {% else %}
                                                             {{ p.body_qualified_label }}
                                                         {% endif %}
-                                                      " data-slug="{{ p.slug }}" class="search-param" href="#">
-                                                        <i class="fa fa-check"></i>
+                                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                                        <span class="op-search-param-checkmark">
+                                                            <i class="fa fa-check"></i>
+                                                        </span>
                                                         {% if menu.data.labels_view == 'results' %}
-                                                            {{ p.label_results }}
                                                             {% if p.get_tooltip_results %}
                                                                 <i class="fa fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
                                                             {% endif %}
+                                                            {{ p.label_results }}
                                                         {% else %}
-                                                            {{ p.label }}
                                                             {% if p.get_tooltip %}
                                                                 <i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
                                                             {% endif %}
+                                                            {{ p.label }}
                                                         {% endif %}
                                                     </a>
                                                 </li>
@@ -83,18 +85,20 @@
                                         {% else %}
                                             {{ p.body_qualified_label }}
                                         {% endif %}
-                                      " data-slug="{{ p.slug }}" class="search-param" href="#">
-                                        <i class = "fa fa-check"></i>
+                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                        <span class="op-search-param-checkmark">
+                                            <i class = "fa fa-check"></i>
+                                        </span>
                                         {% if menu.data.labels_view == 'results' %}
-                                            {{ p.label_results }}
                                             {% if p.get_tooltip_results %}
                                                 <i class="fa fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
                                             {% endif %}
+                                            {{ p.label_results }}
                                         {% else %}
-                                            {{ p.label }}
                                             {% if p.get_tooltip %}
                                                 <i class="fa fa-info-circle" title="{{ p.get_tooltip }}"></i>
                                             {% endif %}
+                                            {{ p.label }}
                                         {% endif %}
                                     </a>
                                 </li>

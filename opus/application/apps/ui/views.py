@@ -416,6 +416,15 @@ def api_init_detail_page(request, **kwargs):
                 file_list[i] = {'filename': fn,
                                 'link': file_list[i]}
             product_info['files'] = file_list
+            try:
+                entry = Definitions.objects.get(
+                                    context__name='OPUS_PRODUCT_TYPE',
+                                    term=product_type[2])
+                product_info['tooltip'] = entry.definition
+            except Definitions.DoesNotExist:
+                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+                          product_type[2])
+                product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
 
     context = {

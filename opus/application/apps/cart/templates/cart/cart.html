@@ -26,10 +26,10 @@
                                     class="fadey"
                                 {% endif %}
                             >
-                                {{ product_info.product_type }}
                                 {% if product_info.tooltip %}
-                                    <i class="fa fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                    &nbsp;&nbsp;<i class="fa fa-info-circle" title="{{ product_info.tooltip }}"></i>
                                 {% endif %}
+                                {{ product_info.product_type }}
                                 <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
                             </span>
                         </li>
