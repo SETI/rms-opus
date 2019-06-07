@@ -876,16 +876,16 @@ nav.panel-heading {
         width: 100%;
     }
 
-    /* Last item in flex box (slider) will take up 100% of spaces in the
-     2nd line */
-    #browse .browse-nav-container .nav-item:last-child {
-        flex-basis: 100%;
+    /* Make sure first 3 options in 2nd navbar have space between each
+    other */
+    #browse .browse-nav-container .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
 
-    /* The first 3 items in flexbox will share the 1st line evenly, 33%
-    for each item */
-    #browse .browse-nav-container .nav-item:nth-child(-n+3) {
-        flex: 1 0 33%;
+    /* Move slider to the 2nd line when screen is narrow */
+    #browse .browse-nav-container {
+        flex-wrap: wrap;
     }
 
     /* When slider is at the 2nd line, make it take up 75% of width.
@@ -894,6 +894,18 @@ nav.panel-heading {
     #op-observation-slider.ui-slider {
         width: 75% !important;
     }
+
+    /* When slider is at 2nd line, its container will take up 100% of
+    width */
+    .op-slider-nav {
+        flex-basis: 100% !important;
+    }
+}
+
+/* Make slider stays next to other options in 2nd navbar */
+.op-slider-nav {
+    flex-basis: 80%;
+    padding-left: 0;
 }
 
 .browse-nav-container {
@@ -1037,6 +1049,8 @@ is wide enough */
 }
 
 #op-observation-slider.ui-slider {
+    /* Note: set this to percentage will make slider grow when screen
+    is wider */
     width: 400px;
     height: .1em;
 }
