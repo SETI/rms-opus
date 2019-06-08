@@ -10,12 +10,12 @@
                     <p>Download zipped <a data-action="downloadData" href="#" download>data archive</a> or <a data-action="downloadURL" href="#" download>URL archive</a> for this observation (all products, current version only).</a></p>
                     <p>Click on any "Index" type to see the entry for this observation in that table.</p>
                     {% for version, version_items in products.items %}
-                        <ul class="op-detail-product-list">
+                        <ul class="op-detail-list">
                             <h4>Version: {{ version }}</h4>
                             {% for product_type, product_type_info in version_items.items %}
-                                <li class="op-detail-product-entry">
+                                <li class="op-detail-entry">
                                     {% if product_type_info.tooltip %}
-                                        <i class="fa fa-info-circle op-detail-product-entry-icon" title="{{ product_type_info.tooltip }}"></i>&nbsp;
+                                        <i class="fa fa-info-circle op-detail-entry-icon" title="{{ product_type_info.tooltip }}"></i>&nbsp;
                                     {% endif %}
                                     <div>
                                         {% if product_type_info.product_link %}

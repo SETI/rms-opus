@@ -1374,18 +1374,18 @@ is wide enough */
 /* For the individual metadata categories - removes list bullet and
    makes indent look like it did with bullet. Same for the product
    type list. */
-.op-detail-category-metadata, .op-detail-product-list {
+.op-detail-list {
     list-style: none;
     padding-left: 22px;
 }
 
 /* For the product type list at the top of the detail page -
    make each line wrap with the name of the product, not the tooltip. */
-.op-detail-product-entry {
+.op-detail-entry {
     display: flex;
 }
 
-.op-detail-product-entry-icon {
+.op-detail-entry-icon {
     line-height: 21px;
 }
 
