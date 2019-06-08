@@ -549,9 +549,11 @@ var o_browse = {
             let pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
             let orderEntrySlug = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
 
-            // retrieve label from either displayed header's data-label attribute or displayed pill's text
-            let label = $(`.op-data-table-view th a[data-slug="${orderEntrySlug}"]`).data("label") || $(`.sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text();
-
+            // Retrieve label from either displayed header's data-label attribute or displayed pill's text
+            // The browse and cart sort pills will always be identical so we just get the one from browse
+            // here. If we don't specify one, we end up getting two elements.
+            let label = ($(`.op-data-table-view th a[data-slug="${orderEntrySlug}"]`).data("label") ||
+                         $(`#browse .sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).first().text());
             listHtml += "<li class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntrySlug}" data-descending="${isPillOrderDesc}">`;
             if (orderEntrySlug !== "opusid") {
