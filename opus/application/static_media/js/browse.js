@@ -267,7 +267,7 @@ var o_browse = {
 
         $(".modal-dialog").draggable({
             handle: ".modal-content",
-            cancel: ".contents",   // Change from ".metadata" to ".contents"
+            cancel: ".contents",
             drag: function(event, ui) {
                 o_browse.hideMenu();
             }
@@ -1736,7 +1736,7 @@ var o_browse = {
     calculateGalleryWidth: function(view) {
         let tab = opus.getViewTab(view);
         let width = $(`${tab} .gallery-contents`).width();
-        if (width === 0) {
+        if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
                 let leftPanelWidth = parseInt($(".cart_details").css("min-width"));

@@ -97,7 +97,7 @@ var opus = {
         "opera": 42,
         "safari": 10.1,
         "width": 600,
-        "height": 200
+        "height": 350
     },
 
     // current splash page version for storing in the visited cookie
@@ -867,7 +867,7 @@ var opus = {
          * than 275px. If so, display a modal to inform the user to
          * resize the browser size.
          */
-        let modalMsg = (`Please resize your browser. OPUS works best with a browser
+        let modalMsg = (`Please resize your browser. OPUS requires a browser
                         size of at least ${opus.browserSupport.width} pixels by
                         ${opus.browserSupport.height} pixels.`);
         $("#op-browser-size-msg .modal-body").html(modalMsg);

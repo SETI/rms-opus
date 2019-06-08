@@ -427,6 +427,8 @@ th.sticky-header {
     /*  avoid seeing through at the top of header */
     border-top: 0px;
     position: sticky;
+    /* Make sure table header is sticky in Safari */
+    position: -webkit-sticky;
     top: 0;
     z-index: 10;
     background-color: black;
@@ -951,13 +953,12 @@ nav.panel-heading {
 
     /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
     #cart .sort-order-container {
-        margin-top: 3.5em;
+        margin-top: 1.5em;
     }
 
     /* Keep left/right spaces between 2nd navbar options */
     #cart .nav-link {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
+        padding: 0 0.5rem;
     }
 }
 
@@ -975,6 +976,8 @@ nav.panel-heading {
     when screen is narrow */
     .op-toggle-left-pane {
         display: flex !important;
+        padding-left: 0.5em;
+        padding-top: 0.5em;
     }
 
     /* Make sure gallery-contents not cut off by the right edge of the
@@ -988,6 +991,12 @@ nav.panel-heading {
     #cart .cart-gallery-side {
         height: 100vh;
     }
+
+    /* When download options left pane is hidden, and the 2nd navbar options
+    stay in one line, we move up the sorting pill */
+    #cart .sort-order-container {
+        margin-top: 0;
+    }
 }
 
 /* Remove the nav-link for opening up download options panel when screen
@@ -995,6 +1004,14 @@ is wide enough */
 @media (min-width: 901px) {
     .op-toggle-left-pane {
         display: none !important;
+    }
+}
+
+@media (max-width: 765px) {
+    /* When download options left pane is hidden, move down cart tab
+    sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
     }
 }
 
@@ -1316,15 +1333,23 @@ is wide enough */
     flex: 1 1 50%;
 }
 
-@media (max-height: 500px) {
+/* @media (max-height: 500px) { */
+@media (max-height: 520px) {
     /* Make detail image fit the screen when its height is short */
     .detail_img img {
-        max-height: 60vh !important;
+        max-height: 50vh !important;
     }
 
     /* Reduce the top space above the detail image when screen is short */
     .detail_img {
         padding-top: 1% !important;
+    }
+
+}
+
+@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
+    .detail_img p {
+        font-size: 0.5rem;
     }
 }
 
@@ -1335,6 +1360,7 @@ to the left pane when screen is getting too wide */
 }
 
 @media (max-width: 768px) {
+/* @media (max-width: 905px) { */
     /* Move the detail image on top of the left pane */
     .op-detail-content {
         flex-wrap: wrap-reverse;
@@ -1342,6 +1368,7 @@ to the left pane when screen is getting too wide */
 }
 
 @media (max-width: 767px) {
+/* @media (max-width: 904px) { */
     /* Set detail image size when it's above the left pane */
     .detail_img img {
         width: 150px;
@@ -1358,8 +1385,10 @@ to the left pane when screen is getting too wide */
 also set its min width to be 150px */
 .detail_img img {
     max-width: 100%;
-    min-width: 150px;
-    max-height: 70vh;
+    min-width: 90px;
+    max-height: 60vh;
+    /* min-width: 150px;
+    max-height: 70vh; */
 }
 
 /* TODO: use @media to fine tune the heights of footer & nav bar

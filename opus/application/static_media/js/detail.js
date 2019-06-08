@@ -109,7 +109,8 @@ var o_detail = {
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
         o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata", {
-            minScrollbarLength: opus.minimumPSLength
+            minScrollbarLength: opus.minimumPSLength,
+            suppressScrollX: true,
         });
         o_detail.adjustDetailHeight();
     },
