@@ -83,9 +83,6 @@ var opus = {
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
     menuState: {"cats": ["obs_general"]},
 
-    // Help panel
-    helpPanelOpen: false,
-
     // these are for the process that detects there was a change in the selection criteria and
     // updates things
     mainTimer: false,
@@ -384,15 +381,20 @@ var opus = {
 
     },
 
-    hideHelpPanel: function() {
+    hideHelpAndCartPanels: function() {
         /**
-         * If the "Help" panel is currently open, close it.
+         * If the "Help" panel or cart download panel is currently open, close it.
          */
-        if (opus.helpPanelOpen) {
+        if ($("#op-help-panel").hasClass("active")) {
             $("#op-help-panel").toggle("slide", {direction: "right"});
+            $("#op-help-panel").removeClass("active");
             $(".op-overlay").removeClass("active");
         }
-        opus.helpPanelOpen = false;
+        if ($("#op-cart-download-panel").hasClass("active")) {
+            $("#op-cart-download-panel").toggle("slide", {direction: "left"});
+            $("#op-cart-download-panel").removeClass("active");
+            $(".op-overlay").removeClass("active");
+        }
     },
 
     adjustHelpPanelHeight: function() {
@@ -600,7 +602,7 @@ var opus = {
 
         // Clicking on the "X" in the corner of the help pane
         $("#op-help-panel .close, .op-overlay").on("click", function() {
-            opus.hideHelpPanel();
+            opus.hideHelpAndCartPanels();
             return false;
         });
 
@@ -625,7 +627,7 @@ var opus = {
                     }
                 });
 
-                opus.hideHelpPanel();
+                opus.hideHelpAndCartPanels();
             }
         });
 
@@ -714,7 +716,8 @@ var opus = {
             });
         }
         $("#op-help-panel").toggle("slide", {direction:"right"}, function() {
-            $(".op-overlay").addClass("active");
+            $(".op-overlay").addClass("active"); // This shows the panel
+            $("#op-help-panel").addClass("active"); // This is for keeping track of what's open
         });
         $.ajax({
             url: url,
@@ -722,7 +725,6 @@ var opus = {
             success: function(page) {
                 $("#op-help-panel .loader").hide();
                 $("#op-help-panel .op-card-contents").html(page);
-                opus.helpPanelOpen = true;
             }
         });
     },
