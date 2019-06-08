@@ -25,7 +25,7 @@ body {
     width: 3em !important;
 }
 
-@media(max-width: 992px) {
+@media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
         display: block;
@@ -36,6 +36,19 @@ body {
     }
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
+    }
+
+    /* Make items in hamburger stay in one line, not sure if we want this? */
+    #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
+        display: flex;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Add spaces between each nav-link item */
+    #op-tab .nav-link {
+        padding-left: 7px;
+        padding-right: 7px;
     }
 }
 
@@ -57,7 +70,9 @@ body {
     position: absolute;
     left: 0;
     margin: 0;
-
+    /* Make the whole search page shrink proportionally when window
+    is narrower */
+    width: 100%;
 }
 
 #search .add_input {
@@ -139,7 +154,62 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    max-width: 400px;
+    max-width: 380px;
+}
+
+/* As long as q-type shrink to the 2nd line, we set text input width
+to 100%, this will make the shrinking look smoother */
+@media (max-width: 970px) {
+    /* Make text input shrink proportionally when window is narrow */
+    #op-search-widgets input[type="text"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 860px) {
+    /* Make search menu shrink proportionally when screen width is narrower */
+    .sidebar-area {
+        max-width: 44%;
+    }
+
+    /* Make sure scrollbar is not covered by search menu item when search
+    menu item is hovered over */
+    #sidebar-container .ps__rail-y {
+        z-index: 999;
+    }
+
+    /* Make sure widget area can take up at least 50% of screen */
+    #widget-container {
+        min-width: 50%;
+    }
+}
+
+@media (max-width: 725px) {
+    /* Make both reset buttons stay in one line when screen is narrow */
+    .op-reset-button {
+        display: flex;
+    }
+    /* Make sure all left menu contents not cut off when screen is narrow */
+    .searchMenu > li {
+        width: 80%;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Remove left space of search menu when screen width is narrower */
+    .sidebar-area {
+        /* max-width: 50%; */
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 670px) {
+    /* Remove button padding so both reset buttons can stay in one line
+    when window width is about 600px*/
+    .op-reset-button button {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
 }
 
 /* If the menu category (in the search pane or metadata selector) is collapsed,
@@ -295,6 +365,11 @@ ul.searchMenu {
     border-radius: 1%;
 }
 
+/* Make sure "x" button in metadata-dialog is not cut off */
+.modal-content .close i {
+    line-height: 1.1em;
+}
+
 .modal-footer .left-container {
     width: 74%;
 }
@@ -394,6 +469,8 @@ th.sticky-header {
     /*  avoid seeing through at the top of header */
     border-top: 0px;
     position: sticky;
+    /* Make sure table header is sticky in Safari */
+    position: -webkit-sticky;
     top: 0;
     z-index: 10;
     background-color: black;
@@ -503,8 +580,33 @@ th.sticky-header {
     text-decoration: none;
 }
 
+/* prevent weird browser y-scrollbar */
+#op-metadata-selector {
+    overflow-y: hidden;
+}
+
+/* make modal width shrink smoothly with screen */
+#op-metadata-selector .modal-dialog {
+    /* max-width: 1100px; */
+    max-width: 92%;
+}
+
+/* Make both "Save Changes" and "Discard Changes" stay in one line */
+#op-metadata-selector .right-container {
+    display: flex;
+}
+
+/* Make white space (padding) in metadata selector menu responsive */
+#op-metadata-selector .searchMenu {
+    padding-right: 7%;
+}
+
+/* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column, .op-selected-metadata-column {
-    height: 450px;
+    padding-left: 1.5%;
+    padding-right: 1.5%;
+    /* make metadata selector modal height responsive */
+    max-height: calc(75vh - 150px);
     overflow: scroll;
     overflow-x: auto;
 }
@@ -585,11 +687,6 @@ th.sticky-header {
     display: none;
 }
 
-img.preview {
-    max-width: 400px !important;
-    max-height: 400px !important;
-}
-
 @media (min-width: 1200px) {
     .modal-lg {
         max-width: 1100px !important;
@@ -601,7 +698,53 @@ img.preview {
     }
 }
 
+/* make image preview in the modal strechable when screen is resized */
+img.preview {
+    /* make image responsive to horizontal shrinking */
+    max-width: 100% !important;
+    /* make image responsive to vertical shrinking */
+    max-height: 70vh !important;
+}
+
+/* make modal width shrink smoothly with screen */
+#galleryView .modal-dialog {
+    max-width: 92%;
+}
+
+/* make sure left/right hand icon in metadata dialog stay in the same line
+when window sized is narrow */
+#galleryView .op-obs-direction {
+    flex-grow: 3;
+}
+
+/* prevent modal from shirnking to a too small window when resizing horizontally */
+#galleryView .left, #galleryView .right {
+    min-height: 75vh;
+}
+
+#galleryViewContents .metadata {
+    overflow-y: auto;
+    /* Make #galleryView modal right contents shrink vertically
+    95% for the metadata info, 5% for the bottom icons */
+    height: 95%;
+    width: 100%;
+    /* make ps stick to the right of the modal when screen is resizing */
+    position: absolute;
+    right: 0;
+}
+
+@media (max-height: 300px) {
+    #galleryViewContents .metadata {
+        height: 85%;
+    }
+    #galleryView .bottom {
+        height: 15%;
+    }
+}
+
+/* prevent weird browser y-scrollbar */
 #galleryView {
+    overflow-y: hidden;
     pointer-events: none;
     z-index: 999;
 }
@@ -624,6 +767,13 @@ img.preview {
     bottom: 0;
     width: 100%;
     z-index: 1030;
+    /* All icons in metadata display will stay at the bottom */
+    align-items: flex-end;
+    /* align-item for Safari */
+    -webkit-align-items: end;
+    /* Right container in metadata display
+    95% for the metadata info, 5% for the bottom icons */
+    height: 5%;
 }
 
 #galleryView .op-obs-direction {
@@ -636,18 +786,11 @@ img.preview {
 
 #galleryViewContents {
     position: relative;
-    height: 625px;
-}
-
-#galleryViewContents .metadata {
-    overflow-y: auto;
-    max-height: 500px;
-    width: 440px;
-    position: fixed;
+    /* height: 625px; */
 }
 
 #galleryViewContents .left {
-    height: 590px;
+    /* height: 590px; */
 }
 
 #galleryView .modal-dialog:hover {
@@ -749,20 +892,183 @@ nav.panel-heading {
     align-items: flex-start;
 }
 
+@media (max-width: 992px) {
+    /* keep the 2nd navbar in a row when window is narrow */
+    #browse .browse-nav-container .navbar-nav {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 1050px) {
+    /* Remove the left space of Observation # */
+    .op-observation-text {
+        margin-left: 0px !important;
+    }
+}
+
+/* Browse view navbar responsiveness  */
+@media (max-width: 1000px) {
+    /* Move down the sort pill area so that slider can be moved down
+    to the 2nd line */
+    #browse .sort-order-container {
+        margin-top: 1.75em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #browse .nav-link {
+        padding: 0 0.5rem;
+    }
+
+    /* Move the last item in flexbox to the 2nd line */
+    #browse .browse-nav-container .navbar-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make sure first 3 options in 2nd navbar have space between each
+    other */
+    #browse .browse-nav-container .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Move slider to the 2nd line when screen is narrow */
+    #browse .browse-nav-container {
+        flex-wrap: wrap;
+    }
+
+    /* When slider is at the 2nd line, make it take up 75% of width.
+    Note that if we set to 100% the slider bar will be cut off when it's
+    moved to the end of the slider */
+    #op-observation-slider.ui-slider {
+        width: 75% !important;
+    }
+
+    /* When slider is at 2nd line, its container will take up 100% of
+    width */
+    .op-slider-nav {
+        flex-basis: 100% !important;
+    }
+}
+
+/* Make slider stays next to other options in 2nd navbar */
+.op-slider-nav {
+    flex-basis: 80%;
+    padding-left: 0.5rem;
+}
+
 .browse-nav-container {
     height: 1.5em;
     width: 100%;
+    /* display the 2nd navbar in browse view */
+    display: flex;
 }
 
 .browse-nav-container li {
     display: flex;
     align-items: center;
+    /* This will make text stay in one line without wrapping */
+    white-space: nowrap;
 }
 
 .browse-nav-container li input {
     height: 1.6em;
     width: 4.2em;
     text-align: center;
+}
+
+/* Cart view navbar responsiveness */
+@media (max-width: 1100px) {
+    /*  keep the 2nd navbar in a row and move some options to the 2nd
+    line when screen is narrow */
+    #cart .browse-nav-container .navbar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make the 2nd navbar options take up 80% of width when screen is
+    narrow */
+    #cart .browse-nav-container .navbar-nav:first-child {
+        flex: 1 0 80%;
+    }
+
+    /* Make empty cart button take up 20% of width when screen is narrow */
+    #cart .browse-nav-container .navbar-nav:nth-child(2) {
+        flex: 1 0 20%;
+    }
+
+    /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #cart .nav-link {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Hide download options pane when screen is narrow */
+    .cart_details {
+        display: none;
+        max-width: 40%;
+        min-width: 10%;
+        padding-left: 0px;
+
+    }
+
+    /* Add a nav-link option for user to open the donwload options panel
+    when screen is narrow */
+    .op-cart-toggle-download-panel {
+        display: flex !important;
+        padding-left: 0.5em;
+        padding-top: 0.5em;
+    }
+
+    /* Make sure gallery-contents not cut off by the right edge of the
+    screen */
+    #cart .gallery-contents {
+        padding-left: 10px;
+    }
+
+    /* Remove the white space at the bottom of gallery-contents when screen
+    is narrow */
+    #cart .cart-gallery-side {
+        height: 100vh;
+    }
+
+    /* When download options left pane is hidden, and the 2nd navbar options
+    stay in one line, we move up the sorting pill */
+    #cart .sort-order-container {
+        margin-top: 0;
+    }
+}
+
+/* Remove the nav-link for opening up download options panel when screen
+is wide enough */
+@media (min-width: 901px) {
+    .op-cart-toggle-download-panel {
+        display: none !important;
+    }
+}
+
+@media (max-width: 765px) {
+    /* When download options left pane is hidden, move down cart tab
+    sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+}
+
+/* download options panel */
+#op-cart-download-panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    z-index: 9999;
+    top: 2em;
 }
 
 .sort-order-container {
@@ -793,7 +1099,6 @@ nav.panel-heading {
 
 @media (max-width: 700px) {
     .browse-nav-container li {
-        border: 1px solid #383838;
         padding: 0;
         text-align: center;
     }
@@ -807,6 +1112,8 @@ nav.panel-heading {
 }
 
 #op-observation-slider.ui-slider {
+    /* Note: set this to percentage will make slider grow when screen
+    is wider */
     width: 400px;
     height: .1em;
 }
@@ -886,6 +1193,11 @@ nav.panel-heading {
     border-top: 0 none;
 }
 
+/* Reduce left space in each widget (from 50px to 10px) */
+#op-search-widgets ul {
+    padding-left: 10px;
+}
+
 #op-search-widgets li {
     display: inline;
     list-style-type: none;
@@ -899,7 +1211,10 @@ nav.panel-heading {
 
 #op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
-    padding-right: 2em;
+    /* Make left/right space of widgets are shrink proportionally when
+    screen is narrower */
+    padding-right: 3%;
+    padding-left: 3%;
 }
 
 .widget-main .range-qtype-helper {
@@ -911,6 +1226,7 @@ nav.panel-heading {
     display: none;
     width: 500px;
 }
+
 .widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }
@@ -947,7 +1263,8 @@ nav.panel-heading {
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
-    /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
+    /* Widget container can shrink to a minimum width = min-width when
+    browser width is shrinking */
     max-width: 740px;
     min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
@@ -1040,12 +1357,17 @@ nav.panel-heading {
 }
 
 /* detail tab */
-.detail-metadata {
-    position:fixed !important;
-    max-width: 700px;
-    top: 4.15em;
-    bottom: 3em;
-    overflow-y: hidden;
+.op-detail-metadata {
+    /* Make detail left pane shrink proportionally when window is narrow
+    and set its min width to be 470px (+ padding left/right: 30px) */
+    position: relative;
+    min-width: 470px;
+    max-width: 800px;
+}
+
+/* Make detail left pane takes up 50% of width */
+.op-detail-metadata-container {
+    flex: 1 0 50%;
 }
 
 /* For the individual metadata categories - removes list bullet and
@@ -1070,12 +1392,64 @@ nav.panel-heading {
     display: inline;
 }
 
-@media (min-width: 768px) {
-    .op-detail-metadata-container {
-        flex-basis: 800px !important;
-        -webkit-flex-basis: 800px !important;
-        max-width: 800px !important;
+/* Make detail right pane (img) takes up 50% of width */
+.op-detail-img {
+    flex: 1 1 50%;
+}
+
+@media (max-height: 520px) {
+    /* Make detail image fit the screen when its height is short */
+    .op-detail-img img {
+        max-height: 50vh !important;
     }
+
+    /* Reduce the top space above the detail image when screen is short */
+    .op-detail-img {
+        padding-top: 1% !important;
+    }
+
+}
+
+@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
+    .op-detail-img p {
+        font-size: 0.5rem;
+    }
+}
+
+/* Set max width of flexbox container so that detail image will keep close
+to the left pane when screen is getting too wide */
+.op-detail-content {
+    max-width: 1800px;
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Set detail image size when it's above the left pane */
+    .op-detail-img img {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Reduce the top space above the detail image when screen */
+    .op-detail-img {
+        padding-top: 0 !important;
+    }
+}
+
+/* Make detail image shrink proportionally when screen is resized, and
+also set its min width to be 150px */
+.op-detail-img img {
+    max-width: 100%;
+    min-width: 90px;
+    max-height: 60vh;
+    /* min-width: 150px;
+    max-height: 70vh; */
 }
 
 /* TODO: use @media to fine tune the heights of footer & nav bar
