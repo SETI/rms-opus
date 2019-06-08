@@ -1333,7 +1333,6 @@ is wide enough */
     flex: 1 1 50%;
 }
 
-/* @media (max-height: 500px) { */
 @media (max-height: 520px) {
     /* Make detail image fit the screen when its height is short */
     .detail_img img {
@@ -1360,7 +1359,6 @@ to the left pane when screen is getting too wide */
 }
 
 @media (max-width: 768px) {
-/* @media (max-width: 905px) { */
     /* Move the detail image on top of the left pane */
     .op-detail-content {
         flex-wrap: wrap-reverse;
@@ -1368,7 +1366,6 @@ to the left pane when screen is getting too wide */
 }
 
 @media (max-width: 767px) {
-/* @media (max-width: 904px) { */
     /* Set detail image size when it's above the left pane */
     .detail_img img {
         width: 150px;
