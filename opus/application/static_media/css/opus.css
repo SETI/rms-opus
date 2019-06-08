@@ -677,7 +677,7 @@ when window sized is narrow */
 
 /* prevent modal from shirnking to a too small window when resizing horizontally */
 #galleryView .left, #galleryView .right {
-    min-height: calc(75vh - 150px);
+    min-height: 75vh;
 }
 
 #galleryViewContents .metadata {
