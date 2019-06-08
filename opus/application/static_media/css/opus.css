@@ -688,8 +688,8 @@ when window sized is narrow */
 #galleryViewContents .metadata {
     overflow-y: auto;
     /* Make #galleryView modal right contents shrink vertically
-    90% for the metadata info, 10% for the bottom icons */
-    height: 90%;
+    95% for the metadata info, 5% for the bottom icons */
+    height: 95%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
@@ -735,8 +735,8 @@ when window sized is narrow */
     /* align-item for Safari */
     -webkit-align-items: end;
     /* Right container in metadata display
-    90% for the metadata info, 10% for the bottom icons */
-    height: 10%;
+    95% for the metadata info, 5% for the bottom icons */
+    height: 5%;
 }
 
 #galleryView .op-obs-direction {
