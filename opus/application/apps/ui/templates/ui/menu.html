@@ -3,7 +3,11 @@
         {% for div in menu.divs %}
             <li class="list-group-item py-2">
                 {#  Each div has a top-level catgory  #}
-                <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
+                {% if div.table_name == 'obs_general' %}
+                    <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
+                {% else %}
+                    <a href="#submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ div.table_name }}">
+                {% endif %}
                     <span class="title">{{ div.label }}</span>
                 </a>
 
@@ -26,7 +30,7 @@
                             {#  this div has sub_headings, level-3 menu sections... start sub_heading loop  #}
                             {% for sub_head,params in info.data.items %}
                                 <li class="list-group-item py-0 pl-0">
-                                    <a href="#submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ sub_head|slugify }}">
+                                    <a href="#submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ sub_head|slugify }}">
                                         <span class="menu-text title">{{ sub_head }}</span>
                                     </a>
                                     <ul class="list-group list-group-flush submenu collapse" id="submenu-{{ sub_head|slugify }}">

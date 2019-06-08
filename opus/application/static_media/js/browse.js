@@ -1116,8 +1116,8 @@ var o_browse = {
                 // we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li a", "unselect");
 
-                // disply check next to any default columns
-                $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
+                // display check next to any currently used columns
+                $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`.modal-body.metadata li > [data-slug="${col}"]`);
                 });
 
