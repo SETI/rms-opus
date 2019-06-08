@@ -893,12 +893,12 @@ var o_browse = {
     },
 
     addColumn: function(slug) {
-        let elem = $(`#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`);
-        elem.find("i.fa-check").fadeIn().css("display", "inline-block");
+        let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
+        o_menu.markMenuItem(menuSelector);
 
-        let label = elem.data("qualifiedlabel");
-        let info = '<i class = "fas fa-info-circle" title = "' + elem.find('*[title]').attr("title") + '"></i>';
-        let html = `<li id = "cchoose__${slug}">${label}${info}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
+        let label = $(menuSelector).data("qualifiedlabel");
+        let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
+        let html = `<li id="cchoose__${slug}">${info}${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
     },
 
@@ -910,7 +910,7 @@ var o_browse = {
         }
 
         // uncheck all on left; we will check them as we go
-        $("#op-metadata-selector .op-all-metadata-column .fa-check").hide();
+        o_menu.markMenuItem("#op-metadata-selector .op-all-metadata-column a", "unselect");
 
         // remove all from selected column
         $("#op-metadata-selector .op-selected-metadata-column li").remove();
@@ -964,25 +964,17 @@ var o_browse = {
             if (!slug) { return; }
 
             let chosenSlugSelector = `#cchoose__${slug}`;
-            let label = $(this).data('qualifiedlabel');
-
-            //CHANGE THESE TO USE DATA-ICON=
-            let def = $(this).find('i.fa-info-circle').attr("title");
+            let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
 
             if ($(chosenSlugSelector).length === 0) {
-                o_menu.markMenuItem(this);
                 // this slug was previously unselected, add to cols
-                let html = `<li id="${chosenSlugSelector.substr(1)}">`;
-                html +=      `<span class="info"><i class="fas fa-info-circle" title="${def}"></i></span>`;
-                html +=      `${label}`;
-                html +=      `<span class="unselect"><i class="far fa-trash-alt"></span>`;
-                html +=    `</li>`;
-                $(".op-selected-metadata-column > ul").append(html).fadeIn();
+                o_menu.markMenuItem(menuSelector);
+                o_browse.addColumn(slug);
                 opus.prefs.cols.push(slug);
             } else {
-                o_menu.markMenuItem(this, "unselected");
                 // slug had been checked, remove from the chosen
-                opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols),1);
+                o_menu.markMenuItem(menuSelector, "unselected");
+                opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols), 1);
                 $(chosenSlugSelector).remove();
             }
             return false;
@@ -1001,7 +993,8 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
-                $(`#op-metadata-selector .op-all-metadata-column [data-slug=${slug}]`).find("i.fa-check").hide();
+                let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
+                o_menu.markMenuItem(menuSelector, "unselected");
             }
             return false;
         });
@@ -1118,11 +1111,11 @@ var o_browse = {
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
                 // we need to unhighlight the selected widgets
-                o_menu.markMenuItem(".modal-body.metadata li a", "unselect");
+                o_menu.markMenuItem("#op-metadata-selector .op-all-metadata-column a", "unselect");
 
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
-                    o_menu.markMenuItem(`.modal-body.metadata li > [data-slug="${col}"]`);
+                    o_menu.markMenuItem(`#op-metadata-selector .op-all-metadata-column a[data-slug="${col}"]`);
                 });
 
                 o_browse.addMetadataSelectorBehaviors();
@@ -1207,11 +1200,13 @@ var o_browse = {
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
                 viewNamespace.observationData[opusId] = item.metadata;	// for galleryView, store in global array
 
+                let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge\r\Ctrl+click to toggle cart\r\nShift+click to start/end range`;
+
                 // gallery
                 let images = item.images;
                 galleryHtml += `<div class="thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
-                galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${item.obs_num} - ${opusId}\r\nClick to enlarge">`;
+                galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 galleryHtml += '<div class="modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
@@ -1219,20 +1214,20 @@ var o_browse = {
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
-                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail"><i class="fas fa-info-circle fa-xs"></i></a>';
+                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use CTRL for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
                 galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
-                galleryHtml +=     '<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>';
+                galleryHtml +=     '<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
 
                 // table row
                 let checked = item.in_cart ? " checked" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
-                let minimenu = `<a href="#" data-icon="menu"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="${item.obs_num}" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
-                let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}">`;
+                let minimenu = `<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
+                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="Toggle cart\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let tr = `<tr data-id="${opusId}" data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
                     row += `<td>${cell}</td>`;
                 });
@@ -1890,12 +1885,12 @@ var o_browse = {
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev}"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next}"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-hand-point-left fa-2x"></i></a>`;
+        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-hand-point-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}"><i class="fas fa-bars fa-2x"></i></a></div>`;
+        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
     },
 
@@ -1910,7 +1905,12 @@ var o_browse = {
 
 
     updateMetaGalleryView: function(opusId, imageURL) {
-        $("#galleryViewContents .left").html(`<a href='${imageURL}' target='_blank'><img src='${imageURL}' title='${opusId}' class='preview'/></a>`);
+        let tab = `#${opus.prefs.view}`;
+        let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
+        let obsNum = $(element).data("obs");
+        let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+
+        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
         o_browse.metadataboxHtml(opusId);
     },
 

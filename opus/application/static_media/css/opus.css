@@ -270,16 +270,16 @@ ul.searchMenu {
 }
 
 /* Remove hyperlink underlines from chevron and X on widget title */
-.card-header a {
+.widget .card-header a {
     text-decoration: none;
 }
 
 /* Rotate the chevron on a widget header to indicate its open/closed status */
-.card-header .icon-action {
+.widget .card-header .icon-action {
     transition: .3s;
 }
 
-.card-header .collapsed .icon-action {
+.widget .card-header .collapsed .icon-action {
     -ms-transform: rotate(-90deg); /* IE 9 */
     -ms-transform-origin: 80% 43%; /* IE 9 */
     -webkit-transform: rotate(-90deg); /* Safari 3-8 */
@@ -688,18 +688,19 @@ th.sticky-header {
 }
 
 @media (min-width: 1200px) {
+    /* This covers the metadata selector and slideshow */
     .modal-lg {
         max-width: 1100px !important;
         max-height: 1100px !important;
     }
-    img.preview {
+    img.op-slideshow-image-preview {
         max-width: 600px !important;
         max-height: 600px !important;
     }
 }
 
-/* make image preview in the modal strechable when screen is resized */
-img.preview {
+/* make image preview in the modal stretchable when screen is resized */
+img.op-slideshow-image-preview {
     /* make image responsive to horizontal shrinking */
     max-width: 100% !important;
     /* make image responsive to vertical shrinking */
