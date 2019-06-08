@@ -142,6 +142,18 @@ Not sure if this is the desired behavior
     max-width: 400px;
 }
 
+/* If the menu category (in the search pane or metadata selector) is collapsed,
+   then rotate the little triangle 90 degrees to indicate its status. */
+.searchMenu .dropdown-toggle::after {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+
+.searchMenu .dropdown-toggle.collapsed::after {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
 .sidebar_wrapper {
     display: flex;
     margin: 0;
@@ -187,17 +199,23 @@ ul.searchMenu {
     -webkit-transition: opacity: .4s;
 }
 
+/* Remove hyperlink underlines from chevron and X on widget title */
+.card-header a {
+    text-decoration: none;
+}
+
+/* Rotate the chevron on a widget header to indicate its open/closed status */
 .card-header .icon-action {
-    transition: .3s transform ease-in-out;
+    transition: .3s;
 }
 
 .card-header .collapsed .icon-action {
-    -ms-transform: rotate(90deg); /* IE 9 */
-    -ms-transform-origin: 80%; /* IE 9 */
-    -webkit-transform: rotate(90deg); /* Safari 3-8 */
-    -webkit-transform-origin: 80%; /* Safari 3-8 */
-    transform-origin: 80%;
-    transform: rotate(90deg);
+    -ms-transform: rotate(-90deg); /* IE 9 */
+    -ms-transform-origin: 80% 43%; /* IE 9 */
+    -webkit-transform: rotate(-90deg); /* Safari 3-8 */
+    -webkit-transform-origin: 80% 43%; /* Safari 3-8 */
+    transform: rotate(-90deg);
+    transform-origin: 80% 43%;
 }
 
 .thumbnail-container {
