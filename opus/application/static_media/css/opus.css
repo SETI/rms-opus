@@ -328,6 +328,11 @@ ul.searchMenu {
     border-radius: 1%;
 }
 
+/* Make sure "x" button in metadata-dialog is not cut off */
+.modal-content .close i {
+    line-height: 1.1em;
+}
+
 .modal-footer .left-container {
     width: 74%;
 }
