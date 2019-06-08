@@ -70,6 +70,14 @@ var o_mutationObserver = {
                         if (mutation.target.classList.value.match(/collapse/)) {
                             // If there is a collapse/expand happened (attribute changes), we only update ps at the last mutation when the animation finishes and class/style are finalized
                             adjustSearchSideBarHeight();
+
+                            // if the collapse opens below the viewable area, move the scrollbar
+                            // only move the scrollbar if we open the menu item
+                            if (mutation.target.classList.value.match(/show/) &&
+                               !$(mutation.target).children().last().isOnScreen("#sidebar")) {
+                                let containerHeight = o_search.searchBarContainerHeight();
+                                $("#sidebar-container").scrollTop(containerHeight);
+                            }
                         } else if (mutation.target.classList.value.match(/spinner/)) {
                             // If new submenu is added but spinner is still running, we update ps after spinner is done
                             adjustSearchSideBarHeight();

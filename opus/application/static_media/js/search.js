@@ -421,13 +421,22 @@ var o_search = {
         return content;
     },
 
+    searchBarContainerHeight: function() {
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let footerHeight = $(".app-footer").outerHeight();
+        let resetButtonHeight = $(".op-reset-button").outerHeight();
+        let dividerHeight = $(".shadow-divider").outerHeight();
+        let offset = mainNavHeight + footerHeight + resetButtonHeight + dividerHeight;
+        return $("#search").height() - offset;
+    },
+
     adjustSearchHeight: function() {
         o_search.adjustSearchSideBarHeight();
         o_search.adjustSearchWidgetHeight();
     },
 
     adjustSearchSideBarHeight: function() {
-        let containerHeight = $("#search").height() - 120;
+        let containerHeight = o_search.searchBarContainerHeight();
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
 
