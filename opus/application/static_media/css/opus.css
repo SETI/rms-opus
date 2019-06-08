@@ -869,7 +869,12 @@ nav.panel-heading {
     /* Move down the sort pill area so that slider can be moved down
     to the 2nd line */
     #browse .sort-order-container {
-        margin-top: 3.5em;
+        margin-top: 1.75em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #browse .nav-link {
+        padding: 0 0.5rem;
     }
 
     /* Move the last item in flexbox to the 2nd line */
@@ -907,7 +912,7 @@ nav.panel-heading {
 /* Make slider stays next to other options in 2nd navbar */
 .op-slider-nav {
     flex-basis: 80%;
-    padding-left: 0;
+    padding-left: 0.5rem;
 }
 
 .browse-nav-container {
@@ -1052,7 +1057,6 @@ is wide enough */
 
 @media (max-width: 700px) {
     .browse-nav-container li {
-        border: 1px solid #383838;
         padding: 0;
         text-align: center;
     }
