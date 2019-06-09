@@ -97,7 +97,7 @@ var opus = {
         "opera": 42,
         "safari": 10.1,
         "width": 600,
-        "height": 200
+        "height": 350
     },
 
     // current splash page version for storing in the visited cookie
@@ -557,6 +557,10 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
+        let adjustMetadataSelectorMenuPSDB = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
+        let adjustSelectedMetadataPSDB = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
             adjustSearchHeightDB();
@@ -565,11 +569,15 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
+            adjustMetadataSelectorMenuPSDB();
+            adjustSelectedMetadataPSDB();
+            adjustBrowseDialogPSDB();
+            displayCartLeftPaneDB();
             opus.checkBrowserSize();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
-        $("#op-main-nav").on("click", ".main_site_tabs .nav-item", function() {
+        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item", function() {
             if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
                 // this is a link to an external site or a link to open up a message modal
                 return true;
@@ -859,7 +867,7 @@ var opus = {
          * than 275px. If so, display a modal to inform the user to
          * resize the browser size.
          */
-        let modalMsg = (`Please resize your browser. OPUS works best with a browser
+        let modalMsg = (`Please resize your browser. OPUS requires a browser
                         size of at least ${opus.browserSupport.width} pixels by
                         ${opus.browserSupport.height} pixels.`);
         $("#op-browser-size-msg .modal-body").html(modalMsg);

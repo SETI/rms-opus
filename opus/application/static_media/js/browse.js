@@ -267,7 +267,7 @@ var o_browse = {
 
         $(".modal-dialog").draggable({
             handle: ".modal-content",
-            cancel: ".metadata",
+            cancel: ".contents",
             drag: function(event, ui) {
                 o_browse.hideMenu();
             }
@@ -701,8 +701,8 @@ var o_browse = {
                               Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
                               galleryBoundingRect.x :
                               Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
-            let obsNum = obsNumDiff + calculatedFirstObs;
 
+            let obsNum = obsNumDiff + calculatedFirstObs;
             if (browserResized) {
                 // At this point of time, galleryBoundingRect is updated with new row size
                 // from countGalleryImages in adjustBrowseHeight.
@@ -771,6 +771,8 @@ var o_browse = {
     showMetadataDetailModal: function(opusId) {
         o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId);
+        // this is to make sure modal is at its original position when open again
+        $("#galleryView .modal-dialog").css({top: 0, left: 0});
         $("#galleryView").modal("show");
 
         // Do the fake API call to write in the Apache log files that
@@ -941,6 +943,8 @@ var o_browse = {
         });
 
         $("#op-metadata-selector").on("show.bs.modal", function(e) {
+            // this is to make sure modal is back to it original position when open again
+            $("#op-metadata-selector .modal-dialog").css({top: 0, left: 0});
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
 
@@ -1116,8 +1120,8 @@ var o_browse = {
                 // we need to unhighlight the selected widgets
                 o_menu.markMenuItem(".modal-body.metadata li a", "unselect");
 
-                // disply check next to any default columns
-                $.each(opus.prefs.cols, function(index, col) { //CHANGE BELOW TO USE DATA-ICON=
+                // display check next to any currently used columns
+                $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`.modal-body.metadata li > [data-slug="${col}"]`);
                 });
 
@@ -1730,7 +1734,7 @@ var o_browse = {
     calculateGalleryWidth: function(view) {
         let tab = opus.getViewTab(view);
         let width = $(`${tab} .gallery-contents`).width();
-        if (width === 0) {
+        if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
                 let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
@@ -1773,48 +1777,54 @@ var o_browse = {
         let containerHeight = $(".op-all-metadata-column").height();
         let menuHeight = $(".op-all-metadata-column .searchMenu").height();
 
-        if (containerHeight > menuHeight) {
-            if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+        if (o_browse.allMetadataScrollbar) {
+            if (containerHeight > menuHeight) {
+                if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+            o_browse.allMetadataScrollbar.update();
         }
-        o_browse.allMetadataScrollbar.update();
     },
 
     adjustSelectedMetadataPS: function() {
         let containerHeight = $(".op-selected-metadata-column").height();
         let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
 
-        if (containerHeight > selectedMetadataHeight) {
-            if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+        if (o_browse.selectedMetadataScrollbar) {
+            if (containerHeight > selectedMetadataHeight) {
+                if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+            o_browse.selectedMetadataScrollbar.update();
         }
-        o_browse.selectedMetadataScrollbar.update();
     },
 
     adjustBrowseDialogPS: function() {
         let containerHeight = $("#galleryViewContents .metadata").height();
         let browseDialogHeight = $(".metadata .contents").height();
 
-        if (containerHeight > browseDialogHeight) {
-            if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
-                o_browse.modalScrollbar.settings.suppressScrollY = true;
+        if (o_browse.modalScrollbar) {
+            if (containerHeight > browseDialogHeight) {
+                if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.modalScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.modalScrollbar.settings.suppressScrollY = false;
             }
-        } else {
-            $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_browse.modalScrollbar.settings.suppressScrollY = false;
+            o_browse.modalScrollbar.update();
         }
-        o_browse.modalScrollbar.update();
     },
 
     cartButtonInfo: function(status) {
