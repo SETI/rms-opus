@@ -729,10 +729,8 @@ var o_browse = {
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
             // (this will be used to updated slider obsNum).
-            if (o_browse.isGalleryView()) {
-                obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
-                          galleryBoundingRect.x + 1);
-            }
+            obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
+                      galleryBoundingRect.x + 1);
 
             if (maxSliderVal >= obsNum) {
                 $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": obsNum});
@@ -1504,7 +1502,7 @@ var o_browse = {
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
-                        if (infiniteScrollData) {
+                        if (infiniteScrollData && obsNum <= viewNamespace.totalObsCount) {
                             $(`${tab} .op-gallery-view`).infiniteScroll({"obsNum": scrollbarObsNum});
                             $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": scrollbarObsNum});
                             opus.prefs[startObsLabel] = scrollbarObsNum;
