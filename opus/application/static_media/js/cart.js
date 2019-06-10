@@ -97,13 +97,13 @@ var o_cart = {
             o_cart.displayCartLeftPane();
             $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
                 $(".op-overlay").addClass("active");
+                $("#op-cart-download-panel").addClass("active");
             });
         });
 
         // Clicking on the "X" in the corner of the download options panel
         $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
-            $("#op-cart-download-panel").toggle("slide", {direction: "left"});
-            $(".op-overlay").removeClass("active");
+            opus.hideHelpAndCartPanels();
             return false;
         });
     },
@@ -174,7 +174,7 @@ var o_cart = {
         let cartSummaryHeight = $("#cart_summary").height();
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         $("#cart .gallery-contents").height(containerHeight);
-        
+
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
         }

@@ -1,12 +1,14 @@
-<ul class="op-detail-category-metadata">
+<ul class="op-detail-list">
     {% for entry in data %}
-        <li>
+        <li class="op-detail-entry">
             {% for param, values in entry.items %}
                 {% if values.1.get_tooltip_results %}
-                    <i class="fa fa-info-circle" data-toggle="tooltip"
-                        title="{{ values.1.get_tooltip_results|striptags }}"></i>
+                    <i class="fa fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                        title="{{ values.1.get_tooltip_results|striptags }}"></i>&nbsp;
                 {% endif %}
-                {{ param }}: {{ values.0 }}
+                <div>
+                    {{ param }}: {{ values.0 }}
+                </div>
             {% endfor %}
         </li>
     {% endfor %}
