@@ -638,7 +638,7 @@ var o_browse = {
     // called when the slider is moved...
     onUpdateSliderHandle: function(value) {
         value = (value == undefined? 1 : value);
-        $("#op-observation-number").html(o_utils.addCommas(value));
+        $("#browse .op-observation-number").html(o_utils.addCommas(value));
     },
 
     // This function will be called when we scroll the slide to a target value
@@ -681,6 +681,7 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
 
         if ($(selector).length > 0) {
+            $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
@@ -739,8 +740,8 @@ var o_browse = {
                 $(`${tab} .op-data-table-view`).infiniteScroll({"obsNum": obsNum});
                 opus.prefs[startObsLabel] = obsNum;
 
-                $("#op-observation-number").html(o_utils.addCommas(obsNum));
-                $(".op-slider-pointer").css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
+                $(`${tab} .op-observation-number`).html(o_utils.addCommas(obsNum));
+                $(`${tab} .op-slider-pointer`).css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
 
                 // just make the step size the number of the obserations across the page...
                 // if the observations have not yet been rendered, leave the default, it will get changed later
@@ -755,6 +756,11 @@ var o_browse = {
             }
             // update startobs in url when scrolling
             o_hash.updateHash(true);
+        } else {
+            // disable the slider because there are no observations
+            $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
+            $(`${tab} .op-slider-pointer`).css("width", "1ch");
+            $(`${tab} .op-observation-number`).html("?");
         }
     },
 
@@ -1638,7 +1644,7 @@ var o_browse = {
 
         let tab = opus.getViewTab(view);
 
-        o_browse.renderGalleryAndTable(data, path);
+        o_browse.renderGalleryAndTable(data, path, view);
         $(`${tab} .op-gallery-view`).infiniteScroll({"loadPrevPage": false});
         $(`${tab} .op-data-table-view`).infiniteScroll({"loadPrevPage": false});
 
