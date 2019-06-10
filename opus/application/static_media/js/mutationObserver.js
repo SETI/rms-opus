@@ -75,7 +75,7 @@ var o_mutationObserver = {
                             // only move the scrollbar if we open the menu item
                             let lastElement = $(mutation.target).children().last();
                             if (mutation.target.classList.value.match(/show/) &&
-                               !lastElement.isOnScreen("#sidebar-container")) {
+                                !lastElement.isOnScreen("#sidebar-container")) {
                                 let containerHeight = o_search.searchBarContainerHeight();
                                 let containerTop = $("#sidebar-container").offset().top;
                                 let containerBottom = containerHeight + containerTop;
