@@ -1,18 +1,20 @@
 {% for cat, d in data.items %}
-    <ul id="detail__data_{{ cat.lower.split|join:"_" }}" class="op-detail-category-metadata">
+    <ul id="detail__data_{{ cat.lower.split|join:"_" }}" class="op-detail-list">
         {% for param, val in d.items %}
-            <li>
+            <li class="op-detail-entry">
                 {% for name, param_info in all_info.items %}
                     {% if name == param %}
                         {% if param_info.get_tooltip_results %}
-                            <i class="fa fa-info-circle" data-toggle="tooltip"
-                                title="{{ param_info.get_tooltip_results|striptags }}"></i>
+                            <i class="fa fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                                title="{{ param_info.get_tooltip_results|striptags }}"></i>&nbsp;
                         {% endif %}
-                        {% if param_info.get_units %}
-                            {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
-                        {% else %}
-                            {{ param_info.label_results }}: {{ val }}
-                        {% endif %}
+                        <div>
+                            {% if param_info.get_units %}
+                                {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
+                            {% else %}
+                                {{ param_info.label_results }}: {{ val }}
+                            {% endif %}
+                        </div>
                     {% endif %}
                 {% endfor %}
             </li>
