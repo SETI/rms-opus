@@ -1160,6 +1160,7 @@ var o_browse = {
             // for now, just post same message to both #browse & #cart tabs
             if (data.start_obs == 1) {
                 $(`${tab} .navbar`).addClass("op-button-disabled");
+                $(`${tab} .op-gallery-view`).hide();
                 $(`${tab} .op-data-table`).hide();
                 $(`${tab} .op-results-message`).show();
             } else {
@@ -1182,6 +1183,7 @@ var o_browse = {
             o_browse.manageObservationCache(data.count, append, view);
             $(`${tab} .op-results-message`).hide();
             $(`${tab} .navbar`).removeClass("op-button-disabled");
+            $(`${tab} .op-gallery-view`).show();
             $(`${tab} .op-data-table`).show();
 
             viewNamespace.totalObsCount = data.total_obs_count;

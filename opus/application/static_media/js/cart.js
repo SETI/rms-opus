@@ -228,10 +228,9 @@ var o_cart = {
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
-
-            // don't forget to remove existing stuff before append
-            $("#cart .op-data-table > tbody").empty();
+            $("#cart .op-results-message").hide();
             $("#cart .gallery").empty();
+            $("#cart .op-data-table-view").empty();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -269,8 +268,8 @@ var o_cart = {
             $("#op-cart-count").html("0");
             o_cart.reloadObservationData = true;
             o_cart.observationData = {};
-            $("#cart .navbar").hide();
-            $("#cart .sort-order-container").hide();
+            $("#cart .gallery").remove();
+            $("#cart .op-data-table-view").remove();
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
