@@ -1504,7 +1504,14 @@ var o_browse = {
                         // start from the last observation drawn; if none yet drawn, start from opus.prefs.startobs
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit(view);
-                        let scrollbarObsNum = Math.max(obsNum - o_browse.getLimit(view) - opus.getViewNamespace(view).galleryBoundingRect.x, 1);
+
+                        // If it's in table view, we will update the obsNum in InfiniteScroll instances with the
+                        // startObs values right before infiniteScroll load event is triggered. This will be used
+                        // to properly set the scrollbar and slider location in table view after new data is loaded.   
+                        let scrollbarObsNum = (o_browse.isGalleryView() ? (obsNum - o_browse.getLimit(view) -
+                                               opus.getViewNamespace(view).galleryBoundingRect.x) :
+                                               opus.prefs[startObsLabel]);
+                        scrollbarObsNum = Math.max(scrollbarObsNum, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
