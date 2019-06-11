@@ -1567,21 +1567,27 @@ var o_browse = {
             let firstObs = $(`${tab} [data-obs]`).first().data("obs");
 
             // if the startObs is not already rendered and is obviously not contiguous, clear the cache and start over
-            if (lastObs === undefined || firstObs === undefined || elem.length === 0 ||
-                (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
-                viewNamespace.reloadObservationData = true;
-            } else {
-                // wait! is this page already drawn?
-                // if startObs drawn, move the slider to that line, fetch if need be after
-                if (startObs >= firstObs && startObs <= lastObs) {
-                    // may need to do a prefetch here...
-                    if (galleryInfiniteScroll && tableInfiniteScroll) {
-                        startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+            // ... but only if this is not an ampty results queue..
+            if (viewNamespace.totalObsCount !== 0) {
+                if (lastObs === undefined || firstObs === undefined || elem.length === 0 ||
+                    (startObs > lastObs + 1) || (startObs < firstObs - 1)) {
+                    viewNamespace.reloadObservationData = true;
+                } else {
+                    // wait! is this page already drawn?
+                    // if startObs drawn, move the slider to that line, fetch if need be after
+                    if (startObs >= firstObs && startObs <= lastObs) {
+                        // may need to do a prefetch here...
+                        if (galleryInfiniteScroll && tableInfiniteScroll) {
+                            startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.obsNum;
+                        }
+                        o_browse.setScrollbarPosition(startObs, view);
+                        $(".op-page-loading-status > .loader").hide();
+                        return;
                     }
-                    o_browse.setScrollbarPosition(startObs, view);
-                    $(".op-page-loading-status > .loader").hide();
-                    return;
                 }
+            } else {
+                $(".op-page-loading-status > .loader").hide();
+                return;
             }
         }
 
