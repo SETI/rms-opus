@@ -408,10 +408,11 @@ tr.modal-show {
     opacity: 0.65;
 }
 
-.thumbnail-message {
+.op-results-message {
     color: #fff;
     padding-left: 3em;
     width: 500px;
+    display: none;
 }
 
 .img-thumbnail {

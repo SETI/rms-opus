@@ -681,7 +681,6 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
 
         if ($(selector).length > 0) {
-            $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
@@ -758,7 +757,6 @@ var o_browse = {
             o_hash.updateHash(true);
         } else {
             // disable the slider because there are no observations
-            $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
             $(`${tab} .op-slider-pointer`).css("width", "1ch");
             $(`${tab} .op-observation-number`).html("?");
         }
@@ -1161,25 +1159,9 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             // for now, just post same message to both #browse & #cart tabs
             if (data.start_obs == 1) {
-                if (view === "browse") {
-                    // note: this only displays in gallery view; might want to gray out option for table view when no search results.
-                    galleryHtml += '<div class="thumbnail-message">';
-                    galleryHtml += '<h2>Your search produced no results</h2>';
-                    galleryHtml += '<p>Remove or edit one or more of the search criteria selected on the Search tab ';
-                    galleryHtml += 'or click on the Reset Search button to reset the search criteria to default.</p>';
-                    galleryHtml += '</div>';
-                } else {
-                    $("#cart .navbar").hide();
-                    $("#cart .sort-order-container").hide();
-                    $("#cart .op-data-table-view").hide();
-                    galleryHtml += '<div class="thumbnail-message">';
-                    galleryHtml += '<h2>Your cart is empty</h2>';
-                    galleryHtml += '<p>To add observations to the cart, click on the Browse Results tab ';
-                    galleryHtml += 'at the top of the page, mouse over the thumbnail gallery images to reveal the tools, ';
-                    galleryHtml += 'then click on the cart icon.  </p>';
-                    galleryHtml += '</div>';
-                }
-                $(".gallery", tab).html(galleryHtml);
+                $(`${tab} .navbar`).addClass("op-button-disabled");
+                $(`${tab} .op-data-table`).hide();
+                $(`${tab} .op-results-message`).show();
             } else {
                 if (opus.prefs[o_browse.getStartObsLabel()] > data.total_obs_count) {
                     // handle a corner case where a user has changed the startobs to be greater than total_obs_count
@@ -1198,9 +1180,9 @@ var o_browse = {
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
 
             o_browse.manageObservationCache(data.count, append, view);
-            $(`${tab} .thumbnail-message`).remove();
-            $(`${tab} .navbar`).show();
-            $(`${tab} .sort-order-container`).show();
+            $(`${tab} .op-results-message`).hide();
+            $(`${tab} .navbar`).removeClass("op-button-disabled");
+            $(`${tab} .op-data-table`).show();
 
             viewNamespace.totalObsCount = data.total_obs_count;
 
