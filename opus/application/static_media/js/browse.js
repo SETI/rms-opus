@@ -1198,6 +1198,7 @@ var o_browse = {
             let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
 
             o_browse.manageObservationCache(data.count, append, view);
+            $(`${tab} .thumbnail-message`).remove();
             $(`${tab} .navbar`).show();
             $(`${tab} .sort-order-container`).show();
 
