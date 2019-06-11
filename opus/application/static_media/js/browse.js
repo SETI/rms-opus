@@ -1157,13 +1157,13 @@ var o_browse = {
 
         if (data.count == 0) {
             // either there are no selections OR this is signaling the end of the infinite scroll
-            // for now, just post same message to both #browse & #cart tabs
-            if (data.start_obs == 1) {
+            if (data.total_obs_count == 0) {   // empty results, post message
                 $(`${tab} .navbar`).addClass("op-button-disabled");
                 $(`${tab} .op-gallery-view`).hide();
                 $(`${tab} .op-data-table`).hide();
                 $(`${tab} .op-results-message`).show();
             } else {
+                // end of infinite scroll OR invalid startObs
                 if (opus.prefs[o_browse.getStartObsLabel()] > data.total_obs_count) {
                     // handle a corner case where a user has changed the startobs to be greater than total_obs_count
                     // just reset back to 1 and get a new page
