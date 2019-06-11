@@ -674,6 +674,11 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function(browserResized=false) {
+        // Only update the slider & obSnum in infiniteScroll instances when the user
+        // is at browse tab
+        if (opus.getCurrentTab() !== "browse") {
+            return;
+        }
         let tab = opus.getViewTab();
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .thumbnail-container` :
@@ -723,8 +728,9 @@ var o_browse = {
 
             let dataResultCount = viewNamespace.totalObsCount;
             let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
-                                galleryBoundingRect.x + 1);
-            let maxSliderVal = firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.y - 1);
+                                     galleryBoundingRect.x + 1);
+            let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
+                                (galleryBoundingRect.y - 1));
 
             // Update obsNum in both infiniteScroll instances.
             // Store the most top left obsNum in gallery for both infiniteScroll instances
