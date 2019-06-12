@@ -8,22 +8,89 @@
 from django.db import models
 
 
+class ZZAuthGroup(models.Model):
+    name = models.CharField(unique=True, max_length=80)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_group'
+
+
+class ZZAuthGroupPermissions(models.Model):
+    group = models.ForeignKey(ZZAuthGroup, models.DO_NOTHING)
+    permission = models.ForeignKey('ZZAuthPermission', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_group_permissions'
+        unique_together = (('group', 'permission'),)
+
+
+class ZZAuthPermission(models.Model):
+    name = models.CharField(max_length=255)
+    content_type = models.ForeignKey('ZZDjangoContentType', models.DO_NOTHING)
+    codename = models.CharField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_permission'
+        unique_together = (('content_type', 'codename'),)
+
+
+class ZZAuthUser(models.Model):
+    password = models.CharField(max_length=128)
+    last_login = models.DateTimeField(blank=True, null=True)
+    is_superuser = models.IntegerField()
+    username = models.CharField(unique=True, max_length=150)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=150)
+    email = models.CharField(max_length=254)
+    is_staff = models.IntegerField()
+    is_active = models.IntegerField()
+    date_joined = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'auth_user'
+
+
+class ZZAuthUserGroups(models.Model):
+    user = models.ForeignKey(ZZAuthUser, models.DO_NOTHING)
+    group = models.ForeignKey(ZZAuthGroup, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_user_groups'
+        unique_together = (('user', 'group'),)
+
+
+class ZZAuthUserUserPermissions(models.Model):
+    user = models.ForeignKey(ZZAuthUser, models.DO_NOTHING)
+    permission = models.ForeignKey(ZZAuthPermission, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'auth_user_user_permissions'
+        unique_together = (('user', 'permission'),)
+
+
 class ZZCart(models.Model):
     session_id = models.CharField(max_length=80)
     obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
-    opus_id = models.CharField(max_length=80)
-    timestamp = models.DateTimeField()
+    opus_id = models.CharField(max_length=40)
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'cart'
+        unique_together = (('session_id', 'obs_general'),)
 
 
 class ZZContexts(models.Model):
     name = models.CharField(unique=True, max_length=25)
     description = models.CharField(max_length=100)
     parent = models.CharField(max_length=25)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -34,7 +101,7 @@ class ZZDefinitions(models.Model):
     term = models.CharField(max_length=255)
     context = models.ForeignKey(ZZContexts, models.DO_NOTHING, db_column='context')
     definition = models.TextField()
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -42,12 +109,65 @@ class ZZDefinitions(models.Model):
         unique_together = (('term', 'context'),)
 
 
+class ZZDjangoAdminLog(models.Model):
+    action_time = models.DateTimeField()
+    object_id = models.TextField(blank=True, null=True)
+    object_repr = models.CharField(max_length=200)
+    action_flag = models.PositiveSmallIntegerField()
+    change_message = models.TextField()
+    content_type = models.ForeignKey('ZZDjangoContentType', models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey(ZZAuthUser, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'django_admin_log'
+
+
+class ZZDjangoContentType(models.Model):
+    app_label = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'django_content_type'
+        unique_together = (('app_label', 'model'),)
+
+
+class ZZDjangoMigrations(models.Model):
+    app = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    applied = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_migrations'
+
+
+class ZZDjangoSession(models.Model):
+    session_key = models.CharField(primary_key=True, max_length=40)
+    session_data = models.TextField()
+    expire_date = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_session'
+
+
+class ZZDjangoSite(models.Model):
+    domain = models.CharField(unique=True, max_length=100)
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        managed = False
+        db_table = 'django_site'
+
+
 class ZZGroupingTargetName(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30, blank=True, null=True)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -60,7 +180,7 @@ class MultObsGeneralInstHostId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -73,7 +193,7 @@ class MultObsGeneralInstrumentId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -86,7 +206,7 @@ class MultObsGeneralMissionId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -99,7 +219,7 @@ class MultObsGeneralObservationType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -112,7 +232,7 @@ class MultObsGeneralPlanetId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -125,7 +245,7 @@ class MultObsGeneralQuantity(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -138,7 +258,7 @@ class MultObsGeneralTargetClass(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -152,7 +272,7 @@ class MultObsGeneralTargetName(models.Model):
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=7, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -165,7 +285,7 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -178,7 +298,7 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -191,7 +311,7 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -204,7 +324,7 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -217,7 +337,7 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -230,7 +350,7 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -243,7 +363,7 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -256,7 +376,7 @@ class MultObsInstrumentCoissCamera(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -269,7 +389,7 @@ class MultObsInstrumentCoissCombinedFilter(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -282,7 +402,7 @@ class MultObsInstrumentCoissCompressionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -295,7 +415,7 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -308,7 +428,7 @@ class MultObsInstrumentCoissGainModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -321,7 +441,7 @@ class MultObsInstrumentCoissImageObservationType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -334,7 +454,7 @@ class MultObsInstrumentCoissInstrumentModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -347,7 +467,7 @@ class MultObsInstrumentCoissShutterModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -360,7 +480,7 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -373,7 +493,7 @@ class MultObsInstrumentCoissTargetDesc(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -386,7 +506,7 @@ class MultObsInstrumentCouvisChannel(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -399,7 +519,7 @@ class MultObsInstrumentCouvisCompressionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -412,7 +532,7 @@ class MultObsInstrumentCouvisDwellTime(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -425,7 +545,7 @@ class MultObsInstrumentCouvisObservationType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -438,7 +558,7 @@ class MultObsInstrumentCouvisOccultationPortState(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -451,7 +571,7 @@ class MultObsInstrumentCouvisSlitState(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -464,7 +584,7 @@ class MultObsInstrumentCouvisTestPulseState(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -477,7 +597,7 @@ class MultObsInstrumentCovimsChannel(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -490,7 +610,7 @@ class MultObsInstrumentCovimsInstrumentModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -503,7 +623,7 @@ class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -516,7 +636,7 @@ class MultObsInstrumentCovimsSpectralEditing(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -529,7 +649,7 @@ class MultObsInstrumentCovimsSpectralSumming(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -542,7 +662,7 @@ class MultObsInstrumentCovimsStarTracking(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -555,7 +675,7 @@ class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -568,7 +688,7 @@ class MultObsInstrumentGossiCompressionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -581,7 +701,7 @@ class MultObsInstrumentGossiFilterName(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -594,7 +714,7 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -607,7 +727,7 @@ class MultObsInstrumentGossiFrameDuration(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -620,7 +740,7 @@ class MultObsInstrumentGossiGainModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -633,7 +753,7 @@ class MultObsInstrumentGossiObstructionId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -646,7 +766,7 @@ class MultObsInstrumentNhlorriBinningMode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -659,7 +779,7 @@ class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -672,7 +792,7 @@ class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -685,7 +805,7 @@ class MultObsInstrumentVgissCamera(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -698,7 +818,7 @@ class MultObsInstrumentVgissEditMode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -711,7 +831,7 @@ class MultObsInstrumentVgissFilterName(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -724,7 +844,7 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -737,7 +857,7 @@ class MultObsInstrumentVgissGainMode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -750,7 +870,7 @@ class MultObsInstrumentVgissScanMode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -763,7 +883,7 @@ class MultObsInstrumentVgissShutterMode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -776,7 +896,7 @@ class MultObsMissionCassiniCassiniTargetCode(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -789,7 +909,7 @@ class MultObsMissionCassiniIsPrime(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -802,7 +922,7 @@ class MultObsMissionCassiniMissionPhaseName(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -815,7 +935,7 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -828,7 +948,7 @@ class MultObsMissionCassiniRevNo(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -841,7 +961,7 @@ class MultObsMissionGalileoOrbitNumber(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -854,7 +974,7 @@ class MultObsMissionHubbleApertureType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -867,7 +987,7 @@ class MultObsMissionHubbleDetectorId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -880,7 +1000,7 @@ class MultObsMissionHubbleExposureType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -893,7 +1013,7 @@ class MultObsMissionHubbleFilterName(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -906,7 +1026,7 @@ class MultObsMissionHubbleFilterType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -919,7 +1039,7 @@ class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -932,7 +1052,7 @@ class MultObsMissionHubbleGainModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -945,7 +1065,7 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -958,7 +1078,7 @@ class MultObsMissionHubblePc1Flag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -971,7 +1091,7 @@ class MultObsMissionHubbleTargetedDetectorId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -984,7 +1104,7 @@ class MultObsMissionHubbleWf2Flag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -997,7 +1117,7 @@ class MultObsMissionHubbleWf3Flag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1010,7 +1130,7 @@ class MultObsMissionHubbleWf4Flag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1023,7 +1143,7 @@ class MultObsMissionNewHorizonsMissionPhase(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1036,7 +1156,7 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1050,7 +1170,7 @@ class MultObsSurfaceGeometryTargetName(models.Model):
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=7, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1063,7 +1183,7 @@ class MultObsTypeImageImageTypeId(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1076,7 +1196,7 @@ class MultObsWavelengthPolarizationType(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1089,11 +1209,37 @@ class MultObsWavelengthSpecFlag(models.Model):
     label = models.CharField(max_length=60)
     disp_order = models.IntegerField()
     display = models.CharField(max_length=1)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'mult_obs_wavelength_spec_flag'
+
+
+class ObsFiles(models.Model):
+    obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
+    opus_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
+    volume_id = models.CharField(max_length=11)
+    instrument_id = models.CharField(max_length=9)
+    version_number = models.PositiveIntegerField()
+    version_name = models.CharField(max_length=16)
+    category = models.CharField(max_length=20)
+    sort_order = models.CharField(max_length=9)
+    short_name = models.CharField(max_length=32)
+    full_name = models.CharField(max_length=64)
+    product_order = models.PositiveIntegerField()
+    logical_path = models.TextField()
+    url = models.TextField()
+    checksum = models.CharField(max_length=32)
+    size = models.PositiveIntegerField()
+    width = models.PositiveIntegerField(blank=True, null=True)
+    height = models.PositiveIntegerField(blank=True, null=True)
+    id = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_files'
 
 
 class ObsGeneral(models.Model):
@@ -3475,56 +3621,6 @@ class ObsSurfaceGeometryHyperion(models.Model):
         db_table = 'obs_surface_geometry__hyperion'
 
 
-class ObsSurfaceGeometryHyrrokkin(models.Model):
-    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
-    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
-    volume_id = models.CharField(max_length=11)
-    instrument_id = models.CharField(max_length=9)
-    planetocentric_latitude1 = models.FloatField(blank=True, null=True)
-    planetocentric_latitude2 = models.FloatField(blank=True, null=True)
-    planetographic_latitude1 = models.FloatField(blank=True, null=True)
-    planetographic_latitude2 = models.FloatField(blank=True, null=True)
-    iau_west_longitude1 = models.FloatField(blank=True, null=True)
-    iau_west_longitude2 = models.FloatField(blank=True, null=True)
-    iau_west_longitude = models.FloatField(blank=True, null=True)
-    d_iau_west_longitude = models.FloatField(blank=True, null=True)
-    solar_hour_angle1 = models.FloatField(blank=True, null=True)
-    solar_hour_angle2 = models.FloatField(blank=True, null=True)
-    solar_hour_angle = models.FloatField(blank=True, null=True)
-    d_solar_hour_angle = models.FloatField(blank=True, null=True)
-    observer_longitude1 = models.FloatField(blank=True, null=True)
-    observer_longitude2 = models.FloatField(blank=True, null=True)
-    observer_longitude = models.FloatField(blank=True, null=True)
-    d_observer_longitude = models.FloatField(blank=True, null=True)
-    finest_resolution1 = models.FloatField(blank=True, null=True)
-    finest_resolution2 = models.FloatField(blank=True, null=True)
-    coarsest_resolution1 = models.FloatField(blank=True, null=True)
-    coarsest_resolution2 = models.FloatField(blank=True, null=True)
-    range_to_body1 = models.FloatField(blank=True, null=True)
-    range_to_body2 = models.FloatField(blank=True, null=True)
-    phase1 = models.FloatField(blank=True, null=True)
-    phase2 = models.FloatField(blank=True, null=True)
-    incidence1 = models.FloatField(blank=True, null=True)
-    incidence2 = models.FloatField(blank=True, null=True)
-    emission1 = models.FloatField(blank=True, null=True)
-    emission2 = models.FloatField(blank=True, null=True)
-    sub_solar_planetocentric_latitude = models.FloatField(blank=True, null=True)
-    sub_solar_planetographic_latitude = models.FloatField(blank=True, null=True)
-    sub_observer_planetocentric_latitude = models.FloatField(blank=True, null=True)
-    sub_observer_planetographic_latitude = models.FloatField(blank=True, null=True)
-    sub_solar_iau_longitude = models.FloatField(blank=True, null=True)
-    sub_observer_iau_longitude = models.FloatField(blank=True, null=True)
-    center_resolution = models.FloatField(blank=True, null=True)
-    center_distance = models.FloatField(blank=True, null=True)
-    center_phase_angle = models.FloatField(blank=True, null=True)
-    id = models.PositiveIntegerField(primary_key=True)
-    timestamp = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'obs_surface_geometry__hyrrokkin'
-
-
 class ObsSurfaceGeometryIapetus(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
@@ -4373,6 +4469,56 @@ class ObsSurfaceGeometryMiranda(models.Model):
     class Meta:
         managed = False
         db_table = 'obs_surface_geometry__miranda'
+
+
+class ObsSurfaceGeometryMoon(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)
+    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
+    volume_id = models.CharField(max_length=11)
+    instrument_id = models.CharField(max_length=9)
+    planetocentric_latitude1 = models.FloatField(blank=True, null=True)
+    planetocentric_latitude2 = models.FloatField(blank=True, null=True)
+    planetographic_latitude1 = models.FloatField(blank=True, null=True)
+    planetographic_latitude2 = models.FloatField(blank=True, null=True)
+    iau_west_longitude1 = models.FloatField(blank=True, null=True)
+    iau_west_longitude2 = models.FloatField(blank=True, null=True)
+    iau_west_longitude = models.FloatField(blank=True, null=True)
+    d_iau_west_longitude = models.FloatField(blank=True, null=True)
+    solar_hour_angle1 = models.FloatField(blank=True, null=True)
+    solar_hour_angle2 = models.FloatField(blank=True, null=True)
+    solar_hour_angle = models.FloatField(blank=True, null=True)
+    d_solar_hour_angle = models.FloatField(blank=True, null=True)
+    observer_longitude1 = models.FloatField(blank=True, null=True)
+    observer_longitude2 = models.FloatField(blank=True, null=True)
+    observer_longitude = models.FloatField(blank=True, null=True)
+    d_observer_longitude = models.FloatField(blank=True, null=True)
+    finest_resolution1 = models.FloatField(blank=True, null=True)
+    finest_resolution2 = models.FloatField(blank=True, null=True)
+    coarsest_resolution1 = models.FloatField(blank=True, null=True)
+    coarsest_resolution2 = models.FloatField(blank=True, null=True)
+    range_to_body1 = models.FloatField(blank=True, null=True)
+    range_to_body2 = models.FloatField(blank=True, null=True)
+    phase1 = models.FloatField(blank=True, null=True)
+    phase2 = models.FloatField(blank=True, null=True)
+    incidence1 = models.FloatField(blank=True, null=True)
+    incidence2 = models.FloatField(blank=True, null=True)
+    emission1 = models.FloatField(blank=True, null=True)
+    emission2 = models.FloatField(blank=True, null=True)
+    sub_solar_planetocentric_latitude = models.FloatField(blank=True, null=True)
+    sub_solar_planetographic_latitude = models.FloatField(blank=True, null=True)
+    sub_observer_planetocentric_latitude = models.FloatField(blank=True, null=True)
+    sub_observer_planetographic_latitude = models.FloatField(blank=True, null=True)
+    sub_solar_iau_longitude = models.FloatField(blank=True, null=True)
+    sub_observer_iau_longitude = models.FloatField(blank=True, null=True)
+    center_resolution = models.FloatField(blank=True, null=True)
+    center_distance = models.FloatField(blank=True, null=True)
+    center_phase_angle = models.FloatField(blank=True, null=True)
+    id = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_surface_geometry__moon'
 
 
 class ObsSurfaceGeometryMundilfari(models.Model):
@@ -6624,7 +6770,7 @@ class ZZParamInfo(models.Model):
     category_name = models.CharField(max_length=150)
     name = models.CharField(max_length=87)
     form_type = models.CharField(max_length=100, blank=True, null=True)
-    display = models.CharField(max_length=1)
+    display = models.IntegerField()
     display_results = models.IntegerField()
     disp_order = models.IntegerField()
     label = models.CharField(max_length=240, blank=True, null=True)
@@ -6636,8 +6782,10 @@ class ZZParamInfo(models.Model):
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
     dict_name = models.CharField(max_length=255, blank=True, null=True)
+    dict_context_results = models.CharField(max_length=255, blank=True, null=True)
+    dict_name_results = models.CharField(max_length=255, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -6649,7 +6797,7 @@ class Partables(models.Model):
     trigger_col = models.CharField(max_length=200, blank=True, null=True)
     trigger_val = models.CharField(max_length=60, blank=True, null=True)
     partable = models.CharField(max_length=200, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -6661,7 +6809,7 @@ class TableNames(models.Model):
     label = models.CharField(max_length=60)
     display = models.CharField(max_length=1)
     disp_order = models.IntegerField()
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -6677,7 +6825,7 @@ class UserSearches(models.Model):
     units_hash = models.CharField(max_length=32, blank=True, null=True)
     order_json = models.TextField(blank=True, null=True)
     order_hash = models.CharField(max_length=32, blank=True, null=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
