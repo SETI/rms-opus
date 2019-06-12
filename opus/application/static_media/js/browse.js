@@ -1182,8 +1182,8 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             if (data.total_obs_count == 0) {   // empty results, post message
                 $(`${tab} .navbar`).addClass("op-button-disabled");
-                $(`${tab} .op-thumbnail-container`).remove();
-                $(`${tab} .op-gallery-view`).hide();
+                $(`${tab} .gallery`).empty();
+                $(`${tab} .op-data-table tbody`).empty();
                 $(`${tab} .op-data-table`).hide();
                 $(`${tab} .op-results-message`).show();
             } else {
@@ -1208,11 +1208,11 @@ var o_browse = {
             o_browse.manageObservationCache(data.count, append, view);
             $(`${tab} .op-results-message`).hide();
             $(`${tab} .navbar`).removeClass("op-button-disabled");
-            if (o_browse.isGalleryView(view)) {
+            //if (o_browse.isGalleryView(view)) {
                 $(`${tab} .op-gallery-view`).show();
-            } else {
+            //} else {
                 $(`${tab} .op-data-table`).show();
-            }
+            //}
 
             viewNamespace.totalObsCount = data.total_obs_count;
 
@@ -1639,19 +1639,14 @@ var o_browse = {
                 return;
             }
 
-            if (viewNamespace.reloadObservationData) {
-                o_browse.initTable(tab, data.columns, data.columns_no_units);
+            o_browse.initTable(tab, data.columns, data.columns_no_units);
 
-                $(`${tab} .op-gallery-view`).scrollTop(0);
-                $(`${tab} .op-data-table-view`).scrollTop(0);
-            }
+            $(`${tab} .op-gallery-view`).scrollTop(0);
+            $(`${tab} .op-data-table-view`).scrollTop(0);
 
             // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
-            $(`${tab} .op-thumbnail-container`).each(function() {
-                let delOpusId = $(this).data("id");
-                delete viewNamespace.observationData[delOpusId];
-            });
-            $(`${tab} .op-thumbnail-container`).remove();
+            viewNamespace.observationData = {};
+            $(`${tab} .gallery`).empty();
             o_browse.hideGalleryViewModal();
 
             o_browse.renderGalleryAndTable(data, this.url, view);
