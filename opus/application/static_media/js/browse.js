@@ -539,7 +539,7 @@ var o_browse = {
             // let headers = $(`.op-data-table-view th a:not([data-slug="opusid"], [data-slug=${slug}])`).find("span:last");
             let headers = $(`.op-data-table-view th a:not([data-slug=${slug}])`).find("span:last");
             headers.data("sort", "none");
-            headers.attr("class", defaultTableSortArrow);
+            headers.attr("class", `column_ordering ${defaultTableSortArrow}`);
         }
 
         // Re-render each pill
