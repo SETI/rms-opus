@@ -583,7 +583,7 @@ var o_browse = {
         o_browse.metadataDetailOpusId = opusId;
 
         let maxObs = viewNamespace.totalObsCount;
-        let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
+        let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
         let obsNum = $(element).data("obs");
 
         let checkView = (direction === "next" ? obsNum <= maxObs : obsNum > 0);
@@ -611,7 +611,7 @@ var o_browse = {
 
     setScrollbarPosition: function(obsNum, view) {
         let tab = opus.getViewTab(view);
-        let galleryTarget = $(`${tab} .thumbnail-container[data-obs="${obsNum}"]`);
+        let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${obsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${obsNum}']`);
 
         // Make sure obsNum is rendered before setting scrollbar position
@@ -645,7 +645,7 @@ var o_browse = {
     onUpdateSlider: function(value) {
         let view = opus.prefs.view;
         let tab = opus.getViewTab();
-        let elem = $(`${tab} .thumbnail-container[data-obs="${value}"]`);
+        let elem = $(`${tab} .op-thumbnail-container[data-obs="${value}"]`);
         let startObsLabel = o_browse.getStartObsLabel();
         let viewNamespace = opus.getViewNamespace();
 
@@ -676,7 +676,7 @@ var o_browse = {
     updateSliderHandle: function(browserResized=false) {
         let tab = opus.getViewTab();
         let selector = (o_browse.isGalleryView() ?
-                        `${tab} .gallery .thumbnail-container` :
+                        `${tab} .gallery .op-thumbnail-container` :
                         `${tab} .op-data-table tbody tr`);
         let startObsLabel = o_browse.getStartObsLabel();
 
@@ -862,7 +862,7 @@ var o_browse = {
 
     getGalleryElement: function(opusId) {
         let tab = opus.getViewTab();
-        return $(`${tab} .thumbnail-container[data-id=${opusId}]`);
+        return $(`${tab} .op-thumbnail-container[data-id=${opusId}]`);
     },
 
     getDataTableInputElement: function(opusId) {
@@ -1159,7 +1159,7 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             if (data.total_obs_count == 0) {   // empty results, post message
                 $(`${tab} .navbar`).addClass("op-button-disabled");
-                $(`${tab} .thumbnail-container`).remove();
+                $(`${tab} .op-thumbnail-container`).remove();
                 $(`${tab} .op-gallery-view`).hide();
                 $(`${tab} .op-data-table`).hide();
                 $(`${tab} .op-results-message`).show();
@@ -1179,7 +1179,7 @@ var o_browse = {
                 return;
             }
         } else {
-            let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+            let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
             let append = (lastObs === undefined || data.start_obs > lastObs);
 
             o_browse.manageObservationCache(data.count, append, view);
@@ -1202,7 +1202,7 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                galleryHtml += `<div class="thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
+                galleryHtml += `<div class="op-thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
                 galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
@@ -1466,8 +1466,8 @@ var o_browse = {
                 path: function() {
                     let obsNum = opus.prefs[startObsLabel];
                     let customizedLimitNum;
-                    let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
-                    let firstCachedObs = $(`${tab} .thumbnail-container`).first().data("obs");
+                    let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
+                    let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
@@ -1533,8 +1533,8 @@ var o_browse = {
                 let contentsView = o_browse.getScrollContainerClass(view);
                 let viewNamespace = opus.getViewNamespace(view);
                 let infiniteScrollData = $(`${tab} ${contentsView}`).data("infiniteScroll");
-                let firstObs = $(`${tab} .thumbnail-container`).first().data("obs");
-                let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+                let firstObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
+                let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
 
                 if (infiniteScrollData.options.loadPrevPage === true) {
                     if (firstObs === 1) {
@@ -1616,11 +1616,11 @@ var o_browse = {
             }
 
             // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
-            $(`${tab} .thumbnail-container`).each(function() {
+            $(`${tab} .op-thumbnail-container`).each(function() {
                 let delOpusId = $(this).data("id");
                 delete viewNamespace.observationData[delOpusId];
             });
-            $(`${tab} .thumbnail-container`).remove();
+            $(`${tab} .op-thumbnail-container`).remove();
             o_browse.hideGalleryViewModal();
 
             o_browse.renderGalleryAndTable(data, this.url, view);
@@ -1851,7 +1851,7 @@ var o_browse = {
 
     getNextPrevHandles: function(opusId, view) {
         let tab = opus.getViewTab(view);
-        let idArray = $(`${tab} .thumbnail-container[data-obs]`).map(function() {
+        let idArray = $(`${tab} .op-thumbnail-container[data-obs]`).map(function() {
             return $(this).data("id");
         });
         let next = $.inArray(opusId, idArray) + 1;
@@ -1910,7 +1910,7 @@ var o_browse = {
 
     updateMetaGalleryView: function(opusId, imageURL) {
         let tab = `#${opus.prefs.view}`;
-        let element = (o_browse.isGalleryView() ? $(`${tab} .thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
+        let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
         let obsNum = $(element).data("obs");
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
 

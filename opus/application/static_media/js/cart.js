@@ -259,7 +259,7 @@ var o_cart = {
     },
 
     isIn: function(opusId) {
-        return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("op-in-cart");
+        return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
     emptyCart: function(returnToSearch=false) {
@@ -276,8 +276,8 @@ var o_cart = {
         });
 
         let buttonInfo = o_browse.cartButtonInfo("in");
-        $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
+        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
         $(".op-data-table-view input").prop("checked", false);
     },
 
@@ -289,8 +289,8 @@ var o_cart = {
             let tab = opus.getViewTab();
             let action = (fromElem.hasClass("op-in-cart") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);
-            let toIndex = $(`${tab} .thumbnail-container`).index(toElem);
+            let fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
+            let toIndex = $(`${tab} .op-thumbnail-container`).index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
@@ -298,7 +298,7 @@ var o_cart = {
             }
             let length = toIndex - fromIndex+1;
             /// NOTE: we need to mark the elements on BOTH browse and cart page
-            let elementArray = $(`${tab} .thumbnail-container`);
+            let elementArray = $(`${tab} .op-thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
             let addOpusIdList = [];
             // This loop can take a fairly long time to execute for a large range, and it would be nice
@@ -311,11 +311,11 @@ var o_cart = {
                 let opusId = $(elem).data("id");
                 let status = "in";
                 if (action == "addrange") {
-                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
                     status = "out"; // this is only so that we can make sure the icon is a trash can
                 } else {
-                    $(`.thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
-                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
@@ -340,10 +340,10 @@ var o_cart = {
             // note - doing it this way handles the obs on the browse tab at the same time
             let action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
 
-            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
+            $(`.op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
             $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
 
-            $(`#cart .thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
+            $(`#cart .op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
 
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
