@@ -1217,8 +1217,8 @@ class MultObsWavelengthSpecFlag(models.Model):
 
 
 class ObsFiles(models.Model):
-    obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
-    opus_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING)
+    obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general')
+    opus_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
     version_number = models.PositiveIntegerField()
