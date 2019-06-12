@@ -264,16 +264,17 @@ var o_cart = {
 
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {
-            $("#op-cart-count").html("0");
-            o_cart.reloadObservationData = true;
-            o_cart.observationData = {};
+        $.getJSON("/opus/__cart/reset.json", function(data) {  
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
                 opus.changeTab("search");
             }
         });
+
+        $("#op-cart-count").html("0");
+        o_cart.reloadObservationData = true;
+        o_cart.observationData = {};
 
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
