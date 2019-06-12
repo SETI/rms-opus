@@ -1126,7 +1126,7 @@ is wide enough */
     opacity: 0.5;
 }
 
-#op-observation-number {
+.op-observation-number {
     text-align: center;
     vertical-align: middle;
 }
