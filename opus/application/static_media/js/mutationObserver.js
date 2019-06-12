@@ -184,7 +184,8 @@ var o_mutationObserver = {
                         o_browse.adjustSelectedMetadataPS();
                         // if the new item appears below the viewable area, move the scrollbar
                         let lastElement = $(mutation.target).children().last();
-                        if (!lastElement.isOnScreen(".op-selected-metadata-column", 1)) {
+                        if (mutation.addedNodes.length !== 0 &&
+                            !lastElement.isOnScreen(".op-selected-metadata-column", 1)) {
                             let containerHeight = o_browse.selectedMetadataContainerHeight();
                             let containerTop = $(".op-selected-metadata-column").offset().top;
                             let containerBottom = containerHeight + containerTop;

@@ -923,7 +923,7 @@ var o_browse = {
 
         let label = $(menuSelector).data("qualifiedlabel");
         let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
-        let html = `<li id="cchoose__${slug}">${info}${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="info">&nbsp;${info}</span>${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
     },
 
@@ -1000,7 +1000,9 @@ var o_browse = {
                 // slug had been checked, remove from the chosen
                 o_menu.markMenuItem(menuSelector, "unselected");
                 opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols), 1);
-                $(chosenSlugSelector).remove();
+                $(chosenSlugSelector).fadeOut(200, function() {
+                    $(this).remove();
+                });
             }
             return false;
         });
@@ -1160,8 +1162,7 @@ var o_browse = {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
-                // dragging to reorder the chosen
-                $( ".op-selected-metadata-column > ul").sortable({
+                $(".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.metadataDragged(this); }

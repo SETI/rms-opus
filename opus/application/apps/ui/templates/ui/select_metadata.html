@@ -10,7 +10,7 @@
   	    <ul>
             {% for slug, param_info in all_slugs_info.items %}
   		        <li id="cchoose__{{ slug }}">
-                    <span class="info">&nbsp;<i class="fa fa-info-circle" title = "
+                    <span class="info">&nbsp;<i class="fas fa-info-circle" title = "
                         {% if param_info.get_tooltip %}
                             {{ param_info.get_tooltip|striptags }}
                         {% else  %}
@@ -18,7 +18,6 @@
                         {% endif %}
                     "></i></span>
                     {{ param_info.body_qualified_label_results }}
-                    <!-- "remove this column" x button -->
                     <span class="unselect"><i class="far fa-trash-alt"></i></span>
 	            </li>
             {% endfor %}

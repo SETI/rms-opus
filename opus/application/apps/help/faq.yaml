@@ -100,7 +100,7 @@ General Questions:
             <li>On the Cart tab, you now have the ability to change the sort
             order of the displayed thumbnails or table rows.</li>
             <li>On the Cart tab, the available products include tooltips
-            (<i class="fa fa-info-circle"></i>) that give details about each
+            (<i class="fas fa-info-circle"></i>) that give details about each
             file type.</li>
             </ul>
 
