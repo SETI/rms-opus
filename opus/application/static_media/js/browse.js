@@ -1159,6 +1159,7 @@ var o_browse = {
             // either there are no selections OR this is signaling the end of the infinite scroll
             if (data.total_obs_count == 0) {   // empty results, post message
                 $(`${tab} .navbar`).addClass("op-button-disabled");
+                $(`${tab} .thumbnail-container`).remove();
                 $(`${tab} .op-gallery-view`).hide();
                 $(`${tab} .op-data-table`).hide();
                 $(`${tab} .op-results-message`).show();
@@ -1178,13 +1179,17 @@ var o_browse = {
                 return;
             }
         } else {
-            let append = (data.start_obs > $(`${tab} .thumbnail-container`).last().data("obs"));
+            let lastObs = $(`${tab} .thumbnail-container`).last().data("obs");
+            let append = (lastObs === undefined || data.start_obs > lastObs);
 
             o_browse.manageObservationCache(data.count, append, view);
             $(`${tab} .op-results-message`).hide();
             $(`${tab} .navbar`).removeClass("op-button-disabled");
-            $(`${tab} .op-gallery-view`).show();
-            $(`${tab} .op-data-table`).show();
+            if (o_browse.isGalleryView(view)) {
+                $(`${tab} .op-gallery-view`).show();
+            } else {
+                $(`${tab} .op-data-table`).show();
+            }
 
             viewNamespace.totalObsCount = data.total_obs_count;
 

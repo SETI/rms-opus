@@ -230,7 +230,7 @@ var o_cart = {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
             $("#cart .op-results-message").hide();
             $("#cart .gallery").empty();
-            $("#cart .op-data-table-view").empty();
+            $("#cart .op-data-table tbody").empty();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -268,8 +268,6 @@ var o_cart = {
             $("#op-cart-count").html("0");
             o_cart.reloadObservationData = true;
             o_cart.observationData = {};
-            $("#cart .gallery").remove();
-            $("#cart .op-data-table-view").remove();
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
