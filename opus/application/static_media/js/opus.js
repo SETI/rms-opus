@@ -500,7 +500,12 @@ var opus = {
         return (view === "cart" ? "#cart" : "#browse");
     },
 
-
+    getCurrentTab: function() {
+        /**
+         * Return the current tab that the user selects
+         */
+        return opus.prefs.view;
+    },
 
     //------------------------------------------------------------------------------------
     // OPUS initialization
