@@ -957,7 +957,7 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 let tab = opus.getViewTab();
-                o_browse.clearObservationData();
+                o_browse.clearObservationData(true); // Leave startobs alone
                 o_hash.updateHash(); // This makes the changes visible to the user
                 o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData(opus.prefs.view);
@@ -1956,9 +1956,15 @@ var o_browse = {
         o_browse.metadataboxHtml(opusId);
     },
 
-    clearObservationData: function() {
-        opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
-        opus.prefs.cart_startobs = 1;
+    clearObservationData: function(leaveStartObs) {
+        if (!leaveStartObs) {
+            // Normally when we delete all the data we want to force a return to the top because
+            // we don't know what data is going to be loaded. But in some circumstances
+            // (like updating metadata columns) we know we're going to reload exactly the same
+            // data so we can keep our place.
+            opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
+            opus.prefs.cart_startobs = 1;
+        }
         o_cart.reloadObservationData = true;  // forces redraw of cart tab
         o_cart.observationData = {};
         o_browse.reloadObservationData = true;  // forces redraw of browse tab
