@@ -86,7 +86,6 @@ def api_last_blog_update(request):
     return ret
 
 
-@render_to('ui/menu.html')
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -97,7 +96,11 @@ def api_get_menu(request):
     Format: __menu.html
     """
     api_code = enter_api_call('api_get_menu', request)
-    ret = _get_menu_labels(request, 'search')
+
+    menu = _get_menu_labels(request, 'search')
+    menu['which'] = 'search' # Used to create DOM IDs
+    ret = render(request, "ui/menu.html", menu)
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -320,13 +323,11 @@ def api_get_metadata_selector(request):
     all_slugs_info = OrderedDict()
     for slug in slugs:
         all_slugs_info[slug] = get_param_info_by_slug(slug, 'col')
-    menu = _get_menu_labels(request, 'results')['menu']
+    menu = _get_menu_labels(request, 'selector')
 
-    context = {
-        "all_slugs_info": all_slugs_info,
-        "menu": menu
-    }
-    ret = render(request, "ui/select_metadata.html", context)
+    menu['all_slugs_info'] = all_slugs_info
+    menu['which'] = 'selector'
+    ret = render(request, "ui/select_metadata.html", menu)
 
     exit_api_call(api_code, ret)
     return ret
@@ -1123,7 +1124,7 @@ def api_dummy(request, *args, **kwargs):
 
 def _get_menu_labels(request, labels_view):
     "Return the categories in the menu for the search form."
-    labels_view = 'results' if labels_view == 'results' else 'search'
+    labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
         filter = "display"
     else:
@@ -1140,7 +1141,7 @@ def _get_menu_labels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
 
-    if labels_view == 'results':
+    if labels_view == 'selector':
         if 'obs_surface_geometry' in triggered_tables:
             triggered_tables.remove('obs_surface_geometry')
 

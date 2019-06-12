@@ -203,6 +203,10 @@ var opus = {
         opus.lastSelections = selections;
         opus.lastExtras = extras;
 
+        // Force the Select Metadata dialog to refresh the next time we go to the browse
+        // tab in case the categories are changed by this search.
+        o_browse.metadataSelectorDrawn = false;
+        
         // Update the UI in the following order:
         // 1) Normalize all the inputs and check for validity (allNormalizedApiCall)
         // 2) Perform the search and get the result count (getResultCount)
@@ -558,7 +562,7 @@ var opus = {
 
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
-        let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
+        let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
         let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
@@ -570,7 +574,7 @@ var opus = {
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
-            adjustSearchHeightDB();
+            searchHeightChangedDB();
             adjustBrowseHeightDB();
             adjustTableSizeDB();
             adjustProductInfoHeightDB();

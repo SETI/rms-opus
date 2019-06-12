@@ -430,12 +430,12 @@ var o_search = {
         return $("#search").height() - offset;
     },
 
-    adjustSearchHeight: function() {
-        o_search.adjustSearchSideBarHeight();
-        o_search.adjustSearchWidgetHeight();
+    searchHeightChanged: function() {
+        o_search.searchSideBarHeightChanged();
+        o_search.searchWidgetHeightChanged();
     },
 
-    adjustSearchSideBarHeight: function() {
+    searchSideBarHeightChanged: function() {
         let containerHeight = o_search.searchBarContainerHeight();
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
@@ -451,7 +451,7 @@ var o_search = {
         o_search.searchScrollbar.update();
     },
 
-    adjustSearchWidgetHeight: function() {
+    searchWidgetHeightChanged: function() {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let totalNonSearchAreaHeight = footerHeight + mainNavHeight;

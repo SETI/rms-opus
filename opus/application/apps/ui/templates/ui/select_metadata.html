@@ -3,9 +3,7 @@
 {% block menu %}
 <div class="row">
     <div class="op-all-metadata-column col">
-        {% with 'menu' as expectedVarName %}
-            {{ block.super }} {# renders ui/menu.html #}
-        {% endwith %}
+        {{ block.super }} {# renders ui/menu.html #}
     </div>
 
     <div class="op-selected-metadata-column col">

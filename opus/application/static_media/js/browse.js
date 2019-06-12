@@ -590,7 +590,7 @@ var o_browse = {
 
         if (checkView) {
             // make sure the current element that the modal is displaying is viewable
-            if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
+            if (!element.isOnScreen($(`${tab} .gallery-contents`), 0.5)) {
                 let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
 
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
@@ -751,7 +751,7 @@ var o_browse = {
             if (maxSliderVal >= obsNum) {
                 // "sliderObsNum" will be the startObs.
                 // "scrollbarObsNum" will be the obsNum at current scrollbar location.
-                // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row. 
+                // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row.
                 $(`${tab} .op-gallery-view`).infiniteScroll({
                     "sliderObsNum": obsNum,
                     "scrollbarObsNum": tableCurrentObsNum
@@ -1124,6 +1124,14 @@ var o_browse = {
 
         url += `&${slug}=${view}`;
         return url;
+    },
+
+    metadataSelectorMenuContainerHeight: function() {
+        return $(".op-all-metadata-column").outerHeight();
+    },
+
+    selectedMetadataContainerHeight: function() {
+        return $(".op-selected-metadata-column").outerHeight();
     },
 
     renderMetadataSelector: function() {

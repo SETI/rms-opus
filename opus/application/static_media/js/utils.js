@@ -43,7 +43,7 @@ var o_utils = {
 /**
  * returns true if an element is visible
  */
-$.fn.isOnScreen = function(scope) {
+$.fn.isOnScreen = function(scope, slop) {
     if (!this || !scope) {
         return;
     }
@@ -55,7 +55,7 @@ $.fn.isOnScreen = function(scope) {
     let top = scope.offset().top;
     let bottom = top + scope.height();
     let elementHeight = target.outerHeight();
-    let offset = elementHeight * .50;   // allow 50% of the observation to be half visible
+    let offset = elementHeight * slop;   // allow part of the object to be off screen
     let elementTop = target.offset().top;
     let elementBottom = elementTop + elementHeight;
     // hack to take care of table header height

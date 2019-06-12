@@ -49,7 +49,7 @@ var o_menu = {
             // for opus: keeping track of menu state, since menu is constantly refreshed
             // menu cats
             let category = $(this).data( "cat" );
-            let groupElem = $(`#sidebar #submenu-${category}`);
+            let groupElem = $(`#sidebar #search-submenu-${category}`);
             if ($(groupElem).hasClass("show")) {
                 opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
             } else {
@@ -71,8 +71,8 @@ var o_menu = {
             // open menu items that were open before
             $("#sidebar").toggleClass("op-redraw-menu");
             $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#submenu-${category}`).length != 0) {
-                    $(`#submenu-${category}`).collapse("show");
+                if ($(`#sidebar #search-submenu-${category}`).length != 0) {
+                    $(`#sidebar #search-submenu-${category}`).collapse("show");
                 } else {
                     // this is if the surface geometry target is no longer applicable so it's not
                     // on the menu, remove from the menuState
