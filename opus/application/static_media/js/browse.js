@@ -749,6 +749,9 @@ var o_browse = {
                       galleryBoundingRect.x + 1);
 
             if (maxSliderVal >= obsNum) {
+                // "sliderObsNum" will be the startObs.
+                // "scrollbarObsNum" will be the obsNum at current scrollbar location.
+                // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row. 
                 $(`${tab} .op-gallery-view`).infiniteScroll({
                     "sliderObsNum": obsNum,
                     "scrollbarObsNum": tableCurrentObsNum
