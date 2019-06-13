@@ -1971,7 +1971,7 @@ var o_browse = {
         o_browse.observationData = {};
     },
 
-    clearBrowseObservationDataAndEraseDOM: function(leaveStartObs) {
+    clearBrowseObservationDataAndEraseDOM: function(leaveStartObs=false) {
         if (!leaveStartObs) {
             opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
         }
