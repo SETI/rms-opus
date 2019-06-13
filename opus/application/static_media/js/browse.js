@@ -1970,4 +1970,15 @@ var o_browse = {
         o_browse.reloadObservationData = true;  // forces redraw of browse tab
         o_browse.observationData = {};
     },
+
+    clearBrowseObservationDataAndEraseDOM: function(leaveStartObs) {
+        if (!leaveStartObs) {
+            opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
+        }
+        o_browse.reloadObservationData = true;  // forces redraw of browse tab
+        o_browse.observationData = {};
+        // Just so the user doesn't see old data lying around while waiting for a reload
+        $("#browse .gallery").empty();
+        $("#browse .op-data-table tbody").empty();
+    },
 };
