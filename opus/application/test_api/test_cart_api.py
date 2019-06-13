@@ -202,10 +202,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        expected = {'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations there. The maximum allowed is 0.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 1, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 0, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations there. The maximum allowed is 0.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 1, 'reqno': 456}
+        else:
+            expected = {'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_add_one_too_many_1(self):
@@ -229,7 +235,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
-        expected = {'count': 1, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations there. The maximum allowed is 1.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 1, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 1, 'error': 'Your request to add OPUS ID co-iss-n1460961026 to the cart failed - there are already too many observations there. The maximum allowed is 1.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'count': 1, 'reqno': 456}
@@ -253,10 +262,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 2, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/add.json?opusid=vg-iss-2-s-c4360018&reqno=456'
-        expected = {'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations there. The maximum allowed is 2.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 3, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 2, 'error': 'Your request to add OPUS ID vg-iss-2-s-c4360018 to the cart failed - there are already too many observations there. The maximum allowed is 2.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 2, 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 3, 'reqno': 456}
+        else:
+            expected = {'count': 2, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 
@@ -733,10 +748,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=567'
-        expected = {'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 1, 'error': False, 'reqno': 567}
+        else:
+            expected = {'count': 0, 'error': 'Your request to add 1 observations (OPUS IDs co-vims-v1484504505_ir to co-vims-v1484504505_ir) to the cart failed. The resulting cart would have more than the maximum (0) allowed. None of the observations were added.', 'reqno': 567}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 1, 'reqno': 456}
+        else:
+            expected = {'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addrange_one_too_many_1(self):
@@ -760,7 +781,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
-        expected = {'count': 17, 'error': 'Your request to add 17 observations (OPUS IDs co-vims-v1488642557_ir to co-vims-v1488646261_ir) to the cart failed. The resulting cart would have more than the maximum (33) allowed. None of the observations were added.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 17, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 17, 'error': 'Your request to add 17 observations (OPUS IDs co-vims-v1488642557_ir to co-vims-v1488646261_ir) to the cart failed. The resulting cart would have more than the maximum (33) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'count': 17, 'reqno': 456}
@@ -1307,10 +1331,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        expected = {'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 906, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 0, 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 906, 'reqno': 456}
+        else:
+            expected = {'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_one_too_many_906(self):
@@ -1334,7 +1364,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 906, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        expected = {'count': 906, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 906, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 906, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'count': 906, 'reqno': 456}
@@ -1349,10 +1382,16 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        expected = {'count': 1, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 906, 'error': False, 'reqno': 456}
+        else:
+            expected = {'count': 1, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'count': 1, 'reqno': 456}
+        if settings.TEST_GO_LIVE:
+            expected = {'count': 906, 'reqno': 456}
+        else:
+            expected = {'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate3_too_many_907(self):
