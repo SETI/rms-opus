@@ -388,7 +388,8 @@ var o_search = {
             }
 
             // check each range input, if it's not valid, change its background to red
-            o_search.validateRangeInput(normalizedInputData);
+            // and also remove spinner.
+            o_search.validateRangeInput(normalizedInputData, true);
             if (!opus.allInputsValid) {
                 return;
             }

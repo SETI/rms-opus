@@ -288,7 +288,7 @@ ul.searchMenu {
     transform-origin: 80% 43%;
 }
 
-.thumbnail-container {
+.op-thumbnail-container {
     display: inline-block;
     float: left;
     position: relative;
@@ -298,7 +298,7 @@ ul.searchMenu {
     border: medium solid transparent;
 }
 
-.thumbnail-container .img-thumbnail {
+.op-thumbnail-container .img-thumbnail {
     position: absolute;
     top: 0;
     right: 0;
@@ -310,7 +310,7 @@ ul.searchMenu {
     max-width: 100%;
 }
 
-.thumbnail-container:hover .op-thumb-overlay {
+.op-thumbnail-container:hover .op-thumb-overlay {
     height: 30%;
 }
 
@@ -374,7 +374,7 @@ ul.searchMenu {
     width: 74%;
 }
 
-.thumbnail-container .modal-overlay {
+.op-thumbnail-container .modal-overlay {
     position: absolute;
     text-align: center;
     padding-left: 1em;
@@ -386,7 +386,7 @@ ul.searchMenu {
     z-index: -1;
 }
 
-.thumbnail-container .modal-show {
+.op-thumbnail-container .modal-show {
     z-index: 999;
     -webkit-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
@@ -403,15 +403,16 @@ tr.modal-show {
     filter: alpha(opacity=92);
 }
 
-.thumbnail-container .content-text {
+.op-thumbnail-container .content-text {
     margin: 0px;
     opacity: 0.65;
 }
 
-.thumbnail-message {
+.op-results-message {
     color: #fff;
     padding-left: 3em;
     width: 500px;
+    display: none;
 }
 
 .img-thumbnail {
@@ -1125,7 +1126,7 @@ is wide enough */
     opacity: 0.5;
 }
 
-#op-observation-number {
+.op-observation-number {
     text-align: center;
     vertical-align: middle;
 }

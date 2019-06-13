@@ -194,7 +194,7 @@ var opus = {
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
 
         // Start the observation number slider spinner - no point in doing a flash here
-        $("#op-observation-number").html(opus.spinner);
+        $("#browse .op-observation-number").html(opus.spinner);
 
         // Start the spinners for the left side menu and each widget for hinting
         $(".op-menu-text.spinner").addClass("op-show-spinner");
@@ -249,7 +249,7 @@ var opus = {
             // We don't try to get a result count if any of the inputs are invalid.
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
-            $("#op-observation-number").html("?");
+            $("#browse .op-observation-number").html("?");
             return;
         }
 
