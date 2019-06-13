@@ -1204,7 +1204,7 @@ var o_browse = {
                 $(`${tab} .navbar`).addClass("op-button-disabled");
                 $(`${tab} .gallery`).empty();
                 $(`${tab} .op-data-table tbody`).empty();
-                $(`${tab} .op-data-table`).hide();
+                $(`${tab} .op-data-table-view`).hide();
                 $(`${tab} .op-results-message`).show();
             } else {
                 // end of infinite scroll OR invalid startObs
@@ -1231,7 +1231,7 @@ var o_browse = {
             if (o_browse.isGalleryView(view)) {
                 $(`${tab} .op-gallery-view`).show();
             } else {
-                $(`${tab} .op-data-table`).show();
+                $(`${tab} .op-data-table-view`).show();
             }
 
             viewNamespace.totalObsCount = data.total_obs_count;
