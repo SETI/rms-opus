@@ -122,7 +122,7 @@ var o_detail = {
         // When detail image is moved to the top of detail left pane, we have to
         // account for the height of detail image as well when calculating the containerHeight
         let detailImgHeight = ($(window).width() <= detailImageThreshold ?
-                               $(".detail_img").outerHeight() : 0);
+                               $(".op-detail-img").outerHeight() : 0);
         let containerHeight = ($(window).height() - footerHeight - mainNavHeight -
                                detailTabPaddingTop - detailImgHeight);
 
