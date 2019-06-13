@@ -1973,7 +1973,9 @@ var o_browse = {
             opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
             opus.prefs.cart_startobs = 1;
             $(`.op-gallery-view`).infiniteScroll({"scrollbarObsNum": 1});
+            $(`.op-gallery-view`).infiniteScroll({"sliderObsNum": 1});
             $(`.op-data-table-view`).infiniteScroll({"scrollbarObsNum": 1});
+            $(`.op-data-table-view`).infiniteScroll({"sliderObsNum": 1});
         }
         o_cart.reloadObservationData = true;  // forces redraw of cart tab
         o_cart.observationData = {};
@@ -1985,12 +1987,17 @@ var o_browse = {
         if (!leaveStartObs) {
             opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
             $("#browse .op-gallery-view").infiniteScroll({"scrollbarObsNum": 1});
+            $("#browse .op-gallery-view").infiniteScroll({"sliderObsNum": 1});
             $("#browse .op-data-table-view").infiniteScroll({"scrollbarObsNum": 1});
+            $("#browse .op-data-table-view").infiniteScroll({"sliderObsNum": 1});
         }
         o_browse.reloadObservationData = true;  // forces redraw of browse tab
         o_browse.observationData = {};
         // Just so the user doesn't see old data lying around while waiting for a reload
-        $("#browse .gallery").empty();
-        $("#browse .op-data-table tbody").empty();
+        // XXX For some reason having these lines here makes data sometimes double-load
+        // when the scrollbar isn't at the top, so for now this is disabled and the
+        // user might occasionally see old data briefly while the new stuff loads.
+        // $("#browse .gallery").empty();
+        // $("#browse .op-data-table tbody").empty();
     },
 };
