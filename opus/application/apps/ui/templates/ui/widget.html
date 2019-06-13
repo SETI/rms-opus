@@ -7,17 +7,19 @@
 <div class="card">
     <header class="card-header">
         <h6 class="card-title mt-0">
-                    <i class = "fas fa-info-circle" title = "{{tooltip|safe }}"></i>
-                    {{ label }} {{ units }}
-                    <span class="spinner">&nbsp;</span>
-                    <span class="float-right border-left border-dark">
-                        <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
-                                <i class="icon-action fa fa-chevron-down pull-right"></i>
+            <div>
+                <i class = "fas fa-info-circle" title = "{{tooltip|safe }}"></i>
+                {{ label }} {{ units }}
+                <span class="spinner">&nbsp;</span>
+            </div>
+            <span class="float-right border-left border-dark">
+                <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
+                    <i class="icon-action fa fa-chevron-down pull-right"></i>
                 </a>
-                        <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
+                <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
                     <i class="icon-action fa fa-times"></i>
                 </a>
-                    </span>
+            </span>
         </h6>
     </header>
 

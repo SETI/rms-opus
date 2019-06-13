@@ -1269,6 +1269,19 @@ is wide enough */
     overflow-y: hidden !important;
 }
 
+/* Make only widget title and "i" icon wrapped and keep arrow & x symbols
+stay at the top right corner when screen is narrow */
+#widget-container .card-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Group widgets' arrow and x symbols, make them always stay in one line
+even when screen is narrow */
+#widget-container .card-title > span {
+    display: flex;
+}
+
 .op-widget-column {
     position: relative;
     padding: 0 20px;
