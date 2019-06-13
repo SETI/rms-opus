@@ -61,6 +61,12 @@ body {
     display: block;
 }
 
+/* Add padding to (?)help when main nav has the hamburger */
+#op-help-menu {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 #op-tab img.newGIF {
     display: none;
 }
@@ -134,7 +140,9 @@ body {
 }
 
 #sidebar {
-    min-width: 24rem;
+    /* set 100% on min-width so search menu (including the grey border)
+    will shrink proportionally when screen is narrow */
+    min-width: 100%;
     max-width: 26rem;
     height: 100%;
 }
@@ -189,17 +197,19 @@ to 100%, this will make the shrinking look smoother */
     .op-reset-button {
         display: flex;
     }
-    /* Make sure all left menu contents not cut off when screen is narrow */
-    .searchMenu > li {
-        width: 80%;
-    }
 }
 
 @media (max-width: 700px) {
     /* Remove left space of search menu when screen width is narrower */
     .sidebar-area {
-        /* max-width: 50%; */
         padding-left: 0;
+    }
+
+    /* keep equal padding on both left/right sides of search menu when
+    screen is narrow */
+    ul.searchMenu {
+        padding-right: 1em;
+        padding-left: 1em;
     }
 }
 
