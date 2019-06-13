@@ -151,6 +151,10 @@ var opus = {
             $(".op-reset-button button").prop("disabled", true);
         }
 
+        // If we're coming in from a URL, we want to leave startobs and cart_startobs
+        // alone so we are using the values in the URL.
+        let leaveStartObs = true;
+
         // Compare selections and last selections, extras and last extras to see if anything
         // has changed that would require an update to the results. We ignore q-types for
         // search fields that aren't actually being searched on because when the user changes
@@ -163,11 +167,9 @@ var opus = {
             if (!opus.force_load) {
                 return;
             }
+            // Everything is the same but force_load is true; fall through to the reload
+            // This happens on OPUS initialization
         } else {
-            // The selections or extras have changed in a meaningful way requiring an update
-            opus.prefs.startobs = 1;
-            opus.prefs.cart_startobs = 1;
-
             // If selections != opus.selections or extras != opus.extras,
             // it means the user manually updated the URL in the browser,
             // so we have to reload the page. We can't just continue on normally
@@ -179,11 +181,11 @@ var opus = {
                 opus.extras = extras;
                 location.reload();
                 return;
-            } else {
-                // Otherwise, this was just a user change to one of the search criteria inside
-                // the UI, so erase the previous data and reload the results.
-                o_browse.clearObservationData();
             }
+
+            // The selections or extras have changed in a meaningful way requiring an update
+            // In this case we want to reset startobs and cart_startobs to 1
+            leaveStartObs = false;
         }
 
         opus.force_load = false;
@@ -202,6 +204,15 @@ var opus = {
         // avoid a recursive api call
         opus.lastSelections = selections;
         opus.lastExtras = extras;
+
+        // Force the Select Metadata dialog to refresh the next time we go to the browse
+        // tab in case the categories are changed by this search.
+        o_browse.metadataSelectorDrawn = false;
+
+        // Clear the gallery and table views on the browse tab so we start afresh when the data
+        // returns. There's no point in clearing the cart tab since the search doesn't
+        // affect what appears there.
+        o_browse.clearBrowseObservationDataAndEraseDOM(leaveStartObs);
 
         // Update the UI in the following order:
         // 1) Normalize all the inputs and check for validity (allNormalizedApiCall)
@@ -231,7 +242,7 @@ var opus = {
 
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This sets the opus.allInputsValid
-        // flag used below.
+        // flag used below and also updates the hash.
         o_search.validateRangeInput(normalizedData, true);
 
         if (!opus.allInputsValid) {
@@ -240,6 +251,18 @@ var opus = {
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             return;
+        }
+
+        if (opus.getCurrentTab() === "browse") {
+            // The user was really quick, and switched tabs before we had a chance
+            // to notice that the search parameters had changed. So they're looking at
+            // old data using an old hash :-( The clearObservationDataAndEraseDOM earlier
+            // will at least make them look at a blank screen, but we still need to
+            // force them to reload the data now that we have updated the hash.
+            // Note that things are OK if they switch tabs AFTER this point, even
+            // if result_count hasn't returned, because at least the hash has been
+            // updated so their call to dataimages.json will have the correct parameters.
+            o_browse.loadData(opus.getCurrentTab());
         }
 
         // Execute the query and return the result count
@@ -558,7 +581,7 @@ var opus = {
 
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
-        let adjustSearchHeightDB = _.debounce(o_search.adjustSearchHeight, 200);
+        let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
         let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
@@ -570,7 +593,7 @@ var opus = {
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
-            adjustSearchHeightDB();
+            searchHeightChangedDB();
             adjustBrowseHeightDB();
             adjustTableSizeDB();
             adjustProductInfoHeightDB();

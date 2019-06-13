@@ -539,7 +539,7 @@ var o_browse = {
             // let headers = $(`.op-data-table-view th a:not([data-slug="opusid"], [data-slug=${slug}])`).find("span:last");
             let headers = $(`.op-data-table-view th a:not([data-slug=${slug}])`).find("span:last");
             headers.data("sort", "none");
-            headers.attr("class", defaultTableSortArrow);
+            headers.attr("class", `column_ordering ${defaultTableSortArrow}`);
         }
 
         // Re-render each pill
@@ -590,7 +590,7 @@ var o_browse = {
 
         if (checkView) {
             // make sure the current element that the modal is displaying is viewable
-            if (!element.isOnScreen($(`${tab} .gallery-contents`))) {
+            if (!element.isOnScreen($(`${tab} .gallery-contents`), 0.5)) {
                 let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
 
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
@@ -691,7 +691,8 @@ var o_browse = {
                         `${tab} .op-data-table tbody tr`);
         let startObsLabel = o_browse.getStartObsLabel();
 
-        if ($(selector).length > 0) {
+        let numThumbnails = $(selector).length;
+        if (numThumbnails > 0) {
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
@@ -776,12 +777,22 @@ var o_browse = {
                     "max": maxSliderVal,
                 });
             }
+            $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
             // update startobs in url when scrolling
             o_hash.updateHash(true);
-        } else {
-            // disable the slider because there are no observations
-            $(`${tab} .op-slider-pointer`).css("width", "1ch");
-            $(`${tab} .op-observation-number`).html("?");
+        }
+
+        let galleryImages = o_browse.countGalleryImages();
+        if (opus.prefs[startObsLabel] + numThumbnails < galleryImages.x * galleryImages.y) {
+            // disable the slider because the observations don't fill the browser window
+            // $("#op-observation-slider").slider({
+            //     "value": 1,
+            //     "step": o_browse.gallerySliderStep,
+            //     "max": 1,
+            // });
+            $(`${tab} .op-slider-pointer`).css("width", "3ch");
+            $(`${tab} .op-observation-number`).html("-");
+            $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
         }
     },
 
@@ -927,7 +938,7 @@ var o_browse = {
 
         let label = $(menuSelector).data("qualifiedlabel");
         let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
-        let html = `<li id="cchoose__${slug}">${info}${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="info">&nbsp;${info}</span>${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
     },
 
@@ -961,7 +972,7 @@ var o_browse = {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 let tab = opus.getViewTab();
-                o_browse.clearObservationData();
+                o_browse.clearObservationData(true); // Leave startobs alone
                 o_hash.updateHash(); // This makes the changes visible to the user
                 o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData(opus.prefs.view);
@@ -1004,7 +1015,9 @@ var o_browse = {
                 // slug had been checked, remove from the chosen
                 o_menu.markMenuItem(menuSelector, "unselected");
                 opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols), 1);
-                $(chosenSlugSelector).remove();
+                $(chosenSlugSelector).fadeOut(200, function() {
+                    $(this).remove();
+                });
             }
             return false;
         });
@@ -1130,6 +1143,14 @@ var o_browse = {
         return url;
     },
 
+    metadataSelectorMenuContainerHeight: function() {
+        return $(".op-all-metadata-column").outerHeight();
+    },
+
+    selectedMetadataContainerHeight: function() {
+        return $(".op-selected-metadata-column").outerHeight();
+    },
+
     renderMetadataSelector: function() {
         if (!o_browse.metadataSelectorDrawn) {
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
@@ -1156,8 +1177,7 @@ var o_browse = {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
-                // dragging to reorder the chosen
-                $( ".op-selected-metadata-column > ul").sortable({
+                $(".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.metadataDragged(this); }
@@ -1184,7 +1204,7 @@ var o_browse = {
                 $(`${tab} .navbar`).addClass("op-button-disabled");
                 $(`${tab} .gallery`).empty();
                 $(`${tab} .op-data-table tbody`).empty();
-                $(`${tab} .op-data-table`).hide();
+                $(`${tab} .op-data-table-view`).hide();
                 $(`${tab} .op-results-message`).show();
             } else {
                 // end of infinite scroll OR invalid startObs
@@ -1208,11 +1228,11 @@ var o_browse = {
             o_browse.manageObservationCache(data.count, append, view);
             $(`${tab} .op-results-message`).hide();
             $(`${tab} .navbar`).removeClass("op-button-disabled");
-            //if (o_browse.isGalleryView(view)) {
+            if (o_browse.isGalleryView(view)) {
                 $(`${tab} .op-gallery-view`).show();
-            //} else {
-                $(`${tab} .op-data-table`).show();
-            //}
+            } else {
+                $(`${tab} .op-data-table-view`).show();
+            }
 
             viewNamespace.totalObsCount = data.total_obs_count;
 
@@ -1944,12 +1964,40 @@ var o_browse = {
         o_browse.metadataboxHtml(opusId);
     },
 
-    clearObservationData: function() {
-        opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
-        opus.prefs.cart_startobs = 1;
+    clearObservationData: function(leaveStartObs) {
+        if (!leaveStartObs) {
+            // Normally when we delete all the data we want to force a return to the top because
+            // we don't know what data is going to be loaded. But in some circumstances
+            // (like updating metadata columns) we know we're going to reload exactly the same
+            // data so we can keep our place.
+            opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
+            opus.prefs.cart_startobs = 1;
+            $(`.op-gallery-view`).infiniteScroll({"scrollbarObsNum": 1});
+            $(`.op-gallery-view`).infiniteScroll({"sliderObsNum": 1});
+            $(`.op-data-table-view`).infiniteScroll({"scrollbarObsNum": 1});
+            $(`.op-data-table-view`).infiniteScroll({"sliderObsNum": 1});
+        }
         o_cart.reloadObservationData = true;  // forces redraw of cart tab
         o_cart.observationData = {};
         o_browse.reloadObservationData = true;  // forces redraw of browse tab
         o_browse.observationData = {};
+    },
+
+    clearBrowseObservationDataAndEraseDOM: function(leaveStartObs=false) {
+        if (!leaveStartObs) {
+            opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
+            $("#browse .op-gallery-view").infiniteScroll({"scrollbarObsNum": 1});
+            $("#browse .op-gallery-view").infiniteScroll({"sliderObsNum": 1});
+            $("#browse .op-data-table-view").infiniteScroll({"scrollbarObsNum": 1});
+            $("#browse .op-data-table-view").infiniteScroll({"sliderObsNum": 1});
+        }
+        o_browse.reloadObservationData = true;  // forces redraw of browse tab
+        o_browse.observationData = {};
+        // Just so the user doesn't see old data lying around while waiting for a reload
+        // XXX For some reason having these lines here makes data sometimes double-load
+        // when the scrollbar isn't at the top, so for now this is disabled and the
+        // user might occasionally see old data briefly while the new stuff loads.
+        // $("#browse .gallery").empty();
+        // $("#browse .op-data-table tbody").empty();
     },
 };
