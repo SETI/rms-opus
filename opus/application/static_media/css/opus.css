@@ -154,7 +154,7 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    max-width: 380px;
+    max-width: 420px;
 }
 
 /* As long as q-type shrink to the 2nd line, we set text input width
