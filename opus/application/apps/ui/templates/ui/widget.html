@@ -1,0 +1,48 @@
+{% comment %}
+    this is all inside of: <li id="widget__{{ slug }}" class = "widget">
+
+    range-qtype-helper div is appended in widgets.js becuase omg was impossible to layout #todo
+{% endcomment %}
+
+<div class="card">
+    <header class="card-header">
+        <h6 class="card-title mt-0">
+                    <i class = "fas fa-info-circle" title = "{{tooltip|safe }}"></i>
+                    {{ label }} {{ units }}
+                    <span class="spinner">&nbsp;</span>
+                    <span class="float-right border-left border-dark">
+                        <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
+                                <i class="icon-action fa fa-chevron-down pull-right"></i>
+                </a>
+                        <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
+                    <i class="icon-action fa fa-times"></i>
+                </a>
+                    </span>
+        </h6>
+    </header>
+
+    <div class="collapse show" id="card__{{ slug }}" style="">
+        <article class="card-body p-1 widget__{{ slug }}
+                            {% if form_type in range_form_types %}
+                                 range-widget
+                            {% endif %}
+                            {% if form_type in mult_form_types %}
+                                 mult-widget
+                            {% endif %}
+                        ">
+            <div class="widget-main">
+                <div id = "hint__{{ slug }}" class = "range_hints"></div>
+                <ul>
+                    {% if intro %}
+                        <div class = "text-info">
+                            {{ intro }}
+
+                        </div>
+                    {% endif %}
+
+                        {{ form|safe }}
+                </ul>
+            </div>
+        </article>
+    </div><!-- /widget-body -->
+</div><!-- /widget-box -->

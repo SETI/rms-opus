@@ -15,21 +15,20 @@ import settings
 ### Test cases ###
 ##################
 class APIResultCountsTests(TestCase):
-    filename = "test_api/csv/result_counts.csv"
+    filename = "test_api/data/result_counts.csv"
 
     # disable error logging and trace output before test
     def setUp(self):
-        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.OPUS_SCHEMA_NAME
-        sys.tracebacklimit = 0 # default: 1000
+        self.maxDiff = None
+        settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.DEBUG)
 
     # enable error logging and trace output after test
     def tearDown(self):
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
     def test_api_result_counts_from_csv(self):
-        """Result Counts: compare result counts of API calls between csv and live server
+        """[test_result_counts.py] Compare result counts of API calls between csv and live server
            Result counts from live server should always be greater or equal.
            Expected values in csv is obtain from production site on 12/12/18.
            Example of return json:

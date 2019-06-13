@@ -1,0 +1,84 @@
+<p>This guide describes the API that drives <a href="https://tools.pds-rings.seti.org/opus">OPUS, an outer planets data search tool</a> produced by the <a href="https://pds-rings.seti.org">NASA PDS Ring-Moon Systems Node</a>. Any search that can be performed in OPUS can also be requested as an API call. Below are several examples. Please <a href="https://pds-rings.seti.org/cgi-bin/comments/form.pl?"> send us questions or comments</a>.</p>
+
+<div class="jumpto">
+	{% for section in guide.sections %}
+		<a href="#{{ section.title|slugify }}">{{ section.title }}</a> <br>
+	{% endfor %}
+	<a href="#availablefields">Available Fields</a> <br>
+</div>
+
+{% for section in guide.sections %}
+	<div class="section">
+		<a name="{{ section.title|slugify }}"></a>
+
+		<h2>{{ section.title }}</h2>
+		<p>{{ section.desc }}</p>
+
+		{% for endpoint in section.endpoints %}
+            <div class="intro">
+                <h3>{{ endpoint.title }}</h3>
+                <p>{{ endpoint.desc }}</p>
+            </div>
+
+            <ul class="keyvals">
+                {% for key,val in endpoint.info.items %}
+                    <li><strong>{{key}}: </strong> {{val}} </li>
+                {% endfor %}
+            </ul>
+
+            <div class="examples">
+                <strong> Example: </strong>
+
+                <ul>
+                    {% for example in endpoint.examples %}
+
+                        <li>
+                            <p id="example_intro">{{ example.desc }}</p>
+                            <p><a href="{{ example.url }}" target="_blank">
+                                {{ example.url }}
+                            </a></p>
+
+                            <p class="cutpaste">
+                                <!-- curl -O {{ base_url }}{{ example.link }} -->
+                                <input type="text" value="wget {{ example.url }}" size=80>
+                            </p>
+                        </li>
+
+                    {% endfor %}
+                </ul>
+            </div>
+		{% endfor %}
+	</div>
+
+	<a href="#">back to top</a>
+{% endfor %}
+
+<h2>Available Fields</h2>
+<p>Old slugs are deprecated but are still functional for backwards compatibility.
+Please remove the use of old slugs from your code ASAP.</p>
+<a name="availablefields"></a>
+<div id="field_data" class="table-responsive">
+    <table class="table table-sm table-striped table-hover">
+		<thead class="thead-dark">
+            <tr>
+                <th>Category</th>
+                <th>Label</th>
+                <th>Slug (<span class="text-danger">Old Slug</span>)</th>
+            </tr>
+		</thead>
+		<tbody>
+	    {% for k,v in slugs.items %}
+            <tr>
+                <td>{{ v.category }}</td>
+                <td>{{ v.label }}</td>
+                <td>{{ v.slug }}
+                    {% if v.old_slug %}
+                        <p class="text-danger">{{ v.old_slug }}</p>
+                    {% endif %}
+                </td>
+            </tr>
+	    {% endfor %}
+		</tbody>
+    </table>
+</div>
+

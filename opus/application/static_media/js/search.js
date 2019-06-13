@@ -1,188 +1,58 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $, PerfectScrollbar */
+/* globals o_hash, o_menu, o_utils, o_widgets, opus */
+
+/* jshint varstmt: false */
 var o_search = {
+/* jshint varstmt: true */
 
     /**
      *
      *  Everything that appears on the search tab
      *
      **/
+    searchScrollbar: new PerfectScrollbar("#sidebar-container", {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
+    widgetScrollbar: new PerfectScrollbar("#widget-container" , {
+        suppressScrollX: true,
+        minScrollbarLength: opus.minimumPSLength
+    }),
+
+    // for input validation in the search widgets
+    searchTabDrawn: false,
+    searchResultsNotEmpty: false,
     searchMsg: "",
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
+    lastSlugNormalizeRequestNo: 0,
+    lastMultsRequestNo: 0,
+    lastEndpointsRequestNo: 0,
+
     slugStringSearchChoicesReqno: {},
     slugNormalizeReqno: {},
     slugMultsReqno: {},
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
-    allNormalizedApiCall: function() {
-        let newHash = o_hash.updateHash(false);
-        /*
-        We are relying on URL order now to parse and get slugs before "&view" in the URL
-        Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
-        Refer to hash.js getSelectionsFromHash and updateHash functions
-        */
-        let regexForHashWithSearchParams = /(.*)&view/;
-        if(newHash.match(regexForHashWithSearchParams)) {
-            newHash = newHash.match(regexForHashWithSearchParams)[1];
-        }
-        opus.waitingForAllNormalizedAPI = true;
-        opus.lastAllNormalizeRequestNo++;
-        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
-        return $.getJSON(url);
-    },
-    validateRangeInput: function(normalizedInputData, removeSpinner=false) {
-        opus.allInputsValid = true;
-        o_search.slugRangeInputValidValueFromLastSearch = {};
 
-        $.each(normalizedInputData, function(eachSlug, value) {
-            let currentInput = $(`input[name="${eachSlug}"]`);
-            if(value === null) {
-                if(currentInput.hasClass("RANGE")) {
-                    if(currentInput.hasClass("input_currently_focused")) {
-                        $("#sidebar").addClass("search_overlay");
-                    } else {
-                        $("#sidebar").addClass("search_overlay");
-                        currentInput.addClass("search_input_invalid_no_focus");
-                        currentInput.removeClass("search_input_invalid");
-                        currentInput.val(opus.selections[eachSlug]);
-                    }
-                }
-                opus.allInputsValid = false;
-            } else {
-                if(currentInput.hasClass("RANGE")) {
-                    /*
-                    If current focused input value is different from returned normalized data
-                    we will not overwrite its displayed value.
-                    */
-                    if(currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                    } else {
-                        currentInput.val(value);
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                        // No color border if the input value is valid
-                        currentInput.addClass("search_input_original");
-                        currentInput.removeClass("search_input_invalid_no_focus");
-                        currentInput.removeClass("search_input_invalid");
-                        currentInput.removeClass("search_input_valid");
-                    }
-                }
-            }
-        });
-
-        if(!opus.allInputsValid) {
-            $("#result_count").text("?");
-            // set hinting info to ? when any range input has invalid value
-            // for range
-            $(".range_hints").each(function() {
-                if($(this).children().length > 0) {
-                    $(this).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
-                }
-            });
-            // for mults
-            $(".hints").each(function() {
-                $(this).html("<span>?</span>");
-            });
-
-            if(removeSpinner) {
-                $(".spinner").fadeOut("");
-            }
-        }
-    },
-    parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
-        $.getJSON(url, function(normalizedInputData) {
-            // Make sure it's the final call before parsing normalizedInputData
-            if(normalizedInputData["reqno"] < o_search.slugNormalizeReqno[slug]) {
-                return;
-            }
-
-            // check each range input, if it's not valid, change its background to red
-            o_search.validateRangeInput(normalizedInputData);
-            if(!opus.allInputsValid) {
-                return;
-            }
-
-            o_hash.updateHash();
-            if (o_utils.areObjectsEqual(opus.selections, opus.last_selections))  {
-                // Put back normal hinting info
-                opus.widgets_drawn.forEach(function(eachSlug) {
-                    o_search.getHinting(eachSlug);
-                });
-                $("#result_count").text(o_utils.addCommas(opus.result_count));
-            }
-            $("input.RANGE").each(function() {
-                if(!$(this).hasClass("input_currently_focused")){
-                    $(this).removeClass("search_input_valid");
-                    $(this).removeClass("search_input_invalid");
-                    $(this).addClass("search_input_original");
-                }
-            });
-            // $("input.RANGE").removeClass("search_input_valid");
-            // $("input.RANGE").removeClass("search_input_invalid");
-            // $("input.RANGE").addClass("search_input_original");
-            $("#sidebar").removeClass("search_overlay");
-        });
-    },
-    extractHtmlContent: function(htmlString) {
-        let domParser = new DOMParser();
-        let content = domParser.parseFromString(htmlString, "text/html").documentElement.textContent;
-        return content;
-    },
-    searchBehaviors: function() {
-        /*
-        // result count display hover
-        $('#result_count').parent().hover(
-            function(){ $('#result_count').addClass('result_count_hover'); },
-            function(){ $('#result_count').removeClass('result_count_hover'); }
-        )
-        */
-
-        // the split form buttons - view the search form in 1 or 2 columns
-        /*
-        $('#split_search_form a').live('click', function() {
-            col = $(this).attr("href");
-            if (col == '#2col') {
-                // clicked '2 columns' so add a 2nd column
-                if (opus.search_form_cols==1) o_widgets.resetWidgetScrolls(); // changing shap calls for reset scrolls
-                opus.search_form_cols = 2;
-                o_search.addSecondFormsCol();
-            } else {
-                // clicked '1 column' remove the 2nd column
-                if (opus.search_form_cols==2) o_widgets.resetWidgetScrolls(); // reset all scroll positions
-                // first move the widgets to the first column
-                opus.search_form_cols = 1;
-                $('#search_widgets1').width('70%');
-                $('#search_widgets2 .widget').each(function() {
-                    $(this).appendTo('#search_widgets1');
-                    slug = $(this).attr('id').split('__')[1];
-                    opus.prefs.widgets.push(slug);
-                    opus.prefs.widgets2.splice(jQuery.inArray(slug,opus.prefs.widgets2),1);
-                    o_hash.updateHash();
-                });
-
-                $('#search_widgets1 .widget').each(function() {
-                    o_widgets.adjustWidgetWidth(this);
-                });
-                // remove the 2nd column, widen the first column
-                $('#search_widgets2').remove();
-            }
-
-
-            o_widgets.updateWidgetCookies();
-            return false;
-        });
-        */
-
+    addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            if(o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "") {
-              $(this).addClass("input_currently_focused");
+            if (o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "") {
               $(this).addClass("search_input_original");
             } else {
-              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_invalid");
-              $(this).removeClass("search_input_invalid_no_focus");
             }
+            $(this).addClass("input_currently_focused");
+            $(this).removeClass("search_input_invalid_no_focus");
         });
 
         /*
@@ -190,10 +60,8 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(event) {
-            let slug = $(this).attr("name");
-            let currentValue = $(this).val().trim();
             $(this).removeClass("input_currently_focused");
-            if($(this).hasClass("search_input_invalid")) {
+            if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
                 $(this).removeClass("search_input_invalid");
             }
@@ -201,16 +69,15 @@ var o_search = {
 
         // Dynamically get input values right after user input a character
         $("#search").on("input", "input.RANGE", function(event) {
-            if(!$(this).hasClass("input_currently_focused")) {
+            if (!$(this).hasClass("input_currently_focused")) {
                 $(this).addClass("input_currently_focused");
             }
 
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = []
 
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
 
             // values.push(currentValue)
             // opus.selections[slug] = values;
@@ -222,16 +89,16 @@ var o_search = {
             1) Input field is empty OR
             2) Input value didn't change from the last successful search
             */
-            if(currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slug]) {
+            if (currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slug]) {
                 $(event.target).removeClass("search_input_valid search_input_invalid");
                 $(event.target).addClass("search_input_original");
                 return;
             }
 
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
-                if(data["reqno"] < o_search.slugNormalizeReqno[slug]) {
+                if (data.reqno < o_search.slugNormalizeReqno[slug]) {
                     return;
                 }
 
@@ -242,10 +109,10 @@ var o_search = {
                 If it's null, add search_input_invalid class
                 If it's valid, add search_input_valid class
                 */
-                if(returnData === "") {
+                if (returnData === "") {
                     $(event.target).removeClass("search_input_valid search_input_invalid");
                     $(event.target).addClass("search_input_original");
-                } else if(returnData !== null) {
+                } else if (returnData !== null) {
                     $(event.target).removeClass("search_input_original search_input_invalid");
                     $(event.target).removeClass("search_input_invalid_no_focus");
                     $(event.target).addClass("search_input_valid");
@@ -265,10 +132,12 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(event) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
-            let values = []
-            values.push(currentValue)
-            opus.selections[slug] = values;
 
+            if (currentValue) {
+                opus.selections[slug] = [currentValue];
+            } else {
+                delete opus.selections[slug];
+            }
             let newHash = o_hash.updateHash(false);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -276,64 +145,81 @@ var o_search = {
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
-            if(newHash.match(regexForHashWithSearchParams)) {
+            if (newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
 
-            if($(event.target).hasClass("input_currently_focused")) {
+            if ($(event.target).hasClass("input_currently_focused")) {
                 $(event.target).removeClass("input_currently_focused");
             }
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
-        // filling in a range or string search field = update the hash
-        // range behaviors and string behaviors for search widgets - input box
-        $('#search').on('change', 'input.STRING', function(event) {
+        $('#search').on("change", 'input.STRING', function(event) {
+
             let slug = $(this).attr("name");
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
             // get values of all inputs
-            var values = [];
+            let values = [];
             if (css_class == 'STRING') {
-                $('#widget__' + slug + ' input.STRING').each(function() {
-                    values[values.length] = $(this).val();
+                $("#widget__" + slug + ' input.STRING').each(function() {
+                    if ($(this).val()) {
+                        values.push($(this).val());
+                    }
                 });
-                opus.selections[slug] = values;
+
+                if (values.length) {
+                    opus.selections[slug] = values;
+                } else {
+                    delete opus.selections[slug];
+                }
             } else {
                 // range query
-                var slug_no_num = slug.match(/(.*)[1|2]/)[1];
+                let slugNoNum = slug.match(/(.*)[1|2]/)[1];
                 // min
                 values = [];
-                $('#widget__' + slug_no_num + '1 input.min', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.min', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $('#widget__' + slug_no_num + ' input.min', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.min', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
-                opus.selections[slug_no_num + '1'] = values;
+
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '1'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '1'];
+                }
                 // max
                 values = [];
-                $('#widget__' + slug_no_num + '1 input.max', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.max', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $('#widget__' + slug_no_num + ' input.max', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.max', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
-                opus.selections[slug_no_num + '2'] = values;
+
+                if (values.length && values[0]) {
+                    opus.selections[slugNoNum + '2'] = values;
+                } else {
+                    delete opus.selections[slugNoNum + '2'];
+                }
             }
 
-            if(opus.last_selections && opus.last_selections[slug]) {
-                if(opus.last_selections[slug][0] === $(this).val().trim()) {
+            if (opus.lastSelections && opus.lastSelections[slug]) {
+                if (opus.lastSelections[slug][0] === $(this).val().trim()) {
                     return;
                 }
             }
+
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
             /*
@@ -342,275 +228,355 @@ var o_search = {
             Refer to hash.js getSelectionsFromHash and updateHash functions
             */
             let regexForHashWithSearchParams = /(.*)&view/;
-            if(newHash.match(regexForHashWithSearchParams)) {
+            if (newHash.match(regexForHashWithSearchParams)) {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
-            opus.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = opus.lastSlugNormalizeRequestNo;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastSlugNormalizeRequestNo;
+            o_search.lastSlugNormalizeRequestNo++;
+            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
+        $('#search').on("change", 'input.multichoice, input.singlechoice', function() {
+           // mult widget gets changed
+           let id = $(this).attr("id").split('_')[0];
+           let value = $(this).attr("value").replace(/\+/g, '%2B');
+
+           if ($(this).is(':checked')) {
+               let values = [];
+               if (opus.selections[id]) {
+                   values = opus.selections[id]; // this param already has been constrained
+               }
+
+               // for surfacegeometry we only want a target selected
+               if (id === 'surfacegeometrytargetname') {
+                  opus.selections[id] = [value];
+               } else {
+                  // add the new value to the array of values
+                  values[values.length] = value;
+                  // add the array of values to selections
+                  opus.selections[id] = values;
+               }
+
+               // special menu behavior for surface geo, slide in a loading indicator..
+               if (id == 'surfacetarget') {
+                    let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
+                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
+               }
+
+           } else {
+               let remove = opus.selections[id].indexOf(value); // find index of value to remove
+               opus.selections[id].splice(remove,1);        // remove value from array
+
+               if (opus.selections[id].length === 0) {
+                   delete opus.selections[id];
+               }
+           }
+           o_hash.updateHash();
+        });
+
         // range behaviors and string behaviors for search widgets - qtype select dropdown
-        $('#search').on('change','select', function() {
-            var qtypes = [];
-            var form_type = $(this).attr("class");
+        $('#search').on("change", "select", function() {
+            let qtypes = [];
 
-            if (form_type == 'RANGE') {
-                slug_no_num = $(this).attr("name").match(/-(.*)/)[1];
-                slug = slug_no_num + '1';
+            switch ($(this).attr("class")) {  // form type
+                case "RANGE":
+                    let slugNoNum = $(this).attr("name").match(/-(.*)/)[1];
+                    $(`#widget__${slugNoNum} select`).each(function() {
+                        qtypes.push($(this).val());
+                    });
+                    opus.extras[`qtype-${slugNoNum}`] = qtypes;
+                    break;
 
-                $('#widget__' + slug + ' select').each(function() {
-                    qtypes[qtypes.length] = $(this).val();
-                });
-                opus.extras['qtype-' + slug_no_num] = qtypes;
-
-            } else if (form_type == 'STRING') {
-                slug = $(this).attr("name").match(/-(.*)/)[1];
-                $('#widget__' + slug + ' select').each(function() {
-                    qtypes[qtypes.length] = $(this).val();
-                });
-                opus.extras['qtype-' + slug] = qtypes;
+                case "STRING":
+                    let slug = $(this).attr("name").match(/-(.*)/)[1];
+                    $(`#widget__${slug} select`).each(function() {
+                        qtypes.push($(this).val());
+                    });
+                    opus.extras[`qtype-${slug}`] = qtypes;
+                    break;
             }
+
             o_hash.updateHash();
         });
+    },
 
-        // "add range" and "add string" search behaviors -- todo
-        $('#search').on("click", 'a.add_input, a.add_input', function() {
-            return false;
-            slug = $(this).parent().parent().parent().parent().attr("class").split(' ')[0].match(/\__(.*)/)[1]; // shoot me now.
-            count = $('#widget__' + slug + ' input').length + 1;
+    allNormalizedApiCall: function() {
+        let newHash = o_hash.updateHash(false);
+        /*
+        We are relying on URL order now to parse and get slugs before "&view" in the URL
+        Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
+        Refer to hash.js getSelectionsFromHash and updateHash functions
+        */
+        let regexForHashWithSearchParams = /(.*)&view/;
+        if (newHash.match(regexForHashWithSearchParams)) {
+            newHash = newHash.match(regexForHashWithSearchParams)[1];
+        }
+        opus.waitingForAllNormalizedAPI = true;
+        opus.lastAllNormalizeRequestNo++;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
+        return $.getJSON(url);
+    },
 
-            // no bring in another note form
-            // we don't want
-            $.ajax({ url: "/opus/__forms/widget/" + slug + '.html?addlink=false',
-                success: function(widget_str){
-                    // we don't want to insert the entire widget, only the span class = "widget_form" section
-                    html = widget_str.match(/<section>([\s\S]*)<\/section>/)[0];
-                    $(html).appendTo('#widget__' + slug + ' .widget_inner');
-                }});
-            return false;
+    validateRangeInput: function(normalizedInputData, removeSpinner=false) {
+        opus.allInputsValid = true;
+        o_search.slugRangeInputValidValueFromLastSearch = {};
 
-        });
-
-        // add range add string search behaviors - remove string -- todo
-        $('#search').on("click", '.STRING a.remove_input, .RANGE a.remove_input', function() {
-            return false;
-
-            var slug = $(this).parent().parent().parent().parent().parent().parent().attr("id").match(/\__(.*)/)[1];
-            form_type = 'STRING';
-            if ($('#widget__' + slug + ' .widget_inner').hasClass('RANGE')) form_type = 'RANGE';
-            var qname = 'qtype-' + slug;
-
-            if (form_type == 'RANGE') {
-                var min = slug.match(/(.*)[1|2]/)[1] + '1';
-                var max = slug.match(/(.*)[1|2]/)[1] + '2';
-                var input_val_max = $(this).parent().prev().prev().children('input').val();
-                var input_val_min = $(this).parent().prev().prev().prev().children('input').val();
-
-
-                $(this).parent().parent().remove(); // the section
-
-                // removing a range means removing any values entered from the opus.selections and updating the hash
-                if (typeof(opus.selections[min]) != 'undefined' || typeof(opus.selections[min])  != 'undefined') {
-                    // this range is contrained, are we removing
-                    // loop through the opus.selections to find the pair we are removing
-                    lngth = Math.max(opus.selections[min].length, opus.selections[max].length);
-                    for (var key=0;key<lngth;key++) {
-                        if (opus.selections[min][key] == input_val_min && opus.selections[max][key] == input_val_max) {
-                            // this is the pair we need to remove
-                            opus.selections[min].splice(key,1);
-                            opus.selections[max].splice(key,1);
-                            if (jQuery.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
-                                opus.extras[qname].splice(key,1);
-                            }
-                            break;
-                        }
+        $.each(normalizedInputData, function(eachSlug, value) {
+            let currentInput = $(`input[name="${eachSlug}"]`);
+            if (value === null) {
+                if (currentInput.hasClass("RANGE")) {
+                    if (currentInput.hasClass("input_currently_focused")) {
+                        $("#sidebar").addClass("search_overlay");
+                    } else {
+                        $("#sidebar").addClass("search_overlay");
+                        currentInput.addClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.val(opus.selections[eachSlug]);
                     }
                 }
-            } else { // this is a STRING field
-                var input_val = $(this).parent().prev().prev().children('input').val();
-
-                $(this).parent().prev().prev().remove(); // the section
-                $(this).parent().prev().remove(); // the section
-                $(this).parent().remove(); // the section
-                // $(this).parent().prev().remove(); // the section
-
-                if (typeof(opus.selections[slug]) != 'undefined') {
-                    for (key in opus.selections[slug]) {
-                         if (opus.selections[slug][key] == input_val) {
-                             opus.selections[slug].splice(key,1);
-                              if (jQuery.inArray(qname, opus.extras) > -1 && typeof(opus.extras[qname]) != 'undefined') {
-                                 opus.extras[qname].splice(key,1);
-                             }
-                             break;
-                         }
+                opus.allInputsValid = false;
+            } else {
+                if (currentInput.hasClass("RANGE")) {
+                    /*
+                    If current focused input value is different from returned normalized data
+                    we will not overwrite its displayed value.
+                    */
+                    if (currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                    } else {
+                        currentInput.val(value);
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        opus.selections[eachSlug] = [value];
+                        // No color border if the input value is valid
+                        currentInput.addClass("search_input_original");
+                        currentInput.removeClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.removeClass("search_input_valid");
                     }
                 }
             }
-                o_hash.updateHash();
-                return false;
+        });
+
+        if (opus.allInputsValid) {
+            o_hash.updateHash();
+        } else {
+            $("#op-result-count").text("?");
+            // set hinting info to ? when any range input has invalid value
+            // for range
+            $(".range_hints").each(function() {
+                if ($(this).children().length > 0) {
+                    $(this).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                }
             });
+            // for mults
+            $(".hints").each(function() {
+                $(this).html("<span>?</span>");
+            });
+
+            if (removeSpinner) {
+                $(".spinner").fadeOut("");
+            }
+        }
     },
 
-    adjustSearchHeight: function() {
+    parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
+        $.getJSON(url, function(normalizedInputData) {
+            // Make sure it's the final call before parsing normalizedInputData
+            if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
+                return;
+            }
 
-        container_height = $(window).height() - 100;
-        $(".widget_column").height(container_height);
-        $(".sidebar_wrapper").height(container_height);
+            // check each range input, if it's not valid, change its background to red
+            // and also remove spinner.
+            o_search.validateRangeInput(normalizedInputData, true);
+            if (!opus.allInputsValid) {
+                return;
+            }
 
+            o_hash.updateHash();
+            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                // Put back normal hinting info
+                opus.widgetsDrawn.forEach(function(eachSlug) {
+                    o_search.getHinting(eachSlug);
+                });
+                $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+            }
+            $("input.RANGE").each(function() {
+                if (!$(this).hasClass("input_currently_focused")) {
+                    $(this).removeClass("search_input_valid");
+                    $(this).removeClass("search_input_invalid");
+                    $(this).addClass("search_input_original");
+                }
+            });
+            // $("input.RANGE").removeClass("search_input_valid");
+            // $("input.RANGE").removeClass("search_input_invalid");
+            // $("input.RANGE").addClass("search_input_original");
+            $("#sidebar").removeClass("search_overlay");
+        });
     },
 
-    getSearchTab: function() {
+    extractHtmlContent: function(htmlString) {
+        let domParser = new DOMParser();
+        let content = domParser.parseFromString(htmlString, "text/html").documentElement.textContent;
+        return content;
+    },
 
-        if (opus.search_tab_drawn) { return; }
-        // widgets1 is the left column of widgets, wigets2 is the optional right col
+    searchBarContainerHeight: function() {
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let footerHeight = $(".app-footer").outerHeight();
+        let resetButtonHeight = $(".op-reset-button").outerHeight();
+        let dividerHeight = $(".shadow-divider").outerHeight();
+        let offset = mainNavHeight + footerHeight + resetButtonHeight + dividerHeight;
+        return $("#search").height() - offset;
+    },
+
+    searchHeightChanged: function() {
+        o_search.searchSideBarHeightChanged();
+        o_search.searchWidgetHeightChanged();
+    },
+
+    searchSideBarHeightChanged: function() {
+        let containerHeight = o_search.searchBarContainerHeight();
+        let searchMenuHeight = $(".searchMenu").height();
+        $("#search .sidebar_wrapper").height(containerHeight);
+
+        if (containerHeight > searchMenuHeight) {
+            $("#sidebar-container .ps__rail-y").addClass("hide_ps__rail-y");
+            o_search.searchScrollbar.settings.suppressScrollY = true;
+        } else {
+            $("#sidebar-container .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_search.searchScrollbar.settings.suppressScrollY = false;
+        }
+
+        o_search.searchScrollbar.update();
+    },
+
+    searchWidgetHeightChanged: function() {
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
+        let containerHeight = $("#search").height() - totalNonSearchAreaHeight;
+        let searchWidgetHeight = $("#op-search-widgets").height();
+        $(".op-widget-column").height(containerHeight);
+
+        if (containerHeight > searchWidgetHeight) {
+            $("#widget-container .ps__rail-y").addClass("hide_ps__rail-y");
+            o_search.widgetScrollbar.settings.suppressScrollY = true;
+        } else {
+            $("#widget-container .ps__rail-y").removeClass("hide_ps__rail-y");
+            o_search.widgetScrollbar.settings.suppressScrollY = false;
+        }
+
+        o_search.widgetScrollbar.update();
+    },
+
+    activateSearchTab: function() {
+
+        if (o_search.searchTabDrawn) {
+            return;
+        }
 
         // get any prefs from cookies
         if (!opus.prefs.widgets.length && $.cookie("widgets")) {
             opus.prefs.widgets = $.cookie("widgets").split(',');
         }
-        if (!opus.prefs.widgets2.length && $.cookie("widgets2")) {
-            opus.prefs.widgets2 = $.cookie("widgets2").split(',');
-        }
-
         // get menu
-        o_menu.getMenu();
+        o_menu.getNewSearchMenu();
 
         // find and place the widgets
-        if (!opus.prefs.widgets.length && !opus.prefs.widgets2.length) {
+        if (!opus.prefs.widgets.length) {
             // no widgets defined, get the default widgets
-            opus.prefs.widgets = ['planet','target'];
+            opus.prefs.widgets = ["planet","target"];
             o_widgets.placeWidgetContainers();
-            o_widgets.getWidget('planet','#search_widgets1');
-            o_widgets.getWidget('target','#search_widgets1');
+            o_widgets.getWidget("planet","#op-search-widgets");
+            o_widgets.getWidget("target","#op-search-widgets");
         } else {
-            if (!opus.widget_elements_drawn.length) {
+            if (!opus.widgetElementsDrawn.length) {
                 o_widgets.placeWidgetContainers();
             }
         }
 
         o_widgets.updateWidgetCookies();
 
-        for (key in opus.prefs.widgets) {  // fetch each widget
-            slug = opus.prefs.widgets[key];
-            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#search_widgets1');
+        for (let key in opus.prefs.widgets) {  // fetch each widget
+            let slug = opus.prefs.widgets[key];
+            if ($.inArray(slug, opus.widgetsDrawn) < 0) {  // only draw if not already drawn
+                o_widgets.getWidget(slug,"#op-search-widgets");
             }
         }
 
-        for (key in jQuery.unique(opus.prefs.widgets2)) {  // fetch each widget
-            slug = opus.prefs.widgets2[key];
-            if (jQuery.inArray(slug, opus.widgets_drawn) < 0) {  // only draw if not already drawn
-                o_widgets.getWidget(slug,'#search_widgets2');
-            }
-        }
-        opus.search_tab_drawn = true;
-
-        o_search.adjustSearchHeight();
-
-    },
-
-
-    addSecondFormsCol: function() {
-        var width = '35%';
-        if (!$('#search_widgets2').length) {
-            $('.formscolumn').width(width);
-
-            $('#search_widgets1').after('<ul  id = "search_widgets2" style = "width:' + width + '" class="formscolumn"></ul>')
-                              .animate({width:width},'fast');
-            $('#search_widgets1, #search_widgets2').sortable({
-                    connectWith: '.formscolumn',
-                    handle:'.widget_draghandle',
-                    cursor: 'crosshair',
-                    stop: function(event,ui) {
-                        o_widgets.widgetDrop(ui);
-                    }
-            });
-
-            $('#search_widgets1 .widget').each(function() {
-                o_widgets.adjustWidgetWidth(this);
-            });
-
-        }
+        o_search.searchTabDrawn = true;
     },
 
     getHinting: function(slug) {
 
-        if ($('.widget__' + slug).hasClass('range-widget')) {
+        if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
 
-        } else if ($('.widget__' + slug).hasClass('mult-widget')) {
+        } else if ($(".widget__" + slug).hasClass("mult-widget")) {
             // this is a mult field
             o_search.getValidMults(slug);
         } else {
-          $('#widget__' + slug + ' .spinner').fadeOut();
+          $(`#widget__${slug} .spinner`).fadeOut();
         }
     },
 
     getRangeEndpoints: function(slug) {
 
-        $('#widget__' + slug + ' .spinner').fadeIn();
-        opus.lastEndpointsRequestNo++;
-        o_search.slugEndpointsReqno[slug] = opus.lastEndpointsRequestNo;
-        var url = "/opus/__api/meta/range/endpoints/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + o_search.slugEndpointsReqno[slug];
-        
+        $(`#widget__${slug} .spinner`).fadeIn();
+
+        o_search.lastEndpointsRequestNo++;
+        o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
+        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
-            success: function(multdata){
-                $('#widget__' + slug + ' .spinner').fadeOut();
+            success: function(multdata) {
+                $(`#widget__${slug} .spinner`).fadeOut();
 
-                if (multdata['reqno'] < o_search.slugEndpointsReqno[slug]) {
+                if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-
-                min = multdata['min'];
-                max = multdata['max'];
-                nulls = multdata['nulls'];
-
-                widget = "widget__" + slug;
-                $('#hint__' + slug).html("<span>min: " + min + "</span><span>max: " + max + "</span><span> nulls: " + nulls + '</span>');
-
+                $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
             },
             statusCode: {
                 404: function() {
-                  $('#widget__' + slug + ' .spinner').removeClass('spinning');
-              }
+                    $(`#widget__${slug} .spinner`).fadeOut();
+                }
             },
-            error:function (xhr, ajaxOptions, thrownError){
-                $("#widget__" + slug + " .spinner").removeClass("spinning");
+            error:function(xhr, ajaxOptions, thrownError) {
+                $(`#widget__${slug} .spinner`).fadeOut();
                 // range input hints are "?" when wrong values of url is pasted
-                $("#hint__" + slug).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                $(`#hint__${slug}`).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
             }
         }); // end mults ajax
     },
 
-    getValidMults: function (slug) {
+    getValidMults: function(slug) {
         // turn on spinner
-        $('#widget__' + slug + ' .spinner').fadeIn();
-        opus.lastMultsRequestNo++;
-        o_search.slugMultsReqno[slug] = opus.lastMultsRequestNo;
-        var url = "/opus/__api/meta/mults/" + slug + ".json?" + o_hash.getHash() +  '&reqno=' + o_search.slugMultsReqno[slug];
+        $(`#widget__${slug} .spinner`).fadeIn();
 
+        o_search.lastMultsRequestNo++;
+        o_search.slugMultsReqno[slug] = o_search.lastMultsRequestNo;
+        let url = `/opus/__api/meta/mults/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugMultsReqno[slug]}`;
         $.ajax({url: url,
             dataType:"json",
-            success: function(multdata){
-
-                $('#widget__' + slug + ' .spinner').fadeOut('');
-
-                if (multdata['reqno'] < o_search.slugMultsReqno[slug]) {
+            success: function(multdata) {
+                if (multdata.reqno < o_search.slugMultsReqno[slug]) {
                     return;
                 }
 
-                slug = multdata['field'];
-                widget = "widget__" + slug;
-                mults = multdata['mults'];
-                $('#' + widget + ' input').each( function() {
-                    value = $(this).attr('value');
-                    id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+                let dataSlug = multdata.field;
+                $("#widget__" + dataSlug + " .spinner").fadeOut('');
 
-                    if (mults[value]){
+                let widget = "widget__" + dataSlug;
+                let mults = multdata.mults;
+                $('#' + widget + ' input').each( function() {
+                    let value = $(this).attr("value");
+                    let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+
+                    if (mults[value]) {
                           $(id).html('<span>' + mults[value] + '</span>');
                           if ($(id).parent().hasClass("fadey")) {
                             $(id).parent().removeClass("fadey");
@@ -619,17 +585,15 @@ var o_search = {
                         $(id).html('<span>0</span>');
                         $(id).parent().addClass("fadey");
                     }
-
                 });
-
             },
             statusCode: {
                 404: function() {
-                  $('#widget__' + slug + ' .spinner').removeClass('spinning');
+                  $(`#widget__${slug} .spinner`).fadeOut();
               }
             },
-            error:function (xhr, ajaxOptions, thrownError){
-                $("#widget__" + slug + " .spinner").removeClass("spinning");
+            error:function(xhr, ajaxOptions, thrownError) {
+                $(`#widget__${slug} .spinner`).fadeOut();
                 // checkbox hints are "?" when wrong values of url is pasted
                 $(".hints").each(function() {
                     $(this).html("<span>?</span>");
@@ -638,7 +602,4 @@ var o_search = {
         }); // end mults ajax
 
     },
-
-
-
 };

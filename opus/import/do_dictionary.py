@@ -31,7 +31,9 @@ def create_import_definitions_table():
     pds_file = opus_secrets.DICTIONARY_PDSDD_FILE
     json_schema_path = opus_secrets.DICTIONARY_JSON_SCHEMA_PATH + '/obs*.json'
     json_list = glob.glob(json_schema_path)
-
+    json_def_path = (opus_secrets.DICTIONARY_JSON_SCHEMA_PATH +
+                     '/internal_def*.json')
+    json_list += glob.glob(json_def_path)
     rows = []
 
     logger.log('info', f'Importing {pds_file}')
@@ -64,27 +66,28 @@ def create_import_definitions_table():
         logger.log('info', f'Importing {file_name}')
         schema = import_util.read_schema_for_table(file_name)
         for column in schema:
-            if 'definition' in column:
-                definition = column['definition']
-                if column.get('pi_dict_name', None) is None:
-                    logger.log('error',
-                       'Missing term for "{definition}" in "{file_name}"')
-                    bad_db = True
-                    continue
-                term = column['pi_dict_name']
-                if column.get('pi_dict_context', None) is None:
-                    logger.log('error',
-                       'Missing context for "{definition}" in "{file_name}"')
-                    bad_db = True
-                    continue
-                context = column['pi_dict_context']
+            for suffix in ('', '_results'):
+                if 'definition'+suffix in column:
+                    definition = column['definition'+suffix]
+                    if column.get('pi_dict_name'+suffix, None) is None:
+                        logger.log('error',
+                           f'Missing term for "{definition}" in "{file_name}"')
+                        bad_db = True
+                        continue
+                    term = column['pi_dict_name'+suffix]
+                    if column.get('pi_dict_context'+suffix, None) is None:
+                        logger.log('error',
+                         f'Missing context for "{definition}" in "{file_name}"')
+                        bad_db = True
+                        continue
+                    context = column['pi_dict_context'+suffix]
 
-                new_row = {
-                    'term': term,
-                    'context': context,
-                    'definition': definition
-                }
-                rows.append(new_row)
+                    new_row = {
+                        'term': term,
+                        'context': context,
+                        'definition': definition
+                    }
+                    rows.append(new_row)
 
     if bad_db:
         return False

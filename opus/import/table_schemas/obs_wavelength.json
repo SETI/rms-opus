@@ -61,10 +61,13 @@
             "obs_wavelength_<INST>_wavelength1"
         ],
         "data_source_order": 0,
-        "definition": "The range of wavelengths at which an observation was made. For spectrographic instruments, this is the actual range avilable. For imaging instruments, this is the FWHM range around the center wavelength.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH",
+        "definition": "The range of wavelengths at which an observation was made. For spectrographic instruments, this is the actual range available. For most imaging instruments, this is the full transmission bandwidth. For Cassini ISS, this is based on the FWHM around the center wavelength. Some instruments natively use wavelength and others natively use wavenumber. OPUS supports both quantities for all instruments and searches over equivalent ranges of wavelength and wavenumber will produce identical results. Both the minimum and maximum wavelengths are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVELENGTH_MIN",
+        "definition_results": "The minimum (shortest) wavelength at which an observation was made. For spectrographic instruments, this is the actual minimum. For most imaging instruments, this is the full transmission bandwidth. For Cassini ISS, this is based on the FWHM range around the center wavelength.",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -89,8 +92,9 @@
         ],
         "data_source_order": 1,
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "OPUS_WAVELENGTH",
-        "pi_dict_name": "WAVELENGTH",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVELENGTH_MAX",
+        "definition_results": "The maximum (longest) wavelength at which an observation was made. For spectrographic instruments, this is the actual maximum. For most imaging instruments, this is the full transmission bandwidth. For Cassini ISS, this is based on the FWHM range around the center wavelength.",
         "pi_disp_order": 11,
         "pi_display": 0,
         "pi_display_results": 1,
@@ -114,10 +118,13 @@
             "obs_wavelength_<INST>_wave_res1"
         ],
         "data_source_order": 2,
-        "definition": "The wavelength_resolution indicates the smallest width of spectral lines that can be reliably detected in a data product.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH_RESOLUTION",
+        "definition": "The range of widths of spectral lines that can be reliably detected in an observation, measured in wavelengths. For most non-spectrographic instruments, this is equal to the filter bandpass. For Cassini ISS, it is equal to the FWHM. Both the minimum and maximum wavelength resolutions are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVELENGTH_RESOLUTION_MIN",
+        "definition_results": "The smallest distance between spectral lines that can be reliably detected in an observation, measured in wavelengths. For most non-spectrographic instruments, this is equal to the filter bandpass. For Cassini ISS, it is equal to the FWHM.",
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -129,7 +136,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron/pixel",
-        "comments": "Definition is from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are converted from math to micron or micron/pixel, so we round up to .6f"
+        "comments": "Definition is modified from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are converted from math to micron or micron/pixel, so we round up to .6f"
     },
     {
         "field_name": "wave_res2",
@@ -142,8 +149,9 @@
         ],
         "data_source_order": 3,
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "OPUS_WAVELENGTH",
-        "pi_dict_name": "WAVELENGTH_RESOLUTION",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVELENGTH_RESOLUTION_MAX",
+        "definition_results": "The largest distance between spectral lines that can be reliably detected in an observation, measured in wavelengths. For most non-spectrographic instruments, this is equal to the filter bandpass. For Cassini ISS, it is equal to the FWHM.",
         "pi_disp_order": 21,
         "pi_display": 0,
         "pi_display_results": 1,
@@ -155,7 +163,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "micron/pixel",
-        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_res1"
+        "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_res1"
     },
     {
         "field_name": "wave_no1",
@@ -167,10 +175,13 @@
             "obs_wavelength_<INST>_wave_no1"
         ],
         "data_source_order": 10,
-        "definition": "The wavenumber indicates the reciprocal of the wavelength, i.e., the number of waves per unit of length. It is typically measured in units of inverse centimeters. This quantity is defined to support certain instruments that measure spectra in uniformly-spaced steps of wavenumber rather than wavelength. See also wavelength.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVENUMBER",
+        "definition": "The range of wavenumbers at which an observation was made. The wavenumber is the reciprocal of the wavelength, i.e., the number of waves per unit of length. This quantity is provided to support instruments that measure spectra in uniformly-spaced steps of wavenumber rather than wavelength. Some instruments natively use wavelength and others natively use wavenumber. OPUS supports both quantities for all instruments and searches over equivalent ranges of wavelength and wavenumber will produce identical results. Both the minimum and maximum wavenumbers are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVENUMBER_MIN",
+        "definition_results": "The minimum wavenumber (corresponding to the longest wavelength) at which an observation was made. The wavenumber is the reciprocal of the wavelength, i.e., the number of waves per unit of length. This quantity is provided to support instruments that measure spectra in uniformly-spaced steps of wavenumber rather than wavelength, although both wavenumber and wavelength are provided for all instruments.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -182,7 +193,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comments": "Definition is from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
+        "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
     },
     {
         "field_name": "wave_no2",
@@ -195,8 +206,9 @@
         ],
         "data_source_order": 10,
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "OPUS_WAVELENGTH",
-        "pi_dict_name": "WAVENUMBER",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVENUMBER_MAX",
+        "definition_results": "The maximum wavenumber (corresponding to the shortest wavelength) at which an observation was made. The wavenumber is the reciprocal of the wavelength, i.e., the number of waves per unit of length. This quantity is provided to support instruments that measure spectra in uniformly-spaced steps of wavenumber rather than wavelength, although both wavenumber and wavelength are provided for all instruments.",
         "pi_disp_order": 31,
         "pi_display": 0,
         "pi_display_results": 1,
@@ -208,7 +220,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_no1."
+        "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no1."
     },
     {
         "field_name": "wave_no_res1",
@@ -220,10 +232,13 @@
             "obs_wavelength_<INST>_wave_no_res1"
         ],
         "data_source_order": 20,
-        "definition": "The wavenumber_resolution indicates the smallest width of spectral lines that can be reliably detected in a data product. See also wavenumber and wavelength_resolution.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVENUMBER_RESOLUTION",
+        "definition": "The range of widths of spectral lines that can be reliably detected in an observation, measured in wavenumbers. Both the minimum and maximum wavenumber resolutions are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVENUMBER_RESOLUTION_MIN",
+        "definition_results": "The smallest distance between spectral lines that can be reliably detected in an observation, measured in wavenumbers.",
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -235,7 +250,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1/pixel",
-        "comments": "Definition is from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
+        "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
     },
     {
         "field_name": "wave_no_res2",
@@ -248,8 +263,9 @@
         ],
         "data_source_order": 20,
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "OPUS_WAVELENGTH",
-        "pi_dict_name": "WAVENUMBER_RESOLUTION",
+        "pi_dict_context_results": "OPUS_WAVELENGTH",
+        "pi_dict_name_results": "WAVENUMBER_RESOLUTION_MAX",
+        "definition_results": "The largest distance between spectral lines that can be reliably detected in an observation, measured in wavenumbers.",
         "pi_disp_order": 41,
         "pi_display": 0,
         "pi_display_results": 1,
@@ -261,7 +277,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": "cm^-1",
-        "comments": "Definition is from old OPUS dictionary. For units format, refer to wave_no_res1."
+        "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no_res1."
     },
     {
         "field_name": "spec_flag",
@@ -272,10 +288,10 @@
             "obs_wavelength_<INST>_spec_flag"
         ],
         "data_source_order": 30,
-        "definition": "The spectral_information_flag indicates whether a given remote-sensing data product contains information about multiple wavelengths or a single wavelength or electromagnetic radiation. A value of yes indicates that multiple wavelengths are included.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "SPECTRAL_INFORMATION_FLAG",
+        "definition": "A flag indicating whether an observation contains separable information about multiple wavelengths. The flag is Yes for spectrographic instruments and imaging cameras using prisms or grisms as long as there is more than one spectral bin.",
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -287,7 +303,7 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "pi_units": null,
-        "comments": "Definition is from old OPUS dictionary."
+        "comments": "Definition is modified from old OPUS dictionary."
     },
     {
         "field_name": "spec_size",
@@ -299,10 +315,10 @@
             "obs_wavelength_<INST>_spec_size"
         ],
         "data_source_order": 30,
-        "definition": "The number of distinct wavelengths or wavelength bins that can be detected.",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "SPECTRUM_SIZE",
+        "definition": "The number of distinct wavelengths or wavelength bins that can be detected in an observation. Null for non-spectrographic instruments not using prisms or grisms.",
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -326,8 +342,9 @@
             "obs_wavelength_<INST>_polarization_type"
         ],
         "pi_category_name": "obs_wavelength",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "RECEIVED_POLARIZATION_TYPE",
+        "definition": "The type of polarization detected by the instrument. Values are Linear (linear polarization) or None (no polarization filter used).",
         "pi_disp_order": 70,
         "pi_display": 1,
         "pi_display_results": 1,

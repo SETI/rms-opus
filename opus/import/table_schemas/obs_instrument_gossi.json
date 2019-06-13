@@ -49,10 +49,10 @@
             "TAB:index",
             "OBSERVATION_ID"
         ],
-        "definition": "This is the Galileo activity id of each image which is in the form NNTIOOOOOOMM#SSSXXXX. NN is the Orbit number. T is the scan platform target body initial (if applicable). I is the instrument. OOOOOO is the orbit planning guide objective mnemonic. MM is the sequential OAPEL number for each value of NNTIOOOOOO. # is the multiple observation flag symbol (- or *). SSS is the PA set number. XXXX is the MIPL Processing Code.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "OBSERVATION_ID",
+        "definition": "The Galileo activity ID of each image, of the form NNTIOOOOOOMM#SSSXXXX. NN is the orbit number. T is the scan platform target body initial (if applicable). I is the instrument. OOOOOO is the orbit planning guide objective mnemonic. MM is the sequential OAPEL number for each value of NNTIOOOOOO (an OAPEL form is a brief description of the design of the observation). # is the multiple observation flag symbol (- or *). SSS is the PA set number. XXXX is the MIPL (Multimission Image Processing Laboratory) Processing Code.",
         "pi_disp_order": 80,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -75,10 +75,10 @@
             "TAB:index",
             "IMAGE_ID"
         ],
-        "definition": "Image id which takes the form of XXYZZZZ.  XX is the orbit (A1, A2 etc is approach; C1, C2 is cruise). Y is the target body (J=Jupiter, A=Amalthea, I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites, R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra). ZZZZ is the picture count which is generated in the sequence generation process and which is incremented separately for each target body in each orbit.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "IMAGE_ID",
+        "definition": "The image ID, of the form of XXYZZZZ. XX is the orbit (Ax is approach; Cx is cruise). Y is the target body (J=Jupiter, A=Amalthea, I=Io, E=Europa, G=Ganymede, C=Callisto, S=Minor Satellites, R=ring, H=star, L=Moon, W=Earth, V=Venus, U=Ida, P=Gaspra). ZZZZ is the picture count which is generated in the sequence generation process and is incremented separately for each target body in each orbit.",
         "pi_disp_order": 70,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -103,10 +103,10 @@
             "TAB:index",
             "FILTER_NAME"
         ],
-        "definition": "Optical filter used for the image. Valid filters include: CLEAR, GREEN, RED, VIOLET, IR-7560, IR-9680, IR-7270, IR-8890.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FILTER_NAME",
+        "definition": "The optical filter used for the image: Clear, Green, Red, Violet, Methane [IR-7270, 0.727 micron], Continuum [IR-7560, 0.756 micron], Methane [IR-8890, 0.889 micron], and Infrared [IR-9680, 0.968 micron].",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -121,14 +121,14 @@
         "pi_units": null,
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
-              [   0,    "CLEAR",           "Clear",   10, "Y", null],
-              [   1,   "VIOLET",          "Violet",   20, "Y", null],
-              [   2,    "GREEN",           "Green",   30, "Y", null],
-              [   3,      "RED",             "Red",   40, "Y", null],
-              [   4,   "IR-7270", "Methane [7270]",   50, "Y", null],
-              [   5,   "IR-7560",      "Continuum",   60, "Y", null],
-              [   6,   "IR-8890", "Methane [8890]",   70, "Y", null],
-              [   7,   "IR-9680",       "Infrared",   80, "Y", null]
+              [   0,    "CLEAR",                        "Clear",   10, "Y", null],
+              [   1,   "VIOLET",                       "Violet",   20, "Y", null],
+              [   2,    "GREEN",                        "Green",   30, "Y", null],
+              [   3,      "RED",                          "Red",   40, "Y", null],
+              [   4,   "IR-7270",           "Methane [IR-7270]",   50, "Y", null],
+              [   5,   "IR-7560", "Methane Continuum [IR-7560]",   60, "Y", null],
+              [   6,   "IR-8890",           "Methane [IR-8890]",   70, "Y", null],
+              [   7,   "IR-9680",          "Infrared [IR-9680]",   80, "Y", null]
           ]
     },
     {
@@ -142,10 +142,10 @@
         ],
         "val_min": 0,
         "val_max": 7,
-        "definition": "Optical filter number, containing the unique number associated with the optical filter for the image. Valid 0-7.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FILTER_NUMBER",
+        "definition": "The optical filter number, containing the unique number associated with the optical filter for the image (0=CLEAR, 1=GREEN, 2=RED, 3=VIOLET, 4=IR-7560, 5=IR-9680, 6=IR-7270, and 7=IR-8890).",
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -169,10 +169,10 @@
             "TAB:index",
             "GAIN_MODE_ID"
         ],
-        "definition": "Gain mode of the camera. Valid 400K, 100K, 40K, 10K.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "GAIN_MODE_ID",
+        "definition": "The gain mode of the camera. Values are 400K, 100K, 40K, and 10K.",
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -263,8 +263,9 @@
             "COMPRESSION_TYPE"
         ],
         "pi_category_name": "obs_instrument_gossi",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "GOSSI",
         "pi_dict_name": "COMPRESSION_TYPE",
+        "definition": "The type of compression used for the image. Values are BARC (Block-Adaptive Rate-Controlled, which is lossy and returns a fixed number of 2,592 bits per line), Huffman (lossless), Integer Cosine Transform (lossy), and None. Compressed images (BARC and ICT) tend to have artifacts that make them unsuitable for astrometry.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -279,7 +280,7 @@
         "pi_units": null,
         "comments": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
         "mult_options": [
-              [   0,        "BARC RATE CONTROL",        "BARC Rate Control", 10, "Y", null],
+              [   0,        "BARC RATE CONTROL",                     "BARC", 10, "Y", null],
               [   1,                  "HUFFMAN",                  "Huffman", 20, "Y", null],
               [   2, "INTEGER COSINE TRANSFORM", "Integer Cosine Transform", 30, "Y", null],
               [   3,                     "NONE",                     "None", 40, "Y", null]

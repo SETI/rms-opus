@@ -27,6 +27,20 @@
             "TAB:obs_general",
             "opus_id"
         ],
+        "pi_category_name": "obs_pds",
+        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_name": "OPUS_ID",
+        "pi_disp_order": 60,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "STRING",
+        "pi_intro": null,
+        "pi_label": "OPUS ID",
+        "pi_label_results": "OPUS ID",
+        "pi_slug": "opusid",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null,
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -39,8 +53,9 @@
             "volume_id"
         ],
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "VOLUME_ID",
+        "definition": "The PDS3 volume containing the observation. Volumes are artificial constructs used to group consecutive observations into manageable chunks. They are formatted as MMIII_NNNN, where MMIII is an abbreviation for the mission and instrument (e.g. COISS for Cassini Orbiter ISS) and NNNN is a four-digit volume number. Hubble volumes have 5-digit volume numbers and are formatted as HSTIN_NNNN. See Help/Volumes for the list of volumes available in OPUS.",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -74,10 +89,10 @@
             "FUNCTION",
             "obs_pds_<INST>_data_set_id"
         ],
-        "definition": "PDS-supplied name for this data set.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "DATA_SET_ID",
+        "definition": "A string assigned by the PDS describing a PDS3 data set. Data sets are often aggregations of multiple volumes. A Data Set ID usually encodes, at a minimum, the mission, instrument, and version number of the data as provided by the instrument team.",
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -88,8 +103,7 @@
         "pi_slug": "datasetid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "comments": "Definition is from COISS and GOSSI labels."
+        "pi_units": null
     },
     {
         "field_name": "product_id",
@@ -100,10 +114,10 @@
             "FUNCTION",
             "obs_pds_<INST>_product_id"
         ],
-        "definition": "A permanent, unique identifier assigned to a data product.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "PRODUCT_ID",
+        "definition": "A permanent identifier assigned to a data product by the PDS that is unique within its data set.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -114,8 +128,7 @@
         "pi_slug": "productid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "comments": "Definition is from HSTACS label."
+        "pi_units": null
     },
     {
         "field_name": "product_creation_time",
@@ -127,10 +140,13 @@
             "obs_pds_<INST>_product_creation_time"
         ],
         "data_source_order": 10,
-        "definition": "Approximate UTC date and time when the PDS data product was created. Often rounded to 12:00.",
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "OPUS_GENERAL",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "PRODUCT_CREATION_TIME",
+        "definition": "The approximate date and time when the PDS data product was created for inclusion in the archive. Although many formats are supported, the standard is YYYY-MM-DD[Thh:mm:ss.sss].",
+        "pi_dict_context_results": "OPUS_PDS",
+        "pi_dict_name_results": "PRODUCT_CREATION_TIME_RESULTS",
+        "definition_results": "The approximate date and time when the PDS data product was created for inclusion in the archive.",
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -141,8 +157,7 @@
         "pi_slug": "productcreationtime",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "comments": "Definition is from HSTACS label."
+        "pi_units": null
     },
     {
         "field_name": "primary_file_spec",
@@ -155,8 +170,9 @@
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "FILE_SPECIFICATION_NAME",
+        "definition": "The full primary data filename, including the path, relative to its containing volume in the PDS archive.",
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -180,8 +196,9 @@
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",
-        "pi_dict_context": "PSDD",
+        "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "NOTE",
+        "definition": "Miscellaneous notes or comments about an observation, such as why the observation was taken or known problems with the data.",
         "pi_disp_order": 70,
         "pi_display": 1,
         "pi_display_results": 1,

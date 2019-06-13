@@ -18,12 +18,12 @@
     },
     {
         "field_name": "display",
-        "field_type": "char1",
+        "field_type": "int1",
         "field_notnull": true
     },
     {
         "field_name": "display_results",
-        "field_type": "int4",
+        "field_type": "int1",
         "field_notnull": true
     },
     {
@@ -73,6 +73,16 @@
     },
     {
         "field_name": "dict_name",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
+        "field_name": "dict_context_results",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
+        "field_name": "dict_name_results",
         "field_type": "varchar255",
         "field_default": null
     },

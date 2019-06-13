@@ -1,0 +1,66 @@
+<section class="container-fluid">
+    <div class="row flex-md-row flex-md-nowrap op-detail-content">
+        <div class="col-md-12 op-detail-metadata-container">
+            <div class="op-detail-metadata pr-5">
+                <h1>Observation Detail</h1>
+                <p><b>OPUS ID: </b>{{ opus_id }}</p>
+
+                <h2>PDS Products</h2>
+                <div>
+                    <p>Download zipped <a data-action="downloadData" href="#" download>data archive</a> or <a data-action="downloadURL" href="#" download>URL archive</a> for this observation (all products, current version only).</a></p>
+                    <p>Click on any "Index" type to see the entry for this observation in that table.</p>
+                    {% for version, version_items in products.items %}
+                        <ul class="op-detail-list">
+                            <h4>Version: {{ version }}</h4>
+                            {% for product_type, product_type_info in version_items.items %}
+                                <li class="op-detail-entry">
+                                    {% if product_type_info.tooltip %}
+                                        <i class="fas fa-info-circle op-detail-entry-icon" title="{{ product_type_info.tooltip }}"></i>&nbsp;
+                                    {% endif %}
+                                    <div>
+                                        {% if product_type_info.product_link %}
+                                            <a href={{ product_type_info.product_link }} target="_blank">{{ product_type }}:</a>
+                                        {% else %}
+                                            {{ product_type }}:
+                                        {% endif %}
+                                        &nbsp;
+                                        <ul class="list-inline op-detail-file-list">
+                          	                {% for f in product_type_info.files %}
+                          			            <li class="list-inline-item"><a href="{{ f.link }}" target="_blank">{{ f.filename }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endfor %}
+                </div>
+
+                <h2>Selected Metadata</h2>
+                <p><a class="op-download-csv" download href="#">Download CSV of selected metadata</a></p>
+                <div id="cols_metadata_{{ opus_id }}">
+                    <span class="spinner">&nbsp;</span>
+                </div>
+                <div>
+                    <h2>All OPUS Metadata for this Observation</h2>
+                    <p>Download all metadata <a href="/opus/__api/metadata_v2/{{ opus_id }}.json" download>as JSON</a></p>
+                    <div id="all_metadata_{{ opus_id }}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 op-detail-img pt-5">
+          <div>
+                <a href="{{ preview_full_url }}" target="_blank">
+                    <img id="detail__{{ img.opus_id }}" src="{{ preview_med_url }}">
+                </a>
+                <div>
+                    <p>
+                        {% if preview_guide_url %}
+                            Read about <a href="{{ preview_guide_url }}" target="_blank">how to interpret {{ instrument_id }} preview images</a>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

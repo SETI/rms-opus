@@ -1,18 +1,16 @@
-# results/tests.py
+# results/test_results.py
 
-import json
+import logging
 import sys
 from unittest import TestCase
 
-from django.conf import settings
+from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
+from django.test import RequestFactory
 from django.test.client import Client
+
 from results.views import *
-
-import logging
-
-settings.CACHE_BACKEND = 'dummy:///'
 
 cursor = connection.cursor()
 
@@ -28,16 +26,15 @@ class resultsTests(TestCase):
             print(q)
             cursor.execute(q)
         cache.clear()
-        cache._cache.flush_all()  # clears memcache hopefully only on this port!
+        self.factory = RequestFactory()
 
     def setUp(self):
         self._empty_user_searches()
-        sys.tracebacklimit = 0 # default: 1000
-        logging.disable(logging.DEBUG)
+        self.maxDiff = None
+        logging.disable(logging.ERROR)
 
     def tearDown(self):
         self._empty_user_searches()
-        sys.tracebacklimit = 1000 # default: 1000
         logging.disable(logging.NOTSET)
 
 
@@ -46,15 +43,14 @@ class resultsTests(TestCase):
             ######################################################
 
     def test__api_get_data_and_images_no_request(self):
-        "api_get_data_and_images: no request"
+        "[test_results.py] api_get_data_and_images: no request"
         with self.assertRaises(Http404):
             api_get_data_and_images(None)
 
     def test__api_get_data_and_images_no_get(self):
-        "api_get_data_and_images: no GET"
+        "[test_results.py] api_get_data_and_images: no GET"
         c = Client()
-        response = c.get('/__api/dataimages.json')
-        request = response.wsgi_request
+        request = self.factory.get('/__api/dataimages.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_data_and_images(request)
@@ -64,24 +60,164 @@ class resultsTests(TestCase):
             ######### api_get_data UNIT TESTS #########
             ###########################################
 
+    def test__api_get_data_no_request(self):
+        "[test_results.py] api_get_data: no request"
+        with self.assertRaises(Http404):
+            api_get_data(None, 'json')
+
+    def test__api_get_data_no_get(self):
+        "[test_results.py] api_get_data: no GET"
+        c = Client()
+        request = self.factory.get('/__api/data.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_data(request, 'json')
+
+
 
             ###############################################
             ######### api_get_metadata UNIT TESTS #########
             ###############################################
 
     def test__api_get_metadata_no_request(self):
-        "api_get_metadata: no request"
+        "[test_results.py] api_get_metadata: no request"
         with self.assertRaises(Http404):
             api_get_metadata(None, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self):
-        "api_get_metadata: no GET"
+        "[test_results.py] api_get_metadata: no GET"
         c = Client()
-        response = c.get('/api/metadata/vg-iss-2-s-c4360845.json')
-        request = response.wsgi_request
+        request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaises(Http404):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
+
+
+            ##################################################
+            ######### api_get_metadata_v2 UNIT TESTS #########
+            ##################################################
+
+    def test__api_get_metadata_v2_no_request(self):
+        "[test_results.py] api_get_metadata_v2: no request"
+        with self.assertRaises(Http404):
+            api_get_metadata_v2(None, 'vg-iss-2-s-c4360845', 'json')
+
+    def test__api_get_metadata_v2_no_get(self):
+        "[test_results.py] api_get_metadata_v2: no GET"
+        c = Client()
+        request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_metadata_v2(request, 'vg-iss-2-s-c4360845', 'json')
+
+
+            #############################################
+            ######### api_get_images UNIT TESTS #########
+            #############################################
+
+    def test__api_get_images_no_request(self):
+        "[test_results.py] api_get_images: no request"
+        with self.assertRaises(Http404):
+            api_get_images(None, 'json')
+
+    def test__api_get_images_no_get(self):
+        "[test_results.py] api_get_images: no GET"
+        c = Client()
+        request = self.factory.get('/api/images.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_images(request, 'json')
+
+
+            #####################################################
+            ######### api_get_images_by_size UNIT TESTS #########
+            #####################################################
+
+    def test__api_get_images_by_size_no_request(self):
+        "[test_results.py] api_get_images_by_size: no request"
+        with self.assertRaises(Http404):
+            api_get_images_by_size(None, 'small', 'json')
+
+    def test__api_get_images_by_size_no_get(self):
+        "[test_results.py] api_get_images_by_size: no GET"
+        c = Client()
+        request = self.factory.get('/api/images/small.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_images_by_size(request, 'small', 'json')
+
+
+            ############################################
+            ######### api_get_image UNIT TESTS #########
+            ############################################
+
+    def test__api_get_image_no_request(self):
+        "[test_results.py] api_get_image: no request"
+        with self.assertRaises(Http404):
+            api_get_image(None, 'vg-iss-2-s-c4360845', 'small', 'json')
+
+    def test__api_get_image_no_get(self):
+        "[test_results.py] api_get_image: no GET"
+        c = Client()
+        request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
+
+
+            ############################################
+            ######### api_get_files UNIT TESTS #########
+            ############################################
+
+    def test__api_get_files_no_request(self):
+        "[test_results.py] api_get_files: no request"
+        with self.assertRaises(Http404):
+            api_get_files(None, 'vg-iss-2-s-c4360845')
+
+    def test__api_get_files_no_get(self):
+        "[test_results.py] api_get_files: no GET"
+        c = Client()
+        request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_files(request, 'vg-iss-2-s-c4360845')
+
+
+            #################################################################
+            ######### api_get_categories_for_opus_id UNIT TESTS #########
+            #################################################################
+
+    def test__api_get_categories_for_opus_id_no_request(self):
+        "[test_results.py] api_get_categories_for_opus_id: no request"
+        with self.assertRaises(Http404):
+            api_get_categories_for_opus_id(None, 'vg-iss-2-s-c4360845')
+
+    def test__api_get_categories_for_opus_id_no_get(self):
+        "[test_results.py] api_get_categories_for_opus_id: no GET"
+        c = Client()
+        request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
+
+
+
+            ################################################################
+            ######### api_get_categories_for_search UNIT TESTS #########
+            ################################################################
+
+    def test__api_get_categories_for_search_no_request(self):
+        "[test_results.py] api_get_categories_for_search: no request"
+        with self.assertRaises(Http404):
+            api_get_categories_for_search(None)
+
+    def test__api_get_categories_for_search_no_get(self):
+        "[test_results.py] api_get_categories_for_search: no GET"
+        c = Client()
+        request = self.factory.get('/api/categories.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_categories_for_search(request)
 
 
             ###################################################
@@ -99,7 +235,7 @@ class resultsTests(TestCase):
         self.assertEqual(partables, expected)
 
     def test__get_triggered_tables_cassini(self):
-        "get_triggered_tables: tables triggered by mission Cassini"
+        "[test_results.py] get_triggered_tables: tables triggered by mission Cassini"
         q = QueryDict('mission=Cassini')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -109,7 +245,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_cocirs(self):
-        "get_triggered_tables: tables triggered by instrument COCIRS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument COCIRS"
         q = QueryDict('planet=SATURN&instrument=COCIRS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -119,7 +255,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_coiss(self):
-        "get_triggered_tables: tables triggered by instrument COISS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument COISS"
         q = QueryDict('planet=SATURN&instrument=COISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -129,7 +265,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_coiss_volume(self):
-        "get_triggered_tables: tables triggered by volume COISS"
+        "[test_results.py] get_triggered_tables: tables triggered by volume COISS"
         q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -139,7 +275,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_couvis(self):
-        "get_triggered_tables: tables triggered by instrument COUVIS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument COUVIS"
         q = QueryDict('instrument=COUVIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -149,7 +285,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_couvis_volume(self):
-        "get_triggered_tables: tables triggered by volume COUVIS"
+        "[test_results.py] get_triggered_tables: tables triggered by volume COUVIS"
         q = QueryDict('volumeid=COUVIS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -159,7 +295,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_covims(self):
-        "get_triggered_tables: tables triggered by instrument COVIMS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument COVIMS"
         q = QueryDict('instrument=COVIMS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -169,7 +305,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_galileo(self):
-        "get_triggered_tables: tables triggered by mission Galileo"
+        "[test_results.py] get_triggered_tables: tables triggered by mission Galileo"
         q = QueryDict('mission=Galileo')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -180,7 +316,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_gossi(self):
-        "get_triggered_tables: tables triggered by instrument GOSSI"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument GOSSI"
         q = QueryDict('instrument=Galileo+SSI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -191,7 +327,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_voyager(self):
-        "get_triggered_tables: tables triggered by mission Voyager"
+        "[test_results.py] get_triggered_tables: tables triggered by mission Voyager"
         q = QueryDict('mission=Voyager')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -202,7 +338,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_vgiss(self):
-        "get_triggered_tables: tables triggered by instrument VGISS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument VGISS"
         q = QueryDict('instrument=Voyager+ISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -213,7 +349,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_vgiss_volume(self):
-        "get_triggered_tables: tables triggered by volume VGISS_6210"
+        "[test_results.py] get_triggered_tables: tables triggered by volume VGISS_6210"
         q = QueryDict('volumeid=VGISS_6210')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -223,7 +359,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hubble(self):
-        "get_triggered_tables: tables triggered by mission Hubble"
+        "[test_results.py] get_triggered_tables: tables triggered by mission Hubble"
         q = QueryDict('mission=Hubble')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -233,7 +369,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hstacs(self):
-        "get_triggered_tables: tables triggered by instrument HSTACS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument HSTACS"
         q = QueryDict('instrument=Hubble+ACS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -243,7 +379,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hstnicmos(self):
-        "get_triggered_tables: tables triggered by instrument HSTNICMOS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument HSTNICMOS"
         q = QueryDict('instrument=Hubble+NICMOS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -253,7 +389,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hststis(self):
-        "get_triggered_tables: tables triggered by instrument HSTSTIS"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument HSTSTIS"
         q = QueryDict('instrument=Hubble+STIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -263,7 +399,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hstwfc3(self):
-        "get_triggered_tables: tables triggered by instrument HSTWFC3"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument HSTWFC3"
         q = QueryDict('instrument=Hubble+WFC3')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -273,7 +409,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hstwfc3_filespec(self):
-        "get_triggered_tables: tables triggered by filespec IB4V12N4Q"
+        "[test_results.py] get_triggered_tables: tables triggered by filespec IB4V12N4Q"
         q = QueryDict('primaryfilespec=IB4V12N4Q')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -283,7 +419,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_hstwfpc2(self):
-        "get_triggered_tables: tables triggered by instrument HSTWFPC2"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument HSTWFPC2"
         q = QueryDict('instrument=Hubble+WFPC2')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -293,7 +429,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_newhorizons(self):
-        "get_triggered_tables: tables triggered by mission New Horizons"
+        "[test_results.py] get_triggered_tables: tables triggered by mission New Horizons"
         q = QueryDict('mission=New+Horizons')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -303,7 +439,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_nhlorri(self):
-        "get_triggered_tables: tables triggered by instrument NHLORRI"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument NHLORRI"
         q = QueryDict('instrument=New+Horizons+LORRI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
@@ -314,7 +450,7 @@ class resultsTests(TestCase):
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_nhmvic(self):
-        "get_triggered_tables: tables triggered by instrument NHMVIC"
+        "[test_results.py] get_triggered_tables: tables triggered by instrument NHMVIC"
         q = QueryDict('instrument=New+Horizons+MVIC')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',

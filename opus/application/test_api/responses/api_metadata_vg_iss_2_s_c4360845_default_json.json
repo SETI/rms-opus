@@ -14,8 +14,7 @@
     "right_asc1": "197.700321",
     "right_asc2": "198.368500",
     "declination1": "-5.021599",
-    "declination2": "-4.355657",
-    "opus_id": "vg-iss-2-s-c4360845"
+    "declination2": "-4.355657"
   },
   "PDS Constraints": {
     "volume_id": "VGISS_6210",
@@ -23,6 +22,7 @@
     "product_id": "C4360845_RAW.IMG",
     "product_creation_time": "2012-05-01T16:00:00.000",
     "primary_file_spec": "VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL",
+    "opus_id": "vg-iss-2-s-c4360845",
     "note": ""
   },
   "Image Constraints": {
@@ -125,8 +125,8 @@
     "ring_azimuth_wrt_observer1": "175.899",
     "ring_azimuth_wrt_observer2": "41.025",
     "range_to_ring_intercept1": "12941480.166",
-    "ring_center_distance": "13208460.501",
     "range_to_ring_intercept2": "13760160.075",
+    "ring_center_distance": "13208460.501",
     "resolution1": "119.70930",
     "resolution2": "127.28212",
     "projected_radial_resolution1": "122.34282",

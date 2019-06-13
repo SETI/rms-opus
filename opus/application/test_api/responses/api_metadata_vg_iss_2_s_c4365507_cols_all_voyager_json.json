@@ -12,7 +12,7 @@
     "VOYAGERspacecraftclockcount2": "43655:07:001"
   },
   {
-    "VOYAGERert1": "1981-08-14T12:24:54.000"
+    "VOYAGERert": "1981-08-14T12:24:54.000"
   },
   {
     "VGISScamera": "Narrow Angle"
@@ -39,9 +39,9 @@
     "VGISSimageid": "0570S2-012"
   },
   {
-    "VGISSusablelines1": "800"
+    "VGISSusablelines": "800"
   },
   {
-    "VGISSusablesamples1": "544"
+    "VGISSusablesamples": "544"
   }
 ]

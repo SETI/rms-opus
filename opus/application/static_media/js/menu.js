@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $ */
+/* globals o_hash, o_widgets, opus */
+
+/* jshint varstmt: false */
 var o_menu = {
+/* jshint varstmt: true */
 
     /**
      *
@@ -6,24 +17,17 @@ var o_menu = {
      *
      **/
 
-     menuBehaviors: function() {
-         // search menu behaviors
-
-         // click cat header in menu toggles arrow style
-         $('#sidebar').on("click", 'a', function() {
-            $(this).find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-
-         });
-
+     addMenuBehaviors: function() {
          // click param in menu get new widget
-         $('#sidebar').on("click", '.submenu li a', function() {
-             slug = $(this).data('slug');
+         $("#sidebar").on("click", ".submenu li a", function() {
+
+             let slug = $(this).data("slug");
              if (!slug) { return; }
-             if (jQuery.inArray(slug, opus.widgets_drawn)>-1){
+             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
                  // widget is already showing do not fetch another
                  try {
                     // scroll to widget and highlight it
-                    o_widgets.scrollToWidget('widget__'+slug);
+                    o_widgets.scrollToWidget(`widget__#{slug}`);
 
                 } catch(e) {
                     return false;
@@ -31,140 +35,89 @@ var o_menu = {
                 return false;
 
              } else {
-                 o_widgets.getWidget(slug,'#search_widgets1');
+                  o_menu.markMenuItem(this);
+                  o_widgets.getWidget(slug,'#op-search-widgets');
              }
+
              o_hash.updateHash();
              return false;
          });
 
 
         // menu state - keep track of what menu items are open
-        $('.sidebar').on(ace.click_event, '.nav-list', function(e){
-            var link_element = $(e.target).closest('a');
-            if(!link_element || link_element.length == 0) return;//if not clicked inside a link element
-
-            var sub = link_element.next().get(0);
-
+        $("#sidebar").on("click", ".dropdown-toggle", function(e) {
             // for opus: keeping track of menu state, since menu is constantly refreshed
             // menu cats
-            if ($(link_element).data( "cat" )) {
-                cat_name = $(link_element).data( "cat" );
-                if ($(sub).parent().hasClass('open')) {
-                    if (jQuery.inArray(cat_name, opus.menu_state['cats']) < 0) {
-                        opus.menu_state['cats'].push(cat_name);
-                    }
-                } else {
-                    opus.menu_state['cats'].splice(opus.menu_state['cats'].indexOf(cat_name), 1);
-                }
-            }
-            // menu groups
-            if ($(link_element).data( "group" )) {
-                group_name = $(link_element).data( "group" );
-                if ($(sub).parent().hasClass('open')) {
-                    if (jQuery.inArray(group_name, opus.menu_state['groups']) < 0) {
-                        opus.menu_state['groups'].push(group_name);
-                    }
-                } else {
-                    opus.menu_state['groups'].splice(opus.menu_state['groups'].indexOf(group_name), 1);
-                }
-            }
-
-
-            // check if this menu group only has one option, if so just open that widget
-            // I'm commenting this out because I do not agree that it is desirable
-            // with the new menu
-            /*
-            if ($(this).next().children().size() == 1) {
-                $(this).next().find('li a').trigger("click");
-            }
-            */
-
-            return false;
-        });
-
-
-
-
-     },
-
-     getMenu: function() {
-        $('.menu_spinner').fadeIn("fast");
-        hash = o_hash.getHash();
-
-        $( "#sidebar").load( "/opus/__menu.html?" + hash, function() {
-            if (opus.menu_state['cats'] == 'all') {
-
-                // first load, open general constraints
-                opus.menu_state['cats'] = [];
-                cat_name = 'obs_general';
-                opus.menu_state['cats'].push(cat_name);
-                link = $("a." + cat_name, ".sidebar");
-                sub = link.next().get(0);
-                $(sub).toggle().parent().toggleClass('open');
-                link.parent().find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-
-
+            let category = $(this).data( "cat" );
+            let groupElem = $(`#sidebar #search-submenu-${category}`);
+            if ($(groupElem).hasClass("show")) {
+                opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
             } else {
-
-                // open menu items that were open before
-                for (var key in opus.menu_state['cats']) {
-                    cat_name = opus.menu_state['cats'][key];
-                    link = $("a." + cat_name, ".sidebar");
-                    sub = link.next().get(0);
-                    $(sub).toggle().parent().toggleClass('open');
-                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-
-                    // $("." + cat_name, ".sidebar").trigger(ace.click_event);
-                }
-                for (var key in opus.menu_state['groups']) {
-                    group_name = opus.menu_state['groups'][key];
-                    link = $("a." + group_name, ".sidebar");
-                    sub = link.next().get(0);
-                    $(sub).toggle().parent().toggleClass('open');
-                    link.find('b.arrow').toggleClass('fa-angle-right').toggleClass('fa-angle-down');
-                    // $("." + group_name, ".sidebar").trigger(ace.click_event);
+                if ($.inArray(category, opus.menuState.cats) >= 0 ) {
+                    console.log(`submenu ${category } state already in array`);
+                } else {
+                    opus.menuState.cats.push(category);
                 }
             }
-            // open any newly arrived surface geo tables
-            // todo: this could be problematic if user wants to close it and keep it closed..
-            geo_cat = $('a[data-cat^="obs_surface_geometry__"]', '.sidebar').data('cat');
-            if (geo_cat && jQuery.inArray(geo_cat, opus.menu_state['cats']) < 0) {
-                // open it
-                link = $("a." + geo_cat, ".sidebar");
-                sub = link.next().get(0);
-                $(sub).slideToggle(400).parent().toggleClass('open');
-                // and add it to open cats list
-                opus.menu_state['cats'].push(geo_cat);
-            }
-
-            // add the 'start over' button
-            button_html = '<li class = "restart_button"><button type="button" class="btn btn-sm btn-danger restart">Start Over</button></li>';
-            $('#sidebar ul.nav-list').append(button_html);
-
-
-
-            o_search.adjustSearchHeight();
-            $('.menu_spinner').fadeOut("fast");
-
         });
      },
 
+     getNewSearchMenu: function() {
+        let spinnerTimer = setTimeout(function() {
+             $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+        let hash = o_hash.getHash();
+
+        $("#sidebar").load("/opus/__menu.html?" + hash, function() {
+            // open menu items that were open before
+            $("#sidebar").toggleClass("op-redraw-menu");
+            $.each(opus.menuState.cats, function(key, category) {
+                if ($(`#sidebar #search-submenu-${category}`).length != 0) {
+                    $(`#sidebar #search-submenu-${category}`).collapse("show");
+                } else {
+                    // this is if the surface geometry target is no longer applicable so it's not
+                    // on the menu, remove from the menuState
+                    opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
+                }
+            });
+            $("#sidebar").toggleClass("op-redraw-menu");
+            $(".menu_spinner").fadeOut("fast");
+
+            o_menu.markCurrentMenuItems();
+
+            $('.op-menu-text.spinner').removeClass("op-show-spinner");
+            clearTimeout(spinnerTimer);
+        });
+     },
+
+     markMenuItem: function(selector, selected) {
+        if (selected == undefined || selected == "select") {
+            $(selector).css({"background": "gainsboro"});
+            // We use find() here instead of just adding to the selector because
+            // selector might be a string or it might be an actual DOM object
+            $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
+        } else {
+            $(selector).css({"background": "initial"});
+            $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
+        }
+     },
+
+    markCurrentMenuItems: function() {
+        $.each(opus.prefs.widgets, function(index, slug) {
+            o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
+        });
+    },
 
      // type = cat/group
      getCatGroupFromSlug: function(slug) {
-         cat = '';
-         group = '';
-         $('ul.menu_list>li a', '#search').each(function() {
-             if (slug == $(this).data('slug')) {
-                   cat = $(this).data('cat');
-                   group = $(this).data('group');
-                   return false; // this is how you break in an each!
+         let cat = "";
+         let group = "";
+         $("ul.menu_list>li a", "#search").each(function() {
+             if (slug == $(this).data("slug")) {
+                 cat = $(this).data("cat");
+                 group = $(this).data("group");
+                 return false; // this is how you break in an each!
              }
          });
-         return {"cat":cat, "group":group}
-
+         return {"cat":cat, "group":group};
      },
-
-
-
 };

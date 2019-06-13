@@ -18,6 +18,11 @@ DB_BRAND = 'MySQL'
 DB_HOST_NAME = '<HOST_NAME>'
 DB_DATABASE_NAME = '<DB_NAME>'
 
+# The main namespace in which OPUS tables live.
+# For MySQL this is the database name.
+# For PostgreSQL this is the schema name.
+DB_SCHEMA_NAME = 'XXX'
+
 # The database user and password. This user needs to have most privileges,
 # including table creation and deletion.
 DB_USER = '<DB_USER>'
@@ -47,10 +52,19 @@ PDS_TOOLS_PATH = '<PATH>'
 ### NEEDED FOR THE MAIN OPUS APPLICATION ###
 ############################################
 
-# The main namespace in which OPUS tables live.
-# For MySQL this is the database name.
-# For PostgreSQL this is the schema name.
-OPUS_SCHEMA_NAME = 'XXX'
+# The Django debug setting. NEVER deploy a production site with DEBUG set to
+# True.
+DEBUG = True
+
+# The list of hosts or IP addresses that Django is permitted to serve
+ALLOWED_HOSTS = ('127.0.0.1',
+                 'localhost')
+
+# These settings are useful to include on a production server
+# ADMINS = (<email list>)
+# MANAGERS = ADMINS
+# EMAIL_* (see https://docs.djangoproject.com/en/2.1/topics/email/)
+# SERVER_EMAIL
 
 # The Django "secret key". This needs to be a unique, secret string.
 # Generator tools are available:
@@ -59,6 +73,11 @@ SECRET_KEY = '<SECRET_KEY>'
 
 # Where static files are served from in a production environment
 STATIC_ROOT = '<STATIC_DIR>'
+
+# The prefix to add to all cache keys indicating a unique string for this
+# installation on a server. This allows multiple OPUS installations on the
+# same server without causing memcached cache key conflicts.
+CACHE_SERVER_PREFIX = ''
 
 # Where to put zipped cart files for downloading
 # Needs a TRAILING SLASH
@@ -71,6 +90,9 @@ TAR_FILE_URL_PATH = '<URL>/'
 # The directory in which to place log files created by OPUS
 OPUS_LOGFILE_DIR = '<LOGFILE_DIR>'
 OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
+
+# The file that contains the date of the last blog update
+OPUS_LAST_BLOG_UPDATE_FILE = '<FILE>'
 
 # What level of message to log at each destination
 OPUS_LOG_FILE_LEVEL = 'INFO'

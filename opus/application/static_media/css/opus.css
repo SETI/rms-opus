@@ -1,0 +1,1682 @@
+body {
+    overflow: hidden;
+}
+
+.app-body {
+    margin-top: 3.8em !important;
+    overflow: hidden;
+}
+
+.container-fluid {
+    padding: 0;
+    margin-bottom: -12px;
+}
+
+.dictionary {
+    display: none;
+}
+
+.tab-full-width {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.navbar-brand {
+    width: 3em !important;
+}
+
+@media (max-width: 992px) {
+    #op-main-nav.navbar .navbar-brand {
+        float: none;
+        display: block;
+    }
+    #op-main-nav.navbar .navbar-nav>.nav-item {
+        float: none;
+        margin-left: .1rem;
+    }
+    #op-main-nav.navbar .navbar-nav {
+        float: none !important;
+    }
+
+    /* Make items in hamburger stay in one line, not sure if we want this? */
+    #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
+        display: flex;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Add spaces between each nav-link item */
+    #op-tab .nav-link {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+}
+
+.op-user-msg {
+    display: none;
+}
+
+/* display normalized url message */
+.op-show-msg {
+    display: block;
+}
+
+#op-tab img.newGIF {
+    display: none;
+}
+
+#search {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    margin: 0;
+    /* Make the whole search page shrink proportionally when window
+    is narrower */
+    width: 100%;
+}
+
+#search .add_input {
+    display: none;
+}
+
+#search .op-search-param {
+    font-size: 90%;
+}
+
+#browse, #cart, #detail {
+    padding: 0; margin:0;
+    display: none;
+}
+
+#browse {
+    background-color: #303030; /* #383838; */
+}
+
+#browse .data {
+    background-color: white;
+}
+
+#browse .gallery {
+    margin: 0;
+    padding: 0;
+    margin-top: .25em;
+    background-color: #303030; /* #383838; */
+    padding-left: 1.5em;
+    min-height: 700px;
+}
+
+.op-gallery-view {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Make sure y-axis rail is not moving and always visible */
+.op-gallery-view > .ps__rail-y {
+    background-color: transparent !important;
+}
+
+#detail {
+    padding: 20px 50px;
+}
+
+#detail h1 {
+    white-space: nowrap;
+}
+
+#nav-sidebar {
+    margin: 0;
+    padding: 0;
+    width: 400em;
+    background-color: #f1f1f1;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+}
+
+#sidebar {
+    min-width: 24rem;
+    max-width: 26rem;
+    height: 100%;
+}
+
+#sidebar .submenu {
+    margin-left: 15px;
+}
+
+#sidebar .menu_help {
+    margin: 0;
+    padding: .1em .2em;
+    padding-left: 1em;
+}
+
+/*
+Fix the sidebar width so the width will not change when .menu_help message shows up
+Not sure if this is the desired behavior
+*/
+.sidebar-area {
+    max-width: 380px;
+}
+
+/* As long as q-type shrink to the 2nd line, we set text input width
+to 100%, this will make the shrinking look smoother */
+@media (max-width: 970px) {
+    /* Make text input shrink proportionally when window is narrow */
+    #op-search-widgets input[type="text"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 860px) {
+    /* Make search menu shrink proportionally when screen width is narrower */
+    .sidebar-area {
+        max-width: 44%;
+    }
+
+    /* Make sure scrollbar is not covered by search menu item when search
+    menu item is hovered over */
+    #sidebar-container .ps__rail-y {
+        z-index: 999;
+    }
+
+    /* Make sure widget area can take up at least 50% of screen */
+    #widget-container {
+        min-width: 50%;
+    }
+}
+
+@media (max-width: 725px) {
+    /* Make both reset buttons stay in one line when screen is narrow */
+    .op-reset-button {
+        display: flex;
+    }
+    /* Make sure all left menu contents not cut off when screen is narrow */
+    .searchMenu > li {
+        width: 80%;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Remove left space of search menu when screen width is narrower */
+    .sidebar-area {
+        /* max-width: 50%; */
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 670px) {
+    /* Remove button padding so both reset buttons can stay in one line
+    when window width is about 600px*/
+    .op-reset-button button {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+}
+
+/* If the menu category (in the search pane or metadata selector) is collapsed,
+   then rotate the little triangle 90 degrees to indicate its status. */
+.searchMenu .dropdown-toggle::after {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+
+.searchMenu .dropdown-toggle.collapsed::after {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+.sidebar_wrapper {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    margin-top: 5px;
+    position: relative;
+    height: 500px; /* matches .op-widget-column */
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.op-redraw-menu .collapsing {
+     -webkit-transition: none;
+     transition: none;
+}
+
+hr.shadow-divider {
+    height: 10px;
+    border: 0;
+    box-shadow: 0 9px 9px -10px #8c8b8b inset;
+}
+
+ul.searchMenu {
+    padding-right: 2em;
+}
+
+/* Add or remove background and checkmark when a search item is active.
+   This is both for the main search tab and the select metadata dialog. */
+.op-search-param {
+    background: initial;
+    transition: background .4s;
+    -moz-transition: background .4s;
+    -webkit-transition: background .4s;
+}
+
+.op-search-param-checkmark {
+    display: inline-block;
+    opacity: 0;
+    transition: opacity .4s;
+    -moz-transition: opacity .4s;
+    -webkit-transition: opacity: .4s;
+}
+
+/* Remove hyperlink underlines from chevron and X on widget title */
+.widget .card-header a {
+    text-decoration: none;
+}
+
+/* Rotate the chevron on a widget header to indicate its open/closed status */
+.widget .card-header .icon-action {
+    transition: .3s;
+}
+
+.widget .card-header .collapsed .icon-action {
+    -ms-transform: rotate(-90deg); /* IE 9 */
+    -ms-transform-origin: 80% 43%; /* IE 9 */
+    -webkit-transform: rotate(-90deg); /* Safari 3-8 */
+    -webkit-transform-origin: 80% 43%; /* Safari 3-8 */
+    transform: rotate(-90deg);
+    transform-origin: 80% 43%;
+}
+
+.op-thumbnail-container {
+    display: inline-block;
+    float: left;
+    position: relative;
+    margin: 1px;
+    min-width: 98px;  /* This gives us a 100x100 thumbnail including margin */
+    min-height: 98px;
+    border: medium solid transparent;
+}
+
+.op-thumbnail-container .img-thumbnail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    padding: 0px !important;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.op-thumbnail-container:hover .op-thumb-overlay {
+    height: 30%;
+}
+
+.op-thumb-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.92;
+    filter: alpha(opacity=92);
+    background: rgba(76, 75, 80, 0.3);
+    overflow: hidden;
+    width: 100%;
+    height: 0;
+    transition: .5s ease;
+}
+
+.op-thumb-overlay a:hover {
+    color: #097da5;
+    /* font-size: 130%; */
+}
+
+#browse .op-in-cart {
+    border: medium solid #097da5;
+}
+
+#cart .remove {
+    display: none;
+}
+
+#cart .removed {
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#cart .fa-times {
+    color: #eee;
+    opacity: 0.15;
+}
+
+#op-confirm-modal {
+    border-radius: 6px;
+    border-width: 3px;
+}
+
+.modal-content {
+    border-radius: 1%;
+}
+
+/* Make sure "x" button in metadata-dialog is not cut off */
+.modal-content .close i {
+    line-height: 1.1em;
+}
+
+.modal-footer .left-container {
+    width: 74%;
+}
+
+.op-thumbnail-container .modal-overlay {
+    position: absolute;
+    text-align: center;
+    padding-left: 1em;
+    padding-right: 1em;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    z-index: -1;
+}
+
+.op-thumbnail-container .modal-show {
+    z-index: 999;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    /*  -webkit-transition: opacity 0.1s ease-in;
+      -moz-transition: opacity 0.1s ease-in;
+      -o-transition: opacity 0.1s ease-in; */
+    opacity: 1;
+}
+
+tr.modal-show {
+    color: #167495;
+    opacity: 0.92;
+    filter: alpha(opacity=92);
+}
+
+.op-thumbnail-container .content-text {
+    margin: 0px;
+    opacity: 0.65;
+}
+
+.op-results-message {
+    color: #fff;
+    padding-left: 3em;
+    width: 500px;
+    display: none;
+}
+
+.img-thumbnail {
+    background-color: transparent !important;
+    border: 0px solid #000000 !important;
+}
+
+.op-thumb-overlay .op-tools {
+    text-align: center;
+}
+
+.op-thumb-overlay .op-tools > a {
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.op-thumb-overlay .op-tools a:nth-child(1n) {
+    position: relative;
+    left: 0;
+}
+
+.op-thumb-overlay .op-tools a:nth-child(2n) {
+    margin-right: 0.8em;
+    margin-left: 0.8em;
+}
+
+.op-thumb-overlay .op-tools a:nth-child(3n) {
+    position: relative;
+    right: 0;
+}
+
+td.op-table-tools {
+    width: 3em;
+}
+
+td .form-group {
+    padding: 0px 8px;
+    height: 0.5em;
+    margin-top: -5px;
+}
+
+td .form-group > a {
+    color: white;
+    font-size: 20px;
+}
+
+th.sticky-header {
+    /*  avoid seeing through at the top of header */
+    border-top: 0px;
+    position: sticky;
+    /* Make sure table header is sticky in Safari */
+    position: -webkit-sticky;
+    top: 0;
+    z-index: 10;
+    background-color: black;
+}
+
+.op-data-table  {
+    padding: 0;
+}
+
+.op-data-table th {
+    vertical-align: middle;
+    /* Fix the hidden th left/right border in firebox */
+    background-clip: padding-box;
+    text-align: center;
+    /* padding-right: 10px; */
+}
+
+.op-data-table th a {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+}
+
+.op-data-table .column_ordering {
+    margin: 0 10px;
+    /* display: inline-flex; */
+    /* float: right; */
+}
+
+.op-data-table td {
+    white-space: nowrap;
+    min-width: 4.2em;
+}
+
+/* Move y-scrollbar out of container in table view */
+.op-data-table th:last-child {
+    border-right-width: 15px;
+}
+
+.op-data-table tr > td:last-child {
+    border-right-width: 15px;
+}
+
+.op-data-table th > div {
+    vertical-align: middle;
+    display: inline-block;
+    width: 100%;
+    position: relative;
+    /* white-space: nowrap; */
+    /* height: 100%; */
+}
+
+/* vertically center the resizable handle */
+.op-data-table th > div div {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.op-data-table-view {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.op-data-table-view .ps__rail-y {
+    background-color: transparent !important;
+    z-index: 11;
+}
+
+/* Make sure x-scrollbar in dataTable is always at the left and visible */
+.op-data-table-view .ps__rail-x {
+    background-color: transparent !important;
+    opacity: 0.9 !important;
+}
+
+/* change from 1px to 2px to make ps__thumb-y more cnetered */
+.op-data-table-view .ps__thumb-y {
+    right: 2px;
+}
+
+/* avoid seeing through ps__rail_x in table view */
+.op-data-table-view .ps__thumb-x {
+    bottom: 1px;
+}
+
+.fadey {
+    color: #b0b0b0;
+}
+
+.detailViewLink {
+    margin-top: 70px;
+    font-size: 130%;
+    padding: 5px 0px;
+    color: #3399ff;
+}
+
+#product_types {
+    display: inline-grid;
+}
+
+#op-metadata-selector i.fa-check {
+    display: inline-block;
+}
+
+#op-metadata-selector ul li {
+    text-decoration: none;
+}
+
+/* prevent weird browser y-scrollbar */
+#op-metadata-selector {
+    overflow-y: hidden;
+}
+
+/* make modal width shrink smoothly with screen */
+#op-metadata-selector .modal-dialog {
+    /* max-width: 1100px; */
+    max-width: 92%;
+}
+
+/* Make both "Save Changes" and "Discard Changes" stay in one line */
+#op-metadata-selector .right-container {
+    display: flex;
+}
+
+/* Make white space (padding) in metadata selector menu responsive */
+#op-metadata-selector .searchMenu {
+    padding-right: 7%;
+}
+
+/* Make white space (padding) in metadata selector modal responsive */
+.op-all-metadata-column, .op-selected-metadata-column {
+    padding-left: 1.5%;
+    padding-right: 1.5%;
+    /* make metadata selector modal height responsive */
+    max-height: calc(75vh - 150px);
+    overflow: scroll;
+    overflow-x: auto;
+}
+
+.op-all-metadata-column ul li {
+    padding-bottom: 3px;
+
+}
+
+.op-all-metadata-column .cat_label {
+    margin-top: 15px;
+    margin-bottom: -5px;
+}
+
+.op-all-metadata-column .submenu {
+    margin-left: 15px;
+}
+
+.op-selected-metadata-column ul {
+    padding-inline-start: 0.5em;
+    padding-inline-end: 1em;
+}
+
+.op-selected-metadata-column ul li:hover {
+    cursor: grab;
+}
+
+.op-selected-metadata-column ul li .unselect:hover {
+    cursor: default;
+}
+
+.op-selected-metadata-column ul li .info:hover {
+    cursor: default;
+}
+
+.op-selected-metadata-column .unselect {
+    float: right;
+}
+
+.op-selected-metadata-column {
+    border: 0;
+    z-index: 9999;
+}
+
+.op-selected-metadata-column ul li {
+    padding: 5px 15px;
+    border: 1px dotted gray;
+    list-style-type: none;
+}
+
+.hints {
+    color: green;
+    margin: 0 2px 0 5px;
+}
+
+.range_hints {
+    display: block;
+    clear: both;
+    padding: 5px 0 10px 50px;
+    color: green;
+}
+
+.range_hints span {
+    margin-right: 5px;
+}
+
+.paging_indicator {
+    color: #A8A8A8;
+    padding: 0 10px;
+}
+
+.end_of_page {
+    /* display:absolute; */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    display: none;
+}
+
+@media (min-width: 1200px) {
+    /* This covers the metadata selector and slideshow */
+    .modal-lg {
+        max-width: 1100px !important;
+        max-height: 1100px !important;
+    }
+    img.op-slideshow-image-preview {
+        max-width: 600px !important;
+        max-height: 600px !important;
+    }
+}
+
+/* make image preview in the modal stretchable when screen is resized */
+img.op-slideshow-image-preview {
+    /* make image responsive to horizontal shrinking */
+    max-width: 100% !important;
+    /* make image responsive to vertical shrinking */
+    max-height: 70vh !important;
+}
+
+/* make modal width shrink smoothly with screen */
+#galleryView .modal-dialog {
+    max-width: 92%;
+}
+
+/* make sure left/right hand icon in metadata dialog stay in the same line
+when window sized is narrow */
+#galleryView .op-obs-direction {
+    flex-grow: 3;
+}
+
+/* prevent modal from shirnking to a too small window when resizing horizontally */
+#galleryView .left, #galleryView .right {
+    min-height: 75vh;
+}
+
+#galleryViewContents .metadata {
+    overflow-y: auto;
+    /* Make #galleryView modal right contents shrink vertically
+    95% for the metadata info, 5% for the bottom icons */
+    height: 95%;
+    width: 100%;
+    /* make ps stick to the right of the modal when screen is resizing */
+    position: absolute;
+    right: 0;
+}
+
+@media (max-height: 300px) {
+    #galleryViewContents .metadata {
+        height: 85%;
+    }
+    #galleryView .bottom {
+        height: 15%;
+    }
+}
+
+/* prevent weird browser y-scrollbar */
+#galleryView {
+    overflow-y: hidden;
+    pointer-events: none;
+    z-index: 999;
+}
+
+#galleryView button.close, #op-metadata-selector button.close {
+    position: absolute;
+    float: right;
+    top: .8em;
+    right: 1em;
+    z-index: 999;
+}
+
+#galleryView .fa-cart-plus {
+    float: left;
+}
+
+#galleryView .bottom {
+    position: absolute;
+    padding-right: 1em;
+    bottom: 0;
+    width: 100%;
+    z-index: 1030;
+    /* All icons in metadata display will stay at the bottom */
+    align-items: flex-end;
+    /* align-item for Safari */
+    -webkit-align-items: end;
+    /* Right container in metadata display
+    95% for the metadata info, 5% for the bottom icons */
+    height: 5%;
+}
+
+#galleryView .op-obs-direction {
+    width: 20em;
+}
+
+#galleryView .op-prev > i {
+    margin-right: .4em;
+}
+
+#galleryViewContents {
+    position: relative;
+    /* height: 625px; */
+}
+
+#galleryViewContents .left {
+    /* height: 590px; */
+}
+
+#galleryView .modal-dialog:hover {
+    cursor: grab;
+}
+
+#galleryViewContents .contents:hover {
+    cursor: text;
+}
+
+/* note - this is here to allow the user-style to be overridden on the modal */
+a:-webkit-any-link, a::any-link {
+    cursor: inherit;
+}
+
+#galleryViewContents .detail {
+    position: fixed;
+    bottom: 3.7em;
+}
+
+#galleryViewContents .ps__rail-y {
+    background-color: transparent !important;
+}
+
+#galleryViewContents a.menu {
+    width: 0px;
+}
+
+/* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
+.op-disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* this is used to style grey out disabled buttons */
+.op-button-disabled {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.1;
+}
+
+#cart .cart-gallery-side {
+    /* margin-top:.25em; */
+    background-color: #303030; /* #383838; */
+}
+
+#cart .thumb-page {
+    padding: 0 1.0em;
+}
+
+#cart-sidebar {
+    padding-left: 3em;
+    padding-right: 3em;
+}
+
+#cart .col {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+#cart .gallery-contents {
+    position: relative;
+}
+
+.hide_ps__rail-y {
+    display: none !important;
+}
+
+#cart-sidebar .zippedFiles li {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    margin: 10px 0px 15px -20px;
+}
+
+.cart_details {
+    border-left: .3em double black;
+    padding-left: 2em;
+    min-width: 28em;
+    max-width: 28em;
+}
+
+#op-download-links {
+    display: none;
+}
+
+div.gallery {
+    margin: 0;
+    padding:0;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    margin-right: -80px;
+}
+
+/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+nav.panel-heading {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+@media (max-width: 992px) {
+    /* keep the 2nd navbar in a row when window is narrow */
+    #browse .browse-nav-container .navbar-nav {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 1050px) {
+    /* Remove the left space of Observation # */
+    .op-observation-text {
+        margin-left: 0px !important;
+    }
+}
+
+/* Browse view navbar responsiveness  */
+@media (max-width: 1000px) {
+    /* Move down the sort pill area so that slider can be moved down
+    to the 2nd line */
+    #browse .sort-order-container {
+        margin-top: 1.75em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #browse .nav-link {
+        padding: 0 0.5rem;
+    }
+
+    /* Move the last item in flexbox to the 2nd line */
+    #browse .browse-nav-container .navbar-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make sure first 3 options in 2nd navbar have space between each
+    other */
+    #browse .browse-nav-container .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Move slider to the 2nd line when screen is narrow */
+    #browse .browse-nav-container {
+        flex-wrap: wrap;
+    }
+
+    /* When slider is at the 2nd line, make it take up 75% of width.
+    Note that if we set to 100% the slider bar will be cut off when it's
+    moved to the end of the slider */
+    #op-observation-slider.ui-slider {
+        width: 75% !important;
+    }
+
+    /* When slider is at 2nd line, its container will take up 100% of
+    width */
+    .op-slider-nav {
+        flex-basis: 100% !important;
+    }
+}
+
+/* Make slider stays next to other options in 2nd navbar */
+.op-slider-nav {
+    flex-basis: 80%;
+    padding-left: 0.5rem;
+}
+
+.browse-nav-container {
+    height: 1.5em;
+    width: 100%;
+    /* display the 2nd navbar in browse view */
+    display: flex;
+}
+
+.browse-nav-container li {
+    display: flex;
+    align-items: center;
+    /* This will make text stay in one line without wrapping */
+    white-space: nowrap;
+}
+
+.browse-nav-container li input {
+    height: 1.6em;
+    width: 4.2em;
+    text-align: center;
+}
+
+/* Cart view navbar responsiveness */
+@media (max-width: 1100px) {
+    /*  keep the 2nd navbar in a row and move some options to the 2nd
+    line when screen is narrow */
+    #cart .browse-nav-container .navbar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make the 2nd navbar options take up 80% of width when screen is
+    narrow */
+    #cart .browse-nav-container .navbar-nav:first-child {
+        flex: 1 0 80%;
+    }
+
+    /* Make empty cart button take up 20% of width when screen is narrow */
+    #cart .browse-nav-container .navbar-nav:nth-child(2) {
+        flex: 1 0 20%;
+    }
+
+    /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #cart .nav-link {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Hide download options pane when screen is narrow */
+    .cart_details {
+        display: none;
+        max-width: 40%;
+        min-width: 10%;
+        padding-left: 0px;
+
+    }
+
+    /* Add a nav-link option for user to open the donwload options panel
+    when screen is narrow */
+    .op-cart-toggle-download-panel {
+        display: flex !important;
+        padding-left: 0.5em;
+        padding-top: 0.5em;
+    }
+
+    /* Make sure gallery-contents not cut off by the right edge of the
+    screen */
+    #cart .gallery-contents {
+        padding-left: 10px;
+    }
+
+    /* Remove the white space at the bottom of gallery-contents when screen
+    is narrow */
+    #cart .cart-gallery-side {
+        height: 100vh;
+    }
+
+    /* When download options left pane is hidden, and the 2nd navbar options
+    stay in one line, we move up the sorting pill */
+    #cart .sort-order-container {
+        margin-top: 0;
+    }
+}
+
+/* Remove the nav-link for opening up download options panel when screen
+is wide enough */
+@media (min-width: 901px) {
+    .op-cart-toggle-download-panel {
+        display: none !important;
+    }
+}
+
+@media (max-width: 765px) {
+    /* When download options left pane is hidden, move down cart tab
+    sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+}
+
+/* download options panel */
+#op-cart-download-panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    z-index: 9999;
+    top: 2em;
+}
+
+.sort-order-container {
+    display: inline-flex;
+    padding-left: 0.5em;
+    /* padding-top: 0.5em; */
+}
+
+.sort-order-icon {
+    color: rgba(255, 255, 255, 0.5);
+    vertical-align: middle;
+}
+
+.sort-contents {
+    /* display: flex; */
+    display: block;
+    margin-bottom: 0;
+}
+
+.sort-contents li {
+    opacity: 0.7;
+    margin-bottom: -10px;
+}
+
+.flip-sort {
+    cursor: row-resize;
+}
+
+@media (max-width: 700px) {
+    .browse-nav-container li {
+        padding: 0;
+        text-align: center;
+    }
+    .browse-nav-container {
+        width: 100%;
+        margin: 0;
+    }
+    .browse-nav-container .order-container {
+        display: none;
+    }
+}
+
+#op-observation-slider.ui-slider {
+    /* Note: set this to percentage will make slider grow when screen
+    is wider */
+    width: 400px;
+    height: .1em;
+}
+
+.op-observation-text {
+    margin-left: 45px;
+    padding-right: .5em;
+    opacity: 0.5;
+}
+
+.op-observation-number {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.ui-slider-horizontal .ui-slider-handle {
+    /* width: auto; */
+    top: -.6em;
+    display: inline-block;
+    height: 1.5em;
+    position: relative;
+    min-width: .68em;
+}
+
+.table-page {
+    display: none;
+}
+
+.panel-body .gallery-contents {
+    position: fixed !important;
+    overflow-y: auto;
+}
+
+.page-load-status {
+    display: none; /* hidden by default */
+    padding-top: 20px;
+    border-top: 1px solid #DDD;
+    text-align: center;
+    /*color: #777;*/
+}
+
+/* opus-specific card stuff, used to be widgets */
+.card-title {
+    margin-top: .15em;
+    margin-bottom: .15em;
+}
+
+.icon-action {
+    margin-top: 5px;
+    padding-left: 1em;
+    font-size: 80%;
+}
+
+.searchMenu a.dropdown-toggle {
+    margin-top: 5px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: initial;
+}
+
+.searchMenua.dropdown-toggle:hover {
+    text-decoration: none;
+}
+
+.searchMenu a.op-search-param {
+    margin-top: 5px;
+    margin-bottom: 12px;
+    font-weight: 70;
+    color: initial;
+}
+
+.searchMenu a.op-search-param:hover {
+    text-decoration: none;
+}
+
+#searchMenu .list-group li:nth-child(1) {
+    border-top: 0 none;
+}
+
+/* Reduce left space in each widget (from 50px to 10px) */
+#op-search-widgets ul {
+    padding-left: 10px;
+}
+
+#op-search-widgets li {
+    display: inline;
+    list-style-type: none;
+}
+
+/* this is for sorting widgets cards, display has to be block */
+#op-search-widgets > li {
+    display: block;
+    list-style-type: none;
+}
+
+#op-search-widgets {  /* this fixes problem scrolling when widget column is short */
+    padding-bottom: 20px;
+    /* Make left/right space of widgets are shrink proportionally when
+    screen is narrower */
+    padding-right: 3%;
+    padding-left: 3%;
+}
+
+.widget-main .range-qtype-helper {
+    font-size: 130%;
+    color: gray;
+}
+
+#range_query_widget_helper_html {
+    display: none;
+    width: 500px;
+}
+
+.widget-main ul li ul li {  /* mult labels */
+    white-space: nowrap;
+}
+
+.widget-main > ul {
+    margin-bottom: 5px;
+    padding-bottom: 0;
+}
+
+.widget-main > ul > li ul {
+    padding-left: 0;
+    padding-bottom: 0;
+}
+
+.widget-main ul li {
+    margin-right: 5px;
+    display: inline;
+    list-style-type: none;
+}
+
+.widget-main label {
+    font-size: 95%;
+}
+
+/* This is to make sortable scrolling (when sorting happened) works with ps */
+#widget-container {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+.op-widget-column {
+    position: relative;
+    padding: 0 20px;
+    margin: 0 10px;
+    margin-left: -20px;
+    margin-top: 5px;
+    /* Widget container can shrink to a minimum width = min-width when
+    browser width is shrinking */
+    max-width: 740px;
+    min-width: 450px;
+    height: 500px;  /* matches .sidebar_wrapper */
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.widget-header {
+    margin: 0;
+    padding: 0;
+    min-height: 20px; /* overwrites ace style */
+    height: 20px;
+    padding-left: 5px;
+}
+
+.widget-header > .widget-title {
+    line-height: 20px;
+}
+
+.widget-toolbar {
+    margin: 0;
+    padding: 0;
+    line-height: 15px;
+    margin-top: -2px;
+    padding: 0px 5px;
+}
+
+/* small spinner */
+.spinner {
+    background-image: url('https://tools.pds-rings.seti.org/static_media/img/spinner.gif');
+    width: 30px;
+    display: inline-block;
+    background-repeat: no-repeat;
+}
+
+/* small spinner: shows up when zipped file links are loading (cart page) */
+#op-download-links .spinner {
+    display: none;
+    margin: 0px 10px;
+    width: 30px;
+}
+
+/* small spinner: shows up when total size is loading (cart page) */
+.op-total-size .spinner {
+    display: none;
+    line-height: 16px;
+    margin: 0 10px;
+}
+
+/* smaller spinner next to general constraints: shows up when menu is loading (search page) */
+.op-menu-text.spinner {
+    display: none;
+    margin-left: 5px;
+    width: 18px;
+    line-height: 16px;
+}
+
+.spinner.op-show-spinner {
+    display: inline-block;
+}
+
+/* large ellips spinner */
+.op-page-loading-status .loader {
+    display: none;
+    /* top: 250px; */
+}
+
+#cart_summary .button-container button {
+    margin-bottom: 1em;
+}
+
+.badge-xlg {
+    font-size:115%;
+    font-weight:bold;
+}
+
+.mult_group_label {
+    padding: 5px 4px;
+    padding-left: 5px;
+}
+
+.mult_group {
+    padding-left: 0;
+    display: none;
+}
+
+.mult_group > .multichoice {
+    padding-left: 0;
+}
+
+/* detail tab */
+.op-detail-metadata {
+    /* Make detail left pane shrink proportionally when window is narrow
+    and set its min width to be 470px (+ padding left/right: 30px) */
+    position: relative;
+    min-width: 470px;
+    max-width: 800px;
+}
+
+/* Make detail left pane takes up 50% of width */
+.op-detail-metadata-container {
+    flex: 1 0 50%;
+}
+
+/* For the individual metadata categories - removes list bullet and
+   makes indent look like it did with bullet. Same for the product
+   type list. */
+.op-detail-list {
+    list-style: none;
+    padding-left: 22px;
+}
+
+/* For the product type list at the top of the detail page -
+   make each line wrap with the name of the product, not the tooltip. */
+.op-detail-entry {
+    display: flex;
+}
+
+.op-detail-entry-icon {
+    line-height: 21px;
+}
+
+.op-detail-file-list {
+    display: inline;
+}
+
+/* Make detail right pane (img) takes up 50% of width */
+.op-detail-img {
+    flex: 1 1 50%;
+}
+
+@media (max-height: 520px) {
+    /* Make detail image fit the screen when its height is short */
+    .op-detail-img img {
+        max-height: 50vh !important;
+    }
+
+    /* Reduce the top space above the detail image when screen is short */
+    .op-detail-img {
+        padding-top: 1% !important;
+    }
+
+}
+
+@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
+    .op-detail-img p {
+        font-size: 0.5rem;
+    }
+}
+
+/* Set max width of flexbox container so that detail image will keep close
+to the left pane when screen is getting too wide */
+.op-detail-content {
+    max-width: 1800px;
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Set detail image size when it's above the left pane */
+    .op-detail-img img {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Reduce the top space above the detail image when screen */
+    .op-detail-img {
+        padding-top: 0 !important;
+    }
+}
+
+/* Make detail image shrink proportionally when screen is resized, and
+also set its min width to be 150px */
+.op-detail-img img {
+    max-width: 100%;
+    min-width: 90px;
+    max-height: 60vh;
+    /* min-width: 150px;
+    max-height: 70vh; */
+}
+
+/* TODO: use @media to fine tune the heights of footer & nav bar
+   when the width of browser window is small
+*/
+
+footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: white;
+    text-align: center;
+    margin-left: 0px  !important;
+    z-index: 9999;
+}
+
+.footer .container {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 42px;
+    padding: 10px 20px;
+    text-align: right;
+}
+
+.footer a {
+    white-space: nowrap;
+}
+
+#op-help-panel {
+    display: none;
+    position: absolute;
+    right: 0;
+    z-index: 9999;
+    top: 2em;
+}
+
+.op-about-table table, th, td {
+    border: 1px solid black;
+}
+
+.op-header-text {
+    display: inline-block;
+}
+
+#op-help-panel .card-body {
+    overflow: auto;
+    /* requirement for perfectScrollbar */
+    position: relative;
+}
+
+.op-overlay {
+    display: none;
+    position: fixed;
+    /* full screen */
+    width: 100vw;
+    height: 100vh;
+    /* transparent black */
+    background: rgba(0, 0, 0, 0.7);
+    /* middle layer, i.e. appears below the panel */
+    z-index: 1099;
+    opacity: 0;
+    /* animate the transition */
+    transition: all 0.5s ease-in-out;
+}
+
+/* display .op-overlay when it has the .active class */
+.op-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* about page */
+.about ul {
+    padding-left: 30px;
+    max-width: 900px;
+}
+
+.about ul li {
+    display: inline;
+}
+
+.about li:after {
+    content: ', ';
+}
+
+.about li:last-child:after {
+    content: '';
+}
+
+.op-reset-button {
+    text-align: center;
+}
+
+.op-reset-button button {
+    margin: 5px 1px;
+    font-weight: bold;
+}
+
+.op-reset-button button:disabled {
+    pointer-events: none;
+}
+
+/* Remove the reddish focus outline on Linux Chrome that makes it look like an
+   invalid value using our color scheme. This color is what is used on Macs. */
+input:focus {
+    outline: auto #5E9ED6;
+}
+
+input[type="text"].search_input_original {
+    border: 1px solid #D5D5D5;
+}
+
+input[type="text"].search_input_valid {
+    border: 3px solid #9EEEBB;
+    margin: -2px;
+}
+
+input[type="text"].search_input_invalid {
+    border: 3px solid #FFD700;
+    background-color: #EEECEC;
+    margin: -2px;
+}
+
+input[type="text"].search_input_invalid_no_focus {
+    background-color: #F6AFAF;
+    border: 3px solid #F6AFAF;
+    margin: -2px;
+}
+
+.search_overlay {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Make drop down scrollable vertically */
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.ui-helper-hidden-accessible {
+    display: none;
+}
+
+ul.ui-autocomplete {
+    list-style: none;
+}
+
+ul.ui-autocomplete li {
+    display: block
+}
+
+ul.ui-autocomplete li a {
+    text-decoration: none;
+}
+
+ul.ui-autocomplete li a:hover {
+    color: #000000;
+}
+
+ul.ui-autocomplete a.ui-state-active {
+    background: #CECBFA;
+    /* background: #4f99c6; */
+    border: none;
+}
+
+.list-header, .list-footer {
+    background-color: #F9F6F6;
+}
+
+.op-no-select {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+
+    /*
+      Introduced in IE 10.
+      See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+    */
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Ripple In */
+@-webkit-keyframes hvr-ripple-in {
+    100% {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+    }
+}
+
+@keyframes hvr-ripple-in {
+    100% {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+    }
+}
+
+.hvr-ripple-in {
+    display: inline-block;
+    vertical-align: middle;
+    -webkit-transform: perspective(1px) translateZ(0);
+    transform: perspective(1px) translateZ(0);
+    position: relative;
+    z-index: 20;
+}
+
+.hvr-ripple-in:before {
+    content: '';
+    position: absolute;
+    border: #20c997 solid 6px;
+    top: -12px;
+    right: -12px;
+    bottom: -12px;
+    left: -12px;
+    opacity: 0.5;
+    animation: hvr-ripple-in 1s infinite;
+    -webkit-animation: hvr-ripple-in 1s infinite;
+}

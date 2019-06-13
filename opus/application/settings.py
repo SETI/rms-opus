@@ -3,7 +3,7 @@ import sys
 from collections import OrderedDict
 
 _HAS_MEMCACHE = False
-try:
+try: # pragma: no cover
     import memcache
     _HAS_MEMCACHE = True
 except ImportError:
@@ -25,23 +25,8 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, PDS_OPUS_LIB_PATH))
 import opus_support
 import julian
 
-ALLOWED_HOSTS = ('127.0.0.1',
-                 'localhost',
-                 'dev.pds-rings.seti.org',
-                 '104.244.248.18',
-                 'pds-rings-tools.seti.org',
-                 'tools.pds-rings.seti.org',
-                 '104.244.248.20')
-
-DEBUG = True
-
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
-
-ADMINS = (
-    ('Robert French', 'rfrench@seti.org'),
-)
-MANAGERS = ADMINS
 
 STATIC_URL = '/static_media/'
 
@@ -78,13 +63,13 @@ STATICFILES_DIRS = [
 ADMIN_MEDIA_PREFIX = ''
 
 MIDDLEWARE = (
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'apps.tools.opus_middleware.StripWhitespaceMiddleware',
     # prod remove:
@@ -138,10 +123,10 @@ INSTALLED_APPS = (
     'search',
     'paraminfo',
     'metadata',
-    'guide',
+    'help',
     'results',
     'ui',
-    'user_collections',
+    'cart',
     'tools',
     'dictionary',
     'rest_framework',
@@ -155,23 +140,23 @@ REST_FRAMEWORK = {
     )
 }
 
-if _HAS_MEMCACHE:
-    # https://github.com/edavis/django-infinite-memcached/tree/
+if _HAS_MEMCACHE: # pragma: no cover
     CACHES = {
         "default": {
-    	"BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
+            "BACKEND":"django.core.cache.backends.memcached.MemcachedCache",
             "LOCATION": "127.0.0.1:11211",
-    	"TIMEOUT": None,
+    	    "TIMEOUT": None,
         },
     }
 else:
     CACHES = {
        'default': {
-           'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-      }
+           'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+           # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
     }
 
-CACHE_KEY_PREFIX = 'opus:' + OPUS_SCHEMA_NAME
+CACHE_KEY_PREFIX = 'opus:' + DB_SCHEMA_NAME
 
 INTERNAL_IPS = ('127.0.0.1',)
 
@@ -237,7 +222,7 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'guide': {
+        'help': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
@@ -253,7 +238,7 @@ LOGGING = {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
-        'user_collections': {
+        'cart': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
         },
@@ -279,13 +264,14 @@ os.environ['REUSE_DB'] = "1"  # for test runner
 
 DATABASES = {
     'default': {
-        'NAME': OPUS_SCHEMA_NAME,  # local database name
+        'NAME': DB_SCHEMA_NAME,  # local database name
+        'HOST': DB_HOST_NAME,
         'ENGINE': 'django.db.backends.mysql',
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
-                    'NAME': OPUS_SCHEMA_NAME,  # use same database for test as prod YES
+                    'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES
                 },
     },
 }
@@ -308,9 +294,13 @@ BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
-SLUGS_NOT_IN_DB = ('browse', 'col_chooser', 'colls_browse', 'cols', 'detail',
-                   'download', 'gallery_data_viewer', 'limit', 'loc_type',
-                   'order', 'page', 'range', 'reqno', 'request', 'startobs',
+SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
+                   'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
+                   'colls_browse', 'colls_order', 'colls_page',
+                   'colls_startobs',
+                   'cols', 'col_chooser', 'detail', 'download',
+                   'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
+                   'range', 'reqno', 'request',
                    'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
 # The root URL used to retrieve product files from a web server
@@ -319,9 +309,12 @@ PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 # The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
+# The search widgets selected when OPUS is first intialized
+DEFAULT_WIDGETS = 'planet,target'
+
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
-DEFAULT_SORT_ORDER = 'time1' # This must be a slug
+DEFAULT_SORT_ORDER = 'time1,opusid' # This must be a list of slugs
 
 # The sort order to append after all other sort orders to ensure the ordering
 # is always deterministic. This field should be unique for all observations.
@@ -359,6 +352,7 @@ STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
+MAX_SELECTIONS_ALLOWED = 10000
 MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 250
 MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
@@ -375,7 +369,11 @@ HTTP404_SEARCH_PARAMS_INVALID = 'Search params invalid'
 HTTP404_UNKNOWN_FORMAT = 'Unknown format'
 HTTP404_UNKNOWN_SLUG = 'Unknown slug'
 HTTP404_UNKNOWN_OPUS_ID = 'Unknown OPUSID'
+HTTP404_MISSING_OPUS_ID = 'Missing OPUSID'
+HTTP404_UNKNOWN_RING_OBS_ID = 'Unknown RINGOBSID'
 HTTP404_UNKNOWN_CATEGORY = 'Unknown category'
+HTTP404_MISSING_REQNO = 'Missing reqno'
+HTTP404_BAD_OR_MISSING_RANGE = 'Bad or missing range'
 
 HTTP500_SEARCH_FAILED = 'Search failed'
 HTTP500_SQL_FAILED = 'SQL query failed'

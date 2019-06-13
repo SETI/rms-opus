@@ -9,9 +9,10 @@ _RESPONSES_FILE_ROOT = 'test_api/responses/'
 
 class ApiTestHelper:
     def _get_response(self, url):
-        if not settings.TEST_GO_LIVE or settings.TEST_GO_LIVE == "production":
+        if (not settings.TEST_GO_LIVE or
+            settings.TEST_GO_LIVE == "production"): # pragma: no cover
             url = "https://tools.pds-rings.seti.org" + url
-        else:
+        else: # pragma: no cover
             url = "http://dev.pds-rings.seti.org" + url
         return self.client.get(url)
 
@@ -24,7 +25,24 @@ class ApiTestHelper:
         #     print(response.content)
         #     self.assertEqual(response.content, err_string)
 
-    def _run_json_equal(self, url, expected):
+    @staticmethod
+    def _depth_first_remove(data, ignore_list):
+        if isinstance(data, dict):
+            for ignore in ignore_list:
+                if ignore in data:
+                    del data[ignore]
+            for key in data:
+                ApiTestHelper._depth_first_remove(data[key], ignore_list)
+        if isinstance(data, list):
+            for ignore in ignore_list: # pragma: no cover
+                while ignore in data:
+                    data.remove(ignore)
+            for el in data:
+                ApiTestHelper._depth_first_remove(el, ignore_list)
+
+    def _run_json_equal(self, url, expected, ignore=[]):
+        if not isinstance(ignore, (list, tuple)):
+            ignore = [ignore]
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -33,6 +51,8 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
+        self._depth_first_remove(jdata, ignore)
+        self._depth_first_remove(expected, ignore)
         self.assertEqual(expected, jdata)
 
     def _run_json_equal_file(self, url, exp_file):
@@ -96,15 +116,19 @@ class ApiTestHelper:
         print(expected)
         self.assertEqual(expected, resp)
 
+    @staticmethod
+    def _cleanup_csv(text):
+        text = str(text)[2:-1]
+        text = (text.replace('\\\\r', '').replace('\\r', '')
+                .replace('\r', ''))
+        return text
+
     def _run_csv_equal(self, url, expected):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
-        resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._cleanup_csv(expected)
+        resp = self._cleanup_csv(response.content)
         print('Got:')
         print(resp)
         print('Expected:')
@@ -117,11 +141,8 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        expected = str(expected)[2:-1]
-        expected = (expected.replace('\\\\r', '').replace('\\r', '')
-                    .replace('\r', ''))
-        resp = str(response.content)[2:-1]
-        resp = resp.replace('\\\\r', '').replace('\\r', '').replace('\r', '')
+        expected = self._cleanup_csv(expected)
+        resp = self._cleanup_csv(response.content)
         print('Got:')
         print(resp)
         print('Expected:')

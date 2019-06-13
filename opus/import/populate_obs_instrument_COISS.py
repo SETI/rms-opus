@@ -605,12 +605,6 @@ def populate_obs_instrument_COISS_camera(**kwargs):
     assert instrument_id[3] in ('N', 'W')
     return instrument_id[3]
 
-def populate_obs_instrument_COISS_filter_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    filter1, filter2 = index_row['FILTER_NAME']
-    return filter1 + ',' + filter2
-
 def populate_obs_instrument_COISS_combined_filter(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']

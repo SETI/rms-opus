@@ -103,10 +103,12 @@ def response_formats(data, fmt, **kwargs):
                     returndata['labels'] = kwargs['labels']
                 if 'checkboxes' in kwargs:
                     returndata['checkboxes'] = kwargs['checkboxes']
-                if 'collection' in kwargs:
-                    returndata['collection'] = kwargs['collection']
+                if 'cart' in kwargs:
+                    returndata['cart'] = kwargs['cart']
                 if 'id_index' in kwargs:
                     returndata['id_index'] = kwargs['id_index']
+                if 'page_no' in data:
+                    returndata['page_no']=data['page_no']
 
                 return render_to_response(kwargs['template'],returndata)
 
@@ -123,8 +125,14 @@ def response_formats(data, fmt, **kwargs):
     # like: [{opus_id=something1, planet=SAt, target = Pan}, {opus_id=something21, planet=Sat, target = Pan}]
     # each row is one dictionary
     elif fmt == 'csv':   # must pass a list of dicts
-        data = data['page']
-        field_names = kwargs['labels']
+        if 'page' not in data:
+            # Placeholder until this routine goes away
+            log.error('response_formats: Tried to write CSV but no page')
+            data = []
+            field_names = []
+        else:
+            data = data['page']
+            field_names = kwargs['labels']
         filename = download_file_name()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
@@ -138,23 +146,27 @@ def response_formats(data, fmt, **kwargs):
 
 def zipped(data):
     "Create a zip file from the given data"
+    # XXX NOTE: Zip file creation is completely broken and all of this needs
+    # to be rewritten. This is just a placeholder for now so that the API calls
+    # don't crash. Downloading of archive zip files does not use this routine
+    # and still works fine.
     filename = download_file_name()
 
-    in_memory = StringIO()
-    zip = ZipFile(in_memory, "a")
-    zip.writestr(filename + '.txt', str(data))
-
-    # fix for Linux zip files read in Windows
-    for file in zip.filelist:
-        file.create_system = 0
-
-    zip.close()
+    # in_memory = StringIO()
+    # zip = ZipFile(in_memory, "a")
+    # zip.writestr(filename + '.txt', str(data))
+    #
+    # # fix for Linux zip files read in Windows
+    # for file in zip.filelist:
+    #     file.create_system = 0
+    #
+    # zip.close()
 
     response = HttpResponse(content_type="application/zip")
     response["Content-Disposition"] = "attachment; filename=" + filename + ".zip"
 
-    in_memory.seek(0)
-    response.write(in_memory.read())
+    # in_memory.seek(0)
+    # response.write(in_memory.read())
 
     return response
 
@@ -206,8 +218,10 @@ def get_reqno(request):
     reqno = request.GET.get('reqno', None)
     try:
         reqno = int(reqno)
+        if reqno < 0:
+            reqno = None
     except:
-        pass
+        reqno = None
     return reqno
 
 
@@ -230,7 +244,7 @@ def enter_api_call(name, request, kwargs=None):
             s += ' ' + json.dumps(request.GET, sort_keys=True,
                                   indent=4,
                                   separators=(',', ': '))
-        log.debug(s)
+        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
     _API_START_TIMES[_API_CALL_NUMBER] = time.time()
     return _API_CALL_NUMBER
 
@@ -257,7 +271,7 @@ def exit_api_call(api_code, ret):
             s += '\n' + ret.content.decode()[:240]
         if delay_amount:
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
-        log.debug(s)
+        getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
     if api_code in _API_START_TIMES:
         del _API_START_TIMES[api_code]
     if delay_amount:
@@ -290,21 +304,22 @@ def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
 
-def convert_ring_obs_id_to_opus_id(ring_obs_id):
+def convert_ring_obs_id_to_opus_id(ring_obs_id, force_ring_obs_id_fmt=False):
     "Given an old-format ringobsid, return the new opusid"
-    if not is_old_format_ring_obs_id(ring_obs_id):
+    if (not force_ring_obs_id_fmt and
+        not is_old_format_ring_obs_id(ring_obs_id)):
         return ring_obs_id
     try:
         return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
     except ObjectDoesNotExist:
         log.error('No matching RING_OBS_ID for "%s"', ring_obs_id)
-        return ring_obs_id
+        return None
     except MultipleObjectsReturned:
         log.error('More than one matching RING_OBS_ID for "%s"', ring_obs_id)
         return (ObsGeneral.objects.filter(ring_obs_id=ring_obs_id)
                 .first().opus_id)
 
-    return ring_obs_id
+    return None
 
 def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
@@ -330,13 +345,17 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
         return str(val)
 
 def get_latest_git_commit_id():
+    curcwd = os.getcwd()
     try:
         os.chdir(settings.PDS_OPUS_PATH)
         # decode here to convert byte object to string
-        return subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip().decode('utf8')
+        ret = (subprocess.check_output(['git', 'log', '--format=%H', '-n', '1'])
+               .strip().decode('utf8'))
     except:
         log.warning('Unable to get the latest git commit id')
-        return str(random.getrandbits(128))
+        ret = str(random.getrandbits(128))
+    os.chdir(curcwd)
+    return ret
 
 def cols_to_slug_list(slugs):
     if not slugs:

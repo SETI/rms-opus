@@ -1,0 +1,61 @@
+<head>
+    <meta charset="utf-8" />
+    <title>OPUS - Data Search for Outer Planets NASA Mission Data - NASA PDS Ring-Moon Systems Node</title>
+    <meta name="description" content="OPUS - Outer Planets Data Search Tool - NASA PDS Ring-Moon Systems Node" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="{{ STATIC_URL }}img/favicon.ico">
+
+    <!-- css fallback function -->
+    <script>
+        function fallback(el, localCopy, needIntegrity=false ,integrity="") {
+            el.onerror = null;
+            el.href = `{{ STATIC_URL }}cdn_fallback/${localCopy}`
+            if(needIntegrity) {
+                el.integrity = integrity;
+            }
+        }
+    </script>
+
+    <link onerror="fallback(this, 'fontawesome/css/all-5.4.1.min.css', true, '')"
+    rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
+
+    <!-- jquery theme -->
+    <link onerror="fallback(this, 'jquery/css/jquery-ui-1.12.1.min.css')"
+    rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css">
+
+    <!-- bootstrap style sheets -->
+    <link onerror="fallback(this, 'bootstrap/css/bootstrap-4.1.3.min.css')"
+    rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <link onerror="fallback(this, 'bootstrap/css/bootstrap-reboot-4.1.3.min.css')"
+    rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap-reboot.min.css">
+
+    <link onerror="fallback(this, 'bootstrap/css/bootstrap-grid-4.1.3.min.css')"
+    rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap-grid.css">
+
+    <!-- Main styles for this application-->
+    <link rel="stylesheet" href="{{ STATIC_URL }}coreui/css/style.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}perfect-scrollbar/css/perfect-scrollbar.css">
+
+    <!-- opus custom -->
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/normalize.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/opus.css?version={{ OPUS_FILE_VERSION }}" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/loader.css?version={{ OPUS_FILE_VERSION }}" />
+
+    <!-- inline styles related to this page -->
+    {% block page_styles %} {% endblock %}
+    <style>
+    {% block inline_styles %} {% endblock %}
+    </style>
+
+    <script>
+        // note: these are here to use the django templates in the defs.
+        const DEFAULT_COLUMNS = '{{ default_columns }}';
+        const DEFAULT_WIDGETS = '{{ default_widgets }}';
+        const DEFAULT_SORT_ORDER = '{{ default_sort_order }}';
+        const STATIC_URL = '{{ STATIC_URL }}';
+        const MAX_SELECTIONS_FOR_DATA_DOWNLOAD = '{{ MAX_SELECTIONS_FOR_DATA_DOWNLOAD }}';
+    </script>
+
+</head>

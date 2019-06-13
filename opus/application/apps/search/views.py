@@ -17,10 +17,7 @@ import math
 import re
 import sys
 
-import settings
-
 from django.apps import apps
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, DatabaseError
 from django.db.models import Q
@@ -32,6 +29,8 @@ from paraminfo.models import ParamInfo
 from search.models import *
 from tools.app_utils import *
 from tools.db_utils import *
+
+import settings
 
 import opus_support
 
@@ -54,15 +53,17 @@ def api_normalize_input(request):
     it. If it can't be, return false.
 
     Format: __api/normalizeinput.json
-    Arguments: Normal search arguments
+    Arguments: reqno=<N>
+               Normal search arguments
 
     Returned JSON is of the format:
-        {"slug1": "normalizedval1", "slug2": "normalizedval2"}
+        {"slug1": "normalizedval1", "slug2": "normalizedval2",
+         "reqno": N}
     """
     api_code = enter_api_call('api_normalize_input', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -78,6 +79,11 @@ def api_normalize_input(request):
         raise ret
 
     reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_normalize_input: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
     selections['reqno'] = reqno
 
     ret = json_response(selections)
@@ -96,13 +102,14 @@ def api_string_search_choices(request, slug):
 
     Format: __api/stringsearchchoices/<slug>.json
     Arguments: limit=<N>
+               reqno=<N>
                Normal search arguments
 
     Returned JSON is of the format:
         {"choices": ["choice1", "choice2"],
          "full_search": true/false,
          "truncated_results": true/false,
-         "reqno": number or None}
+         "reqno": N}
 
     The portion of each choice selected by the partial search is highlighted
     with <b>...</b>.
@@ -118,11 +125,11 @@ def api_string_search_choices(request, slug):
     api_code = enter_api_call('api_string_search_choices', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
-    param_info = get_param_info_by_slug(slug)
+    param_info = get_param_info_by_slug(slug, 'search')
     if not param_info:
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
@@ -142,11 +149,12 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    reqno = request.GET.get('reqno', None)
-    try:
-        reqno = int(reqno)
-    except:
-        reqno = None
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_normalize_input: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if param_qualified_name not in selections:
         selections[param_qualified_name] = ['']
@@ -154,7 +162,7 @@ def api_string_search_choices(request, slug):
     qtypes = {}
     query_qtype_list = []
     query_qtype = 'contains'
-    if 'qtypes' in extras:
+    if 'qtypes' in extras: # pragma: no cover
         qtypes = extras['qtypes']
     if param_qualified_name in qtypes:
         query_qtype_list = qtypes[param_qualified_name]
@@ -166,7 +174,7 @@ def api_string_search_choices(request, slug):
     # Must do this here before deleting the slug from selections below
     like_query, like_params = get_string_query(selections, param_qualified_name,
                                                query_qtype_list)
-    if like_query is None:
+    if like_query is None: # pragma: no cover
         ret = Http404('Bad string query')
         exit_api_call(api_code, ret)
         raise ret
@@ -207,12 +215,13 @@ def api_string_search_choices(request, slug):
     partial_query_hash = hashlib.md5(str.encode(partial_query)).hexdigest()
 
     # Is this result already cached?
-    cache_key = (settings.CACHE_KEY_PREFIX + ':stringsearchchoices:' +
-                 param_qualified_name + ':' +
-                 partial_query_hash + ':' +
-                 user_query_table + ':' +
-                 query_qtype + ':' +
-                 str(limit))
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 +':stringsearchchoices:'
+                 +param_qualified_name + ':'
+                 +partial_query_hash + ':'
+                 +user_query_table + ':'
+                 +query_qtype + ':'
+                 +str(limit))
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         cached_val['reqno'] = reqno
@@ -233,7 +242,7 @@ def api_string_search_choices(request, slug):
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
-    if len(results) != 1 or len(results[0]) != 1:
+    if len(results) != 1 or len(results[0]) != 1: # pragma: no cover
         log.error('api_string_search_choices: SQL failure: %s', sql)
         ret = Http404('Bad SQL')
         exit_api_call(api_code, ret)
@@ -256,7 +265,8 @@ def api_string_search_choices(request, slug):
         # that appear in the cache table to cause result rows
         sql += ' INNER JOIN '+connection.ops.quote_name(user_query_table)
         sql += ' ON '+quoted_table_name+'.'
-        if param_category == 'obs_general':
+        if param_category == 'obs_general': # pragma: no cover
+            # There are currently no string fields in obs_general
             sql += connection.ops.quote_name('id')+'='
         else:
             sql += connection.ops.quote_name('obs_general_id')+'='
@@ -275,7 +285,7 @@ def api_string_search_choices(request, slug):
         try:
             cursor.execute(sql, tuple(sql_params))
         except DatabaseError as e:
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = Http404('Bad SQL')
@@ -304,7 +314,7 @@ def api_string_search_choices(request, slug):
         try:
             cursor.execute(sql, tuple(sql_params))
         except DatabaseError as e:
-            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED:
+            if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
                 ret = Http404('Bad SQL')
@@ -452,20 +462,28 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                           'numeric suffix "%s"', slug)
                 return None, None
 
-        param_info = get_param_info_by_slug(slug)
+        if qtype:
+            param_info = get_param_info_by_slug(slug, 'qtype')
+        else:
+            param_info = get_param_info_by_slug(slug, 'search')
         if not param_info:
             log.error('url_to_search_params: unknown slug "%s"',
                       slug)
             return None, None
 
         param_qualified_name = param_info.param_qualified_name()
+        if param_qualified_name == 'obs_pds.opus_id':
+            # Force OPUS_ID to be searched from obs_general for efficiency
+            # even though the user sees it in PDS Constraints.
+            param_qualified_name = 'obs_general.opus_id'
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
 
         param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
         if qtype:
-            if param_qualified_name_no_num in qtypes:
+            if param_qualified_name_no_num in qtypes: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug for '
                           +'qtype "%s": %s', param_qualified_name_no_num,
                           request_get)
@@ -478,12 +496,30 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             # queries being built.
             # No other form types can be sorted since their ordering
             # corresponds to qtype ordering.
-            if param_qualified_name in selections:
+            if param_qualified_name in selections: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug for '
                           +'"%s": %s', param_qualified_name, request_get)
                 return None, None
             new_val = sorted(set(values))
-            if pretty_results:
+            # Now check to see if the mult values are all valid
+            mult_name = get_mult_name(param_qualified_name)
+            model_name = mult_name.title().replace('_','')
+            model = apps.get_model('search', model_name)
+            mult_values = [x['pk'] for x in
+                           list(model.objects.filter(  Q(label__in=new_val)
+                                                     | Q(value__in=new_val))
+                                             .values('pk'))]
+            if len(mult_values) != len(new_val):
+                if allow_errors:
+                    new_val = None
+                else:
+                    log.error('url_to_search_params: Bad mult data for "%s", '
+                              +'wanted "%s" found "%s"',
+                              param_qualified_name, str(new_val),
+                              str(mult_values))
+                    return None, None
+            if pretty_results and new_val:
                 new_val = ','.join(new_val)
             if return_slugs:
                 selections[slug] = new_val
@@ -502,7 +538,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     func = (opus_support
                             .RANGE_FUNCTIONS[form_type_func][1])
                     values_to_use = values_not_split
-                else:
+                else: # pragma: no cover
                     log.error('url_to_search_params: Unknown RANGE '
                               +'function "%s"', form_type_func)
                     return None, None
@@ -542,7 +578,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     return None, None
         else:
             # For non-RANGE queries, we just put the values here raw
-            if param_qualified_name in selections:
+            if param_qualified_name in selections: # pragma: no cover
+                # This can't happen in real life
                 log.error('url_to_search_params: Duplicate slug '
                           +'for "%s": %s', param_qualified_name,
                           request_get)
@@ -605,8 +642,8 @@ def get_user_query_table(selections, extras, api_code=None):
     cache_table_name = get_user_search_table_name(cache_table_num)
 
     # Is this key set in the cache?
-    cache_key = (settings.CACHE_KEY_PREFIX + ':cache_table:'
-                 + str(cache_table_num))
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                 + ':cache_table:' + str(cache_table_num))
     cached_val = cache.get(cache_key)
     if cached_val:
         return cached_val
@@ -678,8 +715,18 @@ def set_user_search_number(selections, extras):
     qtypes_json = None
     qtypes_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'qtypes' in extras:
-        if len(extras['qtypes']):
-            qtypes_json = str(json.dumps(sort_dictionary(extras['qtypes'])))
+        qtypes = extras['qtypes']
+        # Remove qtypes that aren't used for searching because they don't
+        # do anything to make the search unique
+        new_qtypes = {}
+        for qtype, val in qtypes.items():
+            qtype_no_num = strip_numeric_suffix(qtype)
+            if (qtype_no_num in selections or
+                qtype_no_num+'1' in selections or
+                qtype_no_num+'2' in selections):
+                new_qtypes[qtype] = val
+        if len(new_qtypes):
+            qtypes_json = str(json.dumps(sort_dictionary(new_qtypes)))
             qtypes_hash = hashlib.md5(str.encode(qtypes_json)).hexdigest()
 
     units_json = None
@@ -694,7 +741,7 @@ def set_user_search_number(selections, extras):
         order_json = str(json.dumps(extras['order']))
         order_hash = hashlib.md5(str.encode(order_json)).hexdigest()
 
-    cache_key = (settings.CACHE_KEY_PREFIX
+    cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  +':usersearchno:selections_hash:' + str(selections_hash)
                  +':qtypes_hash:' + str(qtypes_hash)
                  +':units_hash:' + str(units_hash)
@@ -747,63 +794,114 @@ def set_user_search_number(selections, extras):
     return s.id, new_entry
 
 
-def get_param_info_by_slug(slug, from_ui=False):
+def get_param_info_by_slug(slug, source):
     """Given a slug, look up the corresponding ParamInfo.
 
-    If from_ui is True, we try stripping the trailing '1' off a slug
-    as well, because single-value slugs come in with this gratuitous
-    '1' on the end.
+    If source == 'col', then this is a column name. We look at the
+    slug name as given (current or old).
+
+    If source == 'widget', then this is a widget name. Widget names have a
+    '1' on the end even if they are single-column ranges, so we just remove the
+    '1' before searching if we don't find the original name.
+
+    If source == 'qtype', then this is a qtype for a column. Qtypes don't have
+    any numeric suffix, even if though the columns do, so we just add on a '1'
+    if we don't find the original name.
+
+    If source == 'search', then this is a search term. Numeric search terms
+    can always have a '1' or '2' suffix even for single-column ranges.
     """
-    slug_no_num = strip_numeric_suffix(slug)
+    assert source in ('col', 'widget', 'qtype', 'search')
 
-    # Try the current slug names first
+    # Qtypes are forbidden from having a numeric suffix`
+    if source == 'qtype' and slug[-1] in ('1', '2'):
+        log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
+                  'numeric suffix', slug)
+        return None
+
+    ret = None
+    # Current slug as given
     try:
-        return ParamInfo.objects.get(slug=slug_no_num)
+        ret = ParamInfo.objects.get(slug=slug)
     except ParamInfo.DoesNotExist:
         pass
 
-    try:
-        return ParamInfo.objects.get(slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
-
-    try:
-        # qtypes for ranges come through as the param_name_no_num
-        # which doesn't exist in param_info, so grab the param_info
-        # for the lower side of the range
-        return ParamInfo.objects.get(slug=slug + '1')
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if from_ui:
+    if not ret:
+        # Old slug as given
         try:
-            return ParamInfo.objects.get(slug=slug.strip('1'))
+            ret = ParamInfo.objects.get(old_slug=slug)
         except ParamInfo.DoesNotExist:
             pass
 
-    # Now try the same thing but with the old slug names
-    try:
-        return ParamInfo.objects.get(old_slug=slug_no_num)
-    except ParamInfo.DoesNotExist:
-        pass
+    if ret:
+        if source == 'search':
+            if slug[-1] in ('1', '2'):
+                # Search slug has 1/2, param_info has 1/2 - all is good
+                return ret
+            # For a single-column range, the slug we were given MUST end
+            # in a '1' or '2' - but for non-range types, it's OK to not
+            # have the '1' or '2'. Note the non-single-column ranges were
+            # already dealt with above.
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type in settings.RANGE_FORM_TYPES:
+                # Whoops! We are missing the numeric suffix.
+                return None
 
-    try:
-        return ParamInfo.objects.get(old_slug=slug)
-    except ParamInfo.DoesNotExist:
-        pass
+        return ret
 
-    try:
-        return ParamInfo.objects.get(old_slug=slug + '1')
-    except ParamInfo.DoesNotExist:
-        pass
-
-    if from_ui:
+    # For widgets, if this is a multi-column range, return the version with
+    # the '1' suffix.
+    if source == 'widget':
         try:
-            return ParamInfo.objects.get(old_slug=slug.strip('1'))
+            return ParamInfo.objects.get(slug=slug+'1')
         except ParamInfo.DoesNotExist:
             pass
 
-    log.error('get_param_info_by_slug: Slug "%s" not found', slug)
+        try:
+            return ParamInfo.objects.get(old_slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+    # Q-types can never have a '1' or '2' suffix, but the database entries
+    # might.
+    if source == 'qtype' and slug[-1] not in ('1', '2'):
+        try:
+            return ParamInfo.objects.get(slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+        try:
+            return ParamInfo.objects.get(old_slug=slug+'1')
+        except ParamInfo.DoesNotExist:
+            pass
+
+    # Searching on a single-column range is done with '1' or '2' suffixes
+    # even though the database entry is just a single column without a numeric
+    # suffix.
+    if source == 'search' and (slug[-1] == '1' or slug[-1] == '2'):
+        ret = None
+        try:
+            ret = ParamInfo.objects.get(slug=slug[:-1])
+        except ParamInfo.DoesNotExist:
+            pass
+
+        if not ret:
+            try:
+                ret = ParamInfo.objects.get(old_slug=slug[:-1])
+            except ParamInfo.DoesNotExist:
+                pass
+
+        if ret:
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(ret.form_type)
+            if form_type not in settings.RANGE_FORM_TYPES:
+                # Whoops! It's not a range, but we have a numeric suffix.
+                return None
+            return ret
+
+    log.error('get_param_info_by_slug: Slug "%s" source "%s" not found',
+              slug, source)
 
     return None
 
@@ -1056,7 +1154,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   qtype, param_qualified_name, str(selections), str(qtypes))
-
+        return None, None
     return clause, params
 
 def get_range_query(selections, param_qualified_name, qtypes):
@@ -1371,12 +1469,16 @@ def parse_order_slug(all_order):
     for order in orders:
         descending = order[0] == '-'
         order = order.strip('-')
-        param_info = get_param_info_by_slug(order, from_ui=True)
+        param_info = get_param_info_by_slug(order, 'col')
         if not param_info:
             log.error('parse_order_slug: Unable to resolve order '
                       +'slug "%s"', order)
             return None, None
-        order_params.append(param_info.param_qualified_name())
+        order_param = param_info.param_qualified_name()
+        if order_param == 'obs_pds.opus_id':
+            # Force opus_id to be from obs_general for efficiency
+            order_param = 'obs_general.opus_id'
+        order_params.append(order_param)
         order_descending_params.append(descending)
 
     return order_params, order_descending_params
@@ -1392,7 +1494,7 @@ def create_order_by_sql(order_params, descending_params):
             order_slug = order_params[i]
             pi = _get_param_info_by_qualified_name(order_slug)
             if not pi:
-                log.error('construct_query_string: Unable to resolve order'
+                log.error('create_order_by_sql: Unable to resolve order'
                           +' slug "%s"', order_slug)
                 return None, None, None
             (form_type, form_type_func,

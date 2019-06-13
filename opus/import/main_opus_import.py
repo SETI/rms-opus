@@ -35,7 +35,7 @@ import pdsfile
 import opus_support
 
 from config_data import *
-import do_collections
+import do_cart
 import do_dictionary
 import do_django
 import do_grouping_target_name
@@ -87,7 +87,7 @@ parser.add_argument(
             --create-partables
             --create-table-names
             --create-grouping-target-name
-            --create-collections
+            --create-cart
             --drop-cache-tables
          """
 )
@@ -112,7 +112,7 @@ parser.add_argument(
             --create-partables
             --create-table-names
             --create-grouping-target-name
-            --create-collections
+            --create-cart
             --drop-cache-tables
          """
 )
@@ -124,7 +124,7 @@ parser.add_argument(
             --create-partables
             --create-table-names
             --create-grouping-target-name
-            --create-collections
+            --create-cart
             --drop-cache-tables
          """
 )
@@ -244,8 +244,8 @@ parser.add_argument(
     help='Drop the cache tables used by OPUS; also clears user_searches'
 )
 parser.add_argument(
-    '--create-collections', action='store_true', default=False,
-    help='Create the collections table used by OPUS'
+    '--create-cart', action='store_true', default=False,
+    help='Create the cart table used by OPUS'
 )
 
 parser.add_argument(
@@ -306,7 +306,7 @@ if impglobals.ARGUMENTS.do_it_all:
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
-    impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
 if impglobals.ARGUMENTS.do_all_import:
@@ -323,7 +323,7 @@ if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
-    impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
 if impglobals.ARGUMENTS.cleanup_aux_tables:
@@ -331,7 +331,7 @@ if impglobals.ARGUMENTS.cleanup_aux_tables:
     impglobals.ARGUMENTS.create_partables = True
     impglobals.ARGUMENTS.create_table_names = True
     impglobals.ARGUMENTS.create_grouping_target_name = True
-    impglobals.ARGUMENTS.create_collections = True
+    impglobals.ARGUMENTS.create_cart = True
     impglobals.ARGUMENTS.drop_cache_tables = True
 
 
@@ -386,7 +386,7 @@ if (impglobals.ARGUMENTS.drop_permanent_tables !=
         '--drop-permanent-tables and --scorched-earth must be used together')
     sys.exit(-1)
 
-our_schema_name = OPUS_SCHEMA_NAME
+our_schema_name = DB_SCHEMA_NAME
 if impglobals.ARGUMENTS.override_db_schema:
     our_schema_name = impglobals.ARGUMENTS.override_db_schema
 
@@ -419,22 +419,22 @@ try: # Top-level exception handling so we always log what's going on
     impglobals.DATABASE.log_sql = impglobals.ARGUMENTS.log_sql
 
     # This MUST be done before the permanent tables are created, because there
-    # could be entries in the collections table that point at the permanent
+    # could be entries in the cart table that point at the permanent
     # tables, and import could delete entries out of the permanent tables
     # causing a foreign key violation.
     # Note, however, that do_import_steps() might actually delete ALL permanent
     # tables with --scorched-earth, which means our effort here will be wasted,
     # so don't bother in that case.
     if ((impglobals.ARGUMENTS.drop_cache_tables or
-         impglobals.ARGUMENTS.create_collections) and
+         impglobals.ARGUMENTS.create_cart) and
          not impglobals.ARGUMENTS.drop_permanent_tables):
         impglobals.LOGGER.open(
             f'Cleaning up OPUS/Django tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-        if impglobals.ARGUMENTS.create_collections:
-            do_collections.create_collections()
+        if impglobals.ARGUMENTS.create_cart:
+            do_cart.create_cart()
         if impglobals.ARGUMENTS.drop_cache_tables:
             do_django.drop_cache_tables()
 
@@ -478,14 +478,14 @@ try: # Top-level exception handling so we always log what's going on
     if impglobals.ARGUMENTS.validate_perm:
         do_validate.do_validate('perm')
 
-    if (impglobals.ARGUMENTS.create_collections and
-        impglobals.TRY_COLLECTIONS_LATER):
+    if (impglobals.ARGUMENTS.create_cart and
+        impglobals.TRY_CART_LATER):
         impglobals.LOGGER.open(
-            f'Trying to create collections table a second time',
+            f'Trying to create cart table a second time',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-        do_collections.create_collections()
+        do_cart.create_cart()
 
         impglobals.LOGGER.close()
 

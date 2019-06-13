@@ -6,19 +6,18 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: [__]api/data.(json|zip|html|csv)
-#    Format: [__]api/data/(?P<opus_id>[-\w]+).csv
-#    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html)
-#    Format: [__]api/images/(?P<size>thumb|small|med|full).
+#    Format: api/data.(json|html|csv)
+#    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#    Format: api/images/(?P<size>thumb|small|med|full).
 #                           (?P<fmt>json|zip|html|csv)
-#    Format: [__]api/images.(json|zip|html|csv)
-#    Format: [__]api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
+#    Format: api/images.(json|zip|html|csv)
+#    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
 #                          .(?P<fmt>json|zip|html|csv)
-#    Format: [__]api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
 #        or: api/files.(?P<fmt>json|zip|html|csv)
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
-#    Format: [__]api/categories.json
+#    Format: api/categories.json
 #
 ################################################################################
 
@@ -33,10 +32,12 @@ from django.apps import apps
 from django.core.cache import cache
 from django.core.exceptions import FieldError
 from django.db import connection, DatabaseError
-from django.http import Http404
+from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
+from metadata.views import (get_cart_count,
+                            get_result_count_helper)
 from paraminfo.models import *
 from search.models import *
 from search.views import (get_param_info_by_slug,
@@ -44,7 +45,7 @@ from search.views import (get_param_info_by_slug,
                           url_to_search_params,
                           create_order_by_sql,
                           parse_order_slug)
-from user_collections.models import Collections
+from cart.models import Cart
 from tools.app_utils import *
 from tools.db_utils import *
 from tools.file_utils import *
@@ -58,6 +59,7 @@ log = logging.getLogger(__name__)
 #
 ################################################################################
 
+@never_cache
 def api_get_data_and_images(request):
     """Return a page of data and images for a given search.
 
@@ -73,57 +75,79 @@ def api_get_data_and_images(request):
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
+               reqno=<N>
                Normal search and selected-column arguments
 
     Returns JSON.
 
-    Returned JSON is of the format:
+    Returned JSON:
 
         {'page': [
             {'opus_id': OPUS_ID,
+             'obs_num': <obsnum>,    (only if start_obs=N was used)
              'metadata': ['<col1>', '<col2>', '<col3>'],
              'images': {
                 'full':
                 'med':
              },
-             'in_collection': True/False
+             'in_cart': True/False
             },
             ...
          ],
-         'page_no': page_no,   OR   'start_obs': start_obs,
-         'limit':   limit,
-         'order':   order,
-         'count':   len(page),
-         'columns': columns
+         'page_no':             page_no,   OR   'start_obs': start_obs,
+         'limit':               limit,
+         'order':               comma-separate list of slugs,
+         'order_list':          [entry, entry...]
+                                entry is {'slug': slug_name,
+                                        'label': pretty_name,
+                                        'descending': True/False,
+                                        'removeable': True/False},
+         'count':                       len(page),
+         'columns':             columns with units
+                                (corresponds to <col1> etc. in 'metadata'),
+         'columns_no_units':    columns without units,
+         'total_obs_count':     for view=browse, result count as returned by
+                                    api/meta/result_count.json
+                                for view=cart, cart count as returned by
+                                    __cart/status.json
+         'reqno':               reqno
         }
     """
     api_code = enter_api_call('api_get_data_and_images', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
     session_id = get_session_id(request)
+
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                        request,
                                        prepend_cols='opusid',
                                        append_cols='**previewimages',
                                        return_opusids=True,
-                                       return_collection_status=True,
+                                       return_cart_status=True,
                                        api_code=api_code)
     if page is None:
-        ret = Http404('Could not find page')
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     preview_jsons = [json.loads(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons,
                                         ['thumb', 'small', 'med', 'full'])
 
-    if not image_list:
+    if not image_list and len(opus_ids) > 0:
         log.error('api_get_data_and_images: No image found for: %s',
                   str(opus_ids[:50]))
 
@@ -137,26 +161,73 @@ def api_get_data_and_images(request):
                     new_image[size][sfx] = image.get(size+'_'+sfx, None)
         new_image_list.append(new_image)
 
-    collection_status = aux['collection_status']
+    cart_status = aux['cart_status']
     new_page = []
     for i in range(len(opus_ids)):
         new_entry = {
             'opusid': opus_ids[i],
             'metadata': page[i][1:-1],
             'images': new_image_list[i],
-            'in_collection': collection_status[i] is not None
+            'in_cart': cart_status[i] is not None
         }
+        if start_obs is not None:
+            new_entry['obs_num'] = start_obs+i
         new_page.append(new_entry)
 
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
+    labels_no_units = labels_for_slugs(cols_to_slug_list(cols), units=False)
+    if labels is None or labels_no_units is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
-    data = {'page':    new_page,
-            'limit':   limit,
-            'count':   len(image_list),
-            'order':   order,
-            'columns': labels
+    order_slugs = cols_to_slug_list(order)
+    order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
+    order_labels = labels_for_slugs(order_slugs_pure, units=False)
+    if order_labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    order_list = []
+    for idx, (slug, label) in enumerate(zip(order_slugs, order_labels)):
+        removeable = not slug.endswith('opusid')
+        desc = False
+        if slug[0] == '-':
+            slug = slug[1:]
+            desc = True
+        order_entry = {'slug': slug,
+                       'label': label,
+                       'descending': desc,
+                       'removeable': removeable}
+        order_list.append(order_entry)
+
+    if request.GET.get('view', 'browse') == 'cart':
+        count = get_cart_count(session_id)
+    else:
+        count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
+
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_get_data_and_images: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    data = {'page':             new_page,
+            'limit':            limit,
+            'count':            len(image_list),
+            'order':            order,
+            'order_list':       order_list,
+            'columns':          labels,
+            'columns_no_units': labels_no_units,
+            'total_obs_count':  count,
+            'reqno':            reqno
            }
 
     if page_no is not None:
@@ -169,6 +240,7 @@ def api_get_data_and_images(request):
     return ret
 
 
+@never_cache
 def api_get_data(request, fmt):
     """Return a page of data for a given search.
 
@@ -179,43 +251,110 @@ def api_get_data(request, fmt):
     many to return. We also support "pages" for specifying the starting
     observation for backwards compatibility. A "page" is 100 observations long.
 
-    Format: [__]api/data.(json|zip|html|csv)
+    Format: [__]api/data.(json|html|csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
                Normal search and selected-column arguments
 
-    In addition to the standard formats, we also allow 'raw' which returns a
-    dictionary for internal use.
+    Can return JSON, HTML, or CSV.
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Returned JSON:
+        {
+            'page_no': page_no,   OR   'startobs': start_obs,
+            'limit':   limit,
+            'order':   order,
+            'count':   len(page),
+            'labels':  labels,
+            'page':    page         # tabular page data
+        }
 
-    Returned JSON is of the format:
-        data = {
-                'page_no': page_no,   OR   'startobs': start_obs,
-                'limit':   limit,
-                'order':   order,
-                'count':   len(page),
-                'labels':  labels,
-                'page':    page         # tabular page data
-               }
+    Returned HTML:
+        <table>
+            <tr>
+                <th>OPUS ID</th>
+                <th>Instrument Name</th>
+                <th>Planet</th>
+                <th>Intended Target Name</th>
+                <th>Observation Start Time</th>
+                <th>Observation Duration (secs)</th>
+            </tr>
+            <tr>
+                <td>vg-iss-2-s-c4360001</td>
+                <td>Voyager ISS</td>
+                <td>Saturn</td>
+                <td>Titan</td>
+                <td>1981-08-12T14:55:10.080</td>
+                <td>1.9200</td>
+            </tr>
+        </table>
+
+    Returned CSV:
+        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
+        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
     """
     api_code = enter_api_call('api_get_data', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = get_data(request, fmt)
-    if ret is None:
-        exit_api_call(api_code, Http404)
-        raise Http404
+    session_id = get_session_id(request)
+
+    cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+
+    labels = labels_for_slugs(cols_to_slug_list(cols))
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+                                                     request,
+                                                     cols=cols,
+                                                     return_opusids=True,
+                                                     api_code=api_code)
+
+    if page is None:
+        ret = HttpResponseServerError(settings.HTTP500_SEARCH_FAILED)
+        exit_api_call(api_code, ret)
+        return ret
+
+    data = {'limit':    limit,
+            'page':     page,
+            'order':    order,
+            'count':    len(page),
+            'labels':   labels,
+            'columns':  labels # Backwards compatibility with external apps
+           }
+
+    if page_no is not None:
+        data['page_no'] = page_no
+    if start_obs is not None:
+        data['start_obs'] = start_obs
+
+    if fmt == 'csv':
+        csv_data = []
+        csv_data.append(labels)
+        csv_data.extend(page)
+        ret = csv_response('data', csv_data)
+    elif fmt == 'html':
+        context = {'data': data}
+        ret = render(request, 'results/data.html', context)
+    elif fmt == 'json':
+        ret = HttpResponse(json.dumps(data), content_type='application/json')
+    else: # pragma: no cover
+        log.error('api_get_data: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
+        exit_api_call(api_code, ret)
+        raise ret
 
     exit_api_call(api_code, ret)
     return ret
 
 
+@never_cache
 def api_get_metadata(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
@@ -242,6 +381,7 @@ def api_get_metadata(request, opus_id, fmt):
     return get_metadata(request, opus_id, fmt,
                         'api_get_metadata', True, False)
 
+@never_cache
 def api_get_metadata_v2(request, opus_id, fmt):
     """Return all metadata, sorted by category, for this opus_id.
 
@@ -304,17 +444,21 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
-    if not opus_id:
-        ret = Http404('No OPUS ID')
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
         exit_api_call(api_code, ret)
         raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     cols = request.GET.get('cols', False)
     if cols or cols == '':
@@ -333,7 +477,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
-    except LookupError:
+    except LookupError: # pragma: no cover
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
         exit_api_call(api_code, ret)
@@ -392,7 +536,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
-            except LookupError:
+            except LookupError: # pragma: no cover
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
                 ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
@@ -455,7 +599,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             ret = render(request, 'results/detail_metadata.html', context)
     elif fmt == 'json':
         ret = HttpResponse(json.dumps(data), content_type='application/json')
-    else:
+    else: # pragma: no cover
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
@@ -483,7 +627,7 @@ def api_get_images_by_size(request, size, fmt):
     api_code = enter_api_call('api_get_images_by_size', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -543,7 +687,7 @@ def api_get_images_by_size(request, size, fmt):
         data['start_obs'] = start_obs
 
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
@@ -565,7 +709,7 @@ def api_get_images(request, fmt):
     api_code = enter_api_call('api_get_images', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -576,7 +720,7 @@ def api_get_images(request, fmt):
                                        cols='opusid,**previewimages',
                                        return_opusids=True,
                                        return_ringobsids=True,
-                                       return_collection_status=True,
+                                       return_cart_status=True,
                                        api_code=api_code)
     if page is None:
         ret = Http404('Could not find page')
@@ -598,9 +742,9 @@ def api_get_images(request, fmt):
     for i in range(len(opus_ids)):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
-    collection_status = aux['collection_status']
-    for image, in_collection in zip(image_list, collection_status):
-        image['in_collection'] = in_collection is not None
+    cart_status = aux['cart_status']
+    for image, in_cart in zip(image_list, cart_status):
+        image['in_cart'] = in_cart is not None
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data = {'data':  image_list,
@@ -612,11 +756,12 @@ def api_get_images(request, fmt):
     if start_obs is not None:
         data['start_obs'] = start_obs
     ret = response_formats(data, fmt,
-                          template='results/gallery.html', order=order)
+                          template='results/image_list.html', order=order)
     exit_api_call(api_code, ret)
     return ret
 
 
+@never_cache
 def api_get_image(request, opus_id, size='med', fmt='raw'):
     """Return info about a preview image for the given opus_id and size.
 
@@ -631,12 +776,21 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     """
     api_code = enter_api_call('api_get_image', request)
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
         exit_api_call(api_code, ret)
         raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     image_list = get_pds_preview_images(opus_id, None, size)
     if len(image_list) != 1:
@@ -663,6 +817,7 @@ def api_get_image(request, opus_id, size='med', fmt='raw'):
     return ret
 
 
+@never_cache
 def api_get_files(request, opus_id=None):
     """Return all files for a given opus_id or search results.
 
@@ -673,13 +828,17 @@ def api_get_files(request, opus_id=None):
     Arguments: types=<types>
                     Product types
                loc_type=['url', 'path']
+               limit=<N>
+               page=<N>  OR  startobs=<N> (1-based)
+               order=<column>[,<column>...]
+               Normal search arguments
 
     Only returns JSON.
     """
     api_code = enter_api_call('api_get_files', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -691,6 +850,10 @@ def api_get_files(request, opus_id=None):
     if opus_id:
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+        if not opus_id:
+            ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+            exit_api_call(api_code, ret)
+            raise ret
         opus_ids = [opus_id]
     else:
         # No opus_id passed, get files from search results
@@ -724,11 +887,12 @@ def api_get_files(request, opus_id=None):
     data['data'] = current_ret
     data['versions'] = versioned_ret
 
-    ret = HttpResponse(json.dumps(data), content_type='application/json')
+    ret = json_response(data)
     exit_api_call(api_code, ret)
     return ret
 
 
+@never_cache
 def api_get_categories_for_opus_id(request, opus_id):
     """Return a JSON list of all cateories (tables) this opus_id appears in.
 
@@ -739,12 +903,21 @@ def api_get_categories_for_opus_id(request, opus_id):
     api_code = enter_api_call('api_get_categories_for_opus_id', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
         exit_api_call(api_code, ret)
         raise ret
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
 
     all_categories = []
     table_info = (TableNames.objects.all().values('table_name', 'label')
@@ -768,12 +941,12 @@ def api_get_categories_for_opus_id(request, opus_id):
             cat = {'table_name': table_name, 'label': tbl['label']}
             all_categories.append(cat)
 
-    ret = HttpResponse(json.dumps(all_categories),
-                       content_type="application/json")
+    ret = json_response(all_categories)
     exit_api_call(api_code, ret)
     return ret
 
 
+@never_cache
 def api_get_categories_for_search(request):
     """Return a JSON list of all cateories (tables) triggered by this search.
 
@@ -786,7 +959,7 @@ def api_get_categories_for_search(request):
     api_code = enter_api_call('api_get_categories_for_search', request)
 
     if not request or request.GET is None:
-        ret = Http404('No request')
+        ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
 
@@ -814,8 +987,7 @@ def api_get_categories_for_search(request):
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
 
-    ret = HttpResponse(json.dumps([ob for ob in labels]),
-                       content_type="application/json")
+    ret = json_response([ob for ob in labels])
     exit_api_call(api_code, ret)
     return ret
 
@@ -826,101 +998,21 @@ def api_get_categories_for_search(request):
 #
 ################################################################################
 
-def get_data(request, fmt, cols=None, api_code=None):
-    """Return a page of data for a given search and page_no.
-
-    Can return JSON, ZIP, HTML, CSV, or RAW.
-
-    cols is a comma-separated list.
-
-    Returned JSON is of the format:
-        data = {
-                'page_no': page_no,   OR   'start_obs': start_obs,
-                'limit':   limit,
-                'order':   order,
-                'count':   len(page),
-                'labels':  labels,
-                'page':    page         # tabular page data
-                }
-    """
-    session_id = get_session_id(request)
-
-    if cols is None:
-        cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                                     request,
-                                                     cols=cols,
-                                                     return_opusids=True,
-                                                     api_code=api_code)
-
-    if page is None:
-        return None
-
-    checkboxes = request.is_ajax()
-
-    is_column_chooser = request.GET.get('col_chooser', False)
-
-    labels = []
-    id_index = None
-
-    slugs = cols_to_slug_list(cols)
-    labels = labels_for_slugs(slugs)
-
-    try:
-        id_index = slugs.index('opusid')
-    except ValueError:
-        try:
-            id_index = slugs.index('ringobsid')
-        except ValueError:
-            id_index = None
-
-    if is_column_chooser:
-        labels.insert(0, 'add') # adds a column for checkbox add-to-collections
-
-    collection = ''
-    if request.is_ajax():
-        # Find the members of user collection in this page
-        # for pre-filling checkboxes
-        opus_ids = aux['opus_ids']
-        collection = get_collection_in_page(opus_ids, session_id)
-
-    data = {'limit':    limit,
-            'page':     page,
-            'order':    order,
-            'count':    len(page),
-            'labels':   labels,
-            'columns':  labels # Backwards compatibility with external apps
-           }
-
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
-
-    if fmt == 'raw':
-        ret = data
-    ret = response_formats(data, fmt, template='results/data.html',
-                           id_index=id_index,
-                           labels=labels, checkboxes=checkboxes,
-                           collection=collection, order=order)
-    return ret
-
-
-def get_search_results_chunk(request, use_collections=None,
+def get_search_results_chunk(request, use_cart=None,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
+                             start_obs=None,
                              return_opusids=False,
                              return_ringobsids=False,
                              return_filespecs=False,
-                             return_collection_status=False,
+                             return_cart_status=False,
                              api_code=None):
     """Return a page of results.
 
         request             Used to find the search and order parameters and
                             columns if not overridden.
-        use_collections     Ignore the search parameters and instead use the
-                            observations stored in the collections table for
+        use_cart            Ignore the search parameters and instead use the
+                            observations stored in the cart table for
                             this session.
         cols                If specified, overrides the columns in request.
         prepend_cols        A string to prepend to the column list.
@@ -930,6 +1022,8 @@ def get_search_results_chunk(request, use_collections=None,
                             or the default if none given.
         opus_id             Ignore the search parameters and instead return
                             the result for a single opusid.
+        start_obs           Ignore the page or startobs field in the request and
+                            use this startobs instead.
         return_opusids      Include 'opus_ids' in the returned aux dict.
                             This is a list of opus_ids 1:1 with the returned
                             data.
@@ -937,11 +1031,11 @@ def get_search_results_chunk(request, use_collections=None,
         return_filespecs    Include 'file_specs' in the returned aux dict.
                             This is a list of primary_file_specs 1:1 with the
                             returned data.
-        return_collection_status
-                            Include 'collection_status' in the returned aux
+        return_cart_status
+                            Include 'cart_status' in the returned aux
                             dict. This is a list of True/False values 1:1
                             with the returned data indicating if the given
-                            observation is in the current collections table for
+                            observation is in the current cart table for
                             this session.
 
         Returns:
@@ -964,11 +1058,11 @@ def get_search_results_chunk(request, use_collections=None,
 
     session_id = get_session_id(request)
 
-    if use_collections is None:
-        if request.GET.get('view', 'browse') == 'collection':
-            use_collections = True
+    if use_cart is None:
+        if request.GET.get('view', 'browse') == 'cart':
+            use_cart = True
         else:
-            use_collections = False
+            use_cart = False
 
     if limit is None:
         limit = request.GET.get('limit', settings.DEFAULT_PAGE_LIMIT)
@@ -998,7 +1092,7 @@ def get_search_results_chunk(request, use_collections=None,
     mult_tables = set()
     for slug in cols_to_slug_list(cols):
         # First try the full name, which might include a trailing 1 or 2
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
             return none_return
@@ -1033,8 +1127,8 @@ def get_search_results_chunk(request, use_collections=None,
         if 'obs_general.primary_file_spec' not in column_names:
             column_names.append('obs_general.primary_file_spec')
             added_extra_columns += 1 # So we know to strip it off later
-    if return_collection_status:
-        column_names.append('collections.opus_id')
+    if return_cart_status:
+        column_names.append('cart.opus_id')
         added_extra_columns += 1 # So we know to strip it off later
     # This is kind of obscure, but if there are NO columns at this point,
     # go ahead and force opus_ids to be present because we can't actually
@@ -1045,10 +1139,9 @@ def get_search_results_chunk(request, use_collections=None,
             column_names.append('obs_general.opus_id')
             added_extra_columns += 1 # So we know to strip it off later
 
-    # XXX Something here should specify order for collections
-    # colls_order is currently ignored!
-
     # Figure out the sort order
+    # Note: There is only a single sort order that is used for both the
+    # browse tab and the cart tab.
     all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
     if not all_order:
         all_order = settings.DEFAULT_SORT_ORDER
@@ -1062,33 +1155,37 @@ def get_search_results_chunk(request, use_collections=None,
 
     page_size = 100 # Pages are hard-coded to be 100 observations long
     page_no = None # Keep these for returning to the caller
-    start_obs = None
     offset = None
 
-    if use_collections:
-        start_obs = request.GET.get('colls_startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('colls_page', 1)
+    if start_obs is None:
+        if use_cart:
+            start_obs = request.GET.get('cart_startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('cart_page', 1)
+        else:
+            start_obs = request.GET.get('startobs', None)
+            if start_obs is None:
+                page_no = request.GET.get('page', None)
+            if start_obs is None and page_no is None:
+                start_obs = 1 # Default to using start_obs
+        if start_obs is not None:
+            try:
+                start_obs = int(start_obs)
+            except:
+                log.error('get_search_results_chunk: Unable to parse '
+                          +'startobs "%s"', start_obs)
+                return none_return
+            offset = start_obs-1
+        else:
+            try:
+                page_no = int(page_no)
+            except:
+                log.error('get_search_results_chunk: Unable to parse page_no "%s"',
+                          page_no)
+                return none_return
+            offset = (page_no-1)*page_size
     else:
-        start_obs = request.GET.get('startobs', None)
-        if start_obs is None:
-            page_no = request.GET.get('page', 1)
-    if start_obs is not None:
-        try:
-            start_obs = int(start_obs)
-        except:
-            log.error('get_search_results_chunk: Unable to parse startobs "%s"',
-                      start_obs)
-            return none_return
         offset = start_obs-1
-    else:
-        try:
-            page_no = int(page_no)
-        except:
-            log.error('get_search_results_chunk: Unable to parse page_no "%s"',
-                      page_no)
-            return none_return
-        offset = (page_no-1)*page_size
 
     if offset < 0 or offset > settings.SQL_MAX_LIMIT:
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
@@ -1097,7 +1194,7 @@ def get_search_results_chunk(request, use_collections=None,
     temp_table_name = None
     drop_temp_table = False
     params = []
-    if not use_collections:
+    if not use_cart:
         # This is for a search query
 
         # Create the SQL query
@@ -1126,32 +1223,31 @@ def get_search_results_chunk(request, use_collections=None,
         # in the limit window that we care about (if there's a limit window).
         # Then we use that temporary table (or the original cache table) to
         # extract data from all our data tables.
-        temp_table_name = user_query_table
-
-        if page_no != 'all':
-            drop_temp_table = True
-            pid_sfx = str(os.getpid())
-            time1 = time.time()
-            time_sfx = ('%.6f' % time1).replace('.', '_')
-            temp_table_name = 'temp_'+user_query_table
-            temp_table_name += '_'+pid_sfx+'_'+time_sfx
-            temp_sql = 'CREATE TEMPORARY TABLE '
-            temp_sql += connection.ops.quote_name(temp_table_name)
-            temp_sql += ' SELECT sort_order, id FROM '
-            temp_sql += connection.ops.quote_name(user_query_table)
-            temp_sql += ' ORDER BY sort_order'
-            if limit != 'all':
-                temp_sql += ' LIMIT '+str(limit)
-            temp_sql += ' OFFSET '+str(offset)
-            cursor = connection.cursor()
-            try:
-                cursor.execute(temp_sql)
-            except DatabaseError as e:
-                log.error('get_search_results_chunk: "%s" returned %s',
-                          temp_sql, str(e))
-                return none_return
-            log.debug('get_search_results_chunk SQL (%.2f secs): %s',
-                      time.time()-time1, temp_sql)
+        drop_temp_table = True
+        pid_sfx = str(os.getpid())
+        time1 = time.time()
+        time_sfx = ('%.6f' % time1).replace('.', '_')
+        temp_table_name = 'temp_'+user_query_table
+        temp_table_name += '_'+pid_sfx+'_'+time_sfx
+        temp_sql = 'CREATE TEMPORARY TABLE '
+        temp_sql += connection.ops.quote_name(temp_table_name)
+        temp_sql += ' SELECT sort_order, id FROM '
+        temp_sql += connection.ops.quote_name(user_query_table)
+        temp_sql += ' ORDER BY sort_order'
+        if limit == 'all':
+            temp_sql += ' LIMIT '+str(settings.SQL_MAX_LIMIT)
+        else:
+            temp_sql += ' LIMIT '+str(limit)
+        temp_sql += ' OFFSET '+str(offset)
+        cursor = connection.cursor()
+        try:
+            cursor.execute(temp_sql)
+        except DatabaseError as e:
+            log.error('get_search_results_chunk: "%s" returned %s',
+                      temp_sql, str(e))
+            return none_return
+        log.debug('get_search_results_chunk SQL (%.2f secs): %s',
+                  time.time()-time1, temp_sql)
 
         sql = 'SELECT '
         sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
@@ -1187,12 +1283,12 @@ def get_search_results_chunk(request, use_collections=None,
         sql += connection.ops.quote_name(temp_table_name)+'.'
         sql += connection.ops.quote_name('id')
 
-        # Maybe join in the collections table if we need collections_status
-        if return_collection_status:
-            sql += ' LEFT JOIN '+connection.ops.quote_name('collections')
+        # Maybe join in the cart table if we need cart_status
+        if return_cart_status:
+            sql += ' LEFT JOIN '+connection.ops.quote_name('cart')
             sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
             sql += connection.ops.quote_name('id')+'='
-            sql += connection.ops.quote_name('collections')+'.'
+            sql += connection.ops.quote_name('cart')+'.'
             sql += connection.ops.quote_name('obs_general_id')
             sql += ' AND '
             sql += connection.ops.quote_name('session_id')+'=%s'
@@ -1201,7 +1297,7 @@ def get_search_results_chunk(request, use_collections=None,
         sql += ' ORDER BY '
         sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
     else:
-        # This is for a collection
+        # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
         (order_sql, order_mult_tables,
          order_obs_tables) = create_order_by_sql(order_params,
@@ -1233,35 +1329,39 @@ def get_search_results_chunk(request, use_collections=None,
             sql += connection.ops.quote_name(mult_table)+'.'
             sql += connection.ops.quote_name('id')
 
-        # But the collections table is an INNER JOIN because we only want
-        # opus_ids that appear in the collections table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name('collections')
+        # But the cart table is an INNER JOIN because we only want
+        # opus_ids that appear in the cart table to cause result rows
+        sql += ' INNER JOIN '+connection.ops.quote_name('cart')
         sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
         sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('cart')+'.'
         sql += connection.ops.quote_name('obs_general_id')
         sql += ' AND '
-        sql += connection.ops.quote_name('collections')+'.'
+        sql += connection.ops.quote_name('cart')+'.'
         sql += connection.ops.quote_name('session_id')+'=%s'
         params.append(session_id)
 
-        # Note we don't need to add in a special collections JOIN here for
-        # return_collection_status, because we're already joining in the
-        # collections table.
+        # Note we don't need to add in a special cart JOIN here for
+        # return_cart_status, because we're already joining in the
+        # cart table.
 
         # Finally add in the sort order
         sql += order_sql
-
-    # if page_no != 'all':
-    #     base_limit = 100  # explainer of sorts is above
-    #     offset = (page_no-1)*base_limit
-    #     sql += ' LIMIT '+str(limit)
-    #     sql += ' OFFSET '+str(offset)
+        if limit == 'all':
+            sql += ' LIMIT '+str(settings.SQL_MAX_LIMIT)
+        else:
+            sql += ' LIMIT '+str(limit)
+        sql += ' OFFSET '+str(offset)
 
     time1 = time.time()
 
     cursor = connection.cursor()
-    cursor.execute(sql, params)
+    try:
+        cursor.execute(sql, params)
+    except DatabaseError as e:
+        log.error('get_search_results_chunk: "%s" + "%s" returned %s',
+                  sql, params, str(e))
+        return none_return
     results = []
     more = True
     while more:
@@ -1296,10 +1396,10 @@ def get_search_results_chunk(request, use_collections=None,
         file_spec_index = column_names.index('obs_general.primary_file_spec')
         file_specs = [o[file_spec_index] for o in results]
 
-    if return_collection_status:
-        # For retrieving collection status
-        coll_index = column_names.index('collections.opus_id')
-        collection_status = [o[coll_index] for o in results]
+    if return_cart_status:
+        # For retrieving cart status
+        coll_index = column_names.index('cart.opus_id')
+        cart_status = [o[coll_index] for o in results]
 
     # Strip off the opus_id if the user didn't actually ask for it initially
     if added_extra_columns:
@@ -1324,8 +1424,8 @@ def get_search_results_chunk(request, use_collections=None,
         aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_filespecs:
         aux_dict['file_specs'] = file_specs
-    if return_collection_status:
-        aux_dict['collection_status'] = collection_status
+    if return_cart_status:
+        aux_dict['cart_status'] = cart_status
 
     return (page_no, start_obs, limit, results, all_order, aux_dict)
 
@@ -1337,6 +1437,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                                                      request,
                                                      cols=cols,
                                                      opus_id=opus_id,
+                                                     start_obs=1,
                                                      limit=1,
                                                      api_code=api_code)
 
@@ -1349,6 +1450,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
+    if labels is None:
+        ret = Http404(settings.HTTP404_UNKNOWN_SLUG)
+        exit_api_call(api_code, ret)
+        raise ret
 
     if fmt == 'csv':
         return csv_response(opus_id, page, labels)
@@ -1365,7 +1470,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
     if fmt == 'html':
         if internal:
             for slug, label, result in zip(slug_list, labels, page[0]):
-                pi = get_param_info_by_slug(slug)
+                pi = get_param_info_by_slug(slug, 'col')
                 data.append({label: (result, pi)})
             return render(request,
                           'results/detail_metadata_slugs_internal.html',
@@ -1396,8 +1501,8 @@ def get_triggered_tables(selections, extras, api_code=None):
 
     cache_key = None
     if user_query_table:
-        cache_key = (settings.CACHE_KEY_PREFIX + ':triggered_tables:'
-                     + user_query_table)
+        cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                     + ':triggered_tables:' + user_query_table)
         cached_val = cache.get(cache_key)
         if cached_val is not None:
             return cached_val
@@ -1462,44 +1567,20 @@ def get_triggered_tables(selections, extras, api_code=None):
     return final_table_list
 
 
-def get_collection_in_page(opus_id_list, session_id):
-    """Returns obs_general_ids in page that are also in user collection.
-
-    This is for views in results where you have to display the gallery
-    and indicate which thumbnails are in cart.
-    """
-    if not session_id:
-        return
-
-    cursor = connection.cursor()
-    collection_in_page = []
-    sql = 'SELECT DISTINCT opus_id FROM '
-    sql += connection.ops.quote_name('collections')
-    sql += ' WHERE session_id=%s'
-    cursor.execute(sql, [session_id])
-    rows = []
-    more = True
-    while more:
-        part_rows = cursor.fetchall()
-        rows += part_rows
-        more = cursor.nextset()
-    coll_ids = [r[0] for r in rows]
-    ret = [opus_id for opus_id in opus_id_list if opus_id in coll_ids]
-    return ret
-
-
-def labels_for_slugs(slugs):
+def labels_for_slugs(slugs, units=True):
     labels = []
 
     for slug in slugs:
-        pi = get_param_info_by_slug(slug, from_ui=True)
+        pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('api_get_data_and_images: Could not find param_info '
                       +'for %s', slug)
             return None
 
         # append units if pi_units has unit stored
-        unit = pi.get_units()
+        unit = None
+        if units:
+            unit = pi.get_units()
         label = pi.body_qualified_label_results()
         if unit:
             labels.append(label + ' ' + unit)

@@ -19,4 +19,4 @@ def populate_obs_surface_geo_target_name(**kwargs):
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
         return None
-    return (target_name, target_name.title())
+    return (target_name, import_util.cleanup_target_name(target_name))

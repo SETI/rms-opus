@@ -1,9 +1,11 @@
 PSDD,NASA PDS Planetary Science Data Dictionary,NULL
 OPUS_GENERAL,OPUS General Constraints,PSDD
-RING_GEO,Ring Geometry,PSDD
-SURFACE_GEO,Surface Geometry,PSDD
-OPUS_WAVELENGTH,OPUS Wavelength Constraints,PSDD
+OPUS_GENERAL_SEARCH,OPUS General Constraints,PSDD
+OPUS_PDS,OPUS PDS Constraints,PSDD
 OPUS_TYPE_IMAGE,OPUS Image Constraints,PSDD
+OPUS_WAVELENGTH,OPUS Wavelength Constraints,PSDD
+SURFACE_GEO,Surface Geometry,PSDD
+RING_GEO,Ring Geometry,PSDD
 CASSINI,Cassini Mission,OPUS_GENERAL
 COCIRS,Cassini Composite Infrared Spectrometer (CIRS),CASSINI
 COISS,Cassini Imaging Science Subsystem (ISS),CASSINI
@@ -17,3 +19,4 @@ VGISS,Voyager Imaging Science Subsystem (ISS),VOYAGER
 NEWHORIZONS,New Horizons Mission,OPUS_GENERAL
 NHLORRI,New Horizons Long-Range Reconnaissance Imager (LORRI),NEWHORIZONS
 NHMVIC,New Horizons Multispectral Visible Imaging Camera (MVIC),NEWHORIZONS
+OPUS_PRODUCT_TYPE,OPUS Product Types,NULL

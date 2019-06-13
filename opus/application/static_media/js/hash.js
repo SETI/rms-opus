@@ -1,4 +1,15 @@
+/* jshint esversion: 6 */
+/* jshint bitwise: true, curly: true, freeze: true, futurehostile: true */
+/* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
+/* jshint nonbsp: true, nonew: true */
+/* jshint varstmt: true */
+/* jshint multistr: true */
+/* globals $ */
+/* globals opus */
+
+/* jshint varstmt: false */
 var o_hash = {
+/* jshint varstmt: true */
     /**
      *
      *  changing, reading, and initiating a session from the browser hash
@@ -6,67 +17,36 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(updateURL=true){
+    updateHash: function(updateURL=true) {
 
-        hash = [];
-        for (var param in opus.selections) {
-            if (opus.selections[param].length){
-                // hash[hash.length] = param + "=" + opus.selections[param].join(",").replace(/ /g,"+");
+        let hash = [];
+        for (let param in opus.selections) {
+            if (opus.selections[param].length) {
                 hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
             }
         }
 
-        o_widgets.pauseWidgetControlVisibility(opus.selections);
-
-        for (var key in opus.extras) {
-
+        for (let key in opus.extras) {
             try {
-                // hash[hash.length] = key + "=" + opus.extras[key].join(",");
                 hash.push(key + "=" + opus.extras[key].join(","));
             } catch(e) {
                 // oops not an arr
-                // hash[hash.length] = key + "=" + opus.extras[key];
                 hash.push(key + "=" + opus.extras[key]);
             }
         }
-        for (key in opus.prefs) {
+        $.each(opus.prefs, function(key, value) {
+            hash.push(key + "=" + value);
+        });
 
-            switch (key) {
-                case "page":
-                    // page is stored like {"gallery":1, "data":1, "colls_gallery":1, "colls_data":1 }
-                    // so the curent page depends on the view being shown
-                    // opus.prefs.view = search, browse, collection, or detail
-                    // opus.prefs.browse =  'gallery' or 'data',
-                    page = o_browse.getCurrentPage();
-
-                    // hash[hash.length] = "page=" + page;
-                    hash.push("page=" + page);
-                    break;
-
-                case "widget_size":
-                    for (slug in opus.prefs[key]) {
-                        // hash[hash.length] = o_widgets.constructWidgetSizeHash(slug);
-                        hash.push(o_widgets.constructWidgetSizeHash(slug));
-                    }
-                    break;
-
-                case "widget_scroll":
-                    // these are prefs having to do with widget resize and scrolled
-                    break; // there's no scroll without size, so we handle scroll when size comes thru
-
-                default:
-                    hash.push(key + "=" + opus.prefs[key]);
-            }
-        }
-        if(updateURL) {
-            window.location.hash = "/" + hash.join("&");
+        if (updateURL) {
+            window.location.hash = '/' + hash.join('&');
         }
 
         return hash.join("&");
     },
 
     // returns the hash part of the url minus the #/ symbol
-    getHash: function(){
+    getHash: function() {
         try {
             if (window.location.hash) {
                 return window.location.hash.match(/^#\/(.*)$/)[1];
@@ -79,148 +59,122 @@ var o_hash = {
     },
 
     getHashArray: function() {
-        var hashArray = [];
-        $.each(this.getHash().split('&'), function(index, valuePair) {
-            var paramArray = valuePair.split("=");
+        let hashArray = [];
+        let hashInfo = o_hash.getHash();
+        $.each(hashInfo.split('&'), function(index, valuePair) {
+            let paramArray = valuePair.split("=");
             hashArray[paramArray[0]] = paramArray[1];
         });
         return hashArray;
     },
 
     hashArrayToHashString: function(hashArray) {
-        var hash = "";
-        for (var param in hashArray) {
+        let hash = "";
+        for (let param in hashArray) {
             hash += "&"+param+"="+hashArray[param];
         }
         return hash;
     },
 
-    // part is part of the hash, selections or prefs
-    getSelectionsFromHash: function() {
-        var hash = o_hash.getHash();
-        var pairs;
-        if (!hash) return;
-
-        if (hash.search('&') > -1) {
-            pairs = hash.split('&');
+    // get both selections and extras (qtype) from hash.
+    getSelectionsExtrasFromHash: function() {
+        let hash = o_hash.getHash();
+        if (!hash) {
+            return [undefined, undefined];
         }
-        else pairs = [hash];
-        var selections = {};  // the new set of pairs that will not include the result_table specific session vars
 
-        for (var i=0;i< pairs.length;i++) {
-            var param = pairs[i].split('=')[0];
-            var value = pairs[i].split('=')[1];
-            if (!param) continue;
-            if (!(param in opus.prefs) && !param.match(/sz-.*/)) {
+        hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
+        let selections = {};  // the new set of pairs that will not include the result_table specific session vars
+        let extras = {}; // store qtype from url
 
-            if (param in selections) {
-                selections[param].push(value);
-            } else {
-                selections[param] = [value];
+        $.each(hash, function(index, pair) {
+            let slug = pair.split('=')[0];
+            let value = pair.split('=')[1];
+
+            if (!(slug in opus.prefs) && value) {
+                if (slug.startsWith("qtype-")) {
+                    // each qtype will only have one value at a time
+                    extras[slug] = [value];
+                } else {
+                    selections[slug] = value.replace("+", " ").split(",");
                 }
-            } else {
-                if (param  == 'qtype-phase') {}
             }
-        }
-        if (!jQuery.isEmptyObject(selections)) {
-            return selections;
-        }
+        });
 
+        return [selections, extras];
     },
 
+    extrasWithoutUnusedQtypes: function(selections, extras) {
+        // If a qtype is present in extras but is not used in the search
+        // selections, then don't include it at all. This is so that when we
+        // compare selections and extras over time, a "lonely" qtype won't be
+        // taken into account and trigger a new backend search.
+        let newExtras = {};
+        $.each(extras, function(slug, value) {
+            if (slug.startsWith("qtype-")) {
+                let qtypeSlug = slug.slice(6);
+                if (qtypeSlug in selections ||
+                    qtypeSlug+'1' in selections ||
+                    qtypeSlug+'2' in selections) {
+                    newExtras[slug] = value;
+                }
+            }
+        });
+        return newExtras;
+    },
 
-    initFromHash: function(){
-        var hash = o_hash.getHash();
-        if (!hash) { return; }
+    initFromHash: function() {
+        let hash = o_hash.getHash();
+        if (!hash) {
+            return;
+        }
         // first are any custom widget sizes in the hash?
         // just updating prefs here..
         hash = hash.split('&');
 
-        for (var q in hash) {
-
-            slug = hash[q].split('=')[0];
-            value = hash[q].split('=')[1];
-
-            if (slug.match(/sz-.*/)) {
-                var id = slug.match(/sz-(.*)/)[1];
-                // opus.extras['sz-' + id] = value;
-                opus.prefs.widget_size[id] = value.split('+')[0];
-
-                if (value.split('+')[1])
-                    opus.prefs.widget_scroll[id] = value.split('+')[1];
-            }
-            else if (slug.match(/qtype-.*/)) {
-                // range drop down, add the qtype to the global extras array
-                var id = slug.match(/qtype-(.*)/)[1];
-                opus.extras['qtype-' + id] = value.split(',');
-            }
-            // look for prefs
-            else if (slug in opus.prefs) {
-
-                if (slug == 'widgets' || slug == 'widgets2') {
-                    if (value) {
-                        opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
-                    }
-                } else if (slug == 'page') {
-                    if (value) {
-                        opus.prefs.page['gallery'] = parseInt(value, 10);
-                        opus.prefs.page['data'] = parseInt(value, 10);
-                    }
-                } else if (slug == 'limit') {
-                    if (value) {
-                        opus.prefs[slug] = parseInt(value, 10);
-                    }
-                } else if (slug=='cols') {
-                    if (value) {
-                        opus.prefs[slug] = value.split(',');
-                    }
+        $.each(hash, function(index, pair) {
+            let slug = pair.split('=')[0];
+            let value = pair.split('=')[1];
+            if (value) {
+                if (slug.match(/qtype-.*/)) {
+                    // range drop down, add the qtype to the global extras array
+                    let id = slug.match(/qtype-(.*)/)[1];
+                    opus.extras['qtype-' + id] = value.split(',');
                 }
-                else if (value) {
-                        opus.prefs[slug] = value;
-                }
-
-            } else {
-                // these are search params/value!
-                if (value) {
+                // look for prefs
+                else if (slug in opus.prefs) {
+                    switch (slug) {
+                        case "widgets":
+                            opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
+                            break;
+                        case "page":
+                            // page is no longer supported and should have been normalized out
+                            break;
+                        case "limit":
+                            // limit is no longer supported and is calculated based on screen size, so ignore this param
+                            break;
+                        case "cols":
+                            opus.prefs[slug] = value.split(',');
+                            break;
+                        case "order":
+                            opus.prefs[slug] = value.split(',');
+                            break;
+                        case "startobs":
+                        case "cart_startobs":
+                            // Make sure cart_startobs is stored as integer in opus.prefs
+                            opus.prefs[slug] = parseInt(value);
+                            break;
+                        default:
+                            opus.prefs[slug] = value;
+                    }
+                } else {
+                    // these are search params/value!
                     opus.selections[slug] = value.replace(/\+/g, " ").split(',');
                 }
             }
-        }
+        });
 
-        // despite what the url says, make sure every widget that is constrained is actually visible
-        for (slug in opus.selections) {
-          if ($.inArray(slug, opus.prefs['widgets']) < 0) {
-            // this slug is constrained in selections but is not
-            // found in widgets, but do some extra checking for
-            // range widgets:
-
-            if (slug.indexOf('2') !== -1) {
-              // range widges are represented by a single param and that's
-              // the first param in the range, but this is the 2nd
-              // let's see if the first half of this range is constrained
-              slug_no_num = slug.slice(0, -1)
-              if ($.inArray(slug_no_num, opus.prefs['widgets']) >= 0
-                  ||
-                 $.inArray(slug_no_num + '1', opus.prefs['widgets']) >= 0) {
-                   // the first half of this range is found in widgets
-                   // so nothing to do
-                   continue;
-                 } else {
-                   // the first half of this range is constrained by selections
-                   // but NOT found in widgets, so we add it, but don't
-                   // add the param with the '2' index, only add the first
-                   // '1' indexed param
-                   slug = slug_no_num + '1'
-                 }
-            }
-
-            opus.prefs['widgets'].push(slug);
-          }
-        }
-
-        if (!jQuery.isEmptyObject(opus.last_selections)) {
-            opus.load();
-        }
+        opus.load();
     },
 
 
