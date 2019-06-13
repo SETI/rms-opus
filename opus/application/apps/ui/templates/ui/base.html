@@ -115,7 +115,7 @@
                                 <li class="nav-item">
                                     <span class="op-observation-text mr-2">Observation #</span>
                                     <div id="op-observation-slider">
-                                        <div class="ui-slider-handle op-slider-pointer"><div id="op-observation-number"></div></div>
+                                        <div class="ui-slider-handle op-slider-pointer"><div class="op-observation-number"></div></div>
                                     </div>
                                 </li>
                             </ul>
@@ -127,11 +127,17 @@
                             <ul class="sort-contents list-inline"></ul>
                         </div>
                     </nav>
-                    <div class="panel-body gallery-contents container-fluid browse-infiniteScroll-element">
-                        <div class="row justify-content-start op-gallery-view mr-0">
-                            <div class="mr-0 thumb gallery gallery-scroll"></div>
+                    <div class="panel-body gallery-contents container-fluid">
+                       <div class="op-results-message">
+                            <h2>Your search produced no results</h2>
+                            <p>Remove or edit one or more of the search criteria selected on the Search tab
+                            or click on the Reset Search button to reset the search criteria to default.</p>
+                       </div>
+                       <div class="row justify-content-start op-gallery-view mr-0">
+                            <div class="mr-0 thumb gallery gallery-scroll">
+                            </div>
                         </div>
-                        <div class="row op-data-table-view browse-infiniteScroll-element mx-0">
+                        <div class="row op-data-table-view mx-0">
                             <div class="col-lg p-0">
                                 <table class="table table-hover table-bordered table-striped table-dark table-sm op-data-table mb-0">
                                     <thead></thead>
@@ -205,8 +211,15 @@
                             </div>
                         </nav>
                         <div class="panel-body gallery-contents container-fluid">
+                            <div class="op-results-message">
+                                <h2>Your cart is empty</h2>
+                                <p>To add observations to the cart, click on the Browse Results tab
+                                at the top of the page, mouse over the thumbnail gallery images to reveal the tools,
+                                then click on the cart icon.  </p>
+                            </div>
                             <div class="row justify-content-start op-gallery-view mr-0 ml-1">
-                                <div class="mr-0 thumb gallery gallery-scroll"></div>
+                                <div class="mr-0 thumb gallery gallery-scroll">
+                                </div>
                             </div>
                             <div class="row op-data-table-view mx-0">
                                 <div class="col-lg p-0">
