@@ -949,11 +949,9 @@ nav.panel-heading {
         flex-wrap: wrap;
     }
 
-    /* When slider is at the 2nd line, make it take up 75% of width.
-    Note that if we set to 100% the slider bar will be cut off when it's
-    moved to the end of the slider */
+    /* When slider is at the 2nd line, make it take up more width */
     #op-observation-slider.ui-slider {
-        width: 75% !important;
+        width: calc(80% - 2rem) !important;
     }
 
     /* When slider is at 2nd line, its container will take up 100% of
@@ -1124,9 +1122,9 @@ is wide enough */
 }
 
 #op-observation-slider.ui-slider {
-    /* Note: set this to percentage will make slider grow when screen
+    /* Note: Make slider grow when screen
     is wider */
-    width: 400px;
+    width: calc(90% - 9rem);
     height: .1em;
 }
 
