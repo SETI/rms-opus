@@ -206,7 +206,7 @@ to 100%, this will make the shrinking look smoother */
 
     /* keep equal padding on both left/right sides of search menu when
     screen is narrow */
-    ul.searchMenu {
+    #search ul.searchMenu {
         padding-right: 1em;
         padding-left: 1em;
     }
@@ -606,6 +606,15 @@ th.sticky-header {
     display: flex;
 }
 
+/* Make a little white space between "Save Changes" and "Discard Changes" */
+#op-metadata-selector .right-container button[type="submit"] {
+    margin-right: 2px;
+}
+
+#op-metadata-selector .right-container button[type="cancel"] {
+    margin-left: 2px;
+}
+
 /* Make white space (padding) in metadata selector menu responsive */
 #op-metadata-selector .searchMenu {
     padding-right: 7%;
@@ -633,6 +642,12 @@ th.sticky-header {
 
 .op-all-metadata-column .submenu {
     margin-left: 15px;
+}
+
+/* Make sure metadata selector's text is not wrapped when screen is
+narrow */
+.op-all-metadata-column .list-group-item {
+    padding-right: 0;
 }
 
 .op-selected-metadata-column ul {
