@@ -681,6 +681,7 @@ th.sticky-header {
 
 .range_hints span {
     margin-right: 5px;
+    display: inline-block;
 }
 
 .paging_indicator {
