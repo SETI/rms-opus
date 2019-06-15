@@ -61,6 +61,11 @@ body {
     display: block;
 }
 
+/* Make sure expanding help menu will not expand the navbar in hamburger */
+#op-help .dropdown-menu {
+    position: absolute;
+}
+
 /* Add padding to (?)help when main nav has the hamburger */
 #op-help-menu {
   padding-left: 0.5rem;
