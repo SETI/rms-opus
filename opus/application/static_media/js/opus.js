@@ -424,7 +424,11 @@ var opus = {
         /**
          * Set the height of the "Help" panel based on the browser size.
          */
-        let height = $(window).height()-120;
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let cardHeaderHeight = $("#op-help-panel .card-header").outerHeight();
+        let totalNonGalleryHeight = footerHeight + mainNavHeight + cardHeaderHeight;
+        let height = $(window).height()-totalNonGalleryHeight;
         $("#op-help-panel .card-body").css("height", height);
         if (opus.helpScrollbar) {
             // Make scrollbar always start from top

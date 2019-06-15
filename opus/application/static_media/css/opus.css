@@ -1545,6 +1545,14 @@ footer {
     position: relative;
 }
 
+/* In help menu, make "x" icon stays at the right of header. This will
+prevent "x" from getting squeezed to the body area and creating a white
+gap next to ps */
+#op-help-panel .card-header {
+    display: flex;
+    justify-content: space-around;
+}
+
 .op-overlay {
     display: none;
     position: fixed;
