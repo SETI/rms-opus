@@ -61,6 +61,17 @@ body {
     display: block;
 }
 
+/* Make sure expanding help menu will not expand the navbar in hamburger */
+#op-help .dropdown-menu {
+    position: absolute;
+}
+
+/* Add padding to (?)help when main nav has the hamburger */
+#op-help-menu {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 #op-tab img.newGIF {
     display: none;
 }
@@ -134,7 +145,9 @@ body {
 }
 
 #sidebar {
-    min-width: 24rem;
+    /* set 100% on min-width so search menu (including the grey border)
+    will shrink proportionally when screen is narrow */
+    min-width: 100%;
     max-width: 26rem;
     height: 100%;
 }
@@ -154,7 +167,7 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    max-width: 380px;
+    max-width: 420px;
 }
 
 /* As long as q-type shrink to the 2nd line, we set text input width
@@ -184,22 +197,23 @@ to 100%, this will make the shrinking look smoother */
     }
 }
 
-@media (max-width: 725px) {
-    /* Make both reset buttons stay in one line when screen is narrow */
-    .op-reset-button {
-        display: flex;
-    }
-    /* Make sure all left menu contents not cut off when screen is narrow */
-    .searchMenu > li {
-        width: 80%;
-    }
-}
-
 @media (max-width: 700px) {
     /* Remove left space of search menu when screen width is narrower */
     .sidebar-area {
-        /* max-width: 50%; */
         padding-left: 0;
+    }
+
+    /* Make sure horizontal divider has little left margin when screen
+    is narrow */
+    .shadow-divider {
+        margin-left: 1em !important;
+    }
+
+    /* keep equal padding on both left/right sides of search menu when
+    screen is narrow */
+    #search ul.searchMenu {
+        padding-right: 1em;
+        padding-left: 1em;
     }
 }
 
@@ -592,9 +606,22 @@ th.sticky-header {
     max-width: 92%;
 }
 
+#op-metadata-selector .modal-content {
+    border: solid 2px #FFF;
+}
+
 /* Make both "Save Changes" and "Discard Changes" stay in one line */
 #op-metadata-selector .right-container {
     display: flex;
+}
+
+/* Make a little white space between "Save Changes" and "Discard Changes" */
+#op-metadata-selector .right-container button[type="submit"] {
+    margin-right: 2px;
+}
+
+#op-metadata-selector .right-container button[type="cancel"] {
+    margin-left: 2px;
 }
 
 /* Make white space (padding) in metadata selector menu responsive */
@@ -624,6 +651,12 @@ th.sticky-header {
 
 .op-all-metadata-column .submenu {
     margin-left: 15px;
+}
+
+/* Make sure metadata selector's text is not wrapped when screen is
+narrow */
+.op-all-metadata-column .list-group-item {
+    padding-right: 0;
 }
 
 .op-selected-metadata-column ul {
@@ -672,6 +705,7 @@ th.sticky-header {
 
 .range_hints span {
     margin-right: 5px;
+    display: inline-block;
 }
 
 .paging_indicator {
@@ -711,6 +745,10 @@ img.op-slideshow-image-preview {
 /* make modal width shrink smoothly with screen */
 #galleryView .modal-dialog {
     max-width: 92%;
+}
+
+#galleryView .modal-content {
+    border: solid 2px #FFF;
 }
 
 /* make sure left/right hand icon in metadata dialog stay in the same line
@@ -788,11 +826,7 @@ when window sized is narrow */
 
 #galleryViewContents {
     position: relative;
-    /* height: 625px; */
-}
-
-#galleryViewContents .left {
-    /* height: 590px; */
+    border-radius: 1%;
 }
 
 #galleryView .modal-dialog:hover {
@@ -939,11 +973,9 @@ nav.panel-heading {
         flex-wrap: wrap;
     }
 
-    /* When slider is at the 2nd line, make it take up 75% of width.
-    Note that if we set to 100% the slider bar will be cut off when it's
-    moved to the end of the slider */
+    /* When slider is at the 2nd line, make it take up more width */
     #op-observation-slider.ui-slider {
-        width: 75% !important;
+        width: calc(80% - 2rem) !important;
     }
 
     /* When slider is at 2nd line, its container will take up 100% of
@@ -1114,9 +1146,9 @@ is wide enough */
 }
 
 #op-observation-slider.ui-slider {
-    /* Note: set this to percentage will make slider grow when screen
+    /* Note: Make slider grow when screen
     is wider */
-    width: 400px;
+    width: calc(90% - 9rem);
     height: .1em;
 }
 
@@ -1257,6 +1289,19 @@ is wide enough */
 #widget-container {
     overflow-x: auto !important;
     overflow-y: hidden !important;
+}
+
+/* Make only widget title and "i" icon wrapped and keep arrow & x symbols
+stay at the top right corner when screen is narrow */
+#widget-container .card-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Group widgets' arrow and x symbols, make them always stay in one line
+even when screen is narrow */
+#widget-container .card-title > span {
+    display: flex;
 }
 
 .op-widget-column {
@@ -1504,6 +1549,14 @@ footer {
     position: relative;
 }
 
+/* In help menu, make "x" icon stays at the right of header. This will
+prevent "x" from getting squeezed to the body area and creating a white
+gap next to ps */
+#op-help-panel .card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
 .op-overlay {
     display: none;
     position: fixed;
@@ -1543,8 +1596,11 @@ footer {
     content: '';
 }
 
+/* Keep reset buttons in the center when screen is narrow */
 .op-reset-button {
     text-align: center;
+    display: flex;
+    justify-content: center;
 }
 
 .op-reset-button button {
