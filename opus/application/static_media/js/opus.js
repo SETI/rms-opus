@@ -836,6 +836,7 @@ var opus = {
          */
         let browserName, browserVersion, matchObj;
         let userAgent = navigator.userAgent;
+        let updateString = "Please use a supported browser for a better experience.";
 
         if (userAgent.indexOf("Firefox") > -1) {
             // Example output:
@@ -867,19 +868,19 @@ var opus = {
             browserName = "Safari";
             browserVersion = matchObj[1];
         } else {
-            browserName = "unsupported";
-            browserVersion = "0.0";
+            browserName = `unsupported - ${userAgent}`;
+            browserVersion = "";
+            updateString = "";
         }
 
-        let browser = `${browserName} ${browserVersion}. Please update your browser`;
-        if (browserName === "unsupported") {
-            browser = browserName;
-        }
-        let modalMsg = (`Your current browser is ${browser}. OPUS supports
+        let browser = `${browserName} ${browserVersion}</br></br>OPUS may not work properly on your browser.`;
+        let modalMsg = (`Your current browser is ${browser}</br>
+                        We support
                         Firefox (${opus.browserSupport.firefox}+),
                         Chrome (${opus.browserSupport.chrome}+),
                         Safari (${opus.browserSupport.safari}+),
-                        and Opera (${opus.browserSupport.opera}+).`);
+                        and Opera (${opus.browserSupport.opera}+).
+                        ${updateString}`);
         $("#op-browser-version-msg .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
 
