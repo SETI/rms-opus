@@ -606,6 +606,10 @@ th.sticky-header {
     max-width: 92%;
 }
 
+#op-metadata-selector .modal-content {
+    border: solid 2px #FFF;
+}
+
 /* Make both "Save Changes" and "Discard Changes" stay in one line */
 #op-metadata-selector .right-container {
     display: flex;
@@ -743,6 +747,10 @@ img.op-slideshow-image-preview {
     max-width: 92%;
 }
 
+#galleryView .modal-content {
+    border: solid 2px #FFF;
+}
+
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
 #galleryView .op-obs-direction {
@@ -818,11 +826,7 @@ when window sized is narrow */
 
 #galleryViewContents {
     position: relative;
-    /* height: 625px; */
-}
-
-#galleryViewContents .left {
-    /* height: 590px; */
+    border-radius: 1%;
 }
 
 #galleryView .modal-dialog:hover {
@@ -1550,7 +1554,7 @@ prevent "x" from getting squeezed to the body area and creating a white
 gap next to ps */
 #op-help-panel .card-header {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
 }
 
 .op-overlay {
