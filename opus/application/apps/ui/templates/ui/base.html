@@ -396,9 +396,10 @@
         {% include "ui/confirm_modal.html" with
             id_name="op-browser-version-msg"
             confirm_title="Message About Your Browser Version"
-            confirm_msg=""
+            confirm_msg="Please consider upgrading your Browser Version"
             target="op-browser-version-msg"
-            allow_close=False
+            yes_text="OK"
+            allow_close=True
             draggable=False
         %}
         {% include "ui/confirm_modal.html" with
