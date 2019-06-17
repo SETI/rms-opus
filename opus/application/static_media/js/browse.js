@@ -609,7 +609,7 @@ var o_browse = {
         }
     },
 
-    setScrollbarPosition: function(galleryObsNum, tableObsNum, view) {
+    setScrollbarPosition: function(galleryObsNum, tableObsNum, view, offset=0) {
         let tab = opus.getViewTab(view);
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${galleryObsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableObsNum}']`);
@@ -620,7 +620,8 @@ var o_browse = {
             let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
             let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
 
-            let galleryTargetFinalPosition = galleryTargetTopPosition - galleryContainerTopPosition + galleryScrollbarPosition;
+            let galleryTargetFinalPosition = (galleryTargetTopPosition - galleryContainerTopPosition +
+                                              galleryScrollbarPosition - offset);
             $(`${tab} .gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
 
             // make sure it's scrolled to the correct position in table view
@@ -630,7 +631,7 @@ var o_browse = {
             let tableHeaderHeight = $(`${tab} .op-data-table thead th`).outerHeight();
 
             let tableTargetFinalPosition = (tableTargetTopPosition - tableContainerTopPosition +
-                                            tableScrollbarPosition - tableHeaderHeight);
+                                            tableScrollbarPosition - tableHeaderHeight - offset);
             $(`${tab} .op-data-table-view`).scrollTop(tableTargetFinalPosition);
         }
     },
@@ -652,13 +653,17 @@ var o_browse = {
         // Update obsNum in infiniteScroll instances.
         // This obsNum is the first item in current page
         // (will be used to set scrollbar position in renderGalleryAndTable).
+        // Set scrollbarOffset to 0 so that full startObs item can be displayed
+        // after moving slider.
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "sliderObsNum": value,
             "scrollbarObsNum": value,
+            "scrollbarOffset": 0
         });
         $(`${tab} .op-data-table-view`).infiniteScroll({
             "sliderObsNum": value,
             "scrollbarObsNum": value,
+            "scrollbarOffset": 0
         });
         opus.prefs[startObsLabel] = value;
 
@@ -749,17 +754,37 @@ var o_browse = {
             obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
                       galleryBoundingRect.x + 1);
 
+            // update scrollbarOffset in both infiniteScroll instances:
+            // Store scrollbar offset in scrollbarOffset, this will be used in the calculation
+            // in setScrollbarPosition and provide smooth scrolling when infiniteScroll load event
+            // is triggered.
+            let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${obsNum}"]`);
+            let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${tableCurrentObsNum}']`);
+            let galleryOffset = 0;
+            let tableOffset = 0;
+            if (galleryTarget.length && tableTarget.length) {
+                let galleryTargetTopPosition = galleryTarget.offset().top;
+                let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
+                galleryOffset = galleryTargetTopPosition - galleryContainerTopPosition;
+                let tableTargetTopPosition = tableTarget.offset().top;
+                let tableContainerTopPosition = $(`${tab} .op-data-table-view`).offset().top;
+                let tableHeaderHeight = $(`${tab} .op-data-table thead th`).outerHeight();
+                tableOffset = tableTargetTopPosition - tableContainerTopPosition - tableHeaderHeight;
+            }
+
             if (maxSliderVal >= obsNum) {
                 // "sliderObsNum" will be the startObs.
                 // "scrollbarObsNum" will be the obsNum at current scrollbar location.
                 // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row.
                 $(`${tab} .op-gallery-view`).infiniteScroll({
                     "sliderObsNum": obsNum,
-                    "scrollbarObsNum": tableCurrentObsNum
+                    "scrollbarObsNum": tableCurrentObsNum,
+                    "scrollbarOffset": galleryOffset
                 });
                 $(`${tab} .op-data-table-view`).infiniteScroll({
                     "sliderObsNum": obsNum,
-                    "scrollbarObsNum": tableCurrentObsNum
+                    "scrollbarObsNum": tableCurrentObsNum,
+                    "scrollbarOffset": tableOffset
                 });
                 opus.prefs[startObsLabel] = obsNum;
 
@@ -1295,7 +1320,7 @@ var o_browse = {
         //   it for the case when cached data is removed so that scrollbar position is always correct (and never reaches to the
         //   end until it reaches to the end of the data)
         o_browse.setScrollbarPosition(infiniteScrollData.options.sliderObsNum,
-                                      infiniteScrollData.options.scrollbarObsNum, view);
+            infiniteScrollData.options.scrollbarObsNum, view, infiniteScrollData.options.scrollbarOffset);
 
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle();
@@ -1541,12 +1566,10 @@ var o_browse = {
                         obsNum = (lastObs !== undefined ? lastObs + 1 : obsNum);
                         customizedLimitNum = o_browse.getLimit(view);
 
-                        // If it's in table view, we will update the obsNum in InfiniteScroll instances with the
-                        // startObs values right before infiniteScroll load event is triggered. This will be used
-                        // to properly set the scrollbar and slider location in table view after new data is loaded.
-                        let scrollbarObsNum = (o_browse.isGalleryView() ? (obsNum - o_browse.getLimit(view) -
-                                               opus.getViewNamespace(view).galleryBoundingRect.x) :
-                                               opus.prefs[startObsLabel]);
+                        // We will update the obsNum in InfiniteScroll instances with the startObs values
+                        // right before infiniteScroll load event is triggered. This will be used to properly
+                        // set the scrollbar and slider location after new data is loaded.
+                        let scrollbarObsNum = opus.prefs[startObsLabel];
                         scrollbarObsNum = Math.max(scrollbarObsNum, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
