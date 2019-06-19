@@ -696,94 +696,19 @@ var o_browse = {
             let viewNamespace = opus.getViewNamespace();
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
-            // this will get the top left obsNum for gallery view or the top obsNum for table view
-            let firstCachedObs = $(selector).first().data("obs");
-            let firstCachedObsTop = $(selector).first().offset().top;
-            let calculatedFirstObs = (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
-                                      galleryBoundingRect.x + 1);
-            // For gallery view, the topBoxBoundary is the top of .gallery-contents
-
-            // For table view, we will set the topBoxBoundary to be the bottom of thead
-            // (account for height of thead)
-            let topBoxBoundary = (o_browse.isGalleryView() ?
-                              $(`${tab} .gallery-contents`).offset().top :
-                              $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight());
-
-            // table: obsNum = calculatedFirstObs + number of row
-            // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
-            // Note: in table view, we divide by 2nd table tr's height because in some corner
-            // cases, the first table tr's height will be 1px larger than rest of tr, and this
-            // will mess up the calculation.
-            let obsNumDiff = (o_browse.isGalleryView() ?
-                              Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
-                              galleryBoundingRect.x :
-                              Math.round((topBoxBoundary - firstCachedObsTop)/
-                              $(`${tab} tbody tr`).eq(1).outerHeight()));
-
-            let obsNum = obsNumDiff + calculatedFirstObs;
-            if (browserResized) {
-                // At this point of time, galleryBoundingRect is updated with new row size
-                // from countGalleryImages in adjustBrowseHeight.
-                let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
-                                   galleryBoundingRect.x);
-
-                let galleryObsElem = $(`${tab} .gallery [data-obs]`);
-                let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
-                // delete first "numToDelete" obs if row size is changed
-                if (numToDelete !== 0) {
-                    for (let count = 0; count < numToDelete; count++) {
-                        o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count, viewNamespace);
-                    }
-                }
-            }
-
-            let dataResultCount = viewNamespace.totalObsCount;
-            let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
-                                     galleryBoundingRect.x + 1);
-            let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
-                                (galleryBoundingRect.y - 1));
-
-            // Update obsNum in both infiniteScroll instances.
-            // Store the most top left obsNum in gallery for both infiniteScroll instances
-            // (this will be used to updated slider obsNum).
-            // Store the obsNum at current scrollbar location for both infiniteScroll instances
-            // (this wll be used to updated the table view scrollbar location after initInfiniteScroll
-            //  load is triggered).
-            let tableCurrentObsNum = obsNum;
-            obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
-                      galleryBoundingRect.x + 1);
-
-            if (maxSliderVal >= obsNum) {
-                // "sliderObsNum" will be the startObs.
-                // "scrollbarObsNum" will be the obsNum at current scrollbar location.
-                // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row.
-                $(`${tab} .op-gallery-view`).infiniteScroll({
-                    "sliderObsNum": obsNum,
-                    "scrollbarObsNum": tableCurrentObsNum
-                });
-                $(`${tab} .op-data-table-view`).infiniteScroll({
-                    "sliderObsNum": obsNum,
-                    "scrollbarObsNum": tableCurrentObsNum
-                });
-                opus.prefs[startObsLabel] = obsNum;
-
-                $(`${tab} .op-observation-number`).html(o_utils.addCommas(obsNum));
-                $(`${tab} .op-slider-pointer`).css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
-
-                // just make the step size the number of the obserations across the page...
-                // if the observations have not yet been rendered, leave the default, it will get changed later
-                if (galleryBoundingRect.x > 0) {
-                    o_browse.gallerySliderStep = galleryBoundingRect.x;
-                }
-                $("#op-observation-slider").slider({
-                    "value": obsNum,
-                    "step": o_browse.gallerySliderStep,
-                    "max": maxSliderVal,
-                });
-            }
-            $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
-            // update startobs in url when scrolling
-            o_hash.updateHash(true);
+            // When we update the slider, the following steps are run:
+            // 1. Get the current startObs and top obsNum (top item in table view and one of
+            //    top row items in gallery view) that scrollbar is at.
+            // 2. Get the max value for slider.
+            // 3. Update the slider value and data in infiniteScroll instances and URL using
+            //    the data obtained from above 2 steps.
+            let [obsNum, currentScrollObsNum] = o_browse.getCurrentStartObs(selector, tab,
+                                                                            viewNamespace,
+                                                                            galleryBoundingRect,
+                                                                            browserResized);
+            let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
+            o_browse.updateSliderValue(tab, galleryBoundingRect, startObsLabel, maxSliderVal,
+                                       obsNum, currentScrollObsNum);
         }
 
         let galleryImages = o_browse.countGalleryImages();
@@ -798,6 +723,134 @@ var o_browse = {
             $(`${tab} .op-observation-number`).html("-");
             $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
         }
+    },
+
+    getCurrentStartObs: function(selector, tab, viewNamespace, galleryBoundingRect, browserResized) {
+        /**
+         * get the current startObs (for slider number) and the top item's
+         * obsNum in table view, this item will also be at the top row in
+         * gallery view (for setting scrollbar location)
+         */
+
+        // this will get the top left obsNum for gallery view or the top obsNum for table view
+        let firstCachedObs = $(selector).first().data("obs");
+        let firstCachedObsTop = $(selector).first().offset().top;
+        let calculatedFirstObs = (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
+                                  galleryBoundingRect.x + 1);
+        // For gallery view, the topBoxBoundary is the top of .gallery-contents
+
+        // For table view, we will set the topBoxBoundary to be the bottom of thead
+        // (account for height of thead)
+        let topBoxBoundary = (o_browse.isGalleryView() ?
+                          $(`${tab} .gallery-contents`).offset().top :
+                          $(`${tab} .gallery-contents`).offset().top + $(`${tab} .op-data-table thead th`).outerHeight());
+
+        // table: obsNum = calculatedFirstObs + number of row
+        // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
+        // Note: in table view, we divide by the 2nd table tr's height because in some corner
+        // cases, the first table tr's height will be 1px larger than rest of tr, and this
+        // will mess up the calculation.
+        let tableRowHeight = $(`${tab} tbody tr`).eq(1).outerHeight();
+        let obsNumDiff = (o_browse.isGalleryView() ?
+                          Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
+                          galleryBoundingRect.x :
+                          Math.round((topBoxBoundary - firstCachedObsTop)/
+                          tableRowHeight));
+
+        let obsNum = obsNumDiff + calculatedFirstObs;
+
+        o_browse.deleteCachedObs(browserResized, tab, viewNamespace, galleryBoundingRect,
+                                 firstCachedObs);
+
+        // Update obsNum in both infiniteScroll instances.
+        // Store the most top left obsNum in gallery for both infiniteScroll instances
+        // (this will be used to updated slider obsNum).
+        // Store the obsNum at current scrollbar location for both infiniteScroll instances
+        // (this wll be used to updated the table view scrollbar location after initInfiniteScroll
+        //  load is triggered).
+        let currentScrollObsNum = obsNum;
+        obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
+                  galleryBoundingRect.x + 1);
+
+        return [obsNum, currentScrollObsNum];
+    },
+
+    deleteCachedObs: function(browserResized, tab, viewNamespace ,galleryBoundingRect, firstCachedObs) {
+        /**
+         * If browser window is resized, delete some cached observations
+         * to make sure row boundary is correct.
+         */
+
+        if (browserResized) {
+            // At this point of time, galleryBoundingRect is updated with new row size
+            // from countGalleryImages in adjustBrowseHeight.
+
+            let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
+                               galleryBoundingRect.x);
+
+            let galleryObsElem = $(`${tab} .gallery [data-obs]`);
+            let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
+            // delete first "numToDelete" obs if row size is changed
+            if (numToDelete !== 0) {
+                for (let count = 0; count < numToDelete; count++) {
+                    o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count, viewNamespace);
+                }
+            }
+        }
+    },
+
+    getSliderMaxValue: function(viewNamespace, galleryBoundingRect) {
+        /**
+         * Get the maximum value for slider based on gallery view row
+         * boundary.
+         */
+        let dataResultCount = viewNamespace.totalObsCount;
+        let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
+                                 galleryBoundingRect.x + 1);
+        let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
+                            (galleryBoundingRect.y - 1));
+                            
+        return maxSliderVal;
+    },
+
+    updateSliderValue: function(tab, galleryBoundingRect, startObsLabel, maxSliderVal, obsNum,
+                                currentScrollObsNum) {
+        /**
+         * Change the slider value and update data in infiniteScroll
+         * instances.
+         */
+
+        if (maxSliderVal >= obsNum) {
+            // "sliderObsNum" will be the startObs.
+            // "scrollbarObsNum" will be the obsNum at current scrollbar location.
+            // In table view, it's the top obsNum. In gallery view, it's one of obsNums in the top row.
+            $(`${tab} .op-gallery-view`).infiniteScroll({
+                "sliderObsNum": obsNum,
+                "scrollbarObsNum": currentScrollObsNum
+            });
+            $(`${tab} .op-data-table-view`).infiniteScroll({
+                "sliderObsNum": obsNum,
+                "scrollbarObsNum": currentScrollObsNum
+            });
+            opus.prefs[startObsLabel] = obsNum;
+
+            $(`${tab} .op-observation-number`).html(o_utils.addCommas(obsNum));
+            $(`${tab} .op-slider-pointer`).css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
+
+            // just make the step size the number of the obserations across the page...
+            // if the observations have not yet been rendered, leave the default, it will get changed later
+            if (galleryBoundingRect.x > 0) {
+                o_browse.gallerySliderStep = galleryBoundingRect.x;
+            }
+            $("#op-observation-slider").slider({
+                "value": obsNum,
+                "step": o_browse.gallerySliderStep,
+                "max": maxSliderVal,
+            });
+        }
+        $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
+        // update startobs in url when scrolling
+        o_hash.updateHash(true);
     },
 
     checkScroll: function() {
