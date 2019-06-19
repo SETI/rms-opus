@@ -711,10 +711,14 @@ var o_browse = {
 
             // table: obsNum = calculatedFirstObs + number of row
             // gallery: obsNum = calculatedFirstObs + number of row * number of obs in a row
+            // Note: in table view, we divide by 2nd table tr's height because in some corner
+            // cases, the first table tr's height will be 1px larger than rest of tr, and this
+            // will mess up the calculation.
             let obsNumDiff = (o_browse.isGalleryView() ?
                               Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
                               galleryBoundingRect.x :
-                              Math.round((topBoxBoundary - firstCachedObsTop)/$(`${tab} tbody tr`).outerHeight()));
+                              Math.round((topBoxBoundary - firstCachedObsTop)/
+                              $(`${tab} tbody tr`).eq(1).outerHeight()));
 
             let obsNum = obsNumDiff + calculatedFirstObs;
             if (browserResized) {
