@@ -707,6 +707,7 @@ var o_browse = {
                                                                             galleryBoundingRect,
                                                                             browserResized);
             let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
+
             o_browse.updateSliderValue(tab, galleryBoundingRect, startObsLabel, maxSliderVal,
                                        obsNum, currentScrollObsNum);
         }
@@ -769,8 +770,20 @@ var o_browse = {
         // (this wll be used to updated the table view scrollbar location after initInfiniteScroll
         //  load is triggered).
         let currentScrollObsNum = obsNum;
+        let contentsView = o_browse.getScrollContainerClass();
+        let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+
         obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
                   galleryBoundingRect.x + 1);
+        let nextObsNum = obsNum + galleryBoundingRect.x;
+
+        // In gallery view, if scrollbarObsNum in infiniteScroll instance is still within the
+        // current startObs' boundary, we want to make sure it didn't get updated to startObs.
+        // This will make sure table view scrollbar location stays at where it's been left off
+        // when we switch back to table view again.
+        if ((previousScrollObsNum > obsNum) && (previousScrollObsNum < nextObsNum)) {
+            currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
+        }
 
         return [obsNum, currentScrollObsNum];
     },
@@ -809,7 +822,7 @@ var o_browse = {
                                  galleryBoundingRect.x + 1);
         let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
                             (galleryBoundingRect.y - 1));
-                            
+
         return maxSliderVal;
     },
 
@@ -1174,7 +1187,8 @@ var o_browse = {
         // sync up scrollbar position
         if (galleryInfiniteScroll && tableInfiniteScroll) {
             let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-            o_browse.setScrollbarPosition(startObs, startObs);
+            let scrollbarObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
+            o_browse.setScrollbarPosition(startObs, scrollbarObs);
         }
     },
 
