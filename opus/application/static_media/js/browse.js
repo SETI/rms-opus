@@ -778,14 +778,19 @@ var o_browse = {
         obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
                   galleryBoundingRect.x + 1);
 
-        // In gallery view, if scrollbarObsNum in infiniteScroll instance is still within the
-        // current startObs' boundary, we want to make sure it didn't get updated to startObs.
-        // This will make sure table view scrollbar location stays at where it's been left off
-        // when we switch back to table view again.
+        // In gallery view, if scrollbarObsNum in infiniteScroll instance is:
+        // (1) still within the current startObs' boundary
+        // (2) larger than max slider value when current startObs is equal to max slider value
+        // We want to make sure it didn't get updated to startObs. This will make sure table
+        // view scrollbar location stays at where it's been left off when we switch back to
+        // table view again.
         let nextObsNum = obsNum + galleryBoundingRect.x;
         let contentsView = o_browse.getScrollContainerClass();
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
-        if ((previousScrollObsNum > obsNum) && (previousScrollObsNum < nextObsNum)) {
+        let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect)
+        obsNum = Math.min(obsNum, maxSliderVal);
+        if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
+            (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
