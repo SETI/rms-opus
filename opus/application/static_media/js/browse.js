@@ -787,7 +787,7 @@ var o_browse = {
         let nextObsNum = obsNum + galleryBoundingRect.x;
         let contentsView = o_browse.getScrollContainerClass();
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
-        let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect)
+        let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
         obsNum = Math.min(obsNum, maxSliderVal);
         if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
             (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
