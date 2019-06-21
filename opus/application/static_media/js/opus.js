@@ -559,7 +559,8 @@ var opus = {
             }
 
             // Update URL in browser
-            window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "+");
+            window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "%20");
+            // window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "%20");
             // Perform rest of initialization process
             opus.opusInitialization();
             // Watch the hash and URL for changes; this runs continuously

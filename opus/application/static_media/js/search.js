@@ -237,31 +237,32 @@ var o_search = {
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
-        $('#search').on("change", 'input.multichoice, input.singlechoice', function() {
+        $("#search").on("change", "input.multichoice, input.singlechoice", function() {
            // mult widget gets changed
-           let id = $(this).attr("id").split('_')[0];
-           let value = $(this).attr("value").replace(/\+/g, '%2B');
+           let id = $(this).attr("id").split("_")[0];
+           let value = $(this).attr("value").replace(/\+/g, "%2B");
+           value = value.replace(" ", "%20");
 
-           if ($(this).is(':checked')) {
+           if ($(this).is(":checked")) {
                let values = [];
                if (opus.selections[id]) {
                    values = opus.selections[id]; // this param already has been constrained
                }
 
                // for surfacegeometry we only want a target selected
-               if (id === 'surfacegeometrytargetname') {
+               if (id === "surfacegeometrytargetname") {
                   opus.selections[id] = [value];
                } else {
                   // add the new value to the array of values
-                  values[values.length] = value;
+                  values.push(value);
                   // add the array of values to selections
                   opus.selections[id] = values;
                }
 
                // special menu behavior for surface geo, slide in a loading indicator..
-               if (id == 'surfacetarget') {
+               if (id == "surfacetarget") {
                     let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
-                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
+                    $(surface_loading).appendTo($("a.surfacetarget").parent()).slideDown("slow").delay(500);
                }
 
            } else {
