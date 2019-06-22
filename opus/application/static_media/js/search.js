@@ -241,8 +241,7 @@ var o_search = {
            // mult widget gets changed
            let id = $(this).attr("id").split("_")[0];
            let value = $(this).attr("value").replace(/\+/g, "%2B");
-           value = value.replace(" ", "%20");
-
+           value = value.replace(/ /g, "%20");
            if ($(this).is(":checked")) {
                let values = [];
                if (opus.selections[id]) {

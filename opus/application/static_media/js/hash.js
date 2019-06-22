@@ -22,7 +22,7 @@ var o_hash = {
         let hash = [];
         for (let param in opus.selections) {
             if (opus.selections[param].length) {
-                hash.push(param + "=" + opus.selections[param].join(",").replace(" ", "%20"));
+                hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g, "%20"));
             }
         }
 
