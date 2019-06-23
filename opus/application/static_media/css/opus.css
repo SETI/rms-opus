@@ -974,20 +974,26 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    .op-observation-slider.ui-slider {
+    #browse .op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
     /* When slider is at 2nd line, its container will take up 100% of
     width */
-    .op-slider-nav {
+    #browse .op-slider-nav {
         flex-basis: 100% !important;
     }
 }
 
 /* Make slider stays next to other options in 2nd navbar */
-.op-slider-nav {
+#browse .op-slider-nav {
     flex-basis: 80%;
+    padding-left: 0.5rem;
+}
+
+/* Make slider stays next to other options in 2nd navbar */
+#cart .op-slider-nav {
+    flex-basis: 60%;
     padding-left: 0.5rem;
 }
 
@@ -1012,6 +1018,19 @@ nav.panel-heading {
 }
 
 /* Cart view navbar responsiveness */
+@media (max-width: 1500px) {
+    /* When slider is at the 2nd line, make it take up more width */
+    #cart .op-observation-slider.ui-slider {
+        width: calc(60% - 2rem) !important;
+    }
+
+    /* When slider is at 2nd line, its container will take up 100% of
+    width */
+    #cart .op-slider-nav {
+        flex-basis: 100% !important;
+    }
+}
+
 @media (max-width: 1100px) {
     /*  keep the 2nd navbar in a row and move some options to the 2nd
     line when screen is narrow */
