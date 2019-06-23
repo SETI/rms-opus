@@ -112,7 +112,7 @@ body {
     padding: 0;
     margin-top: .25em;
     background-color: #303030; /* #383838; */
-    padding-left: 0.5rem;
+    padding-left: 1.5em;
     min-height: 700px;
 }
 
@@ -974,26 +974,20 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    #browse .op-observation-slider.ui-slider {
+    #op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
     /* When slider is at 2nd line, its container will take up 100% of
     width */
-    #browse .op-slider-nav {
+    .op-slider-nav {
         flex-basis: 100% !important;
     }
 }
 
 /* Make slider stays next to other options in 2nd navbar */
-#browse .op-slider-nav {
+.op-slider-nav {
     flex-basis: 80%;
-    padding-left: 0.5rem;
-}
-
-/* Make slider stays next to other options in 2nd navbar */
-#cart .op-slider-nav {
-    flex-basis: 60%;
     padding-left: 0.5rem;
 }
 
@@ -1018,19 +1012,6 @@ nav.panel-heading {
 }
 
 /* Cart view navbar responsiveness */
-@media (max-width: 1500px) {
-    /* When slider is at the 2nd line, make it take up more width */
-    #cart .op-observation-slider.ui-slider {
-        width: calc(60% - 2rem) !important;
-    }
-
-    /* When slider is at 2nd line, its container will take up 100% of
-    width */
-    #cart .op-slider-nav {
-        flex-basis: 100% !important;
-    }
-}
-
 @media (max-width: 1100px) {
     /*  keep the 2nd navbar in a row and move some options to the 2nd
     line when screen is narrow */
@@ -1164,7 +1145,7 @@ is wide enough */
     }
 }
 
-.op-observation-slider.ui-slider {
+#op-observation-slider.ui-slider {
     /* Note: Make slider grow when screen
     is wider */
     width: calc(90% - 9rem);
