@@ -112,7 +112,7 @@ body {
     padding: 0;
     margin-top: .25em;
     background-color: #303030; /* #383838; */
-    padding-left: 1.5em;
+    padding-left: 0.5rem;
     min-height: 700px;
 }
 
@@ -974,7 +974,7 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    #op-observation-slider.ui-slider {
+    .op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
@@ -1145,7 +1145,7 @@ is wide enough */
     }
 }
 
-#op-observation-slider.ui-slider {
+.op-observation-slider.ui-slider {
     /* Note: Make slider grow when screen
     is wider */
     width: calc(90% - 9rem);

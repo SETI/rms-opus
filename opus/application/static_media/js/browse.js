@@ -39,9 +39,9 @@ var o_browse = {
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'y': 0},
+    gallerySliderStep: 10,
 
     // unique to o_browse
-    gallerySliderStep: 10,
     imageSize: 100,     // default
 
     metadataDetailOpusId: "",
@@ -456,17 +456,19 @@ var o_browse = {
             return false;
         });
 
-        $("#op-observation-slider").slider({
+        $(".op-observation-slider").slider({
             animate: true,
             value: 1,
             min: 1,
             max: 1000,
             step: o_browse.gallerySliderStep,
             slide: function(event, ui) {
-                o_browse.onUpdateSliderHandle(ui.value);
+                let tab = ui.handle.dataset.target;
+                o_browse.onUpdateSliderHandle(tab, ui.value);
             },
             stop: function(event, ui) {
-                o_browse.onUpdateSlider(ui.value);
+                let tab = ui.handle.dataset.target;
+                o_browse.onUpdateSlider(tab, ui.value);
             }
         });
 
@@ -604,7 +606,7 @@ var o_browse = {
                         obsNum = Math.max(obsNum - galleryBoundingRect.tr + 1, 1);
                     }
                 }
-                o_browse.onUpdateSlider(obsNum);
+                o_browse.onUpdateSlider(tab, obsNum);
             }
         }
     },
@@ -636,15 +638,14 @@ var o_browse = {
     },
 
     // called when the slider is moved...
-    onUpdateSliderHandle: function(value) {
+    onUpdateSliderHandle: function(tab, value) {
         value = (value == undefined? 1 : value);
-        $("#browse .op-observation-number").html(o_utils.addCommas(value));
+        $(`${tab} .op-observation-number`).html(o_utils.addCommas(value));
     },
 
     // This function will be called when we scroll the slide to a target value
-    onUpdateSlider: function(value) {
+    onUpdateSlider: function(tab, value) {
         let view = opus.prefs.view;
-        let tab = opus.getViewTab();
         let elem = $(`${tab} .op-thumbnail-container[data-obs="${value}"]`);
         let startObsLabel = o_browse.getStartObsLabel();
         let viewNamespace = opus.getViewNamespace();
@@ -680,11 +681,6 @@ var o_browse = {
 
     // find the first displayed observation index & id in the upper left corner
     updateSliderHandle: function(browserResized=false) {
-        // Only update the slider & obSnum in infiniteScroll instances when the user
-        // is at browse tab
-        if (opus.getCurrentTab() !== "browse") {
-            return;
-        }
         let tab = opus.getViewTab();
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .op-thumbnail-container` :
@@ -769,11 +765,11 @@ var o_browse = {
                 // just make the step size the number of the obserations across the page...
                 // if the observations have not yet been rendered, leave the default, it will get changed later
                 if (galleryBoundingRect.x > 0) {
-                    o_browse.gallerySliderStep = galleryBoundingRect.x;
+                    viewNamespace.gallerySliderStep = galleryBoundingRect.x;
                 }
-                $("#op-observation-slider").slider({
+                $(`${tab} .op-observation-slider`).slider({
                     "value": obsNum,
-                    "step": o_browse.gallerySliderStep,
+                    "step": viewNamespace.gallerySliderStep,
                     "max": maxSliderVal,
                 });
             }
@@ -785,11 +781,6 @@ var o_browse = {
         let galleryImages = o_browse.countGalleryImages();
         if (opus.prefs[startObsLabel] + numThumbnails < galleryImages.x * galleryImages.y) {
             // disable the slider because the observations don't fill the browser window
-            // $("#op-observation-slider").slider({
-            //     "value": 1,
-            //     "step": o_browse.gallerySliderStep,
-            //     "max": 1,
-            // });
             $(`${tab} .op-slider-pointer`).css("width", "3ch");
             $(`${tab} .op-observation-number`).html("-");
             $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
@@ -1544,7 +1535,7 @@ var o_browse = {
                         // If it's in table view, we will update the obsNum in InfiniteScroll instances with the
                         // startObs values right before infiniteScroll load event is triggered. This will be used
                         // to properly set the scrollbar and slider location in table view after new data is loaded.
-                        let scrollbarObsNum = (o_browse.isGalleryView() ? (obsNum - o_browse.getLimit(view) -
+                        let scrollbarObsNum = (o_browse.isGalleryView(view) ? (obsNum - o_browse.getLimit(view) -
                                                opus.getViewNamespace(view).galleryBoundingRect.x) :
                                                opus.prefs[startObsLabel]);
                         scrollbarObsNum = Math.max(scrollbarObsNum, 1);

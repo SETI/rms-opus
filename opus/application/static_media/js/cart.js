@@ -34,6 +34,7 @@ var o_cart = {
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'y': 0},
+    gallerySliderStep: 10,
 
     // unique to o_cart
     lastRequestNo: 0,
@@ -264,7 +265,7 @@ var o_cart = {
 
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {  
+        $.getJSON("/opus/__cart/reset.json", function(data) {
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {

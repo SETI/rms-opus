@@ -70,7 +70,7 @@
             </div>
         </nav>
         {% block content %}
-        <div class="tab-content container-fluid tab-full-width">
+        <div class="tab-content border-0 container-fluid tab-full-width">
             <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
                 <div class="row flex-nowrap">
                     <div class="col pr-0 sidebar-area border-right">
@@ -97,7 +97,7 @@
             </div><!-- /search -->
 
             <div id="browse" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="browse-tab">
-                <div class="panel panel-default">
+                <div class="panel">
                     <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                         <div class="browse-nav-container">
                             <ul class="navbar-nav mr-auto">
@@ -114,8 +114,8 @@
                             <ul class="op-slider-nav">
                                 <li class="nav-item">
                                     <span class="op-observation-text mr-2">Observation #</span>
-                                    <div id="op-observation-slider">
-                                        <div class="ui-slider-handle op-slider-pointer"><div class="op-observation-number"></div></div>
+                                    <div class="op-observation-slider">
+                                        <div class="ui-slider-handle op-slider-pointer" data-target="#browse"><div class="op-observation-number"></div></div>
                                     </div>
                                 </li>
                             </ul>
@@ -133,7 +133,7 @@
                             <p>Remove or edit one or more of the search criteria selected on the Search tab
                             or click on the Reset Search button to reset the search criteria to default.</p>
                        </div>
-                       <div class="row justify-content-start op-gallery-view mr-0">
+                       <div class="row justify-content-start op-gallery-view mx-0">
                             <div class="mr-0 thumb gallery gallery-scroll">
                             </div>
                         </div>
@@ -183,6 +183,14 @@
                                     <li class="nav-item">
                                         <div id="create_zip_url_file">
                                             <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <ul class="op-slider-nav">
+                                    <li class="nav-item">
+                                        <span class="op-observation-text mr-2">Observation #</span>
+                                        <div class="op-observation-slider">
+                                            <div class="ui-slider-handle op-slider-pointer" data-target="#cart"><div class="op-observation-number"></div></div>
                                         </div>
                                     </li>
                                 </ul>
@@ -254,7 +262,7 @@
             </div>
 
             <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
-                <div class="panel panel-default">
+                <div class="panel">
                 <!-- /detail    -->
                 </div>
             </div>
