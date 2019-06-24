@@ -156,7 +156,7 @@ var opus = {
         // If we're coming in from a URL, we want to leave startobs and cart_startobs
         // alone so we are using the values in the URL.
         let leaveStartObs = true;
-
+        
         // Compare selections and last selections, extras and last extras to see if anything
         // has changed that would require an update to the results. We ignore q-types for
         // search fields that aren't actually being searched on because when the user changes
@@ -558,8 +558,13 @@ var opus = {
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
-            // Update URL in browser
-            window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "+");
+            // Encode and update new URL in browser:
+            // After getting new_url from normalizedURLAPICall, we convert space to "%20" and "+" to "2B".
+            // This will make sure URL (either coming from legacy or new one) has "%20" as space and "2B" as "+".
+            let newURL = normalizeURLData.new_url.replace(/ /g, "%20");
+            newURL = newURL.replace(/\+/g, "%2B");
+            window.location.hash = "/" + newURL;
+
             // Perform rest of initialization process
             opus.opusInitialization();
             // Watch the hash and URL for changes; this runs continuously

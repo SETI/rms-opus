@@ -22,7 +22,7 @@ var o_hash = {
         let hash = [];
         for (let param in opus.selections) {
             if (opus.selections[param].length) {
-                hash.push(param + "=" + opus.selections[param].join(",").replace(/ /g,"+"));
+                hash.push(param + "=" + opus.selections[param].join(","));
             }
         }
 
@@ -96,7 +96,7 @@ var o_hash = {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
-                    selections[slug] = value.replace("+", " ").split(",");
+                    selections[slug] = value.split(",");
                 }
             }
         });
