@@ -156,10 +156,7 @@ var opus = {
         // If we're coming in from a URL, we want to leave startobs and cart_startobs
         // alone so we are using the values in the URL.
         let leaveStartObs = true;
-        console.log(`=== selections ===`);
-        console.log(selections);
-        console.log(`=== opus.selections ===`);
-        console.log(opus.selections);
+        
         // Compare selections and last selections, extras and last extras to see if anything
         // has changed that would require an update to the results. We ignore q-types for
         // search fields that aren't actually being searched on because when the user changes
