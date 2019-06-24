@@ -225,6 +225,7 @@ var o_cart = {
     // get Cart tab
     activateCartTab: function() {
         let view = opus.prefs.view;
+        o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
@@ -264,7 +265,7 @@ var o_cart = {
 
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {  
+        $.getJSON("/opus/__cart/reset.json", function(data) {
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
