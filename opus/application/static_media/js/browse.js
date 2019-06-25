@@ -713,9 +713,8 @@ var o_browse = {
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let maxSliderVal = o_browse.getSliderMaxValue();
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
-            let galleryOffset = scrollbarOffset.galleryOffset;
-            let tableOffset = scrollbarOffset.tableOffset;
-            o_browse.updateSliderValue(obsNum, currentScrollObsNum, galleryOffset, tableOffset);
+            o_browse.updateSliderValue(obsNum, currentScrollObsNum, scrollbarOffset.galleryOffset,
+                                       scrollbarOffset.tableOffset);
         }
 
         let galleryImages = o_browse.countGalleryImages();
@@ -755,10 +754,9 @@ var o_browse = {
         // For gallery view, the topBoxBoundary is the top of .gallery-contents
         // For table view, we will set the topBoxBoundary to be the bottom of thead
         // (account for height of thead)
-        let browseContentsContainer = $(`${tab} .gallery-contents`);
+        let browseContentsContainerTop = $(`${tab} .gallery-contents`).offset().top;
         let topBoxBoundary = (o_browse.isGalleryView() ?
-                              browseContentsContainer.offset().top :
-                              browseContentsContainer.offset().top +
+                              browseContentsContainerTop : browseContentsContainerTop +
                               $(`${tab} .op-data-table thead th`).outerHeight());
 
         // table: obsNum = alignedCachedFirstObs + number of row
@@ -1663,7 +1661,6 @@ var o_browse = {
                         // right before infiniteScroll load event is triggered. This will be used to properly
                         // set the scrollbar and slider location after new data is loaded.
                         let scrollbarObsNum = opus.prefs[startObsLabel];
-                        scrollbarObsNum = Math.max(scrollbarObsNum, 1);
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
