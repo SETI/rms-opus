@@ -708,11 +708,14 @@ var o_browse = {
             // 3. Get the scrollbar offset for both gallery and table view.
             // 4. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
-            let [obsNum, currentScrollObsNum] = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector,
+            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector,
                                                 tab, viewNamespace, galleryBoundingRect, browserResized);
+            let obsNum = obsNumObj.startObs;
+            let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
-            let [galleryOffset, tableOffset] = o_browse.getScrollbarOffset(tab, obsNum, currentScrollObsNum);
-
+            let scrollbarOffset = o_browse.getScrollbarOffset(tab, obsNum, currentScrollObsNum);
+            let galleryOffset = scrollbarOffset.galleryOffset;
+            let tableOffset = scrollbarOffset.tableOffset;
             o_browse.updateSliderValue(obsNum, currentScrollObsNum, galleryOffset, tableOffset);
         }
 
@@ -801,7 +804,7 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
-        return [obsNum, currentScrollObsNum];
+        return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
 
     deleteObsToCorrectRowBoundary: function(tab, viewNamespace ,galleryBoundingRect, firstCachedObs) {
@@ -902,7 +905,7 @@ var o_browse = {
             tableOffset = tableTargetTopPosition - tableContainerTopPosition - tableHeaderHeight;
         }
 
-        return [galleryOffset, tableOffset];
+        return {"galleryOffset": galleryOffset, "tableOffset": tableOffset};
     },
 
     checkScroll: function() {
