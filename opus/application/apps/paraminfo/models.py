@@ -2,6 +2,9 @@ from django.db import models
 from dictionary.views import get_def_for_tooltip
 
 from search.models import TableNames
+from tools.app_utils import *
+
+import settings
 
 import opus_support
 
@@ -51,7 +54,7 @@ class ParamInfo(models.Model):
         else:
             definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
-        
+
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label is None: # pragma: no cover
@@ -103,3 +106,13 @@ class ParamInfo(models.Model):
         if units != '':
             ret += ' '+units
         return ret
+
+    def is_string(self):
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(self.form_type)
+        return form_type == 'STRING'
+
+    def is_string_or_mult(self):
+        (form_type, form_type_func,
+         form_type_format) = parse_form_type(self.form_type)
+        return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
