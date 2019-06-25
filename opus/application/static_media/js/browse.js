@@ -702,8 +702,12 @@ var o_browse = {
             let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
             // When we update the slider, the following steps are run:
-            // 1. Get the current startObs and top obsNum (top item in table view and one of
-            //    top row items in gallery view) that scrollbar is at.
+            // 1. Get the current startObs (top left item in gallery view in current page)
+            //    and top obsNum (top item in table view and one of top row items in gallery
+            //    view) that scrollbar is at.
+            //    - If browser is resized, realign doms by deleting some cached obSnum to make
+            //      sure first cached obs are at the correct row boundary. If we don't do so,
+            //      all rendered obs will be with the wrong row boundary after browser resizing.
             // 2. Get the max value for slider.
             // 3. Get the scrollbar offset for both gallery and table view.
             // 4. Update the slider value and data in infiniteScroll instances and URL using
@@ -733,16 +737,24 @@ var o_browse = {
 
     realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized) {
         /**
-         * get the current startObs (obsNum, for slider number) and the
+         * Get the current startObs (obsNum, for slider number) and the
          * top item's obsNum in table view, this item will also be at the
          * top row in gallery view (currentScrollObsNum, for setting
-         * scrollbar location).
+         * scrollbar location). If browser is resized, realign doms by
+         * deleting some observations from the beginning. This will make
+         * sure the first cached obs is at the correct row boundary
+         * after browser resizing. (which means (first obs - 1) % row size
+         * is equal to 0). If we don't realign doms, first rendered obs
+         * will be at the wrong row boundary, and all rendered obs will
+         * be with the wrong row boundary ((first obs - 1) % row size
+         * will not be 0).
          */
         let tab = opus.getViewTab();
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         // this will get the top left obsNum for gallery view or the top obsNum for table view
         let firstCachedObs = $(selector).first().data("obs");
+
         if (browserResized) {
             o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
         }
@@ -808,7 +820,15 @@ var o_browse = {
     deleteObsToCorrectRowBoundary: function(tab, firstCachedObs) {
         /**
          * If browser window is resized, delete some cached observations
-         * to make sure row boundary is correct.
+         * to make sure row boundary is correct. When browser is resized,
+         * the first cached obs will always be rendered as the first item
+         * of the top row of all rendered obs. If we don't delete some
+         * observations from the beginning, the first cached obs will be
+         * at the wrong row boundary. And all rendered obs will be at the
+         * wrong row boundary ((first obs - 1) % row size will not
+         * be 0). So we delete some observations and that way the first
+         * cached obs is at the correct row boundary after resizing (
+         * (first obs - 1) % row size is equal to 0).
          */
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
