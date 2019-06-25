@@ -757,6 +757,9 @@ var o_browse = {
 
         if (browserResized) {
             o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
+            // update firstCachedObs after first couple observations are deleted so that slider
+            // will be upddated to the correct value when browser is resized
+            firstCachedObs = $(selector).first().data("obs");
         }
 
         let firstCachedObsTop = $(selector).first().offset().top;
