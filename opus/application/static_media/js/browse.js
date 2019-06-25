@@ -708,12 +708,11 @@ var o_browse = {
             // 3. Get the scrollbar offset for both gallery and table view.
             // 4. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
-            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector,
-                                                tab, viewNamespace, galleryBoundingRect, browserResized);
+            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
-            let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
-            let scrollbarOffset = o_browse.getScrollbarOffset(tab, obsNum, currentScrollObsNum);
+            let maxSliderVal = o_browse.getSliderMaxValue();
+            let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             let galleryOffset = scrollbarOffset.galleryOffset;
             let tableOffset = scrollbarOffset.tableOffset;
             o_browse.updateSliderValue(obsNum, currentScrollObsNum, galleryOffset, tableOffset);
@@ -733,19 +732,20 @@ var o_browse = {
         }
     },
 
-    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, tab, viewNamespace, galleryBoundingRect,
-                                                         browserResized) {
+    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized) {
         /**
          * get the current startObs (obsNum, for slider number) and the
          * top item's obsNum in table view, this item will also be at the
          * top row in gallery view (currentScrollObsNum, for setting
          * scrollbar location).
          */
-
+        let tab = opus.getViewTab();
+        let viewNamespace = opus.getViewNamespace();
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         // this will get the top left obsNum for gallery view or the top obsNum for table view
         let firstCachedObs = $(selector).first().data("obs");
         if (browserResized) {
-            o_browse.deleteObsToCorrectRowBoundary(tab, viewNamespace, galleryBoundingRect, firstCachedObs);
+            o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
         }
 
         let firstCachedObsTop = $(selector).first().offset().top;
@@ -797,7 +797,7 @@ var o_browse = {
         let nextObsNum = obsNum + galleryBoundingRect.x;
         let contentsView = o_browse.getScrollContainerClass();
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
-        let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
+        let maxSliderVal = o_browse.getSliderMaxValue();
         obsNum = Math.min(obsNum, maxSliderVal);
         if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
             (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
@@ -807,11 +807,13 @@ var o_browse = {
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
 
-    deleteObsToCorrectRowBoundary: function(tab, viewNamespace ,galleryBoundingRect, firstCachedObs) {
+    deleteObsToCorrectRowBoundary: function(tab, firstCachedObs) {
         /**
          * If browser window is resized, delete some cached observations
          * to make sure row boundary is correct.
          */
+        let viewNamespace = opus.getViewNamespace();
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         let numToDelete = ((galleryBoundingRect.x - (firstCachedObs - 1) % galleryBoundingRect.x) %
                            galleryBoundingRect.x);
 
@@ -825,11 +827,13 @@ var o_browse = {
         }
     },
 
-    getSliderMaxValue: function(viewNamespace, galleryBoundingRect) {
+    getSliderMaxValue: function() {
         /**
          * Get the maximum value for slider based on gallery view row
          * boundary.
          */
+        let viewNamespace = opus.getViewNamespace();
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         let dataResultCount = viewNamespace.totalObsCount;
         let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                  galleryBoundingRect.x + 1);
@@ -848,7 +852,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
         let startObsLabel = o_browse.getStartObsLabel();
-        let maxSliderVal = o_browse.getSliderMaxValue(viewNamespace, galleryBoundingRect);
+        let maxSliderVal = o_browse.getSliderMaxValue();
 
         if (maxSliderVal >= obsNum) {
             // "sliderObsNum" will be the startObs.
@@ -885,12 +889,13 @@ var o_browse = {
         o_hash.updateHash(true);
     },
 
-    getScrollbarOffset: function(tab, obsNum, currentScrollObsNum) {
+    getScrollbarOffset: function(obsNum, currentScrollObsNum) {
         /**
          * Get galleryOffset and tableOffset, these values will be used
          * in the calculation in setScrollbarPosition and provide smooth
          * scrolling when infiniteScroll load event is triggered.
          */
+        let tab = opus.getViewTab();
         let galleryTarget = $(`${tab} .op-thumbnail-container[data-obs="${obsNum}"]`);
         let tableTarget = $(`${tab} .op-data-table tbody tr[data-obs='${currentScrollObsNum}']`);
         let galleryOffset = 0;
