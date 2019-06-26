@@ -755,8 +755,9 @@ var o_browse = {
         // this will get the top left obsNum for gallery view or the top obsNum for table view
         let firstCachedObs = $(selector).first().data("obs");
 
+        let numToDelete = 0;
         if (browserResized) {
-            o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
+            numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
             // update firstCachedObs after first couple observations are deleted so that slider
             // will be upddated to the correct value when browser is resized
             firstCachedObs = $(selector).first().data("obs");
@@ -812,10 +813,18 @@ var o_browse = {
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let maxSliderVal = o_browse.getSliderMaxValue();
         obsNum = Math.min(obsNum, maxSliderVal);
-        if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
+        console.log(`obsNum: ${obsNum}`);
+        console.log(`galleryBoundingRect.x : ${galleryBoundingRect.x}`);
+        console.log(`nextObsNum: ${nextObsNum}`);
+        console.log(`currentScrollObsNum before conversion: ${currentScrollObsNum}`);
+        if (browserResized && numToDelete) {
+            currentScrollObsNum = obsNum;
+            // set scrollbar position here????
+        } else if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
             (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
+        console.log(`currentScrollObsNum after conversion: ${currentScrollObsNum}`);
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
@@ -846,6 +855,9 @@ var o_browse = {
                 o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count, viewNamespace);
             }
         }
+
+        console.log(`numToDelete: ${numToDelete}`);
+        return numToDelete;
     },
 
     getSliderMaxValue: function() {
