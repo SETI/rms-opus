@@ -813,18 +813,27 @@ var o_browse = {
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let maxSliderVal = o_browse.getSliderMaxValue();
         obsNum = Math.min(obsNum, maxSliderVal);
-        console.log(`obsNum: ${obsNum}`);
-        console.log(`galleryBoundingRect.x : ${galleryBoundingRect.x}`);
-        console.log(`nextObsNum: ${nextObsNum}`);
-        console.log(`currentScrollObsNum before conversion: ${currentScrollObsNum}`);
-        if (browserResized && numToDelete) {
-            currentScrollObsNum = obsNum;
-            // set scrollbar position here????
-        } else if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
+
+        if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
             (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
+
+            // When resizing happened and some observations are deleted to correct the row boundary:
+            // In table view, if scrollbarObsNum is still within the current startObs' boundary, scrollbar
+            // will stay at where it is.
+            if (browserResized && numToDelete) {
+                currentScrollObsNum = previousScrollObsNum;
+                o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
+            }
+        } else {
+            // When resizing happened and some observations are deleted to correct the row boundary:
+            // In table view, if scrollbarObsNum is not within the current startObs' boundary, scrollbar
+            // will be moved to the location where slider value (current startObs) is the top item.
+            if (browserResized && numToDelete) {
+                currentScrollObsNum = obsNum;
+                o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
+            }
         }
-        console.log(`currentScrollObsNum after conversion: ${currentScrollObsNum}`);
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
@@ -856,7 +865,6 @@ var o_browse = {
             }
         }
 
-        console.log(`numToDelete: ${numToDelete}`);
         return numToDelete;
     },
 
