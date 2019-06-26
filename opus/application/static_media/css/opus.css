@@ -974,7 +974,7 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    #op-observation-slider.ui-slider {
+    .op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
@@ -1127,7 +1127,7 @@ nav.panel-heading {
     /* When download options left pane is hidden, and the 2nd navbar options
     stay in one line, we move up the sorting pill */
     #cart .sort-order-container {
-        margin-top: 1.5em;
+        margin-top: 1.8em;
     }
 }
 
@@ -1189,7 +1189,7 @@ is wide enough */
     }
 }
 
-#op-observation-slider.ui-slider {
+.op-observation-slider.ui-slider {
     /* Note: Make slider grow when screen
     is wider */
     width: calc(90% - 9rem);
