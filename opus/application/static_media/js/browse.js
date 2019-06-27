@@ -788,7 +788,7 @@ var o_browse = {
                           Math.round((topBoxBoundary - firstCachedObsTop)/
                           tableRowHeight));
 
-        let obsNum = obsNumDiff + alignedCachedFirstObs;
+        let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
         // currentScrollObsNum: the current top item in table view. This item is
         // also one of the top row items in gallery view
@@ -799,8 +799,8 @@ var o_browse = {
         // (it will be used to updated slider obsNum).
         // The calculation below is to make sure we are getting the first item in the
         // top row in gallery view.
-        obsNum = (o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
-                  galleryBoundingRect.x + 1);
+        obsNum = Math.max((o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
+                          galleryBoundingRect.x + 1), 1);
 
         // In gallery view, if scrollbarObsNum in infiniteScroll instance is:
         // (1) still within the current startObs' boundary
