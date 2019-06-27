@@ -159,7 +159,9 @@ var o_hash = {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
-                    // If value contains ", ", it's one value from string input.
+                    // If value contains ", ", it's one value from string input. This will make sure "," in
+                    // slug value gets encoded in "%2C" in URL, and store as decoded "," in opus internal variables
+                    // selections.
                     if (value.includes(", ")) {
                         selections[slug] = [value];
                     } else {
@@ -237,7 +239,14 @@ var o_hash = {
                     }
                 } else {
                     // these are search params/value!
-                    opus.selections[slug] = value.split(',');
+                    // If value contains ", ", it's one value from string input. This will make sure "," in
+                    // slug value gets encoded in "%2C" in URL, and store as decoded "," in opus internal variables
+                    // opus.selections.
+                    if (value.includes(", ")) {
+                        opus.selections[slug] = [value];
+                    } else {
+                        opus.selections[slug] = value.split(',');
+                    }
                 }
             }
         });
