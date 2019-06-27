@@ -722,7 +722,7 @@ var o_browse = {
         }
 
         let galleryImages = o_browse.countGalleryImages();
-        if (opus.prefs[startObsLabel] + numObservations < galleryImages.x * galleryImages.y) {
+        if ((opus.prefs[startObsLabel] + numObservations - 1) < galleryImages.x * galleryImages.y) {
             // disable the slider because the observations don't fill the browser window
             // $("#op-observation-slider").slider({
             //     "value": 1,
