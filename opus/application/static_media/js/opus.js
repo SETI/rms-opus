@@ -156,7 +156,7 @@ var opus = {
         // If we're coming in from a URL, we want to leave startobs and cart_startobs
         // alone so we are using the values in the URL.
         let leaveStartObs = true;
-        
+
         // Compare selections and last selections, extras and last extras to see if anything
         // has changed that would require an update to the results. We ignore q-types for
         // search fields that aren't actually being searched on because when the user changes
@@ -558,12 +558,22 @@ var opus = {
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
+            // Get the newURLHash array from new_slugs (data returned from api call).
+            // The reason we don't use new_url directly is because some slug values might
+            // contain "&", and we can't just do .split("&"). This is a more proper way
+            // to get newURLHash array.
+            let newSlugArr = normalizeURLData.new_slugs;
+            let newURLHash = [];
+            for (let idx in newSlugArr) {
+                let slugObj = newSlugArr[idx];
+                for (let slug in slugObj) {
+                    newURLHash.push(`${slug}=${slugObj[slug]}`);
+                }
+            }
             // Encode and update new URL in browser:
-            // After getting new_url from normalizedURLAPICall, we convert space to "%20" and "+" to "2B".
-            // This will make sure URL (either coming from legacy or new one) has "%20" as space and "2B" as "+".
-            let newURL = normalizeURLData.new_url.replace(/ /g, "%20");
-            newURL = newURL.replace(/\+/g, "%2B");
-            window.location.hash = "/" + newURL;
+            newURLHash = o_hash.encodeHashArray(newURLHash);
+            newURLHash = newURLHash.join("&");
+            window.location.hash = "/" + newURLHash;
 
             // Perform rest of initialization process
             opus.opusInitialization();

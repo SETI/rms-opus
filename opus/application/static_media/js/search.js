@@ -240,12 +240,7 @@ var o_search = {
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
             // mult widget gets changed
             let id = $(this).attr("id").split("_")[0];
-            // When user selects a value with "+", we replace it with "%2B".
-            // When user selects a value with white spaces, we replace them with "%20".
-            // These will be stored in opus.selections and used to compare with selections (from
-            // o_hash.getSelectionsExtrasFromHash()) in load function in opus.js.
-            let value = $(this).attr("value").replace(/\+/g, "%2B");
-            value = value.replace(/ /g, "%20");
+            let value = $(this).attr("value");
 
             if ($(this).is(":checked")) {
                 let values = [];
