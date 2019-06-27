@@ -237,8 +237,6 @@ var o_hash = {
                     }
                 } else {
                     // these are search params/value!
-                    // revisit here !!!
-                    // opus.selections[slug] = value.replace(/\+/g, " ").split(',');
                     opus.selections[slug] = value.split(',');
                 }
             }
