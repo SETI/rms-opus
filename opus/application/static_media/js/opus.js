@@ -564,8 +564,7 @@ var opus = {
             // to get newURLHash array.
             let newSlugArr = normalizeURLData.new_slugs;
             let newURLHash = [];
-            for (let idx in newSlugArr) {
-                let slugObj = newSlugArr[idx];
+            for (let slugObj of newSlugArr) {
                 for (let slug in slugObj) {
                     newURLHash.push(`${slug}=${slugObj[slug]}`);
                 }

@@ -21,18 +21,15 @@ var o_hash = {
         let hash = [];
         for (let param in opus.selections) {
             if (opus.selections[param].length) {
-                let encodedSelectionValues = o_hash.encodeSlugValue(opus.selections[param]);
+                let encodedSelectionValues = o_hash.encodeSlugValues(opus.selections[param]);
                 hash.push(param + "=" + encodedSelectionValues.join(","));
             }
         }
 
         for (let key in opus.extras) {
-            let encodedExtraValues = o_hash.encodeSlugValue(opus.extras[key]);
-            try {
+            if (opus.extras[key].length) {
+                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[key]);
                 hash.push(key + "=" + encodedExtraValues.join(","));
-            } catch(e) {
-                // oops not an arr
-                hash.push(key + "=" + encodedExtraValues);
             }
         }
         $.each(opus.prefs, function(key, value) {
@@ -46,20 +43,20 @@ var o_hash = {
         return hash.join("&");
     },
 
-    encodeSlugValue: function(slugValueArray) {
+    encodeSlugValues: function(slugValueArray) {
         /**
          * Take in a slug value array (like opus.selections, each element
-         * will be a value for the slug) and encode all values in the
+         * will be a list of values for the slug) and encode all values in the
          * array. Return an array that contains encoded values for the
          * slug. This function will be called in updateHash to make sure
          * slug values in the hash are all encoded before updating the URL.
          */
         let slugValue = [];
-        $.each(slugValueArray, function(index, val) {
+        for (let val of slugValueArray) {
             let value = encodeURIComponent(val);
             value = value.replace(/\%20/g, "+");
             slugValue.push(value);
-        });
+        }
 
         return slugValue;
     },
@@ -68,41 +65,68 @@ var o_hash = {
         /**
          * Take in a hash array (each element will be "slug=value") and
          * encode the "value" of each element. Return a hash array that
-         * is consist of "slug=encodedValue". This function will be called
+         * consists of "slug=encodedValue". This function will be called
          * in opus.normalizedURLAPICall to make sure slug values from
-         * new URL are decoded.
+         * new URL are encoded.
          */
         let hash = [];
-        $.each(hashArray, function(index, pair) {
-            let slug = pair.split('=')[0];
-            let value = pair.split('=')[1];
-            value = encodeURIComponent(value);
-            value = value.replace(/\%20/g, "+");
+        for (let pair of hashArray) {
+            // Get the first idx of "=" sign and take all of string after the first
+            // "=" as the value (or a list of values) for the slug.
+            let idxOfFirstEqualSign = pair.indexOf("=");
+            let slug = pair.slice(0, idxOfFirstEqualSign);
+            let value = pair.slice(idxOfFirstEqualSign + 1);
+
+            let valueArray = value.split(",");
+            valueArray = o_hash.encodeSlugValues(valueArray);
+            value = valueArray.join(",");
+
             hash.push(`${slug}=${value}`);
-        });
+        }
 
         return hash;
+    },
+
+    decodeSlugValues: function(slugValueArray) {
+        /**
+         * Take in a slug value array (like opus.selections, each element
+         * will be a list of values for the slug) and decode all values in the
+         * array. Return an array that contains decoded values for the
+         * slug. This function will be called in decodeHashArray to make sure
+         * slug values in the hash are all decoded.
+         */
+        let slugValue = [];
+        for (let val of slugValueArray) {
+            let value = val.replace(/\+/g, "%20");
+            value = decodeURIComponent(value);
+            slugValue.push(value);
+        }
+
+        return slugValue;
     },
 
     decodeHashArray: function(hashArray) {
         /**
          * Take in a hash array (each element will be "slug=value") and
          * decode the "value" of each element. Return a hash array that
-         * is consist of "slug=decodedValue". This function will be called
+         * consists of "slug=decodedValue". This function will be called
          * in getSelectionsExtrasFromHash to make sure slug values in
          * selections and extras are decoded. And it will also be called
          * in initFromHash to make sure slug values in opus.selections are
          * decoded.
          */
-        // console.log(`=== hash from decodeHashArray ===`);
         let hash = [];
-        $.each(hashArray, function(index, pair) {
-            let slug = pair.split('=')[0];
-            let value = pair.split('=')[1];
-            value = value.replace(/\+/g, "%20");
-            value = decodeURIComponent(value);
+        for (let pair of hashArray) {
+            let idxOfFirstEqualSign = pair.indexOf("=");
+            let slug = pair.slice(0, idxOfFirstEqualSign);
+            let value = pair.slice(idxOfFirstEqualSign + 1);
+
+            let valueArray = value.split(",");
+            valueArray = o_hash.decodeSlugValues(valueArray);
+            value = valueArray.join(",");
+
             hash.push(`${slug}=${value}`);
-        });
+        }
 
         return hash;
     },
@@ -151,22 +175,22 @@ var o_hash = {
         let extras = {}; // store qtype from url
 
         $.each(hash, function(index, pair) {
-            let slug = pair.split('=')[0];
-            let value = pair.split('=')[1];
+            let idxOfFirstEqualSign = pair.indexOf("=");
+            let slug = pair.slice(0, idxOfFirstEqualSign);
+            let value = pair.slice(idxOfFirstEqualSign + 1);
 
             if (!(slug in opus.prefs) && value) {
                 if (slug.startsWith("qtype-")) {
                     // each qtype will only have one value at a time
                     extras[slug] = [value];
                 } else {
-                    // If value contains ", ", it's one value from string input. This will make sure "," in
-                    // slug value gets encoded in "%2C" in URL, and store as decoded "," in opus internal variables
-                    // selections.
-                    if (value.includes(", ")) {
-                        selections[slug] = [value];
-                    } else {
-                        selections[slug] = value.split(",");
-                    }
+                    // Leave comments here, need to revisit this later. We have find
+                    // a better way to tell if the slug value is coming from string input.
+                    // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
+                    //     selections[slug] = [value];
+                    // } else {
+                    selections[slug] = value.split(",");
+                    // }
                 }
             }
         });
@@ -203,8 +227,9 @@ var o_hash = {
         hash = hash.split('&');
         hash = o_hash.decodeHashArray(hash);
         $.each(hash, function(index, pair) {
-            let slug = pair.split('=')[0];
-            let value = pair.split('=')[1];
+            let idxOfFirstEqualSign = pair.indexOf("=");
+            let slug = pair.slice(0, idxOfFirstEqualSign);
+            let value = pair.slice(idxOfFirstEqualSign + 1);
             if (value) {
                 if (slug.match(/qtype-.*/)) {
                     // range drop down, add the qtype to the global extras array
@@ -238,15 +263,14 @@ var o_hash = {
                             opus.prefs[slug] = value;
                     }
                 } else {
+                    // Leave comments here, need to revisit this later. We have find
+                    // a better way to tell if the slug value is coming from string input.
                     // these are search params/value!
-                    // If value contains ", ", it's one value from string input. This will make sure "," in
-                    // slug value gets encoded in "%2C" in URL, and store as decoded "," in opus internal variables
-                    // opus.selections.
-                    if (value.includes(", ")) {
-                        opus.selections[slug] = [value];
-                    } else {
-                        opus.selections[slug] = value.split(',');
-                    }
+                    // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
+                    //     opus.selections[slug] = [value];
+                    // } else {
+                    opus.selections[slug] = value.split(',');
+                    // }
                 }
             }
         });
