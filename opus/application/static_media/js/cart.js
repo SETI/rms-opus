@@ -226,6 +226,7 @@ var o_cart = {
     // get Cart tab
     activateCartTab: function() {
         let view = opus.prefs.view;
+        o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
