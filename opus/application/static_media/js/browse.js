@@ -763,19 +763,9 @@ var o_browse = {
             firstCachedObs = $(selector).first().data("obs");
         }
 
-        let obsNum = o_browse.calculateCurrentStartObs(selector, firstCachedObs);
-
-        // currentScrollObsNum: the current top item in table view. This item is
-        // also one of the top row items in gallery view
-        // (it will be used to updated the table view scrollbar location).
-        let currentScrollObsNum = obsNum;
-
-        // obsNum: startObs, the most top left obsNum in gallery.
-        // (it will be used to updated slider obsNum).
-        // The calculation below is to make sure we are getting the first item in the
-        // top row in gallery view.
-        obsNum = Math.max((o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
-                          galleryBoundingRect.x + 1), 1);
+        let calculatedObsNumObj = o_browse.calculateCurrentStartObs(selector, firstCachedObs);
+        let obsNum = calculatedObsNumObj.startObs;
+        let currentScrollObsNum = calculatedObsNumObj.scrollbarObsNum;
 
         // In gallery view, if scrollbarObsNum in infiniteScroll instance is:
         // (1) still within the current startObs' boundary
@@ -849,7 +839,19 @@ var o_browse = {
 
         let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
-        return obsNum;
+        // currentScrollObsNum: the current top item in table view. This item is
+        // also one of the top row items in gallery view
+        // (it will be used to updated the table view scrollbar location).
+        let currentScrollObsNum = obsNum;
+
+        // obsNum: startObs, the most top left obsNum in gallery.
+        // (it will be used to updated slider obsNum).
+        // The calculation below is to make sure we are getting the first item in the
+        // top row in gallery view.
+        obsNum = Math.max((o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
+                          galleryBoundingRect.x + 1), 1);
+
+        return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
 
     deleteObsToCorrectRowBoundary: function(tab, firstCachedObs) {
