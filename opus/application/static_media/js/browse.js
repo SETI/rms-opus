@@ -903,6 +903,8 @@ var o_browse = {
                                  galleryBoundingRect.x + 1);
         let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
                             (galleryBoundingRect.y - 1));
+        // Max slider value can't go negative
+        maxSliderVal = Math.max(maxSliderVal, 1);
 
         return maxSliderVal;
     },
