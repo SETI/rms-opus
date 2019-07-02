@@ -107,13 +107,14 @@ body {
     background-color: white;
 }
 
+/* Note: this is the scrolling area for thumbnail, when min-height is set
+We will have extra space at the bottom for scrolling even if thumbnail is
+not taking up the whole page. */
 #browse .gallery {
     margin: 0;
     padding: 0;
-    margin-top: .25em;
     background-color: #303030; /* #383838; */
     padding-left: 1.5em;
-    min-height: 700px;
 }
 
 .op-gallery-view {

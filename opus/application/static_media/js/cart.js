@@ -246,7 +246,7 @@ var o_cart = {
                     }
 
                     let startObsLabel = o_browse.getStartObsLabel();
-                    let startObs = opus.prefs[startObsLabel];
+                    let startObs = Math.max(opus.prefs[startObsLabel], 1);
                     startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
                     o_browse.loadData(view, startObs);
 
@@ -264,7 +264,7 @@ var o_cart = {
 
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {  
+        $.getJSON("/opus/__cart/reset.json", function(data) {
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {

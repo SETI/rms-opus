@@ -638,12 +638,13 @@ var o_browse = {
 
     // called when the slider is moved...
     onSliderHandleMoving: function(value) {
-        value = (value == undefined? 1 : value);
+        value = (value === undefined) ? 1 : Math.max(value, 1);
         $("#browse .op-observation-number").html(o_utils.addCommas(value));
     },
 
     // This function will be called when we scroll the slide to a target value
     onSliderHandleStop: function(value) {
+        value = Math.max(value, 1);
         let view = opus.prefs.view;
         let tab = opus.getViewTab();
         let elem = $(`${tab} .op-thumbnail-container[data-obs="${value}"]`);
@@ -721,15 +722,21 @@ var o_browse = {
                                        scrollbarOffset.tableOffset);
         }
 
+        let currentSliderValue = $(`${tab} #op-observation-slider`).slider("option", "value");
+        let currentSliderMax = $(`${tab} #op-observation-slider`).slider("option", "max");
+
         let galleryImages = o_browse.countGalleryImages();
-        if ((opus.prefs[startObsLabel] + numObservations - 1) < galleryImages.x * galleryImages.y) {
+        if ((opus.prefs[startObsLabel] + numObservations - 1) < galleryImages.x * galleryImages.y ||
+            (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
             // disable the slider because the observations don't fill the browser window
-            // $("#op-observation-slider").slider({
+            // $(`${tab} #op-observation-slider`).slider({
             //     "value": 1,
             //     "step": o_browse.gallerySliderStep,
             //     "max": 1,
             // });
             $(`${tab} .op-slider-pointer`).css("width", "3ch");
+            // Make sure slider always move the the most left before being disabled.
+            $(`${tab} .op-observation-number`).html("1");
             $(`${tab} .op-observation-number`).html("-");
             $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
         }
@@ -1683,7 +1690,7 @@ var o_browse = {
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
                 path: function() {
-                    let obsNum = opus.prefs[startObsLabel];
+                    let obsNum = Math.max(opus.prefs[startObsLabel], 1);
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
@@ -1701,6 +1708,7 @@ var o_browse = {
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
+                            firstCachedObs = Math.max(firstCachedObs, 1);
                             if (infiniteScrollData) {
                                 $(`${tab} .op-gallery-view`).infiniteScroll({"sliderObsNum": firstCachedObs});
                                 $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": firstCachedObs});
@@ -1723,6 +1731,7 @@ var o_browse = {
 
                         // Update the obsNum in infiniteScroll instances with the first obsNum of the row above current last page
                         // This will be used to set the scrollbar position later
+                        scrollbarObsNum = Math.max(scrollbarObsNum, 1);
                         if (infiniteScrollData && obsNum <= viewNamespace.totalObsCount) {
                             $(`${tab} .op-gallery-view`).infiniteScroll({"sliderObsNum": scrollbarObsNum});
                             $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": scrollbarObsNum});
