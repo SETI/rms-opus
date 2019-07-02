@@ -656,6 +656,20 @@ var o_browse = {
         // (will be used to set scrollbar position in renderGalleryAndTable).
         // Set scrollbarOffset to 0 so that full startObs item can be displayed
         // after moving slider.
+        // if (o_browse.isGalleryView()) {
+        //     $(`${tab} .op-gallery-view`).infiniteScroll({
+        //         "sliderObsNum": value,
+        //         "scrollbarObsNum": value,
+        //         "scrollbarOffset": 0
+        //     });
+        // } else {
+        //     $(`${tab} .op-data-table-view`).infiniteScroll({
+        //         "sliderObsNum": value,
+        //         "scrollbarObsNum": value,
+        //         "scrollbarOffset": 0
+        //     });
+        // }
+
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "sliderObsNum": value,
             "scrollbarObsNum": value,
@@ -666,6 +680,7 @@ var o_browse = {
             "scrollbarObsNum": value,
             "scrollbarOffset": 0
         });
+
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
@@ -901,8 +916,9 @@ var o_browse = {
         let dataResultCount = viewNamespace.totalObsCount;
         let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                  galleryBoundingRect.x + 1);
+
         let maxSliderVal = (o_browse.isGalleryView() ? (firstObsInLastRow - galleryBoundingRect.x *
-                            (galleryBoundingRect.y - 1)) : viewNamespace.totalObsCount);
+                            (galleryBoundingRect.y - 1)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr));
         // Max slider value can't go negative
         maxSliderVal = Math.max(maxSliderVal, 1);
 
@@ -944,9 +960,18 @@ var o_browse = {
             if (galleryBoundingRect.x > 0) {
                 o_browse.gallerySliderStep = galleryBoundingRect.x;
             }
+            if (o_browse.isGalleryView()) {
+                $("#op-observation-slider").slider({
+                    "step": o_browse.gallerySliderStep,
+                });
+            } else {
+                $("#op-observation-slider").slider({
+                    "step": 1,
+                });
+            }
             $("#op-observation-slider").slider({
                 "value": obsNum,
-                "step": o_browse.gallerySliderStep,
+                // "step": o_browse.gallerySliderStep,
                 "max": maxSliderVal,
             });
         }
