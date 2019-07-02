@@ -820,8 +820,8 @@ var o_browse = {
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         let firstCachedObsTop = $(selector).first().offset().top;
-        let alignedCachedFirstObs = (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
-                                     galleryBoundingRect.x + 1);
+        let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
+                                     galleryBoundingRect.x + 1) : firstCachedObs);
 
         // For gallery view, the topBoxBoundary is the top of .gallery-contents
         // For table view, we will set the topBoxBoundary to be the bottom of thead
@@ -855,8 +855,8 @@ var o_browse = {
         // (it will be used to updated slider obsNum).
         // The calculation below is to make sure we are getting the first item in the
         // top row in gallery view.
-        obsNum = Math.max((o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
-                          galleryBoundingRect.x + 1), 1);
+        obsNum = (o_browse.isGalleryView() ? Math.max((o_utils.floor((obsNum - 1)/galleryBoundingRect.x) *
+                  galleryBoundingRect.x + 1), 1) : obsNum);
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
     },
@@ -901,8 +901,8 @@ var o_browse = {
         let dataResultCount = viewNamespace.totalObsCount;
         let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                  galleryBoundingRect.x + 1);
-        let maxSliderVal = (firstObsInLastRow - galleryBoundingRect.x *
-                            (galleryBoundingRect.y - 1));
+        let maxSliderVal = (o_browse.isGalleryView() ? (firstObsInLastRow - galleryBoundingRect.x *
+                            (galleryBoundingRect.y - 1)) : viewNamespace.totalObsCount);
         // Max slider value can't go negative
         maxSliderVal = Math.max(maxSliderVal, 1);
 
