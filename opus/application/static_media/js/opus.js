@@ -567,8 +567,8 @@ var opus = {
             for (const slugObj of newSlugArr) {
                 $.each(slugObj, function(slug, value) {
                     newURLHash.push(`${slug}=${value}`);
-                }
-            });
+                });
+            }
             // Encode and update new URL in browser:
             newURLHash = o_hash.encodeHashArray(newURLHash);
             newURLHash = newURLHash.join("&");
