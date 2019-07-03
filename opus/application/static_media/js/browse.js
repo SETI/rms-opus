@@ -742,9 +742,9 @@ var o_browse = {
 
         let galleryImages = o_browse.countGalleryImages();
 
-        let sliderDisabledCondition = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
+        let numberOfObsFitOnTheScreen = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
                                        galleryImages.tr);
-        if ((opus.prefs[startObsLabel] + numObservations - 1) < sliderDisabledCondition ||
+        if ((opus.prefs[startObsLabel] + numObservations - 1) < numberOfObsFitOnTheScreen ||
             (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
             // disable the slider because the observations don't fill the browser window
             $(`${tab} .op-slider-pointer`).css("width", "3ch");
