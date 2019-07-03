@@ -680,17 +680,6 @@ var o_browse = {
             "scrollbarOffset": 0
         });
 
-        // $(`${tab} .op-gallery-view`).infiniteScroll({
-        //     "sliderObsNum": value,
-        //     "scrollbarObsNum": value,
-        //     "scrollbarOffset": 0
-        // });
-        // $(`${tab} .op-data-table-view`).infiniteScroll({
-        //     "sliderObsNum": value,
-        //     "scrollbarObsNum": value,
-        //     "scrollbarOffset": 0
-        // });
-
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
@@ -699,13 +688,11 @@ var o_browse = {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
             // (one current page, one next page, and one previous page) starting from obsNum.
             // obsNum will be the very first obs for data rendering this time
-            // let obsNum = Math.max(value - o_browse.getLimit(), 1);
             // Use galleryValue here so that thumbnail image will be rendered & aligned properly.
             let obsNum = Math.max(galleryValue - o_browse.getLimit(), 1);
 
             // If obsNum is 1, previous page will have value - 1 items, so we render value - 1 + 2 * o_browse.getLimit() items
             // else we render 2 * o_browse.getLimit() items.
-            // let customizedLimitNum = obsNum === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             let customizedLimitNum = obsNum === 1 ? galleryValue - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             viewNamespace.reloadObservationData = true;
             o_browse.loadData(view, obsNum, customizedLimitNum);
@@ -734,20 +721,20 @@ var o_browse = {
             // 1. Get the current startObs (top left item in gallery view in current page)
             //    and top obsNum (top item in table view and one of top row items in gallery
             //    view) that scrollbar is at.
-            //    - If browser is resized, realign doms by deleting some cached obSnum to make
+            //    - If browser is resized, realign DOMs by deleting some cached obSnum to make
             //      sure first cached obs are at the correct row boundary. If we don't do so,
             //      all rendered obs will be with the wrong row boundary after browser resizing.
             // 2. Get the max value for slider.
             // 3. Get the scrollbar offset for both gallery and table view.
             // 4. Update the slider value and data in infiniteScroll instances and URL using
-            //    the data obtained from above 2 steps.
+            //    the data obtained from above 3 steps.
             let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let maxSliderVal = o_browse.getSliderMaxValue();
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             o_browse.setSliderParameters(obsNum, currentScrollObsNum, scrollbarOffset.galleryOffset,
-                                       scrollbarOffset.tableOffset);
+                                         scrollbarOffset.tableOffset);
         }
 
         let currentSliderValue = $(`${tab} #op-observation-slider`).slider("option", "value");
@@ -757,14 +744,9 @@ var o_browse = {
         if ((opus.prefs[startObsLabel] + numObservations - 1) < galleryImages.x * galleryImages.y ||
             (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
             // disable the slider because the observations don't fill the browser window
-            // $(`${tab} #op-observation-slider`).slider({
-            //     "value": 1,
-            //     "step": o_browse.gallerySliderStep,
-            //     "max": 1,
-            // });
             $(`${tab} .op-slider-pointer`).css("width", "3ch");
-            // Make sure slider always move the the most left before being disabled.
-            $(`${tab} .op-observation-number`).html("1");
+            // Make sure slider always move to the most left before being disabled.
+            $(`${tab} .op-observation-number`).slider({"value": 1});
             $(`${tab} .op-observation-number`).html("-");
             $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
         }
@@ -772,14 +754,17 @@ var o_browse = {
 
     realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized) {
         /**
-         * Get the current startObs (obsNum, for slider number) and the
-         * top item's obsNum in table view, this item will also be at the
-         * top row in gallery view (currentScrollObsNum, for setting
-         * scrollbar location). If browser is resized, realign doms by
+         * Get the current startObs (obsNum, for slider number) in both
+         * gallery (top-left item) and table (top item) views. Also get
+         * the scrollbar obsNum (currentScrollObsNum, for setting scrollbar
+         * location). In gallery view, scrollbar obsNum will be one of
+         * items in the top row (can be different from gallery startObs).
+         * In table view, scrollbar obsNum will be the top item (the same
+         * as table startObs). If browser is resized, realign DOMs by
          * deleting some observations from the beginning. This will make
          * sure the first cached obs is at the correct row boundary
-         * after browser resizing. (which means (first obs - 1) % row size
-         * is equal to 0). If we don't realign doms, first rendered obs
+         * after browser resizing (which means (first obs - 1) % row size
+         * is equal to 0). If we don't realign DOMs, first rendered obs
          * will be at the wrong row boundary, and all rendered obs will
          * be with the wrong row boundary ((first obs - 1) % row size
          * will not be 0).
@@ -840,8 +825,7 @@ var o_browse = {
 
     calculateCurrentStartObs: function(selector, firstCachedObs) {
         /**
-         * Calculation of getting the current startObs based on rendered
-         * observations.
+         * Calculation of the current startObs based on rendered observations.
          */
         let tab = opus.getViewTab();
         let viewNamespace = opus.getViewNamespace();
@@ -910,10 +894,8 @@ var o_browse = {
         let galleryObsElem = $(`${tab} .gallery [data-obs]`);
         let tableObsElem = $(`${tab} .op-data-table-view [data-obs]`);
         // delete first "numToDelete" obs if row size is changed
-        if (numToDelete !== 0) {
-            for (let count = 0; count < numToDelete; count++) {
-                o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count, viewNamespace);
-            }
+        for (let count = 0; count < numToDelete; count++) {
+            o_browse.deleteCachedObservation(galleryObsElem, tableObsElem, count, viewNamespace);
         }
 
         return numToDelete;
@@ -984,7 +966,6 @@ var o_browse = {
             }
             $("#op-observation-slider").slider({
                 "value": obsNum,
-                // "step": o_browse.gallerySliderStep,
                 "max": maxSliderVal,
             });
         }
