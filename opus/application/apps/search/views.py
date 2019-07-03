@@ -433,24 +433,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         slug_no_num = strip_numeric_suffix(slug)
         values = search_param[1].strip(',').split(',')
         values = [x.strip() for x in values]
-        value_not_split = search_param[1].strip()
-        values_not_split = [value_not_split]
-
-        # If nothing is specified, just ignore the slug
-        if not values:
-            if pretty_results and return_slugs:
-                selections[slug] = ""
-            continue
-
-        has_value = False
-        for value in values:
-            if value:
-                has_value = True
-                break
-        if not has_value:
-            if pretty_results and return_slugs:
-                selections[slug] = ""
-            continue
+        values_not_split = [search_param[1]]
 
         qtype = False  # assume this is not a qtype statement
         if slug.startswith('qtype-'): # like qtype-time=ZZZ
@@ -478,6 +461,23 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             param_qualified_name = 'obs_general.opus_id'
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
+
+        # If nothing is specified, just ignore the slug
+        if form_type in settings.MULT_FORM_TYPES:
+            has_value = False
+            for value in values:
+                if value:
+                    has_value = True
+                    break
+            if not has_value:
+                if pretty_results and return_slugs:
+                    selections[slug] = ""
+                continue
+        else:
+            if not values_not_split[0]:
+                if pretty_results and return_slugs:
+                    selections[slug] = ""
+                continue
 
         param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
