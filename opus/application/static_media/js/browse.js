@@ -650,36 +650,46 @@ var o_browse = {
         let elem = $(`${tab} .op-thumbnail-container[data-obs="${value}"]`);
         let startObsLabel = o_browse.getStartObsLabel();
         let viewNamespace = opus.getViewNamespace();
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         // Update obsNum in infiniteScroll instances.
         // This obsNum is the first item in current page
         // (will be used to set scrollbar position in renderGalleryAndTable).
         // Set scrollbarOffset to 0 so that full startObs item can be displayed
         // after moving slider.
-        // if (o_browse.isGalleryView()) {
-        //     $(`${tab} .op-gallery-view`).infiniteScroll({
-        //         "sliderObsNum": value,
-        //         "scrollbarObsNum": value,
-        //         "scrollbarOffset": 0
-        //     });
-        // } else {
-        //     $(`${tab} .op-data-table-view`).infiniteScroll({
-        //         "sliderObsNum": value,
-        //         "scrollbarObsNum": value,
-        //         "scrollbarOffset": 0
-        //     });
-        // }
-
-        $(`${tab} .op-gallery-view`).infiniteScroll({
-            "sliderObsNum": value,
-            "scrollbarObsNum": value,
-            "scrollbarOffset": 0
-        });
+        let galleryValue = value;
+        if (o_browse.isGalleryView()) {
+            $(`${tab} .op-gallery-view`).infiniteScroll({
+                "sliderObsNum": galleryValue,
+                "scrollbarObsNum": value,
+                "scrollbarOffset": 0
+            });
+        } else {
+            // Calculate the gallery startObs
+            galleryValue = (o_utils.floor((value - 1)/galleryBoundingRect.x) *
+                     galleryBoundingRect.x + 1);
+            $(`${tab} .op-gallery-view`).infiniteScroll({
+                "sliderObsNum": galleryValue,
+                "scrollbarObsNum": value,
+                "scrollbarOffset": 0
+            });
+        }
         $(`${tab} .op-data-table-view`).infiniteScroll({
             "sliderObsNum": value,
             "scrollbarObsNum": value,
             "scrollbarOffset": 0
         });
+
+        // $(`${tab} .op-gallery-view`).infiniteScroll({
+        //     "sliderObsNum": value,
+        //     "scrollbarObsNum": value,
+        //     "scrollbarOffset": 0
+        // });
+        // $(`${tab} .op-data-table-view`).infiniteScroll({
+        //     "sliderObsNum": value,
+        //     "scrollbarObsNum": value,
+        //     "scrollbarOffset": 0
+        // });
 
         opus.prefs[startObsLabel] = value;
 
@@ -689,11 +699,14 @@ var o_browse = {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
             // (one current page, one next page, and one previous page) starting from obsNum.
             // obsNum will be the very first obs for data rendering this time
-            let obsNum = Math.max(value - o_browse.getLimit(), 1);
+            // let obsNum = Math.max(value - o_browse.getLimit(), 1);
+            // Use galleryValue here so that thumbnail image will be rendered & aligned properly.
+            let obsNum = Math.max(galleryValue - o_browse.getLimit(), 1);
 
             // If obsNum is 1, previous page will have value - 1 items, so we render value - 1 + 2 * o_browse.getLimit() items
             // else we render 2 * o_browse.getLimit() items.
-            let customizedLimitNum = obsNum === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
+            // let customizedLimitNum = obsNum === 1 ? value - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
+            let customizedLimitNum = obsNum === 1 ? galleryValue - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             viewNamespace.reloadObservationData = true;
             o_browse.loadData(view, obsNum, customizedLimitNum);
         }
