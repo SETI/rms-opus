@@ -19,19 +19,20 @@ var o_hash = {
     // updates the hash according to user selections
     updateHash: function(updateURL=true) {
         let hash = [];
-        for (let param in opus.selections) {
-            if (opus.selections[param].length) {
-                let encodedSelectionValues = o_hash.encodeSlugValues(opus.selections[param]);
-                hash.push(param + "=" + encodedSelectionValues.join(","));
+        $.each(opus.selections, function(key, value) {
+            if (value.length) {
+                let encodedSelectionValues = o_hash.encodeSlugValues(value);
+                hash.push(key + "=" + encodedSelectionValues.join(","));
             }
-        }
+        });
 
-        for (let key in opus.extras) {
-            if (opus.extras[key].length) {
-                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[key]);
+        $.each(opus.extras, function(key, value) {
+            if (value.length) {
+                let encodedExtraValues = o_hash.encodeSlugValues(value);
                 hash.push(key + "=" + encodedExtraValues.join(","));
             }
-        }
+        });
+        
         $.each(opus.prefs, function(key, value) {
             hash.push(key + "=" + value);
         });
@@ -52,7 +53,7 @@ var o_hash = {
          * slug values in the hash are all encoded before updating the URL.
          */
         let slugValue = [];
-        for (let val of slugValueArray) {
+        for (const val of slugValueArray) {
             let value = encodeURIComponent(val);
             value = value.replace(/\%20/g, "+");
             slugValue.push(value);
@@ -70,7 +71,7 @@ var o_hash = {
          * new URL are encoded.
          */
         let hash = [];
-        for (let pair of hashArray) {
+        for (const pair of hashArray) {
             // Get the first idx of "=" sign and take all of string after the first
             // "=" as the value (or a list of values) for the slug.
             let idxOfFirstEqualSign = pair.indexOf("=");
@@ -96,7 +97,7 @@ var o_hash = {
          * slug values in the hash are all decoded.
          */
         let slugValue = [];
-        for (let val of slugValueArray) {
+        for (const val of slugValueArray) {
             let value = val.replace(/\+/g, "%20");
             value = decodeURIComponent(value);
             slugValue.push(value);
@@ -116,7 +117,7 @@ var o_hash = {
          * decoded.
          */
         let hash = [];
-        for (let pair of hashArray) {
+        for (const pair of hashArray) {
             let idxOfFirstEqualSign = pair.indexOf("=");
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
@@ -156,7 +157,7 @@ var o_hash = {
 
     hashArrayToHashString: function(hashArray) {
         let hash = "";
-        for (let param in hashArray) {
+        for (const param of hashArray) {
             hash += "&"+param+"="+hashArray[param];
         }
         return hash;

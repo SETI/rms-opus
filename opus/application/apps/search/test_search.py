@@ -368,7 +368,21 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
-    def test__url_to_search_params_string_comma(self):
+    def test__url_to_search_params_stringsearch_one_comma(self):
+        "[test_search.py] url_to_search_params: string with one comma"
+        q = QueryDict('note=,')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_pds.note': [',']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_commas(self):
         "[test_search.py] url_to_search_params: string with commas"
         q = QueryDict('note=,Note1,Note2,&qtype-note=ends')
         (selections, extras) = url_to_search_params(q)
@@ -376,6 +390,34 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_pds.note': ['ends']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_one_space(self):
+        "[test_search.py] url_to_search_params: string with one space"
+        q = QueryDict('note=+')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_pds.note': [' ']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_spaces(self):
+        "[test_search.py] url_to_search_params: string with spaces"
+        q = QueryDict('note=++++')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_pds.note': ['    ']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)

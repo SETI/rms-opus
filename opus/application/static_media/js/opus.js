@@ -564,11 +564,11 @@ var opus = {
             // to get newURLHash array.
             let newSlugArr = normalizeURLData.new_slugs;
             let newURLHash = [];
-            for (let slugObj of newSlugArr) {
-                for (let slug in slugObj) {
-                    newURLHash.push(`${slug}=${slugObj[slug]}`);
+            for (const slugObj of newSlugArr) {
+                $.each(slugObj, function(slug, value) {
+                    newURLHash.push(`${slug}=${value}`);
                 }
-            }
+            });
             // Encode and update new URL in browser:
             newURLHash = o_hash.encodeHashArray(newURLHash);
             newURLHash = newURLHash.join("&");
@@ -825,7 +825,7 @@ var opus = {
         o_mutationObserver.observePerfectScrollbar();
 
         // Create the four infinite scrollbars for the browse&cart gallery&table
-        for (let tab of ["browse", "cart"]) {
+        for (const tab of ["browse", "cart"]) {
             o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
             o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
         }
