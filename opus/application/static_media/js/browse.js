@@ -741,12 +741,15 @@ var o_browse = {
         let currentSliderMax = $(`${tab} #op-observation-slider`).slider("option", "max");
 
         let galleryImages = o_browse.countGalleryImages();
-        if ((opus.prefs[startObsLabel] + numObservations - 1) < galleryImages.x * galleryImages.y ||
+
+        let sliderDisabledCondition = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
+                                       galleryImages.tr);
+        if ((opus.prefs[startObsLabel] + numObservations - 1) < sliderDisabledCondition ||
             (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
             // disable the slider because the observations don't fill the browser window
             $(`${tab} .op-slider-pointer`).css("width", "3ch");
             // Make sure slider always move to the most left before being disabled.
-            $(`${tab} .op-observation-number`).slider({"value": 1});
+            $(`${tab} #op-observation-slider`).slider({"value": 1});
             $(`${tab} .op-observation-number`).html("-");
             $(`${tab} .op-slider-nav`).addClass("op-button-disabled");
         }
