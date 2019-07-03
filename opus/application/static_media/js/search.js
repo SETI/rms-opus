@@ -237,42 +237,42 @@ var o_search = {
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
-        $('#search').on("change", 'input.multichoice, input.singlechoice', function() {
-           // mult widget gets changed
-           let id = $(this).attr("id").split('_')[0];
-           let value = $(this).attr("value").replace(/\+/g, '%2B');
+        $("#search").on("change", "input.multichoice, input.singlechoice", function() {
+            // mult widget gets changed
+            let id = $(this).attr("id").split("_")[0];
+            let value = $(this).attr("value");
 
-           if ($(this).is(':checked')) {
-               let values = [];
-               if (opus.selections[id]) {
-                   values = opus.selections[id]; // this param already has been constrained
-               }
+            if ($(this).is(":checked")) {
+                let values = [];
+                if (opus.selections[id]) {
+                    values = opus.selections[id]; // this param already has been constrained
+                }
 
-               // for surfacegeometry we only want a target selected
-               if (id === 'surfacegeometrytargetname') {
-                  opus.selections[id] = [value];
-               } else {
-                  // add the new value to the array of values
-                  values[values.length] = value;
-                  // add the array of values to selections
-                  opus.selections[id] = values;
-               }
+                // for surfacegeometry we only want a target selected
+                if (id === "surfacegeometrytargetname") {
+                    opus.selections[id] = [value];
+                } else {
+                    // add the new value to the array of values
+                    values.push(value);
+                    // add the array of values to selections
+                    opus.selections[id] = values;
+                }
 
-               // special menu behavior for surface geo, slide in a loading indicator..
-               if (id == 'surfacetarget') {
+                // special menu behavior for surface geo, slide in a loading indicator..
+                if (id == "surfacetarget") {
                     let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
-                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
-               }
+                    $(surface_loading).appendTo($("a.surfacetarget").parent()).slideDown("slow").delay(500);
+                }
 
-           } else {
-               let remove = opus.selections[id].indexOf(value); // find index of value to remove
-               opus.selections[id].splice(remove,1);        // remove value from array
+            } else {
+                let remove = opus.selections[id].indexOf(value); // find index of value to remove
+                opus.selections[id].splice(remove,1);        // remove value from array
 
-               if (opus.selections[id].length === 0) {
-                   delete opus.selections[id];
-               }
-           }
-           o_hash.updateHash();
+                if (opus.selections[id].length === 0) {
+                    delete opus.selections[id];
+                }
+            }
+            o_hash.updateHash();
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown

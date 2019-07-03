@@ -558,8 +558,22 @@ var opus = {
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
-            // Update URL in browser
-            window.location.hash = "/" + normalizeURLData.new_url.replace(" ", "+");
+            // Get the newURLHash array from new_slugs (data returned from api call).
+            // The reason we don't use new_url directly is because some slug values might
+            // contain "&", and we can't just do .split("&"). This is a more proper way
+            // to get newURLHash array.
+            let newSlugArr = normalizeURLData.new_slugs;
+            let newURLHash = [];
+            for (const slugObj of newSlugArr) {
+                $.each(slugObj, function(slug, value) {
+                    newURLHash.push(`${slug}=${value}`);
+                }
+            });
+            // Encode and update new URL in browser:
+            newURLHash = o_hash.encodeHashArray(newURLHash);
+            newURLHash = newURLHash.join("&");
+            window.location.hash = "/" + newURLHash;
+
             // Perform rest of initialization process
             opus.opusInitialization();
             // Watch the hash and URL for changes; this runs continuously
@@ -811,7 +825,7 @@ var opus = {
         o_mutationObserver.observePerfectScrollbar();
 
         // Create the four infinite scrollbars for the browse&cart gallery&table
-        for (let tab of ["browse", "cart"]) {
+        for (const tab of ["browse", "cart"]) {
             o_browse.initInfiniteScroll(tab, `#${tab} .op-gallery-view`);
             o_browse.initInfiniteScroll(tab, `#${tab} .op-data-table-view`);
         }
