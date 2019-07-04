@@ -667,7 +667,7 @@ var o_browse = {
         } else {
             // Calculate the gallery startObs
             galleryValue = (o_utils.floor((value - 1)/galleryBoundingRect.x) *
-                     galleryBoundingRect.x + 1);
+                            galleryBoundingRect.x + 1);
             $(`${tab} .op-gallery-view`).infiniteScroll({
                 "sliderObsNum": galleryValue,
                 "scrollbarObsNum": value,
@@ -1815,11 +1815,17 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
         let viewNamespace = opus.getViewNamespace(view);
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
 
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
+        // Make sure startObs is adjusted based on correct row boundary.
+        // This will make sure when URL with a startobs not aligned with current browser size
+        // is pasted, that startobs will be adjusted to a new value which is aligned with
+        // the browser size.
+        startObs = (o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1);
 
         if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
