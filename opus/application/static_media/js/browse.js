@@ -805,17 +805,21 @@ var o_browse = {
             }
         }
 
+        // In gallery view, if scrollbarObsNum in infiniteScroll instance is:
+        // (1) still within the current startObs' boundary
+        // (2) larger than max slider value when current startObs is equal to max slider value
+        // We want to make sure it didn't get updated to startObs. This will make sure table
+        // view scrollbar location stays at where it's been left off when we switch back to
+        // table view again.
+        let nextObsNum = obsNum + galleryBoundingRect.x;
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let maxSliderVal = o_browse.getSliderMaxValue();
         obsNum = Math.min(obsNum, maxSliderVal);
 
-        console.log(`=== realignDOMAndGetStartObsAndScrollbarObsNum ===`);
-        console.log(`prevObsNumBeforeResizing: ${prevObsNumBeforeResizing}`);
-        console.log(`previousScrollObsNum: ${previousScrollObsNum}`);
-        console.log(`obsNum: ${obsNum}`);
-        console.log(`currentScrollObsNum: ${currentScrollObsNum}`);
-        console.log(`numToDelete: ${numToDelete}`);
-        console.log(galleryBoundingRect);
+        if ((previousScrollObsNum >= obsNum && previousScrollObsNum < nextObsNum) ||
+            (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
+            currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
+        }
 
         // When resizing happened, we need to manually set the scrollbar location so that:
         // 1. In gallery view, previous startObs (before resizing) is always in the top row.
