@@ -780,47 +780,49 @@ var o_browse = {
 
         let numToDelete = 0;
         if (browserResized) {
-            numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
-            // update firstCachedObs after first couple observations are deleted so that slider
-            // will be upddated to the correct value when browser is resized
-            firstCachedObs = $(selector).first().data("obs");
+            // We delete cached obs when we are in gallery view or switch from table to gallery view.
+            if (o_browse.isGalleryView()) {
+                numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
+                // update firstCachedObs after first couple observations are deleted so that slider
+                // will be upddated to the correct value when browser is resized
+                firstCachedObs = $(selector).first().data("obs");
+            }
         }
 
         let calculatedObsNumObj = o_browse.calculateCurrentStartObs(selector, firstCachedObs);
         let obsNum = calculatedObsNumObj.startObs;
         let currentScrollObsNum = calculatedObsNumObj.scrollbarObsNum;
 
-        // In gallery view, if scrollbarObsNum in infiniteScroll instance is:
-        // (1) still within the current startObs' boundary
-        // (2) larger than max slider value when current startObs is equal to max slider value
-        // We want to make sure it didn't get updated to startObs. This will make sure table
-        // view scrollbar location stays at where it's been left off when we switch back to
-        // table view again.
-        let nextObsNum = obsNum + galleryBoundingRect.x;
+        // If resize happened and some obs are deleted, we will make sure startObs right before resizing is
+        // still in top row of gallery view. This will also make new startObs smaller than previous startObs
+        // when resizing happened.
         let contentsView = o_browse.getScrollContainerClass();
+        let prevObsNumBeforeResizing = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
+        if (browserResized) {
+            if (o_browse.isGalleryView()) {
+                obsNum = (Math.max((o_utils.floor((prevObsNumBeforeResizing - 1)/galleryBoundingRect.x) *
+                galleryBoundingRect.x + 1), 1));
+            }
+        }
+
         let previousScrollObsNum = $(`${tab} ${contentsView}`).data("infiniteScroll").options.scrollbarObsNum;
         let maxSliderVal = o_browse.getSliderMaxValue();
         obsNum = Math.min(obsNum, maxSliderVal);
 
-        if ((previousScrollObsNum > obsNum && previousScrollObsNum < nextObsNum) ||
-            (obsNum === maxSliderVal && previousScrollObsNum > maxSliderVal)) {
-            currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
+        console.log(`=== realignDOMAndGetStartObsAndScrollbarObsNum ===`);
+        console.log(`prevObsNumBeforeResizing: ${prevObsNumBeforeResizing}`);
+        console.log(`previousScrollObsNum: ${previousScrollObsNum}`);
+        console.log(`obsNum: ${obsNum}`);
+        console.log(`currentScrollObsNum: ${currentScrollObsNum}`);
+        console.log(`numToDelete: ${numToDelete}`);
+        console.log(galleryBoundingRect);
 
-            // When resizing happened and some observations are deleted to correct the row boundary:
-            // In table view, if scrollbarObsNum is still within the current startObs' boundary, scrollbar
-            // will stay at where it is.
-            if (browserResized && numToDelete) {
-                currentScrollObsNum = previousScrollObsNum;
-                o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
-            }
-        } else {
-            // When resizing happened and some observations are deleted to correct the row boundary:
-            // In table view, if scrollbarObsNum is not within the current startObs' boundary, scrollbar
-            // will be moved to the location where slider value (current startObs) is the top item.
-            if (browserResized && numToDelete) {
-                currentScrollObsNum = obsNum;
-                o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
-            }
+        // When resizing happened, we need to manually set the scrollbar location so that:
+        // 1. In gallery view, previous startObs (before resizing) is always in the top row.
+        // 2. In table view, the top obs will stay the same.
+        if (browserResized) {
+            currentScrollObsNum = previousScrollObsNum;
+            o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
         }
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
