@@ -1,21 +1,34 @@
+{% load encode_value %}
 {% for cat, d in data.items %}
-  <ul id="detail__data_{{ cat.lower.split|join:"_" }}">
-    {% for param, val in d.items %}
-      <li>
-        {% for name, param_info in all_info.items %}
-          {% if name == param %}
-            {% if param_info.get_units %}
-              {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
-            {% else %}
-              {{ param_info.label_results }}: {{ val }}
-            {% endif %}
-            {% if param_info.get_tooltip_results %}
-              <i class="fa fa-info-circle" data-toggle="tooltip"
-                 title="{{ param_info.get_tooltip_results|striptags }}"></i>
-            {% endif %}
-          {% endif %}
+    <ul id="detail__data_{{ cat.lower.split|join:"_" }}" class="op-detail-list">
+        {% for param, val in d.items %}
+            <li class="op-detail-entry">
+                {% for name, param_info in all_info.items %}
+                    {% if name == param %}
+                        {% if param_info.get_tooltip_results %}
+                            <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                                title="{{ param_info.get_tooltip_results|striptags }}"></i>&nbsp;
+                        {% endif %}
+                        <div>
+                            {% if param_info.get_units %}
+                                {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
+                            {% else %}
+                                {{ param_info.label_results }}: {{ val }}
+                            {% endif %}
+                            {% if param_info.is_string_or_mult %}
+                                <a href="/opus/#/{{ param_info.slug }}={{ val|encode_value }}
+                                        {% if param_info.is_string %}
+                                            &qtype-{{ param_info.slug }}=matches
+                                        {% endif %}"
+                                        target="_blank">
+                                    <i class="fas fa-search"
+                                        title='Open a new browser tab containing OPUS that searches for "{{ param_info.label_results }}" equal to "{{ val }}"'></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </li>
         {% endfor %}
-      </li>
-    {% endfor %}
-  </ul>
+    </ul>
 {% endfor %}

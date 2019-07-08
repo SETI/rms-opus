@@ -37,9 +37,9 @@ var o_mutationObserver = {
             subtree: true,
         };
 
-        let adjustSearchSideBarHeight = _.debounce(o_search.adjustSearchSideBarHeight, 200);
-        let adjustSearchWidgetHeight = _.debounce(o_search.adjustSearchHeight, 200);
-        let adjustSearchHeight = _.debounce(o_search.adjustSearchHeight, 200);
+        let searchSideBarHeightChanged = _.debounce(o_search.searchSideBarHeightChanged, 200);
+        let searchWidgetHeightChanged = _.debounce(o_search.searchWidgetHeightChanged, 200);
+        let searchHeightChanged = _.debounce(o_search.searchHeightChanged, 200);
         let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
         let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
@@ -51,7 +51,7 @@ var o_mutationObserver = {
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
         let switchTabObserver = new MutationObserver(function(mutationsList) {
             // this is for switch from other tabs to target page
-            adjustSearchHeight();
+            searchHeightChanged();
             adjustBrowseHeight();
             adjustTableSize();
             adjustProductInfoHeight();
@@ -62,17 +62,35 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (mutation.type === "childList") {
-                    // update ps when there is any children added/removed
-                    adjustSearchSideBarHeight();
+                    // update ps when there are any children added/removed
+                    searchSideBarHeightChanged();
                 } else if (mutation.type === "attributes") {
                     // at the last mutation
                     if (idx === lastMutationIdx) {
                         if (mutation.target.classList.value.match(/collapse/)) {
-                            // If there is a collapse/expand happened (attribute changes), we only update ps at the last mutation when the animation finishes and class/style are finalized
-                            adjustSearchSideBarHeight();
+                            // If a collapse/expand happened (attribute changes),
+                            // we only update ps at the last mutation when the animation
+                            // finishes and class/style are finalized.
+                            // Note we call the original version here, not the debounced
+                            // version, because we need the PS to be visible instantly in
+                            // order for scrollTop to work below.
+                            o_search.searchSideBarHeightChanged();
+                            // if the collapse opens below the viewable area, move the scrollbar
+                            // only move the scrollbar if we open the menu item
+                            let lastElement = $(mutation.target).children().last();
+                            if (mutation.target.classList.value.match(/show/) &&
+                                !lastElement.isOnScreen("#sidebar-container", 1)) {
+                                let containerHeight = o_search.searchBarContainerHeight();
+                                let containerTop = $("#sidebar-container").offset().top;
+                                let containerBottom = containerHeight + containerTop;
+                                let elementTop = lastElement.offset().top;
+                                let elementHeight = lastElement.outerHeight();
+                                let newScrollPosition = $("#sidebar-container").scrollTop() + (elementTop + elementHeight - containerBottom);
+                                $("#sidebar-container").scrollTop(newScrollPosition);
+                            }
                         } else if (mutation.target.classList.value.match(/spinner/)) {
                             // If new submenu is added but spinner is still running, we update ps after spinner is done
-                            adjustSearchSideBarHeight();
+                            searchSideBarHeightChanged();
                         }
                     }
                 }
@@ -85,19 +103,19 @@ var o_mutationObserver = {
             mutationsList.forEach((mutation, idx) => {
                 if (mutation.type === "childList") {
                     // update ps when there is any children added/removed
-                    adjustSearchWidgetHeight();
+                    searchWidgetHeightChanged();
                 } else if (mutation.type === "attributes") {
                     // at the last mutation
                     if (idx === lastMutationIdx) {
                         if (mutation.target.classList.value.match(/collapse/)) {
                             // If there is a collapse/expand happened (attribute changes), we only update ps when the animation finishes and class/style are finalized
-                            adjustSearchWidgetHeight();
+                            searchWidgetHeightChanged();
                         } else if (mutation.target.classList.value.match(/spinner/)) {
                             // If new widget is added but spinner is still spinning, we update ps after spinner is done
-                            adjustSearchWidgetHeight();
+                            searchWidgetHeightChanged();
                         } else if (mutation.target.classList.value.match(/mult_group/)) {
                             // If new mult_group is open inside widgets, we update ps
-                            adjustSearchWidgetHeight();
+                            searchWidgetHeightChanged();
                         }
                     }
                 }
@@ -106,12 +124,7 @@ var o_mutationObserver = {
 
         // ps in cart page
         let cartObserver = new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
-            mutationsList.forEach((mutation, idx) => {
-                if (idx === lastMutationIdx) {
-                    adjustProductInfoHeight();
-                }
-            });
+            adjustProductInfoHeight();
         });
 
         // ps in help page
@@ -126,10 +139,8 @@ var o_mutationObserver = {
 
         // ps in select metadata modal
         let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
-            mutationsList.forEach((mutation, idx) => {
-                adjustMetadataSelectorMenuPS();
-                adjustSelectedMetadataPS();
-            });
+            adjustMetadataSelectorMenuPS();
+            adjustSelectedMetadataPS();
         });
 
         let metadataSelectorMenuObserver = new MutationObserver(function(mutationsList) {
@@ -137,7 +148,26 @@ var o_mutationObserver = {
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/submenu.collapse/)) {
-                        adjustMetadataSelectorMenuPS();
+                        // If a collapse/expand happened (attribute changes),
+                        // we only update ps at the last mutation when the animation
+                        // finishes and class/style are finalized.
+                        // Note we call the original version here, not the debounced
+                        // version, because we need the PS to be visible instantly in
+                        // order for scrollTop to work below.
+                        o_browse.adjustMetadataSelectorMenuPS();
+                        // if the collapse opens below the viewable area, move the scrollbar
+                        // only move the scrollbar if we open the menu item
+                        let lastElement = $(mutation.target).children().last();
+                        if (mutation.target.classList.value.match(/show/) &&
+                            !lastElement.isOnScreen(".op-all-metadata-column", 1)) {
+                            let containerHeight = o_browse.metadataSelectorMenuContainerHeight();
+                            let containerTop = $(".op-all-metadata-column").offset().top;
+                            let containerBottom = containerHeight + containerTop;
+                            let elementTop = lastElement.offset().top;
+                            let elementHeight = lastElement.outerHeight();
+                            let newScrollPosition = $(".op-all-metadata-column").scrollTop() + (elementTop + elementHeight - containerBottom);
+                            $(".op-all-metadata-column").scrollTop(newScrollPosition);
+                        }
                     }
                 }
             });
@@ -148,7 +178,22 @@ var o_mutationObserver = {
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
                     if (mutation.target.classList.value.match(/ui-sortable/)) {
-                        adjustSelectedMetadataPS();
+                        // Note we call the original version here, not the debounced
+                        // version, because we need the PS to be visible instantly in
+                        // order for scrollTop to work below.
+                        o_browse.adjustSelectedMetadataPS();
+                        // if the new item appears below the viewable area, move the scrollbar
+                        let lastElement = $(mutation.target).children().last();
+                        if (mutation.addedNodes.length !== 0 &&
+                            !lastElement.isOnScreen(".op-selected-metadata-column", 1)) {
+                            let containerHeight = o_browse.selectedMetadataContainerHeight();
+                            let containerTop = $(".op-selected-metadata-column").offset().top;
+                            let containerBottom = containerHeight + containerTop;
+                            let elementTop = lastElement.offset().top;
+                            let elementHeight = lastElement.outerHeight();
+                            let newScrollPosition = $(".op-selected-metadata-column").scrollTop() + (elementTop + elementHeight - containerBottom);
+                            $(".op-selected-metadata-column").scrollTop(newScrollPosition);
+                        }
                     }
                 }
             });
@@ -156,43 +201,23 @@ var o_mutationObserver = {
 
         // ps in browse dialog
         let browseDialogObserver = new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
-            mutationsList.forEach((mutation, idx) => {
-                if (idx === lastMutationIdx) {
-                    adjustBrowseDialogPS();
-                }
-            });
+            adjustBrowseDialogPS();
         });
 
         // ps in gallery view
         let galleryViewObserver = new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
-            mutationsList.forEach((mutation, idx) => {
-                if (idx === lastMutationIdx) {
-                    adjustBrowseHeight();
-                }
-            });
+            adjustBrowseHeight();
         });
 
         // ps in table view
         let tableViewObserver = new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
-            mutationsList.forEach((mutation, idx) => {
-                if (idx === lastMutationIdx) {
-                    adjustTableSize();
-                }
-            });
+            adjustTableSize();
         });
 
         // update ps when switching between gallery and table view
         let switchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
-            let lastMutationIdx = mutationsList.length - 1;
-            mutationsList.forEach((mutation, idx) => {
-                if (idx === lastMutationIdx) {
-                    adjustBrowseHeight();
-                    adjustTableSize();
-                }
-            });
+            adjustBrowseHeight();
+            adjustTableSize();
         });
 
         // target node: target element that MutationObserver is observing, need to be a node

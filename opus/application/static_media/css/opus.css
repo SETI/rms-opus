@@ -25,7 +25,7 @@ body {
     width: 3em !important;
 }
 
-@media(max-width: 992px) {
+@media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
         display: block;
@@ -36,6 +36,19 @@ body {
     }
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
+    }
+
+    /* Make items in hamburger stay in one line, not sure if we want this? */
+    #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
+        display: flex;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Add spaces between each nav-link item */
+    #op-tab .nav-link {
+        padding-left: 7px;
+        padding-right: 7px;
     }
 }
 
@@ -48,6 +61,17 @@ body {
     display: block;
 }
 
+/* Make sure expanding help menu will not expand the navbar in hamburger */
+#op-help .dropdown-menu {
+    position: absolute;
+}
+
+/* Add padding to (?)help when main nav has the hamburger */
+#op-help-menu {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 #op-tab img.newGIF {
     display: none;
 }
@@ -57,14 +81,16 @@ body {
     position: absolute;
     left: 0;
     margin: 0;
-
+    /* Make the whole search page shrink proportionally when window
+    is narrower */
+    width: 100%;
 }
 
 #search .add_input {
     display: none;
 }
 
-#search .search-param {
+#search .op-search-param {
     font-size: 90%;
 }
 
@@ -119,12 +145,14 @@ body {
 }
 
 #sidebar {
-    min-width: 24rem;
+    /* set 100% on min-width so search menu (including the grey border)
+    will shrink proportionally when screen is narrow */
+    min-width: 100%;
     max-width: 26rem;
     height: 100%;
 }
 
-#sidebar .submenu {  /* labels in 3rd submenu need schootch over a bit */
+#sidebar .submenu {
     margin-left: 15px;
 }
 
@@ -139,7 +167,75 @@ Fix the sidebar width so the width will not change when .menu_help message shows
 Not sure if this is the desired behavior
 */
 .sidebar-area {
-    max-width: 400px;
+    max-width: 420px;
+}
+
+/* As long as q-type shrink to the 2nd line, we set text input width
+to 100%, this will make the shrinking look smoother */
+@media (max-width: 970px) {
+    /* Make text input shrink proportionally when window is narrow */
+    #op-search-widgets input[type="text"] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 860px) {
+    /* Make search menu shrink proportionally when screen width is narrower */
+    .sidebar-area {
+        max-width: 44%;
+    }
+
+    /* Make sure scrollbar is not covered by search menu item when search
+    menu item is hovered over */
+    #sidebar-container .ps__rail-y {
+        z-index: 999;
+    }
+
+    /* Make sure widget area can take up at least 50% of screen */
+    #widget-container {
+        min-width: 50%;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Remove left space of search menu when screen width is narrower */
+    .sidebar-area {
+        padding-left: 0;
+    }
+
+    /* Make sure horizontal divider has little left margin when screen
+    is narrow */
+    .shadow-divider {
+        margin-left: 1em !important;
+    }
+
+    /* keep equal padding on both left/right sides of search menu when
+    screen is narrow */
+    #search ul.searchMenu {
+        padding-right: 1em;
+        padding-left: 1em;
+    }
+}
+
+@media (max-width: 670px) {
+    /* Remove button padding so both reset buttons can stay in one line
+    when window width is about 600px*/
+    .op-reset-button button {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+}
+
+/* If the menu category (in the search pane or metadata selector) is collapsed,
+   then rotate the little triangle 90 degrees to indicate its status. */
+.searchMenu .dropdown-toggle::after {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+
+.searchMenu .dropdown-toggle.collapsed::after {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
 }
 
 .sidebar_wrapper {
@@ -170,38 +266,65 @@ ul.searchMenu {
     padding-right: 2em;
 }
 
-.card-header .icon-action {
-    transition: .3s transform ease-in-out;
+/* Add or remove background and checkmark when a search item is active.
+   This is both for the main search tab and the select metadata dialog. */
+.op-search-param {
+    background: initial;
+    transition: background .4s;
+    -moz-transition: background .4s;
+    -webkit-transition: background .4s;
 }
 
-.card-header .collapsed .icon-action {
-    -ms-transform: rotate(90deg); /* IE 9 */
-    -ms-transform-origin: 80%; /* IE 9 */
-    -webkit-transform: rotate(90deg); /* Safari 3-8 */
-    -webkit-transform-origin: 80%; /* Safari 3-8 */
-    transform-origin: 80%;
-    transform: rotate(90deg);
+.op-search-param-checkmark {
+    display: inline-block;
+    opacity: 0;
+    transition: opacity .4s;
+    -moz-transition: opacity .4s;
+    -webkit-transition: opacity: .4s;
 }
 
-.thumbnail-container {
+/* Remove hyperlink underlines from chevron and X on widget title */
+.widget .card-header a {
+    text-decoration: none;
+}
+
+/* Rotate the chevron on a widget header to indicate its open/closed status */
+.widget .card-header .icon-action {
+    transition: .3s;
+}
+
+.widget .card-header .collapsed .icon-action {
+    -ms-transform: rotate(-90deg); /* IE 9 */
+    -ms-transform-origin: 80% 43%; /* IE 9 */
+    -webkit-transform: rotate(-90deg); /* Safari 3-8 */
+    -webkit-transform-origin: 80% 43%; /* Safari 3-8 */
+    transform: rotate(-90deg);
+    transform-origin: 80% 43%;
+}
+
+.op-thumbnail-container {
     display: inline-block;
     float: left;
     position: relative;
-    padding: .10em;
-    min-width: 100px;
-    min-height: 100px;
+    margin: 1px;
+    min-width: 98px;  /* This gives us a 100x100 thumbnail including margin */
+    min-height: 98px;
+    border: medium solid transparent;
 }
 
-.thumbnail-container .img-thumbnail {
+.op-thumbnail-container .img-thumbnail {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     margin: auto;
+    padding: 0px !important;
+    max-height: 100%;
+    max-width: 100%;
 }
 
-.thumbnail-container:hover .op-thumb-overlay {
+.op-thumbnail-container:hover .op-thumb-overlay {
     height: 30%;
 }
 
@@ -225,9 +348,7 @@ ul.searchMenu {
 }
 
 #browse .op-in-cart {
-    -webkit-box-shadow: inset 0px 0px 0px 10px #097da5;
-    -moz-box-shadow: inset 0px 0px 0px 10px #097da5;
-    box-shadow: inset 0px 0px 0px 10px #097da5
+    border: medium solid #097da5;
 }
 
 #cart .remove {
@@ -258,11 +379,16 @@ ul.searchMenu {
     border-radius: 1%;
 }
 
+/* Make sure "x" button in metadata-dialog is not cut off */
+.modal-content .close i {
+    line-height: 1.1em;
+}
+
 .modal-footer .left-container {
     width: 74%;
 }
 
-.thumbnail-container .modal-overlay {
+.op-thumbnail-container .modal-overlay {
     position: absolute;
     text-align: center;
     padding-left: 1em;
@@ -274,7 +400,7 @@ ul.searchMenu {
     z-index: -1;
 }
 
-.thumbnail-container .modal-show {
+.op-thumbnail-container .modal-show {
     z-index: 999;
     -webkit-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
@@ -291,15 +417,16 @@ tr.modal-show {
     filter: alpha(opacity=92);
 }
 
-.thumbnail-container .content-text {
+.op-thumbnail-container .content-text {
     margin: 0px;
     opacity: 0.65;
 }
 
-.thumbnail-message {
+.op-results-message {
     color: #fff;
     padding-left: 3em;
     width: 500px;
+    display: none;
 }
 
 .img-thumbnail {
@@ -357,6 +484,8 @@ th.sticky-header {
     /*  avoid seeing through at the top of header */
     border-top: 0px;
     position: sticky;
+    /* Make sure table header is sticky in Safari */
+    position: -webkit-sticky;
     top: 0;
     z-index: 10;
     background-color: black;
@@ -466,8 +595,46 @@ th.sticky-header {
     text-decoration: none;
 }
 
+/* prevent weird browser y-scrollbar */
+#op-metadata-selector {
+    overflow-y: hidden;
+}
+
+/* make modal width shrink smoothly with screen */
+#op-metadata-selector .modal-dialog {
+    /* max-width: 1100px; */
+    max-width: 92%;
+}
+
+#op-metadata-selector .modal-content {
+    border: solid 2px #FFF;
+}
+
+/* Make both "Save Changes" and "Discard Changes" stay in one line */
+#op-metadata-selector .right-container {
+    display: flex;
+}
+
+/* Make a little white space between "Save Changes" and "Discard Changes" */
+#op-metadata-selector .right-container button[type="submit"] {
+    margin-right: 2px;
+}
+
+#op-metadata-selector .right-container button[type="cancel"] {
+    margin-left: 2px;
+}
+
+/* Make white space (padding) in metadata selector menu responsive */
+#op-metadata-selector .searchMenu {
+    padding-right: 7%;
+}
+
+/* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column, .op-selected-metadata-column {
-    height: 450px;
+    padding-left: 1.5%;
+    padding-right: 1.5%;
+    /* make metadata selector modal height responsive */
+    max-height: calc(75vh - 150px);
     overflow: scroll;
     overflow-x: auto;
 }
@@ -480,6 +647,16 @@ th.sticky-header {
 .op-all-metadata-column .cat_label {
     margin-top: 15px;
     margin-bottom: -5px;
+}
+
+.op-all-metadata-column .submenu {
+    margin-left: 15px;
+}
+
+/* Make sure metadata selector's text is not wrapped when screen is
+narrow */
+.op-all-metadata-column .list-group-item {
+    padding-right: 0;
 }
 
 .op-selected-metadata-column ul {
@@ -528,6 +705,7 @@ th.sticky-header {
 
 .range_hints span {
     margin-right: 5px;
+    display: inline-block;
 }
 
 .paging_indicator {
@@ -544,23 +722,69 @@ th.sticky-header {
     display: none;
 }
 
-img.preview {
-    max-width: 400px !important;
-    max-height: 400px !important;
-}
-
 @media (min-width: 1200px) {
+    /* This covers the metadata selector and slideshow */
     .modal-lg {
         max-width: 1100px !important;
         max-height: 1100px !important;
     }
-    img.preview {
+    img.op-slideshow-image-preview {
         max-width: 600px !important;
         max-height: 600px !important;
     }
 }
 
+/* make image preview in the modal stretchable when screen is resized */
+img.op-slideshow-image-preview {
+    /* make image responsive to horizontal shrinking */
+    max-width: 100% !important;
+    /* make image responsive to vertical shrinking */
+    max-height: 70vh !important;
+}
+
+/* make modal width shrink smoothly with screen */
+#galleryView .modal-dialog {
+    max-width: 92%;
+}
+
+#galleryView .modal-content {
+    border: solid 2px #FFF;
+}
+
+/* make sure left/right hand icon in metadata dialog stay in the same line
+when window sized is narrow */
+#galleryView .op-obs-direction {
+    flex-grow: 3;
+}
+
+/* prevent modal from shirnking to a too small window when resizing horizontally */
+#galleryView .left, #galleryView .right {
+    min-height: 75vh;
+}
+
+#galleryViewContents .metadata {
+    overflow-y: auto;
+    /* Make #galleryView modal right contents shrink vertically
+    95% for the metadata info, 5% for the bottom icons */
+    height: 95%;
+    width: 100%;
+    /* make ps stick to the right of the modal when screen is resizing */
+    position: absolute;
+    right: 0;
+}
+
+@media (max-height: 300px) {
+    #galleryViewContents .metadata {
+        height: 85%;
+    }
+    #galleryView .bottom {
+        height: 15%;
+    }
+}
+
+/* prevent weird browser y-scrollbar */
 #galleryView {
+    overflow-y: hidden;
     pointer-events: none;
     z-index: 999;
 }
@@ -578,31 +802,31 @@ img.preview {
 }
 
 #galleryView .bottom {
-    position: fixed;
-    right: 2.5em;
-    bottom: 1.5em;
-    width: 40%;
+    position: absolute;
+    padding-right: 1em;
+    bottom: 0;
+    width: 100%;
     z-index: 1030;
+    /* All icons in metadata display will stay at the bottom */
+    align-items: flex-end;
+    /* align-item for Safari */
+    -webkit-align-items: end;
+    /* Right container in metadata display
+    95% for the metadata info, 5% for the bottom icons */
+    height: 5%;
 }
 
-#galleryView .prev > i {
+#galleryView .op-obs-direction {
+    width: 20em;
+}
+
+#galleryView .op-prev > i {
     margin-right: .4em;
 }
 
 #galleryViewContents {
     position: relative;
-    height: 625px;
-}
-
-#galleryViewContents .metadata {
-    overflow-y: auto;
-    max-height: 500px;
-    width: 440px;
-    position: fixed;
-}
-
-#galleryViewContents .left {
-    min-height: 590px;
+    border-radius: 1%;
 }
 
 #galleryView .modal-dialog:hover {
@@ -704,19 +928,181 @@ nav.panel-heading {
     align-items: flex-start;
 }
 
+@media (max-width: 992px) {
+    /* keep the 2nd navbar in a row when window is narrow */
+    #browse .browse-nav-container .navbar-nav {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 1050px) {
+    /* Remove the left space of Observation # */
+    .op-observation-text {
+        margin-left: 0px !important;
+    }
+}
+
+/* Browse view navbar responsiveness  */
+@media (max-width: 1000px) {
+    /* Move down the sort pill area so that slider can be moved down
+    to the 2nd line */
+    #browse .sort-order-container {
+        margin-top: 1.75em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #browse .nav-link {
+        padding: 0 0.5rem;
+    }
+
+    /* Move the last item in flexbox to the 2nd line */
+    #browse .browse-nav-container .navbar-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make sure first 3 options in 2nd navbar have space between each
+    other */
+    #browse .browse-nav-container .nav-link {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Move slider to the 2nd line when screen is narrow */
+    #browse .browse-nav-container {
+        flex-wrap: wrap;
+    }
+
+    /* When slider is at the 2nd line, make it take up more width */
+    #op-observation-slider.ui-slider {
+        width: calc(80% - 2rem) !important;
+    }
+
+    /* When slider is at 2nd line, its container will take up 100% of
+    width */
+    .op-slider-nav {
+        flex-basis: 100% !important;
+    }
+}
+
+/* Make slider stays next to other options in 2nd navbar */
+.op-slider-nav {
+    flex-basis: 80%;
+    padding-left: 0.5rem;
+}
+
 .browse-nav-container {
     height: 1.5em;
+    width: 100%;
+    /* display the 2nd navbar in browse view */
+    display: flex;
 }
 
 .browse-nav-container li {
     display: flex;
     align-items: center;
+    /* This will make text stay in one line without wrapping */
+    white-space: nowrap;
 }
 
 .browse-nav-container li input {
     height: 1.6em;
     width: 4.2em;
     text-align: center;
+}
+
+/* Cart view navbar responsiveness */
+@media (max-width: 1100px) {
+    /*  keep the 2nd navbar in a row and move some options to the 2nd
+    line when screen is narrow */
+    #cart .browse-nav-container .navbar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Make the 2nd navbar options take up 80% of width when screen is
+    narrow */
+    #cart .browse-nav-container .navbar-nav:first-child {
+        flex: 1 0 80%;
+    }
+
+    /* Make empty cart button take up 20% of width when screen is narrow */
+    #cart .browse-nav-container .navbar-nav:nth-child(2) {
+        flex: 1 0 20%;
+    }
+
+    /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+
+    /* Keep left/right spaces between 2nd navbar options */
+    #cart .nav-link {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Hide download options pane when screen is narrow */
+    .cart_details {
+        display: none;
+        max-width: 40%;
+        min-width: 10%;
+        padding-left: 0px;
+
+    }
+
+    /* Add a nav-link option for user to open the donwload options panel
+    when screen is narrow */
+    .op-cart-toggle-download-panel {
+        display: flex !important;
+        padding-left: 0.5em;
+        padding-top: 0.5em;
+    }
+
+    /* Make sure gallery-contents not cut off by the right edge of the
+    screen */
+    #cart .gallery-contents {
+        padding-left: 10px;
+    }
+
+    /* Remove the white space at the bottom of gallery-contents when screen
+    is narrow */
+    #cart .cart-gallery-side {
+        height: 100vh;
+    }
+
+    /* When download options left pane is hidden, and the 2nd navbar options
+    stay in one line, we move up the sorting pill */
+    #cart .sort-order-container {
+        margin-top: 0;
+    }
+}
+
+/* Remove the nav-link for opening up download options panel when screen
+is wide enough */
+@media (min-width: 901px) {
+    .op-cart-toggle-download-panel {
+        display: none !important;
+    }
+}
+
+@media (max-width: 765px) {
+    /* When download options left pane is hidden, move down cart tab
+    sorting pill when the 2nd navbar become 2 lines */
+    #cart .sort-order-container {
+        margin-top: 1.5em;
+    }
+}
+
+/* download options panel */
+#op-cart-download-panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    z-index: 9999;
+    top: 2em;
 }
 
 .sort-order-container {
@@ -747,7 +1133,6 @@ nav.panel-heading {
 
 @media (max-width: 700px) {
     .browse-nav-container li {
-        border: 1px solid #383838;
         padding: 0;
         text-align: center;
     }
@@ -761,7 +1146,9 @@ nav.panel-heading {
 }
 
 #op-observation-slider.ui-slider {
-    width: 400px;
+    /* Note: Make slider grow when screen
+    is wider */
+    width: calc(90% - 9rem);
     height: .1em;
 }
 
@@ -771,7 +1158,7 @@ nav.panel-heading {
     opacity: 0.5;
 }
 
-#op-observation-number {
+.op-observation-number {
     text-align: center;
     vertical-align: middle;
 }
@@ -825,19 +1212,24 @@ nav.panel-heading {
     text-decoration: none;
 }
 
-.searchMenu a.search-param {
+.searchMenu a.op-search-param {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 70;
     color: initial;
 }
 
-.searchMenu a.search-param:hover {
+.searchMenu a.op-search-param:hover {
     text-decoration: none;
 }
 
 #searchMenu .list-group li:nth-child(1) {
     border-top: 0 none;
+}
+
+/* Reduce left space in each widget (from 50px to 10px) */
+#op-search-widgets ul {
+    padding-left: 10px;
 }
 
 #op-search-widgets li {
@@ -853,7 +1245,10 @@ nav.panel-heading {
 
 #op-search-widgets {  /* this fixes problem scrolling when widget column is short */
     padding-bottom: 20px;
-    padding-right: 2em;
+    /* Make left/right space of widgets are shrink proportionally when
+    screen is narrower */
+    padding-right: 3%;
+    padding-left: 3%;
 }
 
 .widget-main .range-qtype-helper {
@@ -865,6 +1260,7 @@ nav.panel-heading {
     display: none;
     width: 500px;
 }
+
 .widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }
@@ -889,14 +1285,23 @@ nav.panel-heading {
     font-size: 95%;
 }
 
-.sidebar_wrapper i.fa-check {
-    display: none;
-}
-
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
     overflow-x: auto !important;
     overflow-y: hidden !important;
+}
+
+/* Make only widget title and "i" icon wrapped and keep arrow & x symbols
+stay at the top right corner when screen is narrow */
+#widget-container .card-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Group widgets' arrow and x symbols, make them always stay in one line
+even when screen is narrow */
+#widget-container .card-title > span {
+    display: flex;
 }
 
 .op-widget-column {
@@ -905,7 +1310,8 @@ nav.panel-heading {
     margin: 0 10px;
     margin-left: -20px;
     margin-top: 5px;
-    /* Widget container can shrink to a minimum width = min-width when browser width is shrinking. */
+    /* Widget container can shrink to a minimum width = min-width when
+    browser width is shrinking */
     max-width: 740px;
     min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
@@ -998,20 +1404,99 @@ nav.panel-heading {
 }
 
 /* detail tab */
-.detail-metadata {
-    position:fixed !important;
-    max-width: 700px;
-    top: 4.15em;
-    bottom: 3em;
-    overflow-y: hidden;
+.op-detail-metadata {
+    /* Make detail left pane shrink proportionally when window is narrow
+    and set its min width to be 470px (+ padding left/right: 30px) */
+    position: relative;
+    min-width: 470px;
+    max-width: 800px;
 }
 
-@media (min-width: 768px) {
-    .metadata-container {
-        flex-basis: 800px !important;
-        -webkit-flex-basis: 800px !important;
-        max-width: 800px !important;
+/* Make detail left pane takes up 50% of width */
+.op-detail-metadata-container {
+    flex: 1 0 50%;
+}
+
+/* For the individual metadata categories - removes list bullet and
+   makes indent look like it did with bullet. Same for the product
+   type list. */
+.op-detail-list {
+    list-style: none;
+    padding-left: 22px;
+}
+
+/* For the product type list at the top of the detail page -
+   make each line wrap with the name of the product, not the tooltip. */
+.op-detail-entry {
+    display: flex;
+}
+
+.op-detail-entry-icon {
+    line-height: 21px;
+}
+
+.op-detail-file-list {
+    display: inline;
+}
+
+/* Make detail right pane (img) takes up 50% of width */
+.op-detail-img {
+    flex: 1 1 50%;
+}
+
+@media (max-height: 520px) {
+    /* Make detail image fit the screen when its height is short */
+    .op-detail-img img {
+        max-height: 50vh !important;
     }
+
+    /* Reduce the top space above the detail image when screen is short */
+    .op-detail-img {
+        padding-top: 1% !important;
+    }
+
+}
+
+@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
+    .op-detail-img p {
+        font-size: 0.5rem;
+    }
+}
+
+/* Set max width of flexbox container so that detail image will keep close
+to the left pane when screen is getting too wide */
+.op-detail-content {
+    max-width: 1800px;
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Set detail image size when it's above the left pane */
+    .op-detail-img img {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Reduce the top space above the detail image when screen */
+    .op-detail-img {
+        padding-top: 0 !important;
+    }
+}
+
+/* Make detail image shrink proportionally when screen is resized, and
+also set its min width to be 150px */
+.op-detail-img img {
+    max-width: 100%;
+    min-width: 90px;
+    max-height: 60vh;
+    /* min-width: 150px;
+    max-height: 70vh; */
 }
 
 /* TODO: use @media to fine tune the heights of footer & nav bar
@@ -1064,6 +1549,14 @@ footer {
     position: relative;
 }
 
+/* In help menu, make "x" icon stays at the right of header. This will
+prevent "x" from getting squeezed to the body area and creating a white
+gap next to ps */
+#op-help-panel .card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
 .op-overlay {
     display: none;
     position: fixed;
@@ -1079,7 +1572,7 @@ footer {
     transition: all 0.5s ease-in-out;
 }
 
-/* display .overlay when it has the .active class */
+/* display .op-overlay when it has the .active class */
 .op-overlay.active {
     display: block;
     opacity: 1;
@@ -1103,8 +1596,11 @@ footer {
     content: '';
 }
 
+/* Keep reset buttons in the center when screen is narrow */
 .op-reset-button {
     text-align: center;
+    display: flex;
+    justify-content: center;
 }
 
 .op-reset-button button {
@@ -1114,6 +1610,12 @@ footer {
 
 .op-reset-button button:disabled {
     pointer-events: none;
+}
+
+/* Remove the reddish focus outline on Linux Chrome that makes it look like an
+   invalid value using our color scheme. This color is what is used on Macs. */
+input:focus {
+    outline: auto #5E9ED6;
 }
 
 input[type="text"].search_input_original {
@@ -1179,7 +1681,7 @@ ul.ui-autocomplete a.ui-state-active {
     background-color: #F9F6F6;
 }
 
-.op-noSelect {
+.op-no-select {
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;

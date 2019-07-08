@@ -86,7 +86,6 @@ def api_last_blog_update(request):
     return ret
 
 
-@render_to('ui/menu.html')
 def api_get_menu(request):
     """Return the left side menu of the search page.
 
@@ -97,7 +96,11 @@ def api_get_menu(request):
     Format: __menu.html
     """
     api_code = enter_api_call('api_get_menu', request)
-    ret = _get_menu_labels(request, 'search')
+
+    menu = _get_menu_labels(request, 'search')
+    menu['which'] = 'search' # Used to create DOM IDs
+    ret = render(request, "ui/menu.html", menu)
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -142,6 +145,15 @@ def api_get_widget(request, **kwargs):
         if selections is None: # XXX Really should throw an error of some kind
             selections = {}
             extras = {}
+
+    # Sadly, url_to_search_params optimizes the use of OPUS ID
+    # so that it's always searched from obs_general even though it looks
+    # to the user like it's in obs_pds. So we have to account for that here
+    # or we won't find it in selections.
+    if 'obs_general.opus_id' in selections:
+        selections['obs_pds.opus_id'] = selections['obs_general.opus_id']
+    if 'qtypes' in extras and 'obs_general.opus_id' in extras['qtypes']:
+        extras['qtypes']['obs_pds.opus_id'] = extras['qtypes']['obs_general.opus_id']
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
@@ -320,13 +332,11 @@ def api_get_metadata_selector(request):
     all_slugs_info = OrderedDict()
     for slug in slugs:
         all_slugs_info[slug] = get_param_info_by_slug(slug, 'col')
-    menu = _get_menu_labels(request, 'results')['menu']
+    menu = _get_menu_labels(request, 'selector')
 
-    context = {
-        "all_slugs_info": all_slugs_info,
-        "menu": menu
-    }
-    ret = render(request, "ui/select_metadata.html", context)
+    menu['all_slugs_info'] = all_slugs_info
+    menu['which'] = 'selector'
+    ret = render(request, "ui/select_metadata.html", menu)
 
     exit_api_call(api_code, ret)
     return ret
@@ -416,6 +426,15 @@ def api_init_detail_page(request, **kwargs):
                 file_list[i] = {'filename': fn,
                                 'link': file_list[i]}
             product_info['files'] = file_list
+            try:
+                entry = Definitions.objects.get(
+                                    context__name='OPUS_PRODUCT_TYPE',
+                                    term=product_type[2])
+                product_info['tooltip'] = entry.definition
+            except Definitions.DoesNotExist:
+                log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+                          product_type[2])
+                product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
 
     context = {
@@ -765,9 +784,7 @@ def api_normalize_url(request):
     if 'widgets' in old_slugs:
         widgets = old_slugs['widgets']
     else:
-        # msg = 'The "widgets" field is missing; it has been set to the default.'
-        # msg_list.append(msg)
-        widgets = settings.DEFAULT_WIDGETS
+        widgets = ''
     # Note: at least for now, these are the same
     if (widgets == 'planet,target' and
         widgets != settings.DEFAULT_WIDGETS): # pragma: no cover
@@ -807,13 +824,16 @@ def api_normalize_url(request):
     for widget in required_widgets_list:
         if widget not in widgets_list:
             pi = get_param_info_by_slug(widget, 'widget')
-            msg = ('Search field "' + pi.body_qualified_label_results()
-                   +'" has search parameters but is not listed as a displayed '
-                   +'search field; it has been added to the displayed search '
-                   +'field list.')
-            msg_list.append(msg)
+            # msg = ('Search field "' + pi.body_qualified_label_results()
+            #        +'" has search parameters but is not listed as a displayed '
+            #        +'search field; it has been added to the displayed search '
+            #        +'field list.')
+            # msg_list.append(msg)
             widgets_list.append(widget)
-    new_url_suffix_list.append(('widgets', ','.join(widgets_list)))
+    if 'widgets' not in old_slugs and len(widgets_list) == 0:
+        new_url_suffix_list.append(('widgets', settings.DEFAULT_WIDGETS))
+    else:
+        new_url_suffix_list.append(('widgets', ','.join(widgets_list)))
 
     ### ORDER
     order_list = []
@@ -1114,7 +1134,7 @@ def api_dummy(request, *args, **kwargs):
 
 def _get_menu_labels(request, labels_view):
     "Return the categories in the menu for the search form."
-    labels_view = 'results' if labels_view == 'results' else 'search'
+    labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
         filter = "display"
     else:
@@ -1131,7 +1151,7 @@ def _get_menu_labels(request, labels_view):
     else:
         triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
 
-    if labels_view == 'results':
+    if labels_view == 'selector':
         if 'obs_surface_geometry' in triggered_tables:
             triggered_tables.remove('obs_surface_geometry')
 

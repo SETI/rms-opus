@@ -9,6 +9,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast
 from markupsafe import Markup
 
 from opus import slug as slug
+from opus.slug import FamilyType
 
 SearchSlugInfo = Dict[slug.Family, List[Tuple[slug.Info, str]]]
 ColumnSlugInfo = Dict[slug.Family, slug.Info]
@@ -70,13 +71,7 @@ class QueryHandler:
             if (previous_state, current_state) == (State.FETCHING, State.SEARCHING):
                 result.append('Refining Previous Search')
 
-        search_slug_info: SearchSlugInfo = defaultdict(list)
-        for slug, value in query.items():
-            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
-            if slug_info:
-                family = slug_info.family
-                search_slug_info[family].append((slug_info, value))
-                self._session_info.add_search_slug(slug, slug_info)
+        search_slug_info = self.__get_search_slug_info(query)
 
         if uses_columns:
             columns_query = query.get('cols')
@@ -87,7 +82,6 @@ class QueryHandler:
                 column_slug_info = self._default_column_slug_info
         else:
             column_slug_info = {}
-
 
         self.__handle_search_info(self._previous_search_slug_info, search_slug_info, result)
         self._previous_search_slug_info = search_slug_info
@@ -132,9 +126,6 @@ class QueryHandler:
         url: Optional[str] = None
         if result and self._uses_html:
             query.pop('reqno', None)  # Remove if there, but okay if not
-            if query_type != 'result_count':
-                query['view'] = 'browse'
-                query['browse'] = 'gallery'
             url = self.safe_format('/opus/#/{}', urllib.parse.urlencode(query, False))
 
         if result and query_type != 'result_count':
@@ -220,7 +211,8 @@ class QueryHandler:
             if (old_min, old_max, old_qtype) == (new_min, new_max, new_qtype):
                 return
             else:
-                fields = [(family.min, old_min, new_min), (family.max, old_max, new_max), ('qtype', old_qtype, new_qtype)]
+                fields = [(family.min, old_min, new_min), (family.max, old_max, new_max),
+                          ('qtype', old_qtype, new_qtype)]
 
         if self._uses_html:
             def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
@@ -321,6 +313,20 @@ class QueryHandler:
             joined_new_values = ', '.join(formatted_new_values)
             result.append(f'Change Search: "{name}" = {joined_old_values} -> {joined_new_values}')
 
+    def __get_search_slug_info(self, query):
+        search_slug_info: SearchSlugInfo = defaultdict(list)
+        for slug, value in query.items():
+            slug_info = self._slug_map.get_info_for_search_slug(slug, value)
+            if slug_info:
+                family = slug_info.family
+                search_slug_info[family].append((slug_info, value))
+                self._session_info.add_search_slug(slug, slug_info)
+        # If the only item in a family is QTYPE, then discard the family.
+        for family, slug_info_value_list in list(search_slug_info.items()):
+            if len(slug_info_value_list) == 1 and slug_info_value_list[0][0].family_type == FamilyType.QTYPE:
+                del search_slug_info[family]
+        return search_slug_info
+
     @staticmethod
     def get_column_slug_info(slugs: List[str], slug_map: slug.ToInfoMap,
                              session_info: Optional[Any] = None) -> ColumnSlugInfo:
@@ -371,7 +377,6 @@ class QueryHandler:
             mapping.get(slug.FamilyType.SINGLETON), mapping.get(slug.FamilyType.QTYPE),
             reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
         )
-
 
     def safe_format(self, format_string: str, *args: Any) -> str:
         return cast(str, self._session_info.safe_format(format_string, *args))

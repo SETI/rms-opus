@@ -49,7 +49,7 @@ var o_menu = {
             // for opus: keeping track of menu state, since menu is constantly refreshed
             // menu cats
             let category = $(this).data( "cat" );
-            let groupElem = $(`#sidebar #submenu-${category}`);
+            let groupElem = $(`#sidebar #search-submenu-${category}`);
             if ($(groupElem).hasClass("show")) {
                 opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
             } else {
@@ -63,16 +63,16 @@ var o_menu = {
      },
 
      getNewSearchMenu: function() {
-        $('.op-menu-text.spinner').addClass("op-show-spinner");
-
+        let spinnerTimer = setTimeout(function() {
+             $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
             // open menu items that were open before
             $("#sidebar").toggleClass("op-redraw-menu");
             $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#submenu-${category}`).length != 0) {
-                    $(`#submenu-${category}`).collapse("show");
+                if ($(`#sidebar #search-submenu-${category}`).length != 0) {
+                    $(`#sidebar #search-submenu-${category}`).collapse("show");
                 } else {
                     // this is if the surface geometry target is no longer applicable so it's not
                     // on the menu, remove from the menuState
@@ -85,17 +85,20 @@ var o_menu = {
             o_menu.markCurrentMenuItems();
 
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
+            clearTimeout(spinnerTimer);
         });
      },
 
      markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
-            $(selector).css("background", "gainsboro");
-            $(selector).find("i.fa-check").fadeIn().css("display", "inline-block");
+            $(selector).css({"background": "gainsboro"});
+            // We use find() here instead of just adding to the selector because
+            // selector might be a string or it might be an actual DOM object
+            $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
         } else {
-            $(selector).css("background", "initial");
-            $(selector).find("i.fa-check").hide();
-      }
+            $(selector).css({"background": "initial"});
+            $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
+        }
      },
 
     markCurrentMenuItems: function() {

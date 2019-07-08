@@ -57,12 +57,12 @@
 "https://tools.pds-rings.seti.org/#/observationtype=Time+Series",58711,Observation Type Time Series
 "https://tools.pds-rings.seti.org/#/observationtype=Spectral+Time+Series",24950,Observation Type Spectral Time Series
 
-"https://tools.pds-rings.seti.org/#/quantity=Reflectivity",1245907,Measurement Quantity Reflectivity
+"https://tools.pds-rings.seti.org/#/quantity=Reflectivity",1245294,Measurement Quantity Reflectivity
 "https://tools.pds-rings.seti.org/#/quantity=Thermal+Emission",24950,Measurement Quantity Thermal Emission
 "https://tools.pds-rings.seti.org/#/quantity=Optical+Depth",20857,Measurement Quantity Optical Depth
 "https://tools.pds-rings.seti.org/#/quantity=Emission",232680,Measurement Quantity Emission
 
-"https://tools.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOphase1=160&RINGGEOphase2=",=1485,COISS images of Enceladus at high phase angle
+"https://tools.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOphase1=160&RINGGEOphase2=",=1489,COISS images of Enceladus at high phase angle
 "https://tools.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOemission1=160&RINGGEOemission2=",=288,COISS images of Enceladus at high emission angle
 "https://tools.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOnorthbasedemission1=160&RINGGEOnorthbasedemission2=",=88,COISS images of Enceladus at high north-based emission angle
 "https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&target=ENCELADUS&RINGGEOnorthbasedemission1=160&RINGGEOnorthbasedemission2=&RINGGEOphase1=160&RINGGEOphase2=",=0,COISS images of Enceladus at high phase angle and high north-based emission angle. This should give null result because the former requires looking down on the pole and the latter requires being near the equator.
@@ -83,7 +83,7 @@
 
 "https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&CASSINIobsname=007RI_LPHRLFMOV",=249,Daphnis discovery movie
 
-"https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&surfacegeometrytargetname=SATURN&SURFACEGEOsaturnsubobserverplanetographiclatitude1=50&SURFACEGEOsaturnsubobserverplanetographiclatitude2=&SURFACEGEOsaturncenterresolution1=5&SURFACEGEOsaturncenterresolution2=10&target=SATURN",=115,"Images of the polar hexagon."
+"https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&surfacegeometrytargetname=SATURN&SURFACEGEOsaturnsubobserverplanetographiclatitude1=50&SURFACEGEOsaturnsubobserverplanetographiclatitude2=&SURFACEGEOsaturncenterresolution1=5&SURFACEGEOsaturncenterresolution2=10&target=SATURN",=302,"Images of the polar hexagon."
 "https://tools.pds-rings.seti.org/#/instrument=Cassini+ISS&CASSINIobsname=RDCOLSCNM",=285,"This was Jeff’s search. Results from revs 204, 206, 209, and 210. Name could be used again, adding more results."
 "https://tools.pds-rings.seti.org/#/planet=Pluto&mission=Voyager",=0,Voyager mission with Pluto as target
 "https://tools.pds-rings.seti.org/#/planet=Jupiter&RINGGEOringradius1=75000&RINGGEOringradius2=138000&RINGGEOphase1=20&RINGGEOphase2=150&rightasc1=10&rightasc2=270&declination1=-15&declination2=15&targetclass=Ring",120,
@@ -98,7 +98,7 @@
 "https://tools.pds-rings.seti.org/#/planet=Earth&insthost=Cassini&timesec1=1999-230T02:10:00.000&timesec2=1999-230T02:20:00.000",=0,Earth search
 "https://tools.pds-rings.seti.org/#/planet=Venus&mission=Cassini&instrument=Cassini+VIMS&wavelength1=0.4&wavelength2=0.8",=0,"Venus with cassini UVIS, wavelength constrained"
 "https://tools.pds-rings.seti.org/#/planet=Venus&mission=Cassini&instrument=Cassini+ISS&wavelength1=0.70&wavelength2=0.75",=0,"Venus with cassini ISS, wavelength constrained"
-"https://tools.pds-rings.seti.org/#/planet=Jupiter&target=GANYMEDE&instrument=Cassini+ISS&surfacegeometrytargetname=GANYMEDE&SURFACEGEOganymedesolarhourangle1=0&SURFACEGEOganymedesolarhourangle2=30&SURFACEGEOganymedeincidence1=20&SURFACEGEOganymedeincidence2=75&SURFACEGEOganymedeemission1=25&SURFACEGEOganymedeemission2=60&timesec1=2001-001T12:00:00&timesec2=2001-010T12:00:00",23,Surface Geometry of Ganymede
+"https://tools.pds-rings.seti.org/#/planet=Jupiter&target=GANYMEDE&instrument=Cassini+ISS&surfacegeometrytargetname=GANYMEDE&SURFACEGEOganymedesolarhourangle1=0&SURFACEGEOganymedesolarhourangle2=30&SURFACEGEOganymedeincidence1=20&SURFACEGEOganymedeincidence2=75&SURFACEGEOganymedeemission1=25&SURFACEGEOganymedeemission2=60&timesec1=2001-001T12:00:00&timesec2=2001-010T12:00:00",11,Surface Geometry of Ganymede
 
 "https://tools.pds-rings.seti.org/#/planet=Earth&insthost=Cassini&timesec1=1999-230T02:10:00.000&timesec2=1999-230T02:20:00.000",=0,Earth search
 "https://tools.pds-rings.seti.org/#/planet=Venus&mission=Cassini&instrument=Cassini+VIMS&wavelength1=0.4&wavelength2=0.8",=0,"Venus with cassini UVIS, wavelength constrained"
@@ -106,7 +106,6 @@
 "https://tools.pds-rings.seti.org/#/target=Earth&insthost=Cassini&timesec1=1999-230T02:10:00.000&timesec2=1999-230T02:20:00.000",=2,Earth search
 "https://tools.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+VIMS&wavelength1=0.4&wavelength2=0.8",=123,"Venus with cassini UVIS, wavelength constrained"
 "https://tools.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+ISS&wavelength1=0.70&wavelength2=0.75",=4,"Venus with cassini ISS, wavelength constrained"
-"https://tools.pds-rings.seti.org/#/planet=Jupiter&target=GANYMEDE&instrument=Cassini+ISS&surfacegeometrytargetname=GANYMEDE&SURFACEGEOganymedesolarhourangle1=0&SURFACEGEOganymedesolarhourangle2=30&SURFACEGEOganymedeincidence1=20&SURFACEGEOganymedeincidence2=75&SURFACEGEOganymedeemission1=25&SURFACEGEOganymedeemission2=60&timesec1=2001-001T12:00:00&timesec2=2001-010T12:00:00",23,Surface Geometry of Ganymede
 
 "https://tools.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",53994,Surface Geo Jupiter
 "https://tools.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN",1239752,Surfae Geo Saturn

@@ -47,13 +47,12 @@ var o_search = {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
             if (o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "") {
-              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_original");
             } else {
-              $(this).addClass("input_currently_focused");
               $(this).addClass("search_input_invalid");
-              $(this).removeClass("search_input_invalid_no_focus");
             }
+            $(this).addClass("input_currently_focused");
+            $(this).removeClass("search_input_invalid_no_focus");
         });
 
         /*
@@ -238,42 +237,42 @@ var o_search = {
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
-        $('#search').on("change", 'input.multichoice, input.singlechoice', function() {
-           // mult widget gets changed
-           let id = $(this).attr("id").split('_')[0];
-           let value = $(this).attr("value").replace(/\+/g, '%2B');
+        $("#search").on("change", "input.multichoice, input.singlechoice", function() {
+            // mult widget gets changed
+            let id = $(this).attr("id").split("_")[0];
+            let value = $(this).attr("value");
 
-           if ($(this).is(':checked')) {
-               let values = [];
-               if (opus.selections[id]) {
-                   values = opus.selections[id]; // this param already has been constrained
-               }
+            if ($(this).is(":checked")) {
+                let values = [];
+                if (opus.selections[id]) {
+                    values = opus.selections[id]; // this param already has been constrained
+                }
 
-               // for surfacegeometry we only want a target selected
-               if (id === 'surfacegeometrytargetname') {
-                  opus.selections[id] = [value];
-               } else {
-                  // add the new value to the array of values
-                  values[values.length] = value;
-                  // add the array of values to selections
-                  opus.selections[id] = values;
-               }
+                // for surfacegeometry we only want a target selected
+                if (id === "surfacegeometrytargetname") {
+                    opus.selections[id] = [value];
+                } else {
+                    // add the new value to the array of values
+                    values.push(value);
+                    // add the array of values to selections
+                    opus.selections[id] = values;
+                }
 
-               // special menu behavior for surface geo, slide in a loading indicator..
-               if (id == 'surfacetarget') {
+                // special menu behavior for surface geo, slide in a loading indicator..
+                if (id == "surfacetarget") {
                     let surface_loading = '<li style="margin-left:50%; display:none" class="spinner">&nbsp;</li>';
-                    $(surface_loading).appendTo($('a.surfacetarget').parent()).slideDown("slow").delay(500);
-               }
+                    $(surface_loading).appendTo($("a.surfacetarget").parent()).slideDown("slow").delay(500);
+                }
 
-           } else {
-               let remove = opus.selections[id].indexOf(value); // find index of value to remove
-               opus.selections[id].splice(remove,1);        // remove value from array
+            } else {
+                let remove = opus.selections[id].indexOf(value); // find index of value to remove
+                opus.selections[id].splice(remove,1);        // remove value from array
 
-               if (opus.selections[id].length === 0) {
-                   delete opus.selections[id];
-               }
-           }
-           o_hash.updateHash();
+                if (opus.selections[id].length === 0) {
+                    delete opus.selections[id];
+                }
+            }
+            o_hash.updateHash();
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
@@ -348,6 +347,7 @@ var o_search = {
                     } else {
                         currentInput.val(value);
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        opus.selections[eachSlug] = [value];
                         // No color border if the input value is valid
                         currentInput.addClass("search_input_original");
                         currentInput.removeClass("search_input_invalid_no_focus");
@@ -358,7 +358,9 @@ var o_search = {
             }
         });
 
-        if (!opus.allInputsValid) {
+        if (opus.allInputsValid) {
+            o_hash.updateHash();
+        } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
@@ -386,7 +388,8 @@ var o_search = {
             }
 
             // check each range input, if it's not valid, change its background to red
-            o_search.validateRangeInput(normalizedInputData);
+            // and also remove spinner.
+            o_search.validateRangeInput(normalizedInputData, true);
             if (!opus.allInputsValid) {
                 return;
             }
@@ -397,7 +400,7 @@ var o_search = {
                 opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
                 });
-                $("#op-result-count").text(o_utils.addCommas(opus.resultCount));
+                $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
             }
             $("input.RANGE").each(function() {
                 if (!$(this).hasClass("input_currently_focused")) {
@@ -419,13 +422,22 @@ var o_search = {
         return content;
     },
 
-    adjustSearchHeight: function() {
-        o_search.adjustSearchSideBarHeight();
-        o_search.adjustSearchWidgetHeight();
+    searchBarContainerHeight: function() {
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let footerHeight = $(".app-footer").outerHeight();
+        let resetButtonHeight = $(".op-reset-button").outerHeight();
+        let dividerHeight = $(".shadow-divider").outerHeight();
+        let offset = mainNavHeight + footerHeight + resetButtonHeight + dividerHeight;
+        return $("#search").height() - offset;
     },
 
-    adjustSearchSideBarHeight: function() {
-        let containerHeight = $("#search").height() - 120;
+    searchHeightChanged: function() {
+        o_search.searchSideBarHeightChanged();
+        o_search.searchWidgetHeightChanged();
+    },
+
+    searchSideBarHeightChanged: function() {
+        let containerHeight = o_search.searchBarContainerHeight();
         let searchMenuHeight = $(".searchMenu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
 
@@ -440,7 +452,7 @@ var o_search = {
         o_search.searchScrollbar.update();
     },
 
-    adjustSearchWidgetHeight: function() {
+    searchWidgetHeightChanged: function() {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let totalNonSearchAreaHeight = footerHeight + mainNavHeight;

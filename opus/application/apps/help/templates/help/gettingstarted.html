@@ -1,0 +1,278 @@
+<h3>Introduction</h3>
+
+<p>OPUS (Outer Planets Unified Search) makes available more than 1,500,000
+    images and spectra of the outer planets (Jupiter, Saturn, Uranus, Neptune,
+    and the Kuiper Belt) from Voyagers 1 and 2, Galileo, Cassini, New Horizons,
+    and the Hubble Space Telescope. (More details about these missions and what
+    OPUS provides can be found in the <b>About</b> section of the <b>Help</b>
+    menu.)</p>
+
+<p>OPUS makes it easy to perform four main tasks:</p>
+<ol>
+    <li><b>Search</b> for observations (e.g. images and spectra) using a variety
+        of simple and complex search terms.</li>
+    <li><b>Browse</b> the results of the search using intuitive, colored
+        thumbnails.</li>
+    <li><b>Get Details</b> on individual observations.</li>
+    <li><b>Download</b> PDS products (e.g. raw or calibrated data, preview
+        images, geometry metadata) for off-line use.</li>
+</ol>
+
+<p>These four tasks correspond to the four navigation tabs at the top of the
+OPUS screen. You can switch among these tabs in any order as you explore the
+data OPUS has to offer.</p>
+
+<h3>Searching</h3>
+
+<p>The <b>Search</b> tab consists of:</p>
+<ol>
+    <li>A series of <em>search terms</em> on the left side organized by
+        category. By default, there are five categories:
+        <ol>
+            <li><b>General Constraints</b> includes high-level information such
+                as the mission, instrument, and target name.</li>
+            <li><b>PDS Constraints</b> includes search fields more internal to
+                the PDS, such as the Volume ID and Data Set ID. These fields
+                are less likely to be useful to the casual user.</li>
+            <li><b>Image Constraints</b> permits easy searching across missions
+                and instruments by abstracting away details about the physical
+                details of the observation, such as image size and exposure
+                time.</li>
+            <li><b>Wavelength Constraints</b> permits easy searching across
+                missions and instruments by abstracting away details about what
+                portion of the electromagnetic spectrum the observation
+                encodes, such as wavelength range and polarization.</li>
+            <li><b>Surface Geometry Constraints</b> allows searching on the
+                details of any body in the field of view, such as latitude and
+                longitude or lighting geometry.</li>
+            <li><b>Ring Geometry Constraints</b> allows searching on the details
+                of any planetary rings in the field of view, such as radius
+                and longitude or lighting geometry.</li>
+        </ol>
+
+        In addition, new categories will appear when the search is sufficiently
+        restricted. For example, when all observations in the current search
+        are from Cassini, a <b>Cassini Constraints</b> category will appear
+        with Cassini-specific search fields.</li>
+    <li>A series of <em>search fields</em> on the right side. When OPUS starts,
+        <b>Planet</b> and <b>Intended Target Name</b> are provided. Additional
+        fields can be created by clicking on one of the search terms on the
+        left. Search fields can be minimized by clicking on the
+        <i class="fa fa-chevron-down"></i> icon,
+        closed by clicking on the
+        <i class="fa fa-times"></i> icon,
+        or reordered by dragging and dropping the entire search field box.</li>
+</ol>
+
+<p>There are four basic types of search fields:</p>
+<ol>
+    <li><b>Multiple-Choice Fields</b> (such as <b>Planet</b> and <b>Mission</b>)
+        allow you to select one or more items by clicking on a checkbox. If you
+        select more than one item, your search will return results applicable
+        to any of those items.</li>
+    <li><b>String Fields</b> (such as <b>Volume ID</b>) allow you to search on
+        strings. You can provide partial strings that match the beginning or
+        end, are contained anywhere within, or match exactly, among
+        other choices. As you type your search string you will be presented
+        with suggestions; click on one of the suggestions to have it placed
+        in the search field.</li>
+    <li><b>Numeric Fields</b> (such as <b>Observation Duration</b> or
+        <b>Observed Ring Radius</b>) allow you to search on a range of numbers
+        by specifying either a minimum or a maximum value, or both. An
+        explanation of the Any/All/Only dropdown menu is provided in the FAQ.
+        </li>
+    <li><b>Date/Time Fields</b> (such as <b>Observation Time</b>) allow you
+        to search on a range of dates and times by specifying a minimum or
+        maximum date/time, or both. You can enter dates and times in a wide
+        variety of formats, although the standard is YYYY-MM-DD[Thh:mm:ss.sss].
+        </li>
+</ol>
+
+<p>For the latter two types of fields, as you type your search value you will
+    receive feedback indicating if the value is legal. A green box means it
+    is fine as-is. A yellow box means the value is illegal and you should change
+    something before leaving the search field (by clicking elsewhere or hitting
+    the Enter key). If you leave the field with an invalid value, it will turn
+    red and no search will be performed until you fix the value.</p>
+
+<p>As you enter search values, the number of results that are selected will
+    constantly update in the <b>Browse Results</b> tab. In addition,
+    you will be provided with the minimum/maximum values or date/times,
+    or the number of results for each multiple-choice item, based on your
+    current search criteria.</p>
+
+<p>Once you have selected entered some search constraints, it's time to browse
+    the results.</p>
+
+<h3>Browsing</h3>
+
+<p>The <b>Browse Results</b> tab shows the observations selected by your search
+    in one of two ways:</p>
+
+<ol>
+    <li>The <b>Gallery View</b> shows a grid of colored thumbnails. The meaning
+        of the thumbnail contents differs depending on the instrument, but in
+        general it attempts to capture the image including filter color or
+        wavelength range (for imaging cameras or spectrographs) or footprint
+        (for non-imaging spectrographic instruments).</li>
+    <li>The <b>Table View</b> shows a series of rows, one per observation,
+        containing the currently selected metadata fields.</li>
+</ol>
+
+<p>You can switch between the two views by clicking on <b>View Table</b> or
+    <b>View Gallery</b>.</p>
+
+<p>You can navigate through the result set using the scrollbar on the right,
+    which may be moved either up or down. As the scrollbar approaches one of its
+    extremes, additional data will be loaded, giving the appearance of a
+    continuous data set in either direction. You may also use the mouse wheel,
+    up/down arrow keys, or page up/down keys. To move a larger distance through
+    the result set, you may use the slider at the top of the screen. The
+    observation number you select will appear in the top-left thumbnail
+    (gallery) or top row (table).</p>
+
+<p>Each observation has a menu (<i class="fas fa-bars fa-xs"></i>) that allows
+    you to perform a variety of operations, including adding or removing the
+    observation from the cart, starting or ending a range of observations
+    to be added or removed from the cart, showing the details of the
+    observation, or downloading observation data. A single observation may also
+    be added to or removed from the cart by using Ctrl+Click, clicking on the
+    <i class="fas fa-cart-plus fa-xs"></i> or
+    <i class="far fa-trash-alt fa-xs"></i> icons in the gallery view,
+    or clicking on the checkbox in the table view. A range of observations may
+    also be added to or removed from the cart by using Shift+Click to start and
+    end the range. If the starting observation is not currently in the cart,
+    all observations in the range will be added; if the starting observation is
+    already in the cart, all observations in the range will be removed.
+    See the section on the <b>Cart</b> tab below for more information on
+    downloading.</p>
+
+<p>The sort order for all results may be modified by clicking on a column header
+    in the table view; this is the only way to choose a different metadata field
+    to sort on. However, the current sort field and sort direction are always
+    displayed at the top after the <i class="fas fa-random"></i> icon. Clicking
+    a field name there will toggle the order between ascending and descending,
+    and clicking on the <i class="fas fa-times-circle"></i> icon will remove
+    that field from the sort order. The same sort order applies to the
+    <b>Browse</b> tab and the <b>Cart</b> tab.</p>
+
+<p>Clicking on a thumbnail or table row will display a larger version of the
+    thumbnail along with the metadata for the currently selected metadata
+    fields; this is called the slideshow view. You may navigate by clicking on
+    the <i class="far fa-hand-point-left"></i> or
+    <i class="far fa-hand-point-right"></i> icons or using the right/left arrow
+    keys. You may also add or remove observations from the cart or perform the
+    operations permitted by the <i class="fas fa-bars fa-xs"></i> menu.</p>
+
+<p>Which metadata fields are displayed in the table view and slideshow view
+    can be changed by clicking on <b>Select Metadata</b> at the top. Fields may
+    be added or removed by clicking on them on the left, and may be reordered
+    by dragging. The fields selected here also affect what is included in a
+    CSV file when using <b>Download CSV (all results)</b> at the top or
+    the <b>Download CSV of selected metadata</b> menu option, as well as what
+    is included in downloaded data and URL archive zip files.</p>
+
+<h3>The Cart</h3>
+
+<p>The cart allows you to collect observations for future downloading. As
+    described above, you can add or remove individual observations, or ranges
+    of observations, from the <b>Browse Results</b> tab. The number of
+    observations in the cart will be displayed next to the <b>Cart</b> tab.</p>
+
+<p>The <b>Cart</b> tab allows you to view and navigate through your cart in the
+    same way the <b>Browse</b> tab allows you to view and navigate through your
+    total result set. In addition, the <b>Download Options</b> pane on the left
+    shows the estimated total download size of your cart as well as which data
+    products will be included in a download. The individual products can be
+    selected or removed to reduce the file size.</p>
+
+<p>Three basic methods of download are provided:</p>
+
+<ol>
+    <li>A <b>Metadata CSV</b> is a comma-separated value (CSV) text file
+        containing one row per observation. The rows contain all of the
+        metadata fields selected using the <b>Select Metadata</b> option. On
+        the <b>Cart</b> tab, the <i class="fas fa-file-csv"></i><b>Metadata
+        CSV</b> option will include all of the observations in your cart.
+        On the <b>Browse</b> tab, the
+        <i class="fas fa-download"></i><b>Download CSV (all results)</b>
+        option will include <em>all</em> of the observations in your result set
+        (which may be a lot!).
+        The <i class="fas fa-bars fa-xs"></i> menu may also be used to create
+        a metadata CSV file for a single observation.</li>
+    <li>A <b>Data Archive</b> includes all of the selected data products in
+        a single zip file. Also included are a metadata CSV file, a file of
+        product checksums, a manifest showing which files are included, and
+        a file containing the URLs for each data product. On the <b>Cart</b>
+        tab, the <i class="fas fa-download"></i><b>Data Archive</b> option will
+        include all observations in your cart in the zip file. You may also
+        download a data archive for all data relevant data products for a
+        single observation using the
+        <i class="fas fa-bars fa-xs"></i> menu.</li>
+    <li>A <b>URL Archive</b> is similar to a data archive, but includes only
+        the non-product files (metadata CSV, checksum, manifest, and URL) in a
+        single zip file. This results in a very small download. The actual data
+        products can then be retrieved using a command line utility such as <b>wget</b>:
+        <pre>    wget -i urls.txt</pre></li>
+</ol>
+
+<h3>Observation Details</h3>
+
+<p>Finally, it is possible to view all of the available product files and all of
+the available metadata for an observation by using the <b>Detail</b> tab.</p>
+
+<p>To view an observation's details, you may click on a thumbnail's
+    <i class="fas fa-info-circle fa-xs"></i> icon or select <b>Show detail</b>
+    in the <i class="fas fa-bars fa-xs"></i> menu.</p>
+
+<p>The <b>Detail</b> tab includes larger version of the thumbnail on the right.
+    On the left is:</p>
+
+<ol>
+    <li>The OPUS ID you are viewing.</li>
+    <li>Links to download a data archive or URL archive for the observation.
+        </li>
+    <li>A list of all available PDS product types for the observation, along
+        with all files that are available for each. Multiple versions
+        are offered if available. If an <b>Index</b> file has an active
+        link, clicking on it will provide the full detail of the observation
+        in the given index file.</li>
+    <li>Metadata for the currently selected metadata fields, including the
+        option to download a metadata CSV file for the observation.</li>
+    <li>All available metadata for the observation, including the option to
+        download it all in JSON format. Each string or multiple-choice field
+        has a <i class="fas fa-search"></i> icon after the value. If you click
+        on this icon, a new browser tab will open with a new OPUS
+        that searches only for that value for that search field. This is useful,
+        for example, for easily finding other observations with the same
+        Cassini <b>Observation Name</b> as the one you are currently looking
+        at.</li>
+</ol>
+
+<h3>Other Features</h3>
+
+<p>Selecting <b>Recent Announcements</b> will take you to the OPUS blog, where
+    we announce changes to OPUS.</p>
+
+<p>Selecting <b>Questions/Feedback</b> will take you to our feedback page,
+    where you can ask questions, make comments or suggestions, and report
+    bugs.</p>
+
+<p>Selecting <b>Help</b> will provide you with various options to get additional
+    assistance:</p>
+
+<ul>
+    <li><b>About</b> describes OPUS and gives a summary of the missions and
+        instruments we support.</li>
+    <li><b>FAQ</b> gives detailed answers to various frequently asked
+        questions. It is a good place to look after completing this
+        <b>Getting Started</b> page.</li>
+    <li><b>Data Volumes</b> gives a list of all PDS volumes supported by
+        OPUS.</li>
+    <li><b>API Guide</b> gives the details of our publicly-available RESTful
+        API that allows third-party software to use OPUS to search for
+        and retrieve data.</li>
+</ul>
+
+<p>Thank you for your interest in OPUS! We hope you enjoy your experience and
+    find your data easily, and we look forward to hearing your feedback.</p>

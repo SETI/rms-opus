@@ -100,7 +100,7 @@ General Questions:
             <li>On the Cart tab, you now have the ability to change the sort
             order of the displayed thumbnails or table rows.</li>
             <li>On the Cart tab, the available products include tooltips
-            (<i class="fa fa-info-circle"></i>) that give details about each
+            (<i class="fas fa-info-circle"></i>) that give details about each
             file type.</li>
             </ul>
 
@@ -122,6 +122,10 @@ General Questions:
             <i class="far fa-hand-point-right"></i>)
             or the keyboard arrow keys to navigate to other observations.
             </ul>
+
+
+            Please refer to <b>Getting Started</b> under the <b>Help</b> menu
+            for complete information on how to use OPUS.
     -
         Q: >
             Where are all the pretty pictures?

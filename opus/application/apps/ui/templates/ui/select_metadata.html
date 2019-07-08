@@ -2,32 +2,26 @@
 
 {% block menu %}
 <div class="row">
-  <div class="op-all-metadata-column col">
-    {% with 'menu' as expectedVarName %}
-      {{ block.super }} {# renders ui/menu.html #}
-    {% endwith %}
-  </div>
+    <div class="op-all-metadata-column col">
+        {{ block.super }} {# renders ui/menu.html #}
+    </div>
 
-  <div class="op-selected-metadata-column col">
-  	<ul>
-  		{% for slug, param_info in all_slugs_info.items %}
-  		    <li id="cchoose__{{ slug }}">
-
-                {{ param_info.body_qualified_label_results }}
-
-                <span class="info">&nbsp;<i class="fa fa-info-circle" title = "
-                    {% if param_info.get_tooltip %}
-                        {{ param_info.get_tooltip|striptags }}
-                    {% else  %}
-                        {{ param_info.body_qualified_label_results }}
-                    {% endif %}
-                "></i>&nbsp;&nbsp;&nbsp;</span>
-
-                <!-- "remove this column" x button -->
-                <span class="unselect"><i class="far fa-trash-alt"></i></span>
-  			</li>
-  		{% endfor %}
-  	</ul>
-  </div>
+    <div class="op-selected-metadata-column col">
+  	    <ul>
+            {% for slug, param_info in all_slugs_info.items %}
+  		        <li id="cchoose__{{ slug }}">
+                    <span class="info">&nbsp;<i class="fas fa-info-circle" title = "
+                        {% if param_info.get_tooltip %}
+                            {{ param_info.get_tooltip|striptags }}
+                        {% else  %}
+                            {{ param_info.body_qualified_label_results }}
+                        {% endif %}
+                    "></i></span>
+                    {{ param_info.body_qualified_label_results }}
+                    <span class="unselect"><i class="far fa-trash-alt"></i></span>
+	            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 {% endblock %}

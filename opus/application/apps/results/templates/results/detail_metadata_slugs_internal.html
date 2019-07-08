@@ -1,13 +1,26 @@
-<ul class="columns_metadata">
-  {% for entry in data %}
-    <li>
-      {% for param, values in entry.items %}
-        {{ param }}: {{ values.0 }}
-        {% if values.1.get_tooltip_results %}
-          <i class="fa fa-info-circle" data-toggle="tooltip"
-             title="{{ values.1.get_tooltip_results|striptags }}"></i>
-        {% endif %}
-      {% endfor %}
-    </li>
-  {% endfor %}
+{% load encode_value %}
+<ul class="op-detail-list">
+    {% for entry in data %}
+        <li class="op-detail-entry">
+            {% for param, values in entry.items %}
+                {% if values.1.get_tooltip_results %}
+                    <i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"
+                        title="{{ values.1.get_tooltip_results|striptags }}"></i>&nbsp;
+                {% endif %}
+                <div>
+                    {{ param }}: {{ values.0 }}
+                    {% if values.1.is_string_or_mult %}
+                        <a href="/opus/#/{{ values.1.slug }}={{ values.0|encode_value }}
+                                {% if values.1.is_string %}
+                                    &qtype-{{ values.1.slug }}=matches
+                                {% endif %}"
+                                target="_blank">
+                            <i class="fas fa-search"
+                                title='Open a new browser tab containing OPUS that searches for "{{ values.1.label_results }}" equal to "{{ values.0 }}"'></i>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </li>
+    {% endfor %}
 </ul>

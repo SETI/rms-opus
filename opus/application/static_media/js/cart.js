@@ -6,30 +6,43 @@
 /* globals $, PerfectScrollbar */
 /* globals o_browse, o_hash, opus */
 
+// The download options left pane will become a slide panel when screen width
+// is equal to or less than the threshold point.
+const cartLeftPaneThreshold = 900;
+
 /* jshint varstmt: false */
 var o_cart = {
 /* jshint varstmt: true */
-    // cart
-    cartChange: true, // cart has changed since last load of cart_tab
-    lastRequestNo: 0,
-    downloadInProcess: false,
-    cartCount: 0,
-
-    // collector for all cart status error messages
-    statusDataErrorCollector: [],
-    galleryBoundingRect: {'x': 0, 'y': 0},
-
+    // tableScrollbar and galleryScrollbar are common vars w/browse.js
     tableScrollbar: new PerfectScrollbar("#cart .op-data-table-view", {
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     galleryScrollbar: new PerfectScrollbar("#cart .op-gallery-view", {
         suppressScrollX: true,
-        minScrollbarLength: opus.minimumPSLength
+        minScrollbarLength: opus.galleryAndTablePSLength,
+        maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
+    // o_cart only...
     downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
         minScrollbarLength: opus.minimumPSLength
     }),
+    // these vars are common w/o_browse
+    reloadObservationData: true, // start over by reloading all data
+    observationData: {},  // holds observation column data
+    totalObsCount : undefined,
+    cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
+    maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
+    galleryBoundingRect: {'x': 0, 'y': 0},
 
+    // unique to o_cart
+    lastRequestNo: 0,
+    downloadInProcess: false,
+    cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
+    downloadSizeSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
+
+    // collector for all cart status error messages
+    statusDataErrorCollector: [],
     /**
      *
      *  managing cart communication between server and client and
@@ -58,9 +71,7 @@ var o_cart = {
 
         // check an input on selected products and images updates file_info
         $("#cart").on("click","#download_options input", function() {
-            $("#op-total-download-size").hide();
-            $(".op-total-size .spinner").addClass("op-show-spinner");
-
+            o_cart.showDownloadSizeSpinner();
             let add_to_url = o_cart.getDownloadFiltersChecked();
             o_cart.lastRequestNo++;
             let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
@@ -68,8 +79,7 @@ var o_cart = {
                 if (info.reqno < o_cart.lastRequestNo) {
                     return;
                 }
-                $(".op-total-size .spinner").removeClass("op-show-spinner");
-                $("#op-total-download-size").fadeOut().html(info.total_download_size_pretty).fadeIn();
+                o_cart.hideDownloadSizeSpinner(info.total_download_size_pretty);
             });
         });
 
@@ -93,6 +103,36 @@ var o_cart = {
                 $("#op-cart-status-error-msg").modal("show");
             }
         });
+
+        // Click to open the download options panel when that nav-link is availabe
+        $("#cart").on("click", ".op-cart-slide-download-panel", function(e) {
+            o_cart.displayCartLeftPane();
+            $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
+                $(".op-overlay").addClass("active");
+                $("#op-cart-download-panel").addClass("active");
+            });
+        });
+
+        // Clicking on the "X" in the corner of the download options panel
+        $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
+            opus.hideHelpAndCartPanels();
+            return false;
+        });
+    },
+
+    displayCartLeftPane: function() {
+        /**
+         * Move download options elements between original left pane and slide panel
+         * depending on the screen width
+         */
+        // We use detach here to keep the event handlers attached to elements
+        let html = $("#op-download-options-container").detach();
+        if ($(window).width() <= cartLeftPaneThreshold) {
+            $("#op-cart-download-panel .op-card-contents").html(html);
+        } else {
+            $(".cart_details").html(html);
+        }
+        o_cart.adjustProductInfoHeight();
     },
 
     // download filters
@@ -144,7 +184,12 @@ var o_cart = {
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cartSummaryHeight = $("#cart_summary").height();
+        let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         $("#cart .gallery-contents").height(containerHeight);
+
+        if ($(window).width() < cartLeftPaneThreshold) {
+            downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
+        }
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
 
         // The following steps will hide the y-scrollbar when it's not needed.
@@ -168,43 +213,46 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        o_cart.cartCount = status.count;
-        $("#op-cart-count").html(o_cart.cartCount);
+        o_cart.totalObsCount = status.count;
+        o_cart.hideCartCountSpinner(o_cart.totalObsCount);
         if (status.total_download_size_pretty !== undefined) {
-            $("#op-total-download-size").fadeOut().html(status.total_download_size_pretty).fadeIn();
+            o_cart.hideDownloadSizeSpinner(status.total_download_size_pretty);
         }
     },
 
     // init an existing cart on page load
     initCart: function() {
-       // display cart badge spinner, it will get updated after the return of status.json
-       $("#op-cart-count").html(opus.spinner);
-       // returns any user cart saved in session
-       o_cart.lastRequestNo++;
-       $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
-           if (statusData.reqno < o_cart.lastRequestNo) {
-               return;
-           }
-           o_cart.updateCartStatus(statusData);
-       });
+        o_cart.showCartCountSpinner();
+
+        // returns any user cart saved in session
+        o_cart.lastRequestNo++;
+        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
+            if (statusData.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(statusData);
+        });
     },
 
     // get Cart tab
     activateCartTab: function() {
         let view = opus.prefs.view;
+        o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
-        if (o_cart.cartChange) {
+        if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
-
-            // don't forget to remove existing stuff before append
-            $("#cart .op-data-table > tbody").empty();  // yes all namespaces
+            $("#cart .op-results-message").hide();
             $("#cart .gallery").empty();
+            $("#cart .op-data-table tbody").empty();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
                 success: function(html) {
                     // this div lives in the in the nav menu template
                     $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
+                    // Depending on the screen width, we move download options elements
+                    // to either original left pane or slide panel
+                    o_cart.displayCartLeftPane();
 
                     if (o_cart.downloadInProcess) {
                         $(".spinner", "#cart_summary").fadeIn();
@@ -212,7 +260,7 @@ var o_cart = {
 
                     let startObsLabel = o_browse.getStartObsLabel();
                     let startObs = opus.prefs[startObsLabel];
-                    startObs = (startObs > o_cart.cartCount ? 1 : startObs);
+                    startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
                     o_browse.loadData(view, startObs);
 
                     if (zippedFiles_html) {
@@ -224,16 +272,12 @@ var o_cart = {
     },
 
     isIn: function(opusId) {
-        return  $("[data-id='"+opusId+"'].thumbnail-container").hasClass("op-in-cart");
+        return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
     emptyCart: function(returnToSearch=false) {
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
-            $("#op-cart-count").html("0");
-            o_cart.cartChange = true;
-            $("#cart .navbar").hide();
-            $("#cart .sort-order-container").hide();
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
@@ -241,9 +285,13 @@ var o_cart = {
             }
         });
 
+        $("#op-cart-count").html("0");
+        o_cart.reloadObservationData = true;
+        o_cart.observationData = {};
+
         let buttonInfo = o_browse.cartButtonInfo("in");
-        $(".thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(".thumbnail-container.op-in-cart").removeClass("op-in-cart");
+        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
         $(".op-data-table-view input").prop("checked", false);
     },
 
@@ -255,8 +303,8 @@ var o_cart = {
             let tab = opus.getViewTab();
             let action = (fromElem.hasClass("op-in-cart") ? "removerange" : "addrange");
             let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(`${tab} .thumbnail-container`).index(fromElem);
-            let toIndex = $(`${tab} .thumbnail-container`).index(toElem);
+            let fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
+            let toIndex = $(`${tab} .op-thumbnail-container`).index(toElem);
 
             // reorder if need be
             if (fromIndex > toIndex) {
@@ -264,18 +312,24 @@ var o_cart = {
             }
             let length = toIndex - fromIndex+1;
             /// NOTE: we need to mark the elements on BOTH browse and cart page
-            let elementArray = $(`${tab} .thumbnail-container`);
+            let elementArray = $(`${tab} .op-thumbnail-container`);
             let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
             let addOpusIdList = [];
+            // This loop can take a fairly long time to execute for a large range, and it would be nice
+            // to display the cart count spinner while it's going on. Unfortuntately, JavaScript doesn't
+            // let us do that without creating a function that will execute out of the next pass through
+            // the event loop. At that point we leave ourselves open for race conditions if the user
+            // has managed to click on a cart toggle before we get our event in the queue, and it's not
+            // worth fixing those right now.
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
                 if (action == "addrange") {
-                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
                     status = "out"; // this is only so that we can make sure the icon is a trash can
                 } else {
-                    $(`.thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
-                    $(`.thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
                 }
                 $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
                 o_browse.updateCartIcon(opusId, status);
@@ -300,10 +354,10 @@ var o_cart = {
             // note - doing it this way handles the obs on the browse tab at the same time
             let action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
 
-            $(`.thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
+            $(`.op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
             $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
 
-            $(`#cart .thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
+            $(`#cart .op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
 
             o_browse.updateCartIcon(fromOpusId, action);
             o_cart.editCart(fromOpusId, action);
@@ -317,7 +371,15 @@ var o_cart = {
         // This is used when we want to do a lot of cart operations in a row and only update
         // at the end
         let view = opus.prefs.view;
-        o_cart.cartChange = true;
+        o_cart.reloadObservationData = true;
+        // Note we intentionally don't set o_cart.observationData = {} here.
+        // This is because we allow users to add/remove while on the cart page
+        // without updating the window. If we erased the cached data, then
+        // the user would be unable to click on an obs they had removed and
+        // see the metadata dialog. The penalty we pay for this is there will
+        // be old cruft in the cache table that won't go away easily until there's
+        // a hard flush like a page reload. Yes, manageObservationCache will try,
+        // but if the browser has been resized it may not get it all.
 
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -343,10 +405,8 @@ var o_cart = {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
-        // display spinner next to cart badge & total size
-        $("#op-cart-count").html(opus.spinner);
-        $("#op-total-download-size").hide();
-        $(".op-total-size .spinner").addClass("op-show-spinner");
+        o_cart.showCartCountSpinner();
+        o_cart.showDownloadSizeSpinner();
 
         o_cart.lastRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
@@ -369,8 +429,41 @@ var o_cart = {
                 return;
             }
 
-            $(".op-total-size .spinner").removeClass("op-show-spinner");
             o_cart.updateCartStatus(statusData);
         });
+    },
+
+    showCartCountSpinner: function() {
+        if (o_cart.cartCountSpinnerTimer === null) {
+            o_cart.cartCountSpinnerTimer = setTimeout(function() {
+                $("#op-cart-count").html(opus.spinner); }, opus.spinnerDelay);
+        }
+    },
+
+    hideCartCountSpinner: function(cartCount) {
+        $("#op-cart-count").html(cartCount);
+        if (o_cart.cartCountSpinnerTimer !== null) {
+            // This should always be true - we're just being careful
+            clearTimeout(o_cart.cartCountSpinnerTimer);
+            o_cart.cartCountSpinnerTimer = null;
+        }
+    },
+
+    showDownloadSizeSpinner: function() {
+        if (o_cart.downloadSizeSpinnerTimer === null) {
+            o_cart.downloadSizeSpinnerTimer = setTimeout(function() {
+                $("#op-total-download-size").hide();
+                $(".op-total-size .spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+        }
+    },
+
+    hideDownloadSizeSpinner: function(downloadSize) {
+        $(".op-total-size .spinner").removeClass("op-show-spinner");
+        $("#op-total-download-size").html(downloadSize).fadeIn();
+        if (o_cart.downloadSizeSpinnerTimer !== null) {
+            // This should always be true - we're just being careful
+            clearTimeout(o_cart.downloadSizeSpinnerTimer);
+            o_cart.downloadSizeSpinnerTimer = null;
+        }
     },
 };

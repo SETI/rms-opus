@@ -7,6 +7,10 @@
 /* globals $, _, PerfectScrollbar */
 /* globals o_hash, opus */
 
+// The detail image will stay on top of detail left pane when screen width
+// is equal to or less than the threshold point.
+const detailImageThreshold = 767;
+
 /* jshint varstmt: false */
 var o_detail = {
 /* jshint varstmt: true */
@@ -104,16 +108,26 @@ var o_detail = {
 
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
-        o_detail.detailPageScrollbar = new PerfectScrollbar(".detail-metadata", {
-            minScrollbarLength: opus.minimumPSLength
+        o_detail.detailPageScrollbar = new PerfectScrollbar(".op-detail-metadata", {
+            minScrollbarLength: opus.minimumPSLength,
+            suppressScrollX: true,
         });
-        o_detail.detailPageScrollbar.update();
+        o_detail.adjustDetailHeight();
     },
 
     adjustDetailHeight: function() {
-        let containerHeight = $(window).height()-100;
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
+        // When detail image is moved to the top of detail left pane, we have to
+        // account for the height of detail image as well when calculating the containerHeight
+        let detailImgHeight = ($(window).width() <= detailImageThreshold ?
+                               $(".op-detail-img").outerHeight() : 0);
+        let containerHeight = ($(window).height() - footerHeight - mainNavHeight -
+                               detailTabPaddingTop - detailImgHeight);
+
         if (o_detail.detailPageScrollbar) {
-            $(".detail-metadata").height(containerHeight);
+            $(".op-detail-metadata").height(containerHeight);
             o_detail.detailPageScrollbar.update();
         }
     },

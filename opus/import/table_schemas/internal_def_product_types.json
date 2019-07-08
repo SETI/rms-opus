@@ -72,17 +72,17 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-thumb",
-        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-medium",
-        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "coiss-full",
-        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
+        "definition": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -112,12 +112,12 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "nh-raw",
-        "definition": "New Horizons Raw Data"
+        "definition": "Raw image files (*_eng.fit) for New Horizons LORRI and MVIC. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "nh-calib",
-        "definition": "New Horizons Calibrated Data"
+        "definition": "Calibrated image files (*_sci.fit) for New Horizons LORRI and MVIC. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -137,162 +137,187 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-ispm",
-        "definition": "Text files (ISPM*_DDD.TAB) that tabulate the instrument parameters and timing information for each of the interferograms in an observation for detector DDD. Associated labels (ISPM*_DDD.LBL) are text files that contain information about the table files. Also included is ISPMDATA.FMT, which describes the format of the table file."
+        "definition": "Text files (ISPM*_FPx.TAB) that tabulate the instrument parameters and timing information for each of the interferograms in an observation for detector FPx. Associated labels (ISPM*_FPx.LBL) are text files that contain information about the table files. Also included is ISPMDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-poi",
-        "definition": "Text files (POI*_DDD.TAB) that tabulate the footprint geometry on a body for each of the interferograms in an observation for detector DDD. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is POIDATA.FMT, which describes the format of the table file."
+        "definition": "Text files (POI*_FPx.TAB) that tabulate the footprint geometry on a body for each of the interferograms in an observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is POIDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-rin",
-        "definition": "Text files (RIN*_DDD.TAB) that tabulate the footprint geometry on the rings for each of the interferograms in this observation for detector DDD. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is RINDATA.FMT, which describes the format of the table file."
+        "definition": "Text files (RIN*_FPx.TAB) that tabulate the footprint geometry on the rings for each of the interferograms in this observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is RINDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-tar",
-        "definition": "Text files (TAR*_DDD.TAB) that tabulate which objects fall within the field of view for detector DDD. Associated labels (TAR*_XXX.LBL) are text files that contain information about the table files. Also included is TARDATA.FMT, which describes the format of the table file."
+        "definition": "Text files (TAR*_FPx.TAB) that tabulate which objects fall within the field of view for detector FPx. Associated labels (TAR*_XXX.LBL) are text files that contain information about the table files. Also included is TARDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-target",
-        "definition": "Extra Browse Diagram (default)"
+        "definition": "Diagrams (IMG*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on the default target. Associated labels (IMG*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-saturn",
-        "definition": "Extra Browse Diagram (Saturn)"
+        "definition": "Diagrams (POI*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn. Associated labels (POI*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-rings",
-        "definition": "Extra Browse Diagram (rings)"
+        "definition": "Diagrams (RIN*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn's rings. Associated labels (RIN*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-mimas",
-        "definition": "Extra Browse Diagram (Mimas)"
+        "definition": "Diagrams (POI*_FPx_601.PNG) showing the footprint of the spectra in a CIRS observation on Mimas. Associated labels (POI*_FPx_601.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-enceladus",
-        "definition": "Extra Browse Diagram (Enceladus)"
+        "definition": "Diagrams (POI*_FPx_602.PNG) showing the footprint of the spectra in a CIRS observation on Enceladus. Associated labels (POI*_FPx_602.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-tethys",
-        "definition": "Extra Browse Diagram (Tethys)"
+        "definition": "Diagrams (POI*_FPx_603.PNG) showing the footprint of the spectra in a CIRS observation on Tethys. Associated labels (POI*_FPx_603.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-dione",
-        "definition": "Extra Browse Diagram (Dione)"
+        "definition": "Diagrams (POI*_FPx_604.PNG) showing the footprint of the spectra in a CIRS observation on Dione. Associated labels (POI*_FPx_604.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-rhea",
-        "definition": "Extra Browse Diagram (Rhea)"
+        "definition": "Diagrams (POI*_FPx_605.PNG) showing the footprint of the spectra in a CIRS observation on Rhea. Associated labels (POI*_FPx_605.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-titan",
-        "definition": "Extra Browse Diagram (Titan)"
+        "definition": "Diagrams (POI*_FPx_606.PNG) showing the footprint of the spectra in a CIRS observation on Titan. Associated labels (POI*_FPx_606.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-hyperion",
-        "definition": "Extra Browse Diagram (Hyperion)"
+        "definition": "Diagrams (POI*_FPx_607.PNG) showing the footprint of the spectra in a CIRS observation on Hyperion. Associated labels (POI*_FPx_607.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-iapetus",
-        "definition": "Extra Browse Diagram (Iapetus)"
+        "definition": "Diagrams (POI*_FPx_608.PNG) showing the footprint of the spectra in a CIRS observation on Iapetus. Associated labels (POI*_FPx_608.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-phoebe",
-        "definition": "Extra Browse Diagram (Phoebe)"
+        "definition": "Diagrams (POI*_FPx_609.PNG) showing the footprint of the spectra in a CIRS observation on Phoebe. Associated labels (POI*_FPx_609.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-janus",
-        "definition": "Extra Browse Diagram (Janus)"
+        "definition": "Diagrams (POI*_FPx_610.PNG) showing the footprint of the spectra in a CIRS observation on Janus. Associated labels (POI*_FPx_610.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-epimetheus",
-        "definition": "Extra Browse Diagram (Epimetheus)"
+        "definition": "Diagrams (POI*_FPx_611.PNG) showing the footprint of the spectra in a CIRS observation on Epimetheus. Associated labels (POI*_FPx_611.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-helene",
-        "definition": "Extra Browse Diagram (Helene)"
+        "definition": "Diagrams (POI*_FPx_612.PNG) showing the footprint of the spectra in a CIRS observation on Helene. Associated labels (POI*_FPx_612.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-telesto",
-        "definition": "Extra Browse Diagram (Telesto)"
+        "definition": "Diagrams (POI*_FPx_613.PNG) showing the footprint of the spectra in a CIRS observation on Telesto. Associated labels (POI*_FPx_613.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-calypso",
-        "definition": "Extra Browse Diagram (Calypso)"
+        "definition": "Diagrams (POI*_FPx_614.PNG) showing the footprint of the spectra in a CIRS observation on Calypso. Associated labels (POI*_FPx_614.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-atlas",
-        "definition": "Extra Browse Diagram (Atlas)"
+        "definition": "Diagrams (POI*_FPx_615.PNG) showing the footprint of the spectra in a CIRS observation on Atlas. Associated labels (POI*_FPx_615.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-prometheus",
-        "definition": "Extra Browse Diagram (Prometheus)"
+        "definition": "Diagrams (POI*_FPx_616.PNG) showing the footprint of the spectra in a CIRS observation on Prometheus. Associated labels (POI*_FPx_616.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-pandora",
-        "definition": "Extra Browse Diagram (Pandora)"
+        "definition": "Diagrams (POI*_FPx_617.PNG) showing the footprint of the spectra in a CIRS observation on Pandora. Associated labels (POI*_FPx_617.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cirs-browse-pan",
-        "definition": "Extra Browse Diagram (Pan)"
+        "definition": "Diagrams (POI*_FPx_618.PNG) showing the footprint of the spectra in a CIRS observation on Pan. Associated labels (POI*_FPx_618.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-text",
-        "definition": "FITS Header Text"
+        "definition": "Text files (*.ASC) giving the FITS header for the associated HST data files (which are not available in the PDS). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-label",
-        "definition": "HST Preview Products"
+        "definition": "Text files (*.LBL) containing information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-tiff",
-        "definition": "Raw Data Preview (lossless)"
+        "definition": "Full-size raw preview 16-bit TIFFs (*_RAW.TIF) of observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-raw",
-        "definition": "Raw Data Preview"
+        "definition": "Full-size raw preview JPEGs (*_RAW.JPG) of observations, supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-calib",
-        "definition": "Calibrated Data Preview"
+        "definition": "Full-size calibrated preview JPEGs (*_FLT.JPG) of observations, supplied by the STScI. For spectrographic instruments, the preview will show a wavelength plot. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-summed",
+        "definition": "Full-size preview JPEGs (*_SFL.JPG) of summed calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-cosmic-ray",
+        "definition": "Full-size preview JPEGs (*_CRJ.JPG) of cosmic-ray-cleaned calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-drizzled",
+        "definition": "Full-size preview JPEGs (*_DRZ.JPG) of calibrated observations corrected for geometric distortion, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-ima",
+        "definition": "Full-size preview JPEGs (*_IMA.JPG) of the intermediate step in creating a mosaic from multiple calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "hst-mosaic",
+        "definition": "Full-size preview JPEGs (*_MOS.JPG) of completed calibrated mosaics, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-1d-spectrum",
-        "definition": "Line Spectrum Preview"
+        "definition": "Preview JPEGs (*_X1D.JPG or *_SX1.JPG) of observations, supplied by the STScI showing a 1-D spectrum plot (wavelength vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-2d-spectrum",
-        "definition": "2-D Spectrum Preview"
+        "definition": "Preview JPEGs (*_X2D.JPG or *_SX2.JPG) of observations, supplied by the STScI showing a 2-D spectrum plot (wavelength vs. line number vs. intensity). Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

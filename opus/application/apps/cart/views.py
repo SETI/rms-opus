@@ -1,6 +1,6 @@
 ################################################################################
 #
-# results/views.py
+# cart/views.py
 #
 # The (private) API interface for adding and removing items from the cart
 # and creating download .zip and .csv files.
@@ -38,8 +38,10 @@ from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
 
+from cart.models import Cart
 from dictionary.models import Definitions
-from metadata.views import get_result_count_helper
+from metadata.views import (get_cart_count,
+                            get_result_count_helper)
 from results.views import (get_search_results_chunk,
                            labels_for_slugs)
 from search.models import ObsGeneral
@@ -47,7 +49,6 @@ from search.views import (url_to_search_params,
                           get_user_query_table,
                           parse_order_slug,
                           create_order_by_sql)
-from cart.models import Cart
 from tools.app_utils import *
 from tools.file_utils import *
 
@@ -162,7 +163,7 @@ def api_cart_status(request):
     else:
         info = {}
 
-    count = _get_cart_count(session_id)
+    count = get_cart_count(session_id)
 
     info['count'] = count
     info['reqno'] = reqno
@@ -276,7 +277,7 @@ def api_edit_cart(request, action, **kwargs):
     else:
         info = {}
 
-    cart_count = _get_cart_count(session_id)
+    cart_count = get_cart_count(session_id)
     info['error'] = err
     info['count'] = cart_count
     info['reqno'] = reqno
@@ -688,12 +689,6 @@ def _get_download_info(product_types, session_id):
     return ret
 
 
-def _get_cart_count(session_id):
-    "Return the number of items in the current cart."
-    count = Cart.objects.filter(session_id__exact=session_id).count()
-    return count
-
-
 ################################################################################
 #
 # Support routines - add or remove items from cart
@@ -712,7 +707,7 @@ def _add_to_cart_table(opus_id, session_id, api_code):
     # Note that this doesn't handle the case where some or all of the opus_ids
     # are already in the cart. It's difficult to handle this well, would slow
     # down the API, and should never happen when using the UI anyway.
-    num_selections = _get_cart_count(session_id)
+    num_selections = get_cart_count(session_id)
     if num_selections >= settings.MAX_SELECTIONS_ALLOWED:
         return (f'Your request to add OPUS ID {opus_id} to the cart failed '
                 +f'- there are already too many observations there. The '
@@ -884,7 +879,7 @@ def _edit_cart_range(request, session_id, action, api_code):
         # ignore it for now even though it's possible a user would run into
         # it when adding a range that already contains observations that are in
         # the cart.
-        num_selections = _get_cart_count(session_id)
+        num_selections = get_cart_count(session_id)
 
         sql_from = ' FROM '+q('obs_general')
         # INNER JOIN because we only want rows that exist in the
@@ -968,7 +963,7 @@ def _edit_cart_addall(request, session_id, api_code):
     # going to ignore it for now even though it's possible a user would run into
     # it when adding all from a search that already contains observations that
     # are in the cart.
-    num_selections = _get_cart_count(session_id)
+    num_selections = get_cart_count(session_id)
     if num_selections+count > settings.MAX_SELECTIONS_ALLOWED:
         return (f'Your request to add all {count:,d} observations '
                 +f'to the cart failed. The resulting cart would have more '
