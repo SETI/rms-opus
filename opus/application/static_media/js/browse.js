@@ -836,7 +836,13 @@ var o_browse = {
         // 2. In table view, the top obs will stay the same.
         if (browserResized) {
             currentScrollObsNum = previousScrollObsNum;
-            o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
+            let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
+            let offset = (o_browse.isGalleryView() ? scrollbarOffset.galleryOffset :
+            scrollbarOffset.tableOffset);
+
+            // Set offset for scrollbar position so that it will have smooth scrolling in both
+            // gallery and table view when infiniteScroll load is triggered.
+            o_browse.setScrollbarPosition(obsNum, currentScrollObsNum, undefined, offset);
         }
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
