@@ -651,6 +651,7 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel();
         let viewNamespace = opus.getViewNamespace();
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
+        let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
 
         // Update obsNum in infiniteScroll instances.
         // This obsNum is the first item in current page
@@ -683,7 +684,16 @@ var o_browse = {
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
-            o_browse.setScrollbarPosition(value, value);
+            // When slider is moved to an obs close to the last cached obs (less than the number of
+            // items fit on one page), we will load more data. This will make sure slider value
+            // stays at where it's been dragged to even if that value is very close to the edge of
+            // cached obs.
+            if (lastObs - galleryValue < o_browse.getLimit()) {
+                let contentsView = o_browse.getScrollContainerClass();
+                $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
+            } else {
+                o_browse.setScrollbarPosition(value, value);
+            }
         } else {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
             // (one current page, one next page, and one previous page) starting from obsNum.
