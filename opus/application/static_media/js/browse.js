@@ -1844,10 +1844,11 @@ var o_browse = {
 
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
         // Make sure startObs is adjusted based on correct row boundary.
-        // This will make sure when URL with a startobs not aligned with current browser size
-        // is pasted, that startobs will be adjusted to a new value which is aligned with
-        // the browser size.
-        startObs = (o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1);
+        // This will make sure, in gallery view, when URL with a startobs not aligned with current
+        // browser size is pasted, that startobs will be adjusted to a new value which is aligned
+        // with the browser size.
+        startObs = (o_browse.isGalleryView() ? (o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
+                    galleryBoundingRect.x + 1) : startObs);
 
         if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
