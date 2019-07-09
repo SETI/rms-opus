@@ -743,7 +743,7 @@ var o_browse = {
         let galleryImages = o_browse.countGalleryImages();
 
         let numberOfObsFitOnTheScreen = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
-                                       galleryImages.tr);
+                                         galleryImages.tr);
         if ((opus.prefs[startObsLabel] + numObservations - 1) < numberOfObsFitOnTheScreen ||
             (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
             // disable the slider because the observations don't fill the browser window
