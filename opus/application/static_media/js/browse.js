@@ -688,7 +688,7 @@ var o_browse = {
             // items fit on one page), we will load more data. This will make sure slider value
             // stays at where it's been dragged to even if that value is very close to the edge of
             // cached obs.
-            if (lastObs - galleryValue < o_browse.getLimit()) {
+            if (lastObs - galleryValue < o_browse.getLimit() && lastObs !== viewNamespace.totalObsCount) {
                 let contentsView = o_browse.getScrollContainerClass();
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             } else {
