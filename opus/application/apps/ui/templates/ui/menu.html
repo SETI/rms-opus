@@ -30,10 +30,10 @@
                             {#  this div has sub_headings, level-3 menu sections... start sub_heading loop  #}
                             {% for sub_head,params in info.data.items %}
                                 <li class="list-group-item py-0 pl-0">
-                                    <a href="#{{ which }}-submenu-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ sub_head|slugify }}">
+                                    <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ sub_head|slugify }}">
                                         <span class="menu-text title">{{ sub_head }}</span>
                                     </a>
-                                    <ul class="list-group list-group-flush submenu collapse" id="{{ which }}-submenu-{{ sub_head|slugify }}">
+                                    <ul class="list-group list-group-flush submenu collapse" id="{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head|slugify }}">
                                         {% for p in params %}
                                             {% if p.cat_name == sub_head.slugify %}
                                                 <li class="list-group-item py-0 pl-0">

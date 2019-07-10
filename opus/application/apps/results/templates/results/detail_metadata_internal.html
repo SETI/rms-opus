@@ -1,3 +1,4 @@
+{% load encode_value %}
 {% for cat, d in data.items %}
     <ul id="detail__data_{{ cat.lower.split|join:"_" }}" class="op-detail-list">
         {% for param, val in d.items %}
@@ -13,6 +14,16 @@
                                 {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
                             {% else %}
                                 {{ param_info.label_results }}: {{ val }}
+                            {% endif %}
+                            {% if param_info.is_string_or_mult %}
+                                <a href="/opus/#/{{ param_info.slug }}={{ val|encode_value }}
+                                        {% if param_info.is_string %}
+                                            &qtype-{{ param_info.slug }}=matches
+                                        {% endif %}"
+                                        target="_blank">
+                                    <i class="fas fa-search"
+                                        title='Open a new browser tab containing OPUS that searches for "{{ param_info.label_results }}" equal to "{{ val }}"'></i>
+                                </a>
                             {% endif %}
                         </div>
                     {% endif %}

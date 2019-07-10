@@ -146,6 +146,15 @@ def api_get_widget(request, **kwargs):
             selections = {}
             extras = {}
 
+    # Sadly, url_to_search_params optimizes the use of OPUS ID
+    # so that it's always searched from obs_general even though it looks
+    # to the user like it's in obs_pds. So we have to account for that here
+    # or we won't find it in selections.
+    if 'obs_general.opus_id' in selections:
+        selections['obs_pds.opus_id'] = selections['obs_general.opus_id']
+    if 'qtypes' in extras and 'obs_general.opus_id' in extras['qtypes']:
+        extras['qtypes']['obs_pds.opus_id'] = extras['qtypes']['obs_general.opus_id']
+
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
 
     initial_qtype = None
@@ -775,9 +784,7 @@ def api_normalize_url(request):
     if 'widgets' in old_slugs:
         widgets = old_slugs['widgets']
     else:
-        # msg = 'The "widgets" field is missing; it has been set to the default.'
-        # msg_list.append(msg)
-        widgets = settings.DEFAULT_WIDGETS
+        widgets = ''
     # Note: at least for now, these are the same
     if (widgets == 'planet,target' and
         widgets != settings.DEFAULT_WIDGETS): # pragma: no cover
@@ -817,13 +824,16 @@ def api_normalize_url(request):
     for widget in required_widgets_list:
         if widget not in widgets_list:
             pi = get_param_info_by_slug(widget, 'widget')
-            msg = ('Search field "' + pi.body_qualified_label_results()
-                   +'" has search parameters but is not listed as a displayed '
-                   +'search field; it has been added to the displayed search '
-                   +'field list.')
-            msg_list.append(msg)
+            # msg = ('Search field "' + pi.body_qualified_label_results()
+            #        +'" has search parameters but is not listed as a displayed '
+            #        +'search field; it has been added to the displayed search '
+            #        +'field list.')
+            # msg_list.append(msg)
             widgets_list.append(widget)
-    new_url_suffix_list.append(('widgets', ','.join(widgets_list)))
+    if 'widgets' not in old_slugs and len(widgets_list) == 0:
+        new_url_suffix_list.append(('widgets', settings.DEFAULT_WIDGETS))
+    else:
+        new_url_suffix_list.append(('widgets', ','.join(widgets_list)))
 
     ### ORDER
     order_list = []

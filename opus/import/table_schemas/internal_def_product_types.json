@@ -287,12 +287,12 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-summed",
-        "definition": "Full-size preview JPEGs (*_SFL.JPG) of summed observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size preview JPEGs (*_SFL.JPG) of summed calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hst-cosmic-ray",
-        "definition": "Full-size preview JPEGs (*_CRJ.JPG) of cosmic-ray-cleaned observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
+        "definition": "Full-size preview JPEGs (*_CRJ.JPG) of cosmic-ray-cleaned calibrated observations, supplied by the STScI. Associated labels (*.LBL) are text files that contain information about the observation, including how to download the actual observation data from the STScI archive web site."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

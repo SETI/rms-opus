@@ -648,7 +648,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?instrument=COISS'
         new_slugs['instrument'] = 'COISS'
-        new_slugs['widgets'] = settings.DEFAULT_WIDGETS + ',instrument'
+        new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_widgets_searched_2(self):
@@ -657,7 +657,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?rightasc1=10.'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['rightasc1'] = '10.000000'
-        new_slugs['widgets'] = settings.DEFAULT_WIDGETS + ',rightasc'
+        new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_widgets_searched_3(self):
@@ -666,7 +666,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?rightasc2=10.'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['rightasc2'] = '10.000000'
-        new_slugs['widgets'] = settings.DEFAULT_WIDGETS + ',rightasc'
+        new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_widgets_searched_4(self):
@@ -676,7 +676,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['rightasc1'] = '5.000000'
         new_slugs['rightasc2'] = '10.000000'
-        new_slugs['widgets'] = settings.DEFAULT_WIDGETS + ',rightasc'
+        new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_widgets_searched_5(self):
@@ -1539,7 +1539,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         new_slugs['opusid'] = 'vg-iss-2-s-c4360845'
         new_slugs['qtype-opusid'] = 'contains'
-        new_slugs['widgets'] = 'planet,target,opusid'
+        new_slugs['widgets'] = 'opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_ringobsid_bad(self):
@@ -1559,7 +1559,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_real_1(self):
         "[test_ui_api.py] /__normalizeurl: real 1"
         url = '/opus/__normalizeurl.json?planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
-        expected = {'new_url': 'mission=Voyager&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>Search field "Mission" has search parameters but is not listed as a displayed search field; it has been added to the displayed search field list.</li><li>Search field "Planet" has search parameters but is not listed as a displayed search field; it has been added to the displayed search field list.</li><li>Search field "Observation Type" has search parameters but is not listed as a displayed search field; it has been added to the displayed search field list.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li><li>Search query type "Volume ID" refers to a search field that is not being used; it has been ignored.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
+        expected = {'new_url': 'mission=Voyager&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li><li>Search query type "Volume ID" refers to a search field that is not being used; it has been ignored.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_2(self):

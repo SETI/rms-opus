@@ -1,3 +1,4 @@
+{% load encode_value %}
 <ul class="op-detail-list">
     {% for entry in data %}
         <li class="op-detail-entry">
@@ -8,6 +9,16 @@
                 {% endif %}
                 <div>
                     {{ param }}: {{ values.0 }}
+                    {% if values.1.is_string_or_mult %}
+                        <a href="/opus/#/{{ values.1.slug }}={{ values.0|encode_value }}
+                                {% if values.1.is_string %}
+                                    &qtype-{{ values.1.slug }}=matches
+                                {% endif %}"
+                                target="_blank">
+                            <i class="fas fa-search"
+                                title='Open a new browser tab containing OPUS that searches for "{{ values.1.label_results }}" equal to "{{ values.0 }}"'></i>
+                        </a>
+                    {% endif %}
                 </div>
             {% endfor %}
         </li>
