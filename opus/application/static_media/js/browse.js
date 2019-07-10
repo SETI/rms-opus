@@ -724,9 +724,6 @@ var o_browse = {
 
         let numObservations = $(selector).length;
         if (numObservations > 0) {
-            let viewNamespace = opus.getViewNamespace();
-            let galleryBoundingRect = viewNamespace.galleryBoundingRect;
-
             // When we update the slider, the following steps are run:
             // 1. Get the current startObs (top left item in gallery view in current page)
             //    and top obsNum (top item in table view and one of top row items in gallery
@@ -734,14 +731,12 @@ var o_browse = {
             //    - If browser is resized, realign DOMs by deleting some cached obSnum to make
             //      sure first cached obs are at the correct row boundary. If we don't do so,
             //      all rendered obs will be with the wrong row boundary after browser resizing.
-            // 2. Get the max value for slider.
-            // 3. Get the scrollbar offset for both gallery and table view.
-            // 4. Update the slider value and data in infiniteScroll instances and URL using
-            //    the data obtained from above 3 steps.
+            // 2. Get the scrollbar offset for both gallery and table view.
+            // 3. Update the slider value and data in infiniteScroll instances and URL using
+            //    the data obtained from above 2 steps.
             let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
-            let maxSliderVal = o_browse.getSliderMaxValue();
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             o_browse.setSliderParameters(obsNum, currentScrollObsNum, scrollbarOffset.galleryOffset,
                                          scrollbarOffset.tableOffset);
@@ -836,7 +831,13 @@ var o_browse = {
         // 2. In table view, the top obs will stay the same.
         if (browserResized) {
             currentScrollObsNum = previousScrollObsNum;
-            o_browse.setScrollbarPosition(obsNum, currentScrollObsNum);
+            let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
+            let offset = (o_browse.isGalleryView() ? scrollbarOffset.galleryOffset :
+            scrollbarOffset.tableOffset);
+
+            // Set offset for scrollbar position so that it will have smooth scrolling in both
+            // gallery and table view when infiniteScroll load is triggered.
+            o_browse.setScrollbarPosition(obsNum, currentScrollObsNum, undefined, offset);
         }
 
         return {"startObs": obsNum, "scrollbarObsNum": currentScrollObsNum};
@@ -851,8 +852,8 @@ var o_browse = {
         let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         let firstCachedObsTop = $(selector).first().offset().top;
-        let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/galleryBoundingRect.x) *
-                                     galleryBoundingRect.x + 1) : firstCachedObs);
+        let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/
+                                     galleryBoundingRect.x) * galleryBoundingRect.x + 1) : firstCachedObs);
 
         // For gallery view, the topBoxBoundary is the top of .gallery-contents
         // For table view, we will set the topBoxBoundary to be the bottom of thead
@@ -1726,6 +1727,7 @@ var o_browse = {
         let startObsLabel = o_browse.getStartObsLabel(view);
         let viewNamespace = opus.getViewNamespace(view);
         viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1735,24 +1737,38 @@ var o_browse = {
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
 
+                    // When loading a pasted URL in table view with a startObs not aligned with current
+                    // browser size, the first cached obs won't be aligned with browser size. We calculate
+                    // the alignedCachedFirstObs and use it as the startObs in the path for infiniteScroll
+                    // to load previous page, so that when load prev page is triggered, all rendered obs will
+                    // be aligned with the browser size.
+                    let alignedCachedFirstObs =  (o_utils.floor((firstCachedObs - 1)/
+                                                  galleryBoundingRect.x) * galleryBoundingRect.x + 1);
+                    let extraObsToMatchRowBoundary = (firstCachedObs - 1) % galleryBoundingRect.x;
+                    // let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/
+                    //                              galleryBoundingRect.x) * galleryBoundingRect.x + 1) : firstCachedObs);
+                    // let extraObsToMatchRowBoundary = (o_browse.isGalleryView() ? (firstCachedObs - 1) %
+                    //                                   galleryBoundingRect.x : 0);
+
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
                         // Direction: scroll up, we prefetch 1 * o_browse.getLimit() items
                         if (obsNum !== 1) {
                             // prefetch o_browse.getLimit() items ahead of firstCachedObs, update the startObs to be passed into url
-                            obsNum = Math.max(firstCachedObs - o_browse.getLimit(view), 1);
+                            obsNum = Math.max(alignedCachedFirstObs - o_browse.getLimit(view), 1);
 
                             // If obsNum to be passed into api url is 1, we will pass firstCachedObs - 1 as limit
                             // else we'll pass in o_browse.getLimit() as limit
-                            customizedLimitNum = obsNum === 1 ? firstCachedObs - 1 : o_browse.getLimit(view);
+                            customizedLimitNum = (obsNum === 1 ? alignedCachedFirstObs - 1 : o_browse.getLimit(view) +
+                                                  extraObsToMatchRowBoundary);
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
-                            firstCachedObs = Math.max(firstCachedObs, 1);
+                            alignedCachedFirstObs = Math.max(alignedCachedFirstObs, 1);
                             if (infiniteScrollData) {
-                                $(`${tab} .op-gallery-view`).infiniteScroll({"sliderObsNum": firstCachedObs});
-                                $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": firstCachedObs});
-                                opus.prefs[startObsLabel] = firstCachedObs;
+                                $(`${tab} .op-gallery-view`).infiniteScroll({"sliderObsNum": alignedCachedFirstObs});
+                                $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": alignedCachedFirstObs});
+                                opus.prefs[startObsLabel] = alignedCachedFirstObs;
                             }
                         } else {
                             customizedLimitNum = 0;
@@ -1838,10 +1854,11 @@ var o_browse = {
 
         startObs = (startObs === undefined ? opus.prefs[startObsLabel] : startObs);
         // Make sure startObs is adjusted based on correct row boundary.
-        // This will make sure when URL with a startobs not aligned with current browser size
-        // is pasted, that startobs will be adjusted to a new value which is aligned with
-        // the browser size.
-        startObs = (o_utils.floor((startObs - 1)/galleryBoundingRect.x) * galleryBoundingRect.x + 1);
+        // This will make sure, in gallery view, when URL with a startobs not aligned with current
+        // browser size is pasted, that startobs will be adjusted to a new value which is aligned
+        // with the browser size.
+        startObs = (o_browse.isGalleryView() ? (o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
+                    galleryBoundingRect.x + 1) : startObs);
 
         if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
@@ -1897,6 +1914,13 @@ var o_browse = {
             o_browse.hideGalleryViewModal();
 
             o_browse.renderGalleryAndTable(data, this.url, view);
+
+            // When pasting a URL, prefetch some data from previous page so that
+            // scrollbar will stay in the middle.
+            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+            if (startObs === firstObs) {
+                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
+            }
 
             if (o_browse.metadataDetailOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
