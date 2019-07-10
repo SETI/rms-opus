@@ -689,7 +689,7 @@ var o_browse = {
             // stays at where it's been dragged to even if that value is very close to the edge of
             // cached obs. We will check if the cached lastObs is the last obs based on the search.
             // This will make sure when dragging slider all the way to the right and there is no data
-            // load triggered, scrollbar position will be set properly. 
+            // load triggered, scrollbar position will be set properly.
             if (lastObs - galleryValue < o_browse.getLimit() && lastObs !== viewNamespace.totalObsCount) {
                 let contentsView = o_browse.getScrollContainerClass();
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
@@ -834,8 +834,8 @@ var o_browse = {
         if (browserResized) {
             currentScrollObsNum = previousScrollObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
-            let offset = (o_browse.isGalleryView() ? scrollbarOffset.galleryOffset :
-            scrollbarOffset.tableOffset);
+            let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
+            let offset = infiniteScrollDataObj.scrollbarOffset;
 
             // Set offset for scrollbar position so that it will have smooth scrolling in both
             // gallery and table view when infiniteScroll load is triggered.
@@ -1728,8 +1728,6 @@ var o_browse = {
         let tab = `#${view}`;
         let startObsLabel = o_browse.getStartObsLabel(view);
         let viewNamespace = opus.getViewNamespace(view);
-        viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
-        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1738,7 +1736,8 @@ var o_browse = {
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
-
+                    viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+                    let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
                     // browser size, the first cached obs won't be aligned with browser size. We calculate
                     // the alignedCachedFirstObs and use it as the startObs in the path for infiniteScroll
