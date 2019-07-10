@@ -687,8 +687,10 @@ var o_browse = {
             // When slider is moved to an obs close to the last cached obs (less than the number of
             // items fit on one page), we will load more data. This will make sure slider value
             // stays at where it's been dragged to even if that value is very close to the edge of
-            // cached obs.
-            if (lastObs - galleryValue < o_browse.getLimit()) {
+            // cached obs. We will check if the cached lastObs is the last obs based on the search.
+            // This will make sure when dragging slider all the way to the right and there is no data
+            // load triggered, scrollbar position will be set properly. 
+            if (lastObs - galleryValue < o_browse.getLimit() && lastObs !== viewNamespace.totalObsCount) {
                 let contentsView = o_browse.getScrollContainerClass();
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             } else {
