@@ -1047,7 +1047,7 @@ nav.panel-heading {
     }
     /* Move down cart tab sorting pill when slider is at the 2nd line */
     #cart .sort-order-container {
-        margin-top: 1.5em;
+        margin-top: 1.8em;
     }
     /* Style the width of slider when it moves to the 2nd line */
     #cart .op-slider-nav {
