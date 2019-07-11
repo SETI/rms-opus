@@ -828,7 +828,8 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
-        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reach the end of the data.
+        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reaches to the end
+        // of the data.
         let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
