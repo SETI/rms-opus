@@ -828,6 +828,21 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
+        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reach the end of the data.
+        let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
+        if (lastObs === viewNamespace.totalObsCount) {
+            if (o_browse.isGalleryView()) {
+                if (viewNamespace.galleryScrollbar.reach.y === "end") {
+                    obsNum = maxSliderVal;
+                    currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                }
+            } else {
+                if (viewNamespace.tableScrollbar.reach.y === "end") {
+                    obsNum = maxSliderVal;
+                }
+            }
+        }
+
         // When resizing happened, we need to manually set the scrollbar location so that:
         // 1. In gallery view, previous startObs (before resizing) is always in the top row.
         // 2. In table view, the top obs will stay the same.
@@ -872,11 +887,12 @@ var o_browse = {
         // than rest of tr, and this will mess up the calculation.
         let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr`).outerHeight() :
                               $(`${tab} tbody tr`).eq(1).outerHeight());
+
         let obsNumDiff = (o_browse.isGalleryView() ?
-                          Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
-                          galleryBoundingRect.x :
-                          Math.round((topBoxBoundary - firstCachedObsTop)/
-                          tableRowHeight));
+                          Math.floor((topBoxBoundary - firstCachedObsTop + o_browse.imageSize *
+                          opus.sliderViewableFraction)/o_browse.imageSize) * galleryBoundingRect.x :
+                          Math.floor((topBoxBoundary - firstCachedObsTop + tableRowHeight *
+                          opus.sliderViewableFraction)/tableRowHeight));
 
         let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
@@ -934,11 +950,12 @@ var o_browse = {
         let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                  galleryBoundingRect.x + 1);
 
+        // Add one more row to max slider value. This will make sure the last row is fully displayed
+        // when slider is moved to the end.
         let maxSliderVal = (o_browse.isGalleryView() ? (firstObsInLastRow - galleryBoundingRect.x *
-                            (galleryBoundingRect.y - 1)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr));
+                            (galleryBoundingRect.y - 2)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr + 1));
         // Max slider value can't go negative
         maxSliderVal = Math.max(maxSliderVal, 1);
-
         return maxSliderVal;
     },
 
