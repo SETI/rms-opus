@@ -1764,10 +1764,6 @@ var o_browse = {
                     let alignedCachedFirstObs =  (o_utils.floor((firstCachedObs - 1)/
                                                   galleryBoundingRect.x) * galleryBoundingRect.x + 1);
                     let extraObsToMatchRowBoundary = (firstCachedObs - 1) % galleryBoundingRect.x;
-                    // let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/
-                    //                              galleryBoundingRect.x) * galleryBoundingRect.x + 1) : firstCachedObs);
-                    // let extraObsToMatchRowBoundary = (o_browse.isGalleryView() ? (firstCachedObs - 1) %
-                    //                                   galleryBoundingRect.x : 0);
 
                     let infiniteScrollData = $(selector).data("infiniteScroll");
                     if (infiniteScrollData !== undefined && infiniteScrollData.options.loadPrevPage === true) {
@@ -1778,16 +1774,16 @@ var o_browse = {
 
                             // If obsNum to be passed into api url is 1, we will pass firstCachedObs - 1 as limit
                             // else we'll pass in o_browse.getLimit() as limit
-                            customizedLimitNum = (obsNum === 1 ? alignedCachedFirstObs - 1 : o_browse.getLimit(view) +
-                                                  extraObsToMatchRowBoundary);
+                            customizedLimitNum = (obsNum === 1 ?  alignedCachedFirstObs - 1 + extraObsToMatchRowBoundary
+                                                  : o_browse.getLimit(view) + extraObsToMatchRowBoundary);
 
                             // Update the obsNum in infiniteScroll instances with firstCachedObs
                             // This will be used to set the scrollbar position later
                             alignedCachedFirstObs = Math.max(alignedCachedFirstObs, 1);
                             if (infiniteScrollData) {
                                 $(`${tab} .op-gallery-view`).infiniteScroll({"sliderObsNum": alignedCachedFirstObs});
-                                $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": alignedCachedFirstObs});
-                                opus.prefs[startObsLabel] = alignedCachedFirstObs;
+                                $(`${tab} .op-data-table-view`).infiniteScroll({"sliderObsNum": firstCachedObs});
+                                opus.prefs[startObsLabel] = o_browse.isGalleryView() ? alignedCachedFirstObs : firstCachedObs;
                             }
                         } else {
                             customizedLimitNum = 0;
