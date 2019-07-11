@@ -689,7 +689,7 @@ var o_browse = {
             // stays at where it's been dragged to even if that value is very close to the edge of
             // cached obs. We will check if the cached lastObs is the last obs based on the search.
             // This will make sure when dragging slider all the way to the right and there is no data
-            // load triggered, scrollbar position will be set properly. 
+            // load triggered, scrollbar position will be set properly.
             if (lastObs - galleryValue < o_browse.getLimit() && lastObs !== viewNamespace.totalObsCount) {
                 let contentsView = o_browse.getScrollContainerClass();
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
@@ -828,14 +828,30 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
+        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reaches to the end
+        // of the data.
+        let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
+        if (lastObs === viewNamespace.totalObsCount) {
+            if (o_browse.isGalleryView()) {
+                if (viewNamespace.galleryScrollbar.reach.y === "end") {
+                    obsNum = maxSliderVal;
+                    currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                }
+            } else {
+                if (viewNamespace.tableScrollbar.reach.y === "end") {
+                    obsNum = maxSliderVal;
+                }
+            }
+        }
+
         // When resizing happened, we need to manually set the scrollbar location so that:
         // 1. In gallery view, previous startObs (before resizing) is always in the top row.
         // 2. In table view, the top obs will stay the same.
         if (browserResized) {
             currentScrollObsNum = previousScrollObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
-            let offset = (o_browse.isGalleryView() ? scrollbarOffset.galleryOffset :
-            scrollbarOffset.tableOffset);
+            let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
+            let offset = infiniteScrollDataObj.scrollbarOffset;
 
             // Set offset for scrollbar position so that it will have smooth scrolling in both
             // gallery and table view when infiniteScroll load is triggered.
@@ -872,11 +888,12 @@ var o_browse = {
         // than rest of tr, and this will mess up the calculation.
         let tableRowHeight = ($(`${tab} tbody tr`).length === 1 ? $(`${tab} tbody tr`).outerHeight() :
                               $(`${tab} tbody tr`).eq(1).outerHeight());
+
         let obsNumDiff = (o_browse.isGalleryView() ?
-                          Math.round((topBoxBoundary - firstCachedObsTop)/o_browse.imageSize) *
-                          galleryBoundingRect.x :
-                          Math.round((topBoxBoundary - firstCachedObsTop)/
-                          tableRowHeight));
+                          Math.floor((topBoxBoundary - firstCachedObsTop + o_browse.imageSize *
+                          opus.sliderViewableFraction)/o_browse.imageSize) * galleryBoundingRect.x :
+                          Math.floor((topBoxBoundary - firstCachedObsTop + tableRowHeight *
+                          opus.sliderViewableFraction)/tableRowHeight));
 
         let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
@@ -934,11 +951,12 @@ var o_browse = {
         let firstObsInLastRow = (o_utils.floor((dataResultCount - 1)/galleryBoundingRect.x) *
                                  galleryBoundingRect.x + 1);
 
+        // Add one more row to max slider value. This will make sure the last row is fully displayed
+        // when slider is moved to the end.
         let maxSliderVal = (o_browse.isGalleryView() ? (firstObsInLastRow - galleryBoundingRect.x *
-                            (galleryBoundingRect.y - 1)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr));
+                            (galleryBoundingRect.y - 2)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr + 1));
         // Max slider value can't go negative
         maxSliderVal = Math.max(maxSliderVal, 1);
-
         return maxSliderVal;
     },
 
@@ -1728,8 +1746,6 @@ var o_browse = {
         let tab = `#${view}`;
         let startObsLabel = o_browse.getStartObsLabel(view);
         let viewNamespace = opus.getViewNamespace(view);
-        viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
-        let galleryBoundingRect = viewNamespace.galleryBoundingRect;
 
         if (!$(selector).data("infiniteScroll")) {
             $(selector).infiniteScroll({
@@ -1738,7 +1754,8 @@ var o_browse = {
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
-
+                    viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+                    let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
                     // browser size, the first cached obs won't be aligned with browser size. We calculate
                     // the alignedCachedFirstObs and use it as the startObs in the path for infiniteScroll
