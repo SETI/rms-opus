@@ -248,7 +248,7 @@ var o_cart = {
                     }
 
                     let startObsLabel = o_browse.getStartObsLabel();
-                    let startObs = opus.prefs[startObsLabel];
+                    let startObs = Math.max(opus.prefs[startObsLabel], 1);
                     startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
                     o_browse.loadData(view, startObs);
 
