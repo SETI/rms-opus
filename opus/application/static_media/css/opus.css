@@ -110,10 +110,8 @@ body {
 #browse .gallery {
     margin: 0;
     padding: 0;
-    margin-top: .25em;
     background-color: #303030; /* #383838; */
     padding-left: 1.5em;
-    min-height: 700px;
 }
 
 .op-gallery-view {
