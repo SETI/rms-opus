@@ -1997,7 +1997,7 @@ var o_browse = {
         // and avoid the wrong calculation of container position in setScrollbarPosition.
         o_browse.adjustBrowseHeight(false);
         o_browse.adjustTableSize();
-        
+
         o_browse.loadData(opus.prefs.view);
     },
 
