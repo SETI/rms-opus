@@ -1419,6 +1419,11 @@ to work with perfect scrollbar */
     display: none;
 }
 
+/* Hide the FF default scrollbar in detail page */
+.op-detail-metadata {
+    scrollbar-width: none;
+}
+
 /* Make detail left pane takes up 50% of width */
 .op-detail-metadata-container {
     flex: 1 0 50%;
