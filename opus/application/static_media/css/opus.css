@@ -124,6 +124,10 @@ body {
     background-color: transparent !important;
 }
 
+.op-browse-view[data-view] {
+    width: 8em;
+}
+
 #detail {
     padding: 20px 50px;
 }

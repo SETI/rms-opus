@@ -1326,27 +1326,30 @@ var o_browse = {
         o_browse.fading = true;
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
+
         let galleryInfiniteScroll = $(`${tab} .op-gallery-view`).data("infiniteScroll");
         let tableInfiniteScroll = $(`${tab} .op-data-table-view`).data("infiniteScroll");
+
+        let browseViewSelector = $(`${tab} .op-browse-view`);
 
         let suppressScrollY = false;
 
         if (o_browse.isGalleryView()) {
             $(".op-data-table-view", tab).hide();
-            $(".op-gallery-view", tab).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
 
-            $(".op-browse-view", tab).html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            $(".op-browse-view", tab).attr("title", "View sortable metadata table");
-            $(".op-browse-view", tab).data("view", "data");
+            browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
+            browseViewSelector.attr("title", "View sortable metadata table");
+            browseViewSelector.data("view", "data");
 
             suppressScrollY = false;
         } else {
-            $(".op-gallery-view", tab).hide();
-            $(".op-data-table-view", tab).fadeIn("done", function() {o_browse.fading = false;});
+            $(`${tab} .op-gallery-view`).hide();
+            $(`${tab} .op-data-table-view`).fadeIn("done", function() {o_browse.fading = false;});
 
-            $(".op-browse-view", tab).html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            $(".op-browse-view", tab).attr("title", "View sortable thumbnail gallery");
-            $(".op-browse-view", tab).data("view", "gallery");
+            browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
+            browseViewSelector.attr("title", "View sortable thumbnail gallery");
+            browseViewSelector.data("view", "gallery");
 
             suppressScrollY = true;
         }
