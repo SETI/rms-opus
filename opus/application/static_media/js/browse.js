@@ -1992,6 +1992,11 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
+        // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view
+        // are set. This will prevent the height of data obs containers from jumping when the page is loaded,
+        // and avoid the wrong calculation of container position in setScrollbarPosition.
+        o_browse.adjustBrowseHeight(false);
+        o_browse.adjustTableSize();
 
         o_browse.loadData(opus.prefs.view);
     },
