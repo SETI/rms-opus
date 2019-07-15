@@ -1060,7 +1060,7 @@ nav.panel-heading {
     /* When download options left pane is hidden, and the 2nd navbar options
     become 2 lines, we move down the sorting pill */
     #cart .sort-order-container {
-        margin-top: 3em;
+        margin-top: 3.3em;
     }
 }
 /* Cart view navbar responsiveness */
@@ -1085,7 +1085,7 @@ nav.panel-heading {
 
     /* Move down cart tab sorting pill when options of 2nd navbar becomes 2 lines */
     #cart .sort-order-container {
-        margin-top: 3em;
+        margin-top: 3.3em;
     }
 
     /* Keep left/right spaces between 2nd navbar options */
@@ -1125,7 +1125,7 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 900px) and (min-width: 705px) {
+@media (max-width: 900px) and (min-width: 688px) {
     /* When download options left pane is hidden, and the 2nd navbar options
     stay in one line, we move up the sorting pill */
     #cart .sort-order-container {
