@@ -1408,6 +1408,15 @@ even when screen is narrow */
     position: relative;
     min-width: 470px;
     max-width: 800px;
+    /* setting container overflow to scroll and hide webkit scrollbar is
+    the workaround for ctrl + F search scroll to work with perfect scrollbar */
+    overflow-y: scroll !important;
+}
+
+/* As mentioned above, this is part of steps to make ctrl + F search scroll
+to work with perfect scrollbar */
+.op-detail-metadata::-webkit-scrollbar {
+    display: none;
 }
 
 /* Make detail left pane takes up 50% of width */
