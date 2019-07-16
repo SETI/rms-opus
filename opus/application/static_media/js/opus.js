@@ -103,7 +103,7 @@ var opus = {
     splashVersion: 1,
 
     // The viewable percentage of an item such that it can be treated as startobs
-    // 0.8 => 80% 
+    // 0.8 => 80%
     sliderViewableFraction: 0.8,
 
     //------------------------------------------------------------------------------------
@@ -200,7 +200,8 @@ var opus = {
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
 
         // Start the observation number slider spinner - no point in doing a flash here
-        $(".op-observation-number").html(opus.spinner);
+        // and only set the spinner for the #browse tab, as changing search parameters does not affect the cart
+        $("#browse .op-observation-number").html(opus.spinner);
 
         // Start the spinners for the left side menu and each widget for hinting
         $(".op-menu-text.spinner").addClass("op-show-spinner");

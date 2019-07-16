@@ -1985,7 +1985,6 @@ var o_browse = {
     },
 
     activateBrowseTab: function() {
-        // init o_browse.galleryBoundingRect
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
         // reset range select
         o_browse.undoRangeSelect();
