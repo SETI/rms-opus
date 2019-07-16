@@ -1809,6 +1809,15 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
+
+                    // If there is no Cached data at all, loadData function will be called
+                    // to render data, during this time, we want to make sure infintieScroll
+                    // doesn't render any data to avoid duplicated cached obs.
+                    if ($(`${tab} .op-data-table tbody tr`).length === 0 ||
+                        $(`${tab} .gallery .op-thumbnail-container`).length === 0) {
+                        customizedLimitNum = 0;
+                    }
+
                     // if totalObsCount is not yet defined, we still need to init the infinite scroll...
                     //if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
                         let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
@@ -1909,7 +1918,6 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
-
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
@@ -1927,13 +1935,12 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
             o_browse.hideGalleryViewModal();
-
             o_browse.renderGalleryAndTable(data, this.url, view);
 
             // When pasting a URL, prefetch some data from previous page so that
             // scrollbar will stay in the middle.
             let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-            if (startObs === firstObs) {
+            if (startObs === firstObs && firstObs !== 1) {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
 
@@ -2268,7 +2275,7 @@ var o_browse = {
         // XXX For some reason having these lines here makes data sometimes double-load
         // when the scrollbar isn't at the top, so for now this is disabled and the
         // user might occasionally see old data briefly while the new stuff loads.
-        // $("#browse .gallery").empty();
-        // $("#browse .op-data-table tbody").empty();
+        $("#browse .gallery").empty();
+        $("#browse .op-data-table tbody").empty();
     },
 };
