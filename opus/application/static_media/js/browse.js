@@ -1867,6 +1867,10 @@ var o_browse = {
     },
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
+        /**
+         * Fetch initial data when reloading page, changing sort order,
+         * or switching to browse tab after search is changed. 
+         */
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
