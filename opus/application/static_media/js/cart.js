@@ -33,7 +33,7 @@ var o_cart = {
     totalObsCount : undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-    galleryBoundingRect: {'x': 0, 'y': 0},
+    galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
     gallerySliderStep: 10,
 
     // unique to o_cart
@@ -226,8 +226,13 @@ var o_cart = {
     // get Cart tab
     activateCartTab: function() {
         let view = opus.prefs.view;
+
+        // init o_browse.galleryBoundingRect
+        opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
+
         o_browse.updateBrowseNav();
         o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
+
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
             $("#cart .op-results-message").hide();
