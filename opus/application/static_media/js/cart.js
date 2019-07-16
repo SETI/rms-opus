@@ -227,7 +227,6 @@ var o_cart = {
     activateCartTab: function() {
         let view = opus.prefs.view;
 
-        // init o_browse.galleryBoundingRect
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
 
         o_browse.updateBrowseNav();
