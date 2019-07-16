@@ -1064,7 +1064,7 @@ nav.panel-heading {
     }
 }
 /* Cart view navbar responsiveness */
-@media (max-width: 1100px) {
+@media (max-width: 1080px) {
     /*  keep the 2nd navbar in a row and move some options to the 2nd
     line when screen is narrow */
     #cart .browse-nav-container .navbar-nav {
