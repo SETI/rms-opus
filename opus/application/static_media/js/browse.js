@@ -1665,9 +1665,7 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
-        if (limitNum === 0 || isNaN(limitNum)) {
-            opus.logError(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
-        }
+
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1815,7 +1813,7 @@ var o_browse = {
                     // If there is no Cached data at all, loadData function will be called to
                     // render initial data, during this time, we want to make sure infintieScroll
                     // doesn't render any data to avoid duplicated cached obs.
-                    if (o_browse.loadDataInProgress || ($(`${tab} .op-data-table tbody tr`).length === 0 &&
+                    if (viewNamespace.loadDataInProgress || ($(`${tab} .op-data-table tbody tr`).length === 0 &&
                         $(`${tab} .gallery .op-thumbnail-container`).length === 0)) {
                         customizedLimitNum = 0;
                     }
@@ -1869,7 +1867,6 @@ var o_browse = {
     },
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
-        o_browse.loadDataInProgress = true;
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
@@ -1921,6 +1918,7 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
+        viewNamespace.loadDataInProgress = true;
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
@@ -1953,7 +1951,7 @@ var o_browse = {
             o_browse.updateSortOrder(data);
 
             viewNamespace.reloadObservationData = false;
-            o_browse.loadDataInProgress = false;
+            viewNamespace.loadDataInProgress = false;
         });
     },
 
