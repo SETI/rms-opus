@@ -50,6 +50,8 @@ var o_browse = {
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
+
+    loadDataInProgress: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -1810,11 +1812,11 @@ var o_browse = {
                         }
                     }
 
-                    // If there is no Cached data at all, loadData function will be called
-                    // to render data, during this time, we want to make sure infintieScroll
+                    // If there is no Cached data at all, loadData function will be called to
+                    // render initial data, during this time, we want to make sure infintieScroll
                     // doesn't render any data to avoid duplicated cached obs.
-                    if ($(`${tab} .op-data-table tbody tr`).length === 0 ||
-                        $(`${tab} .gallery .op-thumbnail-container`).length === 0) {
+                    if (o_browse.loadDataInProgress || ($(`${tab} .op-data-table tbody tr`).length === 0 &&
+                        $(`${tab} .gallery .op-thumbnail-container`).length === 0)) {
                         customizedLimitNum = 0;
                     }
 
@@ -1867,6 +1869,7 @@ var o_browse = {
     },
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
+        o_browse.loadDataInProgress = true;
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
@@ -1950,6 +1953,7 @@ var o_browse = {
             o_browse.updateSortOrder(data);
 
             viewNamespace.reloadObservationData = false;
+            o_browse.loadDataInProgress = false;
         });
     },
 
