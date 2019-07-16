@@ -38,7 +38,7 @@ var o_browse = {
     totalObsCount: undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-    galleryBoundingRect: {'x': 0, 'y': 0},
+    galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
     gallerySliderStep: 10,
 
     // unique to o_browse
@@ -743,7 +743,7 @@ var o_browse = {
         let currentSliderValue = $(`${tab} .op-observation-slider`).slider("option", "value");
         let currentSliderMax = $(`${tab} .op-observation-slider`).slider("option", "max");
 
-        let galleryImages = o_browse.countGalleryImages();
+        let galleryImages = opus.getViewNamespace().galleryBoundingRect;
 
         let numberOfObsFitOnTheScreen = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
                                          galleryImages.tr);
@@ -1753,6 +1753,8 @@ var o_browse = {
                     let customizedLimitNum;
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
+
+                    // need to calc here due to race condition; values needed for url getLimit size
                     viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
                     let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
@@ -2013,8 +2015,8 @@ var o_browse = {
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
 
-        let trCount = 1;
-        if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
+        let trCount = viewNamespace.galleryBoundingRect.tr;
+        if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
             trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
         }
 
