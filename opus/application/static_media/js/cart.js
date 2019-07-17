@@ -45,6 +45,7 @@ var o_cart = {
     statusDataErrorCollector: [],
 
     loadDataInProgress: false,
+    infiniteScrollLoadInProgress: false,
     /**
      *
      *  managing cart communication between server and client and

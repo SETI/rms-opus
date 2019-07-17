@@ -52,6 +52,7 @@ var o_browse = {
     fading: false,  // used to prevent additional clicks until the fade animation complete
 
     loadDataInProgress: false,
+    infiniteScrollLoadInProgress: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -788,7 +789,7 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-        if (browserResized) {
+        if (browserResized && !viewNamespace.infiniteScrollLoadInProgress) {
             // We delete cached obs when we are in gallery view or switch from table to gallery view.
             if (o_browse.isGalleryView()) {
                 numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
@@ -1755,6 +1756,7 @@ var o_browse = {
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
                     viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+                    viewNamespace.infiniteScrollLoadInProgress = true;
                     let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
                     // browser size, the first cached obs won't be aligned with browser size. We calculate
@@ -1869,7 +1871,7 @@ var o_browse = {
     loadData: function(view, startObs, customizedLimitNum=undefined) {
         /**
          * Fetch initial data when reloading page, changing sort order,
-         * or switching to browse tab after search is changed. 
+         * or switching to browse tab after search is changed.
          */
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
@@ -1942,13 +1944,6 @@ var o_browse = {
             o_browse.hideGalleryViewModal();
             o_browse.renderGalleryAndTable(data, this.url, view);
 
-            // When pasting a URL, prefetch some data from previous page so that
-            // scrollbar will stay in the middle.
-            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-            if (startObs === firstObs && firstObs !== 1) {
-                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
-            }
-
             if (o_browse.metadataDetailOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
             }
@@ -1956,10 +1951,19 @@ var o_browse = {
 
             viewNamespace.reloadObservationData = false;
             viewNamespace.loadDataInProgress = false;
+
+            // When pasting a URL, prefetch some data from previous page so that scrollbar will
+            // stay in the middle. This step has to be performed after loadData is done (loadDataInProgress
+            // is set to false).
+            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+            if (startObs === firstObs && firstObs !== 1) {
+                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
+            }
         });
     },
 
     infiniteScrollLoadEventListener: function(event, response, path, view) {
+        let viewNamespace = opus.getViewNamespace(view);
         $(".op-page-loading-status > .loader").show();
         let data = JSON.parse(response);
 
@@ -1994,6 +1998,7 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
+        viewNamespace.infiniteScrollLoadInProgress = false;
     },
 
     activateBrowseTab: function() {
