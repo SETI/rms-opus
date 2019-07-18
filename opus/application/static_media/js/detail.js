@@ -108,6 +108,11 @@ var o_detail = {
 
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
+        // Enable default scrollbar for Ctrl + F search scroll to work in Chrome and Firefox.
+        if (opus.currentBrowser === "chrome" || opus.currentBrowser === "firefox") {
+            $(".op-detail-metadata").addClass("op-enable-default-scrolling");
+        }
+
         o_detail.detailPageScrollbar = new PerfectScrollbar(".op-detail-metadata", {
             minScrollbarLength: opus.minimumPSLength,
             suppressScrollX: true,

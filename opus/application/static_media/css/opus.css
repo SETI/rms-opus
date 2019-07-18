@@ -1410,6 +1410,24 @@ even when screen is narrow */
     max-width: 800px;
 }
 
+/* Add this class to set ps container overflow to scroll, this is part of
+the workaround for ctrl + F search scroll to work with perfect scrollbar */
+.op-enable-default-scrolling {
+    overflow-y: scroll !important;
+}
+
+/* Hide the Chrome default scrollbar, this is part of steps to make ctrl
++ F search scroll to work with perfect scrollbar in Chrome. */
+.op-detail-metadata::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide the FF default scrollbar in detail page, this is part of steps to
+make ctrl + F search scroll to work with perfect scrollbar in FF. */
+.op-detail-metadata {
+    scrollbar-width: none;
+}
+
 /* Make detail left pane takes up 50% of width */
 .op-detail-metadata-container {
     flex: 1 0 50%;
