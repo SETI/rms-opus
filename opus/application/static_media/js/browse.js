@@ -50,6 +50,9 @@ var o_browse = {
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
+
+    loadDataInProgress: false,
+    infiniteScrollLoadInProgress: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -786,7 +789,7 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-        if (browserResized) {
+        if (browserResized && !viewNamespace.infiniteScrollLoadInProgress) {
             // We delete cached obs when we are in gallery view or switch from table to gallery view.
             if (o_browse.isGalleryView()) {
                 numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
@@ -1663,9 +1666,7 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
-        if (limitNum === 0 || isNaN(limitNum)) {
-            opus.logError(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
-        }
+
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1755,6 +1756,7 @@ var o_browse = {
                     let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
                     let firstCachedObs = $(`${tab} .op-thumbnail-container`).first().data("obs");
                     viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+                    viewNamespace.infiniteScrollLoadInProgress = true;
                     let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
                     // browser size, the first cached obs won't be aligned with browser size. We calculate
@@ -1809,6 +1811,15 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
+
+                    // If there is no Cached data at all, loadData function will be called to
+                    // render initial data, during this time, we want to make sure infintieScroll
+                    // doesn't render any data to avoid duplicated cached obs.
+                    if (viewNamespace.loadDataInProgress || ($(`${tab} .op-data-table tbody tr`).length === 0 &&
+                        $(`${tab} .gallery .op-thumbnail-container`).length === 0)) {
+                        customizedLimitNum = 0;
+                    }
+
                     // if totalObsCount is not yet defined, we still need to init the infinite scroll...
                     //if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
                         let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
@@ -1858,6 +1869,10 @@ var o_browse = {
     },
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
+        /**
+         * Fetch initial data when reloading page, changing sort order,
+         * or switching to browse tab after search is changed.
+         */
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
@@ -1909,7 +1924,7 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
-
+        viewNamespace.loadDataInProgress = true;
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
@@ -1927,15 +1942,7 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
             o_browse.hideGalleryViewModal();
-
             o_browse.renderGalleryAndTable(data, this.url, view);
-
-            // When pasting a URL, prefetch some data from previous page so that
-            // scrollbar will stay in the middle.
-            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-            if (startObs === firstObs) {
-                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
-            }
 
             if (o_browse.metadataDetailOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
@@ -1943,10 +1950,20 @@ var o_browse = {
             o_browse.updateSortOrder(data);
 
             viewNamespace.reloadObservationData = false;
+            viewNamespace.loadDataInProgress = false;
+
+            // When pasting a URL, prefetch some data from previous page so that scrollbar will
+            // stay in the middle. This step has to be performed after loadData is done (loadDataInProgress
+            // is set to false).
+            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+            if (startObs === firstObs && firstObs !== 1) {
+                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
+            }
         });
     },
 
     infiniteScrollLoadEventListener: function(event, response, path, view) {
+        let viewNamespace = opus.getViewNamespace(view);
         $(".op-page-loading-status > .loader").show();
         let data = JSON.parse(response);
 
@@ -1981,6 +1998,7 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
+        viewNamespace.infiniteScrollLoadInProgress = false;
     },
 
     activateBrowseTab: function() {
@@ -2268,7 +2286,7 @@ var o_browse = {
         // XXX For some reason having these lines here makes data sometimes double-load
         // when the scrollbar isn't at the top, so for now this is disabled and the
         // user might occasionally see old data briefly while the new stuff loads.
-        // $("#browse .gallery").empty();
-        // $("#browse .op-data-table tbody").empty();
+        $("#browse .gallery").empty();
+        $("#browse .op-data-table tbody").empty();
     },
 };

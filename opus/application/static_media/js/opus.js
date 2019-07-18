@@ -608,7 +608,7 @@ var opus = {
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
         let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
-        let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
+        let adjustBrowseHeightDB = function() {o_browse.adjustBrowseHeight(true);};
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
