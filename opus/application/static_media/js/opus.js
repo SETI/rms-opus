@@ -103,8 +103,10 @@ var opus = {
     splashVersion: 1,
 
     // The viewable percentage of an item such that it can be treated as startobs
-    // 0.8 => 80% 
+    // 0.8 => 80%
     sliderViewableFraction: 0.8,
+
+    currentBrowser: "",
 
     //------------------------------------------------------------------------------------
     // Debugging support
@@ -971,6 +973,7 @@ var opus = {
                         ${updateString}`);
         $("#op-browser-version-msg .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
+        opus.currentBrowser = browserName;
 
         if (opus.browserSupport[browserName] === undefined) {
             $("#op-browser-version-msg").modal("show");
