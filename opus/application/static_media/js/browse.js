@@ -715,7 +715,7 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(browserResized=false) {
+    updateSliderHandle: function(browserResized=false, isDOMChanged=false) {
         // Only update the slider & obSnum in infiniteScroll instances when the user
         // is at browse tab
         if (opus.getCurrentTab() !== "browse") {
@@ -739,7 +739,8 @@ var o_browse = {
             // 2. Get the scrollbar offset for both gallery and table view.
             // 3. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
-            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized);
+            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized,
+                                                                                isDOMChanged);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
@@ -765,7 +766,7 @@ var o_browse = {
         }
     },
 
-    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized) {
+    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged) {
         /**
          * Get the current startObs (obsNum, for slider number) in both
          * gallery (top-left item) and table (top item) views. Also get
@@ -797,7 +798,7 @@ var o_browse = {
         // between the end of newly loaded obs and beginning of old cached obs. So we add the
         // protection here. Another updateSliderHandle will be called to realign DOMS after all
         // new obs are rendered in infiniteScrollLoadEventListener.
-        if (browserResized && !viewNamespace.infiniteScrollLoadInProgress) {
+        if ((browserResized || isDOMChanged) && !viewNamespace.infiniteScrollLoadInProgress) {
             // We delete cached obs when we are in gallery view or switch from table to gallery view.
             if (o_browse.isGalleryView()) {
                 numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
@@ -816,7 +817,7 @@ var o_browse = {
         // when resizing happened.
         let contentsView = o_browse.getScrollContainerClass();
         let prevObsNumBeforeResizing = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-        if (browserResized) {
+        if (browserResized || isDOMChanged) {
             if (o_browse.isGalleryView()) {
                 obsNum = (Math.max((o_utils.floor((prevObsNumBeforeResizing - 1)/galleryBoundingRect.x) *
                 galleryBoundingRect.x + 1), 1));
@@ -858,7 +859,7 @@ var o_browse = {
         // When resizing happened, we need to manually set the scrollbar location so that:
         // 1. In gallery view, previous startObs (before resizing) is always in the top row.
         // 2. In table view, the top obs will stay the same.
-        if (browserResized) {
+        if (browserResized || isDOMChanged) {
             currentScrollObsNum = previousScrollObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
@@ -2019,7 +2020,7 @@ var o_browse = {
 
         // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
         // when browser is resized in the middle of infiniteScroll load.
-        o_browse.updateSliderHandle(true);
+        o_browse.updateSliderHandle(false, true);
     },
 
     activateBrowseTab: function() {
@@ -2034,7 +2035,7 @@ var o_browse = {
         // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view
         // are set. This will prevent the height of data obs containers from jumping when the page is loaded,
         // and avoid the wrong calculation of container position in setScrollbarPosition.
-        o_browse.adjustBrowseHeight(false);
+        o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
 
         o_browse.loadData(opus.prefs.view);
@@ -2105,7 +2106,7 @@ var o_browse = {
         return width;
     },
 
-    adjustBrowseHeight: function(browserResized=false) {
+    adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
@@ -2116,7 +2117,7 @@ var o_browse = {
         viewNamespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(browserResized);
+        o_browse.updateSliderHandle(browserResized, isDOMChanged);
     },
 
     adjustTableSize: function() {
