@@ -789,6 +789,14 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
+
+        // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
+        // trigger to load new data (previous page). During the time when infiniteScroll is
+        // still loading (before all new obs are rendered), if we keep resizing and cause some
+        // DOMs to get deleted, at the end after load is done, there will be some DOMs missing
+        // between the end of newly loaded obs and beginning of old cached obs. So we add the
+        // protection here. Another updateSliderHandle will be called to realign DOMS after all
+        // new obs are rendered in infiniteScrollLoadEventListener.
         if (browserResized && !viewNamespace.infiniteScrollLoadInProgress) {
             // We delete cached obs when we are in gallery view or switch from table to gallery view.
             if (o_browse.isGalleryView()) {
@@ -2008,6 +2016,10 @@ var o_browse = {
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
         viewNamespace.infiniteScrollLoadInProgress = false;
+
+        // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
+        // when browser is resized in the middle of infiniteScroll load.
+        o_browse.updateSliderHandle(true);
     },
 
     activateBrowseTab: function() {
