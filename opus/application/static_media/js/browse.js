@@ -856,6 +856,15 @@ var o_browse = {
             let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
             let offset = infiniteScrollDataObj.scrollbarOffset;
 
+            // When resizing with Ctrl + "+"/"-" (it triggers "scroll" event first, and then "resize" event),
+            // sometimes the previous startObs will be moved to one row ahead of current top row. The
+            // scrollbarOffset stored from updateSliderHandle in "scroll" event will have an absolute value
+            // close to image size which will then set the scrollbar position with one row offset from
+            // updateSliderHandle in "resize" event later. So we reset offset to 0 if the value stored in
+            // infiniteScroll instance will cause one row difference in setScrollbarPosition.
+            let compareFactor = o_browse.imageSize * opus.sliderViewableFraction;
+            offset = (o_browse.isGalleryView() ? (Math.abs(offset) > compareFactor ? 0 : offset) : offset);
+
             // Set offset for scrollbar position so that it will have smooth scrolling in both
             // gallery and table view when infiniteScroll load is triggered.
             o_browse.setScrollbarPosition(obsNum, currentScrollObsNum, undefined, offset);
