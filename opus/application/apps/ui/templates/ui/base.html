@@ -133,7 +133,7 @@
                             <p>Remove or edit one or more of the search criteria selected on the Search tab
                             or click on the Reset Search button to reset the search criteria to default.</p>
                        </div>
-                       <div class="row justify-content-start op-gallery-view mr-0">
+                       <div class="row justify-content-start op-gallery-view mx-0">
                             <div class="mr-0 thumb gallery gallery-scroll">
                             </div>
                         </div>
@@ -173,19 +173,6 @@
                                         <li class="nav-item">
                                             <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-metadata-selector" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
                                         </li>
-                                        <li class="nav-item">
-                                            <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <div id="create_zip_data_file">
-                                                <a href="#" class="downloadData nav-link" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
-                                            </div>
-                                        </li>
-                                        <li class="nav-item">
-                                            <div id="create_zip_url_file">
-                                                <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
-                                            </div>
-                                        </li>
                                     </ul>
                                     <ul class="op-slider-nav">
                                         <li class="nav-item">
@@ -206,6 +193,21 @@
                                     </li>
                                 </ul>
 
+                            </div>
+                            <div class="op-download-options">
+                                <li class="list-inline-item">
+                                    <a href="#" class="op-download-csv" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Download Metadata CSV</a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <div id="create_zip_data_file">
+                                        <a href="#" class="downloadData" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download Data Archive</a>
+                                    </div>
+                                </li>
+                                <li class="list-inline-item">
+                                    <div id="create_zip_url_file">
+                                        <a href="#" class="downloadURL" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download URL Archive</a>
+                                    </div>
+                                </li>
                             </div>
                             <div class="sort-order-container">
                                 <span class="sort-order-icon" title="Results are sorted by these metadata fields">

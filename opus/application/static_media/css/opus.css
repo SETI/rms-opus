@@ -1035,6 +1035,12 @@ nav.panel-heading {
 #cart .op-cart-nav-container {
     justify-content: flex-start;
 }
+
+#cart .op-download-options {
+    display: inline-flex;
+    padding: 0.5em;
+}
+
 @media (max-width: 1380px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
     slider moves to the 2nd line */
@@ -1047,20 +1053,14 @@ nav.panel-heading {
         flex-wrap: wrap;
         width: 100%;
     }
-    /* Move down cart tab sorting pill when slider is at the 2nd line */
-    #cart .sort-order-container {
-        margin-top: 1.8em;
-    }
     /* Style the width of slider when it moves to the 2nd line */
     #cart .op-slider-nav {
         flex-basis: 90%;
     }
-}
-@media (max-width: 704px) {
-    /* When download options left pane is hidden, and the 2nd navbar options
-    become 2 lines, we move down the sorting pill */
-    #cart .sort-order-container {
-        margin-top: 3.3em;
+    /* move the second line down to make room for the slider*/
+    #cart .op-download-options {
+        display: inline-flex;
+        padding: 1.9em 0.5em 0.5em;
     }
 }
 /* Cart view navbar responsiveness */
@@ -1083,18 +1083,13 @@ nav.panel-heading {
         flex: 1 0 5%;
     }
 
-    /* Move down cart tab sorting pill when options of 2nd navbar becomes 2 lines */
-    #cart .sort-order-container {
-        margin-top: 3.3em;
-    }
-
     /* Keep left/right spaces between 2nd navbar options */
     #cart .nav-link {
         padding: 0 0.5rem;
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 930px) {
     /* Hide download options pane when screen is narrow */
     .cart_details {
         display: none;
@@ -1125,17 +1120,9 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 900px) and (min-width: 688px) {
-    /* When download options left pane is hidden, and the 2nd navbar options
-    stay in one line, we move up the sorting pill */
-    #cart .sort-order-container {
-        margin-top: 1.8em;
-    }
-}
-
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 901px) {
+@media (min-width: 930px) {
     .op-cart-toggle-download-panel {
         display: none !important;
 
