@@ -924,7 +924,7 @@ div.gallery {
     margin-right: -80px;
 }
 
-/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+/* Make op-sort-order-container wrapped within the same container as browse-nav-containers */
 nav.panel-heading {
     flex-direction: column;
     align-items: flex-start;
@@ -948,7 +948,7 @@ nav.panel-heading {
 @media (max-width: 1000px) {
     /* Move down the sort pill area so that slider can be moved down
     to the 2nd line */
-    #browse .sort-order-container {
+    #browse .op-sort-order-container {
         margin-top: 1.75em;
     }
 
@@ -1138,13 +1138,13 @@ is wide enough */
     top: 2em;
 }
 
-.sort-order-container {
+.op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
     /* padding-top: 0.5em; */
 }
 
-.sort-order-icon {
+.op-sort-order-icon {
     color: rgba(255, 255, 255, 0.5);
     vertical-align: middle;
 }
