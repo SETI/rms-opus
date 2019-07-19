@@ -1038,7 +1038,17 @@ nav.panel-heading {
 
 #cart .op-download-options {
     display: inline-flex;
-    padding: 0.5em;
+    padding: 0.5em 0.5em 0;
+}
+
+#cart .op-download-options a {
+    opacity: 0.6 !important;
+    text-decoration: none;
+}
+
+#cart .op-download-options a:hover {
+    opacity: 1 !important;
+    text-decoration: none;
 }
 
 @media (max-width: 1380px) {
@@ -1057,10 +1067,14 @@ nav.panel-heading {
     #cart .op-slider-nav {
         flex-basis: 90%;
     }
+
+    #cart .op-sort-order-container {
+        padding-top: 1.9em;
+    }
+
     /* move the second line down to make room for the slider*/
     #cart .op-download-options {
         display: inline-flex;
-        padding: 1.9em 0.5em 0.5em;
     }
 }
 /* Cart view navbar responsiveness */
