@@ -268,7 +268,11 @@ var opus = {
             // Note that things are OK if they switch tabs AFTER this point, even
             // if result_count hasn't returned, because at least the hash has been
             // updated so their call to dataimages.json will have the correct parameters.
-            o_browse.loadData(opus.getCurrentTab());
+
+            // Prevent loadData to call the same dataimages API twice
+            if (!o_browse.loadDataInProgress) {
+                o_browse.loadData(opus.getCurrentTab());
+            }
         }
 
         // Execute the query and return the result count

@@ -840,17 +840,23 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
-        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reaches to the end
-        // of the data.
+        // Properly set obsNum to make sure the last row is fully displayed when scrollbar
+        // reaches to the end of the data.
         let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
-                if (viewNamespace.galleryScrollbar.reach.y === "end") {
+                if (viewNamespace.galleryScrollbar.reach.y === "end" && obsNum >=
+                    maxSliderVal - galleryBoundingRect.x) {
                     obsNum = maxSliderVal;
-                    currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                    if (previousScrollObsNum > maxSliderVal) {
+                        currentScrollObsNum = previousScrollObsNum;
+                    } else {
+                        currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                    }
                 }
             } else {
-                if (viewNamespace.tableScrollbar.reach.y === "end") {
+                if (viewNamespace.tableScrollbar.reach.y === "end" && obsNum >=
+                    maxSliderVal - galleryBoundingRect.tr) {
                     obsNum = maxSliderVal;
                 }
             }
@@ -861,7 +867,6 @@ var o_browse = {
         // 2. In table view, the top obs will stay the same.
         if (browserResized || isDOMChanged) {
             currentScrollObsNum = previousScrollObsNum;
-            let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
             let offset = infiniteScrollDataObj.scrollbarOffset;
 
@@ -2018,9 +2023,11 @@ var o_browse = {
         $("#galleryViewContents").removeClass("op-disabled");
         viewNamespace.infiniteScrollLoadInProgress = false;
 
-        // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
-        // when browser is resized in the middle of infiniteScroll load.
-        o_browse.updateSliderHandle(false, true);
+        if (data.count !== 0) {
+            // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
+            // when browser is resized in the middle of infiniteScroll load.
+            o_browse.updateSliderHandle(false, true);
+        }
     },
 
     activateBrowseTab: function() {
