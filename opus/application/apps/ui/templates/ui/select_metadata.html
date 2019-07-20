@@ -1,7 +1,7 @@
 {% extends "ui/menu.html" %}
 
 {% block menu %}
-<div class="row op-select-metadata-headers">
+<div class="row op-select-metadata-headers op-no-select">
     <div class="col">
         <div class="op-all-metadata-column-header">
             <div class="text-center font-weight-bold h5">Available Metadata Fields</div>
@@ -20,7 +20,7 @@
     </div>
 </div>
 <hr class="op-select-metadata-headers-hr">
-<div class="row">
+<div class="row op-no-select">
     <div class="col">
         <div class="op-all-metadata-column">
             {{ block.super }} {# renders ui/menu.html #}
