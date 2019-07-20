@@ -106,6 +106,8 @@ var opus = {
     // 0.8 => 80%
     sliderViewableFraction: 0.8,
 
+    currentBrowser: "",
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
@@ -269,7 +271,11 @@ var opus = {
             // Note that things are OK if they switch tabs AFTER this point, even
             // if result_count hasn't returned, because at least the hash has been
             // updated so their call to dataimages.json will have the correct parameters.
-            o_browse.loadData(opus.getCurrentTab());
+
+            // Prevent loadData to call the same dataimages API twice
+            if (!o_browse.loadDataInProgress) {
+                o_browse.loadData(opus.getCurrentTab());
+            }
         }
 
         // Execute the query and return the result count
@@ -607,7 +613,7 @@ var opus = {
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
         let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
-        let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
+        let adjustBrowseHeightDB = function() {o_browse.adjustBrowseHeight(true);};
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
@@ -972,6 +978,7 @@ var opus = {
                         ${updateString}`);
         $("#op-browser-version-msg .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
+        opus.currentBrowser = browserName;
 
         if (opus.browserSupport[browserName] === undefined) {
             $("#op-browser-version-msg").modal("show");
