@@ -1143,7 +1143,7 @@ nav.panel-heading {
 
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 930px) {
+@media (min-width: 931px) {
     .op-cart-toggle-download-panel {
         display: none !important;
 
