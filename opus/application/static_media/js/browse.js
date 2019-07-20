@@ -841,22 +841,22 @@ var o_browse = {
         }
 
         // Properly set obsNum to make sure the last row is fully displayed when scrollbar
-        // reaches to the end of the data.
+        // reaches the end of the data.
         let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
-                if (viewNamespace.galleryScrollbar.reach.y === "end" && obsNum >=
-                    maxSliderVal - galleryBoundingRect.x) {
+                if (viewNamespace.galleryScrollbar.reach.y === "end" &&
+                    obsNum >= maxSliderVal - galleryBoundingRect.x) {
                     obsNum = maxSliderVal;
                     if (previousScrollObsNum > maxSliderVal) {
                         currentScrollObsNum = previousScrollObsNum;
                     } else {
-                        currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                        currentScrollObsNum = Math.min(currentScrollObsNum, maxSliderVal);
                     }
                 }
             } else {
-                if (viewNamespace.tableScrollbar.reach.y === "end" && obsNum >=
-                    maxSliderVal - galleryBoundingRect.tr) {
+                if (viewNamespace.tableScrollbar.reach.y === "end" &&
+                    obsNum >= maxSliderVal - galleryBoundingRect.tr) {
                     obsNum = maxSliderVal;
                 }
             }
