@@ -215,7 +215,7 @@ var opus = {
 
         // Force the Select Metadata dialog to refresh the next time we go to the browse
         // tab in case the categories are changed by this search.
-        o_browse.metadataSelectorDrawn = false;
+        o_browse.selectMetadataDrawn = false;
 
         // Clear the gallery and table views on the browse tab so we start afresh when the data
         // returns. There's no point in clearing the cart tab since the search doesn't
@@ -617,8 +617,8 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustMetadataSelectorMenuPSDB = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
-        let adjustSelectedMetadataPSDB = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
+        let hideOrShowSelectedMetadataPSDB = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
         let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
@@ -629,8 +629,9 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            adjustMetadataSelectorMenuPSDB();
-            adjustSelectedMetadataPSDB();
+            o_browse.adjustSelectMetadataHeight();
+            hideOrShowSelectMetadataMenuPSDB();
+            hideOrShowSelectedMetadataPSDB();
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();

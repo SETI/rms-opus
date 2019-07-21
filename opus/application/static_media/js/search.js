@@ -438,7 +438,7 @@ var o_search = {
 
     searchSideBarHeightChanged: function() {
         let containerHeight = o_search.searchBarContainerHeight();
-        let searchMenuHeight = $(".searchMenu").height();
+        let searchMenuHeight = $(".op-search-menu").height();
         $("#search .sidebar_wrapper").height(containerHeight);
 
         if (containerHeight > searchMenuHeight) {
@@ -499,12 +499,11 @@ var o_search = {
 
         o_widgets.updateWidgetCookies();
 
-        for (let key in opus.prefs.widgets) {  // fetch each widget
-            let slug = opus.prefs.widgets[key];
+        $.each(opus.prefs.widgets, function(key, slug) {
             if ($.inArray(slug, opus.widgetsDrawn) < 0) {  // only draw if not already drawn
                 o_widgets.getWidget(slug,"#op-search-widgets");
             }
-        }
+        });
 
         o_search.searchTabDrawn = true;
     },

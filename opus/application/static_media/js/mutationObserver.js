@@ -50,8 +50,9 @@ var o_mutationObserver = {
 
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
-        let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustSelectMetadataHeight = _.debounce(o_browse.adjustSelectMetadataHeight, 200);
+        let hideOrShowSelectMetadataMenuPS = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
+        let hideOrShowSelectedMetadataPS = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
         let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
@@ -144,12 +145,18 @@ var o_mutationObserver = {
         });
 
         // ps in select metadata modal
-        let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
-            adjustMetadataSelectorMenuPS();
-            adjustSelectedMetadataPS();
+        let selectMetadataObserver = new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
+                if (!mutation.target.classList.value.match(/ps/)) {
+                    adjustSelectMetadataHeight();
+                }
+            });
+            hideOrShowSelectMetadataMenuPS();
+            hideOrShowSelectedMetadataPS();
         });
 
-        let metadataSelectorMenuObserver = new MutationObserver(function(mutationsList) {
+        let selectMetadataMenuObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
@@ -160,13 +167,13 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.adjustMetadataSelectorMenuPS();
+                        o_browse.hideOrShowSelectMetadataMenuPS();
                         // if the collapse opens below the viewable area, move the scrollbar
                         // only move the scrollbar if we open the menu item
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.target.classList.value.match(/show/) &&
                             !lastElement.isOnScreen(".op-all-metadata-column", 1)) {
-                            let containerHeight = o_browse.metadataSelectorMenuContainerHeight();
+                            let containerHeight = o_browse.selectMetadataMenuContainerHeight();
                             let containerTop = $(".op-all-metadata-column").offset().top;
                             let containerBottom = containerHeight + containerTop;
                             let elementTop = lastElement.offset().top;
@@ -187,7 +194,7 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.adjustSelectedMetadataPS();
+                        o_browse.hideOrShowSelectedMetadataPS();
                         // if the new item appears below the viewable area, move the scrollbar
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.addedNodes.length !== 0 &&
@@ -233,8 +240,8 @@ var o_mutationObserver = {
         let searchSidebar = $("#sidebar")[0];
         let searchWidget = $("#op-search-widgets")[0];
         let helpPanel = $("#op-help-panel")[0];
-        let metadataSelector = $("#op-metadata-selector")[0];
-        let metadataSelectorContents = $("#op-metadata-selector-contents")[0];
+        let selectMetadata = $("#op-select-metadata")[0];
+        let selectMetadataContents = $("#op-select-metadata-contents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
         let galleryView = $(".gallery")[0];
         let tableView = $(".op-data-table")[0];
@@ -259,11 +266,11 @@ var o_mutationObserver = {
         // update ps in help panel
         helpPanelObserver.observe(helpPanel, attrObserverConfig);
         // update ps when select metadata modal open/close,
-        metadataSelectorObserver.observe(metadataSelector, {attributes: true});
+        selectMetadataObserver.observe(selectMetadata, {attributes: true});
         // udpate ps when select metadata menu expand/collapse
-        metadataSelectorMenuObserver.observe(metadataSelectorContents, attrObserverConfig);
+        selectMetadataMenuObserver.observe(selectMetadataContents, attrObserverConfig);
         // update ps when selected metadata are added/removed
-        selectedMetadataObserver.observe(metadataSelectorContents, childListObserverConfig);
+        selectedMetadataObserver.observe(selectMetadataContents, childListObserverConfig);
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
         // udpate ps in browse gallery view
