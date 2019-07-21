@@ -1054,6 +1054,12 @@ nav.panel-heading {
 /* Cart view navbar responsiveness */
 @media (max-width: 1300px) {
     #cart .op-cart-nav-container {
+        width: 87%;
+    }
+}
+
+@media (max-width: 1425) {
+    #cart .op-cart-nav-container {
         width: 85%;
     }
 }

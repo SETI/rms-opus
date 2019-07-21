@@ -719,9 +719,6 @@ var o_browse = {
     updateSliderHandle: function(browserResized=false, isDOMChanged=false) {
         // Only update the slider & obSnum in infiniteScroll instances when the user
         // is at browse tab
-        if (opus.getCurrentTab() !== "browse") {
-            return;
-        }
         let tab = opus.getViewTab();
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .op-thumbnail-container` :
