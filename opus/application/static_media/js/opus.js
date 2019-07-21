@@ -617,7 +617,6 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustSelectMetadataHeightDB = _.debounce(o_browse.adjustSelectMetadataHeight, 200);
         let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
         let hideOrShowSelectedMetadataPSDB = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
         let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
@@ -630,7 +629,7 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            adjustSelectMetadataHeightDB();
+            o_browse.adjustSelectMetadataHeight();
             hideOrShowSelectMetadataMenuPSDB();
             hideOrShowSelectedMetadataPSDB();
             adjustBrowseDialogPSDB();

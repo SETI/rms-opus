@@ -1391,16 +1391,15 @@ var o_browse = {
             modalFooterHeight = 68;
             selectMetadataHeadersHeight = 122;
             selectMetadataHeadersHRHeight = 1;
-
         }
-        let totalNonGalleryHeight = (footerHeight + mainNavHeight + modalHeaderHeight +
-                                     modalFooterHeight + selectMetadataHeadersHeight +
-                                     selectMetadataHeadersHRHeight);
+        let totalNonScrollableHeight = (footerHeight + mainNavHeight + modalHeaderHeight +
+                                        modalFooterHeight + selectMetadataHeadersHeight +
+                                        selectMetadataHeadersHRHeight);
         /* 55 is a rough guess for how much space we want below the dialog, when possible.
            130 is the minimum size required to display four metadata fields.
            Anything less than that makes the dialog useless. In that case we hide the
            header text to give us more room. */
-        let height = Math.max($(window).height()-totalNonGalleryHeight-55);
+        let height = Math.max($(window).height()-totalNonScrollableHeight-55);
         if (height < 130) {
             $(".op-select-metadata-headers").hide();
             $(".op-select-metadata-headers-hr").hide();
