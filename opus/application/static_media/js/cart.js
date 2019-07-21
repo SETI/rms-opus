@@ -8,7 +8,7 @@
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 900;
+const cartLeftPaneThreshold = 930;
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -44,6 +44,9 @@ var o_cart = {
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
+
+    loadDataInProgress: false,
+    infiniteScrollLoadInProgress: false,
     /**
      *
      *  managing cart communication between server and client and
@@ -119,6 +122,7 @@ var o_cart = {
         if ($(window).width() <= cartLeftPaneThreshold) {
             $("#op-cart-download-panel .op-card-contents").html(html);
         } else {
+            opus.hideHelpAndCartPanels();
             $(".cart_details").html(html);
         }
         o_cart.adjustProductInfoHeight();

@@ -45,9 +45,9 @@ var o_mutationObserver = {
         // make sure the height of .op-gallery-view and .op-data-table-view are set right away
         // when switching to browse tab or switching between gallery & table view. That way the
         // calculation of setScrollbarPosition will be correct and slider value will match startObs.
-        let adjustBrowseHeight = function() {o_browse.adjustBrowseHeight(true);};
+        let adjustBrowseHeight = function() {o_browse.adjustBrowseHeight(false, true);};
         let adjustTableSize = o_browse.adjustTableSize;
-        
+
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
         let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);

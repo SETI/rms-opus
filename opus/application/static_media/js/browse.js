@@ -50,6 +50,9 @@ var o_browse = {
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
+
+    loadDataInProgress: false,
+    infiniteScrollLoadInProgress: false,
     /**
     *
     *  all the things that happen on the browse tab
@@ -713,7 +716,9 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(browserResized=false) {
+    updateSliderHandle: function(browserResized=false, isDOMChanged=false) {
+        // Only update the slider & obSnum in infiniteScroll instances when the user
+        // is at browse tab
         let tab = opus.getViewTab();
         let selector = (o_browse.isGalleryView() ?
                         `${tab} .gallery .op-thumbnail-container` :
@@ -732,7 +737,8 @@ var o_browse = {
             // 2. Get the scrollbar offset for both gallery and table view.
             // 3. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
-            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized);
+            let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized,
+                                                                                isDOMChanged);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
@@ -758,7 +764,7 @@ var o_browse = {
         }
     },
 
-    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized) {
+    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged) {
         /**
          * Get the current startObs (obsNum, for slider number) in both
          * gallery (top-left item) and table (top item) views. Also get
@@ -782,7 +788,15 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-        if (browserResized) {
+
+        // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
+        // trigger to load new data (previous page). During the time when infiniteScroll is
+        // still loading (before all new obs are rendered), if we keep resizing and cause some
+        // DOMs to get deleted, at the end after load is done, there will be some DOMs missing
+        // between the end of newly loaded obs and beginning of old cached obs. So we add the
+        // protection here. Another updateSliderHandle will be called to realign DOMS after all
+        // new obs are rendered in infiniteScrollLoadEventListener.
+        if ((browserResized || isDOMChanged) && !viewNamespace.infiniteScrollLoadInProgress) {
             // We delete cached obs when we are in gallery view or switch from table to gallery view.
             if (o_browse.isGalleryView()) {
                 numToDelete = o_browse.deleteObsToCorrectRowBoundary(tab, firstCachedObs);
@@ -801,7 +815,7 @@ var o_browse = {
         // when resizing happened.
         let contentsView = o_browse.getScrollContainerClass();
         let prevObsNumBeforeResizing = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
-        if (browserResized) {
+        if (browserResized || isDOMChanged) {
             if (o_browse.isGalleryView()) {
                 obsNum = (Math.max((o_utils.floor((prevObsNumBeforeResizing - 1)/galleryBoundingRect.x) *
                 galleryBoundingRect.x + 1), 1));
@@ -824,17 +838,23 @@ var o_browse = {
             currentScrollObsNum = o_browse.isGalleryView() ? previousScrollObsNum : currentScrollObsNum;
         }
 
-        // Properly set obsNum to make sure the last row is fully displayed when scrollbar reaches to the end
-        // of the data.
+        // Properly set obsNum to make sure the last row is fully displayed when scrollbar
+        // reaches the end of the data.
         let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
-                if (viewNamespace.galleryScrollbar.reach.y === "end") {
+                if (viewNamespace.galleryScrollbar.reach.y === "end" &&
+                    obsNum >= maxSliderVal - galleryBoundingRect.x) {
                     obsNum = maxSliderVal;
-                    currentScrollObsNum = currentScrollObsNum >= maxSliderVal ? currentScrollObsNum : maxSliderVal;
+                    if (previousScrollObsNum > maxSliderVal) {
+                        currentScrollObsNum = previousScrollObsNum;
+                    } else {
+                        currentScrollObsNum = Math.min(currentScrollObsNum, maxSliderVal);
+                    }
                 }
             } else {
-                if (viewNamespace.tableScrollbar.reach.y === "end") {
+                if (viewNamespace.tableScrollbar.reach.y === "end" &&
+                    obsNum >= maxSliderVal - galleryBoundingRect.tr) {
                     obsNum = maxSliderVal;
                 }
             }
@@ -843,11 +863,19 @@ var o_browse = {
         // When resizing happened, we need to manually set the scrollbar location so that:
         // 1. In gallery view, previous startObs (before resizing) is always in the top row.
         // 2. In table view, the top obs will stay the same.
-        if (browserResized) {
+        if (browserResized || isDOMChanged) {
             currentScrollObsNum = previousScrollObsNum;
-            let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
             let infiniteScrollDataObj = $(`${tab} ${contentsView}`).data("infiniteScroll").options;
             let offset = infiniteScrollDataObj.scrollbarOffset;
+
+            // When resizing with Ctrl + "+"/"-" (it triggers "scroll" event first, and then "resize" event),
+            // sometimes the previous startObs will be moved to one row ahead of current top row. The
+            // scrollbarOffset stored from updateSliderHandle in "scroll" event will have an absolute value
+            // close to image size which will then set the scrollbar position with one row offset from
+            // updateSliderHandle in "resize" event later. So we reset offset to 0 if the value stored in
+            // infiniteScroll instance will cause one row difference in setScrollbarPosition.
+            let compareFactor = o_browse.imageSize * opus.sliderViewableFraction;
+            offset = (o_browse.isGalleryView() ? (Math.abs(offset) > compareFactor ? 0 : offset) : offset);
 
             // Set offset for scrollbar position so that it will have smooth scrolling in both
             // gallery and table view when infiniteScroll load is triggered.
@@ -1662,9 +1690,7 @@ var o_browse = {
 
         // need to add limit - getting twice as much so that the prefetch is done in one get instead of two.
         let limitNum = customizedLimitNum === undefined ? o_browse.getLimit(view) * 2 : customizedLimitNum;
-        if (limitNum === 0 || isNaN(limitNum)) {
-            opus.logError(`limitNum:  ${limitNum}, customizedLimitNum = ${customizedLimitNum}`);
-        }
+
         url += `&limit=${limitNum}`;
 
         return url;
@@ -1756,6 +1782,7 @@ var o_browse = {
 
                     // need to calc here due to race condition; values needed for url getLimit size
                     viewNamespace.galleryBoundingRect = o_browse.countGalleryImages(view);
+                    viewNamespace.infiniteScrollLoadInProgress = true;
                     let galleryBoundingRect = viewNamespace.galleryBoundingRect;
                     // When loading a pasted URL in table view with a startObs not aligned with current
                     // browser size, the first cached obs won't be aligned with browser size. We calculate
@@ -1810,6 +1837,15 @@ var o_browse = {
                             opus.prefs[startObsLabel] = scrollbarObsNum;
                         }
                     }
+
+                    // If there is no Cached data at all, loadData function will be called to
+                    // render initial data, during this time, we want to make sure infintieScroll
+                    // doesn't render any data to avoid duplicated cached obs.
+                    if (viewNamespace.loadDataInProgress || ($(`${tab} .op-data-table tbody tr`).length === 0 &&
+                        $(`${tab} .gallery .op-thumbnail-container`).length === 0)) {
+                        customizedLimitNum = 0;
+                    }
+
                     // if totalObsCount is not yet defined, we still need to init the infinite scroll...
                     //if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
                         let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
@@ -1859,6 +1895,10 @@ var o_browse = {
     },
 
     loadData: function(view, startObs, customizedLimitNum=undefined) {
+        /**
+         * Fetch initial data when reloading page, changing sort order,
+         * or switching to browse tab after search is changed.
+         */
         let tab = opus.getViewTab(view);
         let startObsLabel = o_browse.getStartObsLabel(view);
         let contentsView = o_browse.getScrollContainerClass(view);
@@ -1910,7 +1950,7 @@ var o_browse = {
         $(".op-page-loading-status > .loader").show();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
-
+        viewNamespace.loadDataInProgress = true;
         // metadata; used for both table and gallery
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
@@ -1928,15 +1968,7 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
             o_browse.hideGalleryViewModal();
-
             o_browse.renderGalleryAndTable(data, this.url, view);
-
-            // When pasting a URL, prefetch some data from previous page so that
-            // scrollbar will stay in the middle.
-            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-            if (startObs === firstObs) {
-                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
-            }
 
             if (o_browse.metadataDetailOpusId != "") {
                 o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
@@ -1944,10 +1976,20 @@ var o_browse = {
             o_browse.updateSortOrder(data);
 
             viewNamespace.reloadObservationData = false;
+            viewNamespace.loadDataInProgress = false;
+
+            // When pasting a URL, prefetch some data from previous page so that scrollbar will
+            // stay in the middle. This step has to be performed after loadData is done (loadDataInProgress
+            // is set to false).
+            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+            if (startObs === firstObs && firstObs !== 1) {
+                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
+            }
         });
     },
 
     infiniteScrollLoadEventListener: function(event, response, path, view) {
+        let viewNamespace = opus.getViewNamespace(view);
         $(".op-page-loading-status > .loader").show();
         let data = JSON.parse(response);
 
@@ -1982,6 +2024,13 @@ var o_browse = {
 
         // if left/right arrow are disabled, make them clickable again
         $("#galleryViewContents").removeClass("op-disabled");
+        viewNamespace.infiniteScrollLoadInProgress = false;
+
+        if (data.count !== 0) {
+            // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
+            // when browser is resized in the middle of infiniteScroll load.
+            o_browse.updateSliderHandle(false, true);
+        }
     },
 
     activateBrowseTab: function() {
@@ -1995,7 +2044,7 @@ var o_browse = {
         // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view
         // are set. This will prevent the height of data obs containers from jumping when the page is loaded,
         // and avoid the wrong calculation of container position in setScrollbarPosition.
-        o_browse.adjustBrowseHeight(false);
+        o_browse.adjustBrowseHeight();
         o_browse.adjustTableSize();
 
         o_browse.loadData(opus.prefs.view);
@@ -2066,7 +2115,7 @@ var o_browse = {
         return width;
     },
 
-    adjustBrowseHeight: function(browserResized=false) {
+    adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
@@ -2077,7 +2126,7 @@ var o_browse = {
         viewNamespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(browserResized);
+        o_browse.updateSliderHandle(browserResized, isDOMChanged);
     },
 
     adjustTableSize: function() {
@@ -2268,7 +2317,7 @@ var o_browse = {
         // XXX For some reason having these lines here makes data sometimes double-load
         // when the scrollbar isn't at the top, so for now this is disabled and the
         // user might occasionally see old data briefly while the new stuff loads.
-        // $("#browse .gallery").empty();
-        // $("#browse .op-data-table tbody").empty();
+        $("#browse .gallery").empty();
+        $("#browse .op-data-table tbody").empty();
     },
 };

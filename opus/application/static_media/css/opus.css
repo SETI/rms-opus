@@ -924,7 +924,7 @@ div.gallery {
     margin-right: -80px;
 }
 
-/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+/* Make op-sort-order-container wrapped within the same container as browse-nav-containers */
 nav.panel-heading {
     flex-direction: column;
     align-items: flex-start;
@@ -948,7 +948,7 @@ nav.panel-heading {
 @media (max-width: 1000px) {
     /* Move down the sort pill area so that slider can be moved down
     to the 2nd line */
-    #browse .sort-order-container {
+    #browse .op-sort-order-container {
         margin-top: 1.75em;
     }
 
@@ -1035,7 +1035,36 @@ nav.panel-heading {
 #cart .op-cart-nav-container {
     justify-content: flex-start;
 }
-@media (max-width: 1380px) {
+
+#cart .op-download-options {
+    display: inline-flex;
+    padding: 0.5em 0.5em 0;
+}
+
+#cart .op-download-options a {
+    opacity: 0.6 !important;
+    text-decoration: none;
+}
+
+#cart .op-download-options a:hover {
+    opacity: 1 !important;
+    text-decoration: none;
+}
+
+/* Cart view navbar responsiveness */
+@media (max-width: 1300px) {
+    #cart .op-cart-nav-container {
+        width: 87%;
+    }
+}
+
+@media (max-width: 1425) {
+    #cart .op-cart-nav-container {
+        width: 85%;
+    }
+}
+
+@media (max-width: 1100px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
     slider moves to the 2nd line */
     #cart .browse-nav-container .nav-link {
@@ -1047,23 +1076,21 @@ nav.panel-heading {
         flex-wrap: wrap;
         width: 100%;
     }
-    /* Move down cart tab sorting pill when slider is at the 2nd line */
-    #cart .sort-order-container {
-        margin-top: 1.8em;
-    }
     /* Style the width of slider when it moves to the 2nd line */
     #cart .op-slider-nav {
         flex-basis: 90%;
     }
-}
-@media (max-width: 704px) {
-    /* When download options left pane is hidden, and the 2nd navbar options
-    become 2 lines, we move down the sorting pill */
-    #cart .sort-order-container {
-        margin-top: 3.3em;
+
+    #cart .op-sort-order-container {
+        padding-top: 1.9em;
+    }
+
+    /* move the second line down to make room for the slider*/
+    #cart .op-download-options {
+        display: inline-flex;
     }
 }
-/* Cart view navbar responsiveness */
+
 @media (max-width: 1080px) {
     /*  keep the 2nd navbar in a row and move some options to the 2nd
     line when screen is narrow */
@@ -1083,18 +1110,13 @@ nav.panel-heading {
         flex: 1 0 5%;
     }
 
-    /* Move down cart tab sorting pill when options of 2nd navbar becomes 2 lines */
-    #cart .sort-order-container {
-        margin-top: 3.3em;
-    }
-
     /* Keep left/right spaces between 2nd navbar options */
     #cart .nav-link {
         padding: 0 0.5rem;
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 930px) {
     /* Hide download options pane when screen is narrow */
     .cart_details {
         display: none;
@@ -1125,17 +1147,9 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 900px) and (min-width: 688px) {
-    /* When download options left pane is hidden, and the 2nd navbar options
-    stay in one line, we move up the sorting pill */
-    #cart .sort-order-container {
-        margin-top: 1.8em;
-    }
-}
-
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 901px) {
+@media (min-width: 931px) {
     .op-cart-toggle-download-panel {
         display: none !important;
 
@@ -1151,13 +1165,13 @@ is wide enough */
     top: 2em;
 }
 
-.sort-order-container {
+.op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
     /* padding-top: 0.5em; */
 }
 
-.sort-order-icon {
+.op-sort-order-icon {
     color: rgba(255, 255, 255, 0.5);
     vertical-align: middle;
 }
@@ -1456,6 +1470,24 @@ even when screen is narrow */
     position: relative;
     min-width: 470px;
     max-width: 800px;
+}
+
+/* Add this class to set ps container overflow to scroll, this is part of
+the workaround for ctrl + F search scroll to work with perfect scrollbar */
+.op-enable-default-scrolling {
+    overflow-y: scroll !important;
+}
+
+/* Hide the Chrome default scrollbar, this is part of steps to make ctrl
++ F search scroll to work with perfect scrollbar in Chrome. */
+.op-detail-metadata::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide the FF default scrollbar in detail page, this is part of steps to
+make ctrl + F search scroll to work with perfect scrollbar in FF. */
+.op-detail-metadata {
+    scrollbar-width: none;
 }
 
 /* Make detail left pane takes up 50% of width */
