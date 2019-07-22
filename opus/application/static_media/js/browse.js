@@ -77,6 +77,7 @@ var o_browse = {
         //   in that corner case.
         $(".op-gallery-view, .op-data-table-view").on("wheel ps-scroll-up", function(event) {
             let startObsLabel = o_browse.getStartObsLabel();
+            let view = opus.prefs.view;
             let tab = opus.getViewTab();
             let contentsView = o_browse.getScrollContainerClass();
 
@@ -88,7 +89,7 @@ var o_browse = {
                             "loadPrevPage": true,
                         });
                         $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
-                        o_browse.updateSliderHandle();
+                        o_browse.updateSliderHandle(view);
                     }
                 }
             }
@@ -716,14 +717,14 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(browserResized=false, isDOMChanged=false) {
+    updateSliderHandle: function(view, browserResized=false, isDOMChanged=false) {
         // Only update the slider & obSnum in infiniteScroll instances when the user
         // is at browse tab
-        let tab = opus.getViewTab();
-        let selector = (o_browse.isGalleryView() ?
+        let tab = opus.getViewTab(view);
+        let selector = (o_browse.isGalleryView(view) ?
                         `${tab} .gallery .op-thumbnail-container` :
                         `${tab} .op-data-table tbody tr`);
-        let startObsLabel = o_browse.getStartObsLabel();
+        let startObsLabel = o_browse.getStartObsLabel(view);
 
         let numObservations = $(selector).length;
         if (numObservations > 0) {
@@ -749,9 +750,9 @@ var o_browse = {
         let currentSliderValue = $(`${tab} .op-observation-slider`).slider("option", "value");
         let currentSliderMax = $(`${tab} .op-observation-slider`).slider("option", "max");
 
-        let galleryImages = opus.getViewNamespace().galleryBoundingRect;
+        let galleryImages = opus.getViewNamespace(view).galleryBoundingRect;
 
-        let numberOfObsFitOnTheScreen = (o_browse.isGalleryView() ? galleryImages.x * galleryImages.y :
+        let numberOfObsFitOnTheScreen = (o_browse.isGalleryView(view) ? galleryImages.x * galleryImages.y :
                                          galleryImages.tr);
         if ((opus.prefs[startObsLabel] + numObservations - 1) < numberOfObsFitOnTheScreen ||
             (currentSliderValue <= 1 && currentSliderValue >= currentSliderMax)) {
@@ -1066,11 +1067,12 @@ var o_browse = {
         // this will make sure ps-scroll-up is triggered to prefetch
         // previous data when scrollbar reaches to up scroll threshold point.
         let tab = opus.getViewTab();
+        let view = opus.prefs.view;
         let contentsView = o_browse.getScrollContainerClass();
         if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
-        o_browse.updateSliderHandle();
+        o_browse.updateSliderHandle(view);
         return false;
     },
 
@@ -1643,7 +1645,7 @@ var o_browse = {
             infiniteScrollDataObj.scrollbarObsNum, view, infiniteScrollDataObj.scrollbarOffset);
 
         $(".op-page-loading-status > .loader").hide();
-        o_browse.updateSliderHandle();
+        o_browse.updateSliderHandle(view);
         o_hash.updateHash(true);
     },
 
@@ -2104,7 +2106,7 @@ var o_browse = {
         if (data.count !== 0) {
             // Realign DOMS after all new obs are rendered. This will make sure all DOMs are aligned
             // when browser is resized in the middle of infiniteScroll load.
-            o_browse.updateSliderHandle(false, true);
+            o_browse.updateSliderHandle(view, false, true);
         }
     },
 
@@ -2192,6 +2194,7 @@ var o_browse = {
 
     adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
+        let view = opus.prefs.view;
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
@@ -2201,7 +2204,7 @@ var o_browse = {
         viewNamespace.galleryBoundingRect = o_browse.countGalleryImages();
 
         // make sure slider is updated when window is resized
-        o_browse.updateSliderHandle(browserResized, isDOMChanged);
+        o_browse.updateSliderHandle(view, browserResized, isDOMChanged);
     },
 
     adjustTableSize: function() {

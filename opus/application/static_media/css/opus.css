@@ -985,7 +985,7 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    .op-observation-slider.ui-slider {
+    #browse .op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
