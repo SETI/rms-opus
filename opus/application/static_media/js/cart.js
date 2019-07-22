@@ -8,7 +8,7 @@
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 930;
+const cartLeftPaneThreshold = 940;
 
 /* jshint varstmt: false */
 var o_cart = {
