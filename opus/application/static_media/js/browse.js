@@ -1300,7 +1300,6 @@ var o_browse = {
         if (!o_browse.selectMetadataDrawn) {
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
             $(".modal-body.metadata").load( url, function(response, status, xhr)  {
-
                 o_browse.selectMetadataDrawn = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -1327,6 +1326,7 @@ var o_browse = {
                     cursor: "grab",
                     stop: function(event, ui) { o_browse.metadataDragged(this); }
                 });
+                o_browse.adjustSelectMetadataHeight();
             });
         }
     },
