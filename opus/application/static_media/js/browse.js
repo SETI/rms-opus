@@ -45,7 +45,7 @@ var o_browse = {
     imageSize: 100,     // default
 
     metadataDetailOpusId: "",
-    metadataSelectorDrawn: false,
+    selectMetadataDrawn: false,
 
     tempHash: "",
     onRenderData: false,
@@ -94,7 +94,7 @@ var o_browse = {
             }
         });
 
-        $("#op-metadata-selector").modal({
+        $("#op-select-metadata").modal({
             keyboard: false,
             backdrop: 'static',
             show: false,
@@ -480,7 +480,7 @@ var o_browse = {
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 o_browse.hideGalleryViewModal();
-                $("#op-metadata-selector").modal('hide');
+                $("#op-select-metadata").modal('hide');
                 // reset range select
                 o_browse.undoRangeSelect();
             }
@@ -1190,51 +1190,19 @@ var o_browse = {
         opus.changeTab("detail");
     },
 
-    // columns can be reordered wrt each other in 'metadata selector' by dragging them
-    metadataDragged: function(element) {
-        let cols = $.map($(element).sortable("toArray"), function(item) {
-            return item.split("__")[1];
-        });
-        opus.prefs.cols = cols;
-    },
 
-    addColumn: function(slug) {
-        let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
-        o_menu.markMenuItem(menuSelector);
-
-        let label = $(menuSelector).data("qualifiedlabel");
-        let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
-        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="info">&nbsp;${info}</span>${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
-        $(".op-selected-metadata-column > ul").append(html);
-    },
-
-    resetMetadata: function(cols, closeModal) {
-        opus.prefs.cols = cols.slice();
-
-        if (closeModal == true) {
-            $("#op-metadata-selector").modal('hide');
-        }
-
-        // uncheck all on left; we will check them as we go
-        o_menu.markMenuItem("#op-metadata-selector .op-all-metadata-column a", "unselect");
-
-        // remove all from selected column
-        $("#op-metadata-selector .op-selected-metadata-column li").remove();
-
-        // add them back and set the check
-        $.each(cols, function(index, slug) {
-            o_browse.addColumn(slug);
-        });
-    },
+    /******************************************/
+    /********* SELECT METADATA DIALOG *********/
+    /******************************************/
 
     // metadata selector behaviors
-    addMetadataSelectorBehaviors: function() {
+    addSelectMetadataBehaviors: function() {
         // Global within this function so behaviors can communicate
         /* jshint varstmt: false */
         var currentSelectedMetadata = opus.prefs.cols.slice();
         /* jshint varstmt: true */
 
-        $("#op-metadata-selector").on("hide.bs.modal", function(e) {
+        $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 let tab = opus.getViewTab();
@@ -1248,14 +1216,15 @@ var o_browse = {
             }
         });
 
-        $("#op-metadata-selector").on("show.bs.modal", function(e) {
+        $("#op-select-metadata").on("show.bs.modal", function(e) {
             // this is to make sure modal is back to it original position when open again
-            $("#op-metadata-selector .modal-dialog").css({top: 0, left: 0});
+            $("#op-select-metadata .modal-dialog").css({top: 0, left: 0});
+            o_browse.adjustSelectMetadataHeight();
             // save current column state so we can look for changes
             currentSelectedMetadata = opus.prefs.cols.slice();
 
             o_browse.hideMenu();
-            o_browse.renderMetadataSelector();
+            o_browse.renderSelectMetadata();
 
             // Do the fake API call to write in the Apache log files that
             // we invoked the metadata selector so log_analyzer has something to
@@ -1265,12 +1234,12 @@ var o_browse = {
             });
         });
 
-        $("#op-metadata-selector .op-all-metadata-column").on("click", '.submenu li a', function() {
+        $("#op-select-metadata .op-all-metadata-column").on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
             let chosenSlugSelector = `#cchoose__${slug}`;
-            let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
+            let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
 
             if ($(chosenSlugSelector).length === 0) {
                 // this slug was previously unselected, add to cols
@@ -1289,7 +1258,7 @@ var o_browse = {
         });
 
         // removes chosen column
-        $("#op-metadata-selector .op-selected-metadata-column").on("click", "li .unselect", function() {
+        $("#op-select-metadata .op-selected-metadata-column").on("click", "li .unselect", function() {
             if (opus.prefs.cols.length <= 1) {
                 return;     // prevent user from removing all the columns
             }
@@ -1301,14 +1270,14 @@ var o_browse = {
                 $(`#cchoose__${slug}`).fadeOut(200, function() {
                     $(this).remove();
                 });
-                let menuSelector = `#op-metadata-selector .op-all-metadata-column a[data-slug=${slug}]`;
+                let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
                 o_menu.markMenuItem(menuSelector, "unselected");
             }
             return false;
         });
 
         // buttons
-        $("#op-metadata-selector").on("click", ".btn", function() {
+        $("#op-select-metadata").on("click", ".btn", function() {
             switch($(this).attr("type")) {
                 case "reset":
                     opus.prefs.cols = [];
@@ -1323,20 +1292,169 @@ var o_browse = {
                     break;
             }
         });
-    },  // /addMetadataSelectorBehaviors
+    },  // /addSelectMetadataBehaviors
 
-    // there are interactions that are applied to different code snippets,
-    // this returns the namespace, view_var
-    // that distinguishes cart vs result tab views
-    // NOTE: get rid of all this with a framework!
-    // usage:
-    // utility function to figure out what view we are in
-    /*
-        // usage
-        view_info = o_browse.getViewInfo();
-        namespace = view_info['namespace'];
-        prefix = view_info['prefix'];
-    */
+    renderSelectMetadata: function() {
+        if (!o_browse.selectMetadataDrawn) {
+            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
+            $(".modal-body.metadata").load( url, function(response, status, xhr)  {
+
+                o_browse.selectMetadataDrawn = true;  // bc this gets saved not redrawn
+                $("#op-select-metadata .op-reset-button").hide(); // we are not using this
+
+                // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
+                // we need to unhighlight the selected widgets
+                o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
+
+                // display check next to any currently used columns
+                $.each(opus.prefs.cols, function(index, col) {
+                    o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
+                });
+
+                o_browse.addSelectMetadataBehaviors();
+
+                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-select-metadata-contents .op-all-metadata-column", {
+                    minScrollbarLength: opus.minimumPSLength
+                });
+                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-select-metadata-contents .op-selected-metadata-column", {
+                    minScrollbarLength: opus.minimumPSLength
+                });
+
+                $(".op-selected-metadata-column > ul").sortable({
+                    items: "li",
+                    cursor: "grab",
+                    stop: function(event, ui) { o_browse.metadataDragged(this); }
+                });
+            });
+        }
+    },
+
+    addColumn: function(slug) {
+        let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
+        o_menu.markMenuItem(menuSelector);
+
+        let label = $(menuSelector).data("qualifiedlabel");
+        let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="info">&nbsp;${info}</span>${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
+        $(".op-selected-metadata-column > ul").append(html);
+    },
+
+    // columns can be reordered wrt each other in 'metadata selector' by dragging them
+    metadataDragged: function(element) {
+        let cols = $.map($(element).sortable("toArray"), function(item) {
+            return item.split("__")[1];
+        });
+        opus.prefs.cols = cols;
+    },
+
+    resetMetadata: function(cols, closeModal) {
+        opus.prefs.cols = cols.slice();
+
+        if (closeModal == true) {
+            $("#op-select-metadata").modal('hide');
+        }
+
+        // uncheck all on left; we will check them as we go
+        o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
+
+        // remove all from selected column
+        $("#op-select-metadata .op-selected-metadata-column li").remove();
+
+        // add them back and set the check
+        $.each(cols, function(index, slug) {
+            o_browse.addColumn(slug);
+        });
+    },
+
+    adjustSelectMetadataHeight: function() {
+        /**
+         * Set the height of the "Select Metadata" dialog based on the browser size.
+         */
+        $(".op-select-metadata-headers").show(); // Show now so computations are accurate
+        $(".op-select-metadata-headers-hr").show();
+        let footerHeight = $(".app-footer").outerHeight();
+        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let modalHeaderHeight = $("#op-select-metadata .modal-header").outerHeight();
+        let modalFooterHeight = $("#op-select-metadata .modal-footer").outerHeight();
+        let selectMetadataHeadersHeight = $(".op-select-metadata-headers").outerHeight()+30;
+        let selectMetadataHeadersHRHeight = $(".op-select-metadata-headers-hr").outerHeight();
+        /* If modalHeaderHeight is zero, the dialog is in the process of being rendered
+           and we don't have valid data yet. If we set the height based on the zeros,
+           we get an annoying "jump" in the dialog size after it's done rendering.
+           So we use a default value that will cover the common case of a dialog wide
+           enough to cause excessive header word wrap.
+        */
+        if (modalHeaderHeight === 0) {
+            modalHeaderHeight = 57;
+            modalFooterHeight = 68;
+            selectMetadataHeadersHeight = 122;
+            selectMetadataHeadersHRHeight = 1;
+        }
+        let totalNonScrollableHeight = (footerHeight + mainNavHeight + modalHeaderHeight +
+                                        modalFooterHeight + selectMetadataHeadersHeight +
+                                        selectMetadataHeadersHRHeight);
+        /* 55 is a rough guess for how much space we want below the dialog, when possible.
+           130 is the minimum size required to display four metadata fields.
+           Anything less than that makes the dialog useless. In that case we hide the
+           header text to give us more room. */
+        let height = Math.max($(window).height()-totalNonScrollableHeight-55);
+        if (height < 130) {
+            $(".op-select-metadata-headers").hide();
+            $(".op-select-metadata-headers-hr").hide();
+            height += selectMetadataHeadersHeight + selectMetadataHeadersHRHeight;
+        }
+        $(".op-all-metadata-column").css("height", height);
+        $(".op-selected-metadata-column").css("height", height);
+    },
+
+    selectMetadataMenuContainerHeight: function() {
+        return $(".op-all-metadata-column").outerHeight();
+    },
+
+    selectedMetadataContainerHeight: function() {
+        return $(".op-selected-metadata-column").outerHeight();
+    },
+
+    hideOrShowSelectMetadataMenuPS: function() {
+        let containerHeight = $(".op-all-metadata-column").height();
+        let menuHeight = $(".op-all-metadata-column .op-search-menu").height();
+        if (o_browse.allMetadataScrollbar) {
+            if (containerHeight >= menuHeight) {
+                if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
+            }
+            o_browse.allMetadataScrollbar.update();
+        }
+    },
+
+    hideOrShowSelectedMetadataPS: function() {
+        let containerHeight = $(".op-selected-metadata-column").height();
+        let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
+
+        if (o_browse.selectedMetadataScrollbar) {
+            if (containerHeight >= selectedMetadataHeight) {
+                if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
+                    o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
+                }
+            } else {
+                $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
+                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
+            }
+            o_browse.selectedMetadataScrollbar.update();
+        }
+    },
+
+    /*************************************************/
+    /********* END OF SELECT METADATA DIALOG *********/
+    /*************************************************/
+
+
     getViewInfo: function() {
         // this function returns some data you need depending on whether
         // you are in #cart or #browse views
@@ -1413,49 +1531,6 @@ var o_browse = {
         return url;
     },
 
-    metadataSelectorMenuContainerHeight: function() {
-        return $(".op-all-metadata-column").outerHeight();
-    },
-
-    selectedMetadataContainerHeight: function() {
-        return $(".op-selected-metadata-column").outerHeight();
-    },
-
-    renderMetadataSelector: function() {
-        if (!o_browse.metadataSelectorDrawn) {
-            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
-            $(".modal-body.metadata").load( url, function(response, status, xhr)  {
-
-                o_browse.metadataSelectorDrawn = true;  // bc this gets saved not redrawn
-                $("#op-metadata-selector .op-reset-button").hide(); // we are not using this
-
-                // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
-                // we need to unhighlight the selected widgets
-                o_menu.markMenuItem("#op-metadata-selector .op-all-metadata-column a", "unselect");
-
-                // display check next to any currently used columns
-                $.each(opus.prefs.cols, function(index, col) {
-                    o_menu.markMenuItem(`#op-metadata-selector .op-all-metadata-column a[data-slug="${col}"]`);
-                });
-
-                o_browse.addMetadataSelectorBehaviors();
-
-                o_browse.allMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-all-metadata-column", {
-                    minScrollbarLength: opus.minimumPSLength
-                });
-                o_browse.selectedMetadataScrollbar = new PerfectScrollbar("#op-metadata-selector-contents .op-selected-metadata-column", {
-                    minScrollbarLength: opus.minimumPSLength
-                });
-
-                $(".op-selected-metadata-column > ul").sortable({
-                    items: "li",
-                    cursor: "grab",
-                    stop: function(event, ui) { o_browse.metadataDragged(this); }
-                });
-            });
-        }
-    },
-
     renderGalleryAndTable: function(data, url, view) {
         // render the gallery and table at the same time.
         let tab = opus.getViewTab(view);
@@ -1511,7 +1586,7 @@ var o_browse = {
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
                 viewNamespace.observationData[opusId] = item.metadata;	// for galleryView, store in global array
 
-                let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge\r\Ctrl+click to toggle cart\r\nShift+click to start/end range`;
+                let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to toggle cart\r\nShift+click to start/end range`;
 
                 // gallery
                 let images = item.images;
@@ -1887,9 +1962,9 @@ var o_browse = {
                 }
             });
 
-            function eventListenerWithView(event, response, path) {
+            let eventListenerWithView = function(event, response, path) {
                 o_browse.infiniteScrollLoadEventListener(event, response, path, view);
-            }
+            };
             $(selector).on("load.infiniteScroll", eventListenerWithView);
         }
     },
@@ -2040,7 +2115,7 @@ var o_browse = {
 
         $(".op-page-loading-status > .loader").show();
         o_browse.updateBrowseNav();
-        o_browse.renderMetadataSelector();   // just do this in background so there's no delay when we want it...
+        o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
         // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view
         // are set. This will prevent the height of data obs containers from jumping when the page is loaded,
         // and avoid the wrong calculation of container position in setScrollbarPosition.
@@ -2136,42 +2211,6 @@ var o_browse = {
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
         opus.getViewNamespace().tableScrollbar.update();
-    },
-
-    adjustMetadataSelectorMenuPS: function() {
-        let containerHeight = $(".op-all-metadata-column").height();
-        let menuHeight = $(".op-all-metadata-column .searchMenu").height();
-
-        if (o_browse.allMetadataScrollbar) {
-            if (containerHeight > menuHeight) {
-                if (!$(".op-all-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $(".op-all-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                    o_browse.allMetadataScrollbar.settings.suppressScrollY = true;
-                }
-            } else {
-                $(".op-all-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-                o_browse.allMetadataScrollbar.settings.suppressScrollY = false;
-            }
-            o_browse.allMetadataScrollbar.update();
-        }
-    },
-
-    adjustSelectedMetadataPS: function() {
-        let containerHeight = $(".op-selected-metadata-column").height();
-        let selectedMetadataHeight = $(".op-selected-metadata-column .ui-sortable").height();
-
-        if (o_browse.selectedMetadataScrollbar) {
-            if (containerHeight > selectedMetadataHeight) {
-                if (!$(".op-selected-metadata-column .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $(".op-selected-metadata-column .ps__rail-y").addClass("hide_ps__rail-y");
-                    o_browse.selectedMetadataScrollbar.settings.suppressScrollY = true;
-                }
-            } else {
-                $(".op-selected-metadata-column .ps__rail-y").removeClass("hide_ps__rail-y");
-                o_browse.selectedMetadataScrollbar.settings.suppressScrollY = false;
-            }
-            o_browse.selectedMetadataScrollbar.update();
-        }
     },
 
     adjustBrowseDialogPS: function() {
