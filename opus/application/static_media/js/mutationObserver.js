@@ -217,18 +217,36 @@ var o_mutationObserver = {
             adjustBrowseDialogPS();
         });
 
+        //#BROWSE
         // ps in gallery view
-        let galleryViewObserver = new MutationObserver(function(mutationsList) {
+        let browseGalleryViewObserver = new MutationObserver(function(mutationsList) {
             adjustBrowseHeight();
         });
 
         // ps in table view
-        let tableViewObserver = new MutationObserver(function(mutationsList) {
+        let browseTableViewObserver = new MutationObserver(function(mutationsList) {
             adjustTableSize();
         });
 
         // update ps when switching between gallery and table view
-        let switchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
+        let browseSwitchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
+            adjustBrowseHeight();
+            adjustTableSize();
+        });
+
+        //#CART
+        // ps in gallery view
+        let cartGalleryViewObserver = new MutationObserver(function(mutationsList) {
+            adjustBrowseHeight();
+        });
+
+        // ps in table view
+        let cartTableViewObserver = new MutationObserver(function(mutationsList) {
+            adjustTableSize();
+        });
+
+        // update ps when switching between gallery and table view
+        let cartSwitchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
             adjustBrowseHeight();
             adjustTableSize();
         });
@@ -243,9 +261,14 @@ var o_mutationObserver = {
         let selectMetadata = $("#op-select-metadata")[0];
         let selectMetadataContents = $("#op-select-metadata-contents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
-        let galleryView = $(".gallery")[0];
-        let tableView = $(".op-data-table")[0];
-        let switchGalleryAndTable = $(".op-browse-view")[0];
+
+        let browseGalleryView = $("#browse .gallery")[0];
+        let browseTableView = $("#browse .op-data-table")[0];
+        let browseSwitchGalleryAndTable = $("#browse .op-browse-view")[0];
+
+        let cartGalleryView = $("#cart .gallery")[0];
+        let cartTableView = $("#cart .op-data-table")[0];
+        let cartSwitchGalleryAndTable = $("#cart .op-browse-view")[0];
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -274,10 +297,16 @@ var o_mutationObserver = {
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
         // udpate ps in browse gallery view
-        galleryViewObserver.observe(galleryView, generalObserverConfig);
+        browseGalleryViewObserver.observe(browseGalleryView, generalObserverConfig);
         // update ps in browse table view
-        tableViewObserver.observe(tableView, generalObserverConfig);
+        browseTableViewObserver.observe(browseTableView, generalObserverConfig);
         // update ps when switching between gallery and table view
-        switchGalleryAndTableObserver.observe(switchGalleryAndTable, attrObserverConfig);
+        browseSwitchGalleryAndTableObserver.observe(browseSwitchGalleryAndTable, attrObserverConfig);
+        // udpate ps in cart gallery view
+        cartGalleryViewObserver.observe(cartGalleryView, generalObserverConfig);
+        // update ps in cart table view
+        cartTableViewObserver.observe(cartTableView, generalObserverConfig);
+        // update ps when switching between cart gallery and table view
+        cartSwitchGalleryAndTableObserver.observe(cartSwitchGalleryAndTable, attrObserverConfig);
     },
 };

@@ -8,7 +8,7 @@
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 900;
+const cartLeftPaneThreshold = 940;
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -33,7 +33,8 @@ var o_cart = {
     totalObsCount : undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-    galleryBoundingRect: {'x': 0, 'y': 0},
+    galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
+    gallerySliderStep: 10,
 
     // unique to o_cart
     lastRequestNo: 0,
@@ -121,6 +122,7 @@ var o_cart = {
         if ($(window).width() <= cartLeftPaneThreshold) {
             $("#op-cart-download-panel .op-card-contents").html(html);
         } else {
+            opus.hideHelpAndCartPanels();
             $(".cart_details").html(html);
         }
         o_cart.adjustProductInfoHeight();
@@ -228,8 +230,12 @@ var o_cart = {
     // get Cart tab
     activateCartTab: function() {
         let view = opus.prefs.view;
+
+        opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
+
         o_browse.updateBrowseNav();
         o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
+
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".zippedFiles", "#cart").html();
             $("#cart .op-results-message").hide();

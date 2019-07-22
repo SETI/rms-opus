@@ -70,7 +70,7 @@
             </div>
         </nav>
         {% block content %}
-        <div class="tab-content container-fluid tab-full-width">
+        <div class="tab-content border-0 container-fluid tab-full-width">
             <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
                 <div class="row flex-nowrap">
                     <div class="col pr-0 sidebar-area border-right">
@@ -97,7 +97,7 @@
             </div><!-- /search -->
 
             <div id="browse" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="browse-tab">
-                <div class="panel panel-default">
+                <div class="panel">
                     <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                         <div class="browse-nav-container">
                             <ul class="navbar-nav mr-auto">
@@ -114,14 +114,14 @@
                             <ul class="op-slider-nav">
                                 <li class="nav-item">
                                     <span class="op-observation-text mr-2">Observation #</span>
-                                    <div id="op-observation-slider">
-                                        <div class="ui-slider-handle op-slider-pointer"><div class="op-observation-number"></div></div>
+                                    <div class="op-observation-slider">
+                                        <div class="ui-slider-handle op-slider-pointer" data-target="#browse"><div class="op-observation-number"></div></div>
                                     </div>
                                 </li>
                             </ul>
                         </div>
-                        <div class="sort-order-container">
-                            <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                        <div class="op-sort-order-container">
+                            <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                 <i class="fas fa-random"></i>
                             </span>&nbsp;
                             <ul class="sort-contents list-inline"></ul>
@@ -133,7 +133,7 @@
                             <p>Remove or edit one or more of the search criteria selected on the Search tab
                             or click on the Reset Search button to reset the search criteria to default.</p>
                        </div>
-                       <div class="row justify-content-start op-gallery-view mr-0">
+                       <div class="row justify-content-start op-gallery-view mx-0">
                             <div class="mr-0 thumb gallery gallery-scroll">
                             </div>
                         </div>
@@ -165,27 +165,24 @@
                     <div class="col pl-0 cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container">
-                                <ul class="navbar-nav mr-auto">
-                                    <li class="nav-item flex-sm-row">
-                                        <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="#" class="op-download-csv nav-link" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <div id="create_zip_data_file">
-                                            <a href="#" class="downloadData nav-link" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
-                                        </div>
-                                    </li>
-                                    <li class="nav-item">
-                                        <div id="create_zip_url_file">
-                                            <a href="#" class="downloadURL nav-link" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
-                                        </div>
-                                    </li>
-                                </ul>
+                                <div class="op-cart-nav-container">
+                                    <ul class="navbar-nav mr-auto">
+                                        <li class="nav-item flex-sm-row">
+                                            <a href="#" class="op-browse-view nav-link" data-toggle="modal" data-target="#op-cart-view" data-view="data" title="View sortable metadata table"><i class="far fa-list-alt"></i>&nbsp;View Table</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="#" class="op-metadata-modal nav-link" data-toggle="modal" data-target="#op-select-metadata" title="Select metadata to display or include in CSV files for each observation"><i class="fas fa-columns"></i>&nbsp;Select Metadata</a>
+                                        </li>
+                                    </ul>
+                                    <ul class="op-slider-nav">
+                                        <li class="nav-item">
+                                            <span class="op-observation-text mr-2">Observation #</span>
+                                            <div class="op-observation-slider">
+                                                <div class="ui-slider-handle op-slider-pointer" data-target="#cart"><div class="op-observation-number"></div></div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
                                 <ul class="nav navbar-nav flex-sm-row">
                                     <li class="nav-item">
                                         <div>
@@ -197,11 +194,26 @@
                                 </ul>
 
                             </div>
-                            <div class="sort-order-container">
-                                <span class="sort-order-icon" title="Results are sorted by these metadata fields">
+                            <div class="op-sort-order-container">
+                                <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                     <i class="fas fa-random"></i>
                                 </span>&nbsp;
                                 <ul class="sort-contents list-inline"></ul>
+                            </div>
+                            <div class="op-download-options">
+                                <li class="list-inline-item">
+                                    <a href="#" class="op-download-csv text-info" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Download Metadata CSV</a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <div id="create_zip_data_file">
+                                        <a href="#" class="downloadData text-info" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download Data Archive</a>
+                                    </div>
+                                </li>
+                                <li class="list-inline-item">
+                                    <div id="create_zip_url_file">
+                                        <a href="#" class="downloadURL text-info" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download URL Archive</a>
+                                    </div>
+                                </li>
                             </div>
                             <div class="op-cart-toggle-download-panel">
                                 <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download options panel">
@@ -254,7 +266,7 @@
             </div>
 
             <div id="detail" class="tab-pane fade" role="tabpanel" aria-labelledby="detail-tab">
-                <div class="panel panel-default">
+                <div class="panel">
                 <!-- /detail    -->
                 </div>
             </div>

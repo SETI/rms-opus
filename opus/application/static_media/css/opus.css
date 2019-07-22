@@ -124,6 +124,10 @@ body {
     background-color: transparent !important;
 }
 
+.op-browse-view[data-view] {
+    width: 8em;
+}
+
 #detail {
     padding: 20px 50px;
 }
@@ -929,7 +933,7 @@ div.gallery {
     margin-right: -80px;
 }
 
-/* Make sort-order-container wrapped within the same container as browse-nav-containers */
+/* Make op-sort-order-container wrapped within the same container as browse-nav-containers */
 nav.panel-heading {
     flex-direction: column;
     align-items: flex-start;
@@ -953,7 +957,7 @@ nav.panel-heading {
 @media (max-width: 1000px) {
     /* Move down the sort pill area so that slider can be moved down
     to the 2nd line */
-    #browse .sort-order-container {
+    #browse .op-sort-order-container {
         margin-top: 1.75em;
     }
 
@@ -981,13 +985,13 @@ nav.panel-heading {
     }
 
     /* When slider is at the 2nd line, make it take up more width */
-    #op-observation-slider.ui-slider {
+    #browse .op-observation-slider.ui-slider {
         width: calc(80% - 2rem) !important;
     }
 
     /* When slider is at 2nd line, its container will take up 100% of
     width */
-    .op-slider-nav {
+    #browse .op-slider-nav {
         flex-basis: 100% !important;
     }
 }
@@ -1018,8 +1022,74 @@ nav.panel-heading {
     text-align: center;
 }
 
+/* Style the first line of the cart nav - calculate the width of the entire container such
+  that the empty cart button is always adjacent, not overlaid, by this container. */
+#cart .op-cart-nav-container {
+    display: flex;
+    width: calc(100% - 11.5em);
+}
+/* Styling for slider's height and width in cart page */
+#cart .op-cart-nav-container .op-observation-slider {
+    width: 100%;
+    height: 0.1em;
+}
+/* Remove the space at the left of "Observation#" in cart page slider area */
+#cart .op-cart-nav-container .op-observation-text {
+    margin-left: 0px;
+}
+/* Make the 'empty' button stay at the right end of the 2nd navbar */
+#cart .browse-nav-container {
+    justify-content: space-between;
+}
+/* Make options of 2nd navbar and slider stay at the left end of the 2nd navbar */
+#cart .op-cart-nav-container {
+    justify-content: flex-start;
+}
+
+#cart .op-download-options {
+    display: inline-flex;
+    padding: 0.5em 0.5em 0;
+}
+
+#cart .op-download-options a {
+    opacity: 0.6 !important;
+    text-decoration: none;
+}
+
+#cart .op-download-options a:hover {
+    opacity: 1 !important;
+    text-decoration: none;
+}
+
 /* Cart view navbar responsiveness */
 @media (max-width: 1100px) {
+    /* Remove the top/bottom extra spaces in options of 2nd navbar when
+    slider moves to the 2nd line */
+    #cart .browse-nav-container .nav-link {
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+    /* Make slider move down to 2nd line when screen is narrow */
+    #cart .op-cart-nav-container {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    /* Style the width of slider when it moves to the 2nd line */
+    #cart .op-slider-nav {
+        flex-basis: 90%;
+    }
+
+    #cart .op-sort-order-container {
+        padding-top: 1.9em;
+    }
+
+    /* move the second line down to make room for the slider*/
+    #cart .op-download-options {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 1080px) {
     /*  keep the 2nd navbar in a row and move some options to the 2nd
     line when screen is narrow */
     #cart .browse-nav-container .navbar-nav {
@@ -1028,20 +1098,14 @@ nav.panel-heading {
         width: 100%;
     }
 
-    /* Make the 2nd navbar options take up 80% of width when screen is
-    narrow */
-    #cart .browse-nav-container .navbar-nav:first-child {
+    /* Make the 2nd navbar options + slider take up 80% of width when screen is narrow */
+    #cart .op-cart-nav-container {
         flex: 1 0 80%;
     }
 
     /* Make empty cart button take up 20% of width when screen is narrow */
-    #cart .browse-nav-container .navbar-nav:nth-child(2) {
-        flex: 1 0 20%;
-    }
-
-    /* Move down cart tab sorting pill when the 2nd navbar become 2 lines */
-    #cart .sort-order-container {
-        margin-top: 1.5em;
+    #cart .browse-nav-container > .navbar-nav {
+        flex: 1 0 5%;
     }
 
     /* Keep left/right spaces between 2nd navbar options */
@@ -1050,7 +1114,7 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 940px) {
     /* Hide download options pane when screen is narrow */
     .cart_details {
         display: none;
@@ -1079,27 +1143,14 @@ nav.panel-heading {
     #cart .cart-gallery-side {
         height: 100vh;
     }
-
-    /* When download options left pane is hidden, and the 2nd navbar options
-    stay in one line, we move up the sorting pill */
-    #cart .sort-order-container {
-        margin-top: 0;
-    }
 }
 
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 901px) {
+@media (min-width: 941px) {
     .op-cart-toggle-download-panel {
         display: none !important;
-    }
-}
 
-@media (max-width: 765px) {
-    /* When download options left pane is hidden, move down cart tab
-    sorting pill when the 2nd navbar become 2 lines */
-    #cart .sort-order-container {
-        margin-top: 1.5em;
     }
 }
 
@@ -1112,13 +1163,13 @@ is wide enough */
     top: 2em;
 }
 
-.sort-order-container {
+.op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
     /* padding-top: 0.5em; */
 }
 
-.sort-order-icon {
+.op-sort-order-icon {
     color: rgba(255, 255, 255, 0.5);
     vertical-align: middle;
 }
@@ -1152,7 +1203,7 @@ is wide enough */
     }
 }
 
-#op-observation-slider.ui-slider {
+.op-observation-slider.ui-slider {
     /* Note: Make slider grow when screen
     is wider */
     width: calc(90% - 9rem);
