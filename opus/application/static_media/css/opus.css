@@ -211,9 +211,10 @@ to 100%, this will make the shrinking look smoother */
         margin-left: 1em !important;
     }
 
-    /* keep equal padding on both left/right sides of search menu when
-    screen is narrow */
-    #search ul.searchMenu {
+    /* Keep equal padding on both left/right sides of the search menu when
+       the screen is narrow. Don't do this for the metadata selector so the
+       menu is close to the edge of the dialog. */
+    #search ul.op-search-menu {
         padding-right: 1em;
         padding-left: 1em;
     }
@@ -230,12 +231,12 @@ to 100%, this will make the shrinking look smoother */
 
 /* If the menu category (in the search pane or metadata selector) is collapsed,
    then rotate the little triangle 90 degrees to indicate its status. */
-.searchMenu .dropdown-toggle::after {
+.op-search-menu .dropdown-toggle::after {
     transition: all .3s;
     -webkit-transition: all .3s;
 }
 
-.searchMenu .dropdown-toggle.collapsed::after {
+.op-search-menu .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
 }
@@ -264,7 +265,7 @@ hr.shadow-divider {
     box-shadow: 0 9px 9px -10px #8c8b8b inset;
 }
 
-ul.searchMenu {
+ul.op-search-menu {
     padding-right: 2em;
 }
 
@@ -589,61 +590,69 @@ th.sticky-header {
     display: inline-grid;
 }
 
-#op-metadata-selector i.fa-check {
+#op-select-metadata i.fa-check {
     display: inline-block;
 }
 
-#op-metadata-selector ul li {
+#op-select-metadata ul li {
     text-decoration: none;
 }
 
 /* prevent weird browser y-scrollbar */
-#op-metadata-selector {
+#op-select-metadata {
     overflow-y: hidden;
 }
 
 /* make modal width shrink smoothly with screen */
-#op-metadata-selector .modal-dialog {
+#op-select-metadata .modal-dialog {
     /* max-width: 1100px; */
     max-width: 92%;
 }
 
-#op-metadata-selector .modal-content {
+#op-select-metadata .modal-content {
     border: solid 2px #FFF;
 }
 
 /* Make both "Save Changes" and "Discard Changes" stay in one line */
-#op-metadata-selector .right-container {
+#op-select-metadata .right-container {
     display: flex;
 }
 
 /* Make a little white space between "Save Changes" and "Discard Changes" */
-#op-metadata-selector .right-container button[type="submit"] {
+#op-select-metadata .right-container button[type="submit"] {
     margin-right: 2px;
 }
 
-#op-metadata-selector .right-container button[type="cancel"] {
+#op-select-metadata .right-container button[type="cancel"] {
     margin-left: 2px;
 }
 
 /* Make white space (padding) in metadata selector menu responsive */
-#op-metadata-selector .searchMenu {
-    padding-right: 7%;
+#op-select-metadata .op-search-menu {
+    padding-right: 3%;
 }
 
 /* Make white space (padding) in metadata selector modal responsive */
+.op-all-metadata-column-header, .op-selected-metadata-column-header {
+    padding-left: calc(1.5% + 4px);
+    padding-right: 2.0%;
+}
+
 .op-all-metadata-column, .op-selected-metadata-column {
+    position: relative;
     padding-left: 1.5%;
     padding-right: 1.5%;
-    /* make metadata selector modal height responsive */
-    max-height: calc(75vh - 150px);
     overflow: scroll;
     overflow-x: auto;
 }
 
+.op-all-metadata-column .op-search-menu-category {
+    padding-left: 4px;
+    padding-top: 0px !important; /* Required to override style default */
+}
+
 .op-all-metadata-column ul li {
     padding-bottom: 3px;
-
 }
 
 .op-all-metadata-column .cat_label {
@@ -662,7 +671,7 @@ narrow */
 }
 
 .op-selected-metadata-column ul {
-    padding-inline-start: 0.5em;
+    padding-inline-start: 4px;
     padding-inline-end: 1em;
 }
 
@@ -688,7 +697,7 @@ narrow */
 }
 
 .op-selected-metadata-column ul li {
-    padding: 5px 15px;
+    padding: 5px 10px 5px 5px;
     border: 1px dotted gray;
     list-style-type: none;
 }
@@ -791,7 +800,7 @@ when window sized is narrow */
     z-index: 999;
 }
 
-#galleryView button.close, #op-metadata-selector button.close {
+#galleryView button.close, #op-select-metadata button.close {
     position: absolute;
     float: right;
     top: .8em;
@@ -1250,29 +1259,29 @@ is wide enough */
     font-size: 80%;
 }
 
-.searchMenu a.dropdown-toggle {
+.op-search-menu a.dropdown-toggle {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 600;
     color: initial;
 }
 
-.searchMenua.dropdown-toggle:hover {
+.op-search-menu a.dropdown-toggle:hover {
     text-decoration: none;
 }
 
-.searchMenu a.op-search-param {
+.op-search-menu a.op-search-param {
     margin-top: 5px;
     margin-bottom: 12px;
     font-weight: 70;
     color: initial;
 }
 
-.searchMenu a.op-search-param:hover {
+.op-search-menu a.op-search-param:hover {
     text-decoration: none;
 }
 
-#searchMenu .list-group li:nth-child(1) {
+.op-search-menu .list-group li:nth-child(1) {
     border-top: 0 none;
 }
 
