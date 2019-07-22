@@ -102,6 +102,12 @@ var opus = {
     // current splash page version for storing in the visited cookie
     splashVersion: 1,
 
+    // The viewable percentage of an item such that it can be treated as startobs
+    // 0.8 => 80%
+    sliderViewableFraction: 0.8,
+
+    currentBrowser: "",
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
@@ -196,6 +202,7 @@ var opus = {
         $("#op-result-count").html(opus.spinner).parent().effect("highlight", {}, 500);
 
         // Start the observation number slider spinner - no point in doing a flash here
+        // and only set the spinner for the #browse tab, as changing search parameters does not affect the cart
         $("#browse .op-observation-number").html(opus.spinner);
 
         // Start the spinners for the left side menu and each widget for hinting
@@ -209,7 +216,7 @@ var opus = {
 
         // Force the Select Metadata dialog to refresh the next time we go to the browse
         // tab in case the categories are changed by this search.
-        o_browse.metadataSelectorDrawn = false;
+        o_browse.selectMetadataDrawn = false;
 
         // Clear the gallery and table views on the browse tab so we start afresh when the data
         // returns. There's no point in clearing the cart tab since the search doesn't
@@ -264,7 +271,11 @@ var opus = {
             // Note that things are OK if they switch tabs AFTER this point, even
             // if result_count hasn't returned, because at least the hash has been
             // updated so their call to dataimages.json will have the correct parameters.
-            o_browse.loadData(opus.getCurrentTab());
+
+            // Prevent loadData to call the same dataimages API twice
+            if (!o_browse.loadDataInProgress) {
+                o_browse.loadData(opus.getCurrentTab());
+            }
         }
 
         // Execute the query and return the result count
@@ -602,13 +613,13 @@ var opus = {
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
         let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
-        let adjustBrowseHeightDB = _.debounce(function() {o_browse.adjustBrowseHeight(true);}, 200);
+        let adjustBrowseHeightDB = function() {o_browse.adjustBrowseHeight(true);};
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustMetadataSelectorMenuPSDB = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
-        let adjustSelectedMetadataPSDB = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
+        let hideOrShowSelectedMetadataPSDB = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
         let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
@@ -619,8 +630,9 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            adjustMetadataSelectorMenuPSDB();
-            adjustSelectedMetadataPSDB();
+            o_browse.adjustSelectMetadataHeight();
+            hideOrShowSelectMetadataMenuPSDB();
+            hideOrShowSelectedMetadataPSDB();
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
@@ -967,6 +979,7 @@ var opus = {
                         ${updateString}`);
         $("#op-browser-version-msg .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
+        opus.currentBrowser = browserName;
 
         if (opus.browserSupport[browserName] === undefined) {
             $("#op-browser-version-msg").modal("show");

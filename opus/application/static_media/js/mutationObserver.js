@@ -40,12 +40,19 @@ var o_mutationObserver = {
         let searchSideBarHeightChanged = _.debounce(o_search.searchSideBarHeightChanged, 200);
         let searchWidgetHeightChanged = _.debounce(o_search.searchWidgetHeightChanged, 200);
         let searchHeightChanged = _.debounce(o_search.searchHeightChanged, 200);
-        let adjustBrowseHeight = _.debounce(o_browse.adjustBrowseHeight, 200);
-        let adjustTableSize = _.debounce(o_browse.adjustTableSize, 200);
+
+        // Use the non-debounced version of adjustBrowseHeight & adjustTableSize. This will
+        // make sure the height of .op-gallery-view and .op-data-table-view are set right away
+        // when switching to browse tab or switching between gallery & table view. That way the
+        // calculation of setScrollbarPosition will be correct and slider value will match startObs.
+        let adjustBrowseHeight = function() {o_browse.adjustBrowseHeight(false, true);};
+        let adjustTableSize = o_browse.adjustTableSize;
+
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustMetadataSelectorMenuPS = _.debounce(o_browse.adjustMetadataSelectorMenuPS, 200);
-        let adjustSelectedMetadataPS = _.debounce(o_browse.adjustSelectedMetadataPS, 200);
+        let adjustSelectMetadataHeight = _.debounce(o_browse.adjustSelectMetadataHeight, 200);
+        let hideOrShowSelectMetadataMenuPS = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
+        let hideOrShowSelectedMetadataPS = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
         let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
@@ -138,12 +145,18 @@ var o_mutationObserver = {
         });
 
         // ps in select metadata modal
-        let metadataSelectorObserver = new MutationObserver(function(mutationsList) {
-            adjustMetadataSelectorMenuPS();
-            adjustSelectedMetadataPS();
+        let selectMetadataObserver = new MutationObserver(function(mutationsList) {
+            mutationsList.forEach((mutation, idx) => {
+                //ignore attribute change in ps to avoid infinite loop of callback function caused by ps update
+                if (!mutation.target.classList.value.match(/ps/)) {
+                    adjustSelectMetadataHeight();
+                }
+            });
+            hideOrShowSelectMetadataMenuPS();
+            hideOrShowSelectedMetadataPS();
         });
 
-        let metadataSelectorMenuObserver = new MutationObserver(function(mutationsList) {
+        let selectMetadataMenuObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
@@ -154,13 +167,13 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.adjustMetadataSelectorMenuPS();
+                        o_browse.hideOrShowSelectMetadataMenuPS();
                         // if the collapse opens below the viewable area, move the scrollbar
                         // only move the scrollbar if we open the menu item
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.target.classList.value.match(/show/) &&
                             !lastElement.isOnScreen(".op-all-metadata-column", 1)) {
-                            let containerHeight = o_browse.metadataSelectorMenuContainerHeight();
+                            let containerHeight = o_browse.selectMetadataMenuContainerHeight();
                             let containerTop = $(".op-all-metadata-column").offset().top;
                             let containerBottom = containerHeight + containerTop;
                             let elementTop = lastElement.offset().top;
@@ -181,7 +194,7 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.adjustSelectedMetadataPS();
+                        o_browse.hideOrShowSelectedMetadataPS();
                         // if the new item appears below the viewable area, move the scrollbar
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.addedNodes.length !== 0 &&
@@ -204,18 +217,36 @@ var o_mutationObserver = {
             adjustBrowseDialogPS();
         });
 
+        //#BROWSE
         // ps in gallery view
-        let galleryViewObserver = new MutationObserver(function(mutationsList) {
+        let browseGalleryViewObserver = new MutationObserver(function(mutationsList) {
             adjustBrowseHeight();
         });
 
         // ps in table view
-        let tableViewObserver = new MutationObserver(function(mutationsList) {
+        let browseTableViewObserver = new MutationObserver(function(mutationsList) {
             adjustTableSize();
         });
 
         // update ps when switching between gallery and table view
-        let switchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
+        let browseSwitchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
+            adjustBrowseHeight();
+            adjustTableSize();
+        });
+
+        //#CART
+        // ps in gallery view
+        let cartGalleryViewObserver = new MutationObserver(function(mutationsList) {
+            adjustBrowseHeight();
+        });
+
+        // ps in table view
+        let cartTableViewObserver = new MutationObserver(function(mutationsList) {
+            adjustTableSize();
+        });
+
+        // update ps when switching between gallery and table view
+        let cartSwitchGalleryAndTableObserver = new MutationObserver(function(mutationsList) {
             adjustBrowseHeight();
             adjustTableSize();
         });
@@ -227,12 +258,17 @@ var o_mutationObserver = {
         let searchSidebar = $("#sidebar")[0];
         let searchWidget = $("#op-search-widgets")[0];
         let helpPanel = $("#op-help-panel")[0];
-        let metadataSelector = $("#op-metadata-selector")[0];
-        let metadataSelectorContents = $("#op-metadata-selector-contents")[0];
+        let selectMetadata = $("#op-select-metadata")[0];
+        let selectMetadataContents = $("#op-select-metadata-contents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
-        let galleryView = $(".gallery")[0];
-        let tableView = $(".op-data-table")[0];
-        let switchGalleryAndTable = $(".op-browse-view")[0];
+
+        let browseGalleryView = $("#browse .gallery")[0];
+        let browseTableView = $("#browse .op-data-table")[0];
+        let browseSwitchGalleryAndTable = $("#browse .op-browse-view")[0];
+
+        let cartGalleryView = $("#cart .gallery")[0];
+        let cartTableView = $("#cart .op-data-table")[0];
+        let cartSwitchGalleryAndTable = $("#cart .op-browse-view")[0];
 
         // Note:
         // The reason of observing sidebar and widdget content element (ps sibling) in search page instead of observing the whole page (html structure) is because:
@@ -253,18 +289,24 @@ var o_mutationObserver = {
         // update ps in help panel
         helpPanelObserver.observe(helpPanel, attrObserverConfig);
         // update ps when select metadata modal open/close,
-        metadataSelectorObserver.observe(metadataSelector, {attributes: true});
+        selectMetadataObserver.observe(selectMetadata, {attributes: true});
         // udpate ps when select metadata menu expand/collapse
-        metadataSelectorMenuObserver.observe(metadataSelectorContents, attrObserverConfig);
+        selectMetadataMenuObserver.observe(selectMetadataContents, attrObserverConfig);
         // update ps when selected metadata are added/removed
-        selectedMetadataObserver.observe(metadataSelectorContents, childListObserverConfig);
+        selectedMetadataObserver.observe(selectMetadataContents, childListObserverConfig);
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
         // udpate ps in browse gallery view
-        galleryViewObserver.observe(galleryView, generalObserverConfig);
+        browseGalleryViewObserver.observe(browseGalleryView, generalObserverConfig);
         // update ps in browse table view
-        tableViewObserver.observe(tableView, generalObserverConfig);
+        browseTableViewObserver.observe(browseTableView, generalObserverConfig);
         // update ps when switching between gallery and table view
-        switchGalleryAndTableObserver.observe(switchGalleryAndTable, attrObserverConfig);
+        browseSwitchGalleryAndTableObserver.observe(browseSwitchGalleryAndTable, attrObserverConfig);
+        // udpate ps in cart gallery view
+        cartGalleryViewObserver.observe(cartGalleryView, generalObserverConfig);
+        // update ps in cart table view
+        cartTableViewObserver.observe(cartTableView, generalObserverConfig);
+        // update ps when switching between cart gallery and table view
+        cartSwitchGalleryAndTableObserver.observe(cartSwitchGalleryAndTable, attrObserverConfig);
     },
 };
