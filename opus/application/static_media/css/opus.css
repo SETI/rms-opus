@@ -1013,10 +1013,11 @@ nav.panel-heading {
     text-align: center;
 }
 
-/* Make options of 2nd navbar and slider stay in one line in cart page */
+/* Style the first line of the cart nav - calculate the width of the entire container such
+  that the empty cart button is always adjacent, not overlaid, by this container. */
 #cart .op-cart-nav-container {
     display: flex;
-    width: 88%;
+    width: calc(100% - 11.5em);
 }
 /* Styling for slider's height and width in cart page */
 #cart .op-cart-nav-container .op-observation-slider {
@@ -1052,18 +1053,6 @@ nav.panel-heading {
 }
 
 /* Cart view navbar responsiveness */
-@media (max-width: 1300px) {
-    #cart .op-cart-nav-container {
-        width: 87%;
-    }
-}
-
-@media (max-width: 1425) {
-    #cart .op-cart-nav-container {
-        width: 85%;
-    }
-}
-
 @media (max-width: 1100px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
     slider moves to the 2nd line */
