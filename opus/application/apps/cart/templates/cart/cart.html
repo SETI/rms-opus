@@ -6,6 +6,10 @@
             <span class="spinner">&nbsp;</span>
         </div>
         <h1>Download Options</h1>
+        <div>
+            <button class="op-cart-select-all-btn" type="button">Select all options</button>
+            <button class="op-cart-deselect-all-btn" type="button">Deselect all options</button>
+        </div>
         <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
         <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
         <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
@@ -13,8 +17,10 @@
         <div id="download_options">
             {% for product_cat, product_list, category_name in product_cat_list %}
                 <h4>{{ product_cat }}</h4>
-                <button class="op-cart-select-btn" data-category="{{ category_name }}" type="button">Select all</button>
-                <button class="op-cart-deselect-btn" data-category="{{ category_name }}" type="button">Deselect all</button>
+                <div>
+                    <button class="op-cart-select-btn" data-category="{{ category_name }}" type="button">Select all</button>
+                    <button class="op-cart-deselect-btn" data-category="{{ category_name }}" type="button">Deselect all</button>
+                </div>
                 <ul id="product_types" class="list-inline" data-category="{{ category_name }}">
                     {% for product_info in product_list %}
                         <li>
