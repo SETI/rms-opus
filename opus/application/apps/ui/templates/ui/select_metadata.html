@@ -33,8 +33,8 @@
                 {% for slug, param_info in all_slugs_info.items %}
       		        <li id="cchoose__{{ slug }}">
                         <span class="info">&nbsp;<i class="fas fa-info-circle" title = "
-                            {% if param_info.get_tooltip %}
-                                {{ param_info.get_tooltip|striptags }}
+                            {% if param_info.get_tooltip_results %}
+                                {{ param_info.get_tooltip_results|striptags }}
                             {% else  %}
                                 {{ param_info.body_qualified_label_results }}
                             {% endif %}

@@ -355,7 +355,7 @@ var o_widgets = {
          for (let k in opus.prefs.widgets) {
              let slug = opus.prefs.widgets[k];
              let widget = 'widget__' + slug;
-             let html = '<li id = "' + widget + '" class = "widget"></li>';
+             let html = '<li id="' + widget + '" class="widget"></li>';
              $(html).appendTo('#op-search-widgets ');
              // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
              opus.widgetElementsDrawn.push(slug);
@@ -386,7 +386,7 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
-            let html = '<li id = "' + widget + '" class = "widget"></li>';
+            let html = '<li id="' + widget + '" class="widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widgetElementsDrawn.unshift(slug);
 
@@ -541,7 +541,7 @@ var o_widgets = {
                 $('#' + widget + ' ul label').after(function() {
                     let value = $(this).find('input').attr("value");
                     let span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
-                    return '<span class = "hints" id = "' + span_id + '"></span>';
+                    return '<span class="hints" id="' + span_id + '"></span>';
                 });
             } catch(e) { } // these only apply to mult widgets
 

@@ -215,7 +215,7 @@ def api_get_widget(request, **kwargs):
                 form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
 
                 if length > 1:
-                    form = form + '</span><div style = "clear: both;"></div></section><section><span class="widget_form">'
+                    form = form + '</span><div style="clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
     elif form_type == 'STRING':
@@ -261,10 +261,10 @@ def api_get_widget(request, **kwargs):
                 if glabel == 'NULL': glabel = 'Other'
                 if model.objects.filter(grouping=gvalue)[0:1]:
                     form +=  "\n\n" + \
-                             '<div class = "mult_group_label_container mult_group_' + str(glabel) + '">' + \
-                             '<span class = "indicator fa fa-plus"></span>' + \
-                             '<span class = "mult_group_label">' + str(glabel) + '</span></div>' + \
-                             '<ul class = "mult_group">' +  \
+                             '<div class="mult_group_label_container mult_group_' + str(glabel) + '">' + \
+                             '<span class="indicator fa fa-plus"></span>' + \
+                             '<span class="mult_group_label">' + str(glabel) + '</span></div>' + \
+                             '<ul class="mult_group">' +  \
                              SearchForm(form_vals, auto_id = '%s_' + str(gvalue), grouping=gvalue).as_ul() + \
                              '</ul>';
 

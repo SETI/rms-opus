@@ -82,7 +82,7 @@ var o_detail = {
                     for (let index in categories) {
                         let tableName = categories[index].table_name;
                         let label = categories[index].label;
-                        let html = '<h3>' + label + '</h3><div class = "detail_' + tableName + '">Loading <span class = "spinner">&nbsp;</span></div>';
+                        let html = '<h3>' + label + '</h3><div class="detail_' + tableName + '">Loading <span class="spinner">&nbsp;</span></div>';
                         $("#all_metadata_" + opusId).append(html);
 
                         // now send for data
