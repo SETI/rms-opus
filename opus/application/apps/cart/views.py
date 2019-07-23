@@ -643,6 +643,7 @@ def _get_download_info(product_types, session_id):
             total_download_size += download_size
             total_download_count += download_count
         pretty_name = category
+        category_name = category
         if category == 'standard':
             pretty_name = 'Standard Data Products'
         elif category == 'metadata':
@@ -653,11 +654,12 @@ def _get_download_info(product_types, session_id):
             pretty_name = 'Diagram Products'
         else:
             pretty_name = category + '-Specific Products'
+            category_name = 'specific'
         key = (category, pretty_name)
         if key not in product_cats:
             product_cats.append(key)
             cur_product_list = []
-            product_cat_list.append((pretty_name, cur_product_list))
+            product_cat_list.append((pretty_name, cur_product_list, category_name))
         try:
             entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
                                             term=short_name)
