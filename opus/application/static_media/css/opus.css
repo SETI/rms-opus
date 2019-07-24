@@ -1413,8 +1413,8 @@ even when screen is narrow */
     width: 30px;
 }
 
-/* small spinner: shows up when total size is loading (cart page) */
-.op-total-size .spinner {
+/* small spinner: shows up when total size/files is loading (cart page) */
+.op-total-size .spinner, .op-total-download .spinner {
     display: none;
     line-height: 16px;
     margin: 0 10px;

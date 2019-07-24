@@ -40,7 +40,7 @@ var o_cart = {
     lastRequestNo: 0,
     downloadInProcess: false,
     cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
-    downloadSizeSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
+    downloadSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
 
     // collector for all cart status error messages
     statusDataErrorCollector: [],
@@ -150,7 +150,7 @@ var o_cart = {
         /**
          * Update file info after selecting/deselecting download options.
          */
-        o_cart.showDownloadSizeSpinner();
+        o_cart.showDownloadSpinner();
         let add_to_url = o_cart.getDownloadFiltersChecked();
         o_cart.lastRequestNo++;
         let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
@@ -158,7 +158,7 @@ var o_cart = {
             if (info.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSizeSpinner(info.total_download_size_pretty);
+            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
         });
     },
 
@@ -311,8 +311,8 @@ var o_cart = {
         }
         o_cart.totalObsCount = status.count;
         o_cart.hideCartCountSpinner(o_cart.totalObsCount);
-        if (status.total_download_size_pretty !== undefined) {
-            o_cart.hideDownloadSizeSpinner(status.total_download_size_pretty);
+        if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
+            o_cart.hideDownloadSpinner(status.total_download_size_pretty, status.total_download_count);
         }
     },
 
@@ -508,7 +508,7 @@ var o_cart = {
         }
 
         o_cart.showCartCountSpinner();
-        o_cart.showDownloadSizeSpinner();
+        o_cart.showDownloadSpinner();
 
         o_cart.lastRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
@@ -551,21 +551,26 @@ var o_cart = {
         }
     },
 
-    showDownloadSizeSpinner: function() {
-        if (o_cart.downloadSizeSpinnerTimer === null) {
-            o_cart.downloadSizeSpinnerTimer = setTimeout(function() {
+    showDownloadSpinner: function() {
+        if (o_cart.downloadSpinnerTimer === null) {
+            o_cart.downloadSpinnerTimer = setTimeout(function() {
                 $("#op-total-download-size").hide();
-                $(".op-total-size .spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+                $("#op-total-download-count").hide();
+                $(".op-total-size .spinner").addClass("op-show-spinner");
+                $(".op-total-download .spinner").addClass("op-show-spinner");
+            }, opus.spinnerDelay);
         }
     },
 
-    hideDownloadSizeSpinner: function(downloadSize) {
+    hideDownloadSpinner: function(downloadSize, downloadCount) {
         $(".op-total-size .spinner").removeClass("op-show-spinner");
+        $(".op-total-download .spinner").removeClass("op-show-spinner");
         $("#op-total-download-size").html(downloadSize).fadeIn();
-        if (o_cart.downloadSizeSpinnerTimer !== null) {
+        $("#op-total-download-count").html(downloadCount).fadeIn();
+        if (o_cart.downloadSpinnerTimer !== null) {
             // This should always be true - we're just being careful
-            clearTimeout(o_cart.downloadSizeSpinnerTimer);
-            o_cart.downloadSizeSpinnerTimer = null;
+            clearTimeout(o_cart.downloadSpinnerTimer);
+            o_cart.downloadSpinnerTimer = null;
         }
     },
 };
