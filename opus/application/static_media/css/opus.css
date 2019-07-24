@@ -889,8 +889,13 @@ a:-webkit-any-link, a::any-link {
 }
 
 #cart-sidebar {
-    padding-left: 3em;
-    padding-right: 3em;
+    padding-left: 0em;
+    padding-right: 1em;
+}
+
+.op-download-table, .op-download-table th, .op-download-table td {
+    border-left: 0px;
+    border-right: 0px;
 }
 
 #cart .col {
