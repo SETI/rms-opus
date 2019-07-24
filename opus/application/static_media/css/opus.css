@@ -1611,6 +1611,10 @@ footer {
     top: 2em;
 }
 
+.op-open-help {
+    float: right;
+}
+
 .op-about-table table, th, td {
     border: 1px solid black;
 }
