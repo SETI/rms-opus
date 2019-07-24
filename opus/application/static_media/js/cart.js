@@ -74,7 +74,7 @@ var o_cart = {
         });
 
         // check an input on selected products and images updates file_info
-        $("#cart").on("click","#download_options input", function(e) {
+        $("#cart").on("click", "#op-download-options-panel input", function(e) {
             let productList = $(e.target).closest("ul");
             let productInputs = productList.find("input");
             let prodTypeSelectAllBtn = productList.prev("div").children().first();
@@ -82,7 +82,7 @@ var o_cart = {
             let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
             let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
 
-            let allCheckboxesOptions = $("#download_options input");
+            let allCheckboxesOptions = $("#op-download-options-panel input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
@@ -99,7 +99,7 @@ var o_cart = {
             let productList = $(e.target).parent().next("ul").find("input");
             o_cart.updateCheckboxes(e.target, productList);
 
-            let allCheckboxesOptions = $("#download_options input");
+            let allCheckboxesOptions = $("#op-download-options-panel input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
@@ -107,9 +107,9 @@ var o_cart = {
                                            ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
         });
 
-        // Event handler when clicking "Select all options" and "Deselect all options" buttons.
+        // Event handler when clicking "Select all product types" and "Deselect all product types" buttons.
         $("#cart").on("click", ".op-cart-select-all-btn, .op-cart-deselect-all-btn", function(e) {
-            let productList = $("#download_options input");
+            let productList = $("#op-download-options-panel input");
             o_cart.updateCheckboxes(e.target, productList);
 
             if ($(e.target).hasClass("op-cart-select-all-btn")) {
@@ -169,29 +169,25 @@ var o_cart = {
          */
         if (($(target).hasClass("op-cart-select-btn") ||
              $(target).hasClass("op-cart-select-all-btn"))) {
-            for (let checkbox of checkboxesOptions) {
-                $(checkbox).prop("checked", true);
-            }
+            $(checkboxesOptions).prop("checked", true);
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
-            for (let checkbox of checkboxesOptions) {
-                $(checkbox).prop("checked", false);
-            }
+            $(checkboxesOptions).prop("checked", false);
         }
         $(target).prop("disabled", true);
         $(target).siblings().prop("disabled", false);
         o_cart.updateDownloadFileInfo();
     },
 
-    updateSelectDeselectBtn: function(isAllSelected, isAllDeselected, selectBtn, deselectBtn) {
+    updateSelectDeselectBtn: function(enableSelectAll, enableDeselectAll, selectBtn, deselectBtn) {
         /**
          * Enable/disable select all and deselect all buttons based on
-         * parameters allSelected & allDeselected passed in.
+         * parameters enableSelectAll & enableDeselectAll passed in.
          */
-         if (isAllSelected) {
+         if (enableSelectAll) {
              $(selectBtn).prop("disabled", true);
              $(deselectBtn).prop("disabled", false);
-         } else if (isAllDeselected) {
+         } else if (enableDeselectAll) {
              $(selectBtn).prop("disabled", false);
              $(deselectBtn).prop("disabled", true);
          } else {
@@ -211,7 +207,7 @@ var o_cart = {
         if (productList.length === 1) {
             return checked === productList.is(":checked");
         }
-        for (let productOption of productList) {
+        for (const productOption of productList) {
             if ($(productOption).prop("checked") === !checked) {
                 return false;
             }
