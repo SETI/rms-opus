@@ -686,7 +686,6 @@ var opus = {
                         $(confirmModal).modal("hide");
                     }
                 });
-
                 opus.hideHelpAndCartPanels();
             }
         });
@@ -765,7 +764,9 @@ var opus = {
                 return;
         }
 
-        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2`);
+        let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
+
+        $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
         // We only need one perfectScrollbar because the pane is reused
@@ -784,7 +785,22 @@ var opus = {
             dataType: "html",
             success: function(page) {
                 $("#op-help-panel .loader").hide();
-                $("#op-help-panel .op-card-contents").html(page);
+                let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
+                $("#op-help-panel .op-card-contents").html(contents);
+                $(".op-open-help .btn").on("click", function(e) {
+                    let action = $(this).data("action");
+                    let contents = $("#op-help-panel .op-help-contents").clone()[0];
+                    let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
+                    $(contents).html(contentsHtml);
+                    let newTabWindow = window.open("", "_blank");
+                    $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, "https://tools.pds-rings.seti.org/static_media"));
+                    $(newTabWindow.document.body).append(contents)
+                        .css({
+                            overflow: "auto",
+                            margin: "1.5em",
+                            backgroundColor: "inherit"
+                        });
+                });
             }
         });
     },
