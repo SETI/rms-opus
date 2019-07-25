@@ -790,8 +790,10 @@ var opus = {
                 $(".op-open-help .btn").on("click", function(e) {
                     let action = $(this).data("action");
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
+                    let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
+                    $(contents).html(contentsHtml);
                     let newTabWindow = window.open("", "_blank");
-                    newTabWindow.document.head.outerHTML = document.head.outerHTML.replace(/\/static_media/g, "https://tools.pds-rings.seti.org/static_media");
+                    $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, "https://tools.pds-rings.seti.org/static_media"));
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
