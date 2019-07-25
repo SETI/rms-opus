@@ -76,19 +76,6 @@ var o_widgets = {
                 }
             });
         });
-
-        // $("#search").on("click", ".widget-main .op-range-qtype-helper", function() {
-            // $(".widget-main .op-range-qtype-helper i").popover({
-            //   // html:true,
-            //     container: "body",
-            //     // trigger:"hover",
-            //     content: function() {
-            //         console.log($("#op-range-qtype-helper-html").html());
-            //         return $("#op-range-qtype-helper-html").html();
-            //     }
-            // });
-        // });
-
     },
 
 
@@ -422,7 +409,7 @@ var o_widgets = {
                 o_hash.updateHash();
             }
 
-            // Initialize popover, this for the (i) icon next to qtype 
+            // Initialize popover, this for the (i) icon next to qtype
             $(".widget-main .op-range-qtype-helper a").popover({
                 html: true,
                 container: "body",
