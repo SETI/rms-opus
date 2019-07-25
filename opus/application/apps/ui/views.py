@@ -293,6 +293,7 @@ def api_get_widget(request, **kwargs):
     label = param_info.body_qualified_label()
     intro = param_info.intro
     units = param_info.get_units()
+
     template = "ui/widget.html"
     context = {
         "slug": slug,
