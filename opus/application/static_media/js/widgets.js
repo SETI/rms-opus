@@ -409,6 +409,17 @@ var o_widgets = {
                 o_hash.updateHash();
             }
 
+            // If we have a widget with qtype options any/all/only, we will append the (i) icon.
+            if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0) {
+                let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
+                if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
+                    let helpIcon = '<li class ="op-range-qtype-helper">\
+                                    <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
+                                    <i class="fas fa-info-circle"></i></a></li>';
+                    $(`#widget__${slug} .widget-main ul`).append(helpIcon);
+                }
+            }
+
             // Initialize popover, this for the (i) icon next to qtype
             $(".widget-main .op-range-qtype-helper a").popover({
                 html: true,
