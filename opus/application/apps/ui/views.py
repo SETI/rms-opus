@@ -305,6 +305,7 @@ def api_get_widget(request, **kwargs):
         "range_form_types": settings.RANGE_FORM_TYPES,
         "mult_form_types": settings.MULT_FORM_TYPES,
         "units": units,
+        'initial_qtype': initial_qtype,
     }
     ret = render(request, template, context)
 

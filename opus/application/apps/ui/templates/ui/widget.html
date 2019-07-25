@@ -1,7 +1,8 @@
 {% comment %}
     this is all inside of: <li id="widget__{{ slug }}" class="widget">
 
-    range-qtype-helper div is appended in widgets.js becuase omg was impossible to layout #todo
+    #op-range-qtype-helper-html div is appended in base.html, and popover is initialized
+    in getWidget function in widgets.js
 {% endcomment %}
 
 <div class="card">
@@ -43,6 +44,11 @@
                     {% endif %}
 
                         {{ form|safe }}
+                    {% if initial_qtype %}
+                        <li class ="op-range-qtype-helper">
+                            <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left"><i class="fas fa-info-circle"></i></a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </article>
