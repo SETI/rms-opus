@@ -23,10 +23,7 @@ var o_cart = {
         minScrollbarLength: opus.galleryAndTablePSLength,
         maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
-    // o_cart only...
-    downloadOptionsScrollbar: new PerfectScrollbar("#op-download-options-container", {
-        minScrollbarLength: opus.minimumPSLength
-    }),
+
     // these vars are common w/o_browse
     reloadObservationData: true, // start over by reloading all data
     observationData: {},  // holds observation column data
@@ -74,7 +71,7 @@ var o_cart = {
         });
 
         // check an input on selected products and images updates file_info
-        $("#cart").on("click", "#op-download-options-panel input", function(e) {
+        $("#cart").on("click", ".op-download-options-product-types input", function(e) {
             let productList = $(e.target).closest("ul");
             let productInputs = productList.find("input");
             let prodTypeSelectAllBtn = productList.prev("div").children().first();
@@ -82,7 +79,7 @@ var o_cart = {
             let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
             let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
 
-            let allCheckboxesOptions = $("#op-download-options-panel input");
+            let allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
@@ -99,7 +96,7 @@ var o_cart = {
             let productList = $(e.target).parent().next("ul").find("input");
             o_cart.updateCheckboxes(e.target, productList);
 
-            let allCheckboxesOptions = $("#op-download-options-panel input");
+            let allCheckboxesOptions = $(".op-download-options-product-types input");
             let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
             let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
 
@@ -109,7 +106,7 @@ var o_cart = {
 
         // Event handler when clicking "Select all product types" and "Deselect all product types" buttons.
         $("#cart").on("click", ".op-cart-select-all-btn, .op-cart-deselect-all-btn", function(e) {
-            let productList = $("#op-download-options-panel input");
+            let productList = $(".op-download-options-product-types input");
             o_cart.updateCheckboxes(e.target, productList);
 
             if ($(e.target).hasClass("op-cart-select-all-btn")) {
@@ -279,28 +276,21 @@ var o_cart = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
-        let cartSummaryHeight = $("#cart_summary").height();
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
-        $("#cart .gallery-contents").height(containerHeight);
+        let downloadOptionsTableHeight = (downloadOptionsHeight - $(".op-download-options-header").outerHeight() -
+                                          footerHeight);
 
+        $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
         }
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
+        $(".op-download-options-product-types").height(downloadOptionsTableHeight);
 
-        // The following steps will hide the y-scrollbar when it's not needed.
-        // Without these steps, y-scrollbar will exist at the beginning, and disappear after the first attempt of scrolling
-        if (downloadOptionsHeight > cartSummaryHeight) {
-            if (!$("#op-download-options-container .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                $("#op-download-options-container .ps__rail-y").addClass("hide_ps__rail-y");
-                o_cart.downloadOptionsScrollbar.settings.suppressScrollY = true;
-            }
-        } else {
-            $("#op-download-options-container .ps__rail-y").removeClass("hide_ps__rail-y");
-            o_cart.downloadOptionsScrollbar.settings.suppressScrollY = false;
+        if (o_cart.downloadOptionsScrollbar) {
+            o_cart.downloadOptionsScrollbar.update();
         }
 
-        o_cart.downloadOptionsScrollbar.update();
         o_cart.galleryScrollbar.update();
         o_cart.tableScrollbar.update();
     },
@@ -352,6 +342,13 @@ var o_cart = {
                     $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
                     $(".op-cart-select-all-btn").prop("disabled", true);
                     $(".op-cart-select-btn").prop("disabled", true);
+
+                    // Init perfect scrollbar when .op-download-options-product-types is rendered.
+                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-download-options-product-types", {
+                        minScrollbarLength: opus.minimumPSLength,
+                        suppressScrollX: true,
+                    });
+
                     // Depending on the screen width, we move download options elements
                     // to either original left pane or slide panel
                     o_cart.displayCartLeftPane();
