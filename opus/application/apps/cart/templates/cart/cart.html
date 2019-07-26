@@ -20,7 +20,7 @@
         <div id="op-download-options-panel">
             <table class="op-download-table table-sm">
                 <thead>
-                    <tr>
+                    <tr class="border-bottom border-dark">
                         <th scope="col">Product Type</th>
                         <th scope="col">Product Count</th>
                         <th scope="col"># of Files</th>
@@ -30,15 +30,24 @@
                 <tbody>
                     {% for product_cat, product_list in product_cat_list %}
                         <th class="bg-light" colspan="4">
-                            <h4>{{ product_cat }}</h4>
-                            <div>
-                                <button class="op-cart-select-btn" data-category="{{ product_cat|slugify }}" type="button">Select all</button>
-                                <button class="op-cart-deselect-btn" data-category="{{ product_cat|slugify }}" type="button">Deselect all</button>
-                            </div>
+                            <h4>{{ product_cat }}
+                                <button class="op-cart-select-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
+                            </h4>
+                            <!-- <div>
+                                <a class="op-cart-select-btn" title="Select all" role="button" data-category="{{ product_cat|slugify }}">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a class="op-cart-deselect-btn" title="Deselect all" role="button" data-category="{{ product_cat|slugify }}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div> -->
+                            <!-- <button class="op-cart-select-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
+                            <button class="op-cart-deselect-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button> -->
                         </th>
 
                                 {% for product_info in product_list %}
-                                    <tr>
+                                    <tr class="border-bottom border-light">
                                         <th scope="row">
                                             <input type="checkbox" value="{{ product_info.slug_name }}"
                                                 {% if product_info.product_count > 0 %}

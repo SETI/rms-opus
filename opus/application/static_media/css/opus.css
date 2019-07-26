@@ -893,9 +893,14 @@ a:-webkit-any-link, a::any-link {
     padding-right: 1em;
 }
 
-.op-download-table, .op-download-table th, .op-download-table td {
+#cart .op-download-table, #cart .op-download-table th, #cart .op-download-table td {
     border-left: 0px;
     border-right: 0px;
+}
+
+#cart .op-download-table .fa-times {
+    color: #000;
+    opacity: 1;
 }
 
 #cart .col {
@@ -1616,7 +1621,7 @@ footer {
     top: 2em;
 }
 
-.op-about-table table, th, td {
+.op-about-table table, .op-about-table th, .op-about-table td {
     border: 1px solid black;
 }
 
