@@ -1314,7 +1314,7 @@ is wide enough */
     color: gray;
 }
 
-#op-range-qtype-helper-html {
+#op-qtype-tooltip {
     display: none;
     width: 500px;
 }
