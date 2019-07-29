@@ -54,7 +54,7 @@
                                 {% for product_info in product_list %}
                                     <tr class="border-bottom border-light">
                                         <th scope="row">
-                                            <input type="checkbox" value="{{ product_info.slug_name }}"
+                                            <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
                                                 {% if product_info.product_count > 0 %}
                                                     checked
                                                 {% endif %}

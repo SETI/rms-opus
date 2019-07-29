@@ -70,40 +70,6 @@ var o_cart = {
             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
         });
 
-        // check an input on selected products and images updates file_info
-        $("#cart").on("click", ".op-download-options-product-types input", function(e) {
-            let productList = $(e.target).closest("ul");
-            let productInputs = productList.find("input");
-            let prodTypeSelectAllBtn = productList.prev("div").children().first();
-            let prodTypeDeselectAllBtn = productList.prev("div").children().last();
-            let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
-            let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
-
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
-            let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
-            let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
-
-            o_cart.updateSelectDeselectBtn(isAllCatOptionsChecked, isAllCatOptionsUnchecked,
-                                           prodTypeSelectAllBtn, prodTypeDeselectAllBtn);
-            o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
-                                           ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
-
-            o_cart.updateDownloadFileInfo();
-        });
-
-        // Event handler when clicking "Select all" and "Deselect all" buttons in each product type.
-        $("#cart").on("click", ".op-cart-select-btn, .op-cart-deselect-btn", function(e) {
-            let productList = $(e.target).parent().next("ul").find("input");
-            o_cart.updateCheckboxes(e.target, productList);
-
-            let allCheckboxesOptions = $(".op-download-options-product-types input");
-            let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
-            let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
-
-            o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
-                                           ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
-        });
-
         // Event handler when clicking "Select all product types" and "Deselect all product types" buttons.
         $("#cart").on("click", ".op-cart-select-all-btn, .op-cart-deselect-all-btn", function(e) {
             let productList = $(".op-download-options-product-types input");
@@ -140,6 +106,43 @@ var o_cart = {
         $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
+        });
+
+        // check an input on selected products and images updates file_info
+        $("#cart").on("click", ".op-download-options-product-types input", function(e) {
+            let productCategory = $(e.currentTarget).data("category");
+            let productInputs = $(`input[data-category="${productCategory}"]`);
+
+            let prodTypeSelectAllBtn = $(`.op-cart-select-btn[data-category="${productCategory}"]`);
+            let prodTypeDeselectAllBtn = $(`.op-cart-deselect-btn[data-category="${productCategory}"]`);
+            let isAllCatOptionsChecked = o_cart.isAllOptionStatusTheSame(productInputs);
+            let isAllCatOptionsUnchecked = o_cart.isAllOptionStatusTheSame(productInputs, false);
+
+            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
+
+            o_cart.updateSelectDeselectBtn(isAllCatOptionsChecked, isAllCatOptionsUnchecked,
+                                           prodTypeSelectAllBtn, prodTypeDeselectAllBtn);
+            o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
+                                           ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
+
+            o_cart.updateDownloadFileInfo();
+        });
+
+        // Event handler when clicking "Select all" and "Deselect all" buttons in each product type.
+        $("#cart").on("click", ".op-cart-select-btn, .op-cart-deselect-btn", function(e) {
+            let productCategory = $(e.currentTarget).data("category");
+            let productList = $(`input[data-category="${productCategory}"]`);
+
+            o_cart.updateCheckboxes(e.currentTarget, productList);
+
+            let allCheckboxesOptions = $(".op-download-options-product-types input");
+            let isAllOptionsChecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions);
+            let isAllOptionsUnchecked = o_cart.isAllOptionStatusTheSame(allCheckboxesOptions, false);
+
+            o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
+                                           ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
         });
     },
 
@@ -232,7 +235,7 @@ var o_cart = {
     getDownloadFiltersChecked: function() {
         // returned as url string
         let productTypes = [];
-        $("ul#product_types input:checkbox:checked").each(function() {
+        $(".op-download-options-product-types input:checkbox:checked").each(function() {
             productTypes.push($(this).val());
         });
         return "types="+productTypes.join(',');
