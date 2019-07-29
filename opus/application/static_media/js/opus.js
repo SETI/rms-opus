@@ -102,10 +102,6 @@ var opus = {
     // current splash page version for storing in the visited cookie
     splashVersion: 1,
 
-    // The viewable percentage of an item such that it can be treated as startobs
-    // 0.8 => 80%
-    sliderViewableFraction: 0.8,
-
     currentBrowser: "",
 
     //------------------------------------------------------------------------------------
