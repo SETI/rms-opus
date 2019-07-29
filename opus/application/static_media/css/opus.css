@@ -1309,12 +1309,12 @@ is wide enough */
     padding-left: 3%;
 }
 
-.widget-main .range-qtype-helper {
+.widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
 }
 
-#range_query_widget_helper_html {
+#op-qtype-tooltip {
     display: none;
     width: 500px;
 }
