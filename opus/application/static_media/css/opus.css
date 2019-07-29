@@ -1193,6 +1193,13 @@ is wide enough */
     top: 2em;
 }
 
+/* Make sure "x" and download options title in header of download options
+panel are properly separated */
+#op-cart-download-panel .card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
 .op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;

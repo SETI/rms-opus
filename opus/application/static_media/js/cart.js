@@ -223,9 +223,14 @@ var o_cart = {
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
         if ($(window).width() <= cartLeftPaneThreshold) {
+            $(html).find(".op-download-options-header h1").remove();
+            $("#op-cart-download-panel .op-header-text").html("<h2>Download Options</h2>");
             $("#op-cart-download-panel .op-card-contents").html(html);
         } else {
             opus.hideHelpAndCartPanels();
+            if ($(html).find(".op-download-options-header h1").length === 0) {
+                $(html).find(".op-download-options-header").prepend("<h1>Download Options</h1>");
+            }
             $(".cart_details").html(html);
         }
         o_cart.adjustProductInfoHeight();
@@ -281,13 +286,14 @@ var o_cart = {
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         let downloadOptionsHeaderHeight = $(".op-download-options-header").outerHeight();
+        let downloadOptionsTableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
+                                          footerHeight);
 
         $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
+            downloadOptionsTableHeight = downloadOptionsHeight - downloadOptionsHeaderHeight;
         }
-        let downloadOptionsTableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
-                                          footerHeight);
 
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
         $(".op-download-options-product-types").height(downloadOptionsTableHeight);
