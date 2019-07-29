@@ -720,7 +720,7 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(view, browserResized=false, isDOMChanged=false) {
+    updateSliderHandle: function(view, browserResized=false, isDOMChanged=false, isScrolling=false) {
         // Only update the slider & obSnum in infiniteScroll instances when the user
         // is at browse tab
         let tab = opus.getViewTab(view);
@@ -742,7 +742,7 @@ var o_browse = {
             // 3. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
             let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized,
-                                                                                isDOMChanged);
+                                                                                isDOMChanged, isScrolling);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
@@ -768,7 +768,7 @@ var o_browse = {
         }
     },
 
-    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged) {
+    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged, isScrolling) {
         /**
          * Get the current startObs (obsNum, for slider number) in both
          * gallery (top-left item) and table (top item) views. Also get
@@ -848,7 +848,7 @@ var o_browse = {
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
                 if (viewNamespace.galleryScrollbar.reach.y === "end" &&
-                    obsNum >= maxSliderVal - galleryBoundingRect.x) {
+                    obsNum >= maxSliderVal - galleryBoundingRect.x && isScrolling) {
                     obsNum = maxSliderVal;
                     if (previousScrollObsNum > maxSliderVal) {
                         currentScrollObsNum = previousScrollObsNum;
@@ -1076,7 +1076,7 @@ var o_browse = {
         if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
-        o_browse.updateSliderHandle(view);
+        o_browse.updateSliderHandle(view, false, false, true);
         return false;
     },
 
@@ -1646,7 +1646,8 @@ var o_browse = {
         //   it for the case when cached data is removed so that scrollbar position is always correct (and never reaches to the
         //   end until it reaches to the end of the data)
         o_browse.setScrollbarPosition(infiniteScrollDataObj.sliderObsNum,
-            infiniteScrollDataObj.scrollbarObsNum, view, infiniteScrollDataObj.scrollbarOffset);
+                                      infiniteScrollDataObj.scrollbarObsNum, view,
+                                      infiniteScrollDataObj.scrollbarOffset);
 
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle(view);
