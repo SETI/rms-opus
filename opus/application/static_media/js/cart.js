@@ -280,13 +280,15 @@ var o_cart = {
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
-        let downloadOptionsTableHeight = (downloadOptionsHeight - $(".op-download-options-header").outerHeight() -
-                                          footerHeight);
+        let downloadOptionsHeaderHeight = $(".op-download-options-header").outerHeight();
 
         $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
         }
+        let downloadOptionsTableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
+                                          footerHeight);
+
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
         $(".op-download-options-product-types").height(downloadOptionsTableHeight);
 

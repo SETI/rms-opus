@@ -35,9 +35,10 @@
                 <tbody>
                     {% for product_cat, product_list in product_cat_list %}
                         <th class="bg-light" colspan="5">
-                            <h5 class="mt-2">{{ product_cat }}
+                            <h5 class="mt-2">
                                 <button class="op-cart-select-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
                                 <button class="op-cart-deselect-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
+                                {{ product_cat }}
                             </h5>
                             <!-- <div>
                                 <a class="op-cart-select-btn" title="Select all" role="button" data-category="{{ product_cat|slugify }}">
