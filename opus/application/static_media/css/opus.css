@@ -1061,6 +1061,11 @@ nav.panel-heading {
     text-decoration: none;
 }
 
+/* Make sure ps container is NOT a flexbox (display: flex) */
+#cart #op-download-options-container {
+    display: block;
+}
+
 /* Cart view navbar responsiveness */
 @media (max-width: 1100px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
