@@ -918,10 +918,12 @@ var o_browse = {
                               $(`${tab} tbody tr`).eq(1).outerHeight());
 
         let obsNumDiff = (o_browse.isGalleryView() ?
-                          Math.floor((topBoxBoundary - firstCachedObsTop + o_browse.imageSize *
-                          o_browse.galleryImageViewableFraction)/o_browse.imageSize) * galleryBoundingRect.x :
-                          Math.floor((topBoxBoundary - firstCachedObsTop + tableRowHeight *
-                          o_browse.galleryImageViewableFraction)/tableRowHeight));
+                          o_utils.floor((topBoxBoundary - firstCachedObsTop +
+                                         o_browse.imageSize * o_browse.galleryImageViewableFraction) /
+                                        o_browse.imageSize) * galleryBoundingRect.x :
+                          o_utils.floor((topBoxBoundary - firstCachedObsTop +
+                                         tableRowHeight * o_browse.galleryImageViewableFraction) /
+                                        tableRowHeight));
 
         let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
@@ -2139,7 +2141,7 @@ var o_browse = {
 
         if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
             trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
-                                    $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
         }
         opus.getViewNamespace(view).galleryBoundingRect.trFloor = trCountFloor;
         return trCountFloor;
@@ -2159,13 +2161,12 @@ var o_browse = {
 
         let xCount = o_utils.floor(width/o_browse.imageSize);
         // This is the total number of rows that are at least partially visible
-        let yCountCeil = Math.ceil(height/o_browse.imageSize);
+        let yCountCeil = o_utils.ceil(height/o_browse.imageSize);
         // This is the total number of rows that are completely visible
-        let yCountFloor = Math.floor(height/o_browse.imageSize);
+        let yCountFloor = o_utils.floor(height/o_browse.imageSize);
         // This is the total number of rows that are visible as much as we think is visually useful
-        let yCountPartial = Math.floor((height + o_browse.imageSize*(1-o_browse.galleryImageViewableFraction)) /
-                                       o_browse.imageSize);
-        // let yCount = Math.ceil(height/o_browse.imageSize);
+        let yCountPartial = o_utils.floor((height + o_browse.imageSize*(1-o_browse.galleryImageViewableFraction)) /
+                                          o_browse.imageSize);
 
         // update the number of cached observations based on screen size
         // for now, only bother when we update the browse tab...

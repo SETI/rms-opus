@@ -35,7 +35,7 @@ var o_utils = {
     },
 
     ceil: function(num) {
-        return Math.ceil(num + 0.0000001);
+        return Math.ceil(num - 0.0000001);
     },
 
 };
