@@ -946,8 +946,9 @@ panel */
 .cart_details {
     border-left: .3em double black;
     padding-left: 2em;
-    min-width: 28em;
-    max-width: 28em;
+    /* Fix the width of download options area */
+    min-width: 36em;
+    max-width: 36em;
 }
 
 #op-download-links {
@@ -1056,7 +1057,7 @@ nav.panel-heading {
   that the empty cart button is always adjacent, not overlaid, by this container. */
 #cart .op-cart-nav-container {
     display: flex;
-    width: calc(100% - 11.5em);
+    width: calc(100% - 10.5em);
 }
 /* Styling for slider's height and width in cart page */
 #cart .op-cart-nav-container .op-observation-slider {
