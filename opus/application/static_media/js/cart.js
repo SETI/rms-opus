@@ -293,24 +293,21 @@ var o_cart = {
     },
 
     toggleInCart: function(fromOpusId, toOpusId) {
-        let fromElem = o_browse.getGalleryElement(fromOpusId);
-
         // handle it as range
         if (toOpusId != undefined) {
             let tab = opus.getViewTab();
-            let action = (fromElem.hasClass("op-in-cart") ? "removerange" : "addrange");
-            let toElem = o_browse.getGalleryElement(toOpusId);
-            let fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
-            let toIndex = $(`${tab} .op-thumbnail-container`).index(toElem);
+            let action = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
+            let fromObsNum = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum;
+            let toObsNum = o_browse.getGalleryElement(toOpusId).data("obs");
 
             // reorder if need be
-            if (fromIndex > toIndex) {
-                [fromIndex, toIndex] = [toIndex, fromIndex];
+            if (fromObsNum > toObsNum) {
+                [fromObsNum, toObsNum] = [toObsNum, fromObsNum];
+                [fromOpusId, toOpusId] = [toOpusId, fromOpusId];
             }
-            let length = toIndex - fromIndex+1;
             /// NOTE: we need to mark the elements on BOTH browse and cart page
             let elementArray = $(`${tab} .op-thumbnail-container`);
-            let opusIdRange = $(elementArray[fromIndex]).data("id") + ","+ $(elementArray[toIndex]).data("id");
+            let opusIdRange = `${fromOpusId},${toOpusId}`;
             let addOpusIdList = [];
             // This loop can take a fairly long time to execute for a large range, and it would be nice
             // to display the cart count spinner while it's going on. Unfortuntately, JavaScript doesn't
@@ -318,6 +315,18 @@ var o_cart = {
             // the event loop. At that point we leave ourselves open for race conditions if the user
             // has managed to click on a cart toggle before we get our event in the queue, and it's not
             // worth fixing those right now.
+            let fromElem = $(`${tab} .op-gallery-view`).find(`[data-obs=${fromObsNum}]`);
+            let fromIndex = 0;
+            let toELem = $(`${tab} .op-gallery-view`).find(`[data-obs=${toObsNum}]`);
+            let length = toObsNum - fromObsNum + 1;
+            // note that only one of the range endpoints can potentially be not present in the DOM,
+            // as we know the user just clicked on one of them to get here.
+            if (fromElem.length > 0) {
+                length = (toELem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
+                fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
+            } else {
+                length = $(`${tab} .op-thumbnail-container`).index(toELem);
+            }
             $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                 let opusId = $(elem).data("id");
                 let status = "in";
@@ -349,6 +358,7 @@ var o_cart = {
             o_browse.undoRangeSelect(tab);
         } else {
             // note - doing it this way handles the obs on the browse tab at the same time
+            let fromElem = o_browse.getGalleryElement(fromOpusId);
             let action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
 
             $(`.op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");

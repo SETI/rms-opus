@@ -1239,7 +1239,7 @@ is wide enough */
     overflow-y: auto;
 }
 
-.page-load-status {
+.op-page-load-status {
     display: none; /* hidden by default */
     padding-top: 20px;
     border-top: 1px solid #DDD;
@@ -1573,6 +1573,26 @@ also set its min width to be 150px */
     max-height: 60vh;
     /* min-width: 150px;
     max-height: 70vh; */
+}
+
+.op-range-select-info-box {
+    position: fixed;
+    /* left: 14em; */
+    bottom: 0;
+    width: auto;
+    height: 0;
+    text-align: center;
+    padding-left: 1em;
+    padding-right: 1em;
+    margin-left: 0px  !important;
+    transition: .5s ease;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.op-range-select-info-box.op-range-select {
+    height: 2.5em;
 }
 
 /* TODO: use @media to fine tune the heights of footer & nav bar

@@ -191,14 +191,13 @@ var o_browse = {
             }
             let tab = opus.getViewTab();
             let opusId = $(this).val();
-            let startElem = $(`${tab} .thumb.gallery`).find(".selected");
 
             if (e.shiftKey) {
-                if (startElem.length == 0) {
+                let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+                if (fromOpusId === undefined) {
                     o_browse.startRangeSelect(opusId);
                     //o_cart.toggleInCart(opusId);
                 } else {
-                    let fromOpusId = $(startElem).data("id");
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
@@ -214,7 +213,6 @@ var o_browse = {
             o_browse.hideMenu();
 
             let tab = opus.getViewTab();
-            let startElem = $(`${tab} .thumb.gallery`).find(".selected");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -223,11 +221,11 @@ var o_browse = {
             }
             // Detecting shift key
             else if (e.shiftKey) {
-                if (startElem.length == 0) {
+                let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+                if (fromOpusId === undefined) {
                     o_browse.startRangeSelect(opusId);
                     //o_cart.toggleInCart(opusId);
                 } else {
-                    let fromOpusId = $(startElem).data("id");
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
@@ -436,12 +434,11 @@ var o_browse = {
                     break;
                 case "range": // begin/end range
                     let tab = opus.getViewTab();
-                    let startElem = $(tab).find(".selected");
-                    if (startElem.length == 0) {
+                    let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+                    if (fromOpusId === undefined) {
                         o_browse.startRangeSelect(opusId);
                         //o_cart.toggleInCart(opusId);
                     } else {
-                        let fromOpusId = $(startElem).data("id");
                         o_cart.toggleInCart(fromOpusId, opusId);
                     }
                     break;
@@ -520,11 +517,11 @@ var o_browse = {
     }, // end browse behaviors
 
     cartShiftKeyHandler: function(e, opusId) {
-        let startElem = $(e.delegateTarget).find(".selected");
-        if (startElem.length == 0) {
+        let tab = opus.getViewTab();
+        let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+        if (fromOpusId === undefined) {
             o_browse.startRangeSelect(opusId);
         } else {
-            let fromOpusId = $(startElem).data("id");
             o_cart.toggleInCart(fromOpusId, opusId);
         }
     },
@@ -1172,7 +1169,15 @@ var o_browse = {
     },
 
     startRangeSelect: function(opusId) {
-        o_browse.undoRangeSelect(); // probably not necessary...
+        let tab = opus.getViewTab();
+        let galleryElement = o_browse.getGalleryElement(opusId);
+        let obsNum = galleryElement.data("obs");
+        $(`${tab} .op-range-select-info-box`).html(`Range select start at #${obsNum}, OPUSID: ${opusId} (ESC to cancel)`).addClass("op-range-select");
+        $(`${tab} .op-gallery-view`).infiniteScroll({
+            "rangeSelectOpusID": opusId,
+            "rangeSelectObsNum": obsNum,
+            "rangeSelectOption": (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange")
+        });
         o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
         o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
     },
@@ -1185,6 +1190,8 @@ var o_browse = {
             let opusId = $(startElem).data("id");
             o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in b-a-2");
         }
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID = undefined;
+        $(`${tab} .op-range-select-info-box`).removeClass("op-range-select");
     },
 
     openDetailTab: function() {
@@ -1933,7 +1940,7 @@ var o_browse = {
                     //return null;
                 },
                 responseType: "text",
-                status: `${tab} .page-load-status`,
+                status: `${tab} .op-page-load-status`,
                 elementScroll: true,
                 history: false,
                 // threshold point for scroll down
