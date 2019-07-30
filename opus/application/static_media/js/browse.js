@@ -1178,7 +1178,7 @@ var o_browse = {
         let tab = opus.getViewTab();
         let galleryElement = o_browse.getGalleryElement(opusId);
         let obsNum = galleryElement.data("obs");
-        $(`${tab} .op-range-select-info-box`).html(`Range select start at #${obsNum}, OPUSID: ${opusId} (ESC to cancel)`).addClass("op-range-select");
+        $(`${tab} .op-range-select-info-box`).html(`Range select start at #${obsNum}, OPUSID: ${opusId}  (ESC to cancel)`).addClass("op-range-select");
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "rangeSelectOpusID": opusId,
             "rangeSelectObsNum": obsNum,
