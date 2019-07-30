@@ -368,10 +368,10 @@ ul.op-search-menu {
     text-align: center;
 }
 
-#cart .fa-times {
+/* #cart .fa-times {
     color: #eee;
     opacity: 0.15;
-}
+} */
 
 #op-confirm-modal {
     border-radius: 6px;
@@ -889,8 +889,38 @@ a:-webkit-any-link, a::any-link {
 }
 
 #cart-sidebar {
-    padding-left: 3em;
-    padding-right: 3em;
+    padding-left: 0em;
+    padding-right: 1em;
+}
+
+/* Expand the width for table in cart download options panel */
+#cart .op-download-options-table, #cart .op-download-options-table th,
+#cart .op-download-options-table td {
+    border-left: 0px;
+    border-right: 0px;
+}
+
+/* Make both buttons the same width */
+#cart .op-cart-select-btn, #cart .op-cart-deselect-btn {
+    width: 8%;
+    outline: none;
+}
+
+/* Remove the focus/hover background for "v" & "x" icon in download options
+panel */
+#cart .op-cart-select-btn:hover, #cart .op-cart-deselect-btn:hover,
+#cart .op-cart-select-btn:focus, #cart .op-cart-deselect-btn:focus {
+    background-color: #F0F3F5 !important;
+}
+
+/* Remove default scrollbar in #op-download-options-container */
+#cart #op-download-options-container {
+    overflow-y: hidden;
+}
+
+/* Required styling for perfect scrollbar in download options panel */
+#cart .op-download-options-product-types {
+    position: absolute;
 }
 
 #cart .col {
@@ -916,8 +946,9 @@ a:-webkit-any-link, a::any-link {
 .cart_details {
     border-left: .3em double black;
     padding-left: 2em;
-    min-width: 28em;
-    max-width: 28em;
+    /* Fix the width of download options area */
+    min-width: 36em;
+    max-width: 36em;
 }
 
 #op-download-links {
@@ -1026,7 +1057,7 @@ nav.panel-heading {
   that the empty cart button is always adjacent, not overlaid, by this container. */
 #cart .op-cart-nav-container {
     display: flex;
-    width: calc(100% - 11.5em);
+    width: calc(100% - 10.5em);
 }
 /* Styling for slider's height and width in cart page */
 #cart .op-cart-nav-container .op-observation-slider {
@@ -1161,6 +1192,13 @@ is wide enough */
     left: 0;
     z-index: 9999;
     top: 2em;
+}
+
+/* Make sure "x" and download options title in header of download options
+panel are properly separated */
+#op-cart-download-panel .card-header {
+    display: flex;
+    justify-content: space-between;
 }
 
 .op-sort-order-container {
@@ -1413,8 +1451,8 @@ even when screen is narrow */
     width: 30px;
 }
 
-/* small spinner: shows up when total size is loading (cart page) */
-.op-total-size .spinner {
+/* small spinner: shows up when total size/files is loading (cart page) */
+.op-total-size .spinner, .op-total-download .spinner {
     display: none;
     line-height: 16px;
     margin: 0 10px;
@@ -1611,7 +1649,7 @@ footer {
     top: 2em;
 }
 
-.op-about-table table, th, td {
+.op-about-table table, .op-about-table th, .op-about-table td {
     border: 1px solid black;
 }
 

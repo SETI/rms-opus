@@ -1,49 +1,82 @@
-<div id="cart-sidebar">
+<div id="cart-sidebar" class="w-100">
     <div id="cart_summary" class="well well-lg">
         <div id="op-download-links">
             <h1>Zipped File Links</h1>
             <ul class="zippedFiles"></ul>
             <span class="spinner">&nbsp;</span>
         </div>
-        <h1>Download Options</h1>
-        <div>
-            <button class="op-cart-select-all-btn" type="button">Select all options</button>
-            <button class="op-cart-deselect-all-btn" type="button">Deselect all options</button>
+        <div class="op-download-options-header border-bottom border-light">
+            <h1>Download Options</h1>
+            <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
+            <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
+            <p class="op-total-size mb-0">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
+            <p class="op-total-download">Total Files (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-count">{{ total_download_count }}</span></p>
+            <p class="m-0">Select which product types to include in downloads:</p>
+            <div class="mb-3">
+                <button class="op-cart-select-all-btn w-100" type="button">
+                    <i class="fas fa-check"></i>&nbsp;&nbsp;Select all product types
+                </button>
+                <button class="op-cart-deselect-all-btn w-100" type="button">
+                    <i class="fas fa-times"></i>&nbsp;&nbsp;Deselect all product types
+                </button>
+            </div>
         </div>
-        <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-        <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
-        <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
+        <div class="op-download-options-product-types pr-2 w-100">
+            <table class="op-download-options-table table-sm w-100">
+                <thead>
+                    <tr class="border-bottom border-light">
+                        <th scope="col"></th>
+                        <th scope="col">Product Type</th>
+                        <th scope="col"># of Obs</th>
+                        <th scope="col"># of Files</th>
+                        <th scope="col">Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product_cat, product_list in product_cat_list %}
+                        <th class="bg-light" colspan="5">
+                            <h5 class="mt-2">
+                                <button class="op-cart-select-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
+                                {{ product_cat }}
+                            </h5>
+                            <!-- <div>
+                                <a class="op-cart-select-btn" title="Select all" role="button" data-category="{{ product_cat|slugify }}">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a class="op-cart-deselect-btn" title="Deselect all" role="button" data-category="{{ product_cat|slugify }}">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div> -->
+                            <!-- <button class="op-cart-select-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
+                            <button class="op-cart-deselect-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button> -->
+                        </th>
 
-        <div id="download_options">
-            {% for product_cat, product_list, category_name in product_cat_list %}
-                <h4>{{ product_cat }}</h4>
-                <div>
-                    <button class="op-cart-select-btn" data-category="{{ category_name }}" type="button">Select all</button>
-                    <button class="op-cart-deselect-btn" data-category="{{ category_name }}" type="button">Deselect all</button>
-                </div>
-                <ul id="product_types" class="list-inline" data-category="{{ category_name }}">
-                    {% for product_info in product_list %}
-                        <li>
-                            <input type="checkbox" value="{{ product_info.slug_name }}"
-                                {% if product_info.product_count > 0 %}
-                                    checked
-                                {% endif %}
-                            >
-                            <span
-                                {% if product_info.product_count == 0 %}
-                                    class="fadey"
-                                {% endif %}
-                            >
-                                {% if product_info.tooltip %}
-                                    &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
-                                {% endif %}
-                                {{ product_info.product_type }}
-                                <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
-                            </span>
-                        </li>
+                                {% for product_info in product_list %}
+                                    <tr class="border-bottom border-light">
+                                        <th scope="row">
+                                            <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
+                                                {% if product_info.product_count > 0 %}
+                                                    checked
+                                                {% endif %}
+                                            >
+                                        </th>
+                                        <td>
+                                            <span class="font-weight-bold">
+                                                {% if product_info.tooltip %}
+                                                    &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                                {% endif %}
+                                                {{ product_info.product_type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ product_info.product_count }}</td>
+                                        <td>{{ product_info.download_count }}</td>
+                                        <td>{{ product_info.download_size_pretty }}</td>
+                                    </tr>
+                                {% endfor %}
                     {% endfor %}
-                </ul>
-            {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
