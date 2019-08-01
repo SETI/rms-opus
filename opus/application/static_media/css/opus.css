@@ -932,6 +932,11 @@ panel */
     position: relative;
 }
 
+/* Make Total Size and Total Files stay in one line in download options */
+.op-total-size, .op-total-download {
+    display: inline;
+}
+
 .hide_ps__rail-y {
     display: none !important;
 }
