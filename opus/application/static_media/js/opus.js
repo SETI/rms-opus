@@ -89,7 +89,7 @@ var opus = {
 
     // store the browser version and width supported by OPUS
     browserSupport: {
-        "firefox": 59,
+        "firefox": 64,
         "chrome": 56,
         "chrome (ios)": 56,
         "opera": 42,
