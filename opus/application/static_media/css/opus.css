@@ -1092,6 +1092,11 @@ nav.panel-heading {
     text-decoration: none;
 }
 
+/* Make sure ps container is NOT a flexbox (display: flex) */
+#cart #op-download-options-container {
+    display: block;
+}
+
 /* Cart view navbar responsiveness */
 @media (max-width: 1100px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
@@ -1347,12 +1352,12 @@ panel are properly separated */
     padding-left: 3%;
 }
 
-.widget-main .range-qtype-helper {
+.widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
 }
 
-#range_query_widget_helper_html {
+#op-qtype-tooltip {
     display: none;
     width: 500px;
 }
@@ -1649,7 +1654,11 @@ footer {
     top: 2em;
 }
 
-.op-about-table table, .op-about-table th, .op-about-table td {
+.op-open-help {
+    float: right;
+}
+
+.op-about-table table, .op-about-table th, .op-about-table td  {
     border: 1px solid black;
 }
 

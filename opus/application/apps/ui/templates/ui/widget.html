@@ -1,14 +1,15 @@
 {% comment %}
-    this is all inside of: <li id="widget__{{ slug }}" class = "widget">
+    this is all inside of: <li id="widget__{{ slug }}" class="widget">
 
-    range-qtype-helper div is appended in widgets.js becuase omg was impossible to layout #todo
+    #op-qtype-tooltip div is appended in base.html, and popover is initialized
+    in getWidget function in widgets.js
 {% endcomment %}
 
 <div class="card">
     <header class="card-header">
         <h6 class="card-title mt-0">
             <div>
-                <i class = "fas fa-info-circle" title = "{{tooltip|safe }}"></i>
+                <i class="fas fa-info-circle" title="{{tooltip|safe }}"></i>
                 {{ label }} {{ units }}
                 <span class="spinner">&nbsp;</span>
             </div>
@@ -33,10 +34,10 @@
                             {% endif %}
                         ">
             <div class="widget-main">
-                <div id = "hint__{{ slug }}" class = "range_hints"></div>
+                <div id="hint__{{ slug }}" class="range_hints"></div>
                 <ul>
                     {% if intro %}
-                        <div class = "text-info">
+                        <div class="text-info">
                             {{ intro }}
 
                         </div>

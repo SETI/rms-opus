@@ -355,7 +355,7 @@ var o_widgets = {
          for (let k in opus.prefs.widgets) {
              let slug = opus.prefs.widgets[k];
              let widget = 'widget__' + slug;
-             let html = '<li id = "' + widget + '" class = "widget"></li>';
+             let html = '<li id="' + widget + '" class="widget"></li>';
              $(html).appendTo('#op-search-widgets ');
              // $(html).hide().appendTo('#op-search-widgets').show("blind",{direction: "vertical" },200);
              opus.widgetElementsDrawn.push(slug);
@@ -386,7 +386,7 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
-            let html = '<li id = "' + widget + '" class = "widget"></li>';
+            let html = '<li id="' + widget + '" class="widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widgetElementsDrawn.unshift(slug);
 
@@ -402,12 +402,34 @@ var o_widgets = {
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
             let qtype = "qtype-" + slug;
-            if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0 && !hash[qtype]) {
-                // When a widget with qtype is open, the value of the first option tag is the default value for qtype
-                let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
-                opus.extras[qtype] = [defaultOption];
-                o_hash.updateHash();
+
+            if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0) {
+                let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
+                if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
+                    let helpIcon = '<li class="op-range-qtype-helper">\
+                                    <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
+                                    <i class="fas fa-info-circle"></i></a></li>';
+                    $(`#widget__${slug} .widget-main ul`).append(helpIcon);
+                }
+
+                if (!hash[qtype]) {
+                    // When a widget with qtype is open, the value of the first option tag is the
+                    // default value for qtype
+                    let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
+                    opus.extras[qtype] = [defaultOption];
+                    o_hash.updateHash();
+                }
             }
+
+            // Initialize popover, this for the (i) icon next to qtype
+            $(".widget-main .op-range-qtype-helper a").popover({
+                html: true,
+                container: "body",
+                trigger: "hover",
+                content: function() {
+                    return $("#op-qtype-tooltip").html();
+                }
+            });
 
             // If we have a string input widget open, initialize autocomplete for string input
             let displayDropDownList = true;
@@ -541,7 +563,7 @@ var o_widgets = {
                 $('#' + widget + ' ul label').after(function() {
                     let value = $(this).find('input').attr("value");
                     let span_id = 'hint__' + slug + '_' + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // special chars not allowed in id element
-                    return '<span class = "hints" id = "' + span_id + '"></span>';
+                    return '<span class="hints" id="' + span_id + '"></span>';
                 });
             } catch(e) { } // these only apply to mult widgets
 

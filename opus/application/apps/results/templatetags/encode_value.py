@@ -7,4 +7,6 @@ register = template.Library()
 @register.filter(name='encode_value')
 def encode_value(value):
     "Encode a search value for use in an OPUS URL."
+    if value is None:
+        value = 'NULL'
     return urllib.parse.quote_plus(value, "-_.!~*'()")
