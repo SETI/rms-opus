@@ -1,3 +1,4 @@
+{% load humanize %}
 <div id="cart-sidebar" class="w-100">
     <div id="cart_summary" class="well well-lg">
         <div id="op-download-links">
@@ -16,7 +17,7 @@
                 </p>
                 <p class="op-total-download">Total Files:
                     <span class="spinner">&nbsp;</span>
-                    <span id="op-total-download-count">{{ total_download_count }}</span>
+                    <span id="op-total-download-count">{{ total_download_count|intcomma }}</span>
                 </p>
             </div>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
@@ -44,7 +45,6 @@
                     {% for product_cat, product_list in product_cat_list %}
                         <th class="bg-light" colspan="5">
                             <h5 class="mt-2">
-                                <!-- border-0 bg-light -->
                                 <button class="op-cart-select-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
                                 <button class="op-cart-deselect-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
                                 {{ product_cat }}
@@ -78,8 +78,8 @@
                                                 {{ product_info.product_type }}
                                             </span>
                                         </td>
-                                        <td class="text-right">{{ product_info.product_count }}</td>
-                                        <td class="text-right">{{ product_info.download_count }}</td>
+                                        <td class="text-right">{{ product_info.product_count|intcomma }}</td>
+                                        <td class="text-right">{{ product_info.download_count|intcomma }}</td>
                                         <td class="text-right">{{ product_info.download_size_pretty }}</td>
                                     </tr>
                                 {% endfor %}
