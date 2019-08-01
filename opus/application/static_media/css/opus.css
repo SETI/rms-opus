@@ -918,6 +918,11 @@ panel */
     overflow-y: hidden;
 }
 
+/* Remove pointer when button is disabled in download options */
+#cart #op-download-options-container button:disabled {
+    pointer-events: none;
+}
+
 /* Required styling for perfect scrollbar in download options panel */
 #cart .op-download-options-product-types {
     position: absolute;
