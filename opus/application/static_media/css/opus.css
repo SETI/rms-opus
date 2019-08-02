@@ -1209,6 +1209,9 @@ is wide enough */
     left: 0;
     z-index: 9999;
     top: 2em;
+    /* Fix the width of the panel so that it will increase when browser
+    is wider*/
+    width: 36em;
 }
 
 /* Make sure "x" and download options title in header of download options
