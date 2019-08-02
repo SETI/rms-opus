@@ -158,7 +158,8 @@ var o_cart = {
             if (info.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
+            o_cart.hideDownloadSpinner(info.total_download_size_pretty,
+                                       o_utils.addCommas(info.total_download_count));
         });
     },
 
@@ -286,17 +287,19 @@ var o_cart = {
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         let downloadOptionsHeaderHeight = $(".op-download-options-header").outerHeight();
-        let downloadOptionsTableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
-                                          footerHeight);
+        let productTypesTableHeader = $(".op-product-type-table-header").outerHeight();
+        let downloadOptionsScrollableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
+                                          footerHeight - productTypesTableHeader);
 
         $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
-            downloadOptionsTableHeight = downloadOptionsHeight - downloadOptionsHeaderHeight;
+            downloadOptionsScrollableHeight = downloadOptionsHeight - downloadOptionsHeaderHeight;
         }
 
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
-        $(".op-download-options-product-types").height(downloadOptionsTableHeight);
+        // $(".op-download-options-product-types").height(downloadOptionsScrollableHeight);
+        $(".op-product-type-table-body").height(downloadOptionsScrollableHeight);
 
         if (o_cart.downloadOptionsScrollbar) {
             o_cart.downloadOptionsScrollbar.update();
@@ -313,7 +316,8 @@ var o_cart = {
         o_cart.totalObsCount = status.count;
         o_cart.hideCartCountSpinner(o_cart.totalObsCount);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
-            o_cart.hideDownloadSpinner(status.total_download_size_pretty, status.total_download_count);
+            o_cart.hideDownloadSpinner(status.total_download_size_pretty,
+                                       o_utils.addCommas(status.total_download_count));
         }
     },
 
@@ -355,7 +359,7 @@ var o_cart = {
                     $(".op-cart-select-btn").prop("disabled", true);
 
                     // Init perfect scrollbar when .op-download-options-product-types is rendered.
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-download-options-product-types", {
+                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
                         minScrollbarLength: opus.minimumPSLength,
                         suppressScrollX: true,
                     });

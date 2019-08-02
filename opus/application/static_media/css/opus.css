@@ -893,16 +893,9 @@ a:-webkit-any-link, a::any-link {
     padding-right: 1em;
 }
 
-/* Expand the width for table in cart download options panel */
-#cart .op-download-options-table, #cart .op-download-options-table th,
-#cart .op-download-options-table td {
-    border-left: 0px;
-    border-right: 0px;
-}
-
 /* Make both buttons the same width */
 #cart .op-cart-select-btn, #cart .op-cart-deselect-btn {
-    width: 8%;
+    width: 4%;
     outline: none;
 }
 
@@ -915,7 +908,7 @@ panel */
 
 /* Remove default scrollbar in #op-download-options-container */
 #cart #op-download-options-container {
-    overflow-y: hidden;
+    overflow: hidden;
 }
 
 /* Remove pointer when button is disabled in download options */
@@ -923,9 +916,18 @@ panel */
     pointer-events: none;
 }
 
-/* Required styling for perfect scrollbar in download options panel */
+/* Make download options product types table take wider space */
 #cart .op-download-options-product-types {
     position: absolute;
+}
+
+/* Required styling for perfect scrollbar in download options panel */
+#cart .op-product-type-table-body {
+    position: relative;
+}
+
+#cart .op-product-type-table-body .ps__rail-y {
+    background-color: transparent !important;
 }
 
 #cart .col {

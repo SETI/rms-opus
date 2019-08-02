@@ -30,62 +30,46 @@
                 </button>
             </div>
         </div>
-        <div class="op-download-options-product-types pr-2 w-100">
-            <table class="op-download-options-table table-sm w-100">
-                <thead>
-                    <tr class="border-bottom border-light">
-                        <th scope="col"></th>
-                        <th scope="col">Product Type</th>
-                        <th scope="col" class="text-right"># Obs</th>
-                        <th scope="col" class="text-right"># Files</th>
-                        <th scope="col" class="text-right">Size</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product_cat, product_list in product_cat_list %}
-                        <th class="bg-light" colspan="5">
+        <div class="op-download-options-product-types w-100">
+            <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters pr-3">
+                <div class="col-7">Product Type</div>
+                <div class="col text-right"># Obs</div>
+                <div class="col text-right"># Files</div>
+                <div class="col text-right">Size</div>
+            </div>
+            <div class="op-product-type-table-body pr-3">
+                {% for product_cat, product_list in product_cat_list %}
+                    <div class="row no-gutters bg-light">
+                        <div class="col-12">
                             <h5 class="mt-2">
-                                <button class="op-cart-select-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
-                                <button class="op-cart-deselect-btn border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
+                                <button class="op-cart-select-btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
                                 {{ product_cat }}
                             </h5>
-                            <!-- <div>
-                                <a class="op-cart-select-btn" title="Select all" role="button" data-category="{{ product_cat|slugify }}">
-                                    <i class="fas fa-check"></i>
-                                </a>
-                                <a class="op-cart-deselect-btn" title="Deselect all" role="button" data-category="{{ product_cat|slugify }}">
-                                    <i class="fas fa-times"></i>
-                                </a>
-                            </div> -->
-                            <!-- <button class="op-cart-select-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
-                            <button class="op-cart-deselect-btn border-0" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button> -->
-                        </th>
-
-                                {% for product_info in product_list %}
-                                    <tr class="border-bottom border-light">
-                                        <th scope="row">
-                                            <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
-                                                {% if product_info.product_count > 0 %}
-                                                    checked
-                                                {% endif %}
-                                            >
-                                        </th>
-                                        <td>
-                                            <span>
-                                                {% if product_info.tooltip %}
-                                                    &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
-                                                {% endif %}
-                                                {{ product_info.product_type }}
-                                            </span>
-                                        </td>
-                                        <td class="text-right">{{ product_info.product_count|intcomma }}</td>
-                                        <td class="text-right">{{ product_info.download_count|intcomma }}</td>
-                                        <td class="text-right">{{ product_info.download_size_pretty }}</td>
-                                    </tr>
-                                {% endfor %}
+                        </div>
+                    </div>
+                    {% for product_info in product_list %}
+                        <div class="row no-gutters border-bottom border-light">
+                            <div class="col-7">
+                                <span>
+                                    <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
+                                        {% if product_info.product_count > 0 %}
+                                            checked
+                                        {% endif %}
+                                    >
+                                    {% if product_info.tooltip %}
+                                        &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                    {% endif %}
+                                    {{ product_info.product_type }}
+                                </span>
+                            </div>
+                            <div class="col text-right">{{ product_info.product_count|intcomma }}</div>
+                            <div class="col text-right">{{ product_info.download_count|intcomma }}</div>
+                            <div class="col text-right">{{ product_info.download_size_pretty }}</div>
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
