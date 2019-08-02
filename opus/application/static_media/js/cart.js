@@ -294,7 +294,8 @@ var o_cart = {
         $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
             downloadOptionsHeight = downloadOptionsHeight - cardHeaderHeight;
-            downloadOptionsScrollableHeight = downloadOptionsHeight - downloadOptionsHeaderHeight;
+            downloadOptionsScrollableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
+                                               productTypesTableHeader);
         }
 
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
