@@ -469,6 +469,7 @@ var o_browse = {
             slide: function(event, ui) {
                 let tab = ui.handle.dataset.target;
                 o_browse.onSliderHandleMoving(tab, ui.value);
+                o_browse.hideMenu();
             },
             stop: function(event, ui) {
                 let tab = ui.handle.dataset.target;
@@ -1126,15 +1127,16 @@ var o_browse = {
         // use the state of the current selected observation to set the icons if one has been selected,
         // otherwise use the state of the current observation - this will identify what will happen to the range
         let tab = opus.getViewTab();
-        let selectedElem = $(tab).find(".selected");
-        if (selectedElem.length != 0) {
-            inCart = (o_cart.isIn($(selectedElem).data("id")) ? "" : "in");
+        let rangeSelected = o_browse.isRangeSelectEnabled(tab);
+        let rangeText = "";
+        if (rangeSelected !== undefined) {
+            let addRemoveText = (rangeSelected === "removerange" ? "remove range from" : "add range from");
+            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`;
+        } else {
+            let addRemoveText = (inCart !== "in" ? "remove range from" : "add range from");
+            rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here`;
         }
-        let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
-        let rangeText = (selectedElem.length === 0 ?
-                            `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
-                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let menu = {"height":$("#op-obs-menu").innerHeight(), "width":$("#op-obs-menu").innerWidth()};
@@ -1178,11 +1180,13 @@ var o_browse = {
         let tab = opus.getViewTab();
         let galleryElement = o_browse.getGalleryElement(opusId);
         let obsNum = galleryElement.data("obs");
-        $(`${tab} .op-range-select-info-box`).html(`Range select start at #${obsNum}, OPUSID: ${opusId}  (ESC to cancel)`).addClass("op-range-select");
+        let action = (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange");
+        let actionText = (action === "removerange" ? "Remove" : "Add");
+        $(`${tab} .op-range-select-info-box`).html(`${actionText} range from cart starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "rangeSelectOpusID": opusId,
             "rangeSelectObsNum": obsNum,
-            "rangeSelectOption": (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange")
+            "rangeSelectOption": action
         });
         o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
         o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
@@ -1197,7 +1201,13 @@ var o_browse = {
             o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in b-a-2");
         }
         $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID = undefined;
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum = undefined;
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption = undefined;
         $(`${tab} .op-range-select-info-box`).removeClass("op-range-select");
+    },
+
+    isRangeSelectEnabled: function(tab) {
+        return $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
     },
 
     openDetailTab: function() {
