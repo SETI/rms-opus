@@ -144,6 +144,14 @@ var o_cart = {
             o_cart.updateSelectDeselectBtn(isAllOptionsChecked, isAllOptionsUnchecked,
                                            ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
         });
+
+        $(".app-footer .op-download-links-btn").popover({
+            html: true,
+            container: "body",
+            content: function() {
+                return $("#op-download-links").html();
+            }
+        });
     },
 
     updateDownloadFileInfo: function() {
@@ -252,9 +260,10 @@ var o_cart = {
             return false;
         }
 
-        $("#op-download-links").show();
         opus.downloadInProcess = true;
-        $(".spinner", "#op-download-links").fadeIn().css("display","inline-block");
+        // display the popover button at the lower right footer area
+        $(".op-download-links-btn").show();
+        $(".op-download-links-contents .spinner").show();
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -263,16 +272,26 @@ var o_cart = {
             url: url,
             dataType: "json",
             success: function(data) {
+                // To dynamically update and display contents of an open popover, we have to make sure html
+                // in both (1) #op-download-links ( content when popover is initialized) and (2) .popover-body
+                // (when popover is open) are synced up with updates. To achieve this, we have to call show
+                // method from popover to update content, and make sure the selector managing DOM are selecting
+                // the same elements in both #op-download-links and .popover-body. (lenght === 2).
+                $(".app-footer .op-download-links-btn").popover("show");
+                $(".op-download-links-contents .spinner").hide();
+                let latestLink = "";
                 if (data.error !== undefined) {
-                    $(`<li>${data.error}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
+                    latestLink = $(`<li>${data.error}</li>`);
                 } else {
-                    $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("slow");
+                    latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
                 }
-                $(".spinner", "#op-download-links").fadeOut();
+                $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
             },
             error: function(e) {
-                $(".spinner", "#op-download-links").fadeOut();
-                $(`<li>${errorMsg}</li>`).hide().prependTo("ul.zippedFiles", "#cart_summary").slideDown("fast");
+                $(".app-footer .op-download-links-btn").popover("show");
+                $(".op-download-links-contents .spinner").hide();
+                let latestLink = $(`<li>${errorMsg}</li>`);
+                $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
             },
             complete: function() {
                 o_cart.downloadInProcess = false;

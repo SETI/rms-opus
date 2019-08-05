@@ -1648,6 +1648,11 @@ footer {
     z-index: 9999;
 }
 
+footer .op-download-links-btn {
+    display: none;
+    float: right;
+}
+
 .footer .container {
     position: absolute;
     bottom: 0;
