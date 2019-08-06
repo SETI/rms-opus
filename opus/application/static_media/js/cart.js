@@ -72,20 +72,6 @@ var o_cart = {
             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
         });
 
-        // Event handler when clicking "Select all product types" and "Deselect all product types" buttons.
-        $("#cart").on("click", ".op-cart-select-all-btn, .op-cart-deselect-all-btn", function(e) {
-            let productList = $(".op-download-options-product-types input");
-            o_cart.updateCheckboxes(e.target, productList);
-
-            if ($(e.target).hasClass("op-cart-select-all-btn")) {
-                $(".op-cart-select-btn").prop("disabled", true);
-                $(".op-cart-deselect-btn").prop("disabled", false);
-            } else {
-                $(".op-cart-select-btn").prop("disabled", false);
-                $(".op-cart-deselect-btn").prop("disabled", true);
-            }
-        });
-
         // Display the whole series of modals.
         // This will keep displaying multiple error message modals one after another when the previous modal is closed.
         $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
@@ -132,7 +118,21 @@ var o_cart = {
             o_cart.updateDownloadFileInfo();
         });
 
-        // Event handler when clicking "Select all" and "Deselect all" buttons in each product type.
+        // Event handler when clicking "Select all product types" and "Deselect all product types" buttons.
+        $("#cart").on("click", ".op-cart-select-all-btn, .op-cart-deselect-all-btn", function(e) {
+            let productList = $(".op-download-options-product-types input");
+            o_cart.updateCheckboxes(e.target, productList);
+
+            if ($(e.target).hasClass("op-cart-select-all-btn")) {
+                $(".op-cart-select-btn").prop("disabled", true);
+                $(".op-cart-deselect-btn").prop("disabled", false);
+            } else {
+                $(".op-cart-select-btn").prop("disabled", false);
+                $(".op-cart-deselect-btn").prop("disabled", true);
+            }
+        });
+
+        // Event handler when clicking "v" and "x" buttons in each product type.
         $("#cart").on("click", ".op-cart-select-btn, .op-cart-deselect-btn", function(e) {
             let productCategory = $(e.currentTarget).data("category");
             let productList = $(`input[data-category="${productCategory}"]`);
@@ -205,6 +205,8 @@ var o_cart = {
         } else if (($(target).hasClass("op-cart-deselect-btn") ||
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
             $(checkboxesOptions).prop("checked", false);
+        } else {
+            opus.logError(`Target button in download options left pane has the wrong class.`);
         }
         $(target).prop("disabled", true);
         $(target).siblings().prop("disabled", false);
