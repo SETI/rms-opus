@@ -432,6 +432,16 @@
             draggable=False
             close_by_keyboard="esc"
         %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-download-links-error-msg"
+            confirm_title="Download Error"
+            confirm_msg=""
+            target="op-download-links-error-msg"
+            yes_text="OK"
+            allow_close=True
+            draggable=False
+            close_by_keyboard="esc"
+        %}
 
         {% endblock %}
 
@@ -463,6 +473,8 @@
     <!-- put download links in a popover -->
     <div id="op-download-links">
         <div class="op-download-links-contents">
+            <!-- <h6>Recent Download History</h6> -->
+            <!-- <h6>Zipped File Links</h6> -->
             <!-- <span class="spinner">&nbsp;</span> -->
             <ul class="zippedFiles">
                 <li class="spinner">&nbsp;</li>

@@ -145,12 +145,24 @@ var o_cart = {
                                            ".op-cart-select-all-btn", ".op-cart-deselect-all-btn");
         });
 
+        // Initialize popover window for download links at the lower right corner in footer area.
         $(".app-footer .op-download-links-btn").popover({
             html: true,
             container: "body",
+            // Make sure popover are only triggered by manual event, and we will set the
+            // event handler manually on buttons to open/close popover. The reason we do
+            // this is to make sure when popover is manully open by show method, it will
+            // close by clicking the button once only. If we didn't set this manual and
+            // add event handler manually, we need to click the button twice to close a
+            // manually open popover.
+            trigger: "manual",
             content: function() {
                 return $("#op-download-links").html();
             }
+        });
+
+        $(".app-footer .op-download-links-btn").on("click", function(){
+            $(".app-footer .op-download-links-btn").popover("toggle");
         });
     },
 
@@ -261,9 +273,10 @@ var o_cart = {
         }
 
         opus.downloadInProcess = true;
-        // display the popover button at the lower right footer area
-        $(".op-download-links-btn").show();
-        $(".op-download-links-contents .spinner").show();
+
+        if ($(".op-download-links-btn").is(":visible")) {
+            $(".op-download-links-contents .spinner").show();
+        }
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -272,26 +285,29 @@ var o_cart = {
             url: url,
             dataType: "json",
             success: function(data) {
-                // To dynamically update and display contents of an open popover, we have to make sure html
-                // in both (1) #op-download-links ( content when popover is initialized) and (2) .popover-body
-                // (when popover is open) are synced up with updates. To achieve this, we have to call show
-                // method from popover to update content, and make sure the selector managing DOM are selecting
-                // the same elements in both #op-download-links and .popover-body. (lenght === 2).
-                $(".app-footer .op-download-links-btn").popover("show");
-                $(".op-download-links-contents .spinner").hide();
-                let latestLink = "";
                 if (data.error !== undefined) {
-                    latestLink = $(`<li>${data.error}</li>`);
+                    // hide the spinner and display error message in an open modal
+                    $(".op-download-links-contents .spinner").hide();
+                    $("#op-download-links-error-msg .modal-body").text(data.error);
+                    $("#op-download-links-error-msg").modal("show");
                 } else {
-                    latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
+                    // To dynamically update and display contents of an open popover, we have to make sure html
+                    // in both (1) #op-download-links ( content when popover is initialized) and (2) .popover-body
+                    // (when popover is open) are synced up with updates. To achieve this, we have to call show
+                    // method from popover to update content, and make sure the selector managing DOM are selecting
+                    // the same elements in both #op-download-links and .popover-body. (lenght === 2).
+                    $(".op-download-links-btn").show();
+                    $(".app-footer .op-download-links-btn").popover("show");
+                    $(".op-download-links-contents .spinner").hide();
+                    let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
+                    $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
                 }
-                $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
             },
             error: function(e) {
-                $(".app-footer .op-download-links-btn").popover("show");
+                // hide the spinner and display error message in an open modal
                 $(".op-download-links-contents .spinner").hide();
-                let latestLink = $(`<li>${errorMsg}</li>`);
-                $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
+                $("#op-download-links-error-msg .modal-body").text(errorMsg);
+                $("#op-download-links-error-msg").modal("show");
             },
             complete: function() {
                 o_cart.downloadInProcess = false;
