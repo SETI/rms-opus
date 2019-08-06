@@ -96,6 +96,7 @@ var o_browse = {
                     }
                 }
             }
+            o_browse.hideMenu();
         });
 
         $("#op-select-metadata").modal({
