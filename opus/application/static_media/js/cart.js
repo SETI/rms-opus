@@ -9,6 +9,8 @@
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
 const cartLeftPaneThreshold = 940;
+// Max height for the window of download links history (in px) before we enable PS.
+const downloadLinksMaxHeight = 300;
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -149,6 +151,9 @@ var o_cart = {
         $(".app-footer .op-download-links-btn").popover({
             html: true,
             container: "body",
+            title: "Zipped File Links\
+                    <button class='close-download-links-history btn-sm p-0 border-0' type='button'>\
+                    <i class='fas fa-times'></i></button>",
             // Make sure popover are only triggered by manual event, and we will set the
             // event handler manually on buttons to open/close popover. The reason we do
             // this is to make sure when popover is manully open by show method, it will
@@ -161,8 +166,14 @@ var o_cart = {
             }
         });
 
-        $(".app-footer .op-download-links-btn").on("click", function(){
+        // Toggle popover window when clicking download history button at the footer
+        $(".app-footer .op-download-links-btn").on("click", function() {
             $(".app-footer .op-download-links-btn").popover("toggle");
+        });
+
+        // Close popover when clicking "x" button on the popover title
+        $(document).on("click", ".close-download-links-history", function() {
+            $(".app-footer .op-download-links-btn").popover("hide");
         });
     },
 
@@ -276,6 +287,8 @@ var o_cart = {
 
         if ($(".op-download-links-btn").is(":visible")) {
             $(".op-download-links-contents .spinner").show();
+            // prevent popover window from jumping when displaying the spinner
+            $(".app-footer .op-download-links-btn").popover("update");
         }
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
@@ -298,9 +311,15 @@ var o_cart = {
                     // the same elements in both #op-download-links and .popover-body. (lenght === 2).
                     $(".op-download-links-btn").show();
                     $(".app-footer .op-download-links-btn").popover("show");
+
+                    // Set the max height for the window of download links history
+                    $(".popover-body").css("max-height", downloadLinksMaxHeight);
+
                     $(".op-download-links-contents .spinner").hide();
                     let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
-                    $(".op-download-links-contents ul.zippedFiles li:nth-child(1)").after(latestLink);
+                    $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
+
+                    o_cart.enablePSinDownloadLinksWindow();
                 }
             },
             error: function(e) {
@@ -313,6 +332,21 @@ var o_cart = {
                 o_cart.downloadInProcess = false;
             }
         });
+    },
+
+    enablePSinDownloadLinksWindow: function() {
+        /**
+         * Initialize and update PS in download links window when the height
+         * of the popover window reaches to the max.
+         */
+        if ($(".popover-body").outerHeight() >= downloadLinksMaxHeight) {
+            if (!o_cart.downloadLinksScrollbar) {
+                o_cart.downloadLinksScrollbar = new PerfectScrollbar(".popover-body", {
+                    suppressScrollX: true,
+                });
+            }
+            o_cart.downloadLinksScrollbar.update();
+        }
     },
 
     adjustProductInfoHeight: function() {
@@ -381,7 +415,7 @@ var o_cart = {
         o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
 
         if (o_cart.reloadObservationData) {
-            let zippedFiles_html = $(".zippedFiles", "#cart").html();
+            let zippedFiles_html = $(".op-zipped-files", "#cart").html();
             $("#cart .op-results-message").hide();
             $("#cart .gallery").empty();
             $("#cart .op-data-table tbody").empty();
@@ -414,7 +448,7 @@ var o_cart = {
                     o_browse.loadData(view, startObs);
 
                     if (zippedFiles_html) {
-                        $(".zippedFiles", "#cart").html(zippedFiles_html);
+                        $(".op-zipped-files", "#cart").html(zippedFiles_html);
                     }
                 }
             });

@@ -948,7 +948,7 @@ panel */
     display: none !important;
 }
 
-#cart-sidebar .zippedFiles li {
+#cart-sidebar .op-zipped-files li {
     margin: 0;
     padding: 0;
     list-style-type: none;
@@ -965,6 +965,20 @@ panel */
 
 #op-download-links {
     display: none;
+}
+
+/* Make the "x" button in download links popover stays at the right. */
+.close-download-links-history {
+    float: right;
+}
+
+.op-zipped-files {
+    padding-left: 2em;
+}
+
+/* Requirement for ps in popover window */
+.popover-body {
+    position: relative;
 }
 
 div.gallery {
