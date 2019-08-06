@@ -303,6 +303,7 @@ var o_cart = {
                 if (data.error !== undefined) {
                     // hide the spinner and display error message in an open modal
                     $(".op-download-links-contents .spinner").hide();
+                    $(".app-footer .op-download-links-btn").popover("update");
                     $("#op-download-links-error-msg .modal-body").text(data.error);
                     $("#op-download-links-error-msg").modal("show");
                 } else {
@@ -327,6 +328,7 @@ var o_cart = {
             error: function(e) {
                 // hide the spinner and display error message in an open modal
                 $(".op-download-links-contents .spinner").hide();
+                $(".app-footer .op-download-links-btn").popover("update");
                 $("#op-download-links-error-msg .modal-body").text(errorMsg);
                 $("#op-download-links-error-msg").modal("show");
             },
