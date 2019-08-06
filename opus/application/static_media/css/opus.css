@@ -967,9 +967,33 @@ panel */
     display: none;
 }
 
+/* Styling for download history button at the lower right of footer */
+.op-download-links-btn {
+    display: none;
+    float: right;
+    cursor: pointer;
+}
+
+.op-download-links-btn:hover {
+    text-decoration: none;
+}
+
+.op-download-links-btn:focus {
+    outline: none;
+}
+
 /* Make the "x" button in download links popover stays at the right. */
 .close-download-links-history {
     float: right;
+    /* We didn't use bg-light class from bootstrap because bootstrap popover
+    header background has a different color (not belong to any bootstrap color
+    class) from bg-light. */
+    background-color: #F7F7F7;
+}
+
+/* Remove the outline for "x" icon in download history window when it's clicked. */
+.close-download-links-history:focus {
+    outline: none;
 }
 
 .op-zipped-files {
@@ -1660,11 +1684,6 @@ footer {
     text-align: center;
     margin-left: 0px  !important;
     z-index: 9999;
-}
-
-footer .op-download-links-btn {
-    display: none;
-    float: right;
 }
 
 .footer .container {
