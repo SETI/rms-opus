@@ -1176,7 +1176,7 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 940px) {
+@media (max-width: 1160px) {
     /* Hide download options pane when screen is narrow */
     .cart_details {
         display: none;
@@ -1209,7 +1209,7 @@ nav.panel-heading {
 
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 941px) {
+@media (min-width: 1161px) {
     .op-cart-toggle-download-panel {
         display: none !important;
 

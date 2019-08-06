@@ -8,7 +8,7 @@
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 940;
+const cartLeftPaneThreshold = 1160;
 // Max height for the window of download links history (in px) before we enable PS.
 const downloadLinksMaxHeight = 300;
 
