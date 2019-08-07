@@ -10,7 +10,7 @@
 // is equal to or less than the threshold point.
 const cartLeftPaneThreshold = 1160;
 // Max height for the window of download links history (in px) before we enable PS.
-const downloadLinksMaxHeight = 300;
+const downloadLinksMaxHeight = 250;
 // Html string for customized popover window. The reason we don't put the whole html
 // element in DOM first and retrieve by .html() later is because we need to attach
 // ps to .popover-body, and by adding the whole popover element in html first, there
@@ -25,7 +25,7 @@ const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
                                      "<div class='popover-body'></div>" +
                                      "<div class='popover-footer'>" +
                                      "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
-                                     "type='button' title='Clear all history'>Clear all</button></div>" +
+                                     "type='button' title='Clear all history' disabled>Clear all</button></div>" +
                                      "</div>";
 
 /* jshint varstmt: false */
