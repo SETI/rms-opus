@@ -1483,13 +1483,14 @@ the workaround for ctrl + F search scroll to work with perfect scrollbar */
 
 /* Hide the Chrome default scrollbar, this is part of steps to make ctrl
 + F search scroll to work with perfect scrollbar in Chrome. */
-.op-detail-metadata::-webkit-scrollbar {
+.op-detail-metadata::-webkit-scrollbar,
+#op-help-panel .card-body::-webkit-scrollbar {
     display: none;
 }
 
 /* Hide the FF default scrollbar in detail page, this is part of steps to
 make ctrl + F search scroll to work with perfect scrollbar in FF. */
-.op-detail-metadata {
+.op-detail-metadata, #op-help-panel .card-body {
     scrollbar-width: none;
 }
 

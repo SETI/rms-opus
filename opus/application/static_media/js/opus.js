@@ -765,6 +765,12 @@ var opus = {
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
+
+        // Enable default scrollbar for Ctrl + F search scroll to work in Chrome and Firefox.
+        if (opus.currentBrowser === "chrome" || opus.currentBrowser === "firefox") {
+            $("#op-help-panel .card-body").addClass("op-enable-default-scrolling");
+        }
+
         // We only need one perfectScrollbar because the pane is reused
         if (!opus.helpScrollbar) {
             opus.helpScrollbar = new PerfectScrollbar("#op-help-panel .card-body", {
