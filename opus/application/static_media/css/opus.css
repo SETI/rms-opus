@@ -973,8 +973,8 @@ panel */
     cursor: pointer;
 }
 
-/* Styling for disabled a tag button */
-.is-disabled {
+/* Styling for disable a tag button */
+.op-a-tag-btn-disabled {
     color: grey;
     opacity: 0.5;
     pointer-events: none;

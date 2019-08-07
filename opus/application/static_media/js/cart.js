@@ -9,8 +9,8 @@
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
 const cartLeftPaneThreshold = 1160;
-// Max height for the window of download links history (in px) before we enable PS.
-const downloadLinksMaxHeight = 200;
+// Max height for the contents of download links history (.popover-body) before we enable PS.
+const downloadLinksPBMaxHeight = 200;
 // Html string for customized popover window. The reason we don't put the whole html
 // element in DOM first and retrieve by .html() later is because we need to attach
 // ps to .popover-body, and by adding the whole popover element in html first, there
@@ -341,13 +341,13 @@ var o_cart = {
                     $(".app-footer .op-download-links-btn").popover("show");
 
                     // Set the max height for the window of download links history
-                    $(".popover-body").css("max-height", downloadLinksMaxHeight);
+                    $(".popover-body").css("max-height", downloadLinksPBMaxHeight);
                     $(".op-download-links-contents .op-empty-history").remove();
                     $(".op-download-links-contents .spinner").hide();
                     let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
                     $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
                     $(".op-clear-history-btn").prop("disabled", false);
-                    $(".op-download-links-btn").removeClass("is-disabled");
+                    $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
                     o_cart.enablePSinDownloadLinksWindow();
                 }
             },
@@ -369,7 +369,7 @@ var o_cart = {
          * Initialize and update PS in download links window when the height
          * of the popover window reaches to the max.
          */
-        if ($(".popover-body").outerHeight() >= downloadLinksMaxHeight) {
+        if ($(".popover-body").outerHeight() >= downloadLinksPBMaxHeight) {
             if (!o_cart.downloadLinksScrollbar) {
                 o_cart.downloadLinksScrollbar = new PerfectScrollbar(".popover-body", {
                     suppressScrollX: true,
@@ -389,7 +389,7 @@ var o_cart = {
         $(".op-download-links-contents").append(emptyHistory);
         $(".app-footer .op-download-links-btn").popover("update");
         $(".op-clear-history-btn").prop("disabled", true);
-        $(".op-download-links-btn").addClass("is-disabled");
+        $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
     },
 
     adjustProductInfoHeight: function() {
