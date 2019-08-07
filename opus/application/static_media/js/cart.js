@@ -10,7 +10,7 @@
 // is equal to or less than the threshold point.
 const cartLeftPaneThreshold = 1160;
 // Max height for the window of download links history (in px) before we enable PS.
-const downloadLinksMaxHeight = 250;
+const downloadLinksMaxHeight = 200;
 // Html string for customized popover window. The reason we don't put the whole html
 // element in DOM first and retrieve by .html() later is because we need to attach
 // ps to .popover-body, and by adding the whole popover element in html first, there
@@ -27,6 +27,12 @@ const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
                                      "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
                                      "type='button' title='Clear all history' disabled>Clear all</button></div>" +
                                      "</div>";
+const downloadLinksPopoverTitle = "Download Archive Links" +
+                                  "<button " +
+                                  "class='close-download-links-history btn-sm py-0 pr-0 pl-2 border-0' " +
+                                  "type='button'>&nbsp;" +
+                                  "<i class='fas fa-times'></i>" +
+                                  "</button>";
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -167,9 +173,7 @@ var o_cart = {
         $(".app-footer .op-download-links-btn").popover({
             html: true,
             container: "body",
-            title: "Zipped File Links\
-                    <button class='close-download-links-history btn-sm p-0 border-0' type='button'>\
-                    <i class='fas fa-times'></i></button>",
+            title: downloadLinksPopoverTitle,
             template: downloadLinksPopoverTemplate,
             // Make sure popover are only triggered by manual event, and we will set the
             // event handler manually on buttons to open/close popover. The reason we do
@@ -343,6 +347,7 @@ var o_cart = {
                     let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
                     $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
                     $(".op-clear-history-btn").prop("disabled", false);
+                    $(".op-download-links-btn").removeClass("is-disabled");
                     o_cart.enablePSinDownloadLinksWindow();
                 }
             },
@@ -384,6 +389,7 @@ var o_cart = {
         $(".op-download-links-contents").append(emptyHistory);
         $(".app-footer .op-download-links-btn").popover("update");
         $(".op-clear-history-btn").prop("disabled", true);
+        $(".op-download-links-btn").addClass("is-disabled");
     },
 
     adjustProductInfoHeight: function() {

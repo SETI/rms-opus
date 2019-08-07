@@ -969,9 +969,15 @@ panel */
 
 /* Styling for download history button at the lower right of footer */
 .op-download-links-btn {
-    display: none;
     float: right;
     cursor: pointer;
+}
+
+/* Styling for disabled a tag button */
+.is-disabled {
+    color: grey;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .op-download-links-btn:hover {
@@ -1016,6 +1022,17 @@ footer for popover window */
 /* Requirement for ps in popover window */
 .popover-body {
     position: relative;
+}
+
+/* Make boostrap .modal-backdrop cover the popover window */
+.popover {
+    z-index: 1039;
+}
+
+/* Make sure browser size modal window has higher z-index than other
+windows, this will make sure it's not covered by any other windows. */
+#op-browser-size-msg {
+    z-index: 9999;
 }
 
 div.gallery {
