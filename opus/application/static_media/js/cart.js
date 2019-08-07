@@ -11,6 +11,22 @@
 const cartLeftPaneThreshold = 1160;
 // Max height for the window of download links history (in px) before we enable PS.
 const downloadLinksMaxHeight = 300;
+// Html string for customized popover window. The reason we don't put the whole html
+// element in DOM first and retrieve by .html() later is because we need to attach
+// ps to .popover-body, and by adding the whole popover element in html first, there
+// will be two .popover-body elements (one from the inserted DOM at the beginning and
+// one from actual popover window). Jquery selector will only select the first
+// .popover-body and failed to attached the ps to the actual popover window. (Note: there
+// is no proper way to distinguish between them because the 2nd one is the duplicate of
+// the 1st one).
+const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
+                                     "<div class='arrow'></div>" +
+                                     "<h3 class='popover-header'></h3>" +
+                                     "<div class='popover-body'></div>" +
+                                     "<div class='popover-footer'>" +
+                                     "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
+                                     "type='button' title='Clear all history'>Clear all</button></div>" +
+                                     "</div>";
 
 /* jshint varstmt: false */
 var o_cart = {
@@ -154,6 +170,7 @@ var o_cart = {
             title: "Zipped File Links\
                     <button class='close-download-links-history btn-sm p-0 border-0' type='button'>\
                     <i class='fas fa-times'></i></button>",
+            template: downloadLinksPopoverTemplate,
             // Make sure popover are only triggered by manual event, and we will set the
             // event handler manually on buttons to open/close popover. The reason we do
             // this is to make sure when popover is manully open by show method, it will
@@ -174,6 +191,10 @@ var o_cart = {
         // Close popover when clicking "x" button on the popover title
         $(document).on("click", ".close-download-links-history", function() {
             $(".app-footer .op-download-links-btn").popover("hide");
+        });
+
+        $(document).on("click", ".op-clear-history-btn", function() {
+            o_cart.clearDownloadLinksHistory();
         });
     },
 
@@ -317,11 +338,11 @@ var o_cart = {
 
                     // Set the max height for the window of download links history
                     $(".popover-body").css("max-height", downloadLinksMaxHeight);
-
+                    $(".op-download-links-contents .op-empty-history").remove();
                     $(".op-download-links-contents .spinner").hide();
                     let latestLink = $(`<li><a href = "${data.filename}" download>${data.filename}</a></li>`);
                     $(".op-download-links-contents ul.op-zipped-files li:nth-child(1)").after(latestLink);
-
+                    $(".op-clear-history-btn").prop("disabled", false);
                     o_cart.enablePSinDownloadLinksWindow();
                 }
             },
@@ -351,6 +372,18 @@ var o_cart = {
             }
             o_cart.downloadLinksScrollbar.update();
         }
+    },
+
+    clearDownloadLinksHistory: function() {
+        /**
+         * Clear the download links history in the popover window
+         */
+        $(".app-footer .op-download-links-btn").popover("show");
+        $(".op-zipped-files li:not(:first-child)").remove();
+        let emptyHistory = "<h5 class='op-empty-history'>No download history</h5>";
+        $(".op-download-links-contents").append(emptyHistory);
+        $(".app-footer .op-download-links-btn").popover("update");
+        $(".op-clear-history-btn").prop("disabled", true);
     },
 
     adjustProductInfoHeight: function() {

@@ -996,6 +996,19 @@ panel */
     outline: none;
 }
 
+/* Copy and modify based on bootstrap .modal-footer to create a pretty
+footer for popover window */
+.popover-footer {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    padding: 0.2rem;
+    border-top: 1px solid #e4e7ea;
+}
+
 .op-zipped-files {
     padding-left: 2em;
 }
