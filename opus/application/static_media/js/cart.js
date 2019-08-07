@@ -267,7 +267,7 @@ var o_cart = {
             return checked === productList.is(":checked");
         }
         for (const productOption of productList) {
-            if ($(productOption).prop("checked") === !checked) {
+            if ($(productOption).prop("checked") !== checked) {
                 return false;
             }
         }
