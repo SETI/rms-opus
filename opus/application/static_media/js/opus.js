@@ -652,7 +652,9 @@ var opus = {
             opus.changeTab(tab);
         });
 
-        $(".op-help-item").on("click", function() {
+        $(".op-help-item").on("click", function(e) {
+            // prevent url hash from being changed to # (in a tag href)
+            e.preventDefault();
             opus.displayHelpPane($(this).data("action"));
         });
 
