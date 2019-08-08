@@ -66,10 +66,14 @@ var o_cart = {
         });
 
         $("#cart").on("click", ".downloadData", function(e) {
+            // prevent url hash from being changed to # (in a tag href)
+            e.preventDefault();
             o_cart.downloadZip("create_zip_data_file", "Internal error creating data zip file");
         });
 
         $("#cart").on("click", ".downloadURL", function(e) {
+            // prevent url hash from being changed to # (in a tag href)
+            e.preventDefault();
             o_cart.downloadZip("create_zip_url_file", "Internal error creating URL zip file");
         });
 
