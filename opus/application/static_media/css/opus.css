@@ -893,16 +893,9 @@ a:-webkit-any-link, a::any-link {
     padding-right: 1em;
 }
 
-/* Expand the width for table in cart download options panel */
-#cart .op-download-options-table, #cart .op-download-options-table th,
-#cart .op-download-options-table td {
-    border-left: 0px;
-    border-right: 0px;
-}
-
 /* Make both buttons the same width */
 #cart .op-cart-select-btn, #cart .op-cart-deselect-btn {
-    width: 8%;
+    width: 4%;
     outline: none;
 }
 
@@ -915,12 +908,26 @@ panel */
 
 /* Remove default scrollbar in #op-download-options-container */
 #cart #op-download-options-container {
-    overflow-y: hidden;
+    overflow: hidden;
+}
+
+/* Remove pointer when button is disabled in download options */
+#cart #op-download-options-container button:disabled {
+    pointer-events: none;
+}
+
+/* Make download options product types table take wider space */
+#cart .op-download-options-product-types {
+    position: absolute;
 }
 
 /* Required styling for perfect scrollbar in download options panel */
-#cart .op-download-options-product-types {
-    position: absolute;
+#cart .op-product-type-table-body {
+    position: relative;
+}
+
+#cart .op-product-type-table-body .ps__rail-y {
+    background-color: transparent !important;
 }
 
 #cart .col {
@@ -932,11 +939,16 @@ panel */
     position: relative;
 }
 
+/* Make Total Size and Total Files stay in one line in download options */
+.op-total-size, .op-total-download {
+    display: inline;
+}
+
 .hide_ps__rail-y {
     display: none !important;
 }
 
-#cart-sidebar .zippedFiles li {
+#cart-sidebar .op-zipped-files li {
     margin: 0;
     padding: 0;
     list-style-type: none;
@@ -953,6 +965,74 @@ panel */
 
 #op-download-links {
     display: none;
+}
+
+/* Styling for download history button at the lower right of footer */
+.op-download-links-btn {
+    float: right;
+    cursor: pointer;
+}
+
+/* Styling for disable a tag button */
+.op-a-tag-btn-disabled {
+    color: grey;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.op-download-links-btn:hover {
+    text-decoration: none;
+}
+
+.op-download-links-btn:focus {
+    outline: none;
+}
+
+/* Make the "x" button in download links popover stays at the right. */
+.close-download-links-history {
+    float: right;
+    /* We didn't use bg-light class from bootstrap because bootstrap popover
+    header background has a different color (not belong to any bootstrap color
+    class) from bg-light. */
+    background-color: #F7F7F7;
+}
+
+/* Remove the outline for "x" icon in download history window when it's clicked. */
+.close-download-links-history:focus {
+    outline: none;
+}
+
+/* Copy and modify based on bootstrap .modal-footer to create a pretty
+footer for popover window */
+.popover-footer {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    padding: 0.2rem;
+    border-top: 1px solid #e4e7ea;
+}
+
+.op-zipped-files {
+    padding-left: 2em;
+}
+
+/* Requirement for ps in popover window */
+.popover-body {
+    position: relative;
+}
+
+/* Make boostrap .modal-backdrop cover the popover window */
+.popover {
+    z-index: 1039;
+}
+
+/* Make sure browser size modal window has higher z-index than other
+windows, this will make sure it's not covered by any other windows. */
+#op-browser-size-msg {
+    z-index: 9999;
 }
 
 div.gallery {
@@ -1092,6 +1172,11 @@ nav.panel-heading {
     text-decoration: none;
 }
 
+/* Make sure ps container is NOT a flexbox (display: flex) */
+#cart #op-download-options-container {
+    display: block;
+}
+
 /* Cart view navbar responsiveness */
 @media (max-width: 1100px) {
     /* Remove the top/bottom extra spaces in options of 2nd navbar when
@@ -1145,7 +1230,7 @@ nav.panel-heading {
     }
 }
 
-@media (max-width: 940px) {
+@media (max-width: 1160px) {
     /* Hide download options pane when screen is narrow */
     .cart_details {
         display: none;
@@ -1178,7 +1263,7 @@ nav.panel-heading {
 
 /* Remove the nav-link for opening up download options panel when screen
 is wide enough */
-@media (min-width: 941px) {
+@media (min-width: 1161px) {
     .op-cart-toggle-download-panel {
         display: none !important;
 
@@ -1192,6 +1277,9 @@ is wide enough */
     left: 0;
     z-index: 9999;
     top: 2em;
+    /* Fix the width of the panel so that it will increase when browser
+    is wider*/
+    width: 36em;
 }
 
 /* Make sure "x" and download options title in header of download options
@@ -1347,12 +1435,12 @@ panel are properly separated */
     padding-left: 3%;
 }
 
-.widget-main .range-qtype-helper {
+.widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
 }
 
-#range_query_widget_helper_html {
+#op-qtype-tooltip {
     display: none;
     width: 500px;
 }
@@ -1649,7 +1737,11 @@ footer {
     top: 2em;
 }
 
-.op-about-table table, .op-about-table th, .op-about-table td {
+.op-open-help {
+    float: right;
+}
+
+.op-about-table table, .op-about-table th, .op-about-table td  {
     border: 1px solid black;
 }
 

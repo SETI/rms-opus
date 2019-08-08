@@ -41,6 +41,9 @@ var o_browse = {
     galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
     gallerySliderStep: 10,
 
+    // The viewable fraction of an item's height such that it will be treated as present on the screen
+    galleryImageViewableFraction: 0.8,
+
     // unique to o_browse
     imageSize: 100,     // default
 
@@ -605,9 +608,9 @@ var o_browse = {
                 // if the binoculars have scrolled down off the screen, then scroll up just until the they are visible in bottom row
                 if (obsNum > startObs) {    // the binoculars have scrolled off bottom
                     if (o_browse.isGalleryView()) {
-                        obsNum = Math.max(obsNum - (galleryBoundingRect.x * (galleryBoundingRect.y - 1)), 1);
+                        obsNum = Math.max(obsNum - (galleryBoundingRect.x * (galleryBoundingRect.yPartial - 1)), 1);
                     } else {
-                        obsNum = Math.max(obsNum - galleryBoundingRect.tr + 1, 1);
+                        obsNum = Math.max(obsNum - galleryBoundingRect.trFloor + 1, 1);
                     }
                 }
                 o_browse.onSliderHandleStop(tab, obsNum);
@@ -717,7 +720,7 @@ var o_browse = {
     },
 
     // find the first displayed observation index & id in the upper left corner
-    updateSliderHandle: function(view, browserResized=false, isDOMChanged=false) {
+    updateSliderHandle: function(view, browserResized=false, isDOMChanged=false, isScrolling=false) {
         // Only update the slider & obSnum in infiniteScroll instances when the user
         // is at browse tab
         let tab = opus.getViewTab(view);
@@ -739,7 +742,7 @@ var o_browse = {
             // 3. Update the slider value and data in infiniteScroll instances and URL using
             //    the data obtained from above 2 steps.
             let obsNumObj = o_browse.realignDOMAndGetStartObsAndScrollbarObsNum(selector, browserResized,
-                                                                                isDOMChanged);
+                                                                                isDOMChanged, isScrolling);
             let obsNum = obsNumObj.startObs;
             let currentScrollObsNum = obsNumObj.scrollbarObsNum;
             let scrollbarOffset = o_browse.getScrollbarOffset(obsNum, currentScrollObsNum);
@@ -765,7 +768,7 @@ var o_browse = {
         }
     },
 
-    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged) {
+    realignDOMAndGetStartObsAndScrollbarObsNum: function(selector, browserResized, isDOMChanged, isScrolling) {
         /**
          * Get the current startObs (obsNum, for slider number) in both
          * gallery (top-left item) and table (top item) views. Also get
@@ -845,7 +848,7 @@ var o_browse = {
         if (lastObs === viewNamespace.totalObsCount) {
             if (o_browse.isGalleryView()) {
                 if (viewNamespace.galleryScrollbar.reach.y === "end" &&
-                    obsNum >= maxSliderVal - galleryBoundingRect.x) {
+                    obsNum >= maxSliderVal - galleryBoundingRect.x && isScrolling) {
                     obsNum = maxSliderVal;
                     if (previousScrollObsNum > maxSliderVal) {
                         currentScrollObsNum = previousScrollObsNum;
@@ -855,7 +858,7 @@ var o_browse = {
                 }
             } else {
                 if (viewNamespace.tableScrollbar.reach.y === "end" &&
-                    obsNum >= maxSliderVal - galleryBoundingRect.tr) {
+                    obsNum >= maxSliderVal - galleryBoundingRect.trFloor) {
                     obsNum = maxSliderVal;
                 }
             }
@@ -875,7 +878,7 @@ var o_browse = {
             // close to image size which will then set the scrollbar position with one row offset from
             // updateSliderHandle in "resize" event later. So we reset offset to 0 if the value stored in
             // infiniteScroll instance will cause one row difference in setScrollbarPosition.
-            let compareFactor = o_browse.imageSize * opus.sliderViewableFraction;
+            let compareFactor = o_browse.imageSize * o_browse.galleryImageViewableFraction;
             offset = (o_browse.isGalleryView() ? (Math.abs(offset) > compareFactor ? 0 : offset) : offset);
 
             // Set offset for scrollbar position so that it will have smooth scrolling in both
@@ -915,10 +918,12 @@ var o_browse = {
                               $(`${tab} tbody tr`).eq(1).outerHeight());
 
         let obsNumDiff = (o_browse.isGalleryView() ?
-                          Math.floor((topBoxBoundary - firstCachedObsTop + o_browse.imageSize *
-                          opus.sliderViewableFraction)/o_browse.imageSize) * galleryBoundingRect.x :
-                          Math.floor((topBoxBoundary - firstCachedObsTop + tableRowHeight *
-                          opus.sliderViewableFraction)/tableRowHeight));
+                          o_utils.floor((topBoxBoundary - firstCachedObsTop +
+                                         o_browse.imageSize * o_browse.galleryImageViewableFraction) /
+                                        o_browse.imageSize) * galleryBoundingRect.x :
+                          o_utils.floor((topBoxBoundary - firstCachedObsTop +
+                                         tableRowHeight * o_browse.galleryImageViewableFraction) /
+                                        tableRowHeight));
 
         let obsNum = Math.max((obsNumDiff + alignedCachedFirstObs), 1);
 
@@ -978,8 +983,9 @@ var o_browse = {
 
         // Add one more row to max slider value. This will make sure the last row is fully displayed
         // when slider is moved to the end.
-        let maxSliderVal = (o_browse.isGalleryView() ? (firstObsInLastRow - galleryBoundingRect.x *
-                            (galleryBoundingRect.y - 2)) : (viewNamespace.totalObsCount - galleryBoundingRect.tr + 1));
+        let maxSliderVal = (o_browse.isGalleryView() ?
+                            firstObsInLastRow - galleryBoundingRect.x * (galleryBoundingRect.yFloor-1) :
+                            viewNamespace.totalObsCount - galleryBoundingRect.trFloor + 1);
         // Max slider value can't go negative
         maxSliderVal = Math.max(maxSliderVal, 1);
         return maxSliderVal;
@@ -1072,7 +1078,7 @@ var o_browse = {
         if ($(`${tab} ${contentsView}`).scrollTop() < infiniteScrollUpThreshold) {
             $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
         }
-        o_browse.updateSliderHandle(view);
+        o_browse.updateSliderHandle(view, false, false, true);
         return false;
     },
 
@@ -1642,7 +1648,8 @@ var o_browse = {
         //   it for the case when cached data is removed so that scrollbar position is always correct (and never reaches to the
         //   end until it reaches to the end of the data)
         o_browse.setScrollbarPosition(infiniteScrollDataObj.sliderObsNum,
-            infiniteScrollDataObj.scrollbarObsNum, view, infiniteScrollDataObj.scrollbarOffset);
+                                      infiniteScrollDataObj.scrollbarObsNum, view,
+                                      infiniteScrollDataObj.scrollbarOffset);
 
         $(".op-page-loading-status > .loader").hide();
         o_browse.updateSliderHandle(view);
@@ -1753,7 +1760,7 @@ var o_browse = {
     getLimit: function(view) {
         // default the function to use to be the one in o_browse because there is not one available in o_search
         let galleryBoundingRect = opus.getViewNamespace(view).galleryBoundingRect;
-        return (galleryBoundingRect.x * galleryBoundingRect.y);
+        return (galleryBoundingRect.x * galleryBoundingRect.yCeil);
     },
 
     getDataURL: function(view, startObs, customizedLimitNum=undefined) {
@@ -2130,13 +2137,14 @@ var o_browse = {
     countTableRows: function(view) {
         let tab = opus.getViewTab(view);
         let height = o_browse.calculateGalleryHeight(view);
-        let trCount = 1;
+        let trCountFloor = 1;
 
         if ($(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+            trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
+                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
         }
-        opus.getViewNamespace(view).galleryBoundingRect.tr = trCount;
-        return trCount;
+        opus.getViewNamespace(view).galleryBoundingRect.trFloor = trCountFloor;
+        return trCountFloor;
     },
 
     countGalleryImages: function(view) {
@@ -2145,21 +2153,29 @@ var o_browse = {
         let width = o_browse.calculateGalleryWidth(view);
         let height = o_browse.calculateGalleryHeight(view);
 
-        let trCount = viewNamespace.galleryBoundingRect.tr;
+        let trCountFloor = viewNamespace.galleryBoundingRect.trFloor;
         if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            trCount = o_utils.floor((height-$("th").outerHeight())/$(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+            trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
+                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
         }
 
         let xCount = o_utils.floor(width/o_browse.imageSize);
-        let yCount = Math.round(height/o_browse.imageSize);
-        // let yCount = Math.ceil(height/o_browse.imageSize);
+        // This is the total number of rows that are at least partially visible
+        let yCountCeil = o_utils.ceil(height/o_browse.imageSize);
+        // This is the total number of rows that are completely visible
+        let yCountFloor = o_utils.floor(height/o_browse.imageSize);
+        // This is the total number of rows that are visible as much as we think is visually useful
+        let yCountPartial = o_utils.floor((height + o_browse.imageSize*(1-o_browse.galleryImageViewableFraction)) /
+                                          o_browse.imageSize);
 
         // update the number of cached observations based on screen size
         // for now, only bother when we update the browse tab...
         // rounding because the factor value can be a FP number.
-        viewNamespace.maxCachedObservations = Math.round(xCount * yCount * viewNamespace.cachedObservationFactor);
+        viewNamespace.maxCachedObservations = Math.round(xCount * yCountCeil * viewNamespace.cachedObservationFactor);
 
-        return {"x": xCount, "y": yCount, "tr": trCount};
+        return {"x": xCount,
+                "yCeil": yCountCeil, "yFloor": yCountFloor, "yPartial": yCountPartial,
+                "trFloor": trCountFloor};
     },
 
 

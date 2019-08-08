@@ -133,11 +133,11 @@
                             <p>Remove or edit one or more of the search criteria selected on the Search tab
                             or click on the Reset Search button to reset the search criteria to default.</p>
                        </div>
-                       <div class="row justify-content-start op-gallery-view mx-0">
+                       <div class="justify-content-start op-gallery-view mx-0">
                             <div class="mr-0 thumb gallery gallery-scroll">
                             </div>
                         </div>
-                        <div class="row op-data-table-view mx-0">
+                        <div class="op-data-table-view mx-0">
                             <div class="col-lg p-0">
                                 <table class="table table-hover table-bordered table-striped table-dark table-sm op-data-table mb-0">
                                     <thead></thead>
@@ -229,11 +229,11 @@
                                 at the top of the page, mouse over the thumbnail gallery images to reveal the tools,
                                 then click on the cart icon.  </p>
                             </div>
-                            <div class="row justify-content-start op-gallery-view mr-0 ml-1">
+                            <div class="justify-content-start op-gallery-view mr-0 ml-1">
                                 <div class="mr-0 thumb gallery gallery-scroll">
                                 </div>
                             </div>
-                            <div class="row op-data-table-view mx-0">
+                            <div class="op-data-table-view mx-0">
                                 <div class="col-lg p-0">
                                     <table class="table table-hover table-bordered table-striped table-dark table-sm op-no-select op-data-table mb-0">
                                         <thead></thead>
@@ -252,12 +252,12 @@
                         </div>
                     </div>
                 </div>
-                <div id="op-cart-download-panel" class="card w-75">
+                <div id="op-cart-download-panel" class="card">
                     <div class="card-header align-items-center h-auto pb-0 bg-secondary">
                         <h3 class="op-header-text"></h3>
                         <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
                      </div>
-                    <div class="card-body bg-white">
+                    <div class="card-body bg-white pr-0">
                         <div class="op-card-contents">
                             Loading... please wait.
                         </div>
@@ -432,6 +432,16 @@
             draggable=False
             close_by_keyboard="esc"
         %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-download-links-error-msg"
+            confirm_title="Download Error"
+            confirm_msg=""
+            target="op-download-links-error-msg"
+            yes_text="OK"
+            allow_close=True
+            draggable=False
+            close_by_keyboard="esc"
+        %}
 
         {% endblock %}
 
@@ -453,14 +463,21 @@
     <div class="op-overlay"></div>
 
     {% include "ui/footer.html" %}
-    <div id="range_query_widget_helper_html">
+    <div id="op-qtype-tooltip">
         <p><strong>Any</strong> = The image contains at least a portion of the region bounded by the given min and max.</p>
 
         <p><strong>All</strong> = The image contains the entire requested range from min to max.</p>
 
         <p><strong>Only</strong> = Everything within the image is in the requested range.</p>
     </div>
-
+    <!-- put download links in a popover -->
+    <div id="op-download-links">
+        <div class="op-download-links-contents">
+            <ul class="op-zipped-files">
+                <li class="spinner">&nbsp;</li>
+            </ul>
+        </div>
+    </div>
 
     <!-- basic scripts - always include right before /body tag, do not use jquery slim. -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
