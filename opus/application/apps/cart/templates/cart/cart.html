@@ -3,8 +3,6 @@
     <div id="cart_summary" class="well well-lg">
         <div class="op-download-options-header border-bottom border-light">
             <h1>Download Options</h1>
-            <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-            <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
             <div>
                 <p class="op-total-size mb-0 mr-3">Total Size (before zip):
                     <span class="spinner">&nbsp;</span>
@@ -26,7 +24,7 @@
             </div>
         </div>
         <div class="op-download-options-product-types w-100">
-            <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters pr-3">
+            <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters mr-3">
                 <div class="col-7">Product Type</div>
                 <div class="col text-right"># Obs</div>
                 <div class="col text-right"># Files</div>
@@ -37,8 +35,8 @@
                     <div class="row no-gutters bg-light">
                         <div class="col-12">
                             <h5 class="mt-2">
-                                <button class="op-cart-select-btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all"><i class="fas fa-check"></i></button>
-                                <button class="op-cart-deselect-btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all"><i class="fas fa-times"></i></button>
+                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
                                 {{ product_cat }}
                             </h5>
                         </div>

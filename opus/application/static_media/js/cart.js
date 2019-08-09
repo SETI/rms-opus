@@ -25,7 +25,7 @@ const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
                                      "<div class='popover-body'></div>" +
                                      "<div class='popover-footer'>" +
                                      "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
-                                     "type='button' title='Clear all history' disabled>Clear all</button></div>" +
+                                     "type='button' title='Clear all history' disabled>Clear All</button></div>" +
                                      "</div>";
 const downloadLinksPopoverTitle = "Download Archive Links" +
                                   "<button " +
@@ -78,7 +78,7 @@ var o_cart = {
      *
      **/
 
-     addCartBehaviors: function() {
+    addCartBehaviors: function() {
         // nav bar
         $("#cart").on("click", ".op-download-csv", function(e) {
             let colStr = opus.prefs.cols.join(',');
@@ -231,7 +231,7 @@ var o_cart = {
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
             $(checkboxesOptions).prop("checked", false);
         } else {
-            opus.logError(`Target button in download options left pane has the wrong class.`);
+            opus.logError("Target button in download options left pane has the wrong class.");
         }
         $(target).prop("disabled", true);
         $(target).siblings().prop("disabled", false);
@@ -261,7 +261,7 @@ var o_cart = {
          * return true if all options are selected (when checked is true)
          * or if all options are deselected (when checked is false). This
          * needs to be executed after updateCheckboxes (wait until all
-         * checkboxes properties are updated)
+         * checkboxes properties are updated).
          */
         if (productList.length === 1) {
             return checked === productList.is(":checked");
@@ -333,10 +333,10 @@ var o_cart = {
                     $("#op-download-links-error-msg").modal("show");
                 } else {
                     // To dynamically update and display contents of an open popover, we have to make sure html
-                    // in both (1) #op-download-links ( content when popover is initialized) and (2) .popover-body
+                    // in both (1) #op-download-links (content when popover is initialized) and (2) .popover-body
                     // (when popover is open) are synced up with updates. To achieve this, we have to call show
                     // method from popover to update content, and make sure the selector managing DOM are selecting
-                    // the same elements in both #op-download-links and .popover-body. (lenght === 2).
+                    // the same elements in both #op-download-links and .popover-body. (length === 2).
                     $(".op-download-links-btn").show();
                     $(".app-footer .op-download-links-btn").popover("show");
 

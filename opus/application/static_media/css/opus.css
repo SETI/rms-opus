@@ -368,11 +368,6 @@ ul.op-search-menu {
     text-align: center;
 }
 
-/* #cart .fa-times {
-    color: #eee;
-    opacity: 0.15;
-} */
-
 #op-confirm-modal {
     border-radius: 6px;
     border-width: 3px;
@@ -903,7 +898,8 @@ a:-webkit-any-link, a::any-link {
 panel */
 #cart .op-cart-select-btn:hover, #cart .op-cart-deselect-btn:hover,
 #cart .op-cart-select-btn:focus, #cart .op-cart-deselect-btn:focus {
-    background-color: #F0F3F5 !important;
+    background-color: transparent !important;
+    box-shadow: none;
 }
 
 /* Remove default scrollbar in #op-download-options-container */
