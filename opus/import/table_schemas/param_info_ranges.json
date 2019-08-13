@@ -1,0 +1,28 @@
+{
+    "obs_ring_geometry": {
+        "jupiter_rings": {
+            "halo": {
+                "inner_boundary": 89400,
+                "outer_boundary": 123000
+            },
+            "main_ring": {
+                "inner_boundary": 123000,
+                "outer_boundary": 128940
+            },
+            "amalthea_ring": {
+                "inner_boundary": 128940,
+                "outer_boundary": 181350
+            },
+            "thebe_ring": {
+                "inner_boundary": 128940,
+                "outer_boundary": 221900
+            },
+            "thebe_extension": {
+                "inner_boundary": 221900,
+                "outer_boundary": 280000
+            }
+        },
+        "units": ["km"],
+        "qtype": null
+    }
+}

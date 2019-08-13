@@ -4,6 +4,7 @@
 # Generate and maintain the param_info table.
 ################################################################################
 
+import json
 import os
 
 import impglobals
@@ -22,6 +23,19 @@ def create_import_param_info_table():
 
     # We use the permanent tables to determine what goes into param_info
     table_names = db.table_names('perm', prefix='obs_')
+
+    # read json file for ranges info
+    ranges_filename = os.path.join('table_schemas', 'param_info_ranges.json')
+    with open(ranges_filename, 'r') as fp:
+        try:
+            # read contents (str) and convert it to a json object (dict)
+            contents = fp.read()
+            ranges_json = json.loads(contents)
+        except json.decoder.JSONDecodeError:
+            impglobals.LOGGER.log('debug', f'Was reading ranges json file "{ranges_filename}"')
+            raise
+        except:
+            raise
 
     rows = []
     for table_name in table_names:
@@ -54,6 +68,13 @@ def create_import_param_info_table():
                            f'"{category_name}/{field_name}" has RANGE type '
                            +'without numerical format')
 
+            # if pi_ranges exist in .json, get the corresponding ranges info
+            # from dict and convert it to str before storing to database
+            ranges = column.get('pi_ranges', None)
+            if ranges:
+                ranges = ranges_json.get(ranges)
+                ranges = json.dumps(ranges)
+
             new_row = {
                 'category_name': category_name,
                 'dict_context': column.get('pi_dict_context', None),
@@ -74,7 +95,8 @@ def create_import_param_info_table():
                 'old_slug': column.get('pi_old_slug', None),
                 'sub_heading': column['pi_sub_heading'],
                 'tooltip': column['pi_tooltip'],
-                'units': column['pi_units']
+                'units': column['pi_units'],
+                'ranges': ranges
             }
             rows.append(new_row)
     db.insert_rows('import', 'param_info', rows)

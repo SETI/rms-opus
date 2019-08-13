@@ -99,6 +99,11 @@
         "field_notnull": true
     },
     {
+        "field_name": "ranges",
+        "field_type": "json",
+        "field_default": null
+    },
+    {
         "field_name": "timestamp",
         "field_type": "timestamp"
     }
