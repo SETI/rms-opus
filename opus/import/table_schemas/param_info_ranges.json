@@ -22,6 +22,85 @@
                 "outer_boundary": 280000
             }
         },
+        "saturn_rings": {
+            "d_ring": {
+                "inner_boundary": 66900,
+                "outer_boundary": 74658
+            },
+            "c_ring": {
+                "inner_boundary": 74658,
+                "outer_boundary": 91975
+            },
+            "titan_ringlet": {
+                "inner_boundary": 77871,
+                "outer_boundary": 77896
+            },
+            "maxwell_ringlet": {
+                "inner_boundary": 87491,
+                "outer_boundary": 87555
+            },
+            "1.470_rs_ringlet": {
+                "inner_boundary": 88716,
+                "outer_boundary": 88732
+            },
+            "1.495_rs_ringlet": {
+                "inner_boundary": 90171,
+                "outer_boundary": 90232
+            },
+            "b_ring": {
+                "inner_boundary": 91975,
+                "outer_boundary": 117507
+            },
+            "cassini_division": {
+                "inner_boundary": 117507,
+                "outer_boundary": 122340
+            },
+            "huygens_ringlet": {
+                "inner_boundary": 117825,
+                "outer_boundary": 118185
+            },
+            "a_ring": {
+                "inner_boundary": 122340,
+                "outer_boundary": 136780
+            },
+            "encke_gap": {
+                "inner_boundary": 133410,
+                "outer_boundary": 133740
+            },
+            "keeler_gap": {
+                "inner_boundary": 136487,
+                "outer_boundary": 136522
+            },
+            "f_ring": {
+                "inner_boundary": 139826,
+                "outer_boundary": 140612
+            },
+            "janus/Epimetheus_Ring": {
+                "inner_boundary": 149000,
+                "outer_boundary": 154000
+            },
+            "g_ring": {
+                "inner_boundary": 166000,
+                "outer_boundary": 173200
+            },
+            "e_ring": {
+                "inner_boundary": 180000,
+                "outer_boundary": 480000
+            },
+            "methone_ring": {
+                "inner_boundary": 194440
+            },
+            "anthe_ring": {
+                "inner_boundary": 197655
+            },
+            "pallene_ring": {
+                "inner_boundary": 212000
+            },
+            "phoebe_ring": {
+                "inner_boundary": 7722240,
+                "outer_boundary": 12488310
+            }
+        },
         "units": ["km"],
         "qtype": null
     }
