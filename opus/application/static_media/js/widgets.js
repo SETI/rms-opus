@@ -409,7 +409,13 @@ var o_widgets = {
                     let helpIcon = '<li class="op-range-qtype-helper">\
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
-                    $(`#widget__${slug} .widget-main ul`).append(helpIcon);
+
+                    if ($(`#widget__${slug} .widget-main ul .op-useful-ranges`).length !== 0) {
+                        $(helpIcon).insertBefore(`#widget__${slug} .widget-main ul .op-useful-ranges`);
+                    } else {
+                        $(`#widget__${slug} .widget-main ul`).append(helpIcon);
+                    }
+                    // $(`#widget__${slug} .widget-main ul`).append(helpIcon);
                 }
 
                 if (!hash[qtype]) {
