@@ -1939,3 +1939,15 @@ ul.ui-autocomplete a.ui-state-active {
     animation: hvr-ripple-in 1s infinite;
     -webkit-animation: hvr-ripple-in 1s infinite;
 }
+
+/* Styling for ranges info dropdown */
+.op-useful-ranges .dropdown-item:active {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Enable default scrollbar for ranges info dropdown */
+.op-useful-ranges .scrollable-menu {
+    max-height: 200px;
+    overflow-y: auto;
+}

@@ -47,8 +47,38 @@
                         {{ form|safe }}
                     {% if ranges %}
                         <li class="op-useful-ranges">
-                            <!-- <select class="form-control form-control-sm"> -->
-                            <select>
+                            <div class="dropdown">
+                                <button type="button" id="dropdownMenu" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Preprogrammed Ranges
+                                </button>
+                                <ul class="dropdown-menu scrollable-menu pl-0" aria-labelledby="dropdownMenu" role="menu">
+                                    {% for range_cat, range_subcat in ranges.items %}
+                                        <li class="mr-0 d-block">
+                                            <a class="dropdown-item bg-light" data-toggle="collapse" href="#{{range_cat}}" role="button" aria-expanded="false" aria-controls="{{range_cat}}">{{range_cat|prettify_str}}</a>
+                                            <ul class="collapse" id="{{range_cat}}">
+                                            {% for range_sub, range_info in range_subcat.items %}
+                                                <li class="mr-0 d-block">
+                                                    {{range_sub|prettify_str}}&nbsp;
+                                                    inner boundary:&nbsp;{{range_info.inner_boundary}}&nbsp;
+                                                    outer boundary:&nbsp;{{range_info.outer_boundary}}
+                                                </li>
+
+                                                <!-- {{range_sub|prettify_str}}&nbsp;
+                                                inner boundary:&nbsp;{{range_info.inner_boundary}}&nbsp;
+                                                outer boundary:&nbsp;{{range_info.outer_boundary}} -->
+
+                                            {% endfor %}
+                                            </ul>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+
+                            </div>
+                        </li>
+                    {% endif %}
+                    <!-- {% if ranges %}
+                        <li class="op-useful-ranges">
+                            <select class="form-control form-control-sm">
                                 <option value="None" disabled selected>Useful Ranges</option>
                                     {% for range_cat, range_subcat in ranges.items %}
                                         <optgroup label="{{range_cat|prettify_str}}">
@@ -62,22 +92,9 @@
                                     {% endfor %}
                             </select>
                         </li>
-                    {% endif %}
+                    {% endif %} -->
                 </ul>
-                <!-- {% if ranges %}
-                        <select class="op-useful-ranges form-control form-control-sm pl-2">
-                            <option value="None" disabled selected>Useful Ranges</option>
-                                {% for range_cat, range_subcat in ranges.items %}
-                                    <optgroup label="{{range_cat|prettify_str}}">
-                                        {% for range_sub, range_info in range_subcat.items %}
-                                            <option value="{{range_sub}}">
-                                                {{range_sub|prettify_str}}
-                                                {{range_info.outer_boundary}}
-                                            </option>
-                                        {% endfor %}
-                                {% endfor %}
-                        </select>
-                {% endif %} -->
+
             </div>
         </article>
     </div><!-- /widget-body -->

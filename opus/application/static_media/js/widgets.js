@@ -76,6 +76,19 @@ var o_widgets = {
                 }
             });
         });
+
+        // Avoid closing dropdown menu when clicking any dropdown item
+        $("#search").on("click", ".dropdown-menu", function(e) {
+            e.stopPropagation();
+        });
+
+        // Expand/collapse info when clicking a dropdown submenu
+        $("#search").on("click", ".dropdown-item", function(e) {
+            // prevent URL being messed up with href in <a>
+            e.preventDefault();
+            let collapsibleID = $(e.target).attr("href");
+            $(`${collapsibleID}`).collapse("toggle");
+        });
     },
 
 
