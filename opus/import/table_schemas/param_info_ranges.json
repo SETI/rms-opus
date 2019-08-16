@@ -1,107 +1,193 @@
 {
-    "obs_ring_geometry": {
-        "jupiter_rings": {
-            "halo": {
-                "inner_boundary": 89400,
-                "outer_boundary": 123000
-            },
-            "main_ring": {
-                "inner_boundary": 123000,
-                "outer_boundary": 128940
-            },
-            "amalthea_ring": {
-                "inner_boundary": 128940,
-                "outer_boundary": 181350
-            },
-            "thebe_ring": {
-                "inner_boundary": 128940,
-                "outer_boundary": 221900
-            },
-            "thebe_extension": {
-                "inner_boundary": 221900,
-                "outer_boundary": 280000
-            }
+    "obs_ring_geometry": [
+        {
+            "cat_name": "jupiter rings",
+            "heading1": "min",
+            "heading2": "max",
+            "ranges": [
+                {
+                    "name": "halo",
+                    "field1": "89400",
+                    "field2": "123000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "main ring",
+                    "field1": "123000",
+                    "field2": "128940",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "amalthea ring",
+                    "field1": "128940",
+                    "field2": "181350",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "thebe ring",
+                    "field1": "128940",
+                    "field2": "181350",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "thebe extension",
+                    "field1": "221900",
+                    "field2": "280000",
+                    "unit": "km",
+                    "qtype": null
+                }
+            ]
         },
-        "saturn_rings": {
-            "d_ring": {
-                "inner_boundary": 66900,
-                "outer_boundary": 74658
-            },
-            "c_ring": {
-                "inner_boundary": 74658,
-                "outer_boundary": 91975
-            },
-            "titan_ringlet": {
-                "inner_boundary": 77871,
-                "outer_boundary": 77896
-            },
-            "maxwell_ringlet": {
-                "inner_boundary": 87491,
-                "outer_boundary": 87555
-            },
-            "1.470_rs_ringlet": {
-                "inner_boundary": 88716,
-                "outer_boundary": 88732
-            },
-            "1.495_rs_ringlet": {
-                "inner_boundary": 90171,
-                "outer_boundary": 90232
-            },
-            "b_ring": {
-                "inner_boundary": 91975,
-                "outer_boundary": 117507
-            },
-            "cassini_division": {
-                "inner_boundary": 117507,
-                "outer_boundary": 122340
-            },
-            "huygens_ringlet": {
-                "inner_boundary": 117825,
-                "outer_boundary": 118185
-            },
-            "a_ring": {
-                "inner_boundary": 122340,
-                "outer_boundary": 136780
-            },
-            "encke_gap": {
-                "inner_boundary": 133410,
-                "outer_boundary": 133740
-            },
-            "keeler_gap": {
-                "inner_boundary": 136487,
-                "outer_boundary": 136522
-            },
-            "f_ring": {
-                "inner_boundary": 139826,
-                "outer_boundary": 140612
-            },
-            "janus/Epimetheus_Ring": {
-                "inner_boundary": 149000,
-                "outer_boundary": 154000
-            },
-            "g_ring": {
-                "inner_boundary": 166000,
-                "outer_boundary": 173200
-            },
-            "e_ring": {
-                "inner_boundary": 180000,
-                "outer_boundary": 480000
-            },
-            "methone_ring": {
-                "inner_boundary": 194440
-            },
-            "anthe_ring": {
-                "inner_boundary": 197655
-            },
-            "pallene_ring": {
-                "inner_boundary": 212000
-            },
-            "phoebe_ring": {
-                "inner_boundary": 7722240,
-                "outer_boundary": 12488310
-            }
-        },
-        "units": ["km"],
-        "qtype": null
-    }
+        {
+            "cat_name": "saturn rings",
+            "heading1": "min",
+            "heading2": "max",
+            "ranges": [
+                {
+                    "name": "d ring",
+                    "field1": "66900",
+                    "field2": "74658",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "c ring",
+                    "field1": "74658",
+                    "field2": "91975",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "titan ringlet",
+                    "field1": "77871",
+                    "field2": "77896",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "maxwell ringlet",
+                    "field1": "87491",
+                    "field2": "87555",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "1.470 rs ringlet",
+                    "field1": "88716",
+                    "field2": "88732",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "1.495 rs ringlet",
+                    "field1": "90171",
+                    "field2": "90232",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "b ring",
+                    "field1": "91975",
+                    "field2": "117507",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "cassini divisio",
+                    "field1": "117507",
+                    "field2": "122340",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "huygens ringlet",
+                    "field1": "117825",
+                    "field2": "118185",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "a ring",
+                    "field1": "122340",
+                    "field2": "136780",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "encke gap",
+                    "field1": "133410",
+                    "field2": "133740",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "keeler gap",
+                    "field1": "136487",
+                    "field2": "136522",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "f ring",
+                    "field1": "139826",
+                    "field2": "140612",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "janus/Epimetheus ring",
+                    "field1": "149000",
+                    "field2": "154000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "g ring",
+                    "field1": "166000",
+                    "field2": "173200",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "e ring",
+                    "field1": "180000",
+                    "field2": "480000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "methone ring",
+                    "field1": "194440",
+                    "field2": "",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "anthe ring",
+                    "field1": "197655",
+                    "field2": "",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "pallene ring",
+                    "field1": "212000",
+                    "field2": "",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "phoebe ring",
+                    "field1": "7722240",
+                    "field2": "12488310",
+                    "unit": "km",
+                    "qtype": null
+                },
+            ]
+        }
+    ]
 }
