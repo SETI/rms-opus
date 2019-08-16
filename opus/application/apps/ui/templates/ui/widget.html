@@ -5,6 +5,7 @@
     in getWidget function in widgets.js
 {% endcomment %}
 {% load prettify_str %}
+{% load humanize %}
 
 <div class="card">
     <header class="card-header">
@@ -55,18 +56,37 @@
                                     {% for range_cat, range_subcat in ranges.items %}
                                         <li class="mr-0 d-block">
                                             <a class="dropdown-item bg-light" data-toggle="collapse" href="#{{range_cat}}" role="button" aria-expanded="false" aria-controls="{{range_cat}}">{{range_cat|prettify_str}}</a>
-                                            <ul class="collapse" id="{{range_cat}}">
+                                            <ul class="collapse pl-0 pr-3" id="{{range_cat}}">
                                             {% for range_sub, range_info in range_subcat.items %}
                                                 <li class="mr-0 d-block">
-                                                    {{range_sub|prettify_str}}&nbsp;
+                                                    <div class="container">
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                {{range_sub|prettify_str}}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.inner_boundary %}
+                                                                    inner boundary:&nbsp;{{range_info.inner_boundary|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.outer_boundary %}
+                                                                    outer boundary:&nbsp;{{range_info.outer_boundary|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- {{range_sub|prettify_str}}&nbsp;
                                                     inner boundary:&nbsp;{{range_info.inner_boundary}}&nbsp;
-                                                    outer boundary:&nbsp;{{range_info.outer_boundary}}
+                                                    outer boundary:&nbsp;{{range_info.outer_boundary}} -->
+                                                    <!-- {{range_sub|prettify_str}}
+                                                    {% if range_info.inner_boundary %}
+                                                        inner boundary:&nbsp;{{range_info.inner_boundary}}
+                                                    {% endif %}
+                                                    {% if range_info.outer_boundary %}
+                                                        outer boundary:&nbsp;{{range_info.outer_boundary}}
+                                                    {% endif %} -->
                                                 </li>
-
-                                                <!-- {{range_sub|prettify_str}}&nbsp;
-                                                inner boundary:&nbsp;{{range_info.inner_boundary}}&nbsp;
-                                                outer boundary:&nbsp;{{range_info.outer_boundary}} -->
-
                                             {% endfor %}
                                             </ul>
                                         </li>
@@ -76,23 +96,6 @@
                             </div>
                         </li>
                     {% endif %}
-                    <!-- {% if ranges %}
-                        <li class="op-useful-ranges">
-                            <select class="form-control form-control-sm">
-                                <option value="None" disabled selected>Useful Ranges</option>
-                                    {% for range_cat, range_subcat in ranges.items %}
-                                        <optgroup label="{{range_cat|prettify_str}}">
-                                            {% for range_sub, range_info in range_subcat.items %}
-                                                <option value="{{range_sub}}">
-                                                    {{range_sub|prettify_str}}&nbsp;
-                                                    inner boundary:&nbsp;{{range_info.inner_boundary}}&nbsp;
-                                                    outer boundary:&nbsp;{{range_info.outer_boundary}}
-                                                </option>
-                                            {% endfor %}
-                                    {% endfor %}
-                            </select>
-                        </li>
-                    {% endif %} -->
                 </ul>
 
             </div>
