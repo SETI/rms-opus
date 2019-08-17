@@ -1951,10 +1951,15 @@ ul.ui-autocomplete a.ui-state-active {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
+    /* width: -webkit-fill-available; */
 }
 
 /* Add customized styling for dropdown list items */
 .op-useful-ranges-data-item:hover div  {
     background-color: #d1dbe1;
     cursor: pointer;
+}
+
+.op-useful-ranges-data-item div {
+    display: inline-block;
 }

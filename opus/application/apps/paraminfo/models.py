@@ -122,10 +122,7 @@ class ParamInfo(models.Model):
         """
         Get the ranges info except units & qtype
         """
-        data_dict = {}
+        ranges = {}
         if self.ranges:
             ranges = json.loads(self.ranges)
-            for key in ranges:
-                if key != 'units' and key != 'qtype':
-                    data_dict[key] = ranges[key]
-        return data_dict
+        return ranges
