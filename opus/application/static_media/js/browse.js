@@ -2321,8 +2321,8 @@ var o_browse = {
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-hand-point-left fa-2x"></i></a>`;
-        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-hand-point-right fa-2x"></i></a>`;
+        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
+        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page

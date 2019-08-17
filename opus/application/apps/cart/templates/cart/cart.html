@@ -1,41 +1,68 @@
-<div id="cart-sidebar">
+{% load humanize %}
+<div id="cart-sidebar" class="w-100">
     <div id="cart_summary" class="well well-lg">
-        <div id="op-download-links">
-            <h1>Zipped File Links</h1>
-            <ul class="zippedFiles"></ul>
-            <span class="spinner">&nbsp;</span>
+        <div class="op-download-options-header border-bottom border-light">
+            <h1>Download Options</h1>
+            <div>
+                <p class="op-total-size mb-0 mr-3">Total Size (before zip):
+                    <span class="spinner">&nbsp;</span>
+                    <span id="op-total-download-size">{{ total_download_size_pretty }}</span>
+                </p>
+                <p class="op-total-download">Total Files:
+                    <span class="spinner">&nbsp;</span>
+                    <span id="op-total-download-count">{{ total_download_count|intcomma }}</span>
+                </p>
+            </div>
+            <p class="m-0 mb-1">Select which product types to include in downloads:</p>
+            <div class="mb-3">
+                <button class="op-cart-select-all-btn btn btn-sm btn-primary" type="button">
+                    <i class="fas fa-check"></i>&nbsp;&nbsp;Select all product types
+                </button>
+                <button class="op-cart-deselect-all-btn btn btn-sm btn-danger" type="button">
+                    <i class="fas fa-times"></i>&nbsp;&nbsp;Deselect all product types
+                </button>
+            </div>
         </div>
-        <h1>Download Options</h1>
-        <!-- <p>Total Files: <span id="total_files">{{ download_count }}</span></p> -->
-        <!-- <p>Total Size (before zip): <span id="op-total-download-size">{{ total_download_size_pretty }}</span></p> -->
-        <p class="op-total-size">Total Size (before zip): <span class="spinner">&nbsp;</span><span id="op-total-download-size">{{ total_download_size_pretty }}</span></p>
-
-        <div id="download_options">
-            {% for product_cat, product_list in product_cat_list %}
-                <h4>{{ product_cat }}</h4>
-                <ul id="product_types" class="list-inline">
+        <div class="op-download-options-product-types w-100">
+            <div class="row op-product-type-table-header font-weight-bold border-bottom border-light no-gutters mr-3">
+                <div class="col-7">Product Type</div>
+                <div class="col text-right"># Obs</div>
+                <div class="col text-right"># Files</div>
+                <div class="col text-right">Size</div>
+            </div>
+            <div class="op-product-type-table-body pr-3">
+                {% for product_cat, product_list in product_cat_list %}
+                    <div class="row no-gutters bg-light">
+                        <div class="col-12">
+                            <h5 class="mt-2">
+                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
+                                {{ product_cat }}
+                            </h5>
+                        </div>
+                    </div>
                     {% for product_info in product_list %}
-                        <li>
-                            <input type="checkbox" value="{{ product_info.slug_name }}"
-                                {% if product_info.product_count > 0 %}
-                                    checked
-                                {% endif %}
-                            >
-                            <span
-                                {% if product_info.product_count == 0 %}
-                                    class="fadey"
-                                {% endif %}
-                            >
-                                {% if product_info.tooltip %}
-                                    &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
-                                {% endif %}
-                                {{ product_info.product_type }}
-                                <!-- ({{ product_info.product_count }}, {{ product_info.download_count }}, {{ product_info.download_size_pretty }}) -->
-                            </span>
-                        </li>
+                        <div class="row no-gutters border-bottom border-light">
+                            <div class="col-7">
+                                <span>
+                                    <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
+                                        {% if product_info.product_count > 0 %}
+                                            checked
+                                        {% endif %}
+                                    >
+                                    {% if product_info.tooltip %}
+                                        &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                    {% endif %}
+                                    {{ product_info.product_type }}
+                                </span>
+                            </div>
+                            <div class="col text-right">{{ product_info.product_count|intcomma }}</div>
+                            <div class="col text-right">{{ product_info.download_count|intcomma }}</div>
+                            <div class="col text-right">{{ product_info.download_size_pretty }}</div>
+                        </div>
                     {% endfor %}
-                </ul>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
