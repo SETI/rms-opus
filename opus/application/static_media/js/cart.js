@@ -220,9 +220,6 @@ var o_cart = {
         // returns any user cart saved in session
         o_cart.lastRequestNo++;
         $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
-            if (statusData.reqno < o_cart.lastRequestNo) {
-                return;
-            }
             o_cart.updateCartStatus(statusData);
         });
     },
@@ -337,7 +334,7 @@ var o_cart = {
                     $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
                     $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
                 }
-                $("input[name="+opusId+"]").prop("checked", (action == "addrange"));
+                $("input[name="+opusId+"]").prop("checked", (action === "addrange"));
                 o_browse.updateCartIcon(opusId, status);
                 // If we remove items from the cart on the cart page, the "ghosts" still stick around in the UI
                 // but the backend doesn't know about them. This means you can't do an addrange in the UI that
@@ -412,8 +409,14 @@ var o_cart = {
             add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
 
+        // to disable clicks:
+        $('#click-blocker').show()
+
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSizeSpinner();
+
+        let tab = opus.getViewTab();
+        $("#browse, #cart").off("click");
 
         o_cart.lastRequestNo++;
         $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
@@ -432,11 +435,14 @@ var o_cart = {
                 o_browse.loadData(view, 1);
             }
             // we only update the cart badge result count from the latest request
-            if (statusData.reqno < o_cart.lastRequestNo || !updateBadges) {
+            if (!updateBadges) {
                 return;
             }
 
             o_cart.updateCartStatus(statusData);
+
+            // to enable clicks again
+            $('#click-blocker').hide();
         });
     },
 

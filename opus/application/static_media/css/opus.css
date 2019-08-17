@@ -1793,6 +1793,14 @@ ul.ui-autocomplete a.ui-state-active {
     user-select: none;
 }
 
+#click-blocker {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
 /* Ripple In */
 @-webkit-keyframes hvr-ripple-in {
     100% {

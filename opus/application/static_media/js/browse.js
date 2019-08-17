@@ -200,7 +200,6 @@ var o_browse = {
                 let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
                 if (fromOpusId === undefined) {
                     o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
                 } else {
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
@@ -216,8 +215,6 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenu();
 
-            let tab = opus.getViewTab();
-
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
                 o_cart.toggleInCart(opusId);
@@ -225,13 +222,7 @@ var o_browse = {
             }
             // Detecting shift key
             else if (e.shiftKey) {
-                let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
-                if (fromOpusId === undefined) {
-                    o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
-                } else {
-                    o_cart.toggleInCart(fromOpusId, opusId);
-                }
+                o_browse.cartShiftKeyHandler(e, opusId);
             } else {
                 o_browse.showMetadataDetailModal(opusId);
             }
@@ -441,7 +432,6 @@ var o_browse = {
                     let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
                     if (fromOpusId === undefined) {
                         o_browse.startRangeSelect(opusId);
-                        //o_cart.toggleInCart(opusId);
                     } else {
                         o_cart.toggleInCart(fromOpusId, opusId);
                     }
