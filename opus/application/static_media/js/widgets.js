@@ -89,6 +89,11 @@ var o_widgets = {
             let collapsibleID = $(e.target).attr("href");
             $(`${collapsibleID}`).collapse("toggle");
         });
+
+        // Make sure expanded contents are collapsed when ranges dropdown list is closed.
+        $("#search").on("hidden.bs.dropdown", ".op-useful-ranges", function(e) {
+            $(".op-useful-ranges .container").collapse("hide");
+        });
     },
 
     closeWidget: function(slug) {
@@ -586,10 +591,6 @@ var o_widgets = {
             $(".scrollable-menu").on("scroll wheel", function(e) {
                 e.stopPropagation();
             });
-
-            // $(".op-useful-ranges").on("hide.bs.dropdown", function(e) {
-            //     console.log("dropdown close");
-            // });
 
             // add the spans that hold the hinting
             try {
