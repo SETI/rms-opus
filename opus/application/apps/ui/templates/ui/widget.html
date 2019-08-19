@@ -35,8 +35,53 @@
                             {% endif %}
                         ">
             <div class="widget-main">
+                <!-- EXPERIMENT AREA -->
+                <!-- {% if ranges %}
+                        <div class="op-useful-ranges dropdown pl-2">
+                            <button type="button" id="dropdownMenu" class="btn btn-secondary btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Preprogrammed Ranges
+                            </button>
+                            <ul class="dropdown-menu scrollable-menu pl-0" aria-labelledby="dropdownMenu" role="menu">
+                                {% for range_data_entry in ranges %}
+                                    <li class="mr-0 d-block">
+                                        <a class="dropdown-item bg-light" data-toggle="collapse" href="#{{range_data_entry.cat_name|slugify}}" role="button" aria-expanded="false" aria-controls="{{range_data_entry.cat_name|slugify}}">{{range_data_entry.cat_name|title}}</a>
+                                        <div class="container collapse" id="{{range_data_entry.cat_name|slugify}}">
+                                            <div class="op-useful-ranges-data-header row border-bottom border-light">
+                                                <div class="col-4">
+                                                </div>
+                                                <div class="col-4 font-weight-bold">
+                                                    {{range_data_entry.heading1|title}}
+                                                </div>
+                                                <div class="col-4 font-weight-bold">
+                                                    {{range_data_entry.heading2|title}}
+                                                </div>
+                                            </div>
+                                            {% for range_info in range_data_entry.ranges %}
+                                                        <div class="op-useful-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}">
+                                                            <div class="col-4">
+                                                                {{range_info.name|title}}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.field1 %}
+                                                                    {{range_info.field1|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.field2 %}
+                                                                    {{range_info.field2|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                            {% endfor %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                {% endif %} -->
+                <!-- END EXPERIMENT AREA -->
                 <div id="hint__{{ slug }}" class="range_hints"></div>
-                <ul>
+                <ul class="op-range-input">
                     {% if intro %}
                         <div class="text-info">
                             {{ intro }}
@@ -45,13 +90,13 @@
                     {% endif %}
 
                         {{ form|safe }}
-                    {% if ranges %}
+                    <!-- {% if ranges %}
                         <li class="op-useful-ranges">
                             <div class="dropdown">
-                                <button type="button" id="dropdownMenu" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <button type="button" id="dropdownMenu" class="btn btn-secondary btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     Preprogrammed Ranges
                                 </button>
-                                <ul class="dropdown-menu scrollable-menu pl-0" aria-labelledby="dropdownMenu" role="menu">
+                                <ul class="dropdown-menu dropdown-menu-right scrollable-menu pl-0" aria-labelledby="dropdownMenu" role="menu">
                                     {% for range_data_entry in ranges %}
                                         <li class="mr-0 d-block">
                                             <a class="dropdown-item bg-light" data-toggle="collapse" href="#{{range_data_entry.cat_name|slugify}}" role="button" aria-expanded="false" aria-controls="{{range_data_entry.cat_name|slugify}}">{{range_data_entry.cat_name|title}}</a>
@@ -90,9 +135,53 @@
 
                             </div>
                         </li>
-                    {% endif %}
+                    {% endif %} -->
                 </ul>
-
+                <!-- EXPERIMENT AREA -->
+                {% if ranges %}
+                        <div class="op-useful-ranges dropdown pl-2 d-inline-flex">
+                            <button type="button" id="dropdownMenu" class="btn btn-secondary btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Preprogrammed Ranges
+                            </button>
+                            <ul class="dropdown-menu scrollable-menu pl-0" aria-labelledby="dropdownMenu" role="menu">
+                                {% for range_data_entry in ranges %}
+                                    <li class="mr-0 d-block">
+                                        <a class="dropdown-item bg-light" data-toggle="collapse" href="#{{range_data_entry.cat_name|slugify}}" role="button" aria-expanded="false" aria-controls="{{range_data_entry.cat_name|slugify}}">{{range_data_entry.cat_name|title}}</a>
+                                        <div class="container collapse" id="{{range_data_entry.cat_name|slugify}}">
+                                            <div class="op-useful-ranges-data-header row border-bottom border-light">
+                                                <div class="col-4">
+                                                </div>
+                                                <div class="col-4 font-weight-bold">
+                                                    {{range_data_entry.heading1|title}}
+                                                </div>
+                                                <div class="col-4 font-weight-bold">
+                                                    {{range_data_entry.heading2|title}}
+                                                </div>
+                                            </div>
+                                            {% for range_info in range_data_entry.ranges %}
+                                                        <div class="op-useful-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}">
+                                                            <div class="col-4">
+                                                                {{range_info.name|title}}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.field1 %}
+                                                                    {{range_info.field1|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="col-4">
+                                                                {% if range_info.field2 %}
+                                                                    {{range_info.field2|intcomma}}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                            {% endfor %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                {% endif %}
+                <!-- END EXPERIMENT AREA -->
             </div>
         </article>
     </div><!-- /widget-body -->

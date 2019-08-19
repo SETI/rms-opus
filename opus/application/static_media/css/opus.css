@@ -1946,12 +1946,24 @@ ul.ui-autocomplete a.ui-state-active {
     color: inherit;
 }
 
-/* Enable default scrollbar for ranges info dropdown */
 .op-useful-ranges .scrollable-menu {
+    /* Enable default scrollbar for ranges info dropdown */
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    /* width: -webkit-fill-available; */
+    /* Customization for dropmenu to open and expand to the left when
+    ranges button is placed at the right edge of the widget */
+    right: 8px;
+    left: auto !important;
+    width: max-content;
+    /* Fix the dropdown down expanded area so that it will not move around
+    when resizing or ps scrolling happened */
+    transform: translate3d(8px, 28px, 0px) !important;
+}
+
+/* Remove the outline of ranges info button */
+.op-useful-ranges button:focus {
+    box-shadow: none;
 }
 
 /* Add customized styling for dropdown list items */
@@ -1960,6 +1972,20 @@ ul.ui-autocomplete a.ui-state-active {
     cursor: pointer;
 }
 
-.op-useful-ranges-data-item div {
-    display: inline-block;
+/* Make sure range input is shrinking in a proper way */
+.op-range-input {
+    display: inline-flex;
+}
+
+@media (max-width: 1175px) {
+    .op-range-input {
+        display: block;
+    }
+
+    .op-useful-ranges .scrollable-menu {
+        /* Customization for dropmenu to open and expand to the rigth when
+        ranges button is placed at the left edge of the widget */
+        right: auto;
+        left: 0 !important;
+    }
 }
