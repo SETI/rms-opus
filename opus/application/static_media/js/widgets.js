@@ -91,7 +91,6 @@ var o_widgets = {
         });
     },
 
-
     closeWidget: function(slug) {
 
         let slugNoNum;
@@ -575,7 +574,22 @@ var o_widgets = {
             // close autocomplete dropdown menu when y-axis scrolling happens
             $("#widget-container").on("ps-scroll-y", function() {
                 $("input.STRING").autocomplete("close");
+
+                // Close dropdown list when ps scrolling is happening in widget container
+                if ($(".dropdown-menu").hasClass("show")) {
+                    $("#dropdownMenu").dropdown("toggle");
+                }
             });
+
+            // Prevent overscrolling on ps in widget container when scrolling inside dropdown
+            // list has reached to both ends
+            $(".scrollable-menu").on("scroll wheel", function(e) {
+                e.stopPropagation();
+            });
+
+            // $(".op-useful-ranges").on("hide.bs.dropdown", function(e) {
+            //     console.log("dropdown close");
+            // });
 
             // add the spans that hold the hinting
             try {

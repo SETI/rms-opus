@@ -1469,6 +1469,7 @@ panel are properly separated */
 #widget-container {
     overflow-x: auto !important;
     overflow-y: hidden !important;
+    overscroll-behavior: contain;
 }
 
 /* Make only widget title and "i" icon wrapped and keep arrow & x symbols
@@ -1947,6 +1948,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 .op-useful-ranges .scrollable-menu {
+
     /* Enable default scrollbar for ranges info dropdown */
     max-height: 200px;
     overflow-y: auto;
@@ -1977,8 +1979,18 @@ ul.ui-autocomplete a.ui-state-active {
     display: inline-flex;
 }
 
+.op-useful-ranges {
+    display: inline-flex;
+}
+
 @media (max-width: 1175px) {
     .op-range-input {
+        display: block;
+    }
+
+    /* This is to make sure when ranges info button is squeezed to a separate
+    line, the dropdown area can take up proper width*/
+    .op-useful-ranges {
         display: block;
     }
 
@@ -1987,5 +1999,9 @@ ul.ui-autocomplete a.ui-state-active {
         ranges button is placed at the left edge of the widget */
         right: auto;
         left: 0 !important;
+        /* make sure when ranges info button is squeezed to a separate
+        line, the dropdown area can shrink responsively */
+        width: auto;
     }
+
 }
