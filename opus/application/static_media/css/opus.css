@@ -1964,8 +1964,14 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Remove the outline of ranges info button */
-.op-useful-ranges button:focus {
+.op-useful-ranges #dropdownMenu:focus {
     box-shadow: none;
+}
+
+/* Slight make size smaller so that ranges info button can stay in the same
+line as input fields when browser window is large enough */
+.op-useful-ranges #dropdownMenu {
+    font-size: 0.7rem;
 }
 
 /* Add customized styling for dropdown list items */
@@ -1983,6 +1989,26 @@ ul.ui-autocomplete a.ui-state-active {
     display: inline-flex;
 }
 
+/* Rotate arrow icon when ranges dropdown list or expandable contents are
+expanded/collapsed */
+.op-useful-ranges .dropdown-toggle::after,
+.op-useful-ranges #dropdownMenu::after  {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+
+.op-useful-ranges .dropdown-toggle.collapsed::after,
+.op-useful-ranges #dropdownMenu::after {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+.op-useful-ranges.show #dropdownMenu::after {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+}
+
+/* Styling when ranges info button is not at the same line as input fields */
 @media (max-width: 1175px) {
     .op-range-input {
         display: block;
@@ -1992,6 +2018,7 @@ ul.ui-autocomplete a.ui-state-active {
     line, the dropdown area can take up proper width*/
     .op-useful-ranges {
         display: block;
+        padding-left: 0.5rem;
     }
 
     .op-useful-ranges .scrollable-menu {
