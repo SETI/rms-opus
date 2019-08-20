@@ -159,7 +159,7 @@
                                                 </div>
                                             </div>
                                             {% for range_info in range_data_entry.ranges %}
-                                                        <div class="op-useful-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}">
+                                                        <div class="op-useful-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}" data-widget="widget__{{slug}}">
                                                             <div class="col-4">
                                                                 {{range_info.name|title}}
                                                             </div>

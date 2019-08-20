@@ -94,6 +94,42 @@ var o_widgets = {
         $("#search").on("hidden.bs.dropdown", ".op-useful-ranges", function(e) {
             $(".op-useful-ranges .container").collapse("hide");
         });
+
+        // When user selects a ranges info item, update input fields and opus.selections
+        // before triggering the search.
+        $("#search").on("click", ".op-useful-ranges-data-item", function(e) {
+            let minVal = $(e.currentTarget).data("min");
+            let maxVal = $(e.currentTarget).data("max");
+            let widgetId = $(e.currentTarget).data("widget");
+
+            // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
+            if ($(`#${widgetId} input.RANGE`).length !== 0) {
+                let minInput = $(`#${widgetId} input.min`);
+                let maxInput = $(`#${widgetId} input.max`);
+                let slug = minInput.attr("name");
+
+                if (minVal) {
+                    minInput.val(minVal);
+                    opus.selections[slug] = [minVal];
+                } else {
+                    minInput.val("");
+                    delete opus.selections[slug];
+                }
+
+                slug = maxInput.attr("name");
+                if (maxVal) {
+                    maxInput.val(maxVal);
+                    opus.selections[slug] = [maxVal];
+                } else {
+                    maxInput.val("");
+                    delete opus.selections[slug];
+                }
+
+                // close dropdown and trigger the search
+                $("#dropdownMenu").dropdown("toggle");
+                $(`#${widgetId} input.RANGE`).trigger("change");
+            }
+        });
     },
 
     closeWidget: function(slug) {
