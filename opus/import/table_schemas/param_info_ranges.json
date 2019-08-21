@@ -7,28 +7,28 @@
             "ranges": [
                 {
                     "name": "halo",
-                    "field1": "89400",
-                    "field2": "123000",
+                    "field1": "100000",
+                    "field2": "122400",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "main ring",
-                    "field1": "123000",
-                    "field2": "128940",
+                    "field1": "122400",
+                    "field2": "129100",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "amalthea ring",
-                    "field1": "128940",
+                    "field1": "122400",
                     "field2": "181350",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "thebe ring",
-                    "field1": "128940",
+                    "field1": "122400",
                     "field2": "221900",
                     "unit": "km",
                     "qtype": null
@@ -36,7 +36,7 @@
                 {
                     "name": "thebe extension",
                     "field1": "221900",
-                    "field2": "280000",
+                    "field2": "270000",
                     "unit": "km",
                     "qtype": null
                 }
@@ -50,77 +50,217 @@
                 {
                     "name": "d ring",
                     "field1": "66900",
-                    "field2": "74658",
+                    "field2": "74491",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "c ring",
-                    "field1": "74658",
+                    "field1": "74491",
                     "field2": "91975",
                     "unit": "km",
                     "qtype": null
                 },
                 {
+                    "name": "colombo gap",
+                    "field1": "77748",
+                    "field2": "77926",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
                     "name": "titan ringlet",
-                    "field1": "77871",
-                    "field2": "77896",
+                    "field1": "77867",
+                    "field2": "77890",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "maxwell gap",
+                    "field1": "87343",
+                    "field2": "87610",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "maxwell ringlet",
-                    "field1": "87491",
-                    "field2": "87555",
+                    "field1": "87480",
+                    "field2": "87539",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "1.470 rs ringlet",
-                    "field1": "88716",
-                    "field2": "88732",
+                    "name": "bond gap",
+                    "field1": "88686",
+                    "field2": "88723",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "1.495 rs ringlet",
-                    "field1": "90171",
-                    "field2": "90232",
+                    "name": "bond ringlet",
+                    "field1": "88702",
+                    "field2": "88719",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "dawes gap",
+                    "field1": "90200",
+                    "field2": "90221",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "dawes ringlet",
+                    "field1": "90138",
+                    "field2": "",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "b ring",
                     "field1": "91975",
-                    "field2": "117507",
+                    "field2": "117570",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "region b1",
+                    "field1": "92000",
+                    "field2": "99000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "region b2",
+                    "field1": "99000",
+                    "field2": "104000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "region b3",
+                    "field1": "104100",
+                    "field2": "110000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "region b4",
+                    "field1": "110000",
+                    "field2": "116500",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "region b5",
+                    "field1": "116500",
+                    "field2": "117500",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "cassini division",
-                    "field1": "117507",
-                    "field2": "122340",
+                    "field1": "117570",
+                    "field2": "122050",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "huygens gap",
+                    "field1": "117680",
+                    "field2": "117930",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "huygens ringlet",
-                    "field1": "117825",
-                    "field2": "118185",
+                    "field1": "117806",
+                    "field2": "117824",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "strange ringlet",
+                    "field1": "117907",
+                    "field2": "117909",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "herschel gap",
+                    "field1": "118188",
+                    "field2": "118284",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "herschel ringlet",
+                    "field1": "118234",
+                    "field2": "118263",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "russell gap",
+                    "field1": "118590",
+                    "field2": "118628",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "jefferys gap",
+                    "field1": "118930",
+                    "field2": "118967",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "kuiper gap",
+                    "field1": "119402",
+                    "field2": "119406",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "laplace gap",
+                    "field1": "119845",
+                    "field2": "120086",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "laplace ringlet",
+                    "field1": "120037",
+                    "field2": "120078",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "bessel gap",
+                    "field1": "120231",
+                    "field2": "120244",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "barnard gap",
+                    "field1": "120304",
+                    "field2": "120316",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "a ring",
-                    "field1": "122340",
-                    "field2": "136780",
+                    "field1": "122050",
+                    "field2": "136770",
                     "unit": "km",
                     "qtype": null
                 },
                 {
                     "name": "encke gap",
-                    "field1": "133410",
-                    "field2": "133740",
+                    "field1": "133423",
+                    "field2": "133745",
                     "unit": "km",
                     "qtype": null
                 },
@@ -128,6 +268,13 @@
                     "name": "keeler gap",
                     "field1": "136487",
                     "field2": "136522",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "roche division",
+                    "field1": "136770",
+                    "field2": "139380",
                     "unit": "km",
                     "qtype": null
                 },
@@ -184,6 +331,237 @@
                     "name": "phoebe ring",
                     "field1": "7722240",
                     "field2": "12488310",
+                    "unit": "km",
+                    "qtype": null
+                }
+            ]
+        },
+        {
+            "cat_name": "neptune rings",
+            "heading1": "min",
+            "heading2": "max",
+            "ranges": [
+                {
+                    "name": "galle",
+                    "field1": "41000",
+                    "field2": "43000",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "le verrier",
+                    "field1": "53150",
+                    "field2": "53250",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "lassell",
+                    "field1": "53200",
+                    "field2": "57200",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "arago",
+                    "field1": "57200",
+                    "field2": "57200",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "adams",
+                    "field1": "62925.5",
+                    "field2": "62940.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "fraternite",
+                    "field1": "62925.5",
+                    "field2": "62940.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "egalite 1,2",
+                    "field1": "62925.5",
+                    "field2": "62940.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "liberte",
+                    "field1": "62925.5",
+                    "field2": "62940.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "courage",
+                    "field1": "62925.5",
+                    "field2": "62940.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "unnamed",
+                    "field1": "61953",
+                    "field2": "61953",
+                    "unit": "km",
+                    "qtype": null
+                }
+            ]
+        },
+        {
+            "cat_name": "uranus rings",
+            "heading1": "min",
+            "heading2": "max",
+            "ranges": [
+                {
+                    "name": "zeta cc",
+                    "field1": "26838",
+                    "field2": "34888",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "zeta c",
+                    "field1": "35159",
+                    "field2": "38119",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "dust sheet",
+                    "field1": "26840",
+                    "field2": "50040",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "zeta",
+                    "field1": "37850",
+                    "field2": "41350",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "six",
+                    "field1": "41837.235",
+                    "field2": "41838.765",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "five",
+                    "field1": "42232.86",
+                    "field2": "42235.14",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "four",
+                    "field1": "42569.835",
+                    "field2": "42572.165",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "alpha-4",
+                    "field1": "41350.5",
+                    "field2": "44703.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "alpha",
+                    "field1": "44713.77",
+                    "field2": "44722.23",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "beta-alpha",
+                    "field1": "44723",
+                    "field2": "45035",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "beta",
+                    "field1": "45656.255",
+                    "field2": "45665.745",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "eta c",
+                    "field1": "47181",
+                    "field2": "47221",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "eta",
+                    "field1": "47175.2",
+                    "field2": "47176.8",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "gamma",
+                    "field1": "47625.925",
+                    "field2": "47628.075",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "delta c",
+                    "field1": "48281.5",
+                    "field2": "48296.5",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "delta",
+                    "field1": "48297.7",
+                    "field2": "48302.3",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "lambda c",
+                    "field1": "49934.45",
+                    "field2": "49937.55",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "lambda",
+                    "field1": "50022.85",
+                    "field2": "50025.15",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "epsilon",
+                    "field1": "51119.95",
+                    "field2": "51178.05",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "nu",
+                    "field1": "65400",
+                    "field2": "69200",
+                    "unit": "km",
+                    "qtype": null
+                },
+                {
+                    "name": "mu",
+                    "field1": "89200",
+                    "field2": "106200",
                     "unit": "km",
                     "qtype": null
                 }

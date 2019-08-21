@@ -1493,7 +1493,7 @@ even when screen is narrow */
     margin-top: 5px;
     /* Widget container can shrink to a minimum width = min-width when
     browser width is shrinking */
-    max-width: 820px;
+    max-width: 740px;
     min-width: 450px;
     height: 500px;  /* matches .sidebar_wrapper */
     -webkit-box-sizing: border-box;
@@ -1947,20 +1947,12 @@ ul.ui-autocomplete a.ui-state-active {
     color: inherit;
 }
 
+/* Enable default scrollbar for ranges info dropdown */
 .op-useful-ranges .scrollable-menu {
-
-    /* Enable default scrollbar for ranges info dropdown */
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-    /* Customization for dropmenu to open and expand to the left when
-    ranges button is placed at the right edge of the widget */
-    right: 8px;
-    left: auto !important;
-    width: max-content;
-    /* Fix the dropdown down expanded area so that it will not move around
-    when resizing or ps scrolling happened */
-    transform: translate3d(8px, 28px, 0px) !important;
+    border-width: 2px;
 }
 
 /* Remove the outline of ranges info button */
@@ -1968,26 +1960,14 @@ ul.ui-autocomplete a.ui-state-active {
     box-shadow: none;
 }
 
-/* Slight make size smaller so that ranges info button can stay in the same
-line as input fields when browser window is large enough */
 .op-useful-ranges #dropdownMenu {
-    font-size: 0.7rem;
+    text-decoration: none;
 }
 
 /* Add customized styling for dropdown list items */
 .op-useful-ranges-data-item:hover div  {
     background-color: #d1dbe1;
     cursor: pointer;
-}
-
-/* Make sure range input is shrinking in a proper way */
-.op-range-input {
-    display: inline-block;
-}
-
-.op-useful-ranges {
-    display: inline-block;
-    margin-bottom: 5px;
 }
 
 /* Rotate arrow icon when ranges dropdown list or expandable contents are
@@ -2007,29 +1987,4 @@ expanded/collapsed */
 .op-useful-ranges.show #dropdownMenu::after {
     transform: rotate(0);
     -webkit-transform: rotate(0);
-}
-
-/* Styling when ranges info button is not at the same line as input fields */
-@media (max-width: 1175px) {
-    .op-range-input {
-        display: block;
-    }
-
-    /* This is to make sure when ranges info button is squeezed to a separate
-    line, the dropdown area can take up proper width*/
-    .op-useful-ranges {
-        display: block;
-        padding-left: 0.5rem;
-    }
-
-    .op-useful-ranges .scrollable-menu {
-        /* Customization for dropmenu to open and expand to the rigth when
-        ranges button is placed at the left edge of the widget */
-        right: auto;
-        left: 0 !important;
-        /* make sure when ranges info button is squeezed to a separate
-        line, the dropdown area can shrink responsively */
-        width: auto;
-    }
-
 }
