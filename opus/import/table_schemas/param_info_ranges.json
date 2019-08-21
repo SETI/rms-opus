@@ -567,5 +567,91 @@
                 }
             ]
         }
+    ],
+    "obs_wavelength": [
+        {
+            "cat_name": "wavelengths",
+            "heading1": "min",
+            "heading2": "max",
+            "ranges": [
+                {
+                    "name": "gamma ray",
+                    "field1": "0",
+                    "field2": "0.00001",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "x-ray",
+                    "field1": "0.00001",
+                    "field2": "0.01",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "ultraviolet",
+                    "field1": "0.01",
+                    "field2": "0.04",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "visible",
+                    "field1": "0.390",
+                    "field2": "0.700",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "near infrared",
+                    "field1": "0.65",
+                    "field2": "5",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "infrared",
+                    "field1": "0.75",
+                    "field2": "300",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "far infrared",
+                    "field1": "30",
+                    "field2": "300",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "submillimeter",
+                    "field1": "300",
+                    "field2": "1000",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "millimeter",
+                    "field1": "1000",
+                    "field2": "9000",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "microwave",
+                    "field1": "9000",
+                    "field2": "1000000",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "radio",
+                    "field1": "1000",
+                    "field2": "900000000",
+                    "unit": "microns",
+                    "qtype": null
+                }
+            ]
+        }
     ]
 }
