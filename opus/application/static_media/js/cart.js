@@ -523,102 +523,12 @@ var o_cart = {
         $(".op-data-table-view input").prop("checked", false);
     },
 
-    toggleInCart: function(fromOpusId, toOpusId) {
-        // handle it as range
-        if (toOpusId != undefined) {
-            let tab = opus.getViewTab();
-            let action = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
-            let fromObsNum = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum;
-            let toObsNum = o_browse.getGalleryElement(toOpusId).data("obs");
-
-            // reorder if need be
-            if (fromObsNum > toObsNum) {
-                [fromObsNum, toObsNum] = [toObsNum, fromObsNum];
-                [fromOpusId, toOpusId] = [toOpusId, fromOpusId];
-            }
-            /// NOTE: we need to mark the elements on BOTH browse and cart page
-            let elementArray = $(`${tab} .op-thumbnail-container`);
-            let opusIdRange = `${fromOpusId},${toOpusId}`;
-            let addOpusIdList = [];
-            // This loop can take a fairly long time to execute for a large range, and it would be nice
-            // to display the cart count spinner while it's going on. Unfortuntately, JavaScript doesn't
-            // let us do that without creating a function that will execute out of the next pass through
-            // the event loop. At that point we leave ourselves open for race conditions if the user
-            // has managed to click on a cart toggle before we get our event in the queue, and it's not
-            // worth fixing those right now.
-            let fromElem = $(`${tab} .op-gallery-view`).find(`[data-obs=${fromObsNum}]`);
-            let fromIndex = 0;
-            let toELem = $(`${tab} .op-gallery-view`).find(`[data-obs=${toObsNum}]`);
-            let length = toObsNum - fromObsNum + 1;
-            // note that only one of the range endpoints can potentially be not present in the DOM,
-            // as we know the user just clicked on one of them to get here.
-            if (fromElem.length > 0) {
-                length = (toELem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
-                fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
-            } else {
-                length = $(`${tab} .op-thumbnail-container`).index(toELem);
-            }
-            $.each(elementArray.splice(fromIndex, length), function(index, elem) {
-                let opusId = $(elem).data("id");
-                let status = "in";
-                if (action == "addrange") {
-                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
-                    status = "out"; // this is only so that we can make sure the icon is a trash can
-                } else {
-                    $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
-                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-remove-from-cart");
-                }
-                $("input[name="+opusId+"]").prop("checked", (action === "addrange"));
-                o_browse.updateCartIcon(opusId, status);
-                // If we remove items from the cart on the cart page, the "ghosts" still stick around in the UI
-                // but the backend doesn't know about them. This means you can't do an addrange in the UI that
-                // includes ghosts because the backend won't know what you want to add. So for all addranges
-                // we have to just add the observations one at a time, since we know what needs to be done here.
-                if (action === "addrange" && opus.prefs.view === "cart") {
-                    addOpusIdList.push(opusId);
-                }
-            });
-            if (addOpusIdList.length !== 0) {
-                let lastAddOpusId = addOpusIdList[addOpusIdList.length-1];
-                for (const addOpusId of addOpusIdList) {
-                    o_cart.editCart(addOpusId, "add", addOpusId === lastAddOpusId);
-                }
-            } else {
-                o_cart.editCart(opusIdRange, action);
-            }
-            o_browse.undoRangeSelect(tab);
-        } else {
-            // note - doing it this way handles the obs on the browse tab at the same time
-            let fromElem = o_browse.getGalleryElement(fromOpusId);
-            let action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
-
-            $(`.op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-in-cart");
-            $("input[name="+fromOpusId+"]").prop("checked", (action === "add"));
-
-            $(`#cart .op-thumbnail-container[data-id=${fromOpusId}]`).toggleClass("op-remove-from-cart");
-
-            o_browse.updateCartIcon(fromOpusId, action);
-            o_cart.editCart(fromOpusId, action);
-            return action;
-        }
-    },
-
     // action = add/remove/addrange/removerange/addall
-    editCart: function(opusId, action, updateBadges=true) {
+    getEditURL: function(opusId, action, updateBadges=true) {
         // If updateBadges is false, we set the spinners in motion but don't actually update them
         // This is used when we want to do a lot of cart operations in a row and only update
         // at the end
-        let view = opus.prefs.view;
-        o_cart.reloadObservationData = true;
-        // Note we intentionally don't set o_cart.observationData = {} here.
-        // This is because we allow users to add/remove while on the cart page
-        // without updating the window. If we erased the cached data, then
-        // the user would be unable to click on an obs they had removed and
-        // see the metadata dialog. The penalty we pay for this is there will
-        // be old cruft in the cache table that won't go away easily until there's
-        // a hard flush like a page reload. Yes, manageObservationCache will try,
-        // but if the browser has been resized it may not get it all.
-
+        let tab = opus.getViewTab();
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
             case "add":
@@ -638,23 +548,73 @@ var o_cart = {
 
         // Minor performance check - if we don't need a total download size, don't bother
         // Only the cart tab is interested in updating that count at this time.
-        let add_to_url = "";
-        if (view === "cart" && updateBadges) {
-            add_to_url = "&download=1&" + o_cart.getDownloadFiltersChecked();
+        if (tab === "cart" && updateBadges) {
+            url += "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
+        return url;
+    },
+
+    sendEditRequest: function(url) {
+        o_cart.lastRequestNo++;
+        return $.getJSON(url + "&reqno=" + o_cart.lastRequestNo);
+    },
+
+    toggleInCart: function(fromOpusId, toOpusId) {
+        let tab = opus.getViewTab();
+        let length = 1;
+        let fromIndex = 0;
+        let action = null;
+        let elementArray = $(`${tab} .op-thumbnail-container`);
+        let opusIdRange = fromOpusId;
+        let updateBadges = true;
+
+        o_cart.reloadObservationData = true;
 
         // to disable clicks:
         $('#click-blocker').show()
 
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
+        $(`.op-page-loading-status > .loader`).show();
 
-        let tab = opus.getViewTab();
-        $("#browse, #cart").off("click");
+        // handle it as range
+        if (toOpusId != undefined) {
+            action = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
+            let fromObsNum = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum;
+            let toObsNum = o_browse.getGalleryElement(toOpusId).data("obs");
 
-        o_cart.lastRequestNo++;
-        $.getJSON(url  + add_to_url + "&reqno=" + o_cart.lastRequestNo, function(statusData) {
-            // display modal for every error message returned from api call
+            // reorder if need be
+            if (fromObsNum > toObsNum) {
+                [fromObsNum, toObsNum] = [toObsNum, fromObsNum];
+                [fromOpusId, toOpusId] = [toOpusId, fromOpusId];
+            }
+            opusIdRange = `${fromOpusId},${toOpusId}`;
+            let fromElem = $(`${tab} .op-gallery-view`).find(`[data-obs=${fromObsNum}]`);
+            let toELem = $(`${tab} .op-gallery-view`).find(`[data-obs=${toObsNum}]`);
+            length = toObsNum - fromObsNum + 1;
+            // note that only one of the range endpoints can potentially be not present in the DOM,
+            // as we know the user just clicked on one of them to get here.
+            if (fromElem.length > 0) {
+                length = (toELem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
+                fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
+            } else {
+                length = $(`${tab} .op-thumbnail-container`).index(toELem);
+            }
+        } else {
+            // note - doing it this way handles the obs on the browse tab at the same time
+            let fromElem = o_browse.getGalleryElement(fromOpusId);
+            fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
+            action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
+        }
+
+        let url = o_cart.getEditURL(opusIdRange, action);
+
+        // just so we don't have to continually checke for both addrange and add...
+        action = (action === "addrange" || action === "add" ? "add" : action);
+        let status = (action === "add" ?  "out" : "in");
+        let checked = (action === "add");
+
+        $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
                 if ($("#op-cart-status-error-msg").hasClass("show")) {
@@ -663,21 +623,30 @@ var o_cart = {
                     $("#op-cart-status-error-msg .modal-body").text(statusData.error);
                     $("#op-cart-status-error-msg").modal("show");
                 }
-                // reload data
-                // Note: we don't return after loadData because we still have to update the result count in cart badge (updateCartStatus)
-                o_browse.galleryBegun = false;
-                o_browse.loadData(view, 1);
+                o_cart.updateCartStatus(statusData);
+            } else {
+                $.each(elementArray.splice(fromIndex, length), function(index, elem) {
+                    let opusId = $(elem).data("id");
+                    /// NOTE: we need to mark the elements on BOTH browse and cart page
+                    if (action === "add") {
+                        $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                    } else {
+                        $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                    }
+                    $("input[name="+opusId+"]").prop("checked", checked);
+                    o_browse.updateCartIcon(opusId, status);
+                });
+                // we only update the cart badge result count from the latest request
+                if (updateBadges) {
+                    o_cart.updateCartStatus(statusData);
+                }
             }
-            // we only update the cart badge result count from the latest request
-            if (!updateBadges) {
-                return;
-            }
-
-            o_cart.updateCartStatus(statusData);
-
+            $(`.op-page-loading-status > .loader`).hide();
             // to enable clicks again
             $('#click-blocker').hide();
         });
+        o_browse.undoRangeSelect(tab);
+        return action;
     },
 
     showCartCountSpinner: function() {
