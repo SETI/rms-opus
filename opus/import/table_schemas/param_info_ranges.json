@@ -1025,14 +1025,14 @@
                 {
                     "name": "ultraviolet",
                     "field1": "0.01",
-                    "field2": "0.04",
+                    "field2": "0.4",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
                     "name": "visible",
-                    "field1": "0.390",
-                    "field2": "0.700",
+                    "field1": "0.39",
+                    "field2": "0.7",
                     "unit": "microns",
                     "qtype": null
                 },

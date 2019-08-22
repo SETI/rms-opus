@@ -68,12 +68,16 @@ def create_import_param_info_table():
                            f'"{category_name}/{field_name}" has RANGE type '
                            +'without numerical format')
 
-            # if pi_ranges exist in .json, get the corresponding ranges info
+            # if pi_ranges exists in .json, get the corresponding ranges info
             # from dict and convert it to str before storing to database
             ranges = column.get('pi_ranges', None)
             if ranges:
-                ranges = ranges_json.get(ranges)
-                ranges = json.dumps(ranges)
+                if ranges in ranges_json:
+                    ranges = ranges_json[ranges]
+                    ranges = json.dumps(ranges)
+                else:
+                    logger.log('error',
+                               f'pi_ranges: "{ranges}" is not in "{ranges_filename}"')
 
             new_row = {
                 'category_name': category_name,

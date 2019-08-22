@@ -1942,49 +1942,72 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Styling for ranges info dropdown */
-.op-useful-ranges .dropdown-item:active {
+.op-preprogrammed-ranges .dropdown-item:active {
     background-color: transparent;
     color: inherit;
 }
 
 /* Enable default scrollbar for ranges info dropdown */
-.op-useful-ranges .scrollable-menu {
+.op-preprogrammed-ranges .scrollable-menu {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
     border-width: 2px;
+    /* TEST AREA */
+    /* width: max-content; */
+    /* white-space: nowrap; */
+}
+
+/* TEST AREA */
+.op-preprogrammed-ranges .scrollable-menu div {
+    /* width: 100%; */
+}
+.op-preprogrammed-ranges .scrollable-menu li {
+    /* width: 100%; */
+}
+.op-preprogrammed-ranges .scrollable-menu .row {
+    /* width: 100%; */
+}
+.op-preprogrammed-ranges .scrollable-menu .row div {
+    /* width: max-content; */
+     /* text-align: justify;
+     display: inline-block; */
 }
 
 /* Remove the outline of ranges info button */
-.op-useful-ranges #dropdownMenu:focus {
+.op-preprogrammed-ranges #op-ranges-dropdown-menu:focus {
     box-shadow: none;
 }
 
-.op-useful-ranges #dropdownMenu {
+.op-preprogrammed-ranges #op-ranges-dropdown-menu {
     text-decoration: none;
+    /* Make the button have the same color and font weight as the one in
+    sidebar subheader */
+    color: initial;
+    font-weight: 600;
 }
 
 /* Add customized styling for dropdown list items */
-.op-useful-ranges-data-item:hover div  {
+.op-preprogrammed-ranges-data-item:hover div  {
     background-color: #d1dbe1;
     cursor: pointer;
 }
 
 /* Rotate arrow icon when ranges dropdown list or expandable contents are
 expanded/collapsed */
-.op-useful-ranges .dropdown-toggle::after,
-.op-useful-ranges #dropdownMenu::after  {
+.op-preprogrammed-ranges .dropdown-toggle::after,
+.op-preprogrammed-ranges #op-ranges-dropdown-menu::after  {
     transition: all .3s;
     -webkit-transition: all .3s;
 }
 
-.op-useful-ranges .dropdown-toggle.collapsed::after,
-.op-useful-ranges #dropdownMenu::after {
+.op-preprogrammed-ranges .dropdown-toggle.collapsed::after,
+.op-preprogrammed-ranges #op-ranges-dropdown-menu::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
 }
 
-.op-useful-ranges.show #dropdownMenu::after {
+.op-preprogrammed-ranges.show #op-ranges-dropdown-menu::after {
     transform: rotate(0);
     -webkit-transform: rotate(0);
 }

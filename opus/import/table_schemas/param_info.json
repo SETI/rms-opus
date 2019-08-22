@@ -92,16 +92,16 @@
         "field_default": null
     },
     {
+        "field_name": "ranges",
+        "field_type": "json",
+        "field_default": null
+    },
+    {
         "field_name": "id",
         "field_type": "uint4",
         "field_autoincrement": true,
         "field_key": "primary",
         "field_notnull": true
-    },
-    {
-        "field_name": "ranges",
-        "field_type": "json",
-        "field_default": null
     },
     {
         "field_name": "timestamp",

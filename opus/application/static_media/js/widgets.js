@@ -91,13 +91,13 @@ var o_widgets = {
         });
 
         // Make sure expanded contents are collapsed when ranges dropdown list is closed.
-        $("#search").on("hidden.bs.dropdown", ".op-useful-ranges", function(e) {
-            $(".op-useful-ranges .container").collapse("hide");
+        $("#search").on("hidden.bs.dropdown", ".op-preprogrammed-ranges", function(e) {
+            $(".op-preprogrammed-ranges .container").collapse("hide");
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
         // before triggering the search.
-        $("#search").on("click", ".op-useful-ranges-data-item", function(e) {
+        $("#search").on("click", ".op-preprogrammed-ranges-data-item", function(e) {
             let minVal = $(e.currentTarget).data("min");
             let maxVal = $(e.currentTarget).data("max");
             let widgetId = $(e.currentTarget).data("widget");
@@ -126,7 +126,7 @@ var o_widgets = {
                 }
 
                 // close dropdown and trigger the search
-                $("#dropdownMenu").dropdown("toggle");
+                $("#op-ranges-dropdown-menu").dropdown("toggle");
                 $(`#${widgetId} input.RANGE`).trigger("change");
             }
         });
@@ -463,11 +463,6 @@ var o_widgets = {
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
-                    // if ($(`#widget__${slug} .widget-main ul .op-useful-ranges`).length !== 0) {
-                    //     $(helpIcon).insertBefore(`#widget__${slug} .widget-main ul .op-useful-ranges`);
-                    // } else {
-                    //     $(`#widget__${slug} .widget-main ul`).append(helpIcon);
-                    // }
                     $(`#widget__${slug} .widget-main .op-range-input`).append(helpIcon);
                 }
 
@@ -618,7 +613,7 @@ var o_widgets = {
 
                 // Close dropdown list when ps scrolling is happening in widget container
                 if ($(".dropdown-menu").hasClass("show")) {
-                    $("#dropdownMenu").dropdown("toggle");
+                    $("#op-ranges-dropdown-menu").dropdown("toggle");
                 }
             });
 
