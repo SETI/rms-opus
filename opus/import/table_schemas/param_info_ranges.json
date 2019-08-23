@@ -1,40 +1,40 @@
 {
     "obs_ring_geometry": [
         {
-            "cat_name": "jupiter rings",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Jupiter Rings",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "halo",
+                    "name": "Halo",
                     "field1": "100000",
                     "field2": "122400",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "main ring",
+                    "name": "Main Ring",
                     "field1": "122400",
                     "field2": "129100",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "amalthea ring",
+                    "name": "Amalthea Ring",
                     "field1": "122400",
                     "field2": "181350",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "thebe ring",
+                    "name": "Thebe Ring",
                     "field1": "122400",
                     "field2": "221900",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "thebe extension",
+                    "name": "Thebe Extension",
                     "field1": "221900",
                     "field2": "270000",
                     "unit": "km",
@@ -43,61 +43,61 @@
             ]
         },
         {
-            "cat_name": "jupiter inner satellites",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Jupiter Inner Satellites",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "metis",
+                    "name": "Metis",
                     "field1": "127979",
                     "field2": "127979",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "adrastea",
+                    "name": "Adrastea",
                     "field1": "128980",
                     "field2": "128980",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "amalthea",
+                    "name": "Amalthea",
                     "field1": "181300",
                     "field2": "181300",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "thebe",
+                    "name": "Thebe",
                     "field1": "221900",
                     "field2": "221900",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "io",
+                    "name": "Io",
                     "field1": "421600",
                     "field2": "421600",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "europa",
+                    "name": "Europa",
                     "field1": "670900",
                     "field2": "670900",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "ganymede",
+                    "name": "Ganymede",
                     "field1": "1070000",
                     "field2": "1070000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "callisto",
+                    "name": "Callisto",
                     "field1": "1883000",
                     "field2": "1883000",
                     "unit": "km",
@@ -106,292 +106,292 @@
             ]
         },
         {
-            "cat_name": "saturn rings",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Saturn Rings",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "d ring",
+                    "name": "D Ring",
                     "field1": "66900",
                     "field2": "74491",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "c ring",
+                    "name": "C Ring",
                     "field1": "74491",
                     "field2": "91975",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "colombo gap",
+                    "name": "Colombo Gap",
                     "field1": "77748",
                     "field2": "77926",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "titan ringlet",
+                    "name": "Titan Ringlet",
                     "field1": "77867",
                     "field2": "77890",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "maxwell gap",
+                    "name": "Maxwell Gap",
                     "field1": "87343",
                     "field2": "87610",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "maxwell ringlet",
+                    "name": "Maxwell Ringlet",
                     "field1": "87480",
                     "field2": "87539",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "bond gap",
+                    "name": "Bond Gap",
                     "field1": "88686",
                     "field2": "88723",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "bond ringlet",
+                    "name": "Bond Ringlet",
                     "field1": "88702",
                     "field2": "88719",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "dawes gap",
+                    "name": "Dawes Gap",
                     "field1": "90200",
                     "field2": "90221",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "dawes ringlet",
+                    "name": "Dawes Ringlet",
                     "field1": "90138",
                     "field2": "",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "b ring",
+                    "name": "B Ring",
                     "field1": "91975",
                     "field2": "117570",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "region b1",
+                    "name": "Region B1",
                     "field1": "92000",
                     "field2": "99000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "region b2",
+                    "name": "Region B2",
                     "field1": "99000",
                     "field2": "104000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "region b3",
+                    "name": "Region B3",
                     "field1": "104100",
                     "field2": "110000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "region b4",
+                    "name": "Region B4",
                     "field1": "110000",
                     "field2": "116500",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "region b5",
+                    "name": "Region B5",
                     "field1": "116500",
                     "field2": "117500",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "cassini division",
+                    "name": "Cassini Division",
                     "field1": "117570",
                     "field2": "122050",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "huygens gap",
+                    "name": "Huygens Gap",
                     "field1": "117680",
                     "field2": "117930",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "huygens ringlet",
+                    "name": "Huygens Ringlet",
                     "field1": "117806",
                     "field2": "117824",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "strange ringlet",
+                    "name": "Strange Ringlet",
                     "field1": "117907",
                     "field2": "117909",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "herschel gap",
+                    "name": "Herschel Gap",
                     "field1": "118188",
                     "field2": "118284",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "herschel ringlet",
+                    "name": "Herschel Ringlet",
                     "field1": "118234",
                     "field2": "118263",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "russell gap",
+                    "name": "Russell Gap",
                     "field1": "118590",
                     "field2": "118628",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "jefferys gap",
+                    "name": "Jefferys Gap",
                     "field1": "118930",
                     "field2": "118967",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "kuiper gap",
+                    "name": "Kuiper Gap",
                     "field1": "119402",
                     "field2": "119406",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "laplace gap",
+                    "name": "Laplace Gap",
                     "field1": "119845",
                     "field2": "120086",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "laplace ringlet",
+                    "name": "Laplace Ringlet",
                     "field1": "120037",
                     "field2": "120078",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "bessel gap",
+                    "name": "Bessel Gap",
                     "field1": "120231",
                     "field2": "120244",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "barnard gap",
+                    "name": "Barnard Gap",
                     "field1": "120304",
                     "field2": "120316",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "a ring",
+                    "name": "A Ring",
                     "field1": "122050",
                     "field2": "136770",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "encke gap",
+                    "name": "Encke Gap",
                     "field1": "133423",
                     "field2": "133745",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "keeler gap",
+                    "name": "Keeler Gap",
                     "field1": "136487",
                     "field2": "136522",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "roche division",
+                    "name": "Roche Division",
                     "field1": "136770",
                     "field2": "139380",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "f ring",
+                    "name": "F Ring",
                     "field1": "139826",
                     "field2": "140612",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "janus/Epimetheus ring",
+                    "name": "Janus/Epimetheus Ring",
                     "field1": "149000",
                     "field2": "154000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "g ring",
+                    "name": "G Ring",
                     "field1": "166000",
                     "field2": "173200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "e ring",
+                    "name": "E Ring",
                     "field1": "180000",
                     "field2": "480000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "methone ring",
+                    "name": "Methone Ring",
                     "field1": "194440",
                     "field2": "",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "anthe ring",
+                    "name": "Anthe Ring",
                     "field1": "197655",
                     "field2": "",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "pallene ring",
+                    "name": "Pallene Ring",
                     "field1": "212000",
                     "field2": "",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "phoebe ring",
+                    "name": "Phoebe Ring",
                     "field1": "7722240",
                     "field2": "12488310",
                     "unit": "km",
@@ -400,173 +400,173 @@
             ]
         },
         {
-            "cat_name": "saturn regular satellites",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Saturn Regular Satellites",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "pan",
+                    "name": "Pan",
                     "field1": "133580",
                     "field2": "133580",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "daphnis",
+                    "name": "Daphnis",
                     "field1": "136505",
                     "field2": "136505",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "atlas",
+                    "name": "Atlas",
                     "field1": "137670",
                     "field2": "137670",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "prometheus",
+                    "name": "Prometheus",
                     "field1": "139380",
                     "field2": "139380",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "pandora",
+                    "name": "Pandora",
                     "field1": "141720",
                     "field2": "141720",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "epimetheus",
+                    "name": "Epimetheus",
                     "field1": "151410",
                     "field2": "151410",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "janus",
+                    "name": "Janus",
                     "field1": "151460",
                     "field2": "151460",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "aegaeon",
+                    "name": "Aegaeon",
                     "field1": "167494",
                     "field2": "167494",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "mimas",
+                    "name": "Mimas",
                     "field1": "185539",
                     "field2": "185539",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "methone",
+                    "name": "Methone",
                     "field1": "194440",
                     "field2": "194440",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "anthe",
+                    "name": "Anthe",
                     "field1": "197655",
                     "field2": "197655",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "pallene",
+                    "name": "Pallene",
                     "field1": "212280",
                     "field2": "212280",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "enceladus",
+                    "name": "Enceladus",
                     "field1": "238037",
                     "field2": "238037",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "tethys",
+                    "name": "Tethys",
                     "field1": "294672",
                     "field2": "294672",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "telesto",
+                    "name": "Telesto",
                     "field1": "294710",
                     "field2": "294710",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "calypso",
+                    "name": "Calypso",
                     "field1": "294710",
                     "field2": "294710",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "polydeuces",
+                    "name": "Polydeuces",
                     "field1": "377200",
                     "field2": "377200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "dione",
+                    "name": "Dione",
                     "field1": "377415",
                     "field2": "377415",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "helene",
+                    "name": "Helene",
                     "field1": "377420",
                     "field2": "377420",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "rhea",
+                    "name": "Rhea",
                     "field1": "527068",
                     "field2": "527068",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "titan",
+                    "name": "Titan",
                     "field1": "1221865",
                     "field2": "1221865",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "hyperion",
+                    "name": "Hyperion",
                     "field1": "1500934",
                     "field2": "1500934",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "iapetus",
+                    "name": "Iapetus",
                     "field1": "3560851",
                     "field2": "3560851",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "phoebe",
+                    "name": "Phoebe",
                     "field1": "12947913",
                     "field2": "12947913",
                     "unit": "km",
@@ -575,152 +575,152 @@
             ]
         },
         {
-            "cat_name": "uranus rings",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Uranus Rings",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "zeta cc",
+                    "name": "Zeta Cc",
                     "field1": "26838",
                     "field2": "34888",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "zeta c",
+                    "name": "Zeta C",
                     "field1": "35159",
                     "field2": "38119",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "dust sheet",
+                    "name": "Dust Sheet",
                     "field1": "26840",
                     "field2": "50040",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "zeta",
+                    "name": "Zeta",
                     "field1": "37850",
                     "field2": "41350",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "six",
+                    "name": "Six",
                     "field1": "41837.235",
                     "field2": "41838.765",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "five",
+                    "name": "Five",
                     "field1": "42232.86",
                     "field2": "42235.14",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "four",
+                    "name": "Four",
                     "field1": "42569.835",
                     "field2": "42572.165",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "alpha-4",
+                    "name": "Alpha-4",
                     "field1": "41350.5",
                     "field2": "44703.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "alpha",
+                    "name": "Alpha",
                     "field1": "44713.77",
                     "field2": "44722.23",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "beta-alpha",
+                    "name": "Beta-Alpha",
                     "field1": "44723",
                     "field2": "45035",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "beta",
+                    "name": "Beta",
                     "field1": "45656.255",
                     "field2": "45665.745",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "eta c",
+                    "name": "Eta C",
                     "field1": "47181",
                     "field2": "47221",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "eta",
+                    "name": "Eta",
                     "field1": "47175.2",
                     "field2": "47176.8",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "gamma",
+                    "name": "Gamma",
                     "field1": "47625.925",
                     "field2": "47628.075",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "delta c",
+                    "name": "Delta C",
                     "field1": "48281.5",
                     "field2": "48296.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "delta",
+                    "name": "Delta",
                     "field1": "48297.7",
                     "field2": "48302.3",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "lambda c",
+                    "name": "Lambda C",
                     "field1": "49934.45",
                     "field2": "49937.55",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "lambda",
+                    "name": "Lambda",
                     "field1": "50022.85",
                     "field2": "50025.15",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "epsilon",
+                    "name": "Epsilon",
                     "field1": "51119.95",
                     "field2": "51178.05",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "nu",
+                    "name": "Nu",
                     "field1": "65400",
                     "field2": "69200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "mu",
+                    "name": "Mu",
                     "field1": "89200",
                     "field2": "106200",
                     "unit": "km",
@@ -729,131 +729,131 @@
             ]
         },
         {
-            "cat_name": "uranus inner satellites",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Uranus Inner Satellites",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "cordelia",
+                    "name": "Cordelia",
                     "field1": "49752",
                     "field2": "49752",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "ophelia",
+                    "name": "Ophelia",
                     "field1": "53764",
                     "field2": "53764",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "bianca",
+                    "name": "Bianca",
                     "field1": "59165",
                     "field2": "59165",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "cressida",
+                    "name": "Cressida",
                     "field1": "61767",
                     "field2": "61767",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "desdemona",
+                    "name": "Desdemona",
                     "field1": "62659",
                     "field2": "62659",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "juliet",
+                    "name": "Juliet",
                     "field1": "64358",
                     "field2": "64358",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "portia",
+                    "name": "Portia",
                     "field1": "66097",
                     "field2": "66097",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "rosalind",
+                    "name": "Rosalind",
                     "field1": "69927",
                     "field2": "69927",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "cupid",
+                    "name": "Cupid",
                     "field1": "74392",
                     "field2": "74392",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "belinda",
+                    "name": "Belinda",
                     "field1": "75256",
                     "field2": "75256",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "perdita",
+                    "name": "Perdita",
                     "field1": "76417",
                     "field2": "76417",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "puck",
+                    "name": "Puck",
                     "field1": "86004",
                     "field2": "86004",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "mab",
+                    "name": "Mab",
                     "field1": "97736",
                     "field2": "97736",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "miranda",
+                    "name": "Miranda",
                     "field1": "129800",
                     "field2": "129800",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "ariel",
+                    "name": "Ariel",
                     "field1": "191200",
                     "field2": "191200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "umbriel",
+                    "name": "Umbriel",
                     "field1": "266000",
                     "field2": "266000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "titania",
+                    "name": "Titania",
                     "field1": "435800",
                     "field2": "435800",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "oberon",
+                    "name": "Oberon",
                     "field1": "583600",
                     "field2": "583600",
                     "unit": "km",
@@ -862,75 +862,75 @@
             ]
         },
         {
-            "cat_name": "neptune rings",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Neptune Rings",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "galle",
+                    "name": "Galle",
                     "field1": "41000",
                     "field2": "43000",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "le verrier",
+                    "name": "Le Verrier",
                     "field1": "53150",
                     "field2": "53250",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "lassell",
+                    "name": "Lassell",
                     "field1": "53200",
                     "field2": "57200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "arago",
+                    "name": "Arago",
                     "field1": "57200",
                     "field2": "57200",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "adams",
+                    "name": "Adams",
                     "field1": "62925.5",
                     "field2": "62940.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "fraternite",
+                    "name": "Fraternite",
                     "field1": "62925.5",
                     "field2": "62940.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "egalite 1,2",
+                    "name": "Egalite 1,2",
                     "field1": "62925.5",
                     "field2": "62940.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "liberte",
+                    "name": "Liberte",
                     "field1": "62925.5",
                     "field2": "62940.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "courage",
+                    "name": "Courage",
                     "field1": "62925.5",
                     "field2": "62940.5",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "unnamed",
+                    "name": "Unnamed",
                     "field1": "61953",
                     "field2": "61953",
                     "unit": "km",
@@ -939,61 +939,61 @@
             ]
         },
         {
-            "cat_name": "neptune inner satellites",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Neptune Inner Satellites",
+            "heading1": "Min (km)",
+            "heading2": "Max (km)",
             "ranges": [
                 {
-                    "name": "naiad",
+                    "name": "Naiad",
                     "field1": "48227",
                     "field2": "48227",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "thalassa",
+                    "name": "Thalassa",
                     "field1": "50075",
                     "field2": "50075",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "despina",
+                    "name": "Despina",
                     "field1": "52526",
                     "field2": "52526",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "galatea",
+                    "name": "Galatea",
                     "field1": "61953",
                     "field2": "61953",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "larissa",
+                    "name": "Larissa",
                     "field1": "73548",
                     "field2": "73548",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "proteus",
+                    "name": "Proteus",
                     "field1": "117647",
                     "field2": "117647",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "triton",
+                    "name": "Triton",
                     "field1": "354760",
                     "field2": "354760",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "nereid",
+                    "name": "Nereid",
                     "field1": "5513400",
                     "field2": "5513400",
                     "unit": "km",
@@ -1004,84 +1004,42 @@
     ],
     "obs_wavelength": [
         {
-            "cat_name": "wavelengths",
-            "heading1": "min",
-            "heading2": "max",
+            "cat_name": "Wavelengths",
+            "heading1": "Min (microns)",
+            "heading2": "Max (microns)",
             "ranges": [
                 {
-                    "name": "gamma ray",
-                    "field1": "0",
-                    "field2": "0.00001",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "x-ray",
-                    "field1": "0.00001",
-                    "field2": "0.01",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "ultraviolet",
+                    "name": "Ultraviolet",
                     "field1": "0.01",
                     "field2": "0.4",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
-                    "name": "visible",
+                    "name": "Visible",
                     "field1": "0.39",
                     "field2": "0.7",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
-                    "name": "near infrared",
+                    "name": "Near Infrared",
                     "field1": "0.65",
                     "field2": "5",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
-                    "name": "infrared",
+                    "name": "Infrared",
                     "field1": "0.75",
                     "field2": "300",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
-                    "name": "far infrared",
+                    "name": "Far Infrared",
                     "field1": "30",
                     "field2": "300",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "submillimeter",
-                    "field1": "300",
-                    "field2": "1000",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "millimeter",
-                    "field1": "1000",
-                    "field2": "9000",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "microwave",
-                    "field1": "9000",
-                    "field2": "1000000",
-                    "unit": "microns",
-                    "qtype": null
-                },
-                {
-                    "name": "radio",
-                    "field1": "1000",
-                    "field2": "900000000",
                     "unit": "microns",
                     "qtype": null
                 }
