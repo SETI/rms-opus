@@ -1042,7 +1042,49 @@
                     "field2": "300",
                     "unit": "microns",
                     "qtype": null
-                }
+                },
+                {
+                    "name": "Red",
+                    "field1": "0.647",
+                    "field2": "0.7",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Orange",
+                    "field1": "0.585",
+                    "field2": "0.647",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Yellow",
+                    "field1": "0.575",
+                    "field2": "0.585",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Green",
+                    "field1": "0.491",
+                    "field2": "0.575",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Blue",
+                    "field1": "0.424",
+                    "field2": "0.491",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Violet",
+                    "field1": "0.400",
+                    "field2": "0.424",
+                    "unit": "microns",
+                    "qtype": null
+                },
             ]
         }
     ]
