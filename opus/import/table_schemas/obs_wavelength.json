@@ -80,6 +80,8 @@
         "pi_tooltip": "",
         "pi_units": "micron",
         "pi_ranges": "obs_wavelength",
+        "pi_field_hints1": "Wavelength or Color",
+        "pi_field_hints2": "",
         "comments": "Definition derived from the PSDD and modified for our purposes. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, COCIRS/OBSINDEX.LBL is F8.3, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are just micron, so we round up to .4f"
     },
     {

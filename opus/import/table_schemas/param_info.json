@@ -97,6 +97,16 @@
         "field_default": null
     },
     {
+        "field_name": "field_hints1",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
+        "field_name": "field_hints2",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
         "field_name": "id",
         "field_type": "uint4",
         "field_autoincrement": true,

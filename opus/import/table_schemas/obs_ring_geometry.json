@@ -83,6 +83,8 @@
         "pi_tooltip": null,
         "pi_units": "km",
         "pi_ranges": "obs_ring_geometry",
+        "pi_field_hints1": "Radius or Feature name",
+        "pi_field_hints2": "",
         "comments": "Definition is from RING_GEO label file. Units are %.3f in the label file, but we want to allow greater precision for occulations."
     },
     {

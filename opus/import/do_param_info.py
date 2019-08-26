@@ -100,7 +100,9 @@ def create_import_param_info_table():
                 'sub_heading': column['pi_sub_heading'],
                 'tooltip': column['pi_tooltip'],
                 'units': column['pi_units'],
-                'ranges': ranges
+                'ranges': ranges,
+                'field_hints1': column.get('pi_field_hints1', None),
+                'field_hints2': column.get('pi_field_hints2', None)
             }
             rows.append(new_row)
     db.insert_rows('import', 'param_info', rows)

@@ -366,7 +366,9 @@ var o_search = {
             // for range
             $(".range_hints").each(function() {
                 if ($(this).children().length > 0) {
-                    $(this).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                    $(this).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
+                                  <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
+                                  <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
                 }
             });
             // for mults
@@ -537,7 +539,9 @@ var o_search = {
                 if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-                $('#hint__' + slug).html(`<span>min: ${multdata.min}</span><span>max: ${multdata.max}</span><span> nulls: ${multdata.nulls}</span>`);
+                $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
+                                          <span>Max:&nbsp;<span class="op-hints-info">${multdata.max}</span></span>
+                                          <span>Nulls:&nbsp;<span class="op-hints-info">${multdata.nulls}</span></span>`);
             },
             statusCode: {
                 404: function() {
@@ -547,7 +551,9 @@ var o_search = {
             error:function(xhr, ajaxOptions, thrownError) {
                 $(`#widget__${slug} .spinner`).fadeOut();
                 // range input hints are "?" when wrong values of url is pasted
-                $(`#hint__${slug}`).html("<span>min: ?</span><span>max: ?</span><span> nulls: ?</span>");
+                $(`#hint__${slug}`).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
+                                          <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
+                                          <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
             }
         }); // end mults ajax
     },

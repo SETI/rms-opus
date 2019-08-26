@@ -706,12 +706,16 @@ narrow */
     display: block;
     clear: both;
     padding: 5px 0 10px 50px;
-    color: green;
 }
 
-.range_hints span {
+.range_hints > span {
     margin-right: 5px;
     display: inline-block;
+}
+
+/* Only values in range hints are green */
+.range_hints .op-hints-info {
+    color: green;
 }
 
 .paging_indicator {
@@ -2010,4 +2014,22 @@ expanded/collapsed */
 .op-preprogrammed-ranges.show #op-ranges-dropdown-menu::after {
     transform: rotate(0);
     -webkit-transform: rotate(0);
+}
+
+/* Make palceholder hints visible when browser width is large enough */
+input.RANGE {
+    min-width: 25%;
+}
+
+/* Style placeholder to have "..." when text is overflow */
+input[placeholder] {
+    text-overflow: ellipsis;
+}
+
+::-moz-placeholder {
+    text-overflow: ellipsis;
+}
+
+input:-moz-placeholder {
+    text-overflow: ellipsis;
 }

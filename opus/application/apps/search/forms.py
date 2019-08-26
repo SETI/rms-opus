@@ -73,6 +73,8 @@ class SearchForm(forms.Form):
             if slug.startswith('qtype-'):
                 continue
             param_info = get_param_info_by_slug(slug, 'search')
+            print(f'PARAM::::')
+            print(param_info)
             if not param_info:
                 log.error(
             "SearchForm: Could not find param_info entry for slug %s",
@@ -114,11 +116,19 @@ class SearchForm(forms.Form):
                 label = 'max' if num == '2' else 'min'
 
                 pi = get_param_info_by_slug(slug, 'search')
+                # placeholder for input hints (only apply to Min input for now)
+                hints = pi.field_hints1 if pi.field_hints1 else ''
 
                 self.fields[slug] = MultiFloatField(
-                     required=False,
-                     label = label,
-                     widget = forms.TextInput(attrs={'class':label + ' RANGE'}),
+                    required=False,
+                    label = label.title(),
+                    widget = forms.TextInput(
+                        attrs={
+                            'class':label + ' RANGE',
+                            'placeholder': hints,
+                            'autocomplete': 'off'
+                        }
+                    ),
                 )
                 if not is_single_column_range(pi.param_qualified_name()):
                     self.fields['qtype-'+slug_no_num] = forms.CharField(
