@@ -702,19 +702,19 @@ narrow */
     margin: 0 2px 0 5px;
 }
 
-.range_hints {
+.op-range-hints {
     display: block;
     clear: both;
     padding: 5px 0 10px 50px;
 }
 
-.range_hints > span {
+.op-range-hints > span {
     margin-right: 5px;
     display: inline-block;
 }
 
 /* Only values in range hints are green */
-.range_hints .op-hints-info {
+.op-range-hints .op-hints-info {
     color: green;
 }
 

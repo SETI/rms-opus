@@ -364,7 +364,7 @@ var o_search = {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
-            $(".range_hints").each(function() {
+            $(".op-range-hints").each(function() {
                 if ($(this).children().length > 0) {
                     $(this).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
                                   <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
