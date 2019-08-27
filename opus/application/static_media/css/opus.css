@@ -1945,6 +1945,11 @@ ul.ui-autocomplete a.ui-state-active {
     -webkit-animation: hvr-ripple-in 1s infinite;
 }
 
+/* Make sure ranges info div not splitting input min and max into two lines */
+.op-preprogrammed-ranges {
+    display: inline !important;
+}
+
 /* Styling for ranges info dropdown */
 .op-preprogrammed-ranges .dropdown-item:active {
     background-color: transparent;
@@ -1960,6 +1965,9 @@ ul.ui-autocomplete a.ui-state-active {
     /* TEST AREA */
     /* width: max-content; */
     /* white-space: nowrap; */
+    /* transform: translate3d(40px, -9px, 0px) !important; */
+    /* top: -9px !important;
+    left: 40px !important; */
 }
 
 /* TEST AREA */

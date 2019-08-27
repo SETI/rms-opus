@@ -83,11 +83,11 @@ var o_widgets = {
         });
 
         // Close dropdown list when focus out
-        $("#search").on(" focusout", "input.min", function(e) {
-            if ($(".scrollable-menu").hasClass("show")) {
-                o_widgets.toggleRangesInfoDropdown(e.target);
-            }
-        });
+        // $("#search").on(" focusout", "input.min", function(e) {
+        //     if ($(".scrollable-menu").hasClass("show")) {
+        //         o_widgets.toggleRangesInfoDropdown(e.target);
+        //     }
+        // });
 
         // When user selects a ranges info item, update input fields and opus.selections
         // before triggering the search.
@@ -124,6 +124,8 @@ var o_widgets = {
                 $(`#${widgetId} input.RANGE`).trigger("change");
             }
         });
+
+        o_widgets.addPreprogrammedRangesBehaviors();
     },
 
     addPreprogrammedRangesBehaviors: function() {
@@ -133,8 +135,8 @@ var o_widgets = {
          */
 
         // Expand/collapse info when clicking a dropdown submenu
-        $(".scrollable-menu .dropdown-item").on("click", function(e) {
-        // $("#search").on("click", ".scrollable-menu .dropdown-item", function(e) {
+        // $(".scrollable-menu .dropdown-item").on("click", function(e) {
+        $("#search").on("click", ".scrollable-menu .dropdown-item", function(e) {
             // prevent URL being messed up with href in <a>
             e.preventDefault();
             let collapsibleID = $(e.target).attr("href");
@@ -142,14 +144,8 @@ var o_widgets = {
         });
 
         // Avoid closing dropdown menu when clicking any dropdown item
-        $(".scrollable-menu").on("click", function(e) {
-        // $("#search").on("click", ".scrollable-menu", function(e) {
-            e.stopPropagation();
-        });
-
-        // Prevent overscrolling on ps in widget container when scrolling inside dropdown
-        // list has reached to both ends
-        $(".scrollable-menu").on("scroll wheel", function(e) {
+        // $(".scrollable-menu").on("click", function(e) {
+        $("#search").on("click", ".scrollable-menu", function(e) {
             e.stopPropagation();
         });
 
@@ -648,12 +644,27 @@ var o_widgets = {
                 $("input.STRING").autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
-                if ($(".scrollable-menu").hasClass("show")) {
-                    $("#op-ranges-dropdown-menu").dropdown("toggle");
+                if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
+                    $(`#${widget} .op-preprogrammed-ranges`).dropdown("toggle");
                 }
             });
 
-            o_widgets.addPreprogrammedRangesBehaviors();
+            // Prevent overscrolling on ps in widget container when scrolling inside dropdown
+            // list has reached to both ends
+            $(".scrollable-menu").on("scroll wheel", function(e) {
+                e.stopPropagation();
+            });
+
+            // If ".op-preprogrammed-ranges" is available in the widget, we move the whole
+            // element into the input.min li and use it as the customized dropdown expandable
+            // list for input.min. This will also make sure dropdown list always stays below
+            // input.min.
+            let rangesInfoDropdown = $(`#${widget} .op-preprogrammed-ranges`).detach();
+            if (rangesInfoDropdown.length > 0) {
+                $(`#${widget} input.min`).after(rangesInfoDropdown);
+                $(`#${widget} .op-range-input`).addClass("dropdown");
+            }
+
 
             // add the spans that hold the hinting
             try {

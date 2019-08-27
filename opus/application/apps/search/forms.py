@@ -123,10 +123,13 @@ class SearchForm(forms.Form):
                     label = label.title(),
                     widget = forms.TextInput(
                         attrs={
-                            'class':label + ' RANGE',
+                            'class': label + ' RANGE op-ranges-dropdown-menu',
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,
+                            'data-toggle': 'dropdown',
+                            'aria-haspopup': 'true',
+                            'aria-expanded': 'false'
                         }
                     ),
                 )
