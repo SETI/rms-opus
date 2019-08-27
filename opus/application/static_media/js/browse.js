@@ -283,7 +283,7 @@ var o_browse = {
             $(namespace).find(".modal-show").removeClass("modal-show");
         });
 
-        $('#galleryView').on("click", "a.select", function(e) {
+        $('#galleryView').on("click", "a.op-cart-toggle", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
@@ -513,6 +513,10 @@ var o_browse = {
 
     cartShiftKeyHandler: function(e, opusId) {
         let tab = opus.getViewTab();
+
+        // for now, disable the edit function on the #cart tab
+        if (tab === "#cart") return;
+
         let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
         if (fromOpusId === undefined) {
             o_browse.startRangeSelect(opusId);
@@ -1101,13 +1105,22 @@ var o_browse = {
 
     showMenu: function(e, opusId) {
         // make this like a default right click menu
+        let tab = opus.getViewTab();
+        // hide the cart edit options if we are on the cart tab
+        if (tab === "#cart") {
+            $("#op-obs-menu [data-action='cart']").hide();
+            $("#op-obs-menu [data-action='range']").hide();
+        } else {
+            $("#op-obs-menu [data-action='cart']").show();
+            $("#op-obs-menu [data-action='range']").show();
+        }
         if ($("#op-obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
         let inCart = (o_cart.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#op-obs-menu .dropdown-header").html(opusId);
-        $("#op-obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
@@ -1117,7 +1130,6 @@ var o_browse = {
 
         // use the state of the current selected observation to set the icons if one has been selected,
         // otherwise use the state of the current observation - this will identify what will happen to the range
-        let tab = opus.getViewTab();
         let rangeSelected = o_browse.isRangeSelectEnabled(tab);
         let rangeText = "";
         if (rangeSelected !== undefined) {
@@ -1647,6 +1659,11 @@ var o_browse = {
                 $(".op-data-table-view tbody", tab).prepend(tableHtml);
             }
         }
+        // hide the edit cart icons on the cart tab for now...
+        if (tab === "#cart") {
+            $("#cart [data-icon='cart']").css('visibility','hidden');   // note: this maintains spacing; hide() does not.
+            $("#cart input.multichoice").hide();
+        }
 
         // Note: we have to manually set the scrollbar position.
         // - scroll up: when we scroll up and a new page is fetched, we want to keep scrollbar position at the current startObs,
@@ -1829,7 +1846,7 @@ var o_browse = {
         // don't delete the metadata if the observation is in the cart
         let delOpusId = galleryObsElem.eq(index).data("id");
         if ($("#galleryView").hasClass("show")) {
-            if (delOpusId === $("#galleryViewContents .select").data("id")) {
+            if (delOpusId === $("#galleryViewContents .op-cart-toggle").data("id")) {
                 o_browse.hideGalleryViewModal();
             }
         }
@@ -2274,7 +2291,7 @@ var o_browse = {
         $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo.title);
 
-        let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${opusId}]`;
+        let modalCartSelector = `#galleryViewContents .bottom .op-cart-toggle[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
             $(modalCartSelector).prop("title", `${buttonInfo.title} (spacebar)`);
@@ -2317,7 +2334,7 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
@@ -2328,10 +2345,17 @@ var o_browse = {
         // mini-menu like the hamburger on the observation/gallery page
         html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
+
+        // disable edit of the cart from the cart page for awhile
+        if (opus.getViewTab() === "#cart") {
+            $(".op-cart-toggle").hide();
+        } else {
+            $(".op-cart-toggle").show();
+        }
     },
 
     updateGalleryView: function(opusId) {
-        let tab = `#${opus.prefs.view}`;
+        let tab = opus.getViewTab();
         $(tab).find(".modal-show").removeClass("modal-show");
         $(tab).find(`[data-id='${opusId}'] div.modal-overlay`).addClass("modal-show");
         $(tab).find(`tr[data-id='${opusId}']`).addClass("modal-show");
@@ -2341,7 +2365,7 @@ var o_browse = {
 
 
     updateMetaGalleryView: function(opusId, imageURL) {
-        let tab = `#${opus.prefs.view}`;
+        let tab = opus.getViewTab();
         let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
         let obsNum = $(element).data("obs");
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;

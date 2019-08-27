@@ -465,6 +465,7 @@ tr.modal-show {
 
 td.op-table-tools {
     width: 3em;
+    min-width: auto !important;
 }
 
 td .form-group {
