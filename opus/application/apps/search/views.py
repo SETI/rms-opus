@@ -413,57 +413,110 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
     order_descending_params = []
 
     # Note that request_get.items() automatically gets rid of duplicate entries
-    # because it returns a dict! But we check for them below anyway just for
-    # good measure.
+    # because it returns a dict.
     search_params = list(request_get.items())
+    used_slugs = []
+
     if 'order' not in [x[0] for x in search_params]:
         # If there's no order slug, then force one
         search_params.append(('order', settings.DEFAULT_SORT_ORDER))
-    for search_param in search_params:
-        slug = search_param[0]
+
+    # Go through the search_params one at a time and use whatever slug we find
+    # to look for the other ones we could be paired with.
+    for slug, value in search_params:
+        orig_slug = slug
+        if slug in used_slugs:
+            continue
+
         if slug == 'order':
-            all_order = search_param[1]
+            all_order = value
             order_params, order_descending_params = parse_order_slug(all_order)
             if order_params is None:
                 return None, None
             extras['order'] = (order_params, order_descending_params)
+            used_slugs.append(slug)
             continue
-        if slug in settings.SLUGS_NOT_IN_DB:
-            continue
-        slug_no_num = strip_numeric_suffix(slug)
-        values = search_param[1].strip(',').split(',')
-        values = [x.strip() for x in values]
-        values_not_split = [search_param[1]]
 
-        qtype = False  # assume this is not a qtype statement
-        if slug.startswith('qtype-'): # like qtype-time=ZZZ
-            qtype = True  # this is a statement of query type!
-            slug = slug.split('-')[1]
+        if slug in settings.SLUGS_NOT_IN_DB:
+            used_slugs.append(slug)
+            continue
+
+        # STRING and RANGE types can can have multiple clauses ORed together by
+        # putting "_NNN" after the slug name.
+        clause_num = 1
+        clause_num_str = ''
+        if '_' in slug:
+            clause_num_str = slug[slug.index('_'):]
+            slug = slug[:slug.index('_')]
+            try:
+                clause_num = int(clause_num_str[1:])
+                if clause_num < 1:
+                    raise ValueError
+            except ValueError:
+                log.error('url_to_search_params: Slug has illegal clause '+
+                          'number "%s"', orig_slug)
+                return None, None
+
+        # Find the master param_info
+        param_info = None
+        is_qtype = None
+        if slug.startswith('qtype-'): # like qtype-time=all
+            is_qtype = True
+            slug = slug[6:]
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: qtype slug has '+
-                          'numeric suffix "%s"', slug)
+                          'numeric suffix "%s"', orig_slug)
                 return None, None
-
-        if qtype:
             param_info = get_param_info_by_slug(slug, 'qtype')
         else:
             param_info = get_param_info_by_slug(slug, 'search')
         if not param_info:
             log.error('url_to_search_params: unknown slug "%s"',
-                      slug)
+                      orig_slug)
             return None, None
+
+        slug_no_num = strip_numeric_suffix(slug)
 
         param_qualified_name = param_info.param_qualified_name()
         if param_qualified_name == 'obs_pds.opus_id':
             # Force OPUS_ID to be searched from obs_general for efficiency
             # even though the user sees it in PDS Constraints.
             param_qualified_name = 'obs_general.opus_id'
+        param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
 
-        # If nothing is specified, just ignore the slug
+        if param_info.slug:
+            # Kill off all the original slugs
+            pi_slug_no_num = strip_numeric_suffix(param_info.slug)
+            used_slugs.append(pi_slug_no_num+clause_num_str)
+            used_slugs.append(pi_slug_no_num+'1'+clause_num_str)
+            used_slugs.append(pi_slug_no_num+'2'+clause_num_str)
+            used_slugs.append('qtype-'+pi_slug_no_num+clause_num_str)
+        if param_info.old_slug:
+            # Kill off all the old slugs - this prevents cases where someone
+            # uses the new slug and old slug names in the same query.
+            pi_old_slug_no_num = strip_numeric_suffix(param_info.old_slug)
+            used_slugs.append(pi_old_slug_no_num+clause_num_str)
+            used_slugs.append(pi_old_slug_no_num+'1'+clause_num_str)
+            used_slugs.append(pi_old_slug_no_num+'2'+clause_num_str)
+            used_slugs.append('qtype-'+pi_old_slug_no_num+clause_num_str)
+
         if form_type in settings.MULT_FORM_TYPES:
+            # MULT types have no qtype, units, or 1/2 split.
+            # They also can't accept a clause number.
+            if clause_num_str:
+                log.error('url_to_search_params: Mult field "%s" has clause'
+                          +' number where none permitted', orig_slug)
+                return None, None
+            if is_qtype:
+                log.error('url_to_search_params: Mult field "%s" has qtype',
+                          orig_slug)
+                return None, None
+
+            # If nothing is specified, just ignore the slug.
+            values = [x.strip() for x in value.split(',')]
             has_value = False
             for value in values:
                 if value:
@@ -473,34 +526,10 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 if pretty_results and return_slugs:
                     selections[slug] = ""
                 continue
-        else:
-            if not values_not_split[0]:
-                if pretty_results and return_slugs:
-                    selections[slug] = ""
-                continue
-
-        param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
-
-        if qtype:
-            if param_qualified_name_no_num in qtypes: # pragma: no cover
-                # This can't happen in real life
-                log.error('url_to_search_params: Duplicate slug for '
-                          +'qtype "%s": %s', param_qualified_name_no_num,
-                          request_get)
-                return None, None
-            qtypes[param_qualified_name_no_num] = values
-            continue
-
-        if form_type in settings.MULT_FORM_TYPES:
             # Mult form types can be sorted and uniquified to save duplicate
             # queries being built.
             # No other form types can be sorted since their ordering
             # corresponds to qtype ordering.
-            if param_qualified_name in selections: # pragma: no cover
-                # This can't happen in real life
-                log.error('url_to_search_params: Duplicate slug for '
-                          +'"%s": %s', param_qualified_name, request_get)
-                return None, None
             new_val = sorted(set(values))
             # Now check to see if the mult values are all valid
             mult_name = get_mult_name(param_qualified_name)
@@ -525,69 +554,118 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 selections[slug] = new_val
             else:
                 selections[param_qualified_name] = new_val
-        elif form_type in settings.RANGE_FORM_TYPES:
-            # For RANGE queries, convert the strings into the internal
-            # representations if necessary
-            if form_type_func is None:
-                func = float
-                if form_type_format and form_type_format[-1] == 'd':
-                    func = int
-                values_to_use = _clean_numeric_field(values_not_split)
-            else:
-                if form_type_func in opus_support.RANGE_FUNCTIONS:
-                    func = (opus_support
-                            .RANGE_FUNCTIONS[form_type_func][1])
-                    values_to_use = values_not_split
-                else: # pragma: no cover
-                    log.error('url_to_search_params: Unknown RANGE '
-                              +'function "%s"', form_type_func)
-                    return None, None
-            if param_qualified_name == param_qualified_name_no_num:
-                # This is a single column range query
-                ext = slug[-1]
-                new_param_qualified_name = param_qualified_name+ext
-            else:
-                new_param_qualified_name = param_qualified_name
-            if new_param_qualified_name in selections:
-                log.error('url_to_search_params: Duplicate slug '
-                          +'for "%s": %s', param_qualified_name+ext,
-                          request_get)
-                return None, None
-            try:
-                new_val = list(map(func, values_to_use))
-                if func == float or func == int:
-                    if not all(map(math.isfinite, new_val)):
-                        raise ValueError
-                if pretty_results:
-                    new_val = format_metadata_number_or_func(
-                                        new_val[0], form_type_func, form_type_format)
-                if return_slugs:
-                    selections[slug] = new_val
-                else:
-                    selections[new_param_qualified_name] = new_val
-            except ValueError as e:
+            continue
+
+        # This is either a RANGE or a STRING type.
+
+        # Look for an associated qtype.
+        # Use the original slug name here since we hope if someone says
+        # XXX=5 then they also say qtype-XXX=all
+        qtype_slug = 'qtype-'+slug_no_num+clause_num_str
+        valid_qtypes = settings.STRING_QTYPES
+        if form_type in settings.RANGE_FORM_TYPES:
+            valid_qtypes = settings.RANGE_QTYPES
+        qtype_val = None
+        if qtype_slug in request_get:
+            qtype_val = request_get[qtype_slug]
+            if qtype_val not in valid_qtypes:
                 if allow_errors:
-                    if return_slugs:
-                        selections[slug] = None
-                    else:
-                        selections[new_param_qualified_name] = None
+                    qtype_val = None
                 else:
-                    log.error('url_to_search_params: Function "%s" slug "%s" '
-                              +'threw ValueError(%s) for %s',
-                              func, slug, e, values_to_use)
+                    log.error('url_to_search_params: Bad qtype value for '
+                              +'"%s": %s', qtype_slug, str(qtype_val))
                     return None, None
         else:
-            # For non-RANGE queries, we just put the values here raw
-            if param_qualified_name in selections: # pragma: no cover
-                # This can't happen in real life
-                log.error('url_to_search_params: Duplicate slug '
-                          +'for "%s": %s', param_qualified_name,
-                          request_get)
-                return None, None
-            if return_slugs:
-                selections[slug] = values_not_split
+            qtype_val = valid_qtypes[0] # Default if not specified
+
+        if form_type in settings.RANGE_FORM_TYPES:
+            # For RANGE form types, there can be 1/2 slugs. Just ignore the slug
+            # we're currently looking at and start over for simplicity.
+            new_param_qualified_names = []
+            new_values = []
+            for suffix in ('1', '2'):
+                new_slug = slug_no_num+suffix+clause_num_str
+                new_param_qualified_name = param_qualified_name_no_num+suffix
+                new_value = None
+                if new_slug in request_get:
+                    value = request_get[new_slug].strip()
+                    # Convert the strings into the internal representations if
+                    # necessary
+                    if form_type_func is None:
+                        func = float
+                        if form_type_format and form_type_format[-1] == 'd':
+                            func = int
+                        value_to_use = _clean_numeric_field(value)
+                    else:
+                        if form_type_func in opus_support.RANGE_FUNCTIONS:
+                            func = (opus_support
+                                    .RANGE_FUNCTIONS[form_type_func][1])
+                            value_to_use = value
+                        else: # pragma: no cover
+                            log.error('url_to_search_params: Unknown RANGE '
+                                      +'function "%s"', form_type_func)
+                            return None, None
+                    if value_to_use:
+                        try:
+                            new_value = func(value_to_use)
+                            if func == float or func == int:
+                                if not math.isfinite(new_value):
+                                    raise ValueError
+                            if pretty_results:
+                                new_value = format_metadata_number_or_func(
+                                                    new_value, form_type_func,
+                                                    form_type_format)
+                        except ValueError as e:
+                            new_value = None
+                            if not allow_errors:
+                                log.error('url_to_search_params: Function "%s" '
+                                          +'slug "%s" '
+                                          +'threw ValueError(%s) for %s',
+                                          func, slug, e, value_to_use)
+                                return None, None
+                    else:
+                        new_value = None
+                elif return_slugs:
+                    continue # If return_slugs, then don't put in a value when
+                             # no slug was actually present
+                if return_slugs:
+                    if value == '':
+                        selections[new_slug] = ''
+                    else:
+                        selections[new_slug] = new_value
+                else:
+                    new_param_qualified_names.append(new_param_qualified_name)
+                    new_values.append(new_value)
+            if (not return_slugs and
+                (new_values[0] is not None or new_values[1] is not None)):
+                # If both values are None, then don't include this slug at all
+                if new_param_qualified_names[0] not in selections:
+                    selections[new_param_qualified_names[0]] = []
+                selections[new_param_qualified_names[0]].append(new_values[0])
+                if new_param_qualified_names[1] not in selections:
+                    selections[new_param_qualified_names[1]] = []
+                selections[new_param_qualified_names[1]].append(new_values[1])
+                # There was at least one value added - include the qtype
+                if param_qualified_name_no_num not in qtypes:
+                    qtypes[param_qualified_name_no_num] = []
+                qtypes[param_qualified_name_no_num].append(qtype_val)
+            continue
+
+        # For STRING form types, there is no 1/2 slug so there's nothing else
+        # to look for. We just put the values here raw.
+        if return_slugs:
+            if value is None:
+                selections[slug] = ''
             else:
-                selections[param_qualified_name] = values_not_split
+                selections[slug] = value
+        elif value: # Don't include empty search strings
+            if param_qualified_name not in selections:
+                selections[param_qualified_name] = []
+            selections[param_qualified_name].append(value)
+            if param_qualified_name_no_num not in qtypes:
+                qtypes[param_qualified_name_no_num] = []
+            qtypes[param_qualified_name_no_num].append(qtype_val)
+
 
     extras['qtypes'] = qtypes
 

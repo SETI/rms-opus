@@ -627,11 +627,11 @@ def api_normalize_url(request):
                 search1_val = new_search1_val
         valid_qtypes = None
         if is_range and not is_single_column_range(pi.param_qualified_name()):
-            valid_qtypes = ('any','all','only')
-            qtype_default = 'any'
+            valid_qtypes = settings.RANGE_QTYPES
+            qtype_default = valid_qtypes[0]
         if is_string:
-            valid_qtypes = ('contains', 'begins', 'ends', 'matches', 'excludes')
-            qtype_default = 'contains'
+            valid_qtypes = settings.STRING_QTYPES
+            qtype_default = valid_qtypes[0]
         if valid_qtypes:
             # Only look for a qtype field if there's a reason to have one
             # Same trick as above in case there is qtype-old and qtype-new
@@ -1052,9 +1052,9 @@ def api_normalize_url(request):
         is_range = form_type in settings.RANGE_FORM_TYPES
         is_string = not is_range and form_type not in settings.MULT_FORM_TYPES
         if is_range and not is_single_column_range(pi.param_qualified_name()):
-            valid_qtypes = ('any','all','only')
+            valid_qtypes = settings.RANGE_QTYPES
         if is_string:
-            valid_qtypes = ('contains', 'begins', 'ends', 'matches', 'excludes')
+            valid_qtypes = settings.STRING_QTYPES
         if valid_qtypes:
             if old_slugs[slug] not in valid_qtypes:
                 msg = ('Search field "'
