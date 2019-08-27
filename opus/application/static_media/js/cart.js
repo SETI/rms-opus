@@ -561,8 +561,8 @@ var o_cart = {
 
     toggleInCart: function(fromOpusId, toOpusId) {
         let tab = opus.getViewTab();
-        let length = 1;
-        let fromIndex = 0;
+        let length = null;
+        let fromIndex = null;
         let action = null;
         let elementArray = $(`${tab} .op-thumbnail-container`);
         let opusIdRange = fromOpusId;
@@ -578,7 +578,7 @@ var o_cart = {
         $(`.op-page-loading-status > .loader`).show();
 
         // handle it as range
-        if (toOpusId != undefined) {
+        if (toOpusId !== undefined) {
             action = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
             let fromObsNum = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum;
             let toObsNum = o_browse.getGalleryElement(toOpusId).data("obs");
@@ -590,18 +590,19 @@ var o_cart = {
             }
             opusIdRange = `${fromOpusId},${toOpusId}`;
             let fromElem = $(`${tab} .op-gallery-view`).find(`[data-obs=${fromObsNum}]`);
-            let toELem = $(`${tab} .op-gallery-view`).find(`[data-obs=${toObsNum}]`);
+            let toElem = $(`${tab} .op-gallery-view`).find(`[data-obs=${toObsNum}]`);
             length = toObsNum - fromObsNum + 1;
             // note that only one of the range endpoints can potentially be not present in the DOM,
             // as we know the user just clicked on one of them to get here.
             if (fromElem.length > 0) {
-                length = (toELem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
+                length = (toElem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
                 fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
             } else {
-                length = $(`${tab} .op-thumbnail-container`).index(toELem);
+                length = $(`${tab} .op-thumbnail-container`).index(toElem);
+                fromIndex = 0;
             }
         } else {
-            // note - doing it this way handles the obs on the browse tab at the same time
+            length = 1;
             let fromElem = o_browse.getGalleryElement(fromOpusId);
             fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
             action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
@@ -609,7 +610,7 @@ var o_cart = {
 
         let url = o_cart.getEditURL(opusIdRange, action);
 
-        // just so we don't have to continually checke for both addrange and add...
+        // just so we don't have to continually check for both addrange and add...
         action = (action === "addrange" || action === "add" ? "add" : action);
         let status = (action === "add" ?  "out" : "in");
         let checked = (action === "add");
