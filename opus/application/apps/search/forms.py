@@ -73,8 +73,7 @@ class SearchForm(forms.Form):
             if slug.startswith('qtype-'):
                 continue
             param_info = get_param_info_by_slug(slug, 'search')
-            print(f'PARAM::::')
-            print(param_info)
+
             if not param_info:
                 log.error(
             "SearchForm: Could not find param_info entry for slug %s",
@@ -126,7 +125,8 @@ class SearchForm(forms.Form):
                         attrs={
                             'class':label + ' RANGE',
                             'placeholder': hints,
-                            'autocomplete': 'off'
+                            'autocomplete': 'off',
+                            'data-slugname': slug_no_num,
                         }
                     ),
                 )

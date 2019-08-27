@@ -77,22 +77,16 @@ var o_widgets = {
             });
         });
 
-        // Avoid closing dropdown menu when clicking any dropdown item
-        $("#search").on("click", ".dropdown-menu", function(e) {
-            e.stopPropagation();
+        $("#search").on("focus", "input.min", function(e) {
+            // TODO: Need to check if input is empty or has valid characters
+            o_widgets.toggleRangesInfoDropdown(e.target);
         });
 
-        // Expand/collapse info when clicking a dropdown submenu
-        $("#search").on("click", ".dropdown-item", function(e) {
-            // prevent URL being messed up with href in <a>
-            e.preventDefault();
-            let collapsibleID = $(e.target).attr("href");
-            $(`${collapsibleID}`).collapse("toggle");
-        });
-
-        // Make sure expanded contents are collapsed when ranges dropdown list is closed.
-        $("#search").on("hidden.bs.dropdown", ".op-preprogrammed-ranges", function(e) {
-            $(".op-preprogrammed-ranges .container").collapse("hide");
+        // Close dropdown list when focus out
+        $("#search").on(" focusout", "input.min", function(e) {
+            if ($(".scrollable-menu").hasClass("show")) {
+                o_widgets.toggleRangesInfoDropdown(e.target);
+            }
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
@@ -130,6 +124,48 @@ var o_widgets = {
                 $(`#${widgetId} input.RANGE`).trigger("change");
             }
         });
+    },
+
+    addPreprogrammedRangesBehaviors: function() {
+        /**
+         * Add customized event handlers for preprogrammed ranges dropdown and expandable
+         * list. This function will be called in getWidget.
+         */
+
+        // Expand/collapse info when clicking a dropdown submenu
+        $(".scrollable-menu .dropdown-item").on("click", function(e) {
+        // $("#search").on("click", ".scrollable-menu .dropdown-item", function(e) {
+            // prevent URL being messed up with href in <a>
+            e.preventDefault();
+            let collapsibleID = $(e.target).attr("href");
+            $(`${collapsibleID}`).collapse("toggle");
+        });
+
+        // Avoid closing dropdown menu when clicking any dropdown item
+        $(".scrollable-menu").on("click", function(e) {
+        // $("#search").on("click", ".scrollable-menu", function(e) {
+            e.stopPropagation();
+        });
+
+        // Prevent overscrolling on ps in widget container when scrolling inside dropdown
+        // list has reached to both ends
+        $(".scrollable-menu").on("scroll wheel", function(e) {
+            e.stopPropagation();
+        });
+
+        // Make sure expanded contents are collapsed when ranges dropdown list is closed.
+        $("#search").on("hidden.bs.dropdown", function(e) {
+            $(".op-preprogrammed-ranges .container").collapse("hide");
+        });
+    },
+
+    toggleRangesInfoDropdown: function(target) {
+        /**
+         * Toggle the dropdown expandable list of ranges info
+         */
+        let slug = $(target).data("slugname");
+        let widgetId = `widget__${slug}`;
+        $(`#${widgetId} #op-ranges-dropdown-menu`).dropdown("toggle");
     },
 
     closeWidget: function(slug) {
@@ -612,16 +648,12 @@ var o_widgets = {
                 $("input.STRING").autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
-                if ($(".dropdown-menu").hasClass("show")) {
+                if ($(".scrollable-menu").hasClass("show")) {
                     $("#op-ranges-dropdown-menu").dropdown("toggle");
                 }
             });
 
-            // Prevent overscrolling on ps in widget container when scrolling inside dropdown
-            // list has reached to both ends
-            $(".scrollable-menu").on("scroll wheel", function(e) {
-                e.stopPropagation();
-            });
+            o_widgets.addPreprogrammedRangesBehaviors();
 
             // add the spans that hold the hinting
             try {

@@ -47,10 +47,10 @@
                         {{ form|safe }}
                 </ul>
                 {% if ranges %}
-                    <div class="op-preprogrammed-ranges dropdown">
-                        <button type="button" id="op-ranges-dropdown-menu" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div id="op-ranges-dropdown-menu" class="op-preprogrammed-ranges dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <!-- <button type="button" id="op-ranges-dropdown-menu" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Preprogrammed Ranges
-                        </button>
+                        </button> -->
                         <ul class="dropdown-menu scrollable-menu pl-0 w-100" aria-labelledby="op-ranges-dropdown-menu" role="menu">
                             {% for range_data_entry in ranges %}
                                 <li class="mr-0 d-block">
