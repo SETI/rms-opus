@@ -645,7 +645,9 @@ var o_widgets = {
 
                 // Close dropdown list when ps scrolling is happening in widget container
                 if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
-                    $(`#${widget} .op-preprogrammed-ranges`).dropdown("toggle");
+                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                    // and in this case it's the li (.op-ranges-dropdown-menu).
+                    $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
                 }
             });
 
