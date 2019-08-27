@@ -77,10 +77,10 @@ var o_widgets = {
             });
         });
 
-        $("#search").on("focus", "input.min", function(e) {
-            // TODO: Need to check if input is empty or has valid characters
-            o_widgets.toggleRangesInfoDropdown(e.target);
-        });
+        // $("#search").on("focus", "input.min", function(e) {
+        //     // TODO: Need to check if input is empty or has valid characters
+        //     o_widgets.toggleRangesInfoDropdown(e.target);
+        // });
 
         // Close dropdown list when focus out
         // $("#search").on(" focusout", "input.min", function(e) {
@@ -120,7 +120,7 @@ var o_widgets = {
                 }
 
                 // close dropdown and trigger the search
-                $("#op-ranges-dropdown-menu").dropdown("toggle");
+                $(`#${widgetId} input.min`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE`).trigger("change");
             }
         });
@@ -644,11 +644,12 @@ var o_widgets = {
                 $("input.STRING").autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
-                if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
-                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
-                    // and in this case it's the li (.op-ranges-dropdown-menu).
-                    $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
-                }
+                // if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
+                //     // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                //     // and in this case it's the li (.op-ranges-dropdown-menu).
+                //     // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
+                //     $(`#${widget} input.min`).dropdown("toggle");
+                // }
             });
 
             // Prevent overscrolling on ps in widget container when scrolling inside dropdown

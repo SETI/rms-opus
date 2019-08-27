@@ -176,7 +176,7 @@
                 {
                     "name": "Dawes Ringlet",
                     "field1": "90138",
-                    "field2": "",
+                    "field2": "90200",
                     "unit": "km",
                     "qtype": null
                 },
@@ -370,23 +370,23 @@
                     "qtype": null
                 },
                 {
-                    "name": "Methone Ring",
+                    "name": "Methone Ring Arcs",
                     "field1": "194440",
-                    "field2": "",
+                    "field2": "194450",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "Anthe Ring",
+                    "name": "Anthe Ring Arcs",
                     "field1": "197655",
-                    "field2": "",
+                    "field2": "197665",
                     "unit": "km",
                     "qtype": null
                 },
                 {
-                    "name": "Pallene Ring",
+                    "name": "Pallene Ring Arcs",
                     "field1": "212000",
-                    "field2": "",
+                    "field2": "214500",
                     "unit": "km",
                     "qtype": null
                 },
@@ -889,8 +889,8 @@
                 },
                 {
                     "name": "Arago",
-                    "field1": "57200",
-                    "field2": "57200",
+                    "field1": "57150",
+                    "field2": "57250",
                     "unit": "km",
                     "qtype": null
                 },
@@ -931,8 +931,8 @@
                 },
                 {
                     "name": "Unnamed",
-                    "field1": "61953",
-                    "field2": "61953",
+                    "field1": "61948",
+                    "field2": "61958",
                     "unit": "km",
                     "qtype": null
                 }
