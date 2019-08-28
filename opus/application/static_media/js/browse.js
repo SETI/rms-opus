@@ -54,6 +54,7 @@ var o_browse = {
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
 
+    pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader on cart edit
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
     /**
@@ -314,7 +315,7 @@ var o_browse = {
         $("#browse, #cart").on("click", ".op-data-table-view th a",  function() {
             // show this spinner right away when table is clicked
             // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let orderBy =  $(this).data("slug");
             let targetSlug = orderBy;
 
@@ -349,7 +350,7 @@ var o_browse = {
 
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
 
@@ -374,7 +375,7 @@ var o_browse = {
 
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let targetSlug = slug;
             let isDescending = true;
@@ -1218,6 +1219,21 @@ var o_browse = {
         opus.changeTab("detail");
     },
 
+    showPageLoaderSpinner: function() {
+        if (o_browse.pageLoaderSpinnerTimer === null) {
+            o_browse.pageLoaderSpinnerTimer = setTimeout(function() {
+                $(`.op-page-loading-status > .loader`).show(); }, opus.spinnerDelay);
+        }
+    },
+
+    hidePageLoaderSpinner: function() {
+        if (o_browse.pageLoaderSpinnerTimer !== null) {
+            // This should always be true - we're just being careful
+            clearTimeout(o_browse.pageLoaderSpinnerTimer);
+            $(`.op-page-loading-status > .loader`).hide();
+            o_browse.pageLoaderSpinnerTimer = null;
+        }
+    },
 
     /******************************************/
     /********* SELECT METADATA DIALOG *********/
@@ -1240,7 +1256,7 @@ var o_browse = {
                 o_browse.loadData(opus.prefs.view);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
             }
         });
 
@@ -1312,7 +1328,7 @@ var o_browse = {
                     o_browse.resetMetadata(opus.defaultColumns);
                     break;
                 case "submit":
-                    $(".op-page-loading-status > .loader").show();
+                    o_browse.showPageLoaderSpinner();
                     break;
                 case "cancel":
                     opus.prefs.cols = [];
@@ -1590,7 +1606,7 @@ var o_browse = {
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 } else {
                     // we've hit the end of the infinite scroll.
-                    $(".op-page-loading-status > .loader").hide();
+                    o_browse.hidePageLoaderSpinner();
                 }
                 return;
             }
@@ -1676,7 +1692,7 @@ var o_browse = {
                                       infiniteScrollDataObj.scrollbarObsNum, view,
                                       infiniteScrollDataObj.scrollbarOffset);
 
-        $(".op-page-loading-status > .loader").hide();
+        o_browse.hidePageLoaderSpinner();
         o_browse.updateSliderHandle(view);
         o_hash.updateHash(true);
     },
@@ -2046,17 +2062,17 @@ var o_browse = {
                             startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
                         }
                         o_browse.setScrollbarPosition(startObs, startObs, view);
-                        $(".op-page-loading-status > .loader").hide();
+                        o_browse.hidePageLoaderSpinner();
                         return;
                     }
                 }
             } else {
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
                 return;
             }
         }
 
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         viewNamespace.loadDataInProgress = true;
@@ -2064,7 +2080,7 @@ var o_browse = {
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
                 // make sure to remove spinner before return
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
                 return;
             }
 
@@ -2099,7 +2115,7 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function(event, response, path, view) {
         let viewNamespace = opus.getViewNamespace(view);
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         let data = JSON.parse(response);
 
         let tab = opus.getViewTab(view);
@@ -2147,7 +2163,7 @@ var o_browse = {
         // reset range select
         o_browse.undoRangeSelect();
 
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         o_browse.updateBrowseNav();
         o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
         // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view

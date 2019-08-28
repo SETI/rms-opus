@@ -575,7 +575,7 @@ var o_cart = {
 
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
-        $(`.op-page-loading-status > .loader`).show();
+        o_browse.showPageLoaderSpinner();
 
         // handle it as range
         if (toOpusId !== undefined) {
@@ -642,7 +642,7 @@ var o_cart = {
                     o_cart.updateCartStatus(statusData);
                 }
             }
-            $(`.op-page-loading-status > .loader`).hide();
+            o_browse.hidePageLoaderSpinner();
             // to enable clicks again
             $('#click-blocker').hide();
         });
