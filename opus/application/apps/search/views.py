@@ -625,19 +625,21 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                                 return None, None
                     else:
                         new_value = None
-                elif return_slugs:
-                    continue # If return_slugs, then don't put in a value when
-                             # no slug was actually present
-                if return_slugs:
-                    if value == '':
-                        selections[new_slug] = ''
-                    else:
-                        selections[new_slug] = new_value
-                else:
-                    new_param_qualified_names.append(new_param_qualified_name)
-                    new_values.append(new_value)
-            if (not return_slugs and
-                (new_values[0] is not None or new_values[1] is not None)):
+                    if return_slugs:
+                        # Always put values for present slugs in for
+                        # return_slugs
+                        if value == '':
+                            selections[new_slug] = ''
+                        else:
+                            selections[new_slug] = new_value
+                new_param_qualified_names.append(new_param_qualified_name)
+                new_values.append(new_value)
+            if return_slugs:
+                # Always include qtype no matter what
+                if param_qualified_name_no_num not in qtypes:
+                    qtypes[param_qualified_name_no_num] = []
+                qtypes[param_qualified_name_no_num].append(qtype_val)
+            elif new_values[0] is not None or new_values[1] is not None:
                 # If both values are None, then don't include this slug at all
                 if new_param_qualified_names[0] not in selections:
                     selections[new_param_qualified_names[0]] = []
@@ -651,21 +653,23 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 qtypes[param_qualified_name_no_num].append(qtype_val)
             continue
 
-        # For STRING form types, there is no 1/2 slug so there's nothing else
-        # to look for. We just put the values here raw.
+        # For STRING form types, there is only a single slug. Just ignore the
+        # slug we're currently looking at and start over for simplicity.
+        new_value = None
+        new_slug = slug_no_num+clause_num_str
+        if new_slug in request_get:
+            new_value = request_get[new_slug]
         if return_slugs:
-            if value is None:
-                selections[slug] = ''
-            else:
-                selections[slug] = value
-        elif value: # Don't include empty search strings
-            if param_qualified_name not in selections:
-                selections[param_qualified_name] = []
-            selections[param_qualified_name].append(value)
+            selections[slug] = new_value
+            qtypes[slug] = qtype_val
+        elif value is not None:
+            # If the value is None, then don't include this slug at all
+            if param_qualified_name_no_num not in selections:
+                selections[param_qualified_name_no_num] = []
+            selections[param_qualified_name_no_num].append(new_value)
             if param_qualified_name_no_num not in qtypes:
                 qtypes[param_qualified_name_no_num] = []
             qtypes[param_qualified_name_no_num].append(qtype_val)
-
 
     extras['qtypes'] = qtypes
 

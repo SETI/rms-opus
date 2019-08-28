@@ -286,6 +286,38 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
+    def test__url_to_search_params_times_multi_7(self):
+        "[test_search.py] url_to_search_params: date parsing multi 7"
+        # Using old slug name
+        q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=2000-01-24T06:00:00&qtype-time_1=only')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_general.time1': [2008832.0],
+                        'obs_general.time2': [2008832.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_general.time': ['any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_times_multi_8(self):
+        "[test_search.py] url_to_search_params: date parsing multi 8"
+        # Using old slug name
+        q = QueryDict('time1_1=&time2_2=&time1_3=2000-01-24T06:00:00&time2_3=&qtype-time_3=only')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_general.time1': [2008832.0],
+                        'obs_general.time2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_general.time': ['only']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
     def test__url_to_search_params_times_bad(self):
         "[test_search.py] url_to_search_params: bad date format"
         q = QueryDict('time1=2000 XXX 01')
