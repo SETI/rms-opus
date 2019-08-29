@@ -32,7 +32,7 @@ class searchTests(TestCase):
     def setUp(self):
         self._empty_user_searches()
         self.maxDiff = None
-        # logging.disable(logging.ERROR)
+        logging.disable(logging.ERROR)
 
     def tearDown(self):
         self._empty_user_searches()

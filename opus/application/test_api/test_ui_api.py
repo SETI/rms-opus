@@ -1775,15 +1775,15 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_search_mult_clause(self):
-        "[test_ui_api.py] /__normalizeurl: search mult clause"
+    def test__api_normalizeurl_search_mult_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search mult clause 1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS'
         new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
 
-    def test__api_normalizeurl_search_mult_clause(self):
-        "[test_ui_api.py] /__normalizeurl: search mult clause"
+    def test__api_normalizeurl_search_mult_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search mult clause 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS&instrument=COUVIS'
         new_slugs['instrument'] = 'COUVIS'
