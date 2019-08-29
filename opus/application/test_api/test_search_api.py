@@ -20,11 +20,11 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
-        self.search_time_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
-        self.search_time_threshold2 = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD
+        self.search_time_threshold  = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD
+        self.search_time_threshold2 = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000000
-        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000
-        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1000000
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = 1000000
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1000000
         if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
@@ -34,7 +34,7 @@ class ApiSearchTests(TestCase, ApiTestHelper):
     def tearDown(self):
         logging.disable(logging.NOTSET)
         settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = self.search_count_threshold
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = self.search_time_threshold
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD  = self.search_time_threshold
         settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = self.search_time_threshold2
 
     def _run_stringsearchchoices_subset(self, url, expected):
@@ -383,6 +383,26 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         "[test_search_api.py] /api/stringsearchchoices: bad search2"
         url = '/opus/__api/stringsearchchoices/volumeid.json?missionid=A&reqno=123'
         self._run_status_equal(url, 404)
+
+    def test__api_stringsearchchoices_volumeid_empty_bigcache(self):
+        "[test_search_api.py] /api/stringsearchchoices: volumeid empty"
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=&reqno=123'
+        expected = {'choices': ['COISS_2002', 'GO_0017'],
+                    # 'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_stringsearchchoices_subset(url, expected)
+
+    def test__api_stringsearchchoices_volumeid_empty_bigcache_timeout(self):
+        "[test_search_api.py] /api/stringsearchchoices: volumeid empty timeout"
+        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
+        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1
+        url = '/opus/__api/stringsearchchoices/volumeid.json?volumeid=&reqno=123'
+        expected = {'choices': ['COISS_2002', 'GO_0017'],
+                    # 'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_stringsearchchoices_subset(url, expected)
 
     def test__api_stringsearchchoices_volumeid_none(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid none"

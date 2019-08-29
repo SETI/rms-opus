@@ -1188,6 +1188,15 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_multi_good_1_qtype_bad(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 qtype bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&qtype-rightasc=XXX'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_search_multi_good_2_qtype_all(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 2 qtype all"
         new_slugs = dict(self.default_url_slugs)
@@ -1714,6 +1723,14 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     # Mult field
 
+    def test__api_normalizeurl_search_mult_empty(self):
+        "[test_ui_api.py] /__normalizeurl: search mult empty"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument='
+        new_slugs['instrument'] = ''
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_search_mult_good(self):
         "[test_ui_api.py] /__normalizeurl: search mult good"
         new_slugs = dict(self.default_url_slugs)
@@ -1740,6 +1757,13 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: search mult bad 12"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument1=COISS&instrument2=COISS'
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_mult_bad_val(self):
+        "[test_ui_api.py] /__normalizeurl: search mult bad val"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument=COISS,XXX'
         new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
 

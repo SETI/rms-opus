@@ -62,7 +62,7 @@ def api_normalize_input(request):
     """
     api_code = enter_api_call('api_normalize_input', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None: # pragma: no coverage
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
@@ -124,7 +124,7 @@ def api_string_search_choices(request, slug):
     """
     api_code = enter_api_call('api_string_search_choices', request)
 
-    if not request or request.GET is None:
+    if not request or request.GET is None: # pragma: no coverage
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
@@ -179,13 +179,12 @@ def api_string_search_choices(request, slug):
         exit_api_call(api_code, ret)
         raise ret
 
-    partial_query = ''
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
-    if not user_query_table:
+    if not user_query_table: # pragma: no cover
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -487,7 +486,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
 
-        if param_info.slug:
+        if param_info.slug: # Should always be true # pragma: no cover
             # Kill off all the original slugs
             pi_slug_no_num = strip_numeric_suffix(param_info.slug)
             used_slugs.append(pi_slug_no_num+clause_num_str)
@@ -569,7 +568,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         if qtype_slug in request_get:
             qtype_val = request_get[qtype_slug]
             if qtype_val not in valid_qtypes:
-                if allow_errors:
+                if allow_errors: # pragma: no cover
+                    # We never actually hit this because normalizeurl catches
+                    # the bad qtype first
                     qtype_val = None
                 else:
                     log.error('url_to_search_params: Bad qtype value for '
@@ -636,7 +637,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 new_values.append(new_value)
             if return_slugs:
                 # Always include qtype no matter what
-                if param_qualified_name_no_num not in qtypes:
+                # The following if should always be true because we only hit
+                # this once for each slug
+                if param_qualified_name_no_num not in qtypes: # pragma: no cover
                     qtypes[param_qualified_name_no_num] = []
                 qtypes[param_qualified_name_no_num].append(qtype_val)
             elif new_values[0] is not None or new_values[1] is not None:
@@ -662,7 +665,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         if return_slugs:
             selections[slug] = new_value
             qtypes[slug] = qtype_val
-        elif value is not None:
+        elif new_value is not None: # pragma: no cover
+            # Not possible for this to be false because new_value will be ''
+            # for an empty search string, not None
             # If the value is None, then don't include this slug at all
             if param_qualified_name_no_num not in selections:
                 selections[param_qualified_name_no_num] = []
@@ -1152,7 +1157,10 @@ def construct_query_string(selections, extras):
     # Add in the WHERE clauses
     if clauses:
         sql += ' WHERE '
-        sql += ' AND '.join(['('+c+')' for c in clauses])
+        if len(clauses) == 1:
+            sql += clauses[0]
+        else:
+            sql += ' AND '.join(['('+c+')' for c in clauses])
 
     # Add in the ORDER BY clause
     sql += order_sql
@@ -1187,56 +1195,59 @@ def get_string_query(selections, param_qualified_name, qtypes):
     quoted_param_qualified_name = (quoted_cat_name+'.'
                                    +connection.ops.quote_name(name))
 
-    if len(values) > 1:
-        log.error('_get_string_query: More than one value specified for '
-                  +'"%s" - "%s" '
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_qualified_name, str(values),
-                  str(selections), str(qtypes))
-        return None, None
-
     if len(qtypes) == 0:
-        qtypes = ['contains']
+        qtypes = ['contains'] * len(values)
 
-    if len(qtypes) != 1:
-        log.error('_get_string_query: Not one value specified for qtype '
+    if len(qtypes) != len(values):
+        log.error('get_string_query: Inconsistent qtype/values lengths '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_qualified_name, str(selections), str(qtypes))
         return None, None
 
-    qtype = qtypes[0]
-    value = values[0]
-
-    value = value.replace('\\', '\\\\')
-    if qtype != 'matches':
-        value = value.replace('%', '\\%')
-        value = value.replace('_', '\\_')
-
-    clause = ''
+    clauses = []
     params = []
 
-    if qtype == 'contains':
-        clause = quoted_param_qualified_name + ' LIKE %s'
-        params.append('%'+value+'%')
-    elif qtype == 'begins':
-        clause = quoted_param_qualified_name + ' LIKE %s'
-        params.append(value+'%')
-    elif qtype == 'ends':
-        clause = quoted_param_qualified_name + ' LIKE %s'
-        params.append('%'+value)
-    elif qtype == 'matches':
-        clause = quoted_param_qualified_name + ' = %s'
-        params.append(value)
-    elif qtype == 'excludes':
-        clause = quoted_param_qualified_name + ' NOT LIKE %s'
-        params.append('%'+value+'%')
+    for idx in range(len(values)):
+        value = values[idx]
+        qtype = qtypes[idx]
+
+        clause = ''
+
+        value = value.replace('\\', '\\\\')
+        if qtype != 'matches':
+            value = value.replace('%', '\\%')
+            value = value.replace('_', '\\_')
+
+        if qtype == 'contains':
+            clause = quoted_param_qualified_name + ' LIKE %s'
+            params.append('%'+value+'%')
+        elif qtype == 'begins':
+            clause = quoted_param_qualified_name + ' LIKE %s'
+            params.append(value+'%')
+        elif qtype == 'ends':
+            clause = quoted_param_qualified_name + ' LIKE %s'
+            params.append('%'+value)
+        elif qtype == 'matches':
+            clause = quoted_param_qualified_name + ' = %s'
+            params.append(value)
+        elif qtype == 'excludes':
+            clause = quoted_param_qualified_name + ' NOT LIKE %s'
+            params.append('%'+value+'%')
+        else:
+            log.error('_get_string_query: Unknown qtype "%s" '
+                      +'for "%s"'
+                      +'*** Selections %s *** Qtypes %s ***',
+                      qtype, param_qualified_name, str(selections), str(qtypes))
+            return None, None
+        if clause:
+            clauses.append(clause)
+
+    if len(clauses) == 1:
+        clause = clauses[0]
     else:
-        log.error('_get_string_query: Unknown qtype "%s" '
-                  +'for "%s"'
-                  +'*** Selections %s *** Qtypes %s ***',
-                  qtype, param_qualified_name, str(selections), str(qtypes))
-        return None, None
+        clause = ' OR '.join(['('+c+')' for c in clauses])
+
     return clause, params
 
 def get_range_query(selections, param_qualified_name, qtypes):
@@ -1266,14 +1277,6 @@ def get_range_query(selections, param_qualified_name, qtypes):
     values_min = selections.get(param_qualified_name_min, [])
     values_max = selections.get(param_qualified_name_max, [])
 
-    if len(values_min) > 1 or len(values_max) > 1:
-        log.error('get_range_query: More than one value specified for '
-                  +'"%s" - MIN %s MAX %s '
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_qualified_name, str(values_min), str(values_max),
-                  str(selections), str(qtypes))
-        return None, None
-
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
@@ -1287,7 +1290,7 @@ def get_range_query(selections, param_qualified_name, qtypes):
         param_qualified_name_max = param_qualified_name_no_num
         name_min = name_max = name_no_num
         # qtypes are meaningless for single column ranges!
-        qtypes = ['any']
+        qtypes = ['any'] * len(values_min)
 
     quoted_param_qualified_name_min = (quoted_cat_name+'.'
                                        +connection.ops.quote_name(name_min))
@@ -1295,67 +1298,74 @@ def get_range_query(selections, param_qualified_name, qtypes):
                                        +connection.ops.quote_name(name_max))
 
     if len(qtypes) == 0:
-        qtypes = ['any']
+        qtypes = ['any'] * len(values_min)
 
-    if len(qtypes) != 1:
-        log.error('get_range_query: Not one value specified for qtype '
+    if len(qtypes) != len(values_min) or len(values_min) != len(values_max):
+        log.error('get_range_query: Inconsistent qtype/min/max lengths '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_qualified_name, str(selections), str(qtypes))
         return None, None
 
-    # If we want to support more than one set of range fields, loop here
-    if len(values_min):
-        value_min = values_min[0]
-    else:
-        value_min = None
-    if len(values_max):
-        value_max = values_max[0]
-    else:
-        value_max = None
-    qtype = qtypes[0]
-
-    clause = ''
+    clauses = []
     params = []
 
-    if qtype == 'all':
-        # param_name_min <= value_min AND param_name_max >= value_max
-        if value_min is not None:
-            clause += quoted_param_qualified_name_min + ' <= %s'
-            params.append(value_min)
-        if value_max is not None:
-            if clause:
-                clause += ' AND '
-            clause += quoted_param_qualified_name_max + ' >= %s'
-            params.append(value_max)
+    for idx in range(len(values_min)):
+        value_min = values_min[idx]
+        value_max = values_max[idx]
+        qtype = qtypes[idx]
 
-    elif qtype == 'only':
-        # param_name_min >= value_min AND param_name_max <= value_max
-        if value_min is not None:
-            clause += quoted_param_qualified_name_min + ' >= %s'
-            params.append(value_min)
-        if value_max is not None:
-            if clause:
-                clause += ' AND '
-            clause += quoted_param_qualified_name_max + ' <= %s'
-            params.append(value_max)
+        clause = ''
 
-    elif qtype == 'any' or qtype == '':
-        # param_name_min <= value_max AND param_name_max >= value_min
-        if value_min is not None:
-            clause += quoted_param_qualified_name_max + ' >= %s'
-            params.append(value_min)
-        if value_max is not None:
+        if qtype == 'all':
+            # param_name_min <= value_min AND param_name_max >= value_max
+            if value_min is not None:
+                clause += quoted_param_qualified_name_min + ' <= %s'
+                params.append(value_min)
+            if value_max is not None:
+                if clause:
+                    clause += ' AND '
+                clause += quoted_param_qualified_name_max + ' >= %s'
+                params.append(value_max)
             if clause:
-                clause += ' AND '
-            clause += quoted_param_qualified_name_min + ' <= %s'
-            params.append(value_max)
+                clauses.append(clause)
 
+        elif qtype == 'only':
+            # param_name_min >= value_min AND param_name_max <= value_max
+            if value_min is not None:
+                clause += quoted_param_qualified_name_min + ' >= %s'
+                params.append(value_min)
+            if value_max is not None:
+                if clause:
+                    clause += ' AND '
+                clause += quoted_param_qualified_name_max + ' <= %s'
+                params.append(value_max)
+            if clause:
+                clauses.append(clause)
+
+        elif qtype == 'any' or qtype == '':
+            # param_name_min <= value_max AND param_name_max >= value_min
+            if value_min is not None:
+                clause += quoted_param_qualified_name_max + ' >= %s'
+                params.append(value_min)
+            if value_max is not None:
+                if clause:
+                    clause += ' AND '
+                clause += quoted_param_qualified_name_min + ' <= %s'
+                params.append(value_max)
+            if clause:
+                clauses.append(clause)
+
+        else:
+            log.error('get_range_query: Unknown qtype "%s" '
+                      +'for "%s"'
+                      +'*** Selections %s *** Qtypes %s ***',
+                      qtype, param_qualified_name, str(selections), str(qtypes))
+
+    if len(clauses) == 1:
+        clause = clauses[0]
     else:
-        log.error('get_range_query: Unknown qtype "%s" '
-                  +'for "%s"'
-                  +'*** Selections %s *** Qtypes %s ***',
-                  qtype, param_qualified_name, str(selections), str(qtypes))
+        clause = ' OR '.join(['('+c+')' for c in clauses])
 
     return clause, params
 
@@ -1386,14 +1396,6 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
     values_min = selections.get(param_qualified_name_min, [])
     values_max = selections.get(param_qualified_name_max, [])
 
-    if len(values_min) != 1 or len(values_max) != 1:
-        log.error('get_longitude_query: Must have one value for each '
-                  +'"%s" - MIN %s MAX %s '
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_qualified_name, str(values_min), str(values_max),
-                  str(selections), str(qtypes))
-        return None, None
-
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
@@ -1404,75 +1406,97 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
     col_d_long = cat_name + '.d_' + name_no_num
 
     if len(qtypes) == 0:
-        qtypes = ['any']
+        qtypes = ['any'] * len(values_min)
 
-    if len(qtypes) != 1:
-        log.error('get_longitude_query: Not one value specified for qtype '
+    if len(qtypes) != len(values_min) or len(values_min) != len(values_max):
+        log.error('get_longitude_query: Inconsistent qtype/min/max lengths '
                   +'for "%s"'
                   +'*** Selections %s *** Qtypes %s ***',
                   param_qualified_name, str(selections), str(qtypes))
         return None, None
 
-    # If we want to support more than one set of range fields, loop here
-    # XXX Need to add parameter validation here
-    value_min = float(values_min[0])
-    value_max = float(values_max[0])
-    qtype = qtypes[0]
-
-    if is_single_column_range(param_qualified_name):
-        # A single column range doesn't have center and d_ fields
-        clause = ''
-        params = []
-        quoted_param_qualified_name = (quoted_cat_name+'.'
-                                       +connection.ops.quote_name(name_no_num))
-        if value_max >= value_min:
-            # Normal range MIN to MAX
-            clause = '(' + quoted_param_qualified_name + ' >= %s AND '
-            clause += quoted_param_qualified_name + ' <= %s)'
-            params = [value_min, value_max]
-        else:
-            # Wraparound range MIN to 360, 0 to MAX
-            clause = '(' + quoted_param_qualified_name + ' >= %s OR '
-            clause += quoted_param_qualified_name + ' <= %s)'
-            params = [value_min, value_max]
-        return clause, params
-
-    quoted_param_qualified_name_min = (quoted_cat_name+'.'
-                                       +connection.ops.quote_name(name_min))
-    quoted_param_qualified_name_max = (quoted_cat_name+'.'
-                                       +connection.ops.quote_name(name_max))
-
-
-    # Find the midpoint and dx of the user's range
-    if value_max >= value_min:
-        longit = (value_min + value_max)/2.
-    else:
-        longit = (value_min + value_max + 360.)/2.
-    longit = longit % 360.
-    d_long = (longit - value_min) % 360.
-    sep_sql = 'ABS(MOD(%s - ' + param_qualified_name_no_num + ' + 540., 360.) - 180.)'
-    sep_params = [longit]
-
-    clause = ''
+    clauses = []
     params = []
 
-    if qtype == 'any' or qtype == '':
-        clause += sep_sql + ' <= %s + ' + col_d_long
-        params += sep_params
-        params.append(d_long)
-    elif qtype == 'all':
-        clause += sep_sql + ' <= ' + col_d_long + ' - %s'
-        params += sep_params
-        params.append(d_long)
-    elif qtype == 'only':
-        clause += sep_sql + ' <= %s - ' + col_d_long
-        params += sep_params
-        params.append(d_long)
+    for idx in range(len(values_min)):
+        value_min = values_min[idx]
+        value_max = values_max[idx]
+        qtype = qtypes[idx]
+
+        if value_min is None and value_max is None:
+            continue
+
+        if value_min is None or value_max is None:
+            log.error('get_range_query: Missing min or max value '
+                      +'for "%s"'
+                      +'*** Selections %s *** Qtypes %s ***',
+                      param_qualified_name, str(selections), str(qtypes))
+            return None, None
+
+        clause = ''
+
+        if is_single_column_range(param_qualified_name):
+            # A single column range doesn't have center and d_ fields
+            quoted_param_qualified_name = (quoted_cat_name+'.'
+                                           +connection.ops.quote_name(name_no_num))
+            if value_max >= value_min:
+                # Normal range MIN to MAX
+                clause = '(' + quoted_param_qualified_name + ' >= %s AND '
+                clause += quoted_param_qualified_name + ' <= %s)'
+                params.append(value_min)
+                params.append(value_max)
+            else:
+                # Wraparound range MIN to 360, 0 to MAX
+                clause = '(' + quoted_param_qualified_name + ' >= %s OR '
+                clause += quoted_param_qualified_name + ' <= %s)'
+                params.append(value_min)
+                params.append(value_max)
+            if clause:
+                clauses.append(clause)
+        else:
+            quoted_param_qualified_name_min = (quoted_cat_name+'.'
+                                               +connection.ops.quote_name(name_min))
+            quoted_param_qualified_name_max = (quoted_cat_name+'.'
+                                               +connection.ops.quote_name(name_max))
+
+            # Find the midpoint and dx of the user's range
+            if value_max >= value_min:
+                longit = (value_min + value_max)/2.
+            else:
+                longit = (value_min + value_max + 360.)/2.
+            longit = longit % 360.
+            d_long = (longit - value_min) % 360.
+            sep_sql = 'ABS(MOD(%s - ' + param_qualified_name_no_num + ' + 540., 360.) - 180.)'
+            sep_params = [longit]
+
+            if qtype == 'any' or qtype == '':
+                clause += sep_sql + ' <= %s + ' + col_d_long
+                params += sep_params
+                params.append(d_long)
+            elif qtype == 'all':
+                clause += sep_sql + ' <= ' + col_d_long + ' - %s'
+                params += sep_params
+                params.append(d_long)
+            elif qtype == 'only':
+                clause += sep_sql + ' <= %s - ' + col_d_long
+                params += sep_params
+                params.append(d_long)
+            else:
+                log.error('get_longitude_query: Unknown qtype "%s" '
+                          +'for "%s"'
+                          +'*** Selections %s *** Qtypes %s ***',
+                          qtype, param_name, str(selections), str(qtypes))
+            if clause:
+                clauses.append(clause)
+
+    if len(clauses) == 1:
+        clause = clauses[0]
     else:
-        log.error('get_longitude_query: Unknown qtype "%s" '
-                  +'for "%s"'
-                  +'*** Selections %s *** Qtypes %s ***',
-                  qtype, param_name, str(selections), str(qtypes))
+        if is_single_column_range(param_qualified_name):
+            # These will already be wrapped in ()
+            clause = ' OR '.join(clauses)
+        else:
+            clause = ' OR '.join(['('+c+')' for c in clauses])
 
     return clause, params
 

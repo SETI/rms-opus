@@ -383,6 +383,20 @@ class searchTests(TestCase):
     ### BASIC RANGES ###
     ####################
 
+    def test__url_to_search_params_qtype_only(self):
+        "[test_search.py] url_to_search_params: range with qtype only"
+        q = QueryDict('qtype-RINGGEOphase=only')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
     def test__url_to_search_params_both_empty_min(self):
         "[test_search.py] url_to_search_params: range with only missing min value"
         q = QueryDict('RINGGEOphase1=')
@@ -650,7 +664,6 @@ class searchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
 
-
     #######################
     ### NUMERIC FORMATS ###
     #######################
@@ -686,9 +699,48 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
+    def test__url_to_search_params_numeric_bad_1(self):
+        "[test_search.py] url_to_search_params: numeric bad 1"
+        q = QueryDict('observationduration1=XXX"&observationduration2=10.')
+        (selections, extras) = url_to_search_params(q)
+        print(selections)
+        print(extras)
+        self.assertIsNone(selections)
+
+    def test__url_to_search_params_numeric_bad_2(self):
+        "[test_search.py] url_to_search_params: numeric bad 2"
+        q = QueryDict('observationduration1=10."&observationduration2=XXX')
+        (selections, extras) = url_to_search_params(q)
+        print(selections)
+        print(extras)
+        self.assertIsNone(selections)
+
+    def test__url_to_search_params_numeric_bad_12(self):
+        "[test_search.py] url_to_search_params: numeric bad 12"
+        q = QueryDict('observationduration1=XXX"&observationduration2=XXX')
+        (selections, extras) = url_to_search_params(q)
+        print(selections)
+        print(extras)
+        self.assertIsNone(selections)
+
+
     ######################
     ### STRING FORMATS ###
     ######################
+
+    def test__url_to_search_params_stringsearch_empty(self):
+        "[test_search.py] url_to_search_params: search on a string value empty"
+        q = QueryDict('note=')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_pds.note': ['']}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_pds.note': ['contains']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
 
     def test__url_to_search_params_stringsearch(self):
         "[test_search.py] url_to_search_params: search on a string value"
@@ -806,6 +858,20 @@ class searchTests(TestCase):
     #############
     ### MULTS ###
     #############
+
+    def test__url_to_search_params_mults_empty(self):
+        "[test_search.py] url_to_search_params: mults empty"
+        q = QueryDict('planet=&target=')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
 
     def test__url_to_search_params_mults_uc(self):
         "[test_search.py] url_to_search_params: mults upper case"
@@ -1025,7 +1091,8 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_left_side(self):
         "[test_search.py] range_query: single column range with min only"
-        selections = {'obs_ring_geometry.ring_center_phase1': [20.0]}
+        selections = {'obs_ring_geometry.ring_center_phase1': [20.0],
+                      'obs_ring_geometry.ring_center_phase2': [None]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', [])
         print(sql)
         print(params)
@@ -1038,7 +1105,8 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_right_side(self):
         "[test_search.py] range_query: single column range with max only"
-        selections = {'obs_ring_geometry.ring_center_phase2': [180.0]}
+        selections = {'obs_ring_geometry.ring_center_phase1': [None],
+                      'obs_ring_geometry.ring_center_phase2': [180.0]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', [])
         print(sql)
         print(params)
@@ -1078,8 +1146,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_any_left_side(self):
-        "[test_search.py] range_query: long range with qtype=any, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.]}
+        "[test_search.py] range_query: multi column range with qtype=any, min only"
+        selections = {'obs_ring_geometry.ring_radius1': [10000.],
+                      'obs_ring_geometry.ring_radius2': [None]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'])
         print(sql)
         print(params)
@@ -1092,8 +1161,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_any_right_side(self):
-        "[test_search.py] range_query: long range with qtype=any, max only"
-        selections = {'obs_ring_geometry.ring_radius2': [40000.]}
+        "[test_search.py] range_query: multi column range with qtype=any, max only"
+        selections = {'obs_ring_geometry.ring_radius1': [None],
+                      'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'])
         print(sql)
         print(params)
@@ -1106,7 +1176,7 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_any_both_side(self):
-        "[test_search.py] range_query: long range with qtype=any, both min and max"
+        "[test_search.py] range_query: multi column range with qtype=any, both min and max"
         selections = {'obs_ring_geometry.ring_radius1': [10000.],
                       'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'])
@@ -1121,8 +1191,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_all_left_side(self):
-        "[test_search.py] range_query: long range with qtype=all, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.]}
+        "[test_search.py] range_query: multi column range with qtype=all, min only"
+        selections = {'obs_ring_geometry.ring_radius1': [10000.],
+                      'obs_ring_geometry.ring_radius2': [None]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'])
         print(sql)
         print(params)
@@ -1135,8 +1206,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_all_right_side(self):
-        "[test_search.py] range_query: long range with qtype=all, max only"
-        selections = {'obs_ring_geometry.ring_radius2': [40000.]}
+        "[test_search.py] range_query: multi column range with qtype=all, max only"
+        selections = {'obs_ring_geometry.ring_radius1': [None],
+                      'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'])
         print(sql)
         print(params)
@@ -1149,7 +1221,7 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_all_both_side(self):
-        "[test_search.py] range_query: long range with qtype=all, both min and max"
+        "[test_search.py] range_query: multi column range with qtype=all, both min and max"
         selections = {'obs_ring_geometry.ring_radius1': [10000.],
                       'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['all'])
@@ -1164,8 +1236,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_only_left_side(self):
-        "[test_search.py] range_query: long range with qtype=only, min only"
-        selections = {'obs_ring_geometry.ring_radius1': [10000.]}
+        "[test_search.py] range_query: multi column range with qtype=only, min only"
+        selections = {'obs_ring_geometry.ring_radius1': [10000.],
+                      'obs_ring_geometry.ring_radius2': [None]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'])
         print(sql)
         print(params)
@@ -1178,8 +1251,9 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_only_right_side(self):
-        "[test_search.py] range_query: long range with qtype=only, max only"
-        selections = {'obs_ring_geometry.ring_radius2': [40000.]}
+        "[test_search.py] range_query: multi column range with qtype=only, max only"
+        selections = {'obs_ring_geometry.ring_radius1': [None],
+                      'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'])
         print(sql)
         print(params)
@@ -1192,7 +1266,7 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__range_query_only_both_side(self):
-        "[test_search.py] range_query: long range with qtype=only, both min and max"
+        "[test_search.py] range_query: multi column range with qtype=only, both min and max"
         selections = {'obs_ring_geometry.ring_radius1': [10000.],
                       'obs_ring_geometry.ring_radius2': [40000.]}
         sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only'])
@@ -1206,12 +1280,71 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__range_query_clause_1(self):
+        "[test_search.py] range_query: clause 1 second all None"
+        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
+                      'obs_ring_geometry.ring_radius2': [40000., None]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'])
+        print(sql)
+        print(params)
+        # 10000 to 40000
+        expected = '`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s'
+        expected_params = [10000.0,40000.]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__range_query_clause_2(self):
+        "[test_search.py] range_query: clause 2 second part None"
+        selections = {'obs_ring_geometry.ring_radius1': [10000., None],
+                      'obs_ring_geometry.ring_radius2': [40000., 50000.]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'])
+        print(sql)
+        print(params)
+        # 10000 to 40000
+        expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
+        expected_params = [10000.0,40000.,50000.]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__range_query_clause_3(self):
+        "[test_search.py] range_query: clause 3 some each None"
+        selections = {'obs_ring_geometry.ring_radius1': [10000., None, 60000.],
+                      'obs_ring_geometry.ring_radius2': [40000., 50000., None]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'])
+        print(sql)
+        print(params)
+        # 10000 to 40000
+        expected = '(`obs_ring_geometry`.`ring_radius1` >= %s AND `obs_ring_geometry`.`ring_radius2` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s) OR (`obs_ring_geometry`.`ring_radius1` <= %s)'
+        expected_params = [10000.0,40000.,50000.,60000.]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__range_query_clause_4(self):
+        "[test_search.py] range_query: clause 4 wrote qtype len"
+        selections = {'obs_ring_geometry.ring_radius1': [10000., None, 60000.],
+                      'obs_ring_geometry.ring_radius2': [40000., 50000., None]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any'])
+        print(sql)
+        print(params)
+        expected = None
+        expected_params = None
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
 
             ###################################################
             ######### get_longitude_query UNIT TESTS #########
             ###################################################
 
-    def test__longitude_query_single_col_range_left_side(self):
+    def test__longitude_query_single_col_range_left_side_no_right(self):
         "[test_search.py] longitude_query: single column long range with min only"
         selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [])
@@ -1224,9 +1357,24 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__longitude_query_single_col_range_left_side(self):
+        "[test_search.py] longitude_query: single column long range with min only"
+        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0],
+                      'obs_ring_geometry.sub_solar_ring_long2': [None]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [])
+        print(sql)
+        print(params)
+        expected = None # Can't have one-sided longitude queries
+        expected_params = None
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
     def test__longitude_query_single_col_range_right_side(self):
         "[test_search.py] longitude_query: single column long range with max only"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0]}
+        selections = {'obs_ring_geometry.sub_solar_ring_long1': [None],
+                      'obs_ring_geometry.sub_solar_ring_long2': [180.0]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [])
         print(sql)
         print(params)
@@ -1265,7 +1413,49 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
-    def test__longitude_query_any_left_side(self):
+    def test__longitude_query_single_col_range_clause_1(self):
+        "[test_search.py] longitude_query: single column long range clause 1 second both None"
+        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, None],
+                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, None]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all', 'all'])
+        print(sql)
+        print(params)
+        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected_params = [20.0,180.0]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_single_col_range_clause_2(self):
+        "[test_search.py] longitude_query: single column long range clause 2 second one None"
+        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, None],
+                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, 30.]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all', 'all'])
+        print(sql)
+        print(params)
+        expected = None
+        expected_params = None
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_single_col_range_clause_3(self):
+        "[test_search.py] longitude_query: single column long range clause 3 second both OK"
+        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, 280.0],
+                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, 220.0]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all', 'all'])
+        print(sql)
+        print(params)
+        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s) OR (`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected_params = [20.0,180.0,220.0,280.0]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_any_left_side_no_right(self):
         "[test_search.py] longitude_query: long range with qtype=any, min only"
         selections = {'obs_ring_geometry.J2000_longitude1': [240.]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'])
@@ -1278,9 +1468,24 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__longitude_query_any_left_side(self):
+        "[test_search.py] longitude_query: long range with qtype=any, min only"
+        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
+                      'obs_ring_geometry.J2000_longitude2': [None]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'])
+        print(sql)
+        print(params)
+        expected = None # Can't have one-sided longitude queries
+        expected_params = None
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
     def test__longitude_query_any_right_side(self):
         "[test_search.py] longitude_query: long range with qtype=any, max only"
-        selections = {'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {'obs_ring_geometry.J2000_longitude1': [None],
+                      'obs_ring_geometry.J2000_longitude2': [310.5]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'])
         print(sql)
         print(params)
@@ -1308,7 +1513,8 @@ class searchTests(TestCase):
 
     def test__longitude_query_all_left_side(self):
         "[test_search.py] longitude_query: long range with qtype=all, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.]}
+        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
+                      'obs_ring_geometry.J2000_longitude2': [None]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
         print(sql)
         print(params)
@@ -1321,7 +1527,8 @@ class searchTests(TestCase):
 
     def test__longitude_query_all_right_side(self):
         "[test_search.py] longitude_query: long range with qtype=all, max only"
-        selections = {'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {'obs_ring_geometry.J2000_longitude1': [None],
+                      'obs_ring_geometry.J2000_longitude2': [310.5]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
         print(sql)
         print(params)
@@ -1349,7 +1556,8 @@ class searchTests(TestCase):
 
     def test__longitude_query_only_left_side(self):
         "[test_search.py] longitude_query: long range with qtype=only, min only"
-        selections = {'obs_ring_geometry.J2000_longitude1': [240.]}
+        selections = {'obs_ring_geometry.J2000_longitude1': [240.],
+                      'obs_ring_geometry.J2000_longitude2': [None]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'])
         print(sql)
         print(params)
@@ -1362,7 +1570,8 @@ class searchTests(TestCase):
 
     def test__longitude_query_only_right_side(self):
         "[test_search.py] longitude_query: long range with qtype=only, max only"
-        selections = {'obs_ring_geometry.J2000_longitude2': [310.5]}
+        selections = {'obs_ring_geometry.J2000_longitude1': [None],
+                      'obs_ring_geometry.J2000_longitude2': [310.5]}
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'])
         print(sql)
         print(params)
@@ -1442,6 +1651,65 @@ class searchTests(TestCase):
         # 240 to 30.5
         expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s - obs_ring_geometry.d_j2000_longitude'
         expected_params = [315.25, 75.25]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_all_clause_1(self):
+        "[test_search.py] longitude_query: long range with qtype=all, clause 1 second both None"
+        selections = {'obs_ring_geometry.J2000_longitude1': [240., None],
+                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all', 'all'])
+        print(sql)
+        print(params)
+        # 240 to 310.5
+        expected = 'ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s'
+        expected_params = [275.25, 35.25]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_all_clause_2(self):
+        "[test_search.py] longitude_query: long range with qtype=all, clause 2 second one None"
+        selections = {'obs_ring_geometry.J2000_longitude1': [240., 20.],
+                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
+        print(sql)
+        print(params)
+        expected = None
+        expected_params = None
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_only_all_both_side_clause_3(self):
+        "[test_search.py] longitude_query: long range with qtype=only, clause 3 both OK"
+        selections = {'obs_ring_geometry.J2000_longitude1': [240., 250.],
+                      'obs_ring_geometry.J2000_longitude2': [30.5, 40.5]}
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only', 'all'])
+        print(sql)
+        print(params)
+        # 240 to 30.5
+        expected = '(ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= %s - obs_ring_geometry.d_j2000_longitude) OR (ABS(MOD(%s - obs_ring_geometry.J2000_longitude + 540., 360.) - 180.) <= obs_ring_geometry.d_j2000_longitude - %s)'
+        expected_params = [315.25, 75.25, 325.25, 75.25]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__longitude_query_all_clause_4(self):
+        "[test_search.py] longitude_query: long range with qtype=all, clause 4 wrote qtype len"
+        selections = {'obs_ring_geometry.J2000_longitude1': [240., None],
+                      'obs_ring_geometry.J2000_longitude2': [310.5, None]}
+        # Inconsistent qtype length
+        sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
+        print(sql)
+        print(params)
+        expected = None
+        expected_params = None
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1563,6 +1831,19 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__string_query_clause(self):
+        "[test_search.py] string_query: string query with qtype clause"
+        selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
+        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+                                       ['excludes', 'matches'])
+        print(sql)
+        print(params)
+        expected = '(`obs_pds`.`volume_id` NOT LIKE %s) OR (`obs_pds`.`volume_id` = %s)'
+        expected_params = ['%ISS%', 'COUVIS']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
 
 
             #####################################################
@@ -1627,12 +1908,13 @@ class searchTests(TestCase):
 
     def test__construct_query_string_nojoin(self):
         "[test_search.py] construct_query_string: just obs_general"
-        selections = {'obs_general.observation_duration1': [20]}
+        selections = {'obs_general.observation_duration1': [20],
+                      'obs_general.observation_duration2': [None]}
         extras = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -1646,7 +1928,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_pds`.`primary_file_spec` LIKE %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_file_spec` LIKE %s'
         expected_params = ['%C11399XX%']
         print(expected)
         print(expected_params)
@@ -1661,8 +1943,23 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE (`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE `obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s'
         expected_params = [20.0, 180.0]
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__construct_query_string_single_column_range_clause(self):
+        "[test_search.py] construct_query_string: a single column range clause"
+        selections = {'obs_ring_geometry.ring_center_phase1': [20.0, 200.0],
+                      'obs_ring_geometry.ring_center_phase2': [180.0, 300.0]}
+        extras = {}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE (`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s) OR (`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s)'
+        expected_params = [20.0, 180.0, 200.0, 300.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1675,8 +1972,22 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_pds`.`primary_file_spec` LIKE %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_pds`.`primary_file_spec` LIKE %s'
         expected_params = ['C11399XX%']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
+    def test__construct_query_string_string_with_qtype_clause(self):
+        "[test_search.py] construct_query_string: a string and qtype clause"
+        selections = {'obs_pds.primary_file_spec': ['C11399XX', 'C11399YY']}
+        extras = {'qtypes': {'obs_pds.primary_file_spec': ['begins', 'ends']}}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_pds`.`primary_file_spec` LIKE %s) OR (`obs_pds`.`primary_file_spec` LIKE %s)'
+        expected_params = ['C11399XX%', '%C11399YY']
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1689,7 +2000,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (%s))'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (%s)'
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -1703,7 +2014,7 @@ class searchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`mult_obs_general_planet_id` IN (%s))'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`mult_obs_general_planet_id` IN (%s)'
         expected_params = [4]
         print(expected)
         print(expected_params)
@@ -1787,12 +2098,13 @@ class searchTests(TestCase):
 
     def test__construct_query_string_order_existing_table(self):
         "[test_search.py] construct_query_string: sort order already joined"
-        selections = {'obs_general.observation_duration1': [20]}
+        selections = {'obs_general.observation_duration1': [20],
+                      'obs_general.observation_duration2': [None]}
         extras = {'order': (['obs_general.time1'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time1 ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_general.time1 ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -1802,6 +2114,7 @@ class searchTests(TestCase):
     def test__construct_query_string_order_existing_table_2(self):
         "[test_search.py] construct_query_string: sort order already joined #2"
         selections = {'obs_general.observation_duration1': [20],
+                      'obs_general.observation_duration2': [None],
                       'obs_pds.volume_id': ['COISS']}
         extras = {'qtypes': {'obs_pds.volume_id': ['begins']},
                   'order': (['obs_pds.data_set_id'], [True])}
@@ -1817,14 +2130,15 @@ class searchTests(TestCase):
 
     def test__construct_query_string_order_existing_table_multi(self):
         "[test_search.py] construct_query_string: complex sort order already joined"
-        selections = {'obs_general.observation_duration1': [20]}
+        selections = {'obs_general.observation_duration1': [20],
+                      'obs_general.observation_duration2': [None]}
         extras = {'order': (['obs_general.time1',
                              'obs_general.time2'],
                             [False, True])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_general.time1 ASC,obs_general.time2 DESC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_general.time1 ASC,obs_general.time2 DESC'
         expected_params = [20]
         print(expected)
         print(expected_params)
@@ -1833,12 +2147,13 @@ class searchTests(TestCase):
 
     def test__construct_query_string_order_new_table(self):
         "[test_search.py] construct_query_string: sort order not already joined"
-        selections = {'obs_general.observation_duration1': [20]}
+        selections = {'obs_general.observation_duration1': [20],
+                      'obs_general.observation_duration2': [None]}
         extras = {'order': (['obs_pds.volume_id'], [False])}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE (`obs_general`.`observation_duration` >= %s) ORDER BY obs_pds.volume_id ASC'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_pds` ON `obs_general`.`id`=`obs_pds`.`obs_general_id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY obs_pds.volume_id ASC'
         expected_params = [20]
         print(expected)
         print(expected_params)
