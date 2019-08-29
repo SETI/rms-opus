@@ -123,7 +123,7 @@ class SearchForm(forms.Form):
                     label = label.title(),
                     widget = forms.TextInput(
                         attrs={
-                            'class': label + ' RANGE op-ranges-dropdown-menu',
+                            'class': label + ' RANGE op-ranges-dropdown-menu dropdown-toggle',
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,

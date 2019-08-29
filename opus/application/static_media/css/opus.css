@@ -2024,6 +2024,10 @@ expanded/collapsed */
     -webkit-transform: rotate(0);
 }
 
+.op-hide-preprogrammed-ranges-item {
+    display: none;
+}
+
 /* Make palceholder hints visible when browser width is large enough */
 input.RANGE {
     min-width: 25%;

@@ -53,7 +53,7 @@
                         </button> -->
                         <ul class="dropdown-menu scrollable-menu pl-0 w-100" aria-labelledby="op-ranges-dropdown-menu" role="menu">
                             {% for range_data_entry in ranges %}
-                                <li class="mr-0 d-block">
+                                <li class="mr-0 d-block" data-category="{{range_data_entry.cat_name|slugify}}">
                                     <a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#{{range_data_entry.cat_name|slugify}}" role="button" aria-expanded="false" aria-controls="{{range_data_entry.cat_name|slugify}}">{{range_data_entry.cat_name}}</a>
                                     <div class="container collapse" id="{{range_data_entry.cat_name|slugify}}">
                                         <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
@@ -67,8 +67,8 @@
                                             </div>
                                         </div>
                                         {% for range_info in range_data_entry.ranges %}
-                                            <div class="op-preprogrammed-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}" data-widget="widget__{{slug}}">
-                                                <div class="col-4">
+                                            <div class="op-preprogrammed-ranges-data-item row" data-min="{{range_info.field1|intcomma}}" data-max="{{range_info.field2|intcomma}}" data-widget="widget__{{slug}}" data-name="{{range_info.name}}">
+                                                <div class="col-4 op-preprogrammed-ranges-data-name">
                                                     {{range_info.name}}
                                                 </div>
                                                 <div class="col-4 text-right">

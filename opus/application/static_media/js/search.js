@@ -75,6 +75,72 @@ var o_search = {
 
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
+            console.log(`Currnet val: ${currentValue}`);
+
+            // EXPERIMENT AREA, Iterate through the whole list
+            // When user is typing, iterate through all preprogrammed ranges info.
+            // 1. If input field is empty, display the whole list with all categories collapsed.
+            // 2. If input matches any of list items, expand those categories and display only
+            //    matched items, and hide all unmatched items. Collpase and disable the ability
+            //    to expand for the categories without any matched item.
+            let slugName = $(this).data("slugname");
+            let preprogrammedRangesInfo = $(`#widget__${slugName} .scrollable-menu li`);
+            let itemsMatched = {};
+
+            for (const category of preprogrammedRangesInfo) {
+                let collapsibleContainerId = $(category).data("category");
+                let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+                if (itemsMatched[collapsibleContainerId] === undefined) {
+                    itemsMatched[collapsibleContainerId] = 0;
+                }
+
+                for (const singleRangeData of rangesInfoInEachCategory) {
+                    let dataName = $(singleRangeData).data("name").toLowerCase();
+                    let currentInputValue = currentValue.toLowerCase();
+                    // console.log(`currentValue: ${currentValue}`);
+                    // console.log(`dataName: ${dataName}`);
+                    // console.log(`dataName.includes(currentValue): ${dataName.includes(currentValue)}`);
+                    if (!currentValue) {
+                        // $(singleRangeData).show();
+                        $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        itemsMatched[collapsibleContainerId] = 0;
+                        // if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
+                        //     $(`#${collapsibleContainerId}`).collapse("show");
+                        // }
+                        // itemsMatched = false;
+                    } else if (dataName.includes(currentInputValue)) {
+                        // Expand the category, display the item and highlight the matched keyword.
+                        // $(singleRangeData).show();
+                        $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
+                            // $(`#${collapsibleContainerId}`).on("hidden.bs.collapse", function() {
+                            //     $(`#${collapsibleContainerId}`).collapse("show");
+                            // });
+                            // $(`#${collapsibleContainerId}`).addClass("show");
+                            $(`#${collapsibleContainerId}`).collapse("show");
+                            itemsMatched[collapsibleContainerId] += 1;
+                        }
+                        // itemsMatched = false;
+                    } else {
+                        // Hide the item if it doesn't match the input keyword
+                        // $(singleRangeData).hide();
+                        $(singleRangeData).addClass("op-hide-preprogrammed-ranges-item");
+                    }
+                }
+                console.log(`collapsibleContainerId: ${collapsibleContainerId}`);
+                console.log(itemsMatched);
+                if (!itemsMatched[collapsibleContainerId]) {
+                    console.log("Collapsing...");
+                    // $(`#${collapsibleContainerId}`).on("shown.bs.collapse", function() {
+                    //     $(`#${collapsibleContainerId}`).collapse("hide");
+                    // });
+                    // $(`#${collapsibleContainerId}`).removeClass("show");
+                    $(`#${collapsibleContainerId}`).collapse("hide");
+                    itemsMatched[collapsibleContainerId] = 0;
+                }
+                // Note: the selector to toggle collapse should be the one with "collapse" class.
+                // $(`#${containerId}`).collapse("show");
+            }
 
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;

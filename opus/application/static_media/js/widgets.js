@@ -644,12 +644,12 @@ var o_widgets = {
                 $("input.STRING").autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
-                // if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
-                //     // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
-                //     // and in this case it's the li (.op-ranges-dropdown-menu).
-                //     // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
-                //     $(`#${widget} input.min`).dropdown("toggle");
-                // }
+                if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
+                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                    // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
+                    // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
+                    $(`#${widget} input.min`).dropdown("toggle");
+                }
             });
 
             // Prevent overscrolling on ps in widget container when scrolling inside dropdown
