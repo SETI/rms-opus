@@ -1912,12 +1912,9 @@ ul.ui-autocomplete a.ui-state-active {
     user-select: none;
 }
 
-#click-blocker {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+/* prevents all click, state and cursor options on the specified HTML element */
+.op-prevent-pointer-events {
+    pointer-events: none;
 }
 
 /* Ripple In */

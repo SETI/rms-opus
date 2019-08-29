@@ -463,6 +463,7 @@ var o_cart = {
             $("#cart .op-results-message").hide();
             $("#cart .gallery").empty();
             $("#cart .op-data-table tbody").empty();
+            o_browse.showPageLoaderSpinner();
 
             // redux: and nix this big thing:
             $.ajax({ url: "/opus/__cart/view.html",
@@ -504,8 +505,12 @@ var o_cart = {
     },
 
     emptyCart: function(returnToSearch=false) {
+        // to disable clicks:
+        o_utils.disableUserInteraction();
+
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
+            o_utils.enableUserInteraction();
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
@@ -524,10 +529,7 @@ var o_cart = {
     },
 
     // action = add/remove/addrange/removerange/addall
-    getEditURL: function(opusId, action, updateBadges=true) {
-        // If updateBadges is false, we set the spinners in motion but don't actually update them
-        // This is used when we want to do a lot of cart operations in a row and only update
-        // at the end
+    getEditURL: function(opusId, action) {
         let tab = opus.getViewTab();
         let url = "/opus/__cart/" + action + ".json?";
         switch (action) {
@@ -548,7 +550,7 @@ var o_cart = {
 
         // Minor performance check - if we don't need a total download size, don't bother
         // Only the cart tab is interested in updating that count at this time.
-        if (tab === "cart" && updateBadges) {
+        if (tab === "cart") {
             url += "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
         return url;
@@ -556,22 +558,23 @@ var o_cart = {
 
     sendEditRequest: function(url) {
         o_cart.lastRequestNo++;
+        o_utils.disableUserInteraction();
         return $.getJSON(url + "&reqno=" + o_cart.lastRequestNo);
     },
 
     toggleInCart: function(fromOpusId, toOpusId) {
         let tab = opus.getViewTab();
+
+        // for now, disable the edit function on the #cart tab
+        if (tab === "#cart") return;
+
         let length = null;
         let fromIndex = null;
         let action = null;
         let elementArray = $(`${tab} .op-thumbnail-container`);
         let opusIdRange = fromOpusId;
-        let updateBadges = true;
 
         o_cart.reloadObservationData = true;
-
-        // to disable clicks:
-        $('#click-blocker').show()
 
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
@@ -616,6 +619,7 @@ var o_cart = {
         let checked = (action === "add");
 
         $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
+            o_utils.enableUserInteraction();
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
                 if ($("#op-cart-status-error-msg").hasClass("show")) {
@@ -637,14 +641,9 @@ var o_cart = {
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
-                // we only update the cart badge result count from the latest request
-                if (updateBadges) {
-                    o_cart.updateCartStatus(statusData);
-                }
+                o_cart.updateCartStatus(statusData);
             }
             o_browse.hidePageLoaderSpinner();
-            // to enable clicks again
-            $('#click-blocker').hide();
         });
         o_browse.undoRangeSelect(tab);
         return action;

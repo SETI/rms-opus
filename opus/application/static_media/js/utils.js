@@ -38,6 +38,15 @@ var o_utils = {
         return Math.ceil(num - 0.0000001);
     },
 
+    // these functions are used to prevent the user from moving off the
+    // browse/cart tab which can cause a race condition
+    disableUserInteraction: function(e) {
+        $("body").addClass("op-prevent-pointer-events");
+    },
+
+    enableUserInteraction: function(e) {
+        $("body").removeClass("op-prevent-pointer-events");
+    }
 };
 
 /**

@@ -54,7 +54,7 @@ var o_browse = {
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
 
-    pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader on cart edit
+    pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader spinner
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
     /**
@@ -1134,10 +1134,10 @@ var o_browse = {
         let rangeSelected = o_browse.isRangeSelectEnabled(tab);
         let rangeText = "";
         if (rangeSelected !== undefined) {
-            let addRemoveText = (rangeSelected === "removerange" ? "remove range from" : "add range from");
+            let addRemoveText = (rangeSelected === "removerange" ? "remove range from" : "add range to");
             rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`;
         } else {
-            let addRemoveText = (inCart !== "in" ? "remove range from" : "add range from");
+            let addRemoveText = (inCart !== "in" ? "remove range from" : "add range to");
             rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here`;
         }
 
@@ -1185,8 +1185,8 @@ var o_browse = {
         let galleryElement = o_browse.getGalleryElement(opusId);
         let obsNum = galleryElement.data("obs");
         let action = (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange");
-        let actionText = (action === "removerange" ? "Remove" : "Add");
-        $(`${tab} .op-range-select-info-box`).html(`${actionText} range from cart starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
+        let actionText = (action === "removerange" ? "Remove range from" : "Add range to");
+        $(`${tab} .op-range-select-info-box`).html(`${actionText} cart starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "rangeSelectOpusID": opusId,
             "rangeSelectObsNum": obsNum,
@@ -1198,6 +1198,10 @@ var o_browse = {
 
     undoRangeSelect: function() {
         let tab = opus.getViewTab();
+        
+        // for now, disable the edit function on the #cart tab
+        if (tab === "#cart") return;
+
         let startElem = $(tab).find(".selected");
         if (startElem.length) {
             $(startElem).removeClass("selected hvr-ripple-in b-a-2");
@@ -1228,7 +1232,10 @@ var o_browse = {
 
     hidePageLoaderSpinner: function() {
         if (o_browse.pageLoaderSpinnerTimer !== null) {
-            // This should always be true - we're just being careful
+            // The right way to fix this is probably to reference count the on/off actions,
+            // since they should always be paired, and that way the spinner won't turn off
+            // until the last operation is complete. However, this sounds like a recipe for bugs,
+            // and it isn't a common occurrence
             clearTimeout(o_browse.pageLoaderSpinnerTimer);
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
