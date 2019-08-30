@@ -510,17 +510,17 @@ var o_cart = {
 
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
-            o_utils.enableUserInteraction();
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
                 opus.changeTab("search");
             }
+            o_cart.reloadObservationData = true;
+            o_cart.observationData = {};
+            o_utils.enableUserInteraction();
         });
 
         $("#op-cart-count").html("0");
-        o_cart.reloadObservationData = true;
-        o_cart.observationData = {};
 
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
@@ -601,7 +601,7 @@ var o_cart = {
                 length = (toElem.length === 0 ? elementArray.length - $(`${tab} .op-thumbnail-container`).index(fromIndex) : length);
                 fromIndex = $(`${tab} .op-thumbnail-container`).index(fromElem);
             } else {
-                length = $(`${tab} .op-thumbnail-container`).index(toElem);
+                length = $(`${tab} .op-thumbnail-container`).index(toElem) + 1; // 0-based index
                 fromIndex = 0;
             }
         } else {
