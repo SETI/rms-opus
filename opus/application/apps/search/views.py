@@ -1082,15 +1082,7 @@ def construct_query_string(selections, extras):
             if form_type == 'LONG':
                 # This parameter requires a longitudinal query.
                 # Both sides of range must be defined by user for this to work.
-                if (selections.get(param_qualified_name_no_num + '1', False) and
-                    selections.get(param_qualified_name_no_num + '2', False)):
-                    clause, params = get_longitude_query(selections,
-                                                         param_qualified_name,
-                                                         qtypes)
-                else:
-                    # XXX Need to report this to the user somehow
-                    # Pretend this is a range query
-                    clause, params = get_range_query(selections,
+                clause, params = get_longitude_query(selections,
                                                      param_qualified_name,
                                                      qtypes)
             else:
@@ -1101,9 +1093,10 @@ def construct_query_string(selections, extras):
 
             if clause is None:
                 return None, None
-            clauses.append(clause)
-            clause_params += params
-            obs_tables.add(cat_name)
+            if clause:
+                clauses.append(clause)
+                clause_params += params
+                obs_tables.add(cat_name)
 
         elif form_type == 'STRING':
             clause, params = get_string_query(selections, param_qualified_name,
@@ -1424,35 +1417,39 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
         qtype = qtypes[idx]
 
         if value_min is None and value_max is None:
+            # Ignore if nothing to search on
             continue
-
-        if value_min is None or value_max is None:
-            log.error('get_range_query: Missing min or max value '
-                      +'for "%s"'
-                      +'*** Selections %s *** Qtypes %s ***',
-                      param_qualified_name, str(selections), str(qtypes))
-            return None, None
 
         clause = ''
 
-        if is_single_column_range(param_qualified_name):
+        if value_min is None or value_max is None:
+            # Pretend this is a range query - fake up a new selections and
+            # qtypes containing only this one entry
+            new_selections = {param_qualified_name_min: [value_min],
+                              param_qualified_name_max: [value_max]}
+            new_qtypes = [qtype]
+            clause, r_params = get_range_query(new_selections,
+                                               param_qualified_name,
+                                               new_qtypes)
+            params += r_params
+
+        elif is_single_column_range(param_qualified_name):
             # A single column range doesn't have center and d_ fields
             quoted_param_qualified_name = (quoted_cat_name+'.'
                                            +connection.ops.quote_name(name_no_num))
             if value_max >= value_min:
                 # Normal range MIN to MAX
-                clause = '(' + quoted_param_qualified_name + ' >= %s AND '
-                clause += quoted_param_qualified_name + ' <= %s)'
+                clause = quoted_param_qualified_name + ' >= %s AND '
+                clause += quoted_param_qualified_name + ' <= %s'
                 params.append(value_min)
                 params.append(value_max)
             else:
                 # Wraparound range MIN to 360, 0 to MAX
-                clause = '(' + quoted_param_qualified_name + ' >= %s OR '
-                clause += quoted_param_qualified_name + ' <= %s)'
+                clause = quoted_param_qualified_name + ' >= %s OR '
+                clause += quoted_param_qualified_name + ' <= %s'
                 params.append(value_min)
                 params.append(value_max)
-            if clause:
-                clauses.append(clause)
+
         else:
             quoted_param_qualified_name_min = (quoted_cat_name+'.'
                                                +connection.ops.quote_name(name_min))
@@ -1486,17 +1483,14 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
                           +'for "%s"'
                           +'*** Selections %s *** Qtypes %s ***',
                           qtype, param_name, str(selections), str(qtypes))
-            if clause:
-                clauses.append(clause)
+
+        if clause:
+            clauses.append(clause)
 
     if len(clauses) == 1:
         clause = clauses[0]
     else:
-        if is_single_column_range(param_qualified_name):
-            # These will already be wrapped in ()
-            clause = ' OR '.join(clauses)
-        else:
-            clause = ' OR '.join(['('+c+')' for c in clauses])
+        clause = ' OR '.join(['('+c+')' for c in clauses])
 
     return clause, params
 
