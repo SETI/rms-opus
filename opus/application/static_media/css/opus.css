@@ -465,6 +465,7 @@ tr.modal-show {
 
 td.op-table-tools {
     width: 3em;
+    min-width: auto !important;
 }
 
 td .form-group {
@@ -1361,7 +1362,7 @@ panel are properly separated */
     overflow-y: auto;
 }
 
-.page-load-status {
+.op-page-load-status {
     display: none; /* hidden by default */
     padding-top: 20px;
     border-top: 1px solid #DDD;
@@ -1698,6 +1699,20 @@ also set its min width to be 150px */
     max-height: 70vh; */
 }
 
+.op-range-select-info-box {
+    position: fixed;
+    bottom: 0;
+    width: auto;
+    height: 0;
+    text-align: center;
+    margin-left: 0px  !important;
+    transition: .5s ease;
+}
+
+.op-range-select-info-box.op-range-select {
+    height: 3.8em;
+}
+
 /* TODO: use @media to fine tune the heights of footer & nav bar
    when the width of browser window is small
 */
@@ -1895,6 +1910,11 @@ ul.ui-autocomplete a.ui-state-active {
     */
     -ms-user-select: none;
     user-select: none;
+}
+
+/* prevents all click, state and cursor options on the specified HTML element */
+.op-prevent-pointer-events {
+    pointer-events: none;
 }
 
 /* Ripple In */
