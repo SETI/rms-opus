@@ -1180,6 +1180,11 @@ var o_browse = {
         return $(`.op-data-table div[data-id=${opusId}]`).parent();
     },
 
+    highlightStartOfRange: function(opusId) {
+        o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
+        o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
+    },
+
     startRangeSelect: function(opusId) {
         let tab = opus.getViewTab();
         let galleryElement = o_browse.getGalleryElement(opusId);
@@ -1192,13 +1197,12 @@ var o_browse = {
             "rangeSelectObsNum": obsNum,
             "rangeSelectOption": action
         });
-        o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
-        o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
+        o_browse.highlightStartOfRange(opusId);
     },
 
     undoRangeSelect: function() {
         let tab = opus.getViewTab();
-        
+
         // for now, disable the edit function on the #cart tab
         if (tab === "#cart") return;
 
@@ -1686,6 +1690,8 @@ var o_browse = {
         if (tab === "#cart") {
             $("#cart [data-icon='cart']").css('visibility','hidden');   // note: this maintains spacing; hide() does not.
             $("#cart input.multichoice").hide();
+        } else {
+            o_browse.highlightStartOfRange(infiniteScrollDataObj.rangeSelectOpusID);
         }
 
         // Note: we have to manually set the scrollbar position.
