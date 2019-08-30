@@ -510,13 +510,13 @@ var o_cart = {
 
         // change indicator to zero and let the server know:
         $.getJSON("/opus/__cart/reset.json", function(data) {
+            o_cart.reloadObservationData = true;
+            o_cart.observationData = {};
             if (!returnToSearch) {
                 opus.changeTab("cart");
             } else {
                 opus.changeTab("search");
             }
-            o_cart.reloadObservationData = true;
-            o_cart.observationData = {};
             o_utils.enableUserInteraction();
         });
 
