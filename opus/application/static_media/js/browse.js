@@ -1691,7 +1691,10 @@ var o_browse = {
             $("#cart [data-icon='cart']").css('visibility','hidden');   // note: this maintains spacing; hide() does not.
             $("#cart input.multichoice").hide();
         } else {
-            o_browse.highlightStartOfRange(infiniteScrollDataObj.rangeSelectOpusID);
+            // we must always use the op-gallery-view infinite scroll object for the rangeSelectOpusID because we only
+            // keep track of the range select variables in one of the infinite scroll objects. 
+            let rangeSelectOpusID = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+            o_browse.highlightStartOfRange(rangeSelectOpusID);
         }
 
         // Note: we have to manually set the scrollbar position.
