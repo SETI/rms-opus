@@ -1364,8 +1364,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s'
+        expected_params = [20.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1378,8 +1378,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected_params = [180.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1392,7 +1392,7 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all'])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -1406,7 +1406,7 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all'])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -1420,7 +1420,7 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all', 'all'])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -1434,8 +1434,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all', 'all'])
         print(sql)
         print(params)
-        expected = None
-        expected_params = None
+        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s) OR (`obs_ring_geometry`.`sub_solar_ring_long` >= %s)'
+        expected_params = [20.0, 180.0, 30.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1475,8 +1475,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude2` >= %s'
+        expected_params = [240.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1489,8 +1489,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['any'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude1` <= %s'
+        expected_params = [310.5]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1518,8 +1518,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude1` <= %s'
+        expected_params = [240.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1532,8 +1532,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['all'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude2` >= %s'
+        expected_params = [310.5]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1561,8 +1561,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude1` >= %s'
+        expected_params = [240.0]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1575,8 +1575,8 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.J2000_longitude1', ['only'])
         print(sql)
         print(params)
-        expected = None # Can't have one-sided longitude queries
-        expected_params = None
+        expected = '`obs_ring_geometry`.`j2000_longitude2` <= %s'
+        expected_params = [310.5]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -1604,7 +1604,7 @@ class searchTests(TestCase):
         sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all'])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s OR `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s OR `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
         expected_params = [180.0,20.0]
         print(expected)
         print(expected_params)
