@@ -339,6 +339,11 @@ PREVIEW_GUIDES = {
 
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
+
+# First one in list is the default
+STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes')
+RANGE_QTYPES = ('any', 'all', 'only')
+
 DEFAULT_PAGE_LIMIT = 100
 DEFAULT_STRINGCHOICE_LIMIT = 100
 
