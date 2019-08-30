@@ -359,7 +359,12 @@ def api_create_download(request, opus_id=None):
             max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
         if num_selections > max_selections:
             ret = json_response({'error':
-                                 f'Too many selections ({max_selections} max)'})
+                 f'You are attempting to download more than the maximum '
+                +f'permitted number ({max_selections}) of observations in '
+                +f'a data archive. Please either reduce the number of '
+                +f'observations you are trying to download or download a URL '
+                +f'archive instead and then retrieve the data products using '
+                +f'"wget".'})
             exit_api_call(api_code, ret)
             return ret
         res = (Cart.objects.filter(session_id__exact=session_id)
@@ -402,11 +407,15 @@ def api_create_download(request, opus_id=None):
         download_size = info['total_download_size']
         if download_size > settings.MAX_DOWNLOAD_SIZE:
             ret = json_response({'error':
-                                 'Sorry, this download would require '
-                                 +'{:,}'.format(download_size)
-                                 +' bytes but the maximum allowed is '
-                                 +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
-                                 +' bytes'})
+                 'Sorry, this download would require '
+                 +'{:,}'.format(download_size)
+                 +' bytes but the maximum allowed is '
+                 +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
+                 +' bytes. Please either reduce the number of '
+                 +f'observations you are trying to download, reduce the number '
+                 +f'of data products for each observation, or download a URL '
+                 +f'archive instead and then retrieve the data products using '
+                 +f'"wget".'})
             exit_api_call(api_code, ret)
             return ret
 
@@ -416,9 +425,9 @@ def api_create_download(request, opus_id=None):
         cum_download_size += download_size
         if cum_download_size > settings.MAX_CUM_DOWNLOAD_SIZE:
             ret = json_response({'error':
-                                 'Sorry, maximum cumulative download size ('
-                                 +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
-                                 +' bytes) reached for this session'})
+                 'Sorry, maximum cumulative download size ('
+                 +'{:,}'.format(settings.MAX_CUM_DOWNLOAD_SIZE)
+                 +' bytes) reached for this session'})
             exit_api_call(api_code, ret)
             return ret
         request.session['cum_download_size'] = int(cum_download_size)

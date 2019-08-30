@@ -316,11 +316,12 @@ var o_cart = {
 
         opus.downloadInProcess = true;
 
-        if ($(".op-download-links-btn").is(":visible")) {
-            $(".op-download-links-contents .spinner").show();
-            // prevent popover window from jumping when displaying the spinner
-            $(".app-footer .op-download-links-btn").popover("update");
-        }
+        // Open the download links popover so the user can see the spinner
+        $(".op-download-links-btn").show();
+        $(".app-footer .op-download-links-btn").popover("show");
+        $(".op-download-links-contents .spinner").show();
+        // prevent popover window from jumping when displaying the spinner
+        $(".app-footer .op-download-links-btn").popover("update");
 
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
@@ -389,8 +390,6 @@ var o_cart = {
          */
         $(".app-footer .op-download-links-btn").popover("show");
         $(".op-zipped-files li:not(:first-child)").remove();
-        let emptyHistory = "<h5 class='op-empty-history'>No download history</h5>";
-        $(".op-download-links-contents").append(emptyHistory);
         $(".app-footer .op-download-links-btn").popover("update");
         $(".op-clear-history-btn").prop("disabled", true);
         $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
