@@ -344,7 +344,7 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
     except TypeError:
         return str(val)
 
-def get_latest_git_commit_id():
+def get_latest_git_commit_id(force_valid=False):
     curcwd = os.getcwd()
     try:
         os.chdir(settings.PDS_OPUS_PATH)
@@ -353,7 +353,10 @@ def get_latest_git_commit_id():
                .strip().decode('utf8'))
     except:
         log.warning('Unable to get the latest git commit id')
-        ret = str(random.getrandbits(128))
+        if force_valid:
+            ret = 'Unknown'
+        else:
+            ret = str(random.getrandbits(128))
     os.chdir(curcwd)
     return ret
 
