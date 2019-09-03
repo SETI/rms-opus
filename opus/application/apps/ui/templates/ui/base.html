@@ -518,6 +518,12 @@
 
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
+    <!-- NASA feedback widget -->
+    <script src='https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit' async defer></script>
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js"></script>
+
     {% block scripts %}
 
     <script src="{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
