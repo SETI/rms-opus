@@ -178,6 +178,7 @@ TARGET_NAME_MAPPING = {
     '1999-RT214':       '1999 RT214',
     '80806':            '2000 CM105',
     '60458-2000-CM114': '2000 CM114',
+    '2000CQ114':        '2000 CQ114',
     '2000-CQ114':       '2000 CQ114',
     '2000-FC8':         '2000 FC8',
     '2000-OB51':        '2000 OB51',
@@ -188,6 +189,9 @@ TARGET_NAME_MAPPING = {
     '119070':           '2001 KP77',
     '2002VV130':        '2002 VV130',
     '119979':           '2002 WC19',
+    '182933':           '2002 GZ31',
+    '2003TJ58':         '2003 TJ58',
+    '2003QW111':        'MANWE',
     '2004VE131':        '2004 VE131',
     '2005EF298':        '2005 EF298',
     '2005SE278':        '2005 SE278',
@@ -440,7 +444,7 @@ TARGET_NAME_INFO = {
 
     # Asteroids
     '2002 JF56':     (None,  'OTHER'),
-    '80806':         (None,  'OTHER'), # Minor planet
+    '2000 CM105':    (None,  'OTHER'), # Minor planet
     'MASURSKY':      (None,  'OTHER'),
 
     # TNO/KBOs
@@ -451,6 +455,7 @@ TARGET_NAME_INFO = {
     'HAUMEA':        (None,  'OTHER'),
     'IXION':         (None,  'OTHER'),
     'MAKEMAKE':      (None,  'OTHER'),
+    'MANWE':         (None,  'OTHER'),
     'QUAOAR':        (None,  'OTHER'),
     'VARDA':         (None,  'OTHER'),
     '1999 HG12':     (None,  'OTHER'),
@@ -465,9 +470,11 @@ TARGET_NAME_INFO = {
     '2000 QN251':    (None,  'OTHER'),
     '2001 FL185':    (None,  'OTHER'),
     '2001 KP77':     (None,  'OTHER'),
+    '2002 GZ31':     (None,  'OTHER'),
     '2002 MS4':      (None,  'OTHER'),
     '2002 VV130':    (None,  'OTHER'),
     '2002 WC19':     (None,  'OTHER'),
+    '2003 TJ58':     (None,  'OTHER'),
     '2004 VE131':    (None,  'OTHER'),
     '2005 EF298':    (None,  'OTHER'),
     '2005 SE278':    (None,  'OTHER'),
