@@ -438,6 +438,7 @@ TARGET_NAME_INFO = {
 
     # Asteroids
     '2002 JF56':     (None,  'OTHER'),
+    '80806':         (None,  'OTHER'), # Minor planet
     'MASURSKY':      (None,  'OTHER'),
 
     # TNO/KBOs
