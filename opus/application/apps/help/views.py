@@ -43,7 +43,7 @@ def api_about(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    git_id = get_latest_git_commit_id(True)
+    git_id = get_git_version(True, True)
     database_schema = settings.DB_SCHEMA_NAME
     database_host = settings.DB_HOST_NAME
     context = {

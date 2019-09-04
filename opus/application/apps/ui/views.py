@@ -48,7 +48,7 @@ class main_site(TemplateView):
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
-            settings.OPUS_FILE_VERSION = get_latest_git_commit_id()
+            settings.OPUS_FILE_VERSION = get_git_version()
         context['OPUS_FILE_VERSION'] = settings.OPUS_FILE_VERSION
         return context
 
