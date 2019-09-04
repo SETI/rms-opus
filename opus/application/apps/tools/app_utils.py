@@ -344,16 +344,39 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
     except TypeError:
         return str(val)
 
-def get_latest_git_commit_id():
+def get_git_version(force_valid=False, use_tag=False):
     curcwd = os.getcwd()
+    commit_id = 'Unknown'
+    tag = None
+
     try:
         os.chdir(settings.PDS_OPUS_PATH)
         # decode here to convert byte object to string
-        ret = (subprocess.check_output(['git', 'log', '--format=%H', '-n', '1'])
-               .strip().decode('utf8'))
+        commit_id = (subprocess.check_output(['git', 'log', '--format=%H',
+                                              '-n', '1'])
+                     .strip().decode('utf8'))
     except:
         log.warning('Unable to get the latest git commit id')
-        ret = str(random.getrandbits(128))
+        if not force_valid:
+            commit_id = str(random.getrandbits(128))
+
+    if use_tag:
+        try:
+            # decode here to convert byte object to string
+            tag = (subprocess.check_output(['git', 'tag', '--points-at'])
+                   .strip().decode('utf8'))
+            if '\n' in tag:
+                tag = tag[:tag.index('\n')]
+        except:
+            log.warning('Unable to get the current git tag')
+
+    if tag:
+        if tag.startswith('v'):
+            tag = tag[1:]
+        ret = tag
+    else:
+        ret = commit_id
+
     os.chdir(curcwd)
     return ret
 
