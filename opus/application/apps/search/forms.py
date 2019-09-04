@@ -89,7 +89,7 @@ class SearchForm(forms.Form):
              form_type_format) = parse_form_type(param_info.form_type)
 
             if form_type == 'STRING':
-                choices =  (('contains','contains'),('begins','begins'),('ends','ends'),('matches','matches'),('excludes','excludes'))
+                choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget = forms.TextInput(
                     attrs={'class':'STRING', 'size':'50', 'tabindex':0}),
@@ -106,7 +106,7 @@ class SearchForm(forms.Form):
 
             if form_type in settings.RANGE_FORM_TYPES:
 
-                choices =  (('any','any'),('all','all'),('only','only'))
+                choices = ((x,x) for x in settings.RANGE_QTYPES)
                 slug_no_num = strip_numeric_suffix(slug)
                 num = get_numeric_suffix(slug)
                 if not num:

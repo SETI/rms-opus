@@ -339,6 +339,11 @@ PREVIEW_GUIDES = {
 
 RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
+
+# First one in list is the default
+STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes')
+RANGE_QTYPES = ('any', 'all', 'only')
+
 DEFAULT_PAGE_LIMIT = 100
 DEFAULT_STRINGCHOICE_LIMIT = 100
 
@@ -357,7 +362,7 @@ MAX_SELECTIONS_ALLOWED = 10000
 MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 250
 MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
-MAX_CUM_DOWNLOAD_SIZE = 5*1024*1024*1024 # 5 gigs max cum downloads for a session
+MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a session
 
 THRESHOLD_FOR_EXPONENTIAL = 1e8
 

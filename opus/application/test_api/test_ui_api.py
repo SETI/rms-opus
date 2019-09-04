@@ -339,7 +339,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['startobs'] = 5
         self._run_url_slugs_equal(url, new_slugs)
 
-    # detail=
+    ### detail=
 
     def test__api_normalizeurl_detail_opusid(self):
         "[test_ui_api.py] /__normalizeurl: detail opusid"
@@ -374,7 +374,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['detail'] = ''
         self._run_url_slugs_equal(url, new_slugs)
 
-    # reqno= (an ignored slug)
+    ### reqno= (an ignored slug)
 
     def test__api_normalizeurl_reqno_5(self):
         "[test_ui_api.py] /__normalizeurl: reqno 5"
@@ -397,7 +397,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?reqno='
         self._run_url_slugs_equal(url, new_slugs)
 
-    # lonely qtype - these are qtypes without matching searches or widgets
+    ### Lonely qtype - these are qtypes without matching searches or widgets
 
     def test__api_normalizeurl_lonely_qtype_bad_slug(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype bad slug"
@@ -409,9 +409,11 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: lonely qtype not used"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?qtype-rightasc=any'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'any'
         self._run_url_slugs_equal(url, new_slugs)
 
-    # Lonely qtype - these are qtypes wiithout matching searches but with
+    # Lonely qtype - these are qtypes without matching searches but with
     # widgets
     def test__api_normalizeurl_lonely_qtype_used_any(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used any"
@@ -421,11 +423,53 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc'] = 'any'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_lonely_qtype_used_any_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used only _1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_1=only'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'only'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_qtype_used_any_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used only _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_2=only'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'only'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_qtype_used_any_clause_1_2(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used all/only _1_2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_1=all&qtype-rightasc_2=only'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc_01'] = 'all'
+        new_slugs['qtype-rightasc_02'] = 'only'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_qtype_used_any_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used all/only _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_10=all&qtype-rightasc_20=only'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc_01'] = 'all'
+        new_slugs['qtype-rightasc_02'] = 'only'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_lonely_qtype_used_any_bad(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used any bad"
         # Single column range doesn't take qtypes
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration=any'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_qtype_used_any_bad_clause(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used any bad _2"
+        # Single column range doesn't take qtypes
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration_2=any'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -450,6 +494,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=XXX'
         new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'any'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_badval_contains(self):
@@ -457,6 +502,15 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=contains'
         new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'any'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_qtype_used_badval_contains_2(self):
+        "[test_ui_api.py] /__normalizeurl: lonely qtype used badval contains _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_2=contains'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'any'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_contains(self):
@@ -504,6 +558,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&qtype-volumeid=XXX'
         new_slugs['widgets'] = 'volumeid'
+        new_slugs['qtype-volumeid'] = 'contains'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_badval_any(self):
@@ -511,6 +566,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&qtype-volumeid=any'
         new_slugs['widgets'] = 'volumeid'
+        new_slugs['qtype-volumeid'] = 'contains'
         self._run_url_slugs_equal(url, new_slugs)
 
     ### widgets=
@@ -683,6 +739,16 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: widgets searched not widget 5"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc2=10.&rightasc1=5.&widgets=instrument'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['rightasc1'] = '5.000000'
+        new_slugs['rightasc2'] = '10.000000'
+        new_slugs['widgets'] = 'instrument,rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_widgets_searched_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: widgets searched not widget clause"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?rightasc2_20=10.&rightasc1_20=5.&widgets=instrument'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['rightasc1'] = '5.000000'
         new_slugs['rightasc2'] = '10.000000'
@@ -1076,6 +1142,15 @@ class ApiUITests(TestCase, ApiTestHelper):
 
     # Multi-column ranges
 
+    def test__api_normalizeurl_search_multi_empty(self):
+        "[test_ui_api.py] /__normalizeurl: search multi empty"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1='
+        new_slugs['rightasc1'] = ''
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_search_multi_good_1(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 1"
         new_slugs = dict(self.default_url_slugs)
@@ -1113,6 +1188,15 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_multi_good_1_qtype_bad(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 qtype bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&qtype-rightasc=XXX'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_search_multi_good_2_qtype_all(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 2 qtype all"
         new_slugs = dict(self.default_url_slugs)
@@ -1142,7 +1226,209 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_multi_good_1_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 _1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_2=10.'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_1_2(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 _1_2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_2=10.&rightasc1_1=20.'
+        new_slugs['rightasc1_01'] = '20.000000'
+        new_slugs['rightasc1_02'] = '10.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_20=10.&rightasc1_10=20.'
+        new_slugs['rightasc1_01'] = '20.000000'
+        new_slugs['rightasc1_02'] = '10.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_2_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 2 _1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_1=10.'
+        new_slugs['rightasc2'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_2_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 2 _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_2=10.'
+        new_slugs['rightasc2'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_2_clause_1_2(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 2 _1_2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_2=10.&rightasc2_1=20.'
+        new_slugs['rightasc2_01'] = '20.000000'
+        new_slugs['rightasc2_02'] = '10.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_2_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 2 _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_20=10.&rightasc2_10=20.'
+        new_slugs['rightasc2_01'] = '20.000000'
+        new_slugs['rightasc2_02'] = '10.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_01(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _01"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_01=10.&rightasc2_01=20.'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['rightasc2'] = '20.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_01_1(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _01_1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_01=10.&rightasc2_1=20.'
+        new_slugs['rightasc1_01'] = '10.000000'
+        new_slugs['rightasc2_02'] = '20.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_bad_0(self):
+        "[test_ui_api.py] /__normalizeurl: search multi bad 1 _0"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_0=10.'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_bad_n1(self):
+        "[test_ui_api.py] /__normalizeurl: search multi bad 1 -1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_-1=10.'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_clause_bad_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search multi bad 1 _XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_01_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _01_XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_01=10.&rightasc2_XXX=20.'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_XXX_01(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _XXX_01"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.&rightasc2_01=20.'
+        new_slugs['rightasc2'] = '20.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_1_01_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_01_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.&rightasc2_01=20.&qtype-rightasc_1=only&qtype-rightasc_XXX=only'
+        new_slugs['rightasc2_01'] = '20.000000'
+        new_slugs['rightasc1_02'] = '10.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'only'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_12_clause_1_02_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_02_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.&rightasc2_02=20.&qtype-rightasc_1=only&qtype-rightasc_XXX=only'
+        new_slugs['rightasc1_01'] = '10.000000'
+        new_slugs['rightasc2_02'] = '20.000000'
+        new_slugs['qtype-rightasc_01'] = 'only'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_complicated_clause(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good complicated clause"
+        new_slugs = dict(self.default_url_slugs)
+        # _0 is bad
+        # No clause is 10
+        # _01 is 21/11
+        # _1 is 12
+        # _12 is 22
+        # qtype_20 is None
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_0=10.&rightasc2_0=20.&qtype-rightasc_0=only&rightasc1=10.&rightasc1_01=21.&rightasc2_01=11.&rightasc2_1=12.&qtype-rightasc_1=only&rightasc1_12=22.&qtype-rightasc_20=all'
+        new_slugs['rightasc1_01'] = '10.000000'
+        new_slugs['rightasc1_02'] = '21.000000'
+        new_slugs['rightasc2_02'] = '11.000000'
+        new_slugs['rightasc2_03'] = '12.000000'
+        new_slugs['rightasc1_04'] = '22.000000'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['qtype-rightasc_03'] = 'only'
+        new_slugs['qtype-rightasc_04'] = 'any'
+        new_slugs['qtype-rightasc_05'] = 'all'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
     # Single column ranges
+
+    def test__api_normalizeurl_search_single_empty(self):
+        "[test_ui_api.py] /__normalizeurl: search single empty"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1='
+        new_slugs['observationduration1'] = ''
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_empty_12(self):
+        "[test_ui_api.py] /__normalizeurl: search single empty 12"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=&observationduration2='
+        new_slugs['observationduration1'] = ''
+        new_slugs['observationduration2'] = ''
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_single_good_1(self):
         "[test_ui_api.py] /__normalizeurl: search single good 1"
@@ -1203,11 +1489,163 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_single_good_1_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 1 _1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.'
+        new_slugs['observationduration1'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 1 _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_2=10.'
+        new_slugs['observationduration1'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_1_2(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 1 _1_2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_2=10.&observationduration1_1=20.'
+        new_slugs['observationduration1_01'] = '20.0000'
+        new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 1 _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_20=10.&observationduration1_10=20.'
+        new_slugs['observationduration1_01'] = '20.0000'
+        new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_2_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 2 _1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_1=10.'
+        new_slugs['observationduration2'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_2_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 2 _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_2=10.'
+        new_slugs['observationduration2'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_2_clause_1_2(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 2 _1_2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_2=10.&observationduration2_1=20.'
+        new_slugs['observationduration2_01'] = '20.0000'
+        new_slugs['observationduration2_02'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_2_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 2 _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_20=10.&observationduration2_10=20.'
+        new_slugs['observationduration2_01'] = '20.0000'
+        new_slugs['observationduration2_02'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_01(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _01"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_01=20.'
+        new_slugs['observationduration1'] = '10.0000'
+        new_slugs['observationduration2'] = '20.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_01_1(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _01_1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_1=20.'
+        new_slugs['observationduration1_01'] = '10.0000'
+        new_slugs['observationduration2_02'] = '20.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_bad_0(self):
+        "[test_ui_api.py] /__normalizeurl: search single bad 1 _0"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_0=10.'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_bad_n1(self):
+        "[test_ui_api.py] /__normalizeurl: search single bad 1 -1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_-1=10.'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_1_clause_bad_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search single bad 1 _XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_01_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _01_XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_XXX=20.'
+        new_slugs['observationduration1'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_XXX_01(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _XXX_01"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.&observationduration2_01=20.'
+        new_slugs['observationduration2'] = '20.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
+        new_slugs['observationduration2_01'] = '20.0000'
+        new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_02=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
+        new_slugs['observationduration1_01'] = '10.0000'
+        new_slugs['observationduration2_02'] = '20.0000'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    # Strings
+
     def test__api_normalizeurl_search_string_good(self):
         "[test_ui_api.py] /__normalizeurl: search string good"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&volumeid=COISS'
         new_slugs['volumeid'] = 'COISS'
+        new_slugs['qtype-volumeid'] = 'contains'
+        new_slugs['widgets'] = 'volumeid'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_string_empty(self):
+        "[test_ui_api.py] /__normalizeurl: search string empty"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=volumeid&volumeid='
+        new_slugs['volumeid'] = ''
         new_slugs['qtype-volumeid'] = 'contains'
         new_slugs['widgets'] = 'volumeid'
         self._run_url_slugs_equal(url, new_slugs)
@@ -1271,7 +1709,27 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'volumeid'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_string_clause(self):
+        "[test_ui_api.py] /__normalizeurl: search string clause"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=volumeid&volumeid_03=COISS&volumeid_04=COUVIS&qtype-volumeid_02=ends&qtype-volumeid_04=matches'
+        new_slugs['volumeid_02'] = 'COISS'
+        new_slugs['volumeid_03'] = 'COUVIS'
+        new_slugs['qtype-volumeid_01'] = 'ends'
+        new_slugs['qtype-volumeid_02'] = 'contains'
+        new_slugs['qtype-volumeid_03'] = 'matches'
+        new_slugs['widgets'] = 'volumeid'
+        self._run_url_slugs_equal(url, new_slugs)
+
     # Mult field
+
+    def test__api_normalizeurl_search_mult_empty(self):
+        "[test_ui_api.py] /__normalizeurl: search mult empty"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument='
+        new_slugs['instrument'] = ''
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_search_mult_good(self):
         "[test_ui_api.py] /__normalizeurl: search mult good"
@@ -1302,6 +1760,13 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
 
+    def test__api_normalizeurl_search_mult_bad_val(self):
+        "[test_ui_api.py] /__normalizeurl: search mult bad val"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument=COISS,XXX'
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
+
     def test__api_normalizeurl_search_mult_bad_qtype_only(self):
         "[test_ui_api.py] /__normalizeurl: search mult bad qtype only"
         new_slugs = dict(self.default_url_slugs)
@@ -1309,6 +1774,23 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['instrument'] = 'COISS'
         new_slugs['widgets'] = 'instrument'
         self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_mult_clause_1(self):
+        "[test_ui_api.py] /__normalizeurl: search mult clause 1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS'
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_mult_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search mult clause 2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS&instrument=COUVIS'
+        new_slugs['instrument'] = 'COUVIS'
+        new_slugs['widgets'] = 'instrument'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    ### Bad values
 
     # Multi-column ranges
 
@@ -1559,7 +2041,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_real_1(self):
         "[test_ui_api.py] /__normalizeurl: real 1"
         url = '/opus/__normalizeurl.json?planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
-        expected = {'new_url': 'mission=Voyager&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li><li>Search query type "Volume ID" refers to a search field that is not being used; it has been ignored.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
+        expected = {'new_url': 'mission=Voyager&planet=Saturn&qtype-volumeid=contains&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,volumeid,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'qtype-volumeid': 'contains'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,volumeid,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_2(self):

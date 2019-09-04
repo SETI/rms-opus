@@ -1,7 +1,7 @@
 #!/bin/sh
 python main_opus_import.py --drop-permanent-tables --scorched-earth
 python main_opus_import.py --import-check-duplicate-id --do-all-import GALILEO $1
-python main_opus_import.py --import-check-duplicate-id --do-all-import HST --exclude-volumes HSTJ0_9391 $1
+python main_opus_import.py --import-check-duplicate-id --do-all-import HST --exclude-volumes HSTJ0_9391,HSTJ1_0860 $1
 python main_opus_import.py --import-check-duplicate-id --do-all-import NEWHORIZONS $1
 python main_opus_import.py --import-check-duplicate-id --do-all-import COVIMS $1
 python main_opus_import.py --import-check-duplicate-id --do-all-import COUVIS $1

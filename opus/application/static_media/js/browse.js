@@ -54,6 +54,7 @@ var o_browse = {
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
 
+    pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader spinner
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
     /**
@@ -96,6 +97,7 @@ var o_browse = {
                     }
                 }
             }
+            o_browse.hideMenu();
         });
 
         $("#op-select-metadata").modal({
@@ -194,14 +196,12 @@ var o_browse = {
             }
             let tab = opus.getViewTab();
             let opusId = $(this).val();
-            let startElem = $(`${tab} .thumb.gallery`).find(".selected");
 
             if (e.shiftKey) {
-                if (startElem.length == 0) {
+                let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+                if (fromOpusId === undefined) {
                     o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
                 } else {
-                    let fromOpusId = $(startElem).data("id");
                     o_cart.toggleInCart(fromOpusId, opusId);
                 }
             } else {
@@ -216,9 +216,6 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenu();
 
-            let tab = opus.getViewTab();
-            let startElem = $(`${tab} .thumb.gallery`).find(".selected");
-
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
                 o_cart.toggleInCart(opusId);
@@ -226,13 +223,7 @@ var o_browse = {
             }
             // Detecting shift key
             else if (e.shiftKey) {
-                if (startElem.length == 0) {
-                    o_browse.startRangeSelect(opusId);
-                    //o_cart.toggleInCart(opusId);
-                } else {
-                    let fromOpusId = $(startElem).data("id");
-                    o_cart.toggleInCart(fromOpusId, opusId);
-                }
+                o_browse.cartShiftKeyHandler(e, opusId);
             } else {
                 o_browse.showMetadataDetailModal(opusId);
             }
@@ -293,7 +284,7 @@ var o_browse = {
             $(namespace).find(".modal-show").removeClass("modal-show");
         });
 
-        $('#galleryView').on("click", "a.select", function(e) {
+        $('#galleryView').on("click", "a.op-cart-toggle", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
@@ -324,7 +315,7 @@ var o_browse = {
         $("#browse, #cart").on("click", ".op-data-table-view th a",  function() {
             // show this spinner right away when table is clicked
             // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let orderBy =  $(this).data("slug");
             let targetSlug = orderBy;
 
@@ -359,7 +350,7 @@ var o_browse = {
 
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
 
@@ -384,7 +375,7 @@ var o_browse = {
 
         // browse sort order - flip sort order of a slug
         $(".sort-contents").on("click", "li .flip-sort", function() {
-            $(".op-page-loading-status > .loader").show();
+            o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let targetSlug = slug;
             let isDescending = true;
@@ -439,12 +430,10 @@ var o_browse = {
                     break;
                 case "range": // begin/end range
                     let tab = opus.getViewTab();
-                    let startElem = $(tab).find(".selected");
-                    if (startElem.length == 0) {
+                    let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+                    if (fromOpusId === undefined) {
                         o_browse.startRangeSelect(opusId);
-                        //o_cart.toggleInCart(opusId);
                     } else {
-                        let fromOpusId = $(startElem).data("id");
                         o_cart.toggleInCart(fromOpusId, opusId);
                     }
                     break;
@@ -472,6 +461,7 @@ var o_browse = {
             slide: function(event, ui) {
                 let tab = ui.handle.dataset.target;
                 o_browse.onSliderHandleMoving(tab, ui.value);
+                o_browse.hideMenu();
             },
             stop: function(event, ui) {
                 let tab = ui.handle.dataset.target;
@@ -523,11 +513,15 @@ var o_browse = {
     }, // end browse behaviors
 
     cartShiftKeyHandler: function(e, opusId) {
-        let startElem = $(e.delegateTarget).find(".selected");
-        if (startElem.length == 0) {
+        let tab = opus.getViewTab();
+
+        // for now, disable the edit function on the #cart tab
+        if (tab === "#cart") return;
+
+        let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+        if (fromOpusId === undefined) {
             o_browse.startRangeSelect(opusId);
         } else {
-            let fromOpusId = $(startElem).data("id");
             o_cart.toggleInCart(fromOpusId, opusId);
         }
     },
@@ -1112,13 +1106,22 @@ var o_browse = {
 
     showMenu: function(e, opusId) {
         // make this like a default right click menu
+        let tab = opus.getViewTab();
+        // hide the cart edit options if we are on the cart tab
+        if (tab === "#cart") {
+            $("#op-obs-menu [data-action='cart']").hide();
+            $("#op-obs-menu [data-action='range']").hide();
+        } else {
+            $("#op-obs-menu [data-action='cart']").show();
+            $("#op-obs-menu [data-action='range']").show();
+        }
         if ($("#op-obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
         let inCart = (o_cart.isIn(opusId) ? "" : "in");
         let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#op-obs-menu .dropdown-header").html(opusId);
-        $("#op-obs-menu .cart-item").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
@@ -1128,16 +1131,16 @@ var o_browse = {
 
         // use the state of the current selected observation to set the icons if one has been selected,
         // otherwise use the state of the current observation - this will identify what will happen to the range
-        let tab = opus.getViewTab();
-        let selectedElem = $(tab).find(".selected");
-        if (selectedElem.length != 0) {
-            inCart = (o_cart.isIn($(selectedElem).data("id")) ? "" : "in");
+        let rangeSelected = o_browse.isRangeSelectEnabled(tab);
+        let rangeText = "";
+        if (rangeSelected !== undefined) {
+            let addRemoveText = (rangeSelected === "removerange" ? "remove range from" : "add range to");
+            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`;
+        } else {
+            let addRemoveText = (inCart !== "in" ? "remove range from" : "add range to");
+            rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here`;
         }
-        let addRemoveText = (inCart != "in" ? "remove range from" : "add range to");
 
-        let rangeText = (selectedElem.length === 0 ?
-                            `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText} cart here` :
-                            `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText} cart here`);
         $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
 
         let menu = {"height":$("#op-obs-menu").innerHeight(), "width":$("#op-obs-menu").innerWidth()};
@@ -1177,20 +1180,46 @@ var o_browse = {
         return $(`.op-data-table div[data-id=${opusId}]`).parent();
     },
 
-    startRangeSelect: function(opusId) {
-        o_browse.undoRangeSelect(); // probably not necessary...
+    highlightStartOfRange: function(opusId) {
         o_browse.getGalleryElement(opusId).addClass("selected hvr-ripple-in b-a-2");
         o_browse.getDataTableInputElement(opusId).addClass("hvr-ripple-in b-a-2");
     },
 
+    startRangeSelect: function(opusId) {
+        let tab = opus.getViewTab();
+        let galleryElement = o_browse.getGalleryElement(opusId);
+        let obsNum = galleryElement.data("obs");
+        let action = (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange");
+        let actionText = (action === "removerange" ? "Remove range from" : "Add range to");
+        $(`${tab} .op-range-select-info-box`).html(`${actionText} cart starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
+        $(`${tab} .op-gallery-view`).infiniteScroll({
+            "rangeSelectOpusID": opusId,
+            "rangeSelectObsNum": obsNum,
+            "rangeSelectOption": action
+        });
+        o_browse.highlightStartOfRange(opusId);
+    },
+
     undoRangeSelect: function() {
         let tab = opus.getViewTab();
+
+        // for now, disable the edit function on the #cart tab
+        if (tab === "#cart") return;
+
         let startElem = $(tab).find(".selected");
         if (startElem.length) {
             $(startElem).removeClass("selected hvr-ripple-in b-a-2");
             let opusId = $(startElem).data("id");
             o_browse.getDataTableInputElement(opusId).removeClass("hvr-ripple-in b-a-2");
         }
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID = undefined;
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectObsNum = undefined;
+        $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption = undefined;
+        $(`${tab} .op-range-select-info-box`).removeClass("op-range-select");
+    },
+
+    isRangeSelectEnabled: function(tab) {
+        return $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOption;
     },
 
     openDetailTab: function() {
@@ -1198,6 +1227,24 @@ var o_browse = {
         opus.changeTab("detail");
     },
 
+    showPageLoaderSpinner: function() {
+        if (o_browse.pageLoaderSpinnerTimer === null) {
+            o_browse.pageLoaderSpinnerTimer = setTimeout(function() {
+                $(`.op-page-loading-status > .loader`).show(); }, opus.spinnerDelay);
+        }
+    },
+
+    hidePageLoaderSpinner: function() {
+        if (o_browse.pageLoaderSpinnerTimer !== null) {
+            // The right way to fix this is probably to reference count the on/off actions,
+            // since they should always be paired, and that way the spinner won't turn off
+            // until the last operation is complete. However, this sounds like a recipe for bugs,
+            // and it isn't a common occurrence
+            clearTimeout(o_browse.pageLoaderSpinnerTimer);
+            $(`.op-page-loading-status > .loader`).hide();
+            o_browse.pageLoaderSpinnerTimer = null;
+        }
+    },
 
     /******************************************/
     /********* SELECT METADATA DIALOG *********/
@@ -1220,7 +1267,7 @@ var o_browse = {
                 o_browse.loadData(opus.prefs.view);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
             }
         });
 
@@ -1292,7 +1339,7 @@ var o_browse = {
                     o_browse.resetMetadata(opus.defaultColumns);
                     break;
                 case "submit":
-                    $(".op-page-loading-status > .loader").show();
+                    o_browse.showPageLoaderSpinner();
                     break;
                 case "cancel":
                     opus.prefs.cols = [];
@@ -1570,7 +1617,7 @@ var o_browse = {
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 } else {
                     // we've hit the end of the infinite scroll.
-                    $(".op-page-loading-status > .loader").hide();
+                    o_browse.hidePageLoaderSpinner();
                 }
                 return;
             }
@@ -1639,6 +1686,16 @@ var o_browse = {
                 $(".op-data-table-view tbody", tab).prepend(tableHtml);
             }
         }
+        // hide the edit cart icons on the cart tab for now...
+        if (tab === "#cart") {
+            $("#cart [data-icon='cart']").css('visibility','hidden');   // note: this maintains spacing; hide() does not.
+            $("#cart input.multichoice").hide();
+        } else {
+            // we must always use the op-gallery-view infinite scroll object for the rangeSelectOpusID because we only
+            // keep track of the range select variables in one of the infinite scroll objects. 
+            let rangeSelectOpusID = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
+            o_browse.highlightStartOfRange(rangeSelectOpusID);
+        }
 
         // Note: we have to manually set the scrollbar position.
         // - scroll up: when we scroll up and a new page is fetched, we want to keep scrollbar position at the current startObs,
@@ -1651,7 +1708,7 @@ var o_browse = {
                                       infiniteScrollDataObj.scrollbarObsNum, view,
                                       infiniteScrollDataObj.scrollbarOffset);
 
-        $(".op-page-loading-status > .loader").hide();
+        o_browse.hidePageLoaderSpinner();
         o_browse.updateSliderHandle(view);
         o_hash.updateHash(true);
     },
@@ -1821,7 +1878,7 @@ var o_browse = {
         // don't delete the metadata if the observation is in the cart
         let delOpusId = galleryObsElem.eq(index).data("id");
         if ($("#galleryView").hasClass("show")) {
-            if (delOpusId === $("#galleryViewContents .select").data("id")) {
+            if (delOpusId === $("#galleryViewContents .op-cart-toggle").data("id")) {
                 o_browse.hideGalleryViewModal();
             }
         }
@@ -1940,7 +1997,7 @@ var o_browse = {
                     //return null;
                 },
                 responseType: "text",
-                status: `${tab} .page-load-status`,
+                status: `${tab} .op-page-load-status`,
                 elementScroll: true,
                 history: false,
                 // threshold point for scroll down
@@ -2021,17 +2078,17 @@ var o_browse = {
                             startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
                         }
                         o_browse.setScrollbarPosition(startObs, startObs, view);
-                        $(".op-page-loading-status > .loader").hide();
+                        o_browse.hidePageLoaderSpinner();
                         return;
                     }
                 }
             } else {
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
                 return;
             }
         }
 
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         viewNamespace.loadDataInProgress = true;
@@ -2039,7 +2096,7 @@ var o_browse = {
         $.getJSON(url, function(data) {
             if (data.reqno < opus.lastLoadDataRequestNo[view]) {
                 // make sure to remove spinner before return
-                $(".op-page-loading-status > .loader").hide();
+                o_browse.hidePageLoaderSpinner();
                 return;
             }
 
@@ -2074,7 +2131,7 @@ var o_browse = {
 
     infiniteScrollLoadEventListener: function(event, response, path, view) {
         let viewNamespace = opus.getViewNamespace(view);
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         let data = JSON.parse(response);
 
         let tab = opus.getViewTab(view);
@@ -2122,7 +2179,7 @@ var o_browse = {
         // reset range select
         o_browse.undoRangeSelect();
 
-        $(".op-page-loading-status > .loader").show();
+        o_browse.showPageLoaderSpinner();
         o_browse.updateBrowseNav();
         o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
         // Call the following two functions to make sure the height of .op-gallery-view and .op-data-table-view
@@ -2266,7 +2323,7 @@ var o_browse = {
         $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo.title);
 
-        let modalCartSelector = `#galleryViewContents .bottom .select[data-id=${opusId}]`;
+        let modalCartSelector = `#galleryViewContents .bottom .op-cart-toggle[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
             $(modalCartSelector).prop("title", `${buttonInfo.title} (spacebar)`);
@@ -2309,7 +2366,7 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="select" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
@@ -2320,10 +2377,17 @@ var o_browse = {
         // mini-menu like the hamburger on the observation/gallery page
         html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
+
+        // disable edit of the cart from the cart page for awhile
+        if (opus.getViewTab() === "#cart") {
+            $(".op-cart-toggle").hide();
+        } else {
+            $(".op-cart-toggle").show();
+        }
     },
 
     updateGalleryView: function(opusId) {
-        let tab = `#${opus.prefs.view}`;
+        let tab = opus.getViewTab();
         $(tab).find(".modal-show").removeClass("modal-show");
         $(tab).find(`[data-id='${opusId}'] div.modal-overlay`).addClass("modal-show");
         $(tab).find(`tr[data-id='${opusId}']`).addClass("modal-show");
@@ -2333,7 +2397,7 @@ var o_browse = {
 
 
     updateMetaGalleryView: function(opusId, imageURL) {
-        let tab = `#${opus.prefs.view}`;
+        let tab = opus.getViewTab();
         let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
         let obsNum = $(element).data("obs");
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
