@@ -363,7 +363,7 @@ def get_git_version(force_valid=False, use_tag=False):
     if use_tag:
         try:
             # decode here to convert byte object to string
-            tag = (subprocess.check_output(['git', 'tag', '--points-at'])
+            tag = (subprocess.check_output(['git', 'tag', '--points-at', 'HEAD'])
                    .strip().decode('utf8'))
             if '\n' in tag:
                 tag = tag[:tag.index('\n')]
