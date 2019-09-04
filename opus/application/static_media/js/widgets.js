@@ -84,7 +84,7 @@ var o_widgets = {
 
         // Close dropdown list when focus out
         // $("#search").on(" focusout", "input.min", function(e) {
-        //     if ($(".scrollable-menu").hasClass("show")) {
+        //     if ($(".op-scrollable-menu").hasClass("show")) {
         //         o_widgets.toggleRangesInfoDropdown(e.target);
         //     }
         // });
@@ -135,8 +135,8 @@ var o_widgets = {
          */
 
         // Expand/collapse info when clicking a dropdown submenu
-        // $(".scrollable-menu .dropdown-item").on("click", function(e) {
-        $("#search").on("click", ".scrollable-menu .dropdown-item", function(e) {
+        // $(".op-scrollable-menu .dropdown-item").on("click", function(e) {
+        $("#search").on("click", ".op-scrollable-menu .dropdown-item", function(e) {
             // prevent URL being messed up with href in <a>
             e.preventDefault();
             let collapsibleID = $(e.target).attr("href");
@@ -144,8 +144,8 @@ var o_widgets = {
         });
 
         // Avoid closing dropdown menu when clicking any dropdown item
-        // $(".scrollable-menu").on("click", function(e) {
-        $("#search").on("click", ".scrollable-menu", function(e) {
+        // $(".op-scrollable-menu").on("click", function(e) {
+        $("#search").on("click", ".op-scrollable-menu", function(e) {
             e.stopPropagation();
         });
 
@@ -644,7 +644,7 @@ var o_widgets = {
                 $("input.STRING").autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
-                if ($(`#${widget} .scrollable-menu`).hasClass("show")) {
+                if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
                     // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
                     // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
@@ -654,7 +654,7 @@ var o_widgets = {
 
             // Prevent overscrolling on ps in widget container when scrolling inside dropdown
             // list has reached to both ends
-            $(".scrollable-menu").on("scroll wheel", function(e) {
+            $(".op-scrollable-menu").on("scroll wheel", function(e) {
                 e.stopPropagation();
             });
 

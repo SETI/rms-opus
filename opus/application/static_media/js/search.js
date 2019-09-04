@@ -41,6 +41,11 @@ var o_search = {
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
+    itemsMatched: {},
+    // Use to determine if we should automatically expand/collapse ranges info. If it's set
+    // to true, we will automatically expand/collapse ranges info depending on the matched letters.
+    isTriggeredFromInput: false,
+
     addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(event) {
@@ -67,6 +72,37 @@ var o_search = {
             }
         });
 
+        // Make sure ranges info shows up automatically when the count of matched characters
+        // is not 0. We do this in the event handler when the collpasing is done. This is to avoid
+        // the race condition of the collapsing animation when user types fast in the input.
+        $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            if (o_search.isTriggeredFromInput) {
+                let collapsibleContainerId = $(e.target).attr("id");
+                if (o_search.itemsMatched[collapsibleContainerId]) {
+                    $(e.target).collapse("show");
+                }
+            }
+        });
+
+        // Make sure ranges info hides automatically when the count of matched characters
+        // is 0. We do this in the event handler when the expanding is done. This is to avoid
+        // the race condition of the expanding animation when user types fast in the input.
+        $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            if (o_search.isTriggeredFromInput) {
+                let collapsibleContainerId = $(e.target).attr("id");
+                if (o_search.itemsMatched[collapsibleContainerId] === 0) {
+                    $(e.target).collapse("hide");
+                }
+            }
+        });
+
+        // Set isTriggeredFromInput to false, this will make sure we can still expand/collapse
+        // ranges info by mouse clicking.
+        $(`#search`).on("click", ".op-scrollable-menu", function(e) {
+            console.log("NOT FROM INPUT BUT FROM CLICK");
+            o_search.isTriggeredFromInput = false;
+        });
+
         // Dynamically get input values right after user input a character
         $("#search").on("input", "input.RANGE", function(event) {
             if (!$(this).hasClass("input_currently_focused")) {
@@ -83,16 +119,14 @@ var o_search = {
             // 2. If input matches any of list items, expand those categories and display only
             //    matched items, and hide all unmatched items. Collpase and disable the ability
             //    to expand for the categories without any matched item.
+            o_search.isTriggeredFromInput = true;
             let slugName = $(this).data("slugname");
-            let preprogrammedRangesInfo = $(`#widget__${slugName} .scrollable-menu li`);
-            let itemsMatched = {};
+            let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
 
             for (const category of preprogrammedRangesInfo) {
                 let collapsibleContainerId = $(category).data("category");
                 let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-                if (itemsMatched[collapsibleContainerId] === undefined) {
-                    itemsMatched[collapsibleContainerId] = 0;
-                }
+                o_search.itemsMatched[collapsibleContainerId] = 0;
 
                 for (const singleRangeData of rangesInfoInEachCategory) {
                     let dataName = $(singleRangeData).data("name").toLowerCase();
@@ -100,47 +134,34 @@ var o_search = {
                     // console.log(`currentValue: ${currentValue}`);
                     // console.log(`dataName: ${dataName}`);
                     // console.log(`dataName.includes(currentValue): ${dataName.includes(currentValue)}`);
+
                     if (!currentValue) {
-                        // $(singleRangeData).show();
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
-                        itemsMatched[collapsibleContainerId] = 0;
-                        // if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
-                        //     $(`#${collapsibleContainerId}`).collapse("show");
-                        // }
-                        // itemsMatched = false;
+                        // o_search.itemsMatched = {};
+                        for (const eachCat in o_search.itemsMatched) {
+                            o_search.itemsMatched[eachCat] = 0;
+                        }
                     } else if (dataName.includes(currentInputValue)) {
                         // Expand the category, display the item and highlight the matched keyword.
-                        // $(singleRangeData).show();
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        o_search.itemsMatched[collapsibleContainerId] += 1;
                         if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
-                            // $(`#${collapsibleContainerId}`).on("hidden.bs.collapse", function() {
-                            //     $(`#${collapsibleContainerId}`).collapse("show");
-                            // });
-                            // $(`#${collapsibleContainerId}`).addClass("show");
                             $(`#${collapsibleContainerId}`).collapse("show");
-                            itemsMatched[collapsibleContainerId] += 1;
                         }
-                        // itemsMatched = false;
                     } else {
                         // Hide the item if it doesn't match the input keyword
-                        // $(singleRangeData).hide();
                         $(singleRangeData).addClass("op-hide-preprogrammed-ranges-item");
                     }
                 }
                 console.log(`collapsibleContainerId: ${collapsibleContainerId}`);
-                console.log(itemsMatched);
-                if (!itemsMatched[collapsibleContainerId]) {
-                    console.log("Collapsing...");
-                    // $(`#${collapsibleContainerId}`).on("shown.bs.collapse", function() {
-                    //     $(`#${collapsibleContainerId}`).collapse("hide");
-                    // });
-                    // $(`#${collapsibleContainerId}`).removeClass("show");
+                console.log(o_search.itemsMatched);
+                if (o_search.itemsMatched[collapsibleContainerId] === 0) {
                     $(`#${collapsibleContainerId}`).collapse("hide");
-                    itemsMatched[collapsibleContainerId] = 0;
                 }
                 // Note: the selector to toggle collapse should be the one with "collapse" class.
                 // $(`#${containerId}`).collapse("show");
             }
+            ////// END OF EXPERIMENT AREA
 
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;

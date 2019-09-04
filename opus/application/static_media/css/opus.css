@@ -1977,7 +1977,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Enable default scrollbar for ranges info dropdown */
-.op-preprogrammed-ranges .scrollable-menu {
+.op-preprogrammed-ranges .op-scrollable-menu {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -1991,16 +1991,16 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* TEST AREA */
-.op-preprogrammed-ranges .scrollable-menu div {
+.op-preprogrammed-ranges .op-scrollable-menu div {
     /* width: 100%; */
 }
-.op-preprogrammed-ranges .scrollable-menu li {
+.op-preprogrammed-ranges .op-scrollable-menu li {
     /* width: 100%; */
 }
-.op-preprogrammed-ranges .scrollable-menu .row {
+.op-preprogrammed-ranges .op-scrollable-menu .row {
     /* width: 100%; */
 }
-.op-preprogrammed-ranges .scrollable-menu .row div {
+.op-preprogrammed-ranges .op-scrollable-menu .row div {
     /* width: max-content; */
      /* text-align: justify;
      display: inline-block; */
