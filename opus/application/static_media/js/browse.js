@@ -230,7 +230,7 @@ var o_browse = {
         });
 
         // thumbnail overlay tools
-        $('.gallery, .op-data-table').on("click", ".op-tools a", function(e) {
+        $('.gallery, .op-data-table').on("click contextmenu", ".op-tools a", function(e) {
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
 
@@ -238,6 +238,7 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
+                    return; // need to skip the default action to allow the context menu to work
                     break;
 
                 case "cart":   // add to cart
@@ -418,8 +419,8 @@ var o_browse = {
             return false;
         });
 
-        $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
-            let opusId = $(this).parent().attr("data-id");
+        $("#op-obs-menu").on("click contextmenu", '.dropdown-item',  function(e) {
+            let opusId = $(this).parent().data("id");
             o_browse.hideMenu();
 
             switch ($(this).data("action")) {
@@ -428,6 +429,7 @@ var o_browse = {
                     // clicking on the cart/trash can aborts range select
                     o_browse.undoRangeSelect();
                     break;
+
                 case "range": // begin/end range
                     let tab = opus.getViewTab();
                     let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
@@ -437,15 +439,19 @@ var o_browse = {
                         o_cart.toggleInCart(fromOpusId, opusId);
                     }
                     break;
+
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
+                    return;  // need to not return false to allow the contextmenu to work
                     break;
+
                 case "downloadCSV":
                 case "downloadCSVAll":
                 case "downloadData":
                 case "downloadURL":
                     document.location.href = $(this).attr("href");
                     break;
+                    
                 case "help":
                     break;
             }
@@ -1157,13 +1163,15 @@ var o_browse = {
 
     showDetail: function(e, opusId) {
         opus.prefs.detail = opusId;
-        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            let hashArray = o_hash.getHashArray();
-            hashArray.detail = opusId;
-            let link = "/opus/#/" + o_hash.hashArrayToHashString(hashArray);
+            let link = "/opus/#/" +  o_hash.updateHash();
             link = link.replace("view=browse", "view=detail");
-            window.open(link, '_blank');
+            if ($(e.target).attr("href")) {
+                $(e.target).attr("href", link);
+            } else {
+                $(e.target).parent().attr("href", link);
+            }
         } else {
             opus.prefs.detail = opusId;
             opus.changeTab("detail");
@@ -1692,7 +1700,7 @@ var o_browse = {
             $("#cart input.multichoice").hide();
         } else {
             // we must always use the op-gallery-view infinite scroll object for the rangeSelectOpusID because we only
-            // keep track of the range select variables in one of the infinite scroll objects. 
+            // keep track of the range select variables in one of the infinite scroll objects.
             let rangeSelectOpusID = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
             o_browse.highlightStartOfRange(rangeSelectOpusID);
         }

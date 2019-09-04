@@ -32,7 +32,7 @@ var o_hash = {
                 hash.push(key + "=" + encodedExtraValues.join(","));
             }
         });
-        
+
         $.each(opus.prefs, function(key, value) {
             hash.push(key + "=" + value);
         });
@@ -146,7 +146,7 @@ var o_hash = {
     },
 
     getHashArray: function() {
-        let hashArray = [];
+        let hashArray = {};
         let hashInfo = o_hash.getHash();
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
