@@ -96,6 +96,17 @@ var o_search = {
             }
         });
 
+        // When there is no matched characters of ranges names and the category is collapsed,
+        // the empty category will not be expanded when user clicks it.
+        $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            let collapsibleContainerId = $(e.target).attr("id");
+            let widgetId = $(e.target).data("widget");
+            let currentIuputValue = $(`#${widgetId} input.min`).val().trim();
+            if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0 && currentIuputValue) {
+                e.preventDefault();
+            }
+        });
+
         // Set isTriggeredFromInput to false, this will make sure we can still expand/collapse
         // ranges info by mouse clicking.
         $(`#search`).on("click", ".op-scrollable-menu", function(e) {
