@@ -1004,7 +1004,7 @@
     ],
     "obs_wavelength": [
         {
-            "cat_name": "Wavelengths",
+            "cat_name": "PDS4 Wavelength Ranges",
             "heading1": "Min (microns)",
             "heading2": "Max (microns)",
             "ranges": [
@@ -1042,7 +1042,14 @@
                     "field2": "300",
                     "unit": "microns",
                     "qtype": null
-                },
+                }
+            ]
+        },
+        {
+            "cat_name": "CRC Wavelength Ranges",
+            "heading1": "Min (microns)",
+            "heading2": "Max (microns)",
+            "ranges": [
                 {
                     "name": "Red",
                     "field1": "0.647",
@@ -1082,6 +1089,34 @@
                     "name": "Violet",
                     "field1": "0.400",
                     "field2": "0.424",
+                    "unit": "microns",
+                    "qtype": null
+                }
+            ]
+        },
+        {
+            "cat_name": "Johnson Filters",
+            "heading1": "Min (microns)",
+            "heading2": "Max (microns)",
+            "ranges": [
+                {
+                    "name": "Ultraviolet",
+                    "field1": "0.332",
+                    "field2": "0.398",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Blue",
+                    "field1": "0.398",
+                    "field2": "0.492",
+                    "unit": "microns",
+                    "qtype": null
+                },
+                {
+                    "name": "Visual",
+                    "field1": "0.507",
+                    "field2": "0.595",
                     "unit": "microns",
                     "qtype": null
                 }
