@@ -134,6 +134,7 @@ var o_search = {
 
                     if (!currentValue) {
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        o_search.removeHighlightedRangesName(singleRangeData);
                         // o_search.rangesNameMatchedCounter = {};
                         for (const eachCat in o_search.rangesNameMatchedCounter) {
                             o_search.rangesNameMatchedCounter[eachCat] = 0;
@@ -141,7 +142,7 @@ var o_search = {
                     } else if (dataName.includes(currentInputValue)) {
                         // Expand the category, display the item and highlight the matched keyword.
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
-                        o_search.hightlightMatchedRangesName(singleRangeData, currentInputValue);
+                        o_search.highlightMatchedRangesName(singleRangeData, currentInputValue);
                         o_search.rangesNameMatchedCounter[collapsibleContainerId] += 1;
                         if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
                             $(`#${collapsibleContainerId}`).collapse("show");
@@ -385,7 +386,7 @@ var o_search = {
         });
     },
 
-    hightlightMatchedRangesName: function(singleRangeData, currentInputValue) {
+    highlightMatchedRangesName: function(singleRangeData, currentInputValue) {
         /**
          * Highlight characters of ranges names that match user's input.
          */
@@ -401,6 +402,14 @@ var o_search = {
                                "</b>" + originalText.slice(matchedIdx + matchedLength));
 
         $(singleRangeData).find(".op-preprogrammed-ranges-data-name").html(highlightedText);
+    },
+
+    removeHighlightedRangesName: function(singleRangeData) {
+        /**
+         * Remove highlighted characters of ranges names that match user's input.
+         */
+        let originalText = $(singleRangeData).data("name");
+        $(singleRangeData).find(".op-preprogrammed-ranges-data-name").html(originalText);
     },
 
     allNormalizedApiCall: function() {
