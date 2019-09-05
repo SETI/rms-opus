@@ -77,10 +77,15 @@ var o_widgets = {
             });
         });
 
-        // $("#search").on("focus", "input.min", function(e) {
-        //     // TODO: Need to check if input is empty or has valid characters
-        //     o_widgets.toggleRangesInfoDropdown(e.target);
-        // });
+        // Need to modify this one ... to prevent dropdown from disappearing once double clicking on input happend
+        $("#search").on("mousedown", "input.min", function(e) {
+            console.log("still focus")
+            // TODO: Need to check if input is empty or has valid characters
+            if ($(".op-scrollable-menu").hasClass("show")) {
+                console.log("stop ")
+                e.stopPropagation();
+            }
+        });
 
         // Close dropdown list when focus out
         // $("#search").on(" focusout", "input.min", function(e) {

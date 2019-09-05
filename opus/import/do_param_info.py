@@ -32,7 +32,7 @@ def create_import_param_info_table():
             contents = fp.read()
             ranges_json = json.loads(contents)
         except json.decoder.JSONDecodeError:
-            impglobals.LOGGER.log('debug', f'Was reading ranges json file "{ranges_filename}"')
+            logger.log('debug', f'Was reading ranges json file "{ranges_filename}"')
             raise
         except:
             raise
@@ -55,6 +55,7 @@ def create_import_param_info_table():
                 logger.log('error',
                            f'"{unit}" in "{category_name}/{field_name}" is not '
                            +'a valid unit in translation table')
+                return False
             form_type = column.get('pi_form_type', None)
             if (unit and
                 (not form_type or
@@ -78,6 +79,7 @@ def create_import_param_info_table():
                 else:
                     logger.log('error',
                                f'pi_ranges: "{ranges}" is not in "{ranges_filename}"')
+                    return False
 
             new_row = {
                 'category_name': category_name,

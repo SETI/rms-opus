@@ -120,7 +120,7 @@ class SearchForm(forms.Form):
 
                 self.fields[slug] = MultiFloatField(
                     required=False,
-                    label = label.title(),
+                    label = label.capitalize(),
                     widget = forms.TextInput(
                         attrs={
                             'class': label + ' RANGE op-ranges-dropdown-menu dropdown-toggle',
