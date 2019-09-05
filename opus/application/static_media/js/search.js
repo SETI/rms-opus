@@ -41,7 +41,7 @@ var o_search = {
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
-    itemsMatched: {},
+    rangesNameMatchedCounter: {},
     // Use to determine if we should automatically expand/collapse ranges info. If it's set
     // to true, we will automatically expand/collapse ranges info depending on the matched letters.
     isTriggeredFromInput: false,
@@ -78,7 +78,7 @@ var o_search = {
         $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.itemsMatched[collapsibleContainerId]) {
+                if (o_search.rangesNameMatchedCounter[collapsibleContainerId]) {
                     $(e.target).collapse("show");
                 }
             }
@@ -90,7 +90,7 @@ var o_search = {
         $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.itemsMatched[collapsibleContainerId] === 0) {
+                if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
                     $(e.target).collapse("hide");
                 }
             }
@@ -99,7 +99,6 @@ var o_search = {
         // Set isTriggeredFromInput to false, this will make sure we can still expand/collapse
         // ranges info by mouse clicking.
         $(`#search`).on("click", ".op-scrollable-menu", function(e) {
-            console.log("NOT FROM INPUT BUT FROM CLICK");
             o_search.isTriggeredFromInput = false;
         });
 
@@ -113,7 +112,7 @@ var o_search = {
             let currentValue = $(this).val().trim();
             console.log(`Currnet val: ${currentValue}`);
 
-            // EXPERIMENT AREA, Iterate through the whole list
+            ////// EXPERIMENT AREA, Iterate through the whole list //////
             // When user is typing, iterate through all preprogrammed ranges info.
             // 1. If input field is empty, display the whole list with all categories collapsed.
             // 2. If input matches any of list items, expand those categories and display only
@@ -126,25 +125,24 @@ var o_search = {
             for (const category of preprogrammedRangesInfo) {
                 let collapsibleContainerId = $(category).data("category");
                 let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-                o_search.itemsMatched[collapsibleContainerId] = 0;
+                o_search.rangesNameMatchedCounter[collapsibleContainerId] = 0;
+                // console.log(o_search.rangesNameMatchedCounter);
 
                 for (const singleRangeData of rangesInfoInEachCategory) {
                     let dataName = $(singleRangeData).data("name").toLowerCase();
                     let currentInputValue = currentValue.toLowerCase();
-                    // console.log(`currentValue: ${currentValue}`);
-                    // console.log(`dataName: ${dataName}`);
-                    // console.log(`dataName.includes(currentValue): ${dataName.includes(currentValue)}`);
 
                     if (!currentValue) {
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
-                        // o_search.itemsMatched = {};
-                        for (const eachCat in o_search.itemsMatched) {
-                            o_search.itemsMatched[eachCat] = 0;
+                        // o_search.rangesNameMatchedCounter = {};
+                        for (const eachCat in o_search.rangesNameMatchedCounter) {
+                            o_search.rangesNameMatchedCounter[eachCat] = 0;
                         }
                     } else if (dataName.includes(currentInputValue)) {
                         // Expand the category, display the item and highlight the matched keyword.
                         $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
-                        o_search.itemsMatched[collapsibleContainerId] += 1;
+                        o_search.hightlightMatchedRangesName(singleRangeData, currentInputValue);
+                        o_search.rangesNameMatchedCounter[collapsibleContainerId] += 1;
                         if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
                             $(`#${collapsibleContainerId}`).collapse("show");
                         }
@@ -153,15 +151,14 @@ var o_search = {
                         $(singleRangeData).addClass("op-hide-preprogrammed-ranges-item");
                     }
                 }
-                console.log(`collapsibleContainerId: ${collapsibleContainerId}`);
-                console.log(o_search.itemsMatched);
-                if (o_search.itemsMatched[collapsibleContainerId] === 0) {
+
+                if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
                     $(`#${collapsibleContainerId}`).collapse("hide");
                 }
                 // Note: the selector to toggle collapse should be the one with "collapse" class.
                 // $(`#${containerId}`).collapse("show");
             }
-            ////// END OF EXPERIMENT AREA
+            ////// END OF EXPERIMENT AREA //////
 
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
@@ -386,6 +383,24 @@ var o_search = {
 
             o_hash.updateHash();
         });
+    },
+
+    hightlightMatchedRangesName: function(singleRangeData, currentInputValue) {
+        /**
+         * Highlight characters of ranges names that match user's input.
+         */
+        let originalText = $(singleRangeData).data("name");
+        let matchedIdx = originalText.toLowerCase().indexOf(currentInputValue);
+        let matchedLength = currentInputValue.length;
+
+        // We use "+" to concatenate strings instead of `` string interpolation because
+        // we are going to put the highlightedText in html, and white spaces (or new line)
+        // will break the format and give the highlighted letters extra spaces at both ends.
+        let highlightedText = (originalText.slice(0, matchedIdx) + "<b>" +
+                               originalText.slice(matchedIdx, matchedIdx + matchedLength) +
+                               "</b>" + originalText.slice(matchedIdx + matchedLength));
+
+        $(singleRangeData).find(".op-preprogrammed-ranges-data-name").html(highlightedText);
     },
 
     allNormalizedApiCall: function() {
