@@ -18,6 +18,7 @@ var o_widgets = {
      **/
 
     lastStringSearchRequestNo: 0,
+    isTriggeredFromFocusClick: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -75,16 +76,6 @@ var o_widgets = {
                     console.log("error on close widget, id="+id);
                 }
             });
-        });
-
-        // Need to modify this one ... to prevent dropdown from disappearing once double clicking on input happend
-        $("#search").on("mousedown", "input.min", function(e) {
-            console.log("still focus")
-            // TODO: Need to check if input is empty or has valid characters
-            if ($(".op-scrollable-menu").hasClass("show")) {
-                console.log("stop ")
-                e.stopPropagation();
-            }
         });
 
         // Close dropdown list when focus out
@@ -157,6 +148,20 @@ var o_widgets = {
         // Make sure expanded contents are collapsed when ranges dropdown list is closed.
         $("#search").on("hidden.bs.dropdown", function(e) {
             $(".op-preprogrammed-ranges .container").collapse("hide");
+        });
+
+        // Prevent dropdown from closing when clicking on the focused input again
+        $("#search").on("mousedown", "input.min", function(e) {
+            if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
+                o_widgets.isTriggeredFromFocusClick = true;
+            }
+        });
+
+        $("#search").on("hide.bs.dropdown", function(e) {
+            if (o_widgets.isTriggeredFromFocusClick) {
+                e.preventDefault();
+                o_widgets.isTriggeredFromFocusClick = false;
+            }
         });
     },
 

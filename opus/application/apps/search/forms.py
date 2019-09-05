@@ -117,17 +117,21 @@ class SearchForm(forms.Form):
                 pi = get_param_info_by_slug(slug, 'search')
                 # placeholder for input hints (only apply to Min input for now)
                 hints = pi.field_hints1 if pi.field_hints1 else ''
+                # dropdown only available when ranges info is available
+                ranges = pi.get_ranges_info()
+                dropdown_class = 'op-ranges-dropdown-menu dropdown-toggle' if ranges else ''
+                data_toggle = 'dropdown' if ranges else ''
 
                 self.fields[slug] = MultiFloatField(
                     required=False,
                     label = label.capitalize(),
                     widget = forms.TextInput(
                         attrs={
-                            'class': label + ' RANGE op-ranges-dropdown-menu dropdown-toggle',
+                            'class': label + ' RANGE ' + dropdown_class,
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,
-                            'data-toggle': 'dropdown',
+                            'data-toggle': data_toggle,
                             'aria-haspopup': 'true',
                             'aria-expanded': 'false'
                         }
