@@ -26,8 +26,10 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+var FeedbackMethods;
+
 document.addEventListener("DOMContentLoaded", function(){
-	Feedback(config);
+	FeedbackMethods = Feedback(config);
 });
 
 (function( window, document, undefined ) {

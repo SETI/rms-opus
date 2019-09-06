@@ -9,7 +9,7 @@ var config = {
 				url: "https://pds-rings.seti.org/"
 			},
 			{
-				title: "PDS-Wide Search",
+				title: "PDS-wide Search",
 				url: "https://pds.nasa.gov/datasearch/data-search/"
 			},
 			{
@@ -35,17 +35,17 @@ var config = {
 		]
 	},
 	tab: {
-		label: "Need Help?",		// default: Need Help?
-		color: "#20a8d8",			// default: #0b3d91
-		fontColor: "#ffffff",		// default: #ffffff
-		fontSize: "5",				// default: 16
+		label: "Questions?",		// default: Need Help?
+        color: "#000000",
+		fontColor: "#ffffffc0",		// default: #ffffff
+		fontSize: "15",				// default: 16
 		size: {
-			width: "150",			// default: 150
-			height: "60"			// default: 60
+			width: "130",			// default: 150
+			height: "35"			// default: 60
 		},
 		placement: {
 			side: "right",			// default: right
-			offset: "50"			// default: 50
+			offset: "85"			// default: 50
 		}
 	}
 };

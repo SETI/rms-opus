@@ -257,20 +257,20 @@
     background-color: #0c0c0c \9;
 }
 button.feedback-btn, input[type="submit"].feedback-btn {
-    *padding-top: 2px;
-    *padding-bottom: 2px;
+    /* *padding-top: 2px; */
+    /* *padding-bottom: 2px; */
 }
 button.feedback-btn::-moz-focus-inner, input[type="submit"].feedback-btn::-moz-focus-inner {
     padding: 0;
     border: 0;
 }
 button.feedback-btn.large, input[type="submit"].feedback-btn.large {
-    *padding-top: 7px;
-    *padding-bottom: 7px;
+    /* *padding-top: 7px; */
+    /* *padding-bottom: 7px; */
 }
 button.feedback-btn.small, input[type="submit"].feedback-btn.small {
-    *padding-top: 3px;
-    *padding-bottom: 3px;
+    /* *padding-top: 3px; */
+    /* *padding-bottom: 3px; */
 }
 
 .feedback-btn .caret {
@@ -366,9 +366,9 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
 
 
 .feedback-footer {
-    padding: 5px 14px 15px 15px;
+    /* padding: 5px 14px 15px 15px; */ // Redundant with below??
     line-height:20px;
-    height:20px;
+    height:25px;
     margin-bottom: 0;
     background-color: #f5f5f5;
     border-top: 1px solid #ddd;
@@ -632,13 +632,14 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
 }
 
 .feedbackTab p {
-    font-size: 16px;
+    /* font-size: 16px; */ /* Bug in NASA code doesn't allow override from config.js */
     margin: 0;
     display: flex;
     justify-content: center;
 }
 .feedbackTab p:before {
     background-image: url(../image/msg_icon.png);
+    opacity: 0.5; /* Added to agree with text opacity */
     background-size: 18px 18px;
     background-repeat: no-repeat;
     display: inline-block;
@@ -715,9 +716,9 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
 }
 
 .feedback-footer {
-    padding: 10px 10px 0;
+    padding: 10px 10px 10px 10px;
     display: flex;
-    height: 40px;
+    height: 50px;
     justify-content: space-between;
     align-items: baseline;
 }
