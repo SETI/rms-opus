@@ -1432,6 +1432,11 @@ panel are properly separated */
     padding-left: 3%;
 }
 
+// Make room for the feedbackTab widget
+.op-widget-col {
+    padding-right: 25px;
+}
+
 .widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
