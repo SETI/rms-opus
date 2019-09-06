@@ -117,6 +117,7 @@ var o_search = {
         // TODO: Still need to set to first matched category when there is a match.
         $("#search").on("shown.bs.dropdown", function(e) {
             $(".op-scrollable-menu").scrollTop(0);
+
         });
 
         // Dynamically get input values right after user input a character
@@ -137,6 +138,7 @@ var o_search = {
             //    to expand for the categories without any matched item.
             o_search.isTriggeredFromInput = true;
             let slugName = $(this).data("slugname");
+            let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
             let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
 
             for (const category of preprogrammedRangesInfo) {
@@ -169,10 +171,11 @@ var o_search = {
                         $(singleRangeData).addClass("op-hide-preprogrammed-ranges-item");
                     }
                 }
-
+                console.log(o_search.rangesNameMatchedCounter);
                 if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
                     $(`#${collapsibleContainerId}`).collapse("hide");
                 }
+                o_search.setRangesDropdownScrollbarPos(preprogrammedRangesDropdown);
                 // Note: the selector to toggle collapse should be the one with "collapse" class.
                 // $(`#${containerId}`).collapse("show");
             }
@@ -427,6 +430,31 @@ var o_search = {
          */
         let originalText = $(singleRangeData).data("name");
         $(singleRangeData).find(".op-preprogrammed-ranges-data-name").html(originalText);
+    },
+
+    setRangesDropdownScrollbarPos: function(dropdownElement) {
+        /**
+         * Set ranges info dropdown scrollbar position to make sure scrollbar scrolls
+         * to the first matched category when there is a matched character.
+         */
+        for (let category in o_search.rangesNameMatchedCounter) {
+            if (o_search.rangesNameMatchedCounter[category]) {
+                let targetTopPosition = $(`li[data-category="${category}"]`).offset().top;
+                let containerTopPosition = dropdownElement.offset().top;
+                let containerScrollbarPosition = dropdownElement.scrollTop();
+                // console.log(`first open category: ${category}`);
+                // console.log(o_search.rangesNameMatchedCounter[category]);
+                // console.log(`container top: ${containerTopPosition}`);
+                // console.log(`container scrollTop: ${containerScrollbarPosition}`);
+                // console.log(`target top: ${targetTopPosition}`);
+                // console.log($(`li[data-category="${category}"]`));
+                let finalScrollbarPosition = targetTopPosition - containerTopPosition + containerScrollbarPosition;
+                dropdownElement.scrollTop(finalScrollbarPosition);
+                return;
+            }
+        }
+        // Set to top if there is no match.
+        $(".op-scrollable-menu").scrollTop(0);
     },
 
     allNormalizedApiCall: function() {
