@@ -113,6 +113,12 @@ var o_search = {
             o_search.isTriggeredFromInput = false;
         });
 
+        // Reset scrollbar to top if there is no matched ranges info when dropdown is open.
+        // TODO: Still need to set to first matched category when there is a match.
+        $("#search").on("shown.bs.dropdown", function(e) {
+            $(".op-scrollable-menu").scrollTop(0);
+        });
+
         // Dynamically get input values right after user input a character
         $("#search").on("input", "input.RANGE", function(event) {
             if (!$(this).hasClass("input_currently_focused")) {
