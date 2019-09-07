@@ -152,15 +152,16 @@ var o_search = {
                     let currentInputValue = currentValue.toLowerCase();
 
                     if (!currentValue) {
-                        $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        $(singleRangeData).removeClass("op-hide-element");
                         o_search.removeHighlightedRangesName(singleRangeData);
                         // o_search.rangesNameMatchedCounter = {};
                         for (const eachCat in o_search.rangesNameMatchedCounter) {
                             o_search.rangesNameMatchedCounter[eachCat] = 0;
                         }
                     } else if (dataName.includes(currentInputValue)) {
+                        $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).removeClass("op-hide-element");
                         // Expand the category, display the item and highlight the matched keyword.
-                        $(singleRangeData).removeClass("op-hide-preprogrammed-ranges-item");
+                        $(singleRangeData).removeClass("op-hide-element");
                         o_search.highlightMatchedRangesName(singleRangeData, currentInputValue);
                         o_search.rangesNameMatchedCounter[collapsibleContainerId] += 1;
                         if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
@@ -168,12 +169,15 @@ var o_search = {
                         }
                     } else {
                         // Hide the item if it doesn't match the input keyword
-                        $(singleRangeData).addClass("op-hide-preprogrammed-ranges-item");
+                        $(singleRangeData).addClass("op-hide-element");
                     }
                 }
                 console.log(o_search.rangesNameMatchedCounter);
                 if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
                     $(`#${collapsibleContainerId}`).collapse("hide");
+                    if (currentValue) {
+                        $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).addClass("op-hide-element");
+                    }
                 }
                 o_search.setRangesDropdownScrollbarPos(preprogrammedRangesDropdown);
                 // Note: the selector to toggle collapse should be the one with "collapse" class.
@@ -432,7 +436,7 @@ var o_search = {
         $(singleRangeData).find(".op-preprogrammed-ranges-data-name").html(originalText);
     },
 
-    setRangesDropdownScrollbarPos: function(dropdownElement) {
+    setRangesDropdownScrollbarPos: function(rangesDropdownElement) {
         /**
          * Set ranges info dropdown scrollbar position to make sure scrollbar scrolls
          * to the first matched category when there is a matched character.
@@ -440,8 +444,8 @@ var o_search = {
         for (let category in o_search.rangesNameMatchedCounter) {
             if (o_search.rangesNameMatchedCounter[category]) {
                 let targetTopPosition = $(`li[data-category="${category}"]`).offset().top;
-                let containerTopPosition = dropdownElement.offset().top;
-                let containerScrollbarPosition = dropdownElement.scrollTop();
+                let containerTopPosition = rangesDropdownElement.offset().top;
+                let containerScrollbarPosition = rangesDropdownElement.scrollTop();
                 // console.log(`first open category: ${category}`);
                 // console.log(o_search.rangesNameMatchedCounter[category]);
                 // console.log(`container top: ${containerTopPosition}`);
@@ -449,7 +453,7 @@ var o_search = {
                 // console.log(`target top: ${targetTopPosition}`);
                 // console.log($(`li[data-category="${category}"]`));
                 let finalScrollbarPosition = targetTopPosition - containerTopPosition + containerScrollbarPosition;
-                dropdownElement.scrollTop(finalScrollbarPosition);
+                rangesDropdownElement.scrollTop(finalScrollbarPosition);
                 return;
             }
         }
