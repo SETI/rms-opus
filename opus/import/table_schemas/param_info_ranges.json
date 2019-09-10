@@ -370,27 +370,6 @@
                     "qtype": null
                 },
                 {
-                    "name": "Methone Ring Arcs",
-                    "field1": "194440",
-                    "field2": "194450",
-                    "unit": "km",
-                    "qtype": null
-                },
-                {
-                    "name": "Anthe Ring Arcs",
-                    "field1": "197655",
-                    "field2": "197665",
-                    "unit": "km",
-                    "qtype": null
-                },
-                {
-                    "name": "Pallene Ring Arcs",
-                    "field1": "212000",
-                    "field2": "214500",
-                    "unit": "km",
-                    "qtype": null
-                },
-                {
                     "name": "Phoebe Ring",
                     "field1": "7722240",
                     "field2": "12488310",
@@ -888,13 +867,6 @@
                     "qtype": null
                 },
                 {
-                    "name": "Arago",
-                    "field1": "57150",
-                    "field2": "57250",
-                    "unit": "km",
-                    "qtype": null
-                },
-                {
                     "name": "Adams",
                     "field1": "62925.5",
                     "field2": "62940.5",
@@ -926,13 +898,6 @@
                     "name": "Courage",
                     "field1": "62925.5",
                     "field2": "62940.5",
-                    "unit": "km",
-                    "qtype": null
-                },
-                {
-                    "name": "Unnamed",
-                    "field1": "61948",
-                    "field2": "61958",
                     "unit": "km",
                     "qtype": null
                 }
