@@ -67,7 +67,7 @@ var o_search = {
             let slugName = $(this).data("slugname");
             let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-            if (preprogrammedRangesDropdown.length === 0) {
+            if (preprogrammedRangesDropdown.length === 0 || !$(e.target).hasClass("min")) {
                 return;
             }
             if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
@@ -456,7 +456,7 @@ var o_search = {
         let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
 
         // If ranges info is not available, return from the function.
-        if (preprogrammedRangesDropdown.length === 0) {
+        if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("min")) {
             o_search.performInputValidation = true;
             return;
         }
