@@ -78,13 +78,6 @@ var o_widgets = {
             });
         });
 
-        // Close dropdown list when focus out
-        // $("#search").on(" focusout", "input.min", function(e) {
-        //     if ($(".op-scrollable-menu").hasClass("show")) {
-        //         o_widgets.toggleRangesInfoDropdown(e.target);
-        //     }
-        // });
-
         // When user selects a ranges info item, update input fields and opus.selections
         // before triggering the search.
         $("#search").on("click", ".op-preprogrammed-ranges-data-item", function(e) {
@@ -94,27 +87,7 @@ var o_widgets = {
 
             // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
-                let minInput = $(`#${widgetId} input.min`);
-                let maxInput = $(`#${widgetId} input.max`);
-                let slug = minInput.attr("name");
-
-                if (minVal) {
-                    minInput.val(minVal);
-                    opus.selections[slug] = [minVal];
-                } else {
-                    minInput.val("");
-                    delete opus.selections[slug];
-                }
-
-                slug = maxInput.attr("name");
-                if (maxVal) {
-                    maxInput.val(maxVal);
-                    opus.selections[slug] = [maxVal];
-                } else {
-                    maxInput.val("");
-                    delete opus.selections[slug];
-                }
-
+                o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
                 // close dropdown and trigger the search
                 $(`#${widgetId} input.min`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE`).trigger("change");
@@ -165,13 +138,30 @@ var o_widgets = {
         });
     },
 
-    toggleRangesInfoDropdown: function(target) {
+    fillRangesInputs: function(widgetId, maxVal, minVal) {
         /**
-         * Toggle the dropdown expandable list of ranges info
+         * Fill both ranges inputs with values passed in to the function.
          */
-        let slug = $(target).data("slugname");
-        let widgetId = `widget__${slug}`;
-        $(`#${widgetId} #op-ranges-dropdown-menu`).dropdown("toggle");
+        let minInput = $(`#${widgetId} input.min`);
+        let maxInput = $(`#${widgetId} input.max`);
+        let slug = minInput.attr("name");
+
+        if (minVal) {
+            minInput.val(minVal);
+            opus.selections[slug] = [minVal];
+        } else {
+            minInput.val("");
+            delete opus.selections[slug];
+        }
+
+        slug = maxInput.attr("name");
+        if (maxVal) {
+            maxInput.val(maxVal);
+            opus.selections[slug] = [maxVal];
+        } else {
+            maxInput.val("");
+            delete opus.selections[slug];
+        }
     },
 
     closeWidget: function(slug) {
