@@ -73,6 +73,11 @@ var o_search = {
                 $(this).addClass("search_input_invalid_no_focus");
                 $(this).removeClass("search_input_invalid");
             }
+
+            let currentValue = $(this).val().trim();
+            if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
+                $(this).addClass("search_input_invalid_no_focus");
+            }
         });
 
         o_search.addPreprogrammedRangesSearchBehaviors();
@@ -424,11 +429,18 @@ var o_search = {
          * 2. If input matches any of list items, expand those categories. Highlight and display
          * matched items, and hide all unmatched items. Collpase and hide the empty categories.
          */
+        console.log(currentValue);
         o_search.isTriggeredFromInput = true;
         let slugName = $(targetInput).data("slugname");
         let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
         let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
         let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
+
+        // If ranges info is not available, return from the function.
+        if (preprogrammedRangesDropdown.length === 0) {
+            o_search.performInputValidation = true;
+            return;
+        }
 
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).data("category");
@@ -452,10 +464,6 @@ var o_search = {
                     }
                 } else if (dataName.includes(currentInputValue)) {
                     // Expand the category, display the item and highlight the matched keyword.
-                    if (!preprogrammedRangesDropdown.hasClass("show")) {
-                        inputToTriggerDropdown.dropdown("toggle");
-                    }
-
                     $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.highlightMatchedRangesName(singleRangeData, currentInputValue);
@@ -492,6 +500,10 @@ var o_search = {
 
         if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
+                inputToTriggerDropdown.dropdown("toggle");
+            }
+        } else {
+            if (!preprogrammedRangesDropdown.hasClass("show")) {
                 inputToTriggerDropdown.dropdown("toggle");
             }
         }
