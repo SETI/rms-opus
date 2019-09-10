@@ -75,60 +75,7 @@ var o_search = {
             }
         });
 
-        // Make sure ranges info shows up automatically when the count of matched characters
-        // is not 0. We do this in the event handler when the collpasing is done. This is to avoid
-        // the race condition of the collapsing animation when user types fast in the input.
-        $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
-            if (o_search.isTriggeredFromInput) {
-                let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounter[collapsibleContainerId]) {
-                    $(e.target).collapse("show");
-                }
-            }
-        });
-
-        // Make sure ranges info hides automatically when the count of matched characters
-        // is 0. We do this in the event handler when the expanding is done. This is to avoid
-        // the race condition of the expanding animation when user types fast in the input.
-        $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
-            if (o_search.isTriggeredFromInput) {
-                let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
-                    $(e.target).collapse("hide");
-                }
-            }
-        });
-
-        // When there is no matched characters of ranges names and the category is collapsed,
-        // the empty category will not be expanded when user clicks it.
-        $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
-            let collapsibleContainerId = $(e.target).attr("id");
-            let widgetId = $(e.target).data("widget");
-            let currentIuputValue = $(`#${widgetId} input.min`).val().trim();
-            if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0 && currentIuputValue) {
-                e.preventDefault();
-            }
-        });
-
-        // Set isTriggeredFromInput to false, this will make sure we can still expand/collapse
-        // ranges info by mouse clicking.
-        $(`#search`).on("click", ".op-scrollable-menu", function(e) {
-            o_search.isTriggeredFromInput = false;
-        });
-
-        // Reset scrollbar to top if there is no matched ranges info when dropdown is open.
-        $("#search").on("shown.bs.dropdown", function(e) {
-            $(".op-scrollable-menu").scrollTop(0);
-        });
-
-        // Make sure dropdown is not shown if user focus into an input with numerical value.
-        $("#search").on("show.bs.dropdown", function(e) {
-            let minInput = $(e.target).find("input.min");
-            let currentValue = minInput.val().trim();
-            if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
-                e.preventDefault();
-            }
-        });
+        o_search.addPreprogrammedRangesSearchBehaviors();
 
         // Dynamically get input values right after user input a character
         $("#search").on("input", "input.RANGE", function(e) {
@@ -404,6 +351,69 @@ var o_search = {
             }
 
             o_hash.updateHash();
+        });
+    },
+
+    addPreprogrammedRangesSearchBehaviors: function() {
+        /**
+         * Add customized event handlers for preprogrammed ranges dropdown and expandable
+         * list when user types/focus in & out of the input. This function will be called
+         * in addSearchBehaviors.
+         */
+
+        // Make sure ranges info shows up automatically when the count of matched characters
+        // is not 0. We do this in the event handler when the collpasing is done. This is to avoid
+        // the race condition of the collapsing animation when user types fast in the input.
+        $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            if (o_search.isTriggeredFromInput) {
+                let collapsibleContainerId = $(e.target).attr("id");
+                if (o_search.rangesNameMatchedCounter[collapsibleContainerId]) {
+                    $(e.target).collapse("show");
+                }
+            }
+        });
+
+        // Make sure ranges info hides automatically when the count of matched characters
+        // is 0. We do this in the event handler when the expanding is done. This is to avoid
+        // the race condition of the expanding animation when user types fast in the input.
+        $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            if (o_search.isTriggeredFromInput) {
+                let collapsibleContainerId = $(e.target).attr("id");
+                if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
+                    $(e.target).collapse("hide");
+                }
+            }
+        });
+
+        // When there is no matched characters of ranges names and the category is collapsed,
+        // the empty category will not be expanded when user clicks it.
+        $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            let collapsibleContainerId = $(e.target).attr("id");
+            let widgetId = $(e.target).data("widget");
+            let currentIuputValue = $(`#${widgetId} input.min`).val().trim();
+            if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0 && currentIuputValue) {
+                e.preventDefault();
+            }
+        });
+
+        // Set isTriggeredFromInput to false, this will make sure we can still expand/collapse
+        // ranges info by mouse clicking.
+        $(`#search`).on("click", ".op-scrollable-menu", function(e) {
+            o_search.isTriggeredFromInput = false;
+        });
+
+        // Reset scrollbar to top if there is no matched ranges info when dropdown is open.
+        $("#search").on("shown.bs.dropdown", function(e) {
+            $(".op-scrollable-menu").scrollTop(0);
+        });
+
+        // Make sure dropdown is not shown if user focus into an input with numerical value.
+        $("#search").on("show.bs.dropdown", function(e) {
+            let minInput = $(e.target).find("input.min");
+            let currentValue = minInput.val().trim();
+            if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
+                e.preventDefault();
+            }
         });
     },
 

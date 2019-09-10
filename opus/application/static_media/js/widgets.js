@@ -99,8 +99,8 @@ var o_widgets = {
 
     addPreprogrammedRangesBehaviors: function() {
         /**
-         * Add customized event handlers for preprogrammed ranges dropdown and expandable
-         * list. This function will be called in getWidget.
+         * Add customized event handlers for the general behaviors of preprogrammed ranges
+         * dropdown and expandable list. This function will be called in getWidget.
          */
 
         // Expand/collapse info when clicking a dropdown submenu
