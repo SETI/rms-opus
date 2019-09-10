@@ -50,14 +50,15 @@ var o_search = {
 
     addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
-        $("#search").on("focus", "input.RANGE", function(event) {
+        $("#search").on("focus", "input.RANGE", function(e) {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
+
             if (o_search.slugRangeInputValidValueFromLastSearch[slug] || currentValue === "" ||
-                !o_search.performInputValidation) {
-              $(this).addClass("search_input_original");
+                !o_search.performInputValidation || !$(this).hasClass("search_input_invalid_no_focus")) {
+                $(this).addClass("search_input_original");
             } else {
-              $(this).addClass("search_input_invalid");
+                $(this).addClass("search_input_invalid");
             }
             $(this).addClass("input_currently_focused");
             $(this).removeClass("search_input_invalid_no_focus");
@@ -66,9 +67,13 @@ var o_search = {
             let slugName = $(this).data("slugname");
             let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-            if (!currentValue || (o_search.rangesNameTotalMatchedCounter > 0 && currentValue)) {
+            if (preprogrammedRangesDropdown.length === 0) {
+                return;
+            }
+            if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
                 if (!preprogrammedRangesDropdown.hasClass("show")) {
-                    inputToTriggerDropdown.dropdown("toggle");
+                    o_widgets.isKeepingRangesDropdownOpen = true;
+                    $(this).dropdown("toggle");
                 }
             }
         });
@@ -77,7 +82,7 @@ var o_search = {
         This is to properly put back invalid search background
         when user focus out and there is no "change" event
         */
-        $("#search").on("focusout", "input.RANGE", function(event) {
+        $("#search").on("focusout", "input.RANGE", function(e) {
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
@@ -88,6 +93,8 @@ var o_search = {
             if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
                 $(this).addClass("search_input_invalid_no_focus");
             }
+
+            o_widgets.isKeepingRangesDropdownOpen = false;
         });
 
         o_search.addPreprogrammedRangesSearchBehaviors();
@@ -424,7 +431,10 @@ var o_search = {
 
         // Make sure dropdown is not shown if user focus into an input with numerical value.
         $("#search").on("show.bs.dropdown", function(e) {
-            let minInput = $(e.target).find("input.min");
+            let minInput = $(e.target).find("input.op-ranges-dropdown-menu");
+            if (minInput.length === 0) {
+                return;
+            }
             let currentValue = minInput.val().trim();
             if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
                 e.preventDefault();
@@ -461,10 +471,6 @@ var o_search = {
                 let currentInputValue = currentValue.toLowerCase();
 
                 if (!currentValue) {
-                    if (!preprogrammedRangesDropdown.hasClass("show")) {
-                        inputToTriggerDropdown.dropdown("toggle");
-                    }
-
                     $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);

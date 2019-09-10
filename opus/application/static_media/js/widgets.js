@@ -18,7 +18,7 @@ var o_widgets = {
      **/
 
     lastStringSearchRequestNo: 0,
-    isTriggeredFromFocusClick: false,
+    isKeepingRangesDropdownOpen: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -124,14 +124,14 @@ var o_widgets = {
         // Prevent dropdown from closing when clicking on the focused input again
         $("#search").on("mousedown", "input.min", function(e) {
             if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
-                o_widgets.isTriggeredFromFocusClick = true;
+                o_widgets.isKeepingRangesDropdownOpen = true;
             }
         });
 
         $("#search").on("hide.bs.dropdown", function(e) {
-            if (o_widgets.isTriggeredFromFocusClick) {
+            if (o_widgets.isKeepingRangesDropdownOpen) {
                 e.preventDefault();
-                o_widgets.isTriggeredFromFocusClick = false;
+                o_widgets.isKeepingRangesDropdownOpen = false;
             }
         });
     },
