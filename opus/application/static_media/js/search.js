@@ -61,6 +61,16 @@ var o_search = {
             }
             $(this).addClass("input_currently_focused");
             $(this).removeClass("search_input_invalid_no_focus");
+
+            // Open the dropdown properly when user tabs to focus in.
+            let slugName = $(this).data("slugname");
+            let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
+            let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+            if (!currentValue || (o_search.rangesNameTotalMatchedCounter > 0 && currentValue)) {
+                if (!preprogrammedRangesDropdown.hasClass("show")) {
+                    inputToTriggerDropdown.dropdown("toggle");
+                }
+            }
         });
 
         /*
@@ -429,7 +439,6 @@ var o_search = {
          * 2. If input matches any of list items, expand those categories. Highlight and display
          * matched items, and hide all unmatched items. Collpase and hide the empty categories.
          */
-        console.log(currentValue);
         o_search.isTriggeredFromInput = true;
         let slugName = $(targetInput).data("slugname");
         let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
