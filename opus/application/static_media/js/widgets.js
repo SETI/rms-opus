@@ -104,7 +104,6 @@ var o_widgets = {
          */
 
         // Expand/collapse info when clicking a dropdown submenu
-        // $(".op-scrollable-menu .dropdown-item").on("click", function(e) {
         $("#search").on("click", ".op-scrollable-menu .dropdown-item", function(e) {
             // prevent URL being messed up with href in <a>
             e.preventDefault();
@@ -113,7 +112,6 @@ var o_widgets = {
         });
 
         // Avoid closing dropdown menu when clicking any dropdown item
-        // $(".op-scrollable-menu").on("click", function(e) {
         $("#search").on("click", ".op-scrollable-menu", function(e) {
             e.stopPropagation();
         });

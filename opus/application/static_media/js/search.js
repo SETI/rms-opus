@@ -117,10 +117,17 @@ var o_search = {
         });
 
         // Reset scrollbar to top if there is no matched ranges info when dropdown is open.
-        // TODO: Still need to set to first matched category when there is a match.
         $("#search").on("shown.bs.dropdown", function(e) {
             $(".op-scrollable-menu").scrollTop(0);
+        });
 
+        // Make sure dropdown is not shown if user focus into an input with numerical value.
+        $("#search").on("show.bs.dropdown", function(e) {
+            let minInput = $(e.target).find("input.min");
+            let currentValue = minInput.val().trim();
+            if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
+                e.preventDefault();
+            }
         });
 
         // Dynamically get input values right after user input a character
@@ -195,7 +202,6 @@ var o_search = {
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
 
-            // EXPERIMENT AREA
             if (o_search.rangesNameTotalMatchedCounter === 1) {
                 let matchedCatId = "";
                 for (const eachCat in o_search.rangesNameMatchedCounter) {
@@ -224,6 +230,7 @@ var o_search = {
                     }
                 }
             } else {
+                // close the dropdown
                 let slugName = $(this).data("slugname");
                 let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
                 let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
@@ -231,7 +238,6 @@ var o_search = {
                     inputToTriggerDropdown.dropdown("toggle");
                 }
             }
-            // END OF EXPERIMENT AREA
 
             if (currentValue) {
                 opus.selections[slug] = [currentValue];
@@ -431,7 +437,6 @@ var o_search = {
                     $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);
-                    // o_search.rangesNameMatchedCounter = {};
                     for (const eachCat in o_search.rangesNameMatchedCounter) {
                         o_search.rangesNameMatchedCounter[eachCat] = 0;
                     }
