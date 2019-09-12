@@ -48,10 +48,7 @@
                 </ul>
                 {% if ranges %}
                     <div class="op-preprogrammed-ranges">
-                        <!-- <button type="button" id="op-ranges-dropdown-menu" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Preprogrammed Ranges
-                        </button> -->
-                        <ul class="dropdown-menu op-scrollable-menu pl-0 w-100" aria-labelledby="op-ranges-dropdown-menu" role="menu">
+                        <ul class="dropdown-menu op-scrollable-menu pl-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
                             {% for range_data_entry in ranges %}
                                 <li class="mr-0 d-block" data-category="{{range_data_entry.cat_name|slugify}}">
                                     <a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#{{range_data_entry.cat_name|slugify}}" role="button" aria-expanded="false" aria-controls="{{range_data_entry.cat_name|slugify}}">{{range_data_entry.cat_name}}</a>
@@ -71,12 +68,12 @@
                                                 <div class="col-4 op-preprogrammed-ranges-data-name">
                                                     {{range_info.name}}
                                                 </div>
-                                                <div class="col-4 text-right">
+                                                <div class="col-4 op-preprogrammed-ranges-min-data">
                                                     {% if range_info.field1 %}
                                                         {{range_info.field1|intcomma}}
                                                     {% endif %}
                                                 </div>
-                                                <div class="col-4 text-right">
+                                                <div class="col-4 op-preprogrammed-ranges-max-data">
                                                     {% if range_info.field2 %}
                                                         {{range_info.field2|intcomma}}
                                                     {% endif %}

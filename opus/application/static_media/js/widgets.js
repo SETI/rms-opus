@@ -664,8 +664,8 @@ var o_widgets = {
             if (rangesInfoDropdown.length > 0) {
                 $(`#${widget} input.min`).after(rangesInfoDropdown);
                 $(`#${widget} .op-range-input`).addClass("dropdown");
+                o_widgets.alignRangesDataByDecimalPoint(widget);
             }
-
 
             // add the spans that hold the hinting
             try {
@@ -692,12 +692,40 @@ var o_widgets = {
     }, // end getWidget function
 
 
-     scrollToWidget: function(widget) {
+    scrollToWidget: function(widget) {
         // scrolls window to a widget
         // widget is like: "widget__" + slug
         //  scroll the widget panel to top
         $('#search').animate({
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
-     },
+    },
+
+    alignRangesDataByDecimalPoint: function(widget) {
+        /**
+         * Align the data of ranges info by decimal point.
+         */
+        let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
+        for (const category of preprogrammedRangesInfo) {
+            let collapsibleContainerId = $(category).data("category");
+            let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+
+            for (const singleRangeData of rangesInfoInEachCategory) {
+                let minStr = $(singleRangeData).data("min").toString();
+                let maxStr = $(singleRangeData).data("max").toString();
+                let minIntegerPart = minStr.split(".")[0];
+                let minFractionalPart = minStr.split(".")[1];
+                let maxIntegerPart = maxStr.split(".")[0];
+                let maxFractionalPart = maxStr.split(".")[1];
+                minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
+                maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
+
+                let minValReorg = `<span class="op-integer">${minIntegerPart}</span><span>${minFractionalPart}</span>`;
+                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span><span>${maxFractionalPart}</span>`;
+
+                $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
+                $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
+            }
+        }
+    }
 };

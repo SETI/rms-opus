@@ -976,35 +976,35 @@
                 {
                     "name": "Ultraviolet",
                     "field1": "0.01",
-                    "field2": "0.4",
+                    "field2": "0.40",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
                     "name": "Visible",
                     "field1": "0.39",
-                    "field2": "0.7",
+                    "field2": "0.70",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
                     "name": "Near Infrared",
                     "field1": "0.65",
-                    "field2": "5",
+                    "field2": "5.00",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
                     "name": "Infrared",
                     "field1": "0.75",
-                    "field2": "300",
+                    "field2": "300.00",
                     "unit": "microns",
                     "qtype": null
                 },
                 {
                     "name": "Far Infrared",
-                    "field1": "30",
-                    "field2": "300",
+                    "field1": "30.00",
+                    "field2": "300.00",
                     "unit": "microns",
                     "qtype": null
                 }
@@ -1018,7 +1018,7 @@
                 {
                     "name": "Red",
                     "field1": "0.647",
-                    "field2": "0.7",
+                    "field2": "0.700",
                     "unit": "microns",
                     "qtype": null
                 },

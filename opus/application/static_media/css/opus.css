@@ -1982,46 +1982,47 @@ ul.ui-autocomplete a.ui-state-active {
     overflow-y: auto;
     overflow-x: hidden;
     border-width: 2px;
-    /* TEST AREA */
-    /* width: max-content; */
-    /* white-space: nowrap; */
-    /* transform: translate3d(40px, -9px, 0px) !important; */
-    /* top: -9px !important;
-    left: 40px !important; */
+    /* Set the width of ranges dropdown */
+    width: 80%;
+    max-width: 100%;
+    word-break: keep-all;
 }
 
-/* TEST AREA */
-.op-preprogrammed-ranges .op-scrollable-menu div {
-    /* width: 100%; */
+/* Make ranges dropdown take 100% width when dropdown width is narrow */
+@media (max-width: 950px) {
+    .op-preprogrammed-ranges .op-scrollable-menu {
+        width: max-content;
+    }
 }
+
+/* Make sure ranges names can be wrapped when dropdown width is narrow */
 .op-preprogrammed-ranges .op-scrollable-menu li {
-    /* width: 100%; */
+    white-space: normal;
 }
+
+/* Make ranges names to break by letters (not word) when dropdown width is narrow */
+@media (max-width: 650px) {
+    .op-preprogrammed-ranges .op-scrollable-menu .op-preprogrammed-ranges-data-name {
+        word-break: break-all;
+    }
+}
+
+/* Make sure the fractional part of ranges data is not cutoff */
 .op-preprogrammed-ranges .op-scrollable-menu .row {
-    /* width: 100%; */
-}
-.op-preprogrammed-ranges .op-scrollable-menu .row div {
-    /* width: max-content; */
-     /* text-align: justify;
-     display: inline-block; */
+    padding-right: 1em;
 }
 
-/* Remove the outline of ranges info button */
-.op-preprogrammed-ranges #op-ranges-dropdown-menu:focus {
-    box-shadow: none;
-}
-
-.op-preprogrammed-ranges #op-ranges-dropdown-menu {
-    text-decoration: none;
-    /* Make the button have the same color and font weight as the one in
-    sidebar subheader */
-    color: initial;
-    font-weight: 600;
+/* Styling required to make ranges data aligned by decimal point */
+.op-integer {
+    text-align: right;
+    display: inline-block;
+    width: 100%;
 }
 
 /* Add customized styling for dropdown list items */
-.op-preprogrammed-ranges-data-item:hover div  {
+.op-preprogrammed-ranges-data-item:hover  {
     background-color: #d1dbe1;
+    background-clip: padding-box;
     cursor: pointer;
 }
 
