@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	modalFooter = document.createElement("div"),
 	captchaScore = 0;
 
-	window.captchaCallback = function( response ) {};
+	// window.captchaCallback = function( response ) {};
 
 	window.Feedback = function( options ) {
 
@@ -128,14 +128,20 @@ document.addEventListener("DOMContentLoaded", function(){
 				button.disabled = true;
 
 				// modal close button
-				var a = element("a", "x");
+                // OPUS uses font-awesome
+                var ax = element("i", "");
+                ax.setAttribute("class", "far fa-times-circle fa-lg");
+				var a = element("a", "");
 				a.className =  "feedback-close";
+                a.appendChild(ax);
 				a.onclick = returnMethods.close;
 				a.href = "#";
 
 				// build header element
 				modalHeader.appendChild( a );
-				modalHeader.appendChild( element("h3", options.feedback.header ) );
+                h3 = element("h3", options.feedback.header );
+                h3.appendChild(a);
+				modalHeader.appendChild(h3);
 				modalHeader.className =  "feedback-header";
 
 				modalBody.className = "feedback-body";
@@ -160,17 +166,19 @@ document.addEventListener("DOMContentLoaded", function(){
 				sendButton = document.createElement("input");
 				sendButton.type = "submit";
 				sendButton.value = "Send Feedback";
-				sendButton.setAttribute("class", "feedback-btn g-recaptcha");
-				sendButton.setAttribute("data-callback", "captchaCallback");
-				sendButton.setAttribute("id", "recaptcha");
+				// sendButton.setAttribute("class", "feedback-btn g-recaptcha");
+                sendButton.setAttribute("class", "feedback-btn");
+				// sendButton.setAttribute("data-callback", "captchaCallback");
+				// sendButton.setAttribute("id", "recaptcha");
+                sendButton.onclick = returnMethods.send;
 
 				// reCAPTCHA branding
-				rcBrand = document.createElement("p");
-				rcBrand.innerHTML = 'This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy">Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply.';
-				rcBrand.className = "reCaptcha-brand";
+				// rcBrand = document.createElement("p");
+				// rcBrand.innerHTML = 'This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy">Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply.';
+				// rcBrand.className = "reCaptcha-brand";
 
 				modalFooter.className = "feedback-footer";
-				modalFooter.appendChild( rcBrand );
+				// modalFooter.appendChild( rcBrand );
 				modalFooter.appendChild( sendButton );
 
 				modal.setAttribute("id", "feedback-form");
@@ -182,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 				document.body.appendChild( modal );
 
-				window.grecaptcha.render("recaptcha", {sitekey: "6LfLCIgUAAAAAI3xLW5PQijxDyZcaUUlTyPDfYlZ"});
+				// window.grecaptcha.render("recaptcha", {sitekey: "6LfLCIgUAAAAAI3xLW5PQijxDyZcaUUlTyPDfYlZ"});
 			},
 
 
@@ -191,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 				button.disabled = false;
 
-				window.grecaptcha.reset();
+				// window.grecaptcha.reset();
 
 				// remove feedback elements
 				emptyElements( modalHeader );
@@ -202,19 +210,18 @@ document.addEventListener("DOMContentLoaded", function(){
 			},
 
 			// send data
-			send: function( adapter ) {
-
+			send: function( event /*adapter*/ ) {
 				// make sure send adapter is of right prototype
-				if ( !(adapter instanceof window.Feedback.Send) ) {
-					throw new Error( "Adapter is not an instance of Feedback.Send" );
-				}
+				// if ( !(adapter instanceof window.Feedback.Send) ) {
+				// 	throw new Error( "Adapter is not an instance of Feedback.Send" );
+				// }
 
 				data = options.page.data();
 				emptyElements( modalBody );
 				modalBody.appendChild( loader() );
 
 				// send data to adapter for processing
-				adapter.send( data, function( success ) {
+				window.Feedback.XHR.prototype.send( data, function( success ) {
 
 					emptyElements( modalBody );
 					sendButton.disabled = false;
@@ -229,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function(){
 					modalBody.setAttribute("class", "feedback-body confirmation");
 					var message = document.createElement("p");
 					if ( success === true ) {
-						message.innerHTML = 'Thank you for making the PDS a better site.<br/>If you provided an email address, a PDS representative will get back to you as soon as possible.';
+						message.innerHTML = 'Thank you for making OPUS a better site.<br/>If you provided an email address, a PDS representative will get back to you as soon as possible.';
 					} else {
 						message.innerHTML = 'There was an error sending your feedback.<br/>If the problem persists, please email <a href="mailto:pds_operator@jpl.nasa.gov">pds_operator@jpl.nasa.gov</a>.';
 					}
@@ -283,8 +290,8 @@ document.addEventListener("DOMContentLoaded", function(){
 
 		};
 
-		window.onloadCallback = returnMethods.onloadCallback;
-		window.captchaCallback = returnMethods.captchaCallback;
+		// window.onloadCallback = returnMethods.onloadCallback;
+		// window.captchaCallback = returnMethods.captchaCallback;
 
 		glass.className = "feedback-glass";
 
@@ -326,8 +333,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
 			var useConfig = {
 				setColors: function(el, color, bgColor) {
-					el.style.color = color;
-					el.style.backgroundColor = bgColor;
+                    // OPUS
+					// el.style.color = color;
+					// el.style.backgroundColor = bgColor;
 				},
 
 				setText: function(el, label, fontSize) {
@@ -586,8 +594,8 @@ document.addEventListener("DOMContentLoaded", function(){
 	window.Feedback.XHR.prototype = new window.Feedback.Send();
 
 	window.Feedback.XHR.prototype.send = function( data, callback ) {
-
-		var xhr = this.xhr;
+		// var xhr = this.xhr;
+        var xhr = new XMLHttpRequest();
 
 		xhr.onreadystatechange = function() {
 			if( xhr.readyState == 4 ) {
@@ -606,7 +614,8 @@ document.addEventListener("DOMContentLoaded", function(){
 
 		emailData += '\nLocation: ' + window.location.href + '\n';
 
-		xhr.open( "POST", this.url, true);
+		// xhr.open( "POST", this.url, true);
+        xhr.open( "POST", "https://pds.nasa.gov/email-service/SubmitFeedback", true);
 		xhr.setRequestHeader('Content-type','application/x-www-form-urlencoded');
 		xhr.send(emailData);
 	};
