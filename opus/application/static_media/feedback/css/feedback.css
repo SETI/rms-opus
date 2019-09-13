@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2019, California Institute of Technology ("Caltech").  
+    Copyright (c) 2019, California Institute of Technology ("Caltech").
     U.S. Government sponsorship acknowledged.
     All rights reserved.
     Redistribution and use in source and binary forms, with or without
@@ -56,11 +56,13 @@
 
 .feedback-modal h3 {
     line-height: 27px;
-    font-size: 18px;
+    /* font-size: 18px; */
+    font-size: 24.5px; /* OPUS */
     margin: 0;
-    font-weight: bold;
+    /* font-weight: bold; */ /* OPUS */
     /*color: #333;*/
-    color: #fff;
+    /* color: #fff; */
+    color: #000; /* OPUS - to agree with our modal dialog standard */
     text-rendering: optimizelegibility;
     text-align: center;
 }
@@ -72,7 +74,7 @@
     text-align:left;
     color: #333;
     position: fixed;
-    top: 50%;
+    top: 40%;
     left: 50%;
     z-index: 2050;
     max-height: 500px;
@@ -82,7 +84,7 @@
     background-color: #ffffff;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
-    *border: 1px solid #999;
+    /* *border: 1px solid #999; */ /* OPUS */
     /* IE6-7 */
 
     -webkit-border-radius: 6px;
@@ -105,19 +107,20 @@
 
 .feedback-modal .feedback-close {
     float: right;
-    font-size: 20px;
-    font-weight: bold;
-    line-height: 18px;
-    color: #f5f5f5;
-    text-shadow: 0 1px 0 #ffffff;
-    opacity: 0.2;
-    filter: alpha(opacity=20);
+    font-size: 20px;  /* OPUS
+    /* font-weight: bold; */  /* OPUS */
+    /* line-height: 18px; */ /* OPUS */
+    /* color: #f5f5f5; */ /* OPUS */
+    color: #00000060; /* OPUS */
+    /* text-shadow: 0 1px 0 #ffffff; */ /* OPUS */
+    /* opacity: 0.2; */ /* OPUS */
+    /* filter: alpha(opacity=20); */ /* OPUS */
 }
 .feedback-modal .feedback-close:hover {
     color: #000000;
-    text-decoration: none;
-    opacity: 0.4;
-    filter: alpha(opacity=40);
+    /* text-decoration: none; */
+    /* opacity: 0.4; */ /* OPUS */
+    /* filter: alpha(opacity=40); */ /* OPUS */
     cursor: pointer;
 }
 
@@ -165,7 +168,7 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
     cursor: pointer;
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-    *margin-left: .3em;
+    /* *margin-left: .3em; */  /* OPUS - illegal CSS */
 }
 .feedback-btn:hover,
 .feedback-btn:active,
@@ -178,7 +181,7 @@
     background-color: #cccccc \9;
 }
 .feedback-btn:first-child {
-    *margin-left: 0;
+    /* *margin-left: 0;  */  /* OPUS - illegal CSS */
 }
 .feedback-btn:hover {
     color: #333333;
@@ -257,20 +260,20 @@
     background-color: #0c0c0c \9;
 }
 button.feedback-btn, input[type="submit"].feedback-btn {
-    /* *padding-top: 2px; */
-    /* *padding-bottom: 2px; */
+    /* *padding-top: 2px; */ /* OPUS - illegal CSS */
+    /* *padding-bottom: 2px; */ /* OPUS - illegal CSS */
 }
 button.feedback-btn::-moz-focus-inner, input[type="submit"].feedback-btn::-moz-focus-inner {
     padding: 0;
     border: 0;
 }
 button.feedback-btn.large, input[type="submit"].feedback-btn.large {
-    /* *padding-top: 7px; */
-    /* *padding-bottom: 7px; */
+    /* *padding-top: 7px; */ /* OPUS - illegal CSS */
+    /* *padding-bottom: 7px; */ /* OPUS - illegal CSS */
 }
 button.feedback-btn.small, input[type="submit"].feedback-btn.small {
-    /* *padding-top: 3px; */
-    /* *padding-bottom: 3px; */
+    /* *padding-top: 3px; */ /* OPUS - illegal CSS */
+    /* *padding-bottom: 3px; */ /* OPUS - illegal CSS */
 }
 
 .feedback-btn .caret {
@@ -304,7 +307,8 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
     border-bottom: 1px solid #eee;
     /*background-color: #f5f5f5;*/
     /*background-color: #18ad1c;*/
-    background-color: #006699;
+    /* background-color: #006699; */
+    background-color: #c8ced3; /* OPUS - background color for our modal dialog */
 }
 .feedback-header .feedback-close {
     margin-top: 2px;
@@ -358,7 +362,7 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
     outline: 0;
-    outline: thin dotted \9;
+    /* outline: thin dotted \9; */ /* OPUS */
     /* IE6-9 */
 
 }
@@ -366,9 +370,16 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
 
 
 .feedback-footer {
-    /* padding: 5px 14px 15px 15px; */ // Redundant with below??
+    /* padding: 5px 14px 15px 15px; */ /* OPUS - Redundant */
+    /* OPUS - these lines were copied from the .feedback-footer below */
+    padding: 10px 10px 10px 10px;
+    display: flex;
+    height: 50px;
+    justify-content: space-between;
+    align-items: baseline;
+    /* OPUS - these lines were here already */
     line-height:20px;
-    height:25px;
+    /* height:25px; */ /* OPUS - Redundant */
     margin-bottom: 0;
     background-color: #f5f5f5;
     border-top: 1px solid #ddd;
@@ -378,7 +389,7 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
     -webkit-box-shadow: inset 0 1px 0 #ffffff;
     -moz-box-shadow: inset 0 1px 0 #ffffff;
     box-shadow: inset 0 1px 0 #ffffff;
-    *zoom: 1;
+    /* *zoom: 1; */  /* OPUS - illegal CSS */
 }
 .feedback-footer:before, .feedback-footer:after {
     display: table;
@@ -592,8 +603,8 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
   z-index: 2;
   cursor: pointer;
 
-  background-color: #0b3d91;
-  color: #ffffff;
+  background-color: #000000; /* OPUS */
+  color: #ffffffc0; /* OPUS */
   border: 1px solid transparent;
   font-family: Arial;
   line-height: 20px;
@@ -625,6 +636,7 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
 .feedbackTab:hover,
 .feedbackTab:focus,
 .feedbackTab:active {
+    color: #ffffffff; /* OPUS */
     -webkit-transform: rotate(-90deg) translateY(-5px);
     -moz-transform: rotate(-90deg) translateY(-5px);
     -ms-transform: rotate(-90deg) scale(1.02) translateY(-5px);
@@ -715,13 +727,14 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
     display: grid;
 }
 
-.feedback-footer {
+/* OPUS - duplicate with above and moved in there */
+/* .feedback-footer {
     padding: 10px 10px 10px 10px;
     display: flex;
     height: 50px;
     justify-content: space-between;
     align-items: baseline;
-}
+} */
 
 .reCaptcha-brand {
     margin-top: 0;

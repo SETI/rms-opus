@@ -35,17 +35,18 @@ var config = {
 		]
 	},
 	tab: {
-		label: "Questions?",		// default: Need Help?
-        color: "#000000",
-		fontColor: "#ffffffc0",		// default: #ffffff
-		fontSize: "15",				// default: 16
+		label: "Questions / Feedback",		// default: Need Help?
+        // OPUS - moved directly into feedback.css
+        // color: "#000000",
+		// fontColor: "#ffffffc0",		// default: #ffffff
+		fontSize: "13",				// default: 16
 		size: {
-			width: "130",			// default: 150
+			width: "185",			// default: 150
 			height: "35"			// default: 60
 		},
 		placement: {
 			side: "right",			// default: right
-			offset: "85"			// default: 50
+			offset: "50"			// default: 50
 		}
 	}
 };
