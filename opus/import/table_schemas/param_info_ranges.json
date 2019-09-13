@@ -970,8 +970,8 @@
     "obs_wavelength": [
         {
             "cat_name": "PDS4 Wavelength Ranges",
-            "heading1": "Min (microns)",
-            "heading2": "Max (microns)",
+            "heading1": "Min (&mu;m)",
+            "heading2": "Max (&mu;m)",
             "ranges": [
                 {
                     "name": "Ultraviolet",
@@ -1012,8 +1012,8 @@
         },
         {
             "cat_name": "CRC Wavelength Ranges",
-            "heading1": "Min (microns)",
-            "heading2": "Max (microns)",
+            "heading1": "Min (&mu;m)",
+            "heading2": "Max (&mu;m)",
             "ranges": [
                 {
                     "name": "Red",
@@ -1061,8 +1061,8 @@
         },
         {
             "cat_name": "Johnson Filters",
-            "heading1": "Min (microns)",
-            "heading2": "Max (microns)",
+            "heading1": "Min (&mu;m)",
+            "heading2": "Max (&mu;m)",
             "ranges": [
                 {
                     "name": "Ultraviolet",

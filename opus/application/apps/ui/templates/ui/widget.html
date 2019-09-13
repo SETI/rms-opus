@@ -57,10 +57,10 @@
                                             <div class="col-4">
                                             </div>
                                             <div class="col-4 font-weight-bold text-right">
-                                                {{range_data_entry.heading1}}
+                                                {{range_data_entry.heading1|safe}}
                                             </div>
                                             <div class="col-4 font-weight-bold text-right">
-                                                {{range_data_entry.heading2}}
+                                                {{range_data_entry.heading2|safe}}
                                             </div>
                                         </div>
                                         {% for range_info in range_data_entry.ranges %}

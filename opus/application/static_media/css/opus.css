@@ -2023,7 +2023,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Make sure the fractional part of ranges data is not cutoff */
-.op-preprogrammed-ranges .op-scrollable-menu .op-preprogrammed-ranges-data-item {
+.op-preprogrammed-ranges-data-item {
     padding-right: 2em;
 }
 
@@ -2032,8 +2032,14 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: break-all;
 }
 
+/* Create spaces between long ranges names and min values */
 .op-preprogrammed-ranges-data-name {
     padding-right: 2em;
+}
+
+/* Create spaces between long ranges names and min values */
+.op-preprogrammed-ranges-min-data {
+    padding-left: 2em;
 }
 
 /* Styling required to make ranges data aligned by decimal point */
