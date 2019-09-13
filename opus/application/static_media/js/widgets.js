@@ -711,6 +711,15 @@ var o_widgets = {
             let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
 
             for (const singleRangeData of rangesInfoInEachCategory) {
+
+                // Special case: (maybe put this somewhere else if there are more and more long names)
+                // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
+                // We set it the word-break to break-all.
+                let rangesName = $(singleRangeData).data("name").toString();
+                if (rangesName === "Janus/Epimetheus Ring") {
+                    $(singleRangeData).find(".op-preprogrammed-ranges-data-name").addClass("op-word-break-all");
+                }
+
                 let minStr = $(singleRangeData).data("min").toString();
                 let maxStr = $(singleRangeData).data("max").toString();
                 let minIntegerPart = minStr.split(".")[0];
@@ -720,8 +729,10 @@ var o_widgets = {
                 minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
                 maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
 
-                let minValReorg = `<span class="op-integer">${minIntegerPart}</span><span>${minFractionalPart}</span>`;
-                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span><span>${maxFractionalPart}</span>`;
+                let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
+                                  `<span">${minFractionalPart}</span>`;
+                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
+                                  `<span">${maxFractionalPart}</span>`;
 
                 $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
                 $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
