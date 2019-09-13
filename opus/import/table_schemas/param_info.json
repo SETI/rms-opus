@@ -97,12 +97,7 @@
         "field_default": null
     },
     {
-        "field_name": "field_hints1",
-        "field_type": "varchar255",
-        "field_default": null
-    },
-    {
-        "field_name": "field_hints2",
+        "field_name": "field_hints",
         "field_type": "varchar255",
         "field_default": null
     },

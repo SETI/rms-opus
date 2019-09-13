@@ -92,15 +92,15 @@ class SearchForm(forms.Form):
                 choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget = forms.TextInput(
-                    attrs={'class':'STRING', 'size':'50', 'tabindex':0}),
-                    required=False,
+                    attrs = {'class':'STRING', 'size':'50', 'tabindex':0}),
+                    required = False,
                     label = '')
                 self.fields['qtype-'+slug] = forms.CharField(
-                     required=False,
+                     required = False,
                      label = '',
-                     widget=forms.Select(
-                        choices=choices,
-                        attrs={'tabindex':0, 'class':'STRING'}
+                     widget = forms.Select(
+                        choices = choices,
+                        attrs = {'tabindex':0, 'class':'STRING'}
                      ),
                 )
 
@@ -116,17 +116,17 @@ class SearchForm(forms.Form):
 
                 pi = get_param_info_by_slug(slug, 'search')
                 # placeholder for input hints (only apply to Min input for now)
-                hints = pi.field_hints1 if pi.field_hints1 else ''
+                hints = pi.field_hints if pi.field_hints else ''
                 # dropdown only available when ranges info is available
                 ranges = pi.get_ranges_info()
                 dropdown_class = 'op-ranges-dropdown-menu dropdown-toggle' if ranges else ''
                 data_toggle = 'dropdown' if ranges else ''
 
                 self.fields[slug] = MultiFloatField(
-                    required=False,
+                    required = False,
                     label = label.capitalize(),
                     widget = forms.TextInput(
-                        attrs={
+                        attrs = {
                             'class': label + ' RANGE ' + dropdown_class,
                             'placeholder': hints,
                             'autocomplete': 'off',
@@ -139,11 +139,11 @@ class SearchForm(forms.Form):
                 )
                 if not is_single_column_range(pi.param_qualified_name()):
                     self.fields['qtype-'+slug_no_num] = forms.CharField(
-                         required=False,
+                         required = False,
                          label = '',
-                         widget=forms.Select(
-                            choices=choices,
-                            attrs={'tabindex':0, 'class':"RANGE"}
+                         widget = forms.Select(
+                            choices = choices,
+                            attrs = {'tabindex':0, 'class':"RANGE"}
                          ),
                     )
                     self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
@@ -171,13 +171,13 @@ class SearchForm(forms.Form):
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',
-                            widget = forms.RadioSelect(attrs={'class':'singlechoice'}, choices = choices),
+                            widget = forms.RadioSelect(attrs={'class':'singlechoice'}, choices=choices),
                             required=False)
                 else:
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',
-                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}, choices = choices),
+                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}, choices=choices),
                             required=False)
 
         # XXX RF - This is awful. It takes the last form_type from the above loop, but
