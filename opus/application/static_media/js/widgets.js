@@ -90,7 +90,7 @@ var o_widgets = {
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
                 o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
                 // close dropdown and trigger the search
-                $(`#${widgetId} input.min`).dropdown("toggle");
+                $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE`).trigger("change");
             }
         });
@@ -123,7 +123,7 @@ var o_widgets = {
         });
 
         // Prevent dropdown from closing when clicking on the focused input again
-        $("#search").on("mousedown", "input.min", function(e) {
+        $("#search").on("mousedown", "input.op-range-input-min", function(e) {
             if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
             }
@@ -141,8 +141,8 @@ var o_widgets = {
         /**
          * Fill both ranges inputs with values passed in to the function.
          */
-        let minInput = $(`#${widgetId} input.min`);
-        let maxInput = $(`#${widgetId} input.max`);
+        let minInput = $(`#${widgetId} input.op-range-input-min`);
+        let maxInput = $(`#${widgetId} input.op-range-input-max`);
         let slug = minInput.attr("name");
 
         if (minVal) {
@@ -647,7 +647,7 @@ var o_widgets = {
                     // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
                     // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
-                    $(`#${widget} input.min`).dropdown("toggle");
+                    $(`#${widget} input.op-range-input-min`).dropdown("toggle");
                 }
             });
 
@@ -658,12 +658,12 @@ var o_widgets = {
             });
 
             // If ".op-preprogrammed-ranges" is available in the widget, we move the whole
-            // element into the input.min li and use it as the customized dropdown expandable
-            // list for input.min. This will also make sure dropdown list always stays below
-            // input.min.
+            // element into the input.op-range-input-min li and use it as the customized dropdown expandable
+            // list for input.op-range-input-min. This will also make sure dropdown list always stays below
+            // input.op-range-input-min.
             let rangesInfoDropdown = $(`#${widget} .op-preprogrammed-ranges`).detach();
             if (rangesInfoDropdown.length > 0) {
-                $(`#${widget} input.min`).after(rangesInfoDropdown);
+                $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
                 $(`#${widget} .op-range-input`).addClass("dropdown");
                 o_widgets.alignRangesDataByDecimalPoint(widget);
             }

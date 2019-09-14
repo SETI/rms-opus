@@ -127,7 +127,7 @@ class SearchForm(forms.Form):
                     label = label.capitalize(),
                     widget = forms.TextInput(
                         attrs = {
-                            'class': label + ' RANGE ' + dropdown_class,
+                            'class': 'op-range-input-' + label + ' RANGE ' + dropdown_class,
                             'placeholder': hints,
                             'autocomplete': 'off',
                             'data-slugname': slug_no_num,

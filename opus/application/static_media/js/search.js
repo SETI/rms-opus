@@ -72,9 +72,9 @@ var o_search = {
 
             // Open the dropdown properly when user tabs to focus in.
             let slugName = $(this).data("slugname");
-            let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
+            let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-            if (preprogrammedRangesDropdown.length !== 0 || $(e.target).hasClass("min")) {
+            if (preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) {
                 if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
                     if (!preprogrammedRangesDropdown.hasClass("show")) {
                         o_widgets.isKeepingRangesDropdownOpen = true;
@@ -197,7 +197,7 @@ var o_search = {
                             o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
                             o_search.rangesNameTotalMatchedCounter = 0;
                             // close dropdown and trigger the search
-                            $(`#${widgetId} input.min`).dropdown("toggle");
+                            $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
                             $(`#${widgetId} input.RANGE`).trigger("change");
                             return;
                         }
@@ -207,7 +207,7 @@ var o_search = {
             } else {
                 // close the dropdown
                 let slugName = $(this).data("slugname");
-                let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
+                let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
                 let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
                 if (preprogrammedRangesDropdown.hasClass("show")) {
                     inputToTriggerDropdown.dropdown("toggle");
@@ -263,11 +263,11 @@ var o_search = {
                 let slugNoNum = slug.match(/(.*)[1|2]/)[1];
                 // min
                 values = [];
-                $("#widget__" + slugNoNum + '1 input.min', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.op-range-input-min', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $("#widget__" + slugNoNum + ' input.min', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.op-range-input-min', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
@@ -279,11 +279,11 @@ var o_search = {
                 }
                 // max
                 values = [];
-                $("#widget__" + slugNoNum + '1 input.max', '#search').each(function() {
+                $("#widget__" + slugNoNum + '1 input.op-range-input-max', '#search').each(function() {
                     values[values.length] = $(this).val();
                 });
                 if (values.length == 0) {
-                    $("#widget__" + slugNoNum + ' input.max', '#search').each(function() {
+                    $("#widget__" + slugNoNum + ' input.op-range-input-max', '#search').each(function() {
                         values[values.length] = $(this).val();
                     });
                 }
@@ -418,7 +418,7 @@ var o_search = {
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
             let collapsibleContainerId = $(e.target).attr("id");
             let widgetId = $(e.target).data("widget");
-            let currentIuputValue = $(`#${widgetId} input.min`).val().trim();
+            let currentIuputValue = $(`#${widgetId} input.op-range-input-min`).val().trim();
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();
             }
@@ -458,12 +458,12 @@ var o_search = {
          */
         o_search.isTriggeredFromInput = true;
         let slugName = $(targetInput).data("slugname");
-        let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
+        let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
         let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
         let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
 
         // If ranges info is not available, return from the function.
-        if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("min")) {
+        if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("op-range-input-min")) {
             o_search.performInputValidation = true;
             return;
         }
