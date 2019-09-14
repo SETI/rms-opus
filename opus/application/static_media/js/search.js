@@ -607,8 +607,8 @@ var o_search = {
                         currentInput.removeClass("search_input_invalid");
                         currentInput.val(opus.selections[eachSlug]);
                     }
+                    opus.allInputsValid = false;
                 }
-                opus.allInputsValid = false;
             } else {
                 if (currentInput.hasClass("RANGE")) {
                     /*
