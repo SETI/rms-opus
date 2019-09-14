@@ -748,11 +748,13 @@ var o_widgets = {
          * the corresponding input when browser is resized.
          */
         if ($("ul.ui-autocomplete").is(":visible")) {
-            let autocompleteUl = $("ul.ui-autocomplete");
             let slug = $("ul.ui-autocomplete").data("slug");
-            let position = $(`input[name="${slug}"]`).offset();
-            let properties = {left: position.left, top: position.bottom};
-            $("ul.ui-autocomplete").css(properties);
+            let inputPosition = $(`input[name="${slug}"]`).offset();
+            let inputHeight = $(`input[name="${slug}"]`).outerHeight();
+
+            let autocompletePos = {left: inputPosition.left, top: inputPosition.top + inputHeight};
+            $(`ul.ui-autocomplete[data-slug="${slug}"]`).offset(autocompletePos);
+            $(`ul.ui-autocomplete[data-slug="${slug}"]`).width($(`input[name="${slug}"]`).width());
         }
     }
 };
