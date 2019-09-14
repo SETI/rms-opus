@@ -41,11 +41,18 @@ var o_search = {
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
-    rangesNameMatchedCounter: {},
+    // Based on user's input, store the number of matched info by category, for example:
+    // In ring radius, when user types "ha":
+    // { "jupiter-inner-satellites": 0, "jupiter-rings": 1, "neptune-inner-satellites": 1, "neptune-rings": 0,
+    //   "saturn-regular-satellites": 0, "saturn-rings": 0, "uranus-inner-satellites": 0, "uranus-rings": 3 }
+    rangesNameMatchedCounterByCategory: {},
+    // Store the total number of matched info in a widget's ranges dropdown, in above example, it's 5.
     rangesNameTotalMatchedCounter: 0,
     // Use to determine if we should automatically expand/collapse ranges info. If it's set
     // to true, we will automatically expand/collapse ranges info depending on the matched letters.
     isTriggeredFromInput: false,
+    // Use to determine if user's input should proceed with validation and search when user types in
+    // ranges names.
     performInputValidation: true,
 
     addSearchBehaviors: function() {
@@ -67,13 +74,12 @@ var o_search = {
             let slugName = $(this).data("slugname");
             let inputToTriggerDropdown = $(`#widget__${slugName} input.min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-            if (preprogrammedRangesDropdown.length === 0 || !$(e.target).hasClass("min")) {
-                return;
-            }
-            if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
-                if (!preprogrammedRangesDropdown.hasClass("show")) {
-                    o_widgets.isKeepingRangesDropdownOpen = true;
-                    $(this).dropdown("toggle");
+            if (preprogrammedRangesDropdown.length !== 0 || $(e.target).hasClass("min")) {
+                if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
+                    if (!preprogrammedRangesDropdown.hasClass("show")) {
+                        o_widgets.isKeepingRangesDropdownOpen = true;
+                        $(this).dropdown("toggle");
+                    }
                 }
             }
         });
@@ -173,18 +179,18 @@ var o_search = {
 
             if (o_search.rangesNameTotalMatchedCounter === 1) {
                 let matchedCatId = "";
-                for (const eachCat in o_search.rangesNameMatchedCounter) {
-                    if (o_search.rangesNameMatchedCounter[eachCat] === 1) {
+                for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
+                    if (o_search.rangesNameMatchedCounterByCategory[eachCat] === 1) {
                         matchedCatId = `#${eachCat}`;
                         break;
                     }
                 }
                 let allItemsInMatchedCat = $(`${matchedCatId} .op-preprogrammed-ranges-data-item`);
-                for (const singelRangeData of allItemsInMatchedCat) {
-                    if (!$(singelRangeData).hasClass("op-hide-element")) {
-                        let minVal = $(singelRangeData).data("min");
-                        let maxVal = $(singelRangeData).data("max");
-                        let widgetId = $(singelRangeData).data("widget");
+                for (const singleRangeData of allItemsInMatchedCat) {
+                    if (!$(singleRangeData).hasClass("op-hide-element")) {
+                        let minVal = $(singleRangeData).data("min");
+                        let maxVal = $(singleRangeData).data("max");
+                        let widgetId = $(singleRangeData).data("widget");
 
                         // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
                         if ($(`#${widgetId} input.RANGE`).length !== 0) {
@@ -384,12 +390,12 @@ var o_search = {
          */
 
         // Make sure ranges info shows up automatically when the count of matched characters
-        // is not 0. We do this in the event handler when the collpasing is done. This is to avoid
+        // is not 0. We do this in the event handler when the collapsing is done. This is to avoid
         // the race condition of the collapsing animation when user types fast in the input.
         $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounter[collapsibleContainerId]) {
+                if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId]) {
                     $(e.target).collapse("show");
                 }
             }
@@ -401,7 +407,7 @@ var o_search = {
         $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
+                if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0) {
                     $(e.target).collapse("hide");
                 }
             }
@@ -413,7 +419,7 @@ var o_search = {
             let collapsibleContainerId = $(e.target).attr("id");
             let widgetId = $(e.target).data("widget");
             let currentIuputValue = $(`#${widgetId} input.min`).val().trim();
-            if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0 && currentIuputValue) {
+            if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();
             }
         });
@@ -429,7 +435,8 @@ var o_search = {
             $(".op-scrollable-menu").scrollTop(0);
         });
 
-        // Make sure dropdown is not shown if user focus into an input with numerical value.
+        // Make sure dropdown is not shown if user focus into an input with numerical value or
+        // string value with no match.
         $("#search").on("show.bs.dropdown", function(e) {
             let minInput = $(e.target).find("input.op-ranges-dropdown-menu");
             if (minInput.length === 0) {
@@ -463,10 +470,10 @@ var o_search = {
 
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).data("category");
-            let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-            o_search.rangesNameMatchedCounter[collapsibleContainerId] = 0;
+            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+            o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
 
-            for (const singleRangeData of rangesInfoInEachCategory) {
+            for (const singleRangeData of rangesInfoInOneCategory) {
                 let dataName = $(singleRangeData).data("name").toLowerCase();
                 let currentInputValue = currentValue.toLowerCase();
 
@@ -474,15 +481,15 @@ var o_search = {
                     $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);
-                    for (const eachCat in o_search.rangesNameMatchedCounter) {
-                        o_search.rangesNameMatchedCounter[eachCat] = 0;
+                    for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
+                        o_search.rangesNameMatchedCounterByCategory[eachCat] = 0;
                     }
                 } else if (dataName.includes(currentInputValue)) {
                     // Expand the category, display the item and highlight the matched keyword.
                     $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.highlightMatchedRangesName(singleRangeData, currentInputValue);
-                    o_search.rangesNameMatchedCounter[collapsibleContainerId] += 1;
+                    o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] += 1;
                     if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
                         $(`#${collapsibleContainerId}`).collapse("show");
                     }
@@ -492,24 +499,22 @@ var o_search = {
                 }
             }
 
-            if (o_search.rangesNameMatchedCounter[collapsibleContainerId] === 0) {
+            if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0) {
                 $(`#${collapsibleContainerId}`).collapse("hide");
                 if (currentValue) {
                     $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).addClass("op-hide-element");
                 }
             }
             o_search.setRangesDropdownScrollbarPos(preprogrammedRangesDropdown);
-            // Note: the selector to toggle collapse should be the one with "collapse" class.
-            // $(`#${containerId}`).collapse("show");
         }
 
         // If there is one or more matched ranges names, don't perform input validation.
         o_search.performInputValidation = true;
         o_search.rangesNameTotalMatchedCounter = 0;
-        for (const eachCat in o_search.rangesNameMatchedCounter) {
-            if (o_search.rangesNameMatchedCounter[eachCat] !== 0) {
+        for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
+            if (o_search.rangesNameMatchedCounterByCategory[eachCat] !== 0) {
                 o_search.performInputValidation = false;
-                o_search.rangesNameTotalMatchedCounter += o_search.rangesNameMatchedCounter[eachCat];
+                o_search.rangesNameTotalMatchedCounter += o_search.rangesNameMatchedCounterByCategory[eachCat];
             }
         }
 
@@ -555,8 +560,8 @@ var o_search = {
          * Set ranges info dropdown scrollbar position to make sure scrollbar scrolls
          * to the first matched category when there is a matched character.
          */
-        for (let category in o_search.rangesNameMatchedCounter) {
-            if (o_search.rangesNameMatchedCounter[category]) {
+        for (let category in o_search.rangesNameMatchedCounterByCategory) {
+            if (o_search.rangesNameMatchedCounterByCategory[category]) {
                 let targetTopPosition = $(`li[data-category="${category}"]`).offset().top;
                 let containerTopPosition = rangesDropdownElement.offset().top;
                 let containerScrollbarPosition = rangesDropdownElement.scrollTop();

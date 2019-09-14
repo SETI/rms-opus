@@ -18,6 +18,7 @@ var o_widgets = {
      **/
 
     lastStringSearchRequestNo: 0,
+    // Use to make sure ranges dropdown is not closed by default or manually when it's set to true.
     isKeepingRangesDropdownOpen: false,
 
     addWidgetBehaviors: function() {
@@ -708,9 +709,9 @@ var o_widgets = {
         let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).data("category");
-            let rangesInfoInEachCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
 
-            for (const singleRangeData of rangesInfoInEachCategory) {
+            for (const singleRangeData of rangesInfoInOneCategory) {
 
                 // Special case: (maybe put this somewhere else if there are more and more long names)
                 // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
