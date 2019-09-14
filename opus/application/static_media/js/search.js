@@ -94,9 +94,8 @@ var o_search = {
                 $(this).addClass("search_input_invalid_no_focus");
                 $(this).removeClass("search_input_invalid");
             }
-            console.log(o_search.rangesNameTotalMatchedCounter)
+
             let currentValue = $(this).val().trim();
-            console.log(currentValue)
             if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
                 $(this).addClass("search_input_invalid_no_focus");
             }
@@ -237,7 +236,7 @@ var o_search = {
             if ($(e.target).hasClass("input_currently_focused")) {
                 $(e.target).removeClass("input_currently_focused");
             }
-            
+
             o_search.rangesNameTotalMatchedCounter = 0;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });

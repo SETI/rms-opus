@@ -742,7 +742,7 @@ var o_widgets = {
         }
     },
 
-    attchedStringDropdownToInput: function() {
+    attachStringDropdownToInput: function() {
         /**
          * Make sure jquery ui autocomplete dropdown is attached right below
          * the corresponding input when browser is resized.

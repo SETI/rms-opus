@@ -632,7 +632,7 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
-            o_widgets.attchedStringDropdownToInput();
+            o_widgets.attachStringDropdownToInput();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
