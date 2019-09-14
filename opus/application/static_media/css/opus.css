@@ -2012,8 +2012,13 @@ ul.ui-autocomplete a.ui-state-active {
         word-break: break-all;
     }
 
+    /* Setting these padding to 0 to avoid ranges data squeezing when window is narrow */
     .op-preprogrammed-ranges-data-name {
         padding-right: 0 !important;
+    }
+
+    .op-preprogrammed-ranges-min-data {
+        padding-left: 0 !important;
     }
 }
 
@@ -2095,4 +2100,9 @@ input[placeholder] {
 
 input:-moz-placeholder {
     text-overflow: ellipsis;
+}
+
+/* Customized jquery autocomplete hover background color */
+.ui-menu-item a.ui-state-active {
+    background: #d1dbe1 !important;
 }
