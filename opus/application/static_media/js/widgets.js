@@ -615,6 +615,7 @@ var o_widgets = {
             if (stringInputDropDown) {
                 // Add header and footer for dropdown list
                 stringInputDropDown._renderMenu = function(ul, items) {
+                    ul.attr("data-slug", slug);
                     let self = this;
                     $.each(items, function(index, item) {
                        self._renderItem(ul, item );
@@ -738,6 +739,21 @@ var o_widgets = {
                 $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
                 $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
             }
+        }
+    },
+
+    attchedStringDropdownToInput: function() {
+        /**
+         * Make sure jquery ui autocomplete dropdown is attached right below
+         * the corresponding input when browser is resized.
+         */
+        if ($("ul.ui-autocomplete").is(":visible")) {
+            let autocompleteUl = $("ul.ui-autocomplete");
+            let slug = $("ul.ui-autocomplete").data("slug");
+            console.log(slug);
+            let position = $(`input[name="${slug}"]`).offset();
+            let properties = {left: position.left, top: position.bottom};
+            $("ul.ui-autocomplete").css(properties);
         }
     }
 };
