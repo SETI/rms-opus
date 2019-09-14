@@ -1692,7 +1692,7 @@ var o_browse = {
             $("#cart input.multichoice").hide();
         } else {
             // we must always use the op-gallery-view infinite scroll object for the rangeSelectOpusID because we only
-            // keep track of the range select variables in one of the infinite scroll objects. 
+            // keep track of the range select variables in one of the infinite scroll objects.
             let rangeSelectOpusID = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
             o_browse.highlightStartOfRange(rangeSelectOpusID);
         }
@@ -2126,6 +2126,9 @@ var o_browse = {
             if (startObs === firstObs && firstObs !== 1) {
                 $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
             }
+        }).fail(function() {
+            // hide the search spinner
+            $(`.op-page-loading-status > .loader`).hide();
         });
     },
 
