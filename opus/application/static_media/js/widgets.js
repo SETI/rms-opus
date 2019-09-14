@@ -750,7 +750,6 @@ var o_widgets = {
         if ($("ul.ui-autocomplete").is(":visible")) {
             let autocompleteUl = $("ul.ui-autocomplete");
             let slug = $("ul.ui-autocomplete").data("slug");
-            console.log(slug);
             let position = $(`input[name="${slug}"]`).offset();
             let properties = {left: position.left, top: position.bottom};
             $("ul.ui-autocomplete").css(properties);
