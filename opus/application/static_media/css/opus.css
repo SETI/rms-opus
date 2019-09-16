@@ -1983,7 +1983,8 @@ ul.ui-autocomplete a.ui-state-active {
     overflow-x: hidden;
     border-width: 2px;
     /* Set the width of ranges dropdown */
-    width: max-content;
+    /* width: max-content; */
+    width: 500px;
     max-width: 110%;
     word-break: keep-all;
 }
@@ -2027,11 +2028,6 @@ ul.ui-autocomplete a.ui-state-active {
     white-space: nowrap;
 }
 
-/* Make sure the fractional part of ranges data is not cutoff */
-.op-preprogrammed-ranges-data-item {
-    padding-right: 2em;
-}
-
 /* This class will be assigned to ranges name with long first word */
 .op-word-break-all {
     word-break: break-all;
@@ -2040,11 +2036,6 @@ ul.ui-autocomplete a.ui-state-active {
 /* Create spaces between long ranges names and min values */
 .op-preprogrammed-ranges-data-name {
     padding-right: 2em;
-}
-
-/* Create spaces between long ranges names and min values */
-.op-preprogrammed-ranges-min-data {
-    padding-left: 2em;
 }
 
 /* Styling required to make ranges data aligned by decimal point */

@@ -712,6 +712,9 @@ var o_widgets = {
             let collapsibleContainerId = $(category).data("category");
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
 
+            let maxNumOfDigitInMinDataFraction = 0;
+            let maxNumOfDigitInMaxDataFraction = 0;
+
             for (const singleRangeData of rangesInfoInOneCategory) {
 
                 // Special case: (maybe put this somewhere else if there are more and more long names)
@@ -728,17 +731,60 @@ var o_widgets = {
                 let minFractionalPart = minStr.split(".")[1];
                 let maxIntegerPart = maxStr.split(".")[0];
                 let maxFractionalPart = maxStr.split(".")[1];
+
                 minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
                 maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
+                if (minFractionalPart) {
+                    maxNumOfDigitInMinDataFraction = (Math.max(maxNumOfDigitInMinDataFraction,
+                                                      minFractionalPart.length-1));
+                }
+                if (maxFractionalPart) {
+                    maxNumOfDigitInMaxDataFraction = (Math.max(maxNumOfDigitInMaxDataFraction,
+                                                      maxFractionalPart.length-1));
+                }
 
                 let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
-                                  `<span">${minFractionalPart}</span>`;
+                                  `<span>${minFractionalPart}</span>`;
                 let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
-                                  `<span">${maxFractionalPart}</span>`;
+                                  `<span>${maxFractionalPart}</span>`;
 
                 $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
                 $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
             }
+
+            // The following steps are to make sure ranges data are aligned properly with headers
+            let minData = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-min-data`);
+            let rangesDataItem = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+            let minDataPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMinDataFraction);
+            let rangesDataItemPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMaxDataFraction);
+            if (minDataPaddingVal) {
+                minData.css("padding-right",`${minDataPaddingVal}em`);
+            }
+            if (rangesDataItemPaddingVal) {
+                rangesDataItem.css("padding-right",`${rangesDataItemPaddingVal}em`);
+            }
+        }
+    },
+
+    getPaddingValFromDigitsInFraction: function(numOfDigits) {
+        /**
+         * Get padding-right values for ranges dropdown data from number of digits
+         * in data fractions. Here is the mappings:
+         * Num of digits in fraction    padding-right
+         *          1                   1em
+         *          2                   1.5em
+         *          3                   2em
+         * Note: currently we have at most 3 digits in data fractions.
+         */
+        switch(numOfDigits) {
+            case 1:
+                return 1;
+            case 2:
+                return 1.5;
+            case 3:
+                return 2;
+            default:
+                return 0;
         }
     },
 
