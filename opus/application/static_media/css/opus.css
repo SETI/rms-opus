@@ -1989,18 +1989,28 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 @media (max-width: 680px) {
-    /* When widget width is narrow, allow ranges names to be wrapped by words */
-    .op-preprogrammed-ranges-data-name, .op-preprogrammed-ranges-data-header {
-        /* white-space: nowrap; */
-        white-space: normal;
+    /* Make sure ring radius dropdown never wraps names by letters */
+    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
+        word-break: keep-all;
     }
 }
 
 @media (min-width: 680px) {
     /* When widget width is wide, don't wrap ranges names */
-    .op-preprogrammed-ranges-data-name, .op-preprogrammed-ranges-data-header {
+    .op-preprogrammed-ranges-data-header {
         white-space: nowrap;
     }
+
+    /* Make sure ring radius dropdown starts to wrap the names when width is
+    less than 680px */
+    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
+        white-space: nowrap;
+    }
+}
+
+/* Make sure wavelength dropdown never wrap the names */
+#widget__wavelength .op-preprogrammed-ranges-data-name {
+    white-space: nowrap;
 }
 
 /* Make sure ranges names can be wrapped when dropdown width is narrow */
@@ -2008,15 +2018,12 @@ ul.ui-autocomplete a.ui-state-active {
     white-space: normal;
 }
 
-@media (max-width: 650px) {
-    /* Setting these padding to 0 to avoid ranges data squeezing when window is narrow */
-    .op-preprogrammed-ranges-data-name {
-        padding-right: 0 !important;
-    }
+.op-preprogrammed-ranges-data-name {
+    padding-right: 0 !important;
+}
 
-    .op-preprogrammed-ranges-min-data {
-        padding-left: 0 !important;
-    }
+.op-preprogrammed-ranges-min-data {
+    padding-left: 0 !important;
 }
 
 /* Make sure ranges data is not wrapped into multiple lines */
@@ -2026,13 +2033,13 @@ ul.ui-autocomplete a.ui-state-active {
 
 /* This class will be assigned to ranges name with long first word */
 .op-word-break-all {
-    word-break: break-all;
+    word-break: break-all !important;
 }
 
 @media (max-width: 780px) {
     /* Make long word break earlier */
     .op-word-break-all {
-        white-space: normal;
+        white-space: normal !important;
     }
 }
 
