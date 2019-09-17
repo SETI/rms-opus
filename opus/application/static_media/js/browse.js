@@ -2093,42 +2093,47 @@ var o_browse = {
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         viewNamespace.loadDataInProgress = true;
         // metadata; used for both table and gallery
-        $.getJSON(url, function(data) {
-            if (data.reqno < opus.lastLoadDataRequestNo[view]) {
-                // make sure to remove spinner before return
-                o_browse.hidePageLoaderSpinner();
-                return;
+        $.ajax({
+            url: url,
+            dataType: "json",
+            success: function(data) {
+                if (data.reqno < opus.lastLoadDataRequestNo[view]) {
+                    // make sure to remove spinner before return
+                    o_browse.hidePageLoaderSpinner();
+                    return;
+                }
+
+                o_browse.initTable(tab, data.columns, data.columns_no_units);
+
+                $(`${tab} .op-gallery-view`).scrollTop(0);
+                $(`${tab} .op-data-table-view`).scrollTop(0);
+
+                // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
+                viewNamespace.observationData = {};
+                $(`${tab} .gallery`).empty();
+                o_browse.hideGalleryViewModal();
+                o_browse.renderGalleryAndTable(data, this.url, view);
+
+                if (o_browse.metadataDetailOpusId != "") {
+                    o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
+                }
+                o_browse.updateSortOrder(data);
+
+                viewNamespace.reloadObservationData = false;
+                viewNamespace.loadDataInProgress = false;
+
+                // When pasting a URL, prefetch some data from previous page so that scrollbar will
+                // stay in the middle. This step has to be performed after loadData is done (loadDataInProgress
+                // is set to false).
+                let firstObs = $(`${tab} [data-obs]`).first().data("obs");
+                if (startObs === firstObs && firstObs !== 1) {
+                    $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
+                }
+            },
+            error: function() {
+                // hide the search spinner
+                $(`.op-page-loading-status > .loader`).hide();
             }
-
-            o_browse.initTable(tab, data.columns, data.columns_no_units);
-
-            $(`${tab} .op-gallery-view`).scrollTop(0);
-            $(`${tab} .op-data-table-view`).scrollTop(0);
-
-            // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
-            viewNamespace.observationData = {};
-            $(`${tab} .gallery`).empty();
-            o_browse.hideGalleryViewModal();
-            o_browse.renderGalleryAndTable(data, this.url, view);
-
-            if (o_browse.metadataDetailOpusId != "") {
-                o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
-            }
-            o_browse.updateSortOrder(data);
-
-            viewNamespace.reloadObservationData = false;
-            viewNamespace.loadDataInProgress = false;
-
-            // When pasting a URL, prefetch some data from previous page so that scrollbar will
-            // stay in the middle. This step has to be performed after loadData is done (loadDataInProgress
-            // is set to false).
-            let firstObs = $(`${tab} [data-obs]`).first().data("obs");
-            if (startObs === firstObs && firstObs !== 1) {
-                $(`${tab} ${contentsView}`).trigger("ps-scroll-up");
-            }
-        }).fail(function() {
-            // hide the search spinner
-            $(`.op-page-loading-status > .loader`).hide();
         });
     },
 
