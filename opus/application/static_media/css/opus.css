@@ -1988,13 +1988,15 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: keep-all;
 }
 
-@media (max-width: 950px) {
+@media (max-width: 680px) {
     /* When widget width is narrow, allow ranges names to be wrapped by words */
     .op-preprogrammed-ranges-data-name, .op-preprogrammed-ranges-data-header {
+        /* white-space: nowrap; */
         white-space: normal;
     }
 }
-@media (min-width: 950px) {
+
+@media (min-width: 680px) {
     /* When widget width is wide, don't wrap ranges names */
     .op-preprogrammed-ranges-data-name, .op-preprogrammed-ranges-data-header {
         white-space: nowrap;
@@ -2007,11 +2009,6 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 @media (max-width: 650px) {
-    /* Make ranges names to break by letters (not word) when dropdown width is narrow */
-    .op-preprogrammed-ranges .op-scrollable-menu .op-preprogrammed-ranges-data-name {
-        word-break: break-all;
-    }
-
     /* Setting these padding to 0 to avoid ranges data squeezing when window is narrow */
     .op-preprogrammed-ranges-data-name {
         padding-right: 0 !important;
@@ -2032,9 +2029,16 @@ ul.ui-autocomplete a.ui-state-active {
     word-break: break-all;
 }
 
-/* Create spaces between long ranges names and min values */
+@media (max-width: 780px) {
+    /* Make long word break earlier */
+    .op-word-break-all {
+        white-space: normal;
+    }
+}
+
 .op-preprogrammed-ranges-data-name {
-    padding-right: 2em;
+    /* white-space: nowrap; */
+    width: 100%;
 }
 
 /* Styling required to make ranges data aligned by decimal point */

@@ -115,8 +115,15 @@ class SearchForm(forms.Form):
                 label = 'max' if num == '2' else 'min'
 
                 pi = get_param_info_by_slug(slug, 'search')
+                
                 # placeholder for input hints (only apply to Min input for now)
-                hints = pi.field_hints if pi.field_hints else ''
+                if num == '2':
+                    # Get the hints for slug2 from slug1 field in database
+                    pi_slug1 = get_param_info_by_slug(slug[:-1] + '1', 'search')
+                    hints = pi_slug1.field_hints2 if pi_slug1.field_hints2 else ''
+                else:
+                    hints = pi.field_hints1 if pi.field_hints1 else ''
+
                 # dropdown only available when ranges info is available
                 ranges = pi.get_ranges_info()
                 dropdown_class = 'op-ranges-dropdown-menu dropdown-toggle' if ranges else ''
