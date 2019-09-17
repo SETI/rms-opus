@@ -1983,7 +1983,6 @@ ul.ui-autocomplete a.ui-state-active {
     overflow-x: hidden;
     border-width: 2px;
     /* Set the width of ranges dropdown */
-    /* width: max-content; */
     width: 500px;
     max-width: 110%;
     word-break: keep-all;
@@ -2093,7 +2092,10 @@ input:-moz-placeholder {
     text-overflow: ellipsis;
 }
 
-/* Customized jquery autocomplete hover background color */
+/* Customized jquery autocomplete hover background color and prevent
+wiggling when mouse over autocomplete menu items */
 .ui-menu-item a.ui-state-active {
     background: #d1dbe1 !important;
+    /* Prevent menu item wiggling when we mouse over it */
+    margin: 0;
 }
