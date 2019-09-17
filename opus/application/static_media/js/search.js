@@ -74,13 +74,11 @@ var o_search = {
             let slugName = $(this).data("slugname");
             let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-            if (preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) {
-                if (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) {
-                    if (!preprogrammedRangesDropdown.hasClass("show")) {
-                        o_widgets.isKeepingRangesDropdownOpen = true;
-                        $(this).dropdown("toggle");
-                    }
-                }
+            if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
+                (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) &&
+                !preprogrammedRangesDropdown.hasClass("show")) {
+                o_widgets.isKeepingRangesDropdownOpen = true;
+                $(this).dropdown("toggle");
             }
         });
 
