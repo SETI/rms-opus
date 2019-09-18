@@ -1986,6 +1986,8 @@ ul.ui-autocomplete a.ui-state-active {
     width: 500px;
     max-width: 110%;
     word-break: keep-all;
+    /* This will make sure dropdown is not covering the widget scrollbar */
+    left: -0.5em !important;
 }
 
 @media (max-width: 680px) {
