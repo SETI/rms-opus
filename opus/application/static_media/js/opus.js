@@ -653,6 +653,11 @@ var opus = {
             opus.changeTab(tab);
         });
 
+        // Make sure browse tab nav link does nothing when it's been disabled.
+        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
+            return false;
+        });
+
         $(".op-help-item").on("click", function(e) {
             // prevent url hash from being changed to # (in a tag href)
             e.preventDefault();

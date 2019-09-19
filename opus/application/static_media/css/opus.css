@@ -2112,3 +2112,9 @@ wiggling when mouse over autocomplete menu items */
     /* Prevent menu item wiggling when we mouse over it */
     margin: 0;
 }
+
+/* Use to disable nav link (for the case that disables browse tab when
+we have an invalid search) */
+.op-disabled-nav-link {
+    pointer-events: none;
+}

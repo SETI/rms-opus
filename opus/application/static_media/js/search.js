@@ -87,13 +87,23 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(e) {
+            let currentValue = $(this).val().trim();
+            let slug = $(this).attr("name");
+
+            // Disable browse tab nav link when user focuses out and there is a change of value
+            // in range input. The button will be enabled or keep disabled based on the
+            // result of input validation in parseFinalNormalizedInputDataAndUpdateHash.
+            if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slug]) ||
+                (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slug])) {
+                $(".op-browse-tab").addClass("op-disabled-nav-link");
+            }
+
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
                 $(this).removeClass("search_input_invalid");
             }
 
-            let currentValue = $(this).val().trim();
             if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
                 $(this).addClass("search_input_invalid_no_focus");
             }
@@ -235,7 +245,6 @@ var o_search = {
                 $(e.target).removeClass("input_currently_focused");
             }
 
-            o_search.rangesNameTotalMatchedCounter = 0;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
@@ -665,10 +674,14 @@ var o_search = {
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateRangeInput(normalizedInputData, true);
+
+            // When search is invalid, we disabled browse tab in nav link.
             if (!opus.allInputsValid) {
+                $(".op-browse-tab").addClass("op-disabled-nav-link");
                 return;
             }
 
+            o_search.rangesNameTotalMatchedCounter = 0;
             o_hash.updateHash();
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
@@ -684,9 +697,8 @@ var o_search = {
                     $(this).addClass("search_input_original");
                 }
             });
-            // $("input.RANGE").removeClass("search_input_valid");
-            // $("input.RANGE").removeClass("search_input_invalid");
-            // $("input.RANGE").addClass("search_input_original");
+
+            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
         });
     },
