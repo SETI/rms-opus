@@ -213,7 +213,17 @@ var o_widgets = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+                if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                    // Put back normal hinting info
+                    opus.widgetsDrawn.forEach(function(eachSlug) {
+                        o_search.getHinting(eachSlug);
+                    });
+                }
+                $(".op-browse-tab").removeClass("op-disabled-nav-link");
+            } else {
+                $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
+
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
         });

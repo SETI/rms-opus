@@ -255,7 +255,10 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
+            $(".op-browse-tab").addClass("op-disabled-nav-link");
             return;
+        } else {
+            $(".op-browse-tab").removeClass("op-disabled-nav-link");
         }
 
         if (opus.getCurrentTab() === "browse") {
