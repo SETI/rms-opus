@@ -255,7 +255,10 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
+            $(".op-browse-tab").addClass("op-disabled-nav-link");
             return;
+        } else {
+            $(".op-browse-tab").removeClass("op-disabled-nav-link");
         }
 
         if (opus.getCurrentTab() === "browse") {
@@ -639,6 +642,7 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
+            o_widgets.attachStringDropdownToInput();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
@@ -657,6 +661,11 @@ var opus = {
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
             opus.changeTab(tab);
+        });
+
+        // Make sure browse tab nav link does nothing when it's been disabled.
+        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
+            return false;
         });
 
         $(".op-help-item").on("click", function(e) {

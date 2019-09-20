@@ -4,6 +4,7 @@
 # Generate and maintain the param_info table.
 ################################################################################
 
+import json
 import os
 
 import impglobals
@@ -23,6 +24,19 @@ def create_import_param_info_table():
     # We use the permanent tables to determine what goes into param_info
     table_names = db.table_names('perm', prefix='obs_')
 
+    # read json file for ranges info
+    ranges_filename = os.path.join('table_schemas', 'param_info_ranges.json')
+    with open(ranges_filename, 'r') as fp:
+        try:
+            # read contents (str) and convert it to a json object (dict)
+            contents = fp.read()
+            ranges_json = json.loads(contents)
+        except json.decoder.JSONDecodeError:
+            logger.log('debug', f'Was reading ranges json file "{ranges_filename}"')
+            raise
+        except:
+            raise
+
     rows = []
     for table_name in table_names:
         table_schema = import_util.read_schema_for_table(table_name)
@@ -41,6 +55,7 @@ def create_import_param_info_table():
                 logger.log('error',
                            f'"{unit}" in "{category_name}/{field_name}" is not '
                            +'a valid unit in translation table')
+                return False
             form_type = column.get('pi_form_type', None)
             if (unit and
                 (not form_type or
@@ -53,6 +68,18 @@ def create_import_param_info_table():
                 logger.log('warning',
                            f'"{category_name}/{field_name}" has RANGE type '
                            +'without numerical format')
+
+            # if pi_ranges exists in .json, get the corresponding ranges info
+            # from dict and convert it to str before storing to database
+            ranges = column.get('pi_ranges', None)
+            if ranges:
+                if ranges in ranges_json:
+                    ranges = ranges_json[ranges]
+                    ranges = json.dumps(ranges)
+                else:
+                    logger.log('error',
+                               f'pi_ranges: "{ranges}" is not in "{ranges_filename}"')
+                    return False
 
             new_row = {
                 'category_name': category_name,
@@ -74,7 +101,10 @@ def create_import_param_info_table():
                 'old_slug': column.get('pi_old_slug', None),
                 'sub_heading': column['pi_sub_heading'],
                 'tooltip': column['pi_tooltip'],
-                'units': column['pi_units']
+                'units': column['pi_units'],
+                'ranges': ranges,
+                'field_hints1': column.get('pi_field_hints1', None),
+                'field_hints2': column.get('pi_field_hints2', None),
             }
             rows.append(new_row)
     db.insert_rows('import', 'param_info', rows)
