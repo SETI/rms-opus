@@ -594,16 +594,7 @@ document.addEventListener("DOMContentLoaded", function(){
 	window.Feedback.XHR.prototype = new window.Feedback.Send();
 
 	window.Feedback.XHR.prototype.send = function( data, callback ) {
-		// var xhr = this.xhr;
-        var xhr = new XMLHttpRequest();
-
-		xhr.onreadystatechange = function() {
-			if( xhr.readyState == 4 ) {
-				callback( (xhr.status === 200) );
-			}
-		};
-
-		var emailData = '';
+        var emailData = '';
 		emailData = 'subject=Feedback from ' + window.location.hostname;
 		emailData += '&content=';
 
@@ -613,6 +604,22 @@ document.addEventListener("DOMContentLoaded", function(){
 		}
 
 		emailData += '\nLocation: ' + window.location.href + '\n';
+
+        if (window.location.hostname != 'tools.pds-rings.seti.org' &&
+            window.location.hostname != 'dev.pds-rings.seti.org)') {
+            console.log(emailData);
+            callback(true);
+            return;
+        }
+
+		// var xhr = this.xhr;
+        var xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function() {
+			if( xhr.readyState == 4 ) {
+				callback( (xhr.status === 200) );
+			}
+		};
 
 		// xhr.open( "POST", this.url, true);
         xhr.open( "POST", "https://pds.nasa.gov/email-service/SubmitFeedback", true);
