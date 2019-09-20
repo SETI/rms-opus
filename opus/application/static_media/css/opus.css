@@ -703,16 +703,20 @@ narrow */
     margin: 0 2px 0 5px;
 }
 
-.range_hints {
+.op-range-hints {
     display: block;
     clear: both;
     padding: 5px 0 10px 50px;
-    color: green;
 }
 
-.range_hints span {
+.op-range-hints > span {
     margin-right: 5px;
     display: inline-block;
+}
+
+/* Only values in range hints are green */
+.op-range-hints .op-hints-info {
+    color: green;
 }
 
 .paging_indicator {
@@ -1470,6 +1474,7 @@ panel are properly separated */
 #widget-container {
     overflow-x: auto !important;
     overflow-y: hidden !important;
+    overscroll-behavior: contain;
 }
 
 /* Make only widget title and "i" icon wrapped and keep arrow & x symbols
@@ -1958,4 +1963,158 @@ ul.ui-autocomplete a.ui-state-active {
     opacity: 0.5;
     animation: hvr-ripple-in 1s infinite;
     -webkit-animation: hvr-ripple-in 1s infinite;
+}
+
+/* Make sure ranges info div not splitting input min and max into two lines */
+.op-preprogrammed-ranges {
+    display: inline !important;
+}
+
+/* Styling for ranges info dropdown */
+.op-preprogrammed-ranges .dropdown-item:active {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Enable default scrollbar for ranges info dropdown */
+.op-preprogrammed-ranges .op-scrollable-menu {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-width: 2px;
+    /* Set the width of ranges dropdown */
+    width: 500px;
+    max-width: 110%;
+    word-break: keep-all;
+    /* This will make sure dropdown is not covering the widget scrollbar */
+    left: -0.5em !important;
+}
+
+@media (max-width: 680px) {
+    /* Make sure ring radius dropdown never wraps names by letters */
+    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
+        word-break: keep-all;
+    }
+}
+
+@media (min-width: 680px) {
+    /* When widget width is wide, don't wrap ranges names */
+    .op-preprogrammed-ranges-data-header {
+        white-space: nowrap;
+    }
+
+    /* Make sure ring radius dropdown starts to wrap the names when width is
+    less than 680px */
+    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
+        white-space: nowrap;
+    }
+}
+
+/* Make sure wavelength dropdown never wrap the names */
+#widget__wavelength .op-preprogrammed-ranges-data-name {
+    white-space: nowrap;
+}
+
+/* Make sure ranges names can be wrapped when dropdown width is narrow */
+.op-preprogrammed-ranges .op-scrollable-menu li {
+    white-space: normal;
+}
+
+.op-preprogrammed-ranges-data-name {
+    padding-right: 0 !important;
+}
+
+.op-preprogrammed-ranges-min-data {
+    padding-left: 0 !important;
+}
+
+/* Make sure ranges data is not wrapped into multiple lines */
+.op-preprogrammed-ranges-min-data, .op-preprogrammed-ranges-max-data {
+    white-space: nowrap;
+}
+
+/* This class will be assigned to ranges name with long first word */
+.op-word-break-all {
+    word-break: break-all !important;
+}
+
+@media (max-width: 780px) {
+    /* Make long word break earlier */
+    .op-word-break-all {
+        white-space: normal !important;
+    }
+}
+
+.op-preprogrammed-ranges-data-name {
+    /* white-space: nowrap; */
+    width: 100%;
+}
+
+/* Styling required to make ranges data aligned by decimal point */
+.op-integer {
+    text-align: right;
+    display: inline-block;
+    width:  100%;
+}
+
+/* Add customized styling for dropdown list items */
+.op-preprogrammed-ranges-data-item:hover  {
+    background-color: #d1dbe1;
+    background-clip: padding-box;
+    cursor: pointer;
+}
+
+/* Rotate arrow icon when ranges dropdown list or expandable contents are
+expanded/collapsed */
+.op-preprogrammed-ranges .dropdown-toggle::after,
+.op-preprogrammed-ranges #op-ranges-dropdown-menu::after  {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+
+.op-preprogrammed-ranges .dropdown-toggle.collapsed::after,
+.op-preprogrammed-ranges #op-ranges-dropdown-menu::after {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+.op-preprogrammed-ranges.show #op-ranges-dropdown-menu::after {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+}
+
+.op-hide-element {
+    display: none;
+}
+
+/* Make palceholder hints visible when browser width is large enough */
+input.RANGE {
+    min-width: 25%;
+}
+
+/* Style placeholder to have "..." when text is overflow */
+input[placeholder] {
+    text-overflow: ellipsis;
+}
+
+::-moz-placeholder {
+    text-overflow: ellipsis;
+}
+
+input:-moz-placeholder {
+    text-overflow: ellipsis;
+}
+
+/* Customized jquery autocomplete hover background color and prevent
+wiggling when mouse over autocomplete menu items */
+.ui-menu-item a.ui-state-active {
+    background: #d1dbe1 !important;
+    /* Prevent menu item wiggling when we mouse over it */
+    margin: 0;
+}
+
+/* Use to disable nav link (for the case that disables browse tab when
+we have an invalid search) */
+.op-disabled-nav-link {
+    pointer-events: none;
 }

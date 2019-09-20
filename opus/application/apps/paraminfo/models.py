@@ -24,6 +24,9 @@ class ParamInfo(models.Model):
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
     units = models.CharField(max_length=75, blank=True, null=True)
+    ranges = models.TextField()
+    field_hints1 = models.CharField(max_length=255, blank=True, null=True)
+    field_hints2 = models.CharField(max_length=255, blank=True, null=True)
     intro = models.CharField(max_length=1023, blank=True, null=True)
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)
@@ -116,3 +119,12 @@ class ParamInfo(models.Model):
         (form_type, form_type_func,
          form_type_format) = parse_form_type(self.form_type)
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
+
+    def get_ranges_info(self):
+        """
+        Get the ranges info except units & qtype
+        """
+        ranges = {}
+        if self.ranges:
+            ranges = json.loads(self.ranges)
+        return ranges
