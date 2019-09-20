@@ -5,11 +5,15 @@ var config = {
 		feedbackType: "Comment,Question,Problem/Bug,Kudos,Other",
 		additionalLinks: [
 			{
-				title: "PDS Ring-Moon Systems Node",
+				title: "PDS Ring-Moon Systems Node Home Page",
 				url: "https://pds-rings.seti.org/"
 			},
+            {
+				title: "OPUS Blog and Recent Announcements",
+				url: "https://ringsnodesearchtool.blogspot.com/"
+			},
 			{
-				title: "PDS-wide Search",
+				title: "PDS-Wide Search",
 				url: "https://pds.nasa.gov/datasearch/data-search/"
 			},
 			{
