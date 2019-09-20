@@ -391,21 +391,28 @@ var opus = {
             case "search":
                 window.scrollTo(0,0);
                 $("#search").fadeIn();
+                // Using fadeIn for the feedbackTab looks bad because fadeIn
+                // uses opacity, and we're already using opacity for the text
+                // and background image, so it flashes bright and then dims
+                $(".feedbackTab").show();
                 o_search.activateSearchTab();
                 break;
 
             case "browse":
                 $("#browse").fadeIn();
+                $(".feedbackTab").hide();
                 o_browse.activateBrowseTab();
                 break;
 
             case "detail":
                 $("#detail").fadeIn();
+                $(".feedbackTab").show();
                 o_detail.activateDetailTab(opus.prefs.detail);
                 break;
 
             case "cart":
                 $("#cart").fadeIn();
+                $(".feedbackTab").hide();
                 o_cart.activateCartTab();
                 break;
 
@@ -694,6 +701,7 @@ var opus = {
                     }
                 });
                 opus.hideHelpAndCartPanels();
+                FeedbackMethods.close();
             }
         });
 
@@ -754,20 +762,18 @@ var opus = {
                 url += "guide.html";
                 header = "OPUS API Guide";
                 break;
-            case "tutorial":
-                url += "tutorial.html";
-                header = "A Brief Tutorial";
-                break;
             case "gettingStarted":
                 url += "gettingstarted.html";
                 header = "Getting Started";
                 break;
-            case "feedback":
-                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
-                header = "Questions/Feedback";
-                break;
+            case "contact":
+                FeedbackMethods.open();
+                return;
             case "splash":
                 opus.displaySplashDialog();
+                return;
+            case "announcements":
+                window.open("https://ringsnodesearchtool.blogspot.com/", "_blank");
                 return;
         }
 

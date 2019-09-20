@@ -1436,6 +1436,12 @@ panel are properly separated */
     padding-left: 3%;
 }
 
+/* Make room for the feedbackTab widget - this gives room to the PS on the right
+   side of the widget column */
+.op-widget-col {
+    padding-right: 25px;
+}
+
 .widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
