@@ -606,7 +606,7 @@ document.addEventListener("DOMContentLoaded", function(){
 		emailData += '\nLocation: ' + window.location.href + '\n';
 
         if (window.location.hostname != 'tools.pds-rings.seti.org' &&
-            window.location.hostname != 'dev.pds-rings.seti.org)') {
+            window.location.hostname != 'dev.pds-rings.seti.org') {
             console.log(emailData);
             callback(true);
             return;
