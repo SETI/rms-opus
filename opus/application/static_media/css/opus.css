@@ -1435,6 +1435,7 @@ panel are properly separated */
 .widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
+    line-height: 1;
 }
 
 #op-qtype-tooltip {

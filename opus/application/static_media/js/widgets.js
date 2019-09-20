@@ -575,6 +575,38 @@ var o_widgets = {
             if ($.isEmptyObject(opus.selections)) {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             }
+
+            ////// EXPERIMENT AREA //////
+            console.log(`Current widget: ${slug}`);
+            let widgetInputs = $(`#widget__${slug} input`);
+            if (widgetInputs.hasClass("RANGE")) {
+                console.log(widgetInputs.length);
+                let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
+                let minRangeInputs = $(`#widget__${slug} input.min`);
+                let maxRangeInputs = $(`#widget__${slug} input.max`);
+                let trailingCounter = 0;
+                let trailingCounterString = "";
+                if (extraSearchInputs.length > 0) {
+                    for (const eachMinInput of minRangeInputs) {
+                        trailingCounter++;
+                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let originalMinName = $(eachMinInput).attr("name");
+                        $(eachMinInput).attr("name", `${originalMinName}_${trailingCounterString}`);
+                    }
+
+                    trailingCounter = 0;
+                    for (const eachMaxInput of maxRangeInputs) {
+                        trailingCounter++;
+                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let originalMaxName = $(eachMaxInput).attr("name");
+                        $(eachMaxInput).attr("name", `${originalMaxName}_${trailingCounterString}`);
+                    }
+                }
+            }
+            ////// EXPERIMENT END //////
+
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);

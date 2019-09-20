@@ -215,10 +215,21 @@ def api_get_widget(request, **kwargs):
                 except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
-                form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                if key == 0:
+                    form = form + '<span>' + \
+                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                           '</span>'
+                else:
+                    form = form + '<div></div>' + \
+                           '<span class="op-extra-search-inputs">' + \
+                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                           '</span>'
 
-                if length > 1:
-                    form = form + '</span><div style="clear: both;"></div></section><section><span class="widget_form">'
+                # if length > 1 and key != length - 1:
+                #     # Add div or br tag between each set of range search to make
+                #     # sure each set is in a seprate line
+                #     form = form + '</span><div style="clear: both;"></div><span class="op-extra-search-inputs">'
+                #     # form = form + '</span><div style="clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
     elif form_type == 'STRING':
