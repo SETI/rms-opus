@@ -701,6 +701,7 @@ var opus = {
                     }
                 });
                 opus.hideHelpAndCartPanels();
+                FeedbackMethods.close();
             }
         });
 
