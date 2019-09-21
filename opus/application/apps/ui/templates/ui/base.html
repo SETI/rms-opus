@@ -512,9 +512,9 @@
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
     <!-- NASA feedback widget -->
-    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js"></script>
-    <script src="{{ STATIC_URL }}feedback/js/config.js"></script>
-    <script src="{{ STATIC_URL }}feedback/js/feedback.js"></script>
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
 
     {% block scripts %}
 
