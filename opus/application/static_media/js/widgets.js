@@ -703,8 +703,8 @@ var o_widgets = {
             if (widgetInputs.hasClass("RANGE")) {
                 console.log(widgetInputs.length);
                 let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
-                let minRangeInputs = $(`#widget__${slug} input.min`);
-                let maxRangeInputs = $(`#widget__${slug} input.max`);
+                let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
+                let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
                 let trailingCounter = 0;
                 let trailingCounterString = "";
                 if (extraSearchInputs.length > 0) {
