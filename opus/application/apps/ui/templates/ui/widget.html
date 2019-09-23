@@ -4,12 +4,13 @@
     #op-qtype-tooltip div is appended in base.html, and popover is initialized
     in getWidget function in widgets.js
 {% endcomment %}
+{% load humanize %}
 
 <div class="card">
     <header class="card-header">
         <h6 class="card-title mt-0">
             <div>
-                <i class="fas fa-info-circle" title="{{tooltip|safe }}"></i>
+                <i class="fas fa-info-circle" title="{{ tooltip|safe }}"></i>
                 {{ label }} {{ units }}
                 <span class="spinner">&nbsp;</span>
             </div>
@@ -17,7 +18,7 @@
                 <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
                     <i class="icon-action fa fa-chevron-down pull-right"></i>
                 </a>
-                <a href="#" data-action="close" data-slug="{{slug}}" class="close_card">
+                <a href="#" data-action="close" data-slug="{{ slug }}" class="close_card">
                     <i class="icon-action fa fa-times"></i>
                 </a>
             </span>
@@ -34,8 +35,8 @@
                             {% endif %}
                         ">
             <div class="widget-main">
-                <div id="hint__{{ slug }}" class="range_hints"></div>
-                <ul>
+                <div id="hint__{{ slug }}" class="op-range-hints"></div>
+                <ul class="op-range-input">
                     {% if intro %}
                         <div class="text-info">
                             {{ intro }}
@@ -45,6 +46,46 @@
 
                         {{ form|safe }}
                 </ul>
+                {% if ranges %}
+                    <div class="op-preprogrammed-ranges">
+                        <ul class="dropdown-menu op-scrollable-menu pl-0" aria-labelledby="op-ranges-dropdown-menu" role="menu">
+                            {% for range_data_entry in ranges %}
+                                <li class="mr-0 d-block" data-category="{{ range_data_entry.cat_name|slugify }}">
+                                    <a class="dropdown-item bg-light dropdown-toggle collapsed" data-toggle="collapse" href="#{{ range_data_entry.cat_name|slugify }}" role="button" aria-expanded="false" aria-controls="{{ range_data_entry.cat_name|slugify }}">{{ range_data_entry.cat_name }}</a>
+                                    <div class="container collapse" id="{{ range_data_entry.cat_name|slugify }}" data-widget="widget__{{ slug }}">
+                                        <div class="op-preprogrammed-ranges-data-header row border-bottom border-light">
+                                            <div class="col-4">
+                                            </div>
+                                            <div class="col-4 font-weight-bold text-right">
+                                                {{ range_data_entry.heading1|safe }}
+                                            </div>
+                                            <div class="col-4 font-weight-bold text-right">
+                                                {{ range_data_entry.heading2|safe }}
+                                            </div>
+                                        </div>
+                                        {% for range_info in range_data_entry.ranges %}
+                                            <div class="op-preprogrammed-ranges-data-item row" data-min="{{ range_info.field1|intcomma }}" data-max="{{ range_info.field2|intcomma }}" data-widget="widget__{{ slug }}" data-name="{{range_info.name}}">
+                                                <div class="col-4 op-preprogrammed-ranges-data-name">
+                                                    {{ range_info.name }}
+                                                </div>
+                                                <div class="col-4 op-preprogrammed-ranges-min-data">
+                                                    {% if range_info.field1 %}
+                                                        {{ range_info.field1|intcomma }}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-4 op-preprogrammed-ranges-max-data">
+                                                    {% if range_info.field2 %}
+                                                        {{ range_info.field2|intcomma }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
             </div>
         </article>
     </div><!-- /widget-body -->

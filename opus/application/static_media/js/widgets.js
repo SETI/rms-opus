@@ -18,6 +18,8 @@ var o_widgets = {
      **/
 
     lastStringSearchRequestNo: 0,
+    // Use to make sure ranges dropdown is not closed by default or manually when it's set to true.
+    isKeepingRangesDropdownOpen: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -76,8 +78,90 @@ var o_widgets = {
                 }
             });
         });
+
+        // When user selects a ranges info item, update input fields and opus.selections
+        // before triggering the search.
+        $("#search").on("click", ".op-preprogrammed-ranges-data-item", function(e) {
+            let minVal = $(e.currentTarget).data("min");
+            let maxVal = $(e.currentTarget).data("max");
+            let widgetId = $(e.currentTarget).data("widget");
+
+            // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
+            if ($(`#${widgetId} input.RANGE`).length !== 0) {
+                o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
+                // close dropdown and trigger the search
+                $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
+                $(`#${widgetId} input.RANGE`).trigger("change");
+            }
+        });
+
+        o_widgets.addPreprogrammedRangesBehaviors();
     },
 
+    addPreprogrammedRangesBehaviors: function() {
+        /**
+         * Add customized event handlers for the general behaviors of preprogrammed ranges
+         * dropdown and expandable list. This function will be called in getWidget.
+         */
+
+        // Expand/collapse info when clicking a dropdown submenu
+        $("#search").on("click", ".op-scrollable-menu .dropdown-item", function(e) {
+            // prevent URL being messed up with href in <a>
+            e.preventDefault();
+            let collapsibleID = $(e.target).attr("href");
+            $(`${collapsibleID}`).collapse("toggle");
+        });
+
+        // Avoid closing dropdown menu when clicking any dropdown item
+        $("#search").on("click", ".op-scrollable-menu", function(e) {
+            e.stopPropagation();
+        });
+
+        // Make sure expanded contents are collapsed when ranges dropdown list is closed.
+        $("#search").on("hidden.bs.dropdown", function(e) {
+            $(".op-preprogrammed-ranges .container").collapse("hide");
+        });
+
+        // Prevent dropdown from closing when clicking on the focused input again
+        $("#search").on("mousedown", "input.op-range-input-min", function(e) {
+            if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
+                o_widgets.isKeepingRangesDropdownOpen = true;
+            }
+        });
+
+        $("#search").on("hide.bs.dropdown", function(e) {
+            if (o_widgets.isKeepingRangesDropdownOpen) {
+                e.preventDefault();
+                o_widgets.isKeepingRangesDropdownOpen = false;
+            }
+        });
+    },
+
+    fillRangesInputs: function(widgetId, maxVal, minVal) {
+        /**
+         * Fill both ranges inputs with values passed in to the function.
+         */
+        let minInput = $(`#${widgetId} input.op-range-input-min`);
+        let maxInput = $(`#${widgetId} input.op-range-input-max`);
+        let slug = minInput.attr("name");
+
+        if (minVal) {
+            minInput.val(minVal);
+            opus.selections[slug] = [minVal];
+        } else {
+            minInput.val("");
+            delete opus.selections[slug];
+        }
+
+        slug = maxInput.attr("name");
+        if (maxVal) {
+            maxInput.val(maxVal);
+            opus.selections[slug] = [maxVal];
+        } else {
+            maxInput.val("");
+            delete opus.selections[slug];
+        }
+    },
 
     closeWidget: function(slug) {
 
@@ -129,7 +213,17 @@ var o_widgets = {
                 $("input.RANGE").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+                if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                    // Put back normal hinting info
+                    opus.widgetsDrawn.forEach(function(eachSlug) {
+                        o_search.getHinting(eachSlug);
+                    });
+                }
+                $(".op-browse-tab").removeClass("op-disabled-nav-link");
+            } else {
+                $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
+
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
         });
@@ -409,7 +503,8 @@ var o_widgets = {
                     let helpIcon = '<li class="op-range-qtype-helper">\
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
-                    $(`#widget__${slug} .widget-main ul`).append(helpIcon);
+
+                    $(`#widget__${slug} .widget-main .op-range-input`).append(helpIcon);
                 }
 
                 if (!hash[qtype]) {
@@ -530,6 +625,7 @@ var o_widgets = {
             if (stringInputDropDown) {
                 // Add header and footer for dropdown list
                 stringInputDropDown._renderMenu = function(ul, items) {
+                    ul.attr("data-slug", slug);
                     let self = this;
                     $.each(items, function(index, item) {
                        self._renderItem(ul, item );
@@ -556,7 +652,32 @@ var o_widgets = {
             // close autocomplete dropdown menu when y-axis scrolling happens
             $("#widget-container").on("ps-scroll-y", function() {
                 $("input.STRING").autocomplete("close");
+
+                // Close dropdown list when ps scrolling is happening in widget container
+                if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
+                    // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
+                    // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
+                    // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
+                    $(`#${widget} input.op-range-input-min`).dropdown("toggle");
+                }
             });
+
+            // Prevent overscrolling on ps in widget container when scrolling inside dropdown
+            // list has reached to both ends
+            $(".op-scrollable-menu").on("scroll wheel", function(e) {
+                e.stopPropagation();
+            });
+
+            // If ".op-preprogrammed-ranges" is available in the widget, we move the whole
+            // element into the input.op-range-input-min li and use it as the customized dropdown expandable
+            // list for input.op-range-input-min. This will also make sure dropdown list always stays below
+            // input.op-range-input-min.
+            let rangesInfoDropdown = $(`#${widget} .op-preprogrammed-ranges`).detach();
+            if (rangesInfoDropdown.length > 0) {
+                $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
+                $(`#${widget} .op-range-input`).addClass("dropdown");
+                o_widgets.alignRangesDataByDecimalPoint(widget);
+            }
 
             // add the spans that hold the hinting
             try {
@@ -615,12 +736,113 @@ var o_widgets = {
     }, // end getWidget function
 
 
-     scrollToWidget: function(widget) {
+    scrollToWidget: function(widget) {
         // scrolls window to a widget
         // widget is like: "widget__" + slug
         //  scroll the widget panel to top
         $('#search').animate({
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
-     },
+    },
+
+    alignRangesDataByDecimalPoint: function(widget) {
+        /**
+         * Align the data of ranges info by decimal point.
+         */
+        let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
+        for (const category of preprogrammedRangesInfo) {
+            let collapsibleContainerId = $(category).data("category");
+            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+
+            let maxNumOfDigitInMinDataFraction = 0;
+            let maxNumOfDigitInMaxDataFraction = 0;
+
+            for (const singleRangeData of rangesInfoInOneCategory) {
+
+                // Special case: (maybe put this somewhere else if there are more and more long names)
+                // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
+                // We set it the word-break to break-all.
+                let rangesName = $(singleRangeData).data("name").toString();
+                if (rangesName === "Janus/Epimetheus Ring") {
+                    $(singleRangeData).find(".op-preprogrammed-ranges-data-name").addClass("op-word-break-all");
+                }
+
+                let minStr = $(singleRangeData).data("min").toString();
+                let maxStr = $(singleRangeData).data("max").toString();
+                let minIntegerPart = minStr.split(".")[0];
+                let minFractionalPart = minStr.split(".")[1];
+                let maxIntegerPart = maxStr.split(".")[0];
+                let maxFractionalPart = maxStr.split(".")[1];
+
+                minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
+                maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
+                if (minFractionalPart) {
+                    maxNumOfDigitInMinDataFraction = (Math.max(maxNumOfDigitInMinDataFraction,
+                                                      minFractionalPart.length-1));
+                }
+                if (maxFractionalPart) {
+                    maxNumOfDigitInMaxDataFraction = (Math.max(maxNumOfDigitInMaxDataFraction,
+                                                      maxFractionalPart.length-1));
+                }
+
+                let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
+                                  `<span>${minFractionalPart}</span>`;
+                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
+                                  `<span>${maxFractionalPart}</span>`;
+
+                $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
+                $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
+            }
+
+            // The following steps are to make sure ranges data are aligned properly with headers
+            let minData = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-min-data`);
+            let rangesDataItem = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+            let minDataPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMinDataFraction);
+            let rangesDataItemPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMaxDataFraction);
+            if (minDataPaddingVal) {
+                minData.css("padding-right",`${minDataPaddingVal}em`);
+            }
+            if (rangesDataItemPaddingVal) {
+                rangesDataItem.css("padding-right",`${rangesDataItemPaddingVal}em`);
+            }
+        }
+    },
+
+    getPaddingValFromDigitsInFraction: function(numOfDigits) {
+        /**
+         * Get padding-right values for ranges dropdown data from number of digits
+         * in data fractions. Here is the mappings:
+         * Num of digits in fraction    padding-right
+         *          1                   1em
+         *          2                   1.5em
+         *          3                   2em
+         * Note: currently we have at most 3 digits in data fractions.
+         */
+        switch(numOfDigits) {
+            case 1:
+                return 1;
+            case 2:
+                return 1.5;
+            case 3:
+                return 2;
+            default:
+                return 0;
+        }
+    },
+
+    attachStringDropdownToInput: function() {
+        /**
+         * Make sure jquery ui autocomplete dropdown is attached right below
+         * the corresponding input when browser is resized.
+         */
+        if ($("ul.ui-autocomplete").is(":visible")) {
+            let slug = $("ul.ui-autocomplete").data("slug");
+            let inputPosition = $(`input[name="${slug}"]`).offset();
+            let inputHeight = $(`input[name="${slug}"]`).outerHeight();
+
+            let autocompletePos = {left: inputPosition.left, top: inputPosition.top + inputHeight};
+            $(`ul.ui-autocomplete[data-slug="${slug}"]`).offset(autocompletePos);
+            $(`ul.ui-autocomplete[data-slug="${slug}"]`).width($(`input[name="${slug}"]`).width());
+        }
+    }
 };

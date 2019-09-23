@@ -32,12 +32,12 @@ var o_hash = {
                 hash.push(key + "=" + encodedExtraValues.join(","));
             }
         });
-        
+
         $.each(opus.prefs, function(key, value) {
             hash.push(key + "=" + value);
         });
 
-        if (updateURL) {
+        if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
 

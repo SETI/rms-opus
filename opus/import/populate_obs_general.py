@@ -103,6 +103,8 @@ def populate_obs_general_target_class(**kwargs):
     obs_general_row = metadata['obs_general_row']
     # This target_name might have "SATURN RINGS" in it; slightly different
     # from the PDS "TARGET_NAME"
+    if obs_general_row['target_name'] is None:
+        return None
     target_name = obs_general_row['target_name'].upper()
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
