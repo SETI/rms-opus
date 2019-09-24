@@ -467,9 +467,16 @@ var o_search = {
          */
         o_search.isTriggeredFromInput = true;
         let slugName = $(targetInput).data("slugname");
-        let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
+        let inputName = $(targetInput).attr("name");
+        console.log($(targetInput))
+        console.log(`target input name: ${$(targetInput).attr("name")}`)
+        // Need to be more specific to select the corresponding one
+        let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
         let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
         let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
+        console.log(inputToTriggerDropdown)
+        console.log(preprogrammedRangesDropdown)
+        console.log(preprogrammedRangesInfo)
 
         // If ranges info is not available, return from the function.
         if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("op-range-input-min")) {
@@ -487,6 +494,7 @@ var o_search = {
                 let currentInputValue = currentValue.toLowerCase();
 
                 if (!currentValue) {
+                    console.log($(`.op-scrollable-menu a.dropdown-item`));
                     $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);

@@ -504,7 +504,8 @@ var o_widgets = {
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
-                    $(`#widget__${slug} .widget-main .op-range-input`).append(helpIcon);
+                    // Make sure help icon is attached to the end of each set of inputs
+                    $(`#widget__${slug} .widget-main .op-range-input ul`).append(helpIcon);
                 }
 
                 if (!hash[qtype]) {
@@ -698,10 +699,10 @@ var o_widgets = {
             }
 
             ////// EXPERIMENT AREA //////
-            console.log(`Current widget: ${slug}`);
+            // console.log(`Current widget: ${slug}`);
             let widgetInputs = $(`#widget__${slug} input`);
             if (widgetInputs.hasClass("RANGE")) {
-                console.log(widgetInputs.length);
+                // console.log(widgetInputs.length);
                 let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
                 let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
                 let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
@@ -723,6 +724,31 @@ var o_widgets = {
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let originalMaxName = $(eachMaxInput).attr("name");
                         $(eachMaxInput).attr("name", `${originalMaxName}_${trailingCounterString}`);
+                    }
+
+                    trailingCounter = 0;
+                    let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
+                    if (preprogrammedRangesInfo.length > 1) {
+                        for (const eachRangeDropdown of preprogrammedRangesInfo) {
+                            // let rangesDropdownCategories = $(`#widget__${slug} .op-scrollable-menu li`);
+                            let rangesDropdownCategories = $(eachRangeDropdown).find("li");
+                            // console.log(eachRangeDropdown);
+                            trailingCounter++;
+                            trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                `0${trailingCounter}` : `${trailingCounter}`);
+                            for (const category of rangesDropdownCategories) {
+                                let originalDataCategory = $(category).data("category");
+                                let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
+
+                                // console.log(originalDataCategory);
+                                // console.log(updatedDataCategory);
+                                // $(category).attr("data-category", updatedDataCategory);
+                                $(category).data("category", updatedDataCategory);
+                                $(category).find("a").attr("href", `#${updatedDataCategory}`);
+                                $(category).find("a").attr("aria-controls", updatedDataCategory);
+                                $(category).find(".container").attr("id", updatedDataCategory);
+                            }
+                        }
                     }
                 }
             }

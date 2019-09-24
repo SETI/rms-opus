@@ -216,14 +216,14 @@ def api_get_widget(request, **kwargs):
                     form_vals[slug2] = None
 
                 if key == 0:
-                    form = form + '<span>' + \
+                    form = form + '<ul>' + \
                            str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</span>'
+                           '</ul>'
                 else:
-                    form = form + '<div></div>' + \
-                           '<span class="op-extra-search-inputs">' + \
+                    form = form + \
+                           '<ul class="op-extra-search-inputs">' + \
                            str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</span>'
+                           '</ul>'
 
                 # if length > 1 and key != length - 1:
                 #     # Add div or br tag between each set of range search to make
