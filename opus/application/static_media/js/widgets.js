@@ -110,6 +110,8 @@ var o_widgets = {
             e.preventDefault();
             let collapsibleID = $(e.target).attr("href");
             $(`${collapsibleID}`).collapse("toggle");
+            console.log(`Toggling ${collapsibleID}`);
+            console.log($(`${collapsibleID}`));
         });
 
         // Avoid closing dropdown menu when clicking any dropdown item

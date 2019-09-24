@@ -472,8 +472,10 @@ var o_search = {
         console.log(`target input name: ${$(targetInput).attr("name")}`)
         // Need to be more specific to select the corresponding one
         let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-        let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-        let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
+        let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
+        let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
+        // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+        // let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
         console.log(inputToTriggerDropdown)
         console.log(preprogrammedRangesDropdown)
         console.log(preprogrammedRangesInfo)
@@ -486,6 +488,8 @@ var o_search = {
 
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).data("category");
+            console.log($(category));
+            console.log(`collapsibleContainerId: ${collapsibleContainerId}`)
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
             o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
 
