@@ -255,7 +255,10 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
+            $(".op-browse-tab").addClass("op-disabled-nav-link");
             return;
+        } else {
+            $(".op-browse-tab").removeClass("op-disabled-nav-link");
         }
 
         if (opus.getCurrentTab() === "browse") {
@@ -388,21 +391,28 @@ var opus = {
             case "search":
                 window.scrollTo(0,0);
                 $("#search").fadeIn();
+                // Using fadeIn for the feedbackTab looks bad because fadeIn
+                // uses opacity, and we're already using opacity for the text
+                // and background image, so it flashes bright and then dims
+                $(".feedbackTab").show();
                 o_search.activateSearchTab();
                 break;
 
             case "browse":
                 $("#browse").fadeIn();
+                $(".feedbackTab").hide();
                 o_browse.activateBrowseTab();
                 break;
 
             case "detail":
                 $("#detail").fadeIn();
+                $(".feedbackTab").show();
                 o_detail.activateDetailTab(opus.prefs.detail);
                 break;
 
             case "cart":
                 $("#cart").fadeIn();
+                $(".feedbackTab").hide();
                 o_cart.activateCartTab();
                 break;
 
@@ -632,6 +642,7 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
+            o_widgets.attachStringDropdownToInput();
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
@@ -650,6 +661,11 @@ var opus = {
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
             opus.changeTab(tab);
+        });
+
+        // Make sure browse tab nav link does nothing when it's been disabled.
+        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
+            return false;
         });
 
         $(".op-help-item").on("click", function(e) {
@@ -685,6 +701,7 @@ var opus = {
                     }
                 });
                 opus.hideHelpAndCartPanels();
+                FeedbackMethods.close();
             }
         });
 
@@ -745,20 +762,18 @@ var opus = {
                 url += "guide.html";
                 header = "OPUS API Guide";
                 break;
-            case "tutorial":
-                url += "tutorial.html";
-                header = "A Brief Tutorial";
-                break;
             case "gettingStarted":
                 url += "gettingstarted.html";
                 header = "Getting Started";
                 break;
-            case "feedback":
-                url = "https://pds-rings.seti.org/cgi-bin/comments/form.pl";
-                header = "Questions/Feedback";
-                break;
+            case "contact":
+                FeedbackMethods.open();
+                return;
             case "splash":
                 opus.displaySplashDialog();
+                return;
+            case "announcements":
+                window.open("https://ringsnodesearchtool.blogspot.com/", "_blank");
                 return;
         }
 

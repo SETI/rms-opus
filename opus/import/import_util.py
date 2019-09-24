@@ -365,4 +365,4 @@ def log_nonrepeating_warning(msg):
 
 def announce_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
-    log_nonrepeating_error(_format_vol_line()+msg)
+    log_nonrepeating_error(msg)

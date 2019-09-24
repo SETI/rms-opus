@@ -37,7 +37,7 @@ var o_hash = {
             hash.push(key + "=" + value);
         });
 
-        if (updateURL) {
+        if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
 
