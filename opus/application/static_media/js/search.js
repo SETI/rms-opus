@@ -72,8 +72,10 @@ var o_search = {
 
             // Open the dropdown properly when user tabs to focus in.
             let slugName = $(this).data("slugname");
-            let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
-            let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+            let preprogrammedRangesDropdown = ($(this)
+                                               .next(".op-preprogrammed-ranges")
+                                               .find(".op-scrollable-menu"));
+            // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show")) {
@@ -182,7 +184,10 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
-            let slug = $(this).attr("name");
+            let inputName = $(this).attr("name");
+            let slugName = $(this).data("slugname");
+            let slug = inputName.match(/(.*)_/) ? inputName.match(/(.*)_/)[1] : inputName;
+            console.log(`slug in change event: ${slug}`);
             let currentValue = $(this).val().trim();
 
             if (o_search.rangesNameTotalMatchedCounter === 1) {
@@ -199,13 +204,14 @@ var o_search = {
                         let minVal = $(singleRangeData).data("min");
                         let maxVal = $(singleRangeData).data("max");
                         let widgetId = $(singleRangeData).data("widget");
+                        let minInputSlug = $(singleRangeData).parent(".container").data("mininput");
 
                         // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
                         if ($(`#${widgetId} input.RANGE`).length !== 0) {
-                            o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
+                            o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                             o_search.rangesNameTotalMatchedCounter = 0;
                             // close dropdown and trigger the search
-                            $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
+                            $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
                             $(`#${widgetId} input.RANGE`).trigger("change");
                             return;
                         }
@@ -214,14 +220,18 @@ var o_search = {
                 }
             } else {
                 // close the dropdown
-                let slugName = $(this).data("slugname");
-                let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
-                let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+                let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
+                let preprogrammedRangesDropdown = (inputToTriggerDropdown
+                                                   .next(".op-preprogrammed-ranges")
+                                                   .find(".op-scrollable-menu"));
+                // let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
+                // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
                 if (preprogrammedRangesDropdown.hasClass("show")) {
                     inputToTriggerDropdown.dropdown("toggle");
                 }
             }
 
+            // TODO: Need to modify here later
             if (currentValue) {
                 opus.selections[slug] = [currentValue];
             } else {
@@ -426,8 +436,9 @@ var o_search = {
         // the empty category will not be expanded when user clicks it.
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
             let collapsibleContainerId = $(e.target).attr("id");
+            let inputName = $(e.target).data("mininput");
             let widgetId = $(e.target).data("widget");
-            let currentIuputValue = $(`#${widgetId} input.op-range-input-min`).val().trim();
+            let currentIuputValue = $(`#${widgetId} input.op-range-input-min[name="${inputName}"]`).val().trim();
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();
             }
@@ -468,17 +479,12 @@ var o_search = {
         o_search.isTriggeredFromInput = true;
         let slugName = $(targetInput).data("slugname");
         let inputName = $(targetInput).attr("name");
-        console.log($(targetInput))
-        console.log(`target input name: ${$(targetInput).attr("name")}`)
         // Need to be more specific to select the corresponding one
         let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`);
-        let preprogrammedRangesDropdown = inputToTriggerDropdown.next(".op-preprogrammed-ranges");
+        let preprogrammedRangesDropdown = (inputToTriggerDropdown
+                                           .next(".op-preprogrammed-ranges")
+                                           .find(".op-scrollable-menu"));
         let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
-        // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
-        // let preprogrammedRangesInfo = $(`#widget__${slugName} .op-scrollable-menu li`);
-        console.log(inputToTriggerDropdown)
-        console.log(preprogrammedRangesDropdown)
-        console.log(preprogrammedRangesInfo)
 
         // If ranges info is not available, return from the function.
         if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("op-range-input-min")) {
@@ -487,9 +493,8 @@ var o_search = {
         }
 
         for (const category of preprogrammedRangesInfo) {
-            let collapsibleContainerId = $(category).data("category");
-            console.log($(category));
-            console.log(`collapsibleContainerId: ${collapsibleContainerId}`)
+            // let collapsibleContainerId = $(category).data("category");
+            let collapsibleContainerId = $(category).attr("data-category");
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
             o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
 
@@ -498,7 +503,6 @@ var o_search = {
                 let currentInputValue = currentValue.toLowerCase();
 
                 if (!currentValue) {
-                    console.log($(`.op-scrollable-menu a.dropdown-item`));
                     $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);

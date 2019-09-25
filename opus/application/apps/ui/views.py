@@ -216,12 +216,13 @@ def api_get_widget(request, **kwargs):
                     form_vals[slug2] = None
 
                 if key == 0:
-                    form = form + '<ul>' + \
+                    form = form + \
+                           '<ul class="op-search-inputs-set">' + \
                            str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
                            '</ul>'
                 else:
                     form = form + \
-                           '<ul class="op-extra-search-inputs">' + \
+                           '<ul class="op-extra-search-inputs op-search-inputs-set">' + \
                            str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
                            '</ul>'
 

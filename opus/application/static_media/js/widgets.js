@@ -85,10 +85,11 @@ var o_widgets = {
             let minVal = $(e.currentTarget).data("min");
             let maxVal = $(e.currentTarget).data("max");
             let widgetId = $(e.currentTarget).data("widget");
+            let minInputSlug = $(e.currentTarget).parent(".container").data("mininput");
 
             // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
-                o_widgets.fillRangesInputs(widgetId, maxVal, minVal);
+                o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
                 $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE`).trigger("change");
@@ -110,8 +111,6 @@ var o_widgets = {
             e.preventDefault();
             let collapsibleID = $(e.target).attr("href");
             $(`${collapsibleID}`).collapse("toggle");
-            console.log(`Toggling ${collapsibleID}`);
-            console.log($(`${collapsibleID}`));
         });
 
         // Avoid closing dropdown menu when clicking any dropdown item
@@ -139,13 +138,22 @@ var o_widgets = {
         });
     },
 
-    fillRangesInputs: function(widgetId, maxVal, minVal) {
+    fillRangesInputs: function(widgetId, minInputSlug, maxVal, minVal) {
         /**
          * Fill both ranges inputs with values passed in to the function.
          */
-        let minInput = $(`#${widgetId} input.op-range-input-min`);
-        let maxInput = $(`#${widgetId} input.op-range-input-max`);
-        let slug = minInput.attr("name");
+        let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
+        let minInputName = minInput.attr("name");
+        let slugName = minInput.data("slugname");
+
+        let slug = "";
+        let slugOrderNum = "";
+        if (minInputName.match(/(.*)_/)) {
+            slug = minInputName.match(/(.*)_/)[1];
+            slugOrderNum = minInputName.match(/.*(_.*)/)[1];
+        } else {
+            slug = minInputName;
+        }
 
         if (minVal) {
             minInput.val(minVal);
@@ -155,7 +163,8 @@ var o_widgets = {
             delete opus.selections[slug];
         }
 
-        slug = maxInput.attr("name");
+        slug = slugName + "2" + slugOrderNum;
+        let maxInput = $(`#${widgetId} input.op-range-input-max[name="${slug}"]`);
         if (maxVal) {
             maxInput.val(maxVal);
             opus.selections[slug] = [maxVal];
@@ -701,22 +710,24 @@ var o_widgets = {
             }
 
             ////// EXPERIMENT AREA //////
-            // console.log(`Current widget: ${slug}`);
             let widgetInputs = $(`#widget__${slug} input`);
             if (widgetInputs.hasClass("RANGE")) {
-                // console.log(widgetInputs.length);
                 let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
                 let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
                 let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
                 let trailingCounter = 0;
                 let trailingCounterString = "";
+                let minInputNames = [];
+
                 if (extraSearchInputs.length > 0) {
                     for (const eachMinInput of minRangeInputs) {
                         trailingCounter++;
                         trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let originalMinName = $(eachMinInput).attr("name");
-                        $(eachMinInput).attr("name", `${originalMinName}_${trailingCounterString}`);
+                        let updatedMinName = `${originalMinName}_${trailingCounterString}`;
+                        $(eachMinInput).attr("name", updatedMinName);
+                        minInputNames.push(updatedMinName);
                     }
 
                     trailingCounter = 0;
@@ -725,30 +736,33 @@ var o_widgets = {
                         trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let originalMaxName = $(eachMaxInput).attr("name");
-                        $(eachMaxInput).attr("name", `${originalMaxName}_${trailingCounterString}`);
+                        let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
+                        $(eachMaxInput).attr("name", updatedMaxName);
                     }
 
                     trailingCounter = 0;
                     let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
                     if (preprogrammedRangesInfo.length > 1) {
                         for (const eachRangeDropdown of preprogrammedRangesInfo) {
-                            // let rangesDropdownCategories = $(`#widget__${slug} .op-scrollable-menu li`);
                             let rangesDropdownCategories = $(eachRangeDropdown).find("li");
-                            // console.log(eachRangeDropdown);
                             trailingCounter++;
                             trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                 `0${trailingCounter}` : `${trailingCounter}`);
+                            let correspondingMinInputName = minInputNames.shift();
+
                             for (const category of rangesDropdownCategories) {
                                 let originalDataCategory = $(category).data("category");
                                 let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
-                                // console.log(originalDataCategory);
-                                // console.log(updatedDataCategory);
-                                // $(category).attr("data-category", updatedDataCategory);
-                                $(category).data("category", updatedDataCategory);
-                                $(category).find("a").attr("href", `#${updatedDataCategory}`);
-                                $(category).find("a").attr("aria-controls", updatedDataCategory);
-                                $(category).find(".container").attr("id", updatedDataCategory);
+                                $(category).attr("data-category", updatedDataCategory);
+                                $(category).attr("data-mininput", correspondingMinInputName);
+
+                                let categoryBtn = $(category).find("a");
+                                let itemsInOneCategory = $(category).find(".container");
+                                categoryBtn.attr("href", `#${updatedDataCategory}`);
+                                categoryBtn.attr("aria-controls", updatedDataCategory);
+                                itemsInOneCategory.attr("id", updatedDataCategory);
+                                itemsInOneCategory.attr("data-mininput", correspondingMinInputName);
                             }
                         }
                     }
