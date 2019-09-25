@@ -189,7 +189,9 @@ def api_get_widget(request, **kwargs):
         length = len1 if len1 > len2 else len2
 
         if not length: # param is not constrained
-            form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
+            form = '<ul class="op-search-inputs-set">' + \
+                   str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                   '</ul>'
 
         else: # param is constrained
             if form_type_func is None:

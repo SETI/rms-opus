@@ -719,6 +719,10 @@ var o_widgets = {
                 let trailingCounterString = "";
                 let minInputNames = [];
 
+                // If there are extra sets of RANGE inputs, we reorder the following:
+                // 1. name attribute for min & max inputs.
+                // 2. attributes & id for customized ranges dropdown lists (this is required for them
+                // to work properly).
                 if (extraSearchInputs.length > 0) {
                     for (const eachMinInput of minRangeInputs) {
                         trailingCounter++;
@@ -755,6 +759,8 @@ var o_widgets = {
                                 let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
                                 $(category).attr("data-category", updatedDataCategory);
+                                // This is used to connected each customized ranges dropdown to its
+                                // corresponding .op-range-input-min
                                 $(category).attr("data-mininput", correspondingMinInputName);
 
                                 let categoryBtn = $(category).find("a");
