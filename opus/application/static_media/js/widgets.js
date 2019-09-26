@@ -99,15 +99,36 @@ var o_widgets = {
         o_widgets.addPreprogrammedRangesBehaviors();
 
         // EXPERIMENT AREA
+        // Create a new set of inputs when clicking the "+/OR" button in a widget.
         $("#search").on("click", ".op-add-inputs", function(e) {
             console.log("click +/OR button");
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).last();
-            let cloneInputs = lastExistingSetOfInputs.clone(true);
+            // Do not pass in true to clone(), otherwise event handlers will be attached
+            // for multiple times and cause some weird behaviors.
+            let cloneInputs = lastExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
+
+            // let minusIcon = '<i class="fas fa-minus"></i>';
+            let minusIcon = '<li class="op-remove-inputs">' +
+                            '<button type="button" class="p-0 btn btn-small btn-link" \
+                            title="Delete this set of search inputs"' +
+                            `data-widget="widget__${slug}" data-slug="${slug}">` +
+                            '<i class="fas fa-minus"></i></button></li>';
+
+            // $(`#${widgetId} .op-input`).append(minusIcon);
+            cloneInputs.prepend(minusIcon);
+            // <i class="fas fa-minus"></i>
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
+            // TODO: Need to update hash
+        });
+
+        $("#search").on("click", ".op-remove-inputs", function(e) {
+            console.log("click remove icon");
+            let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
+            inputSetToBeDeleted.remove();
             // TODO: Need to update hash
         });
         // END EXPERIMENT
@@ -729,10 +750,10 @@ var o_widgets = {
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
                 // let plusIcon = '<hr class="shadow-divider my-0 ml-0 mr-0">' +
-                let plusIcon = '<button type="button" class="p-0 btn btn-small btn-outline-secondary op-add-inputs" \
+                let plusIcon = '<button type="button" class="p-0 btn btn-small btn-link op-add-inputs" \
                                title="Add a new set of search inputs"' +
                                `data-widget="widget__${slug}" data-slug="${slug}">` +
-                               '<i class="fas fa-plus"></i>/OR</button>';
+                               '<i class="fas fa-plus">/OR</i></button>';
                 // <i class="fas fa-plus-circle">
                 // <i class="fas fa-plus">
                 // <hr class="shadow-divider my-0 ml-0 mr-3">
@@ -761,6 +782,8 @@ var o_widgets = {
             let trailingCounterString = "";
             let minInputNames = [];
 
+            let originalMinName = `${$(minRangeInputs).data("slugname")}1`;
+            let originalMaxName = `${$(maxRangeInputs).data("slugname")}2`;
             // If there are extra sets of RANGE inputs, we reorder the following:
             // 1. name attribute for min & max inputs.
             // 2. attributes & id for customized ranges dropdown lists (this is required for them
@@ -770,7 +793,6 @@ var o_widgets = {
                     trailingCounter++;
                     trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                  `0${trailingCounter}` : `${trailingCounter}`);
-                    let originalMinName = $(eachMinInput).attr("name");
                     let updatedMinName = `${originalMinName}_${trailingCounterString}`;
                     $(eachMinInput).attr("name", updatedMinName);
                     minInputNames.push(updatedMinName);
@@ -781,7 +803,6 @@ var o_widgets = {
                     trailingCounter++;
                     trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                  `0${trailingCounter}` : `${trailingCounter}`);
-                    let originalMaxName = $(eachMaxInput).attr("name");
                     let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
                     $(eachMaxInput).attr("name", updatedMaxName);
                 }

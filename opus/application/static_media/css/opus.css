@@ -1859,7 +1859,7 @@ input:focus {
 }
 
 input[type="text"].search_input_original {
-    border: 1px solid #D5D5D5;
+    border: 2px solid #D5D5D5;
 }
 
 input[type="text"].search_input_valid {
@@ -2141,4 +2141,9 @@ we have an invalid search) */
     /* margin-left: 30%; */
     position: relative;
     left: 30%;
+}
+
+.op-remove-inputs {
+    position: absolute;
+    left: 0;
 }
