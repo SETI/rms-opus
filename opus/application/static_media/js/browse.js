@@ -419,7 +419,7 @@ var o_browse = {
             return false;
         });
 
-        $("#op-obs-menu").on("click contextmenu", '.dropdown-item',  function(e) {
+        $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let opusId = $(this).parent().data("id");
             o_browse.hideMenu();
 
@@ -451,7 +451,7 @@ var o_browse = {
                 case "downloadURL":
                     document.location.href = $(this).attr("href");
                     break;
-                    
+
                 case "help":
                     break;
             }
@@ -1130,6 +1130,7 @@ var o_browse = {
         $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='info']").attr("href", o_browse.getDetailURL(opusId));
         $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#op-obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#op-obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
@@ -1161,19 +1162,21 @@ var o_browse = {
             .attr("data-id", opusId);
     },
 
+    getDetailURL: function(opusId) {
+        let tab = opus.getCurrentTab();
+        opus.prefs.detail = opusId;
+        let link = "/opus/#/" +  o_hash.updateHash();
+        link = link.replace(`view=${tab}`, "view=detail");
+        return link;
+    },
+
     showDetail: function(e, opusId) {
         opus.prefs.detail = opusId;
+        o_browse.hideMenu();
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            let link = "/opus/#/" +  o_hash.updateHash();
-            link = link.replace("view=browse", "view=detail");
-            if ($(e.target).attr("href")) {
-                $(e.target).attr("href", link);
-            } else {
-                $(e.target).parent().attr("href", link);
-            }
+            $(e.target).parent().attr("href", o_browse.getDetailURL(opusId));
         } else {
-            opus.prefs.detail = opusId;
             opus.changeTab("detail");
             $('a[href="#detail"]').tab("show");
         }
