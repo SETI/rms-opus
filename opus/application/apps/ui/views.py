@@ -241,10 +241,21 @@ def api_get_widget(request, **kwargs):
             key = 0
             for value in selections[param_qualified_name]:
                 form_vals[slug] = value
-                form = form + str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                if key == 0:
+                    form = form + \
+                           '<ul class="op-search-inputs-set">' + \
+                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                           '</ul>'
+                else:
+                    form = form + \
+                           '<ul class="op-extra-search-inputs op-search-inputs-set">' + \
+                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                           '</ul>'
                 key = key+1
         else:
-            form = str(SearchForm(form_vals, auto_id=auto_id).as_ul());
+            form = '<ul class="op-search-inputs-set">' + \
+                   str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
+                   '</ul>'
 
     # MULT form types
     elif form_type in settings.MULT_FORM_TYPES:

@@ -2135,3 +2135,10 @@ we have an invalid search) */
 .op-disabled-nav-link {
     pointer-events: none;
 }
+
+/* Styling for the button to add multiple sets of inputs in a widget */
+.op-add-inputs {
+    /* margin-left: 30%; */
+    position: relative;
+    left: 30%;
+}

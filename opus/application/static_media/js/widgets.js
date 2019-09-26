@@ -97,6 +97,20 @@ var o_widgets = {
         });
 
         o_widgets.addPreprogrammedRangesBehaviors();
+
+        // EXPERIMENT AREA
+        $("#search").on("click", ".op-add-inputs", function(e) {
+            console.log("click +/OR button");
+            let widgetId = $(this).data("widget");
+            let slug = $(this).data("slug");
+            let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).last();
+            let cloneInputs = lastExistingSetOfInputs.clone(true);
+            cloneInputs.addClass("op-extra-search-inputs");
+            $(`#${widgetId} .op-input`).append(cloneInputs);
+            o_widgets.renumberInputsAttributes(slug);
+            // TODO: Need to update hash
+        });
+        // END EXPERIMENT
     },
 
     addPreprogrammedRangesBehaviors: function() {
@@ -516,7 +530,7 @@ var o_widgets = {
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs
-                    $(`#widget__${slug} .widget-main .op-range-input ul`).append(helpIcon);
+                    $(`#widget__${slug} .widget-main .op-input ul`).append(helpIcon);
                 }
 
                 if (!hash[qtype]) {
@@ -687,7 +701,7 @@ var o_widgets = {
             let rangesInfoDropdown = $(`#${widget} .op-preprogrammed-ranges`).detach();
             if (rangesInfoDropdown.length > 0) {
                 $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
-                $(`#${widget} .op-range-input`).addClass("dropdown");
+                $(`#${widget} .op-input`).addClass("dropdown");
                 o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
@@ -711,68 +725,18 @@ var o_widgets = {
 
             ////// EXPERIMENT AREA //////
             let widgetInputs = $(`#widget__${slug} input`);
-            if (widgetInputs.hasClass("RANGE")) {
-                let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
-                let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
-                let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
-                let trailingCounter = 0;
-                let trailingCounterString = "";
-                let minInputNames = [];
+            o_widgets.renumberInputsAttributes(slug);
 
-                // If there are extra sets of RANGE inputs, we reorder the following:
-                // 1. name attribute for min & max inputs.
-                // 2. attributes & id for customized ranges dropdown lists (this is required for them
-                // to work properly).
-                if (extraSearchInputs.length > 0) {
-                    for (const eachMinInput of minRangeInputs) {
-                        trailingCounter++;
-                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                     `0${trailingCounter}` : `${trailingCounter}`);
-                        let originalMinName = $(eachMinInput).attr("name");
-                        let updatedMinName = `${originalMinName}_${trailingCounterString}`;
-                        $(eachMinInput).attr("name", updatedMinName);
-                        minInputNames.push(updatedMinName);
-                    }
-
-                    trailingCounter = 0;
-                    for (const eachMaxInput of maxRangeInputs) {
-                        trailingCounter++;
-                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                     `0${trailingCounter}` : `${trailingCounter}`);
-                        let originalMaxName = $(eachMaxInput).attr("name");
-                        let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
-                        $(eachMaxInput).attr("name", updatedMaxName);
-                    }
-
-                    trailingCounter = 0;
-                    let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
-                    if (preprogrammedRangesInfo.length > 1) {
-                        for (const eachRangeDropdown of preprogrammedRangesInfo) {
-                            let rangesDropdownCategories = $(eachRangeDropdown).find("li");
-                            trailingCounter++;
-                            trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                `0${trailingCounter}` : `${trailingCounter}`);
-                            let correspondingMinInputName = minInputNames.shift();
-
-                            for (const category of rangesDropdownCategories) {
-                                let originalDataCategory = $(category).data("category");
-                                let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
-
-                                $(category).attr("data-category", updatedDataCategory);
-                                // This is used to connected each customized ranges dropdown to its
-                                // corresponding .op-range-input-min
-                                $(category).attr("data-mininput", correspondingMinInputName);
-
-                                let categoryBtn = $(category).find("a");
-                                let itemsInOneCategory = $(category).find(".container");
-                                categoryBtn.attr("href", `#${updatedDataCategory}`);
-                                categoryBtn.attr("aria-controls", updatedDataCategory);
-                                itemsInOneCategory.attr("id", updatedDataCategory);
-                                itemsInOneCategory.attr("data-mininput", correspondingMinInputName);
-                            }
-                        }
-                    }
-                }
+            if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
+                // let plusIcon = '<hr class="shadow-divider my-0 ml-0 mr-0">' +
+                let plusIcon = '<button type="button" class="p-0 btn btn-small btn-outline-secondary op-add-inputs" \
+                               title="Add a new set of search inputs"' +
+                               `data-widget="widget__${slug}" data-slug="${slug}">` +
+                               '<i class="fas fa-plus"></i>/OR</button>';
+                // <i class="fas fa-plus-circle">
+                // <i class="fas fa-plus">
+                // <hr class="shadow-divider my-0 ml-0 mr-3">
+                $(`#widget__${slug} .widget-main`).append(plusIcon);
             }
             ////// EXPERIMENT END //////
 
@@ -783,6 +747,76 @@ var o_widgets = {
         }); // end callback for .done()
     }, // end getWidget function
 
+    renumberInputsAttributes: function(slug) {
+        /**
+         * Reorder all inputs attributes in numerical order when there
+         * are multiple sets of search inputs in one single widget.
+         */
+        let widgetInputs = $(`#widget__${slug} input`);
+        if (widgetInputs.hasClass("RANGE")) {
+            let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
+            let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
+            let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
+            let trailingCounter = 0;
+            let trailingCounterString = "";
+            let minInputNames = [];
+
+            // If there are extra sets of RANGE inputs, we reorder the following:
+            // 1. name attribute for min & max inputs.
+            // 2. attributes & id for customized ranges dropdown lists (this is required for them
+            // to work properly).
+            if (extraSearchInputs.length > 0) {
+                for (const eachMinInput of minRangeInputs) {
+                    trailingCounter++;
+                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                 `0${trailingCounter}` : `${trailingCounter}`);
+                    let originalMinName = $(eachMinInput).attr("name");
+                    let updatedMinName = `${originalMinName}_${trailingCounterString}`;
+                    $(eachMinInput).attr("name", updatedMinName);
+                    minInputNames.push(updatedMinName);
+                }
+
+                trailingCounter = 0;
+                for (const eachMaxInput of maxRangeInputs) {
+                    trailingCounter++;
+                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                 `0${trailingCounter}` : `${trailingCounter}`);
+                    let originalMaxName = $(eachMaxInput).attr("name");
+                    let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
+                    $(eachMaxInput).attr("name", updatedMaxName);
+                }
+
+                trailingCounter = 0;
+                let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
+                if (preprogrammedRangesInfo.length > 1) {
+                    for (const eachRangeDropdown of preprogrammedRangesInfo) {
+                        let rangesDropdownCategories = $(eachRangeDropdown).find("li");
+                        trailingCounter++;
+                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                            `0${trailingCounter}` : `${trailingCounter}`);
+                        let correspondingMinInputName = minInputNames.shift();
+
+                        for (const category of rangesDropdownCategories) {
+                            let originalDataCategory = $(category).data("category");
+                            let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
+
+                            $(category).attr("data-category", updatedDataCategory);
+                            // This is used to connected each customized ranges dropdown to its
+                            // corresponding .op-range-input-min
+                            $(category).attr("data-mininput", correspondingMinInputName);
+
+                            let categoryBtn = $(category).find("a");
+                            let itemsInOneCategory = $(category).find(".container");
+                            categoryBtn.attr("href", `#${updatedDataCategory}`);
+                            categoryBtn.attr("aria-controls", updatedDataCategory);
+                            itemsInOneCategory.attr("id", updatedDataCategory);
+                            itemsInOneCategory.attr("data-mininput", correspondingMinInputName);
+                        }
+                    }
+                }
+            }
+        }
+    },
 
     scrollToWidget: function(widget) {
         // scrolls window to a widget
