@@ -1173,9 +1173,13 @@ var o_browse = {
     showDetail: function(e, opusId) {
         opus.prefs.detail = opusId;
         o_browse.hideMenu();
+        let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            $(e.target).parent().attr("href", o_browse.getDetailURL(opusId));
+            $(e.target).parent().attr("href", url);
+        } else if (e.ctrlKey) {
+            // open detail view in new browser tab
+            window.open(url, "_blank");
         } else {
             opus.changeTab("detail");
             $('a[href="#detail"]').tab("show");
