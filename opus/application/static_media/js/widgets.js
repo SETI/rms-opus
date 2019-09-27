@@ -112,7 +112,7 @@ var o_widgets = {
 
             // let minusIcon = '<i class="fas fa-minus"></i>';
             let minusIcon = '<li class="op-remove-inputs">' +
-                            '<button type="button" class="p-0 btn btn-small btn-link" \
+                            '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
                             title="Delete this set of search inputs"' +
                             `data-widget="widget__${slug}" data-slug="${slug}">` +
                             '<i class="fas fa-minus"></i></button></li>';
@@ -127,8 +127,11 @@ var o_widgets = {
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
             console.log("click remove icon");
+            let slug = $(this).find(".op-remove-inputs-btn").data("slug");
+            console.log(`slug after delete a set: ${slug}`);
             let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
             inputSetToBeDeleted.remove();
+            o_widgets.renumberInputsAttributes(slug);
             // TODO: Need to update hash
         });
         // END EXPERIMENT
@@ -778,12 +781,15 @@ var o_widgets = {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
             let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
+            let qtypes = $(`#widget__${slug} select`);
+
             let trailingCounter = 0;
             let trailingCounterString = "";
             let minInputNames = [];
 
             let originalMinName = `${$(minRangeInputs).data("slugname")}1`;
             let originalMaxName = `${$(maxRangeInputs).data("slugname")}2`;
+            let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
             // If there are extra sets of RANGE inputs, we reorder the following:
             // 1. name attribute for min & max inputs.
             // 2. attributes & id for customized ranges dropdown lists (this is required for them
@@ -792,7 +798,7 @@ var o_widgets = {
                 for (const eachMinInput of minRangeInputs) {
                     trailingCounter++;
                     trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                 `0${trailingCounter}` : `${trailingCounter}`);
+                                             `0${trailingCounter}` : `${trailingCounter}`);
                     let updatedMinName = `${originalMinName}_${trailingCounterString}`;
                     $(eachMinInput).attr("name", updatedMinName);
                     minInputNames.push(updatedMinName);
@@ -802,41 +808,85 @@ var o_widgets = {
                 for (const eachMaxInput of maxRangeInputs) {
                     trailingCounter++;
                     trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                 `0${trailingCounter}` : `${trailingCounter}`);
+                                             `0${trailingCounter}` : `${trailingCounter}`);
                     let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
                     $(eachMaxInput).attr("name", updatedMaxName);
                 }
 
                 trailingCounter = 0;
-                let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
+                // let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
                 if (preprogrammedRangesInfo.length > 1) {
                     for (const eachRangeDropdown of preprogrammedRangesInfo) {
                         let rangesDropdownCategories = $(eachRangeDropdown).find("li");
                         trailingCounter++;
                         trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                            `0${trailingCounter}` : `${trailingCounter}`);
+                                                 `0${trailingCounter}` : `${trailingCounter}`);
                         let correspondingMinInputName = minInputNames.shift();
 
                         for (const category of rangesDropdownCategories) {
                             let originalDataCategory = $(category).data("category");
+                            originalDataCategory = (originalDataCategory.match(/(.*)_/) ?
+                                                    originalDataCategory.match(/(.*)_/)[1] :
+                                                    originalDataCategory);
                             let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
-                            $(category).attr("data-category", updatedDataCategory);
-                            // This is used to connected each customized ranges dropdown to its
-                            // corresponding .op-range-input-min
-                            $(category).attr("data-mininput", correspondingMinInputName);
-
-                            let categoryBtn = $(category).find("a");
-                            let itemsInOneCategory = $(category).find(".container");
-                            categoryBtn.attr("href", `#${updatedDataCategory}`);
-                            categoryBtn.attr("aria-controls", updatedDataCategory);
-                            itemsInOneCategory.attr("id", updatedDataCategory);
-                            itemsInOneCategory.attr("data-mininput", correspondingMinInputName);
+                            o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
+                                                                     correspondingMinInputName);
                         }
+                    }
+                }
+
+                trailingCounter = 0;
+                for (const eachQtype of qtypes) {
+                    trailingCounter++;
+                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                             `0${trailingCounter}` : `${trailingCounter}`);
+                    let originalQtypeName = $(eachQtype).attr("name");
+                    originalQtypeName = (originalQtypeName.match(/(.*)_/) ?
+                                         originalQtypeName.match(/(.*)_/)[1] :
+                                         originalQtypeName);
+                    let updatedQtypeName = `${originalQtypeName}_${trailingCounterString}`;
+                    $(eachQtype).attr("name", updatedQtypeName);
+                }
+            } else {
+                // Only one set of input, remove the "_counter" trailing part.
+                minRangeInputs.attr("name", originalMinName);
+                maxRangeInputs.attr("name", originalMaxName);
+                qtypes.attr("name", `qtype-${slug}`);
+                if (preprogrammedRangesInfo.length > 0) {
+                    let rangesDropdownCategories = preprogrammedRangesInfo.find("li");
+
+                    for (const category of rangesDropdownCategories) {
+                        let originalDataCategory = $(category).data("category");
+                        let updatedDataCategory = (originalDataCategory.match(/(.*)_/) ?
+                                                   originalDataCategory.match(/(.*)_/)[1] :
+                                                   originalDataCategory);
+
+                        o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
+                                                                 originalMinName);
                     }
                 }
             }
         }
+    },
+
+    updateRangesCollapseAttributes: function(rangesCategory, updatedDataCategory, correspondingMinInput) {
+        /**
+         * Update related attributes for ranges info categories. These attributes
+         * will make sure the collapsible can work properly and is correctly
+         * connected to corresponding input.
+         */
+        $(rangesCategory).attr("data-category", updatedDataCategory);
+        // This is used to connected each customized ranges dropdown to its
+        // corresponding .op-range-input-min
+        $(rangesCategory).attr("data-mininput", correspondingMinInput);
+
+        let categoryBtn = $(rangesCategory).find("a");
+        let itemsInOneCategory = $(rangesCategory).find(".container");
+        categoryBtn.attr("href", `#${updatedDataCategory}`);
+        categoryBtn.attr("aria-controls", updatedDataCategory);
+        itemsInOneCategory.attr("id", updatedDataCategory);
+        itemsInOneCategory.attr("data-mininput", correspondingMinInput);
     },
 
     scrollToWidget: function(widget) {
