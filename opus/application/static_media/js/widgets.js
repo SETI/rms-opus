@@ -785,7 +785,7 @@ var o_widgets = {
 
             let trailingCounter = 0;
             let trailingCounterString = "";
-            let minInputNames = [];
+            let minInputNamesArray = [];
 
             let originalMinName = `${$(minRangeInputs).data("slugname")}1`;
             let originalMaxName = `${$(maxRangeInputs).data("slugname")}2`;
@@ -796,27 +796,16 @@ var o_widgets = {
             // to work properly).
             // 3. attributes for qtypes
             if (extraSearchInputs.length > 0) {
-                // Renumber for min inputs.
-                for (const eachMinInput of minRangeInputs) {
-                    trailingCounter++;
-                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                             `0${trailingCounter}` : `${trailingCounter}`);
-                    let updatedMinName = `${originalMinName}_${trailingCounterString}`;
-                    $(eachMinInput).attr("name", updatedMinName);
-                    minInputNames.push(updatedMinName);
-                }
+                // Renumber min inputs.
+                // The data will be used to set as data-mininput for corresponding ranges collapsible
+                // (categories) containers. That way each specific min input will be linked to its own
+                // ranges info dropdown.
+                minInputNamesArray = o_widgets.renumberAttributesOfSearchElements(minRangeInputs, true);
 
-                // Renumber for max inputs.
-                trailingCounter = 0;
-                for (const eachMaxInput of maxRangeInputs) {
-                    trailingCounter++;
-                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                             `0${trailingCounter}` : `${trailingCounter}`);
-                    let updatedMaxName = `${originalMaxName}_${trailingCounterString}`;
-                    $(eachMaxInput).attr("name", updatedMaxName);
-                }
+                // Renumber max inputs.
+                o_widgets.renumberAttributesOfSearchElements(maxRangeInputs);
 
-                // Renumber for preprogrammed ranges dropdown.
+                // Renumber preprogrammed ranges dropdown.
                 trailingCounter = 0;
                 if (preprogrammedRangesInfo.length > 1) {
                     for (const eachRangeDropdown of preprogrammedRangesInfo) {
@@ -824,7 +813,7 @@ var o_widgets = {
                         trailingCounter++;
                         trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                  `0${trailingCounter}` : `${trailingCounter}`);
-                        let correspondingMinInputName = minInputNames.shift();
+                        let correspondingMinInputName = minInputNamesArray.shift();
 
                         for (const category of rangesDropdownCategories) {
                             let originalDataCategory = $(category).data("category");
@@ -839,19 +828,8 @@ var o_widgets = {
                     }
                 }
 
-                // Renumber for qtypes
-                trailingCounter = 0;
-                for (const eachQtype of qtypes) {
-                    trailingCounter++;
-                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                             `0${trailingCounter}` : `${trailingCounter}`);
-                    let originalQtypeName = $(eachQtype).attr("name");
-                    originalQtypeName = (originalQtypeName.match(/(.*)_/) ?
-                                         originalQtypeName.match(/(.*)_/)[1] :
-                                         originalQtypeName);
-                    let updatedQtypeName = `${originalQtypeName}_${trailingCounterString}`;
-                    $(eachQtype).attr("name", updatedQtypeName);
-                }
+                // Renumber qtypes
+                o_widgets.renumberAttributesOfSearchElements(qtypes);
             } else {
                 // When there is only one set of range input, remove the "_counter" trailing part.
                 minRangeInputs.attr("name", originalMinName);
@@ -888,33 +866,45 @@ var o_widgets = {
             // 1. name attribute inputs.
             // 2. attributes for qtypes
             if (extraSearchInputs.length > 0) {
-                // Renumber for string inputs.
-                for (const eachStringInput of stringInputs) {
-                    trailingCounter++;
-                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                             `0${trailingCounter}` : `${trailingCounter}`);
-                    let updatedStringName = `${originalStringName}_${trailingCounterString}`;
-                    $(eachStringInput).attr("name", updatedStringName);
-                }
+                // Renumber string inputs.
+                o_widgets.renumberAttributesOfSearchElements(stringInputs);
 
-                // Renumber for qtypes
-                trailingCounter = 0;
-                for (const eachQtype of qtypes) {
-                    trailingCounter++;
-                    trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                             `0${trailingCounter}` : `${trailingCounter}`);
-                    let originalQtypeName = $(eachQtype).attr("name");
-                    originalQtypeName = (originalQtypeName.match(/(.*)_/) ?
-                                         originalQtypeName.match(/(.*)_/)[1] :
-                                         originalQtypeName);
-                    let updatedQtypeName = `${originalQtypeName}_${trailingCounterString}`;
-                    $(eachQtype).attr("name", updatedQtypeName);
-                }
+                // Renumber qtypes
+                o_widgets.renumberAttributesOfSearchElements(qtypes);
             } else {
                 // When there is only one set of string input, remove the "_counter" trailing part.
                 stringInputs.attr("name", originalStringName);
                 qtypes.attr("name", `qtype-${slug}`);
             }
+        }
+    },
+
+    renumberAttributesOfSearchElements: function(targetSearchElements, returnRenumberedData=false) {
+        /**
+         * Renumber name attributes of inputs/qtypes (either RANGE or STRING inputs/qtypes),
+         * and return the array renumbered data if returnRenumberedData.
+         */
+        let trailingCounter = 0;
+        let trailingCounterString = "";
+        let renumberedData = [];
+
+        for (const eachSearchElement of targetSearchElements) {
+            trailingCounter++;
+            trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                     `0${trailingCounter}` : `${trailingCounter}`);
+            let originalName = $(eachSearchElement).attr("name");
+            originalName = (originalName.match(/(.*)_/) ?
+                            originalName.match(/(.*)_/)[1] :
+                            originalName);
+            let updatedName = `${originalName}_${trailingCounterString}`;
+            $(eachSearchElement).attr("name", updatedName);
+            renumberedData.push(updatedName);
+        }
+
+        if (returnRenumberedData) {
+            return renumberedData;
+        } else {
+            return;
         }
     },
 
