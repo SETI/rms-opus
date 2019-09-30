@@ -167,7 +167,7 @@ var opus = {
         let currentExtrasQ = o_hash.extrasWithoutUnusedQtypes(selections, extras);
         let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
-                                    o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
+            o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
             if (!opus.force_load) {
                 return;
             }

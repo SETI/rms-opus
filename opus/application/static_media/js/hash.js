@@ -17,19 +17,61 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
+    // EXPERIMENT
     updateHash: function(updateURL=true) {
+        /**
+         * Convert data from opus.selections and opus.extras into URL hash string
+         */
         let hash = [];
         $.each(opus.selections, function(key, value) {
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
-                hash.push(key + "=" + encodedSelectionValues.join(","));
+                let rootSlug = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
+                let qtypeSlug = `qtype-${rootSlug}`;
+
+                // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
+                // we attach the trailing counter string to the slug and assign the corresponding before pushing
+                // into hash array.
+                if (value.length > 1 && ((`${qtypeSlug}` in opus.extras ||
+                    `${qtypeSlug}1` in opus.extras || `${qtypeSlug}2` in opus.extras) ||
+                    key.match(/.*(1|2)/))) {
+                    let numberOfInputs = encodedSelectionValues.length;
+
+                    for(let trailingCounter = 1; trailingCounter <= numberOfInputs; trailingCounter++) {
+                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let newKey = `${key}_${trailingCounterString}`;
+
+                        console.log(encodedSelectionValues);
+                        if (encodedSelectionValues[trailingCounter-1] !== "null") {
+                            hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
+                        }
+                    }
+                } else {
+                    hash.push(key + "=" + encodedSelectionValues.join(","));
+                }
             }
         });
 
         $.each(opus.extras, function(key, value) {
             if (value.length) {
                 let encodedExtraValues = o_hash.encodeSlugValues(value);
-                hash.push(key + "=" + encodedExtraValues.join(","));
+
+                if (value.length > 1) {
+                    let numberOfQtypeInputs = encodedExtraValues.length;
+
+                    for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
+                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let newKey = `${key}_${trailingCounterString}`;
+
+                        if (encodedExtraValues[trailingCounter-1] !== "null") {
+                            hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                        }
+                    }
+                } else {
+                    hash.push(key + "=" + encodedExtraValues.join(","));
+                }
             }
         });
 
@@ -40,9 +82,11 @@ var o_hash = {
         if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
-
+        console.log(`hash from updateHash`);
+        console.log(hash);
         return hash.join("&");
     },
+    // END EXPERIMENT
 
     encodeSlugValues: function(slugValueArray) {
         /**
@@ -180,21 +224,55 @@ var o_hash = {
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
+            // EXPERIMENT
             if (!(slug in opus.prefs) && value) {
+                let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                slug = rootSlug;
+
                 if (slug.startsWith("qtype-")) {
-                    // each qtype will only have one value at a time
-                    extras[slug] = [value];
+                    if (slugCounter) {
+                        slugCounter = parseInt(slugCounter);
+                        extras[slug] = extras[slug] ? extras[slug] : [];
+                        while (extras[slug].length < slugCounter) {
+                            extras[slug].push(null);
+                        }
+                        extras[slug][slugCounter-1] = value;
+                    } else {
+                        // each qtype will only have one value at a time
+                        extras[slug] = [value];
+                    }
                 } else {
                     // Leave comments here, need to revisit this later. We have find
                     // a better way to tell if the slug value is coming from string input.
                     // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
                     //     selections[slug] = [value];
                     // } else {
-                    selections[slug] = value.split(",");
+
+                    if (slugCounter) {
+                        slugCounter = parseInt(slugCounter);
+                        selections[slug] = selections[slug] ? selections[slug] : [];
+                        while (selections[slug].length < slugCounter) {
+                            selections[slug].push(null);
+                        }
+                        selections[slug][slugCounter-1] = value;
+                    } else {
+                        selections[slug] = value.split(",");
+                    }
                     // }
                 }
             }
+            // END EXPERIMENT
         });
+
+        // Make sure the arrays for the same set of input have the same length
+        // Possible TODO: DO we need this? Revisit if we need it later
+        // for(const slug in selections) {
+        //     if (slug.match(/.*(1|2)/)) {
+        //         let rootSlug = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
+        //     }
+        //
+        // }
 
         return [selections, extras];
     },
@@ -231,11 +309,25 @@ var o_hash = {
             let idxOfFirstEqualSign = pair.indexOf("=");
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
+
+            // EXPERIMENT
             if (value) {
                 if (slug.match(/qtype-.*/)) {
-                    // range drop down, add the qtype to the global extras array
-                    let id = slug.match(/qtype-(.*)/)[1];
-                    opus.extras['qtype-' + id] = value.split(',');
+                    let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                    let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                    slug = rootSlug;
+                    if (slugCounter) {
+                        slugCounter = parseInt(slugCounter);
+                        opus.extras[slug] = opus.extras[slug] ? opus.extras[slug] : [];
+                        while (opus.extras[slug].length < slugCounter) {
+                            opus.extras[slug].push(null);
+                        }
+                        opus.extras[slug][slugCounter-1] = value;
+                    } else {
+                        // range drop down, add the qtype to the global extras array
+                        let id = slug.match(/qtype-(.*)/)[1];
+                        opus.extras['qtype-' + id] = value.split(',');
+                    }
                 }
                 // look for prefs
                 else if (slug in opus.prefs) {
@@ -270,12 +362,27 @@ var o_hash = {
                     // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
                     //     opus.selections[slug] = [value];
                     // } else {
-                    opus.selections[slug] = value.split(',');
+                    let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                    let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                    slug = rootSlug;
+                    if (slugCounter) {
+                        slugCounter = parseInt(slugCounter);
+                        opus.selections[slug] = opus.selections[slug] ? opus.selections[slug] : [];
+                        while (opus.selections[slug].length < slugCounter) {
+                            opus.selections[slug].push(null);
+                        }
+                        opus.selections[slug][slugCounter-1] = value;
+                    } else {
+                        opus.selections[slug] = value.split(",");
+                    }
                     // }
                 }
             }
+            // END EXPERIMENT
         });
-
+        console.log(`initFromHash`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         opus.load();
     },
 
