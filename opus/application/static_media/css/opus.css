@@ -1920,7 +1920,7 @@ ul.ui-autocomplete a.ui-state-active {
     background-color: #F9F6F6;
 }
 
-.op-no-select {
+.op-no-select, .feedbackTab, .fas, .far {
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
