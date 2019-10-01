@@ -264,15 +264,7 @@ var o_hash = {
             }
             // END EXPERIMENT
         });
-
-        // Make sure the arrays for the same set of input have the same length
-        // Possible TODO: DO we need this? Revisit if we need it later
-        // for(const slug in selections) {
-        //     if (slug.match(/.*(1|2)/)) {
-        //         let rootSlug = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
-        //     }
-        //
-        // }
+        o_hash.alignDataInSelectionsAndExtras(selections, extras);
 
         return [selections, extras];
     },
@@ -380,11 +372,49 @@ var o_hash = {
             }
             // END EXPERIMENT
         });
+
+        o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
         console.log(`initFromHash`);
         console.log(opus.selections);
         console.log(opus.extras);
         opus.load();
     },
 
+    alignDataInSelectionsAndExtras: function(selections, extras) {
+        /**
+         * Arrange data arrays in selections and extras. Make them the same
+         * length if they are related to the same slug. For example:
+         * Arrays for slugNameA1, slugNameA2, and qtype-slugNameA will be the
+         * same length (RANGE input).
+         * Arrays for slugNameB and qtype-slugNameB will be the same length
+         * (STRING input).
+         */
+        for(const slug in selections) {
+            if (slug.match(/.*(1|2)/)) {
+                let rootSlug = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
+                let qtypeSlug = `qtype-${rootSlug}`;
+                let longestLength = Math.max(selections[`${rootSlug}1`].length, selections[`${rootSlug}2`].length);
 
+                while (selections[`${rootSlug}2`].length < longestLength) {
+                    selections[`${rootSlug}2`].push(null);
+                }
+                while (selections[`${rootSlug}1`].length < longestLength) {
+                    selections[`${rootSlug}2`].push(null);
+                }
+                while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
+                    extras[qtypeSlug].push(null);
+                }
+            } else if (slug in extras) {
+                let qtypeSlug = `qtype-${slug}`;
+                let longestLength = Math.max(selections[slug].length, extras[qtypeSlug].length);
+
+                while (selections[slug].length < longestLength) {
+                    selections[slug].push(null);
+                }
+                while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
+                    extras[qtypeSlug].push(null);
+                }
+            }
+        }
+    }
 };

@@ -861,7 +861,9 @@ var opus = {
 
         // set these to the current hash on opus init
         [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
-
+        console.log(`opusInitialization`);
+        console.log(opus.lastSelections);
+        console.log(opus.lastExtras);
         // Initialize opus.prefs from the URL hash
         o_hash.initFromHash();
 
