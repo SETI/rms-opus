@@ -613,6 +613,8 @@ var o_search = {
         opus.waitingForAllNormalizedAPI = true;
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
+        console.log(`allNormalizedApiCall`);
+        console.log(url);
         return $.getJSON(url);
     },
 

@@ -36,13 +36,12 @@ var o_hash = {
                     `${qtypeSlug}1` in opus.extras || `${qtypeSlug}2` in opus.extras) ||
                     key.match(/.*(1|2)/))) {
                     let numberOfInputs = encodedSelectionValues.length;
-
+                    console.log(encodedSelectionValues);
                     for(let trailingCounter = 1; trailingCounter <= numberOfInputs; trailingCounter++) {
                         let trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let newKey = `${key}_${trailingCounterString}`;
 
-                        console.log(encodedSelectionValues);
                         if (encodedSelectionValues[trailingCounter-1] !== "null") {
                             hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
@@ -56,7 +55,7 @@ var o_hash = {
         $.each(opus.extras, function(key, value) {
             if (value.length) {
                 let encodedExtraValues = o_hash.encodeSlugValues(value);
-
+                console.log(encodedExtraValues);
                 if (value.length > 1) {
                     let numberOfQtypeInputs = encodedExtraValues.length;
 

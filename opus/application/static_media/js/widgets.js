@@ -111,11 +111,17 @@ var o_widgets = {
             cloneInputs.addClass("op-extra-search-inputs");
 
             // let minusIcon = '<i class="fas fa-minus"></i>';
-            let minusIcon = '<li class="op-remove-inputs">' +
+            let minusIcon = '<ul class="op-or-labels">OR</ul>' +
+                            '<li class="op-remove-inputs">' +
                             '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
                             title="Delete this set of search inputs"' +
                             `data-widget="widget__${slug}" data-slug="${slug}">` +
                             '<i class="fas fa-minus"></i></button></li>';
+            // let minusIcon = '<li class="op-remove-inputs">' +
+            //                 '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
+            //                 title="Delete this set of search inputs"' +
+            //                 `data-widget="widget__${slug}" data-slug="${slug}">` +
+            //                 '<i class="fas fa-minus"></i></button></li>';
 
             // $(`#${widgetId} .op-input`).append(minusIcon);
             cloneInputs.prepend(minusIcon);
@@ -546,7 +552,10 @@ var o_widgets = {
             let hash = o_hash.getHashArray();
             let qtype = "qtype-" + slug;
 
-            if ($(`#widget__${slug} select[name="${qtype}"]`).length !== 0) {
+            // NOTE: inputs & qtypes are not renumnered yet at this stage.
+            let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
+            let numberOfQtypeInputs = qtypeInputs.length;
+            if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
@@ -557,12 +566,20 @@ var o_widgets = {
                     $(`#widget__${slug} .widget-main .op-input ul`).append(helpIcon);
                 }
 
-                if (!hash[qtype]) {
+                if (numberOfQtypeInputs === 1 && !hash[qtype]) {
                     // When a widget with qtype is open, the value of the first option tag is the
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
                     o_hash.updateHash();
+                } else if (numberOfQtypeInputs > 1) {
+                    // When there are multiple qtype inputs, update qtype options for each
+                    // set of inputs by values from opus.extras.
+                    let qtypeDataIdx = 0;
+                    for (const eachQtype of qtypeInputs) {
+                        $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
+                        qtypeDataIdx++;
+                    }
                 }
             }
 
