@@ -100,8 +100,9 @@ var o_widgets = {
 
         // EXPERIMENT AREA
         // Create a new set of inputs when clicking the "+/OR" button in a widget.
-        $("#search").on("click", ".op-add-inputs", function(e) {
+        $("#search").on("click", ".op-add-inputs-btn", function(e) {
             console.log("click +/OR button");
+            let addInputIcon = $(".op-add-inputs").detach();
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
@@ -110,34 +111,39 @@ var o_widgets = {
             let cloneInputs = lastExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
 
-            // let minusIcon = '<i class="fas fa-minus"></i>';
-            let minusIcon = '<ul class="op-or-labels">OR</ul>' +
+            // let removeInputIcon = '<i class="fas fa-minus"></i>';
+            let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
                             '<li class="op-remove-inputs">' +
                             '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
                             title="Delete this set of search inputs"' +
                             `data-widget="widget__${slug}" data-slug="${slug}">` +
-                            '<i class="fas fa-minus"></i></button></li>';
-            // let minusIcon = '<li class="op-remove-inputs">' +
+                            '<i class="far fa-trash-alt"></i></button></li>';
+            // let removeInputIcon = '<li class="op-remove-inputs">' +
             //                 '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
             //                 title="Delete this set of search inputs"' +
             //                 `data-widget="widget__${slug}" data-slug="${slug}">` +
             //                 '<i class="fas fa-minus"></i></button></li>';
 
-            // $(`#${widgetId} .op-input`).append(minusIcon);
-            cloneInputs.prepend(minusIcon);
+            // $(`#${widgetId} .op-input`).append(removeInputIcon);
+            cloneInputs.prepend(removeInputIcon);
             // <i class="fas fa-minus"></i>
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
+            // Make sure "+/OR" is attached to the right of last input set.
+            $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
             // TODO: Need to update hash
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
-            console.log("click remove icon");
+            let addInputIcon = $(".op-add-inputs").detach();
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
+            console.log("click remove icon");
             console.log(`slug after delete a set: ${slug}`);
             let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
             inputSetToBeDeleted.remove();
             o_widgets.renumberInputsAttributes(slug);
+            // Make sure "+/OR" is attached to the right of last input set.
+            $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
             // TODO: Need to update hash
         });
         // END EXPERIMENT
@@ -769,24 +775,35 @@ var o_widgets = {
             o_widgets.renumberInputsAttributes(slug);
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
-                // let plusIcon = '<hr class="shadow-divider my-0 ml-0 mr-0">' +
-                let plusIcon = '<button type="button" class="p-0 btn btn-small btn-link op-add-inputs" \
-                               title="Add a new set of search inputs"' +
-                               `data-widget="widget__${slug}" data-slug="${slug}">` +
-                               '<i class="fas fa-plus">/OR</i></button>';
+                // let addInputIcon = '<hr class="shadow-divider my-0 ml-0 mr-0">' +
+                // let addInputIcon = '<button type="button" class="p-0 btn btn-small btn-link op-add-inputs-btn" \
+                //                title="Add a new set of search inputs"' +
+                //                `data-widget="widget__${slug}" data-slug="${slug}">` +
+                //                '<i class="fas fa-plus">/OR</i></button>';
                 // <i class="fas fa-plus-circle">
                 // <i class="fas fa-plus">
                 // <hr class="shadow-divider my-0 ml-0 mr-3">
+                let addInputIcon = '<li class="op-add-inputs">' +
+                               '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
+                               title="Add a new set of search inputs"' +
+                               `data-widget="widget__${slug}" data-slug="${slug}">` +
+                               '<i class="fas fa-plus">/OR</i></button></li>';
 
-                let minusIcon = '<ul class="op-or-labels">OR</ul>' +
+                let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
                                 '<li class="op-remove-inputs">' +
                                 '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
                                 title="Delete this set of search inputs"' +
                                 `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                '<i class="fas fa-minus"></i></button></li>';
-                $(`#widget__${slug} .op-extra-search-inputs`).prepend(minusIcon);
+                                '<i class="far fa-trash-alt"></i></button></li>';
 
-                $(`#widget__${slug} .widget-main`).append(plusIcon);
+
+                $(`#widget__${slug} .op-extra-search-inputs`).prepend(removeInputIcon);
+
+                if ($(".op-add-inputs").length > 0) {
+                    addInputIcon = $(".op-add-inputs").detach();
+                }
+                $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+                // $(`#widget__${slug} .widget-main`).append(addInputIcon);
             }
             ////// EXPERIMENT END //////
 

@@ -1458,6 +1458,11 @@ panel are properly separated */
     line-height: 1;
 }
 
+/* Make qtype (i) icon align vertically with inputs */
+.widget-main .op-range-qtype-helper a {
+    vertical-align: middle;
+}
+
 #op-qtype-tooltip {
     display: none;
     width: 500px;
@@ -2136,10 +2141,10 @@ we have an invalid search) */
 }
 
 /* Styling for the button to add multiple sets of inputs in a widget */
-.op-add-inputs {
+.op-add-inputs-btn {
     /* margin-left: 30%; */
-    position: relative;
-    left: 30%;
+    /* position: relative;
+    left: 30%; */
 }
 
 /* Styling for the button to delete a set of inputs in a widget */
@@ -2148,7 +2153,7 @@ we have an invalid search) */
     left: 0;
 }
 
-.op-remove-inputs-btn {
+.op-remove-inputs-btn, .op-add-inputs-btn {
     background: transparent !important;
 }
 
@@ -2156,5 +2161,5 @@ we have an invalid search) */
 .op-or-labels {
     position: relative;
     left: 30%;
-    font-weight: bold;
+    /* font-weight: bold; */
 }
