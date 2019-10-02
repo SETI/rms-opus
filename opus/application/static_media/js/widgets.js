@@ -110,6 +110,8 @@ var o_widgets = {
             // for multiple times and cause some weird behaviors.
             let cloneInputs = lastExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
+            // Clear values in inputs
+            cloneInputs.find("input").val("");
 
             // let removeInputIcon = '<i class="fas fa-minus"></i>';
             let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
