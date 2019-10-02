@@ -2148,6 +2148,10 @@ we have an invalid search) */
     left: 0;
 }
 
+.op-remove-inputs-btn {
+    background: transparent !important;
+}
+
 /* Styling for the text between each set of inputs in a widget */
 .op-or-labels {
     position: relative;

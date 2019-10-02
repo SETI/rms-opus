@@ -777,6 +777,15 @@ var o_widgets = {
                 // <i class="fas fa-plus-circle">
                 // <i class="fas fa-plus">
                 // <hr class="shadow-divider my-0 ml-0 mr-3">
+
+                let minusIcon = '<ul class="op-or-labels">OR</ul>' +
+                                '<li class="op-remove-inputs">' +
+                                '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
+                                title="Delete this set of search inputs"' +
+                                `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                '<i class="fas fa-minus"></i></button></li>';
+                $(`#widget__${slug} .op-extra-search-inputs`).prepend(minusIcon);
+
                 $(`#widget__${slug} .widget-main`).append(plusIcon);
             }
             ////// EXPERIMENT END //////
