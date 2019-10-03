@@ -444,7 +444,9 @@ var o_browse = {
 
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
-                    retValue = undefined;  // need to not return false to allow the contextmenu to work
+                     // need to not return false to allow the contextmenu to work
+                     // unless... context menu was used with shift or ctrl key...
+                    retValue = (e.shiftKey || e.ctrlKey) ? false : undefined;
                     break;
 
                 case "downloadCSV":
@@ -478,7 +480,11 @@ var o_browse = {
         });
 
         $(document).on("keydown click", function(e) {
-            o_browse.hideMenu();
+            // don't close the mini-menu on the shift key in case the user
+            // is trying to open a new window for detail
+           if (!e.shiftKey && !e.ctrlKey) {
+                o_browse.hideMenu();
+            }
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 o_browse.hideGalleryViewModal();
