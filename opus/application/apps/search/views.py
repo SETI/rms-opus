@@ -357,7 +357,7 @@ def api_string_search_choices(request, slug):
 ################################################################################
 
 def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
-                         pretty_results=False):
+                         pretty_results=False, allow_empty=False):
     """Convert a URL to a set of selections and extras.
 
     This is the MAIN routine for taking a URL and parsing it for searching.
@@ -386,6 +386,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
     If pretty_results is True, the resulting values are unparsed back into
     strings based on the ParamInfo format.
+
+    If allow_empty is True, then search terms that have no values for either
+    min or max are kept. This is used to create UI forms for search widgets.
 
     Example command line usage:
 
@@ -642,7 +645,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 if param_qualified_name_no_num not in qtypes: # pragma: no cover
                     qtypes[param_qualified_name_no_num] = []
                 qtypes[param_qualified_name_no_num].append(qtype_val)
-            elif new_values[0] is not None or new_values[1] is not None:
+            elif (allow_empty or
+                  new_values[0] is not None or
+                  new_values[1] is not None):
                 # If both values are None, then don't include this slug at all
                 if new_param_qualified_names[0] not in selections:
                     selections[new_param_qualified_names[0]] = []
@@ -665,10 +670,12 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         if return_slugs:
             selections[slug] = new_value
             qtypes[slug] = qtype_val
-        elif new_value is not None: # pragma: no cover
-            # Not possible for this to be false because new_value will be ''
-            # for an empty search string, not None
-            # If the value is None, then don't include this slug at all
+        elif (allow_empty or
+              (new_value is not None and
+               new_value != '')):
+            # If the value is None or '', then don't include this slug at all
+            if new_value == '':
+                new_value = None
             if param_qualified_name_no_num not in selections:
                 selections[param_qualified_name_no_num] = []
             selections[param_qualified_name_no_num].append(new_value)
