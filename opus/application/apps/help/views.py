@@ -17,6 +17,8 @@ from metadata.views import get_fields_info
 from search.views import ObsGeneral, MultObsGeneralInstrumentId
 from tools.app_utils import *
 
+import settings
+
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +43,16 @@ def api_about(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = render(request, 'help/about.html')
+    git_id = get_git_version(True, True)
+    database_schema = settings.DB_SCHEMA_NAME
+    database_host = settings.DB_HOST_NAME
+    context = {
+        'git_id': git_id,
+        'database_schema': database_schema,
+        'database_host': database_host
+    }
+
+    ret = render(request, 'help/about.html', context)
     exit_api_call(api_code, ret)
     return ret
 

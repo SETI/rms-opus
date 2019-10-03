@@ -5,13 +5,13 @@
 
 <body class="app header-fixed sidebar-fixed aside-menu-fixed sidebar-lg-show">
     <div class="app-body container-fluid">
-        <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info">
+        <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info op-no-select">
             <a class="navbar-brand" href="/opus">OPUS3</a>
             <ul id="op-tab" class="nav navbar-nav mr-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link" href="#search" data-toggle="tab" role="tab" aria-controls="search" aria-selected="true">Search</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item op-browse-tab">
                     <a class="nav-link" href="#browse" data-toggle="tab" role="tab" aria-controls="browse" aria-selected="false">
                         Browse Results <span id="op-result-count" class="badge badge-primary">0</span>
                     </a>
@@ -39,13 +39,6 @@
                             </div>
                         </a>
                     </li>
-                    <li class="nav-item external-link">
-                        <a class="nav-link" href="https://pds-rings.seti.org/cgi-bin/comments/form.pl" target="_blank" aria-controls="feedback">
-                            <div class="container align-items-center d-flex h-100 my-auto">
-                                Questions/Feedback
-                            </div>
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
                     </li>
@@ -56,14 +49,14 @@
                             <i class="fas fa-question-circle"></i> Help
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="op-help-menu">
-                            <a class="dropdown-item op-help-item" data-action="about" href="#">About</a>
-                            <a class="dropdown-item op-help-item" data-action="gettingStarted" href="#">Getting Started</a>
-                            <a class="dropdown-item op-help-item" data-action="faq" href="#">FAQ</a>
-                            <a class="dropdown-item op-help-item" data-action="splash" href="#">Welcome Message</a>
-                            <a class="dropdown-item op-help-item" data-action="volumes" href="#">Data Volumes</a>
-                            <a class="dropdown-item op-help-item" data-action="guide" href="#">API Guide</a>
-                            <!--<a class="dropdown-item op-help-item" data-action="tutorial" href="#">Tutorial</a>-->
-                            <!--a class="dropdown-item op-help-item" data-action="feedback" href="#">Questions/Feedback</a>-->
+                            <a class="dropdown-item op-help-item" data-action="about" href="#" title="Learn about OPUS and its general capabilities">About</a>
+                            <a class="dropdown-item op-help-item" data-action="gettingStarted" href="#" title="View a detailed introduction to each part of OPUS">Getting Started</a>
+                            <a class="dropdown-item op-help-item" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
+                            <a class="dropdown-item op-help-item" data-action="splash" href="#" title="View the OPUS new-user splash screen">Welcome Message</a>
+                            <a class="dropdown-item op-help-item" data-action="contact" href="#" title="Send questions or feedback to the OPUS developers">Contact Us</a>
+                            <a class="dropdown-item op-help-item" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
+                            <a class="dropdown-item op-help-item" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
+                            <a class="dropdown-item op-help-item" data-action="guide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
                        </div>
                    </li>
                 </ul>
@@ -71,7 +64,7 @@
         </nav>
         {% block content %}
         <div class="tab-content border-0 container-fluid tab-full-width">
-            <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
+            <div id="search" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="search-tab">
                 <div class="row flex-nowrap">
                     <div class="col pr-0 sidebar-area border-right">
                         <div id="sidebar-container" class="sidebar_wrapper ps-scrollbar">
@@ -87,7 +80,7 @@
                     </div>
 
                     <!-- selected widgets -->
-                    <div class="col">
+                    <div class="col op-widget-col">
                         <div id="widget-container" class="op-widget-column">
                             <!-- note to self:    this is where the widgets will be replace by cards; should no longer by ul/li -->
                             <ul id="op-search-widgets"></ul>
@@ -160,7 +153,7 @@
                 </div>
             </div>
 
-            <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
+            <div id="cart" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
                     <div class="col cart_details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
@@ -336,7 +329,7 @@
         <!--modal dialog for the metadata selector -->
         <div id="op-select-metadata" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="op-select-metadataLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
+                <div class="modal-content op-no-select">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -517,6 +510,11 @@
     <script>window.InfiniteScroll || document.write('<script src="{{ STATIC_URL }}cdn_fallback/infinite_scroll/js/infinite-scroll-3.0.5.pkgd.min.js"><\/script>')</script>
 
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
+
+    <!-- NASA feedback widget -->
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
 
     {% block scripts %}
 
