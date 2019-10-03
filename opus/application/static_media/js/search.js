@@ -188,6 +188,7 @@ var o_search = {
             let slugName = $(this).data("slugname");
             let slug = inputName.match(/(.*)_/) ? inputName.match(/(.*)_/)[1] : inputName;
             console.log(`slug in change event: ${slug}`);
+            console.log(opus.selections);
             let currentValue = $(this).val().trim();
 
             if (o_search.rangesNameTotalMatchedCounter === 1) {
@@ -232,12 +233,32 @@ var o_search = {
             }
 
             // TODO: Need to modify here later
+            console.log(`input RANGE change event handler function`);
+            console.log(`before update`);
+            console.log(opus.selections[slug]);
+            console.log(opus.selections);
+            let inputCounter = inputName.match(/(.*)_/) ? inputName.match(/.*_(.*)/)[1] : "";
+            let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             if (currentValue) {
-                opus.selections[slug] = [currentValue];
+                // opus.selections[slug] = [currentValue];
+                if (opus.selections[slug]) {
+                    opus.selections[slug][idx] = currentValue;
+                } else {
+                    opus.selections[slug] = [currentValue];
+                }
             } else {
-                delete opus.selections[slug];
+                // delete opus.selections[slug];
+                if (opus.selections[slug]) {
+                    opus.selections[slug][idx] = null;
+                } else {
+                    opus.selections[slug] = [null];
+                }
             }
+            console.log(`after update`);
+            console.log(opus.selections[slug]);
             let newHash = o_hash.updateHash(false);
+            console.log(`after updateHash`);
+            console.log(newHash);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
             Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
@@ -621,9 +642,14 @@ var o_search = {
     validateRangeInput: function(normalizedInputData, removeSpinner=false) {
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
-
+        console.log(`validateRangeInput`);
+        console.log(o_search.slugRangeInputValidValueFromLastSearch);
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
+            let rootSlug = eachSlug.match(/(.*)_/) ? eachSlug.match(/(.*)_/)[1] : eachSlug;
+            let inputCounter = eachSlug.match(/(.*)_/) ? eachSlug.match(/.*_(.*)/)[1] : "";
+            let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+
             if (value === null) {
                 if (currentInput.hasClass("RANGE")) {
                     if (currentInput.hasClass("input_currently_focused")) {
@@ -632,7 +658,7 @@ var o_search = {
                         $("#sidebar").addClass("search_overlay");
                         currentInput.addClass("search_input_invalid_no_focus");
                         currentInput.removeClass("search_input_invalid");
-                        currentInput.val(opus.selections[eachSlug]);
+                        currentInput.val(opus.selections[rootSlug][idx]);
                     }
                     opus.allInputsValid = false;
                 }
@@ -647,7 +673,12 @@ var o_search = {
                     } else {
                         currentInput.val(value);
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                        opus.selections[eachSlug] = [value];
+                        if (opus.selections[rootSlug]) {
+                            opus.selections[rootSlug][idx] = value;
+                        } else {
+                            opus.selections[rootSlug] = [value];
+                        }
+
                         // No color border if the input value is valid
                         currentInput.addClass("search_input_original");
                         currentInput.removeClass("search_input_invalid_no_focus");
@@ -657,7 +688,7 @@ var o_search = {
                 }
             }
         });
-
+        console.log(opus.selections);
         if (opus.allInputsValid) {
             o_hash.updateHash();
         } else {

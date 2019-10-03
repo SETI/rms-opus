@@ -209,6 +209,7 @@ var o_widgets = {
 
         if (minVal) {
             minInput.val(minVal);
+            // TODO: need to modify later
             opus.selections[slug] = [minVal];
         } else {
             minInput.val("");
@@ -521,7 +522,7 @@ var o_widgets = {
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
     getWidget: function(slug, formscolumn) {
-
+        // console.log(`getWidget`);
         if (!slug) {
             return;
         }
@@ -548,6 +549,8 @@ var o_widgets = {
             opus.widgetElementsDrawn.unshift(slug);
 
         }
+        // console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
+        // console.log(o_hash.getHash());
         $.ajax({
             url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
@@ -563,6 +566,9 @@ var o_widgets = {
             // NOTE: inputs & qtypes are not renumnered yet at this stage.
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
+
+            // console.log(hash);
+            // console.log(numberOfQtypeInputs);
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
@@ -585,6 +591,7 @@ var o_widgets = {
                     // set of inputs by values from opus.extras.
                     let qtypeDataIdx = 0;
                     for (const eachQtype of qtypeInputs) {
+                        // TODO: Might need to revisit later
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
