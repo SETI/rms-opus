@@ -1166,14 +1166,14 @@ var o_browse = {
 
     getDetailURL: function(opusId) {
         let tab = opus.getCurrentTab();
-        opus.prefs.detail = opusId;
-        let link = "/opus/#/" + o_hash.updateHash();
-        link = link.replace(`view=${tab}`, "view=detail");
+        let hashArray = o_hash.getHashArray();
+        hashArray.detail = opusId;
+        hashArray.view = "detail";
+        let link = "/opus/#/" + o_hash.hashArrayToHashString(hashArray);
         return link;
     },
 
     showDetail: function(e, opusId) {
-        opus.prefs.detail = opusId;
         o_browse.hideMenu();
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
@@ -1182,7 +1182,11 @@ var o_browse = {
         } else if (e.ctrlKey) {
             // open detail view in new browser tab
             window.open(url, "_blank");
+        } else if (e.shiftKey) {
+            // open detail view in new window
+            window.open(url);
         } else {
+            opus.prefs.detail = opusId;
             opus.changeTab("detail");
             $('a[href="#detail"]').tab("show");
         }
