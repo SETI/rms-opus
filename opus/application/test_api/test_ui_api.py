@@ -39,7 +39,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def tearDown(self):
         logging.disable(logging.NOTSET)
 
-    def _run_url_slugs_equal(self, url, expected):
+    def _run_url_slugs_equal(self, url, expected, msg_contains=None):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
@@ -54,6 +54,11 @@ class ApiUITests(TestCase, ApiTestHelper):
         print('Message:')
         print(jdata['msg'])
         self.assertEqual(expected, slug_data)
+        if msg_contains:
+            self.assertTrue(jdata['msg'] is not None and
+                            msg_contains in jdata['msg'])
+        else:
+            self.assertIsNone(jdata['msg'])
 
 
             ###############################################
@@ -108,7 +113,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?view=collection'
         new_slugs['view'] = 'cart'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_view_cart(self):
         "[test_ui_api.py] /__normalizeurl: view cart"
@@ -129,7 +134,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?view=badval'
         new_slugs['view'] = 'search'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='not one of')
 
     ### browse=
 
@@ -152,7 +157,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?browse=badval'
         new_slugs['browse'] = 'gallery'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for "browse" was not either "gallery" or "data"; it has been set to "gallery".')
 
     ### colls_browse=
 
@@ -200,7 +205,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cart_browse=badval'
         new_slugs['cart_browse'] = 'gallery'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for "cart_browse" was not either "gallery" or "data"; it has been set to "gallery".')
 
     ### page=
 
@@ -209,63 +214,63 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=0'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not between 1 and 20000; it has been set to 1.')
 
     def test__api_normalizeurl_page_n100(self):
         "[test_ui_api.py] /__normalizeurl: page -100"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=-100'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not between 1 and 20000; it has been set to 1.')
 
     def test__api_normalizeurl_page_1000000000000000000000000(self):
         "[test_ui_api.py] /__normalizeurl: page 1000000000000000000000000"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=1000000000000000000000000'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not between 1 and 20000; it has been set to 1.')
 
     def test__api_normalizeurl_page_1(self):
         "[test_ui_api.py] /__normalizeurl: page 1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=1'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_page_2(self):
         "[test_ui_api.py] /__normalizeurl: page 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=2'
         new_slugs['startobs'] = 101
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_page_100(self):
         "[test_ui_api.py] /__normalizeurl: page 100"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=100'
         new_slugs['startobs'] = 9901
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_page_105(self):
         "[test_ui_api.py] /__normalizeurl: page 10.5"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=10.5'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not a valid integer; it has been set to 1.')
 
     def test__api_normalizeurl_page_1e2(self):
         "[test_ui_api.py] /__normalizeurl: page 1e2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=1e2'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not a valid integer; it has been set to 1.')
 
     def test__api_normalizeurl_page_XXX(self):
         "[test_ui_api.py] /__normalizeurl: page XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=XXX'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "page" term was not a valid integer; it has been set to 1.')
 
     ### startobs=
 
@@ -274,21 +279,21 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=0'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not between 1 and 10000000; it has been set to 1.')
 
     def test__api_normalizeurl_startobs_n100(self):
         "[test_ui_api.py] /__normalizeurl: startobs -100"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=-100'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='not between')
 
     def test__api_normalizeurl_startobs_1000000000000000000000000(self):
         "[test_ui_api.py] /__normalizeurl: startobs 1000000000000000000000000"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=1000000000000000000000000'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not between 1 and 10000000; it has been set to 1.')
 
     def test__api_normalizeurl_startobs_1(self):
         "[test_ui_api.py] /__normalizeurl: startobs 1"
@@ -316,28 +321,28 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=10.5'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not a valid integer; it has been set to 1.')
 
     def test__api_normalizeurl_startobs_1e2(self):
         "[test_ui_api.py] /__normalizeurl: startobs 1e2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=1e2'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not a valid integer; it has been set to 1.')
 
     def test__api_normalizeurl_startobs_XXX(self):
         "[test_ui_api.py] /__normalizeurl: startobs XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?startobs=XXX'
         new_slugs['startobs'] = 1
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The value for the "startobs" term was not a valid integer; it has been set to 1.')
 
     def test__api_normalizeurl_page_startobs(self):
         "[test_ui_api.py] /__normalizeurl: page and startobs"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?page=10&startobs=5'
         new_slugs['startobs'] = 5
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     ### detail=
 
@@ -352,27 +357,27 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: detail opusid bad"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?detail=co-iss-n1460961027'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The OPUS_ID specified for the "detail" tab was not found in the current database; it has been ignored.')
 
     def test__api_normalizeurl_detail_ringobsid(self):
         "[test_ui_api.py] /__normalizeurl: detail ringobsid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?detail=S_IMG_CO_ISS_1460961026_N'
         new_slugs['detail'] = 'co-iss-n1460961026'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.')
 
     def test__api_normalizeurl_detail_ringobsid_bad(self):
         "[test_ui_api.py] /__normalizeurl: detail ringobsid bad"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?detail=S_IMG_CO_ISS_14609610267_N'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_14609610267_N), but it could not be converted to a new OPUS_ID. It has been ignored.')
 
     def test__api_normalizeurl_detail_badval(self):
         "[test_ui_api.py] /__normalizeurl: detail badval"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?detail=XXX'
         new_slugs['detail'] = ''
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The OPUS_ID specified for the "detail" tab was not found in the current database; it has been ignored.')
 
     ### reqno= (an ignored slug)
 
@@ -403,7 +408,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: lonely qtype bad slug"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?qtype-fredethel=any'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-fredethel" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_lonely_qtype_not_used(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype not used"
@@ -463,7 +468,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration=any'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_lonely_qtype_used_any_bad_clause(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used any bad _2"
@@ -471,7 +476,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration_2=any'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration_2" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_lonely_qtype_used_all(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used all"
@@ -495,7 +500,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=XXX'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_contains(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used badval contains"
@@ -503,7 +508,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=contains'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_contains_2(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used badval contains _2"
@@ -511,7 +516,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_2=contains'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc_2" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_contains(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used contains"
@@ -559,7 +564,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=volumeid&qtype-volumeid=XXX'
         new_slugs['widgets'] = 'volumeid'
         new_slugs['qtype-volumeid'] = 'contains'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-volumeid" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_any(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used badval any"
@@ -567,7 +572,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=volumeid&qtype-volumeid=any'
         new_slugs['widgets'] = 'volumeid'
         new_slugs['qtype-volumeid'] = 'contains'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-volumeid" has an illegal value; it has been set to the default.')
 
     ### widgets=
 
@@ -632,35 +637,35 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrumentid'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_widgets_instrument_instrument(self):
         "[test_ui_api.py] /__normalizeurl: widgets instrument,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument,instrument'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='duplicated')
 
     def test__api_normalizeurl_widgets_instrument_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: widgets instrument,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument,instrumentid'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='duplicated')
 
     def test__api_normalizeurl_widgets_instrumentid_instrument(self):
         "[test_ui_api.py] /__normalizeurl: widgets instrumentid,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrumentid,instrument'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='duplicated')
 
     def test__api_normalizeurl_widgets_instrumentid_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: widgets instrumentid,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrumentid,instrumentid'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='duplicated')
 
     # Something that doesn't have an old slug
 
@@ -679,14 +684,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=XXX'
         new_slugs['widgets'] = ''
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search field "XXX" is unknown')
 
     def test__api_normalizeurl_widgets_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: widgets bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=XXX,productid'
         new_slugs['widgets'] = 'productid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search field "XXX" is unknown')
 
     # Not searchable
 
@@ -695,7 +700,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=**previewimages'
         new_slugs = dict(self.default_url_slugs)
         new_slugs['widgets'] = ''
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='not searchable')
 
     # Searched but not in widget list
 
@@ -779,7 +784,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration1'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     # Multi-column range with '1' suffix
 
@@ -795,7 +800,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc1'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     ### cols=
 
@@ -805,7 +810,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols='
         new_slugs['cols'] = settings.DEFAULT_COLUMNS
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Your selected metadata list is empty; it has been replaced with the defaults.')
 
     # Empty cols
 
@@ -838,7 +843,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=ringobsid,planet,target,phase1,phase2,time1,time2'
         new_slugs['cols'] = settings.DEFAULT_COLUMNS
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.')
 
     # Something that has an old_slug
 
@@ -854,35 +859,35 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=instrumentid'
         new_slugs['cols'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_cols_instrument_instrument(self):
         "[test_ui_api.py] /__normalizeurl: cols instrument,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=instrument,instrument'
         new_slugs['cols'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Instrument Name" is duplicated in the list of selected metadata; only one copy is being used.')
 
     def test__api_normalizeurl_cols_instrument_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: cols instrument,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=instrument,instrumentid'
         new_slugs['cols'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Instrument Name" is duplicated in the list of selected metadata; only one copy is being used.')
 
     def test__api_normalizeurl_cols_instrumentid_instrument(self):
         "[test_ui_api.py] /__normalizeurl: cols instrumentid,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=instrumentid,instrument'
         new_slugs['cols'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Instrument Name" is duplicated in the list of selected metadata; only one copy is being used.')
 
     def test__api_normalizeurl_cols_instrumentid_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: cols instrumentid,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=instrumentid,instrumentid'
         new_slugs['cols'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "Instrument Name" is duplicated in the list of selected metadata; only one copy is being used.')
 
     # Something that doesn't have an old slug
 
@@ -901,14 +906,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=XXX'
         new_slugs['cols'] = settings.DEFAULT_COLUMNS
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='><li>Selected metadata field "XXX" is unknown; it has been removed.</li><li>Your new selected metadata list is empty; it has been replaced with the defaults.</li>')
 
     def test__api_normalizeurl_cols_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: cols bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=XXX,productid'
         new_slugs['cols'] = 'productid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Selected metadata field "XXX" is unknown; it has been removed.')
 
     # Not viewable
 
@@ -924,7 +929,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=**filespec'
         new_slugs['cols'] = settings.DEFAULT_COLUMNS
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Selected metadata field "**filespec" is not displayable; it has been removed.</li><li>Your new selected metadata list is empty; it has been replaced with the defaults.</li>')
 
     # Single-column range with '1' suffix
 
@@ -940,7 +945,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=observationduration1'
         new_slugs['cols'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     # Multi-column range with '1' suffix
 
@@ -949,7 +954,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?cols=rightasc'
         new_slugs['cols'] = settings.DEFAULT_COLUMNS
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Selected metadata field "rightasc" is unknown; it has been removed.</li><li>Your new selected metadata list is empty; it has been replaced with the defaults.</li>')
 
     def test__api_normalizeurl_cols_rightasc1(self):
         "[test_ui_api.py] /__normalizeurl: cols rightasc1"
@@ -966,7 +971,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order='
         new_slugs['order'] = settings.DEFAULT_SORT_ORDER
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='The "order" field is empty; it has been set to the default.')
 
     # Empty order
 
@@ -1021,49 +1026,49 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrumentid'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_order_instrument_instrument(self):
         "[test_ui_api.py] /__normalizeurl: order instrument,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrument,instrument'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrument_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: order instrument,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrument,instrumentid'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrumentid,instrument'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument_2(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrumentid,-instrument'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument_3(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument 3"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=-instrumentid,instrument'
         new_slugs['order'] = '-instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=instrumentid,instrumentid'
         new_slugs['order'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     # Something that doesn't have an old slug
 
@@ -1081,14 +1086,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=XXX'
         new_slugs['order'] = settings.DEFAULT_SORT_ORDER
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Sort order metadata field "XXX" is unknown; it has been removed.</li><li>The "order" field is empty; it has been set to the default.</li>')
 
     def test__api_normalizeurl_order_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: order bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=XXX,productid'
         new_slugs['order'] = 'productid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "XXX" is unknown; it has been removed.')
 
     # Not viewable
 
@@ -1104,7 +1109,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=**filespec'
         new_slugs['order'] = settings.DEFAULT_SORT_ORDER
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "**filespec" is not displayable; it has been removed.')
 
     # Single-column range with '1' suffix
 
@@ -1120,7 +1125,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=observationduration1'
         new_slugs['order'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     # Multi-column range with '1' suffix
 
@@ -1129,7 +1134,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?order=rightasc'
         new_slugs['order'] = settings.DEFAULT_SORT_ORDER
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "rightasc" is unknown; it has been removed.')
 
     def test__api_normalizeurl_order_rightasc1(self):
         "[test_ui_api.py] /__normalizeurl: order rightasc1"
@@ -1195,7 +1200,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_search_multi_good_2_qtype_all(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 2 qtype all"
@@ -1332,21 +1337,21 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_0=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_0" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_1_clause_bad_n1(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 -1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_-1=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_-1" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_1_clause_bad_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_01_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _01_XXX"
@@ -1355,7 +1360,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc2_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_XXX_01(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _XXX_01"
@@ -1364,7 +1369,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_1_01_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_01_XXX qtypes"
@@ -1375,7 +1380,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'only'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_1_02_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_02_XXX qtypes"
@@ -1386,7 +1391,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc_01'] = 'only'
         new_slugs['qtype-rightasc_02'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_complicated_clause(self):
         "[test_ui_api.py] /__normalizeurl: search multi good complicated clause"
@@ -1409,7 +1414,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc_04'] = 'any'
         new_slugs['qtype-rightasc_05'] = 'all'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "rightasc1_0" has a bad clause number; it has been ignored.</li><li>Search term "rightasc2_0" has a bad clause number; it has been ignored.</li><li>Search term "qtype-rightasc_0" has a bad clause number; it has been ignored.</li>')
 
     # Single column ranges
 
@@ -1461,7 +1466,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&qtype-observationduration=only'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_2_qtype_all(self):
         "[test_ui_api.py] /__normalizeurl: search single good 2 qtype"
@@ -1469,7 +1474,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2=10.&qtype-observationduration=all'
         new_slugs['observationduration2'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='does not allow query')
 
     def test__api_normalizeurl_search_single_good_12_qtype_any(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 qtype any"
@@ -1478,7 +1483,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_qtype_only(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 qtype only"
@@ -1487,7 +1492,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_clause_1(self):
         "[test_ui_api.py] /__normalizeurl: search single good 1 _1"
@@ -1580,21 +1585,21 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_0=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_0" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_clause_bad_n1(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 -1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_-1=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_-1" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_clause_bad_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_01_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _01_XXX"
@@ -1602,7 +1607,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_XXX=20.'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration2_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_XXX_01(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _XXX_01"
@@ -1610,7 +1615,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.&observationduration2_01=20.'
         new_slugs['observationduration2'] = '20.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" has a bad clause number; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
@@ -1619,7 +1624,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration2_01'] = '20.0000'
         new_slugs['observationduration1_02'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX qtypes"
@@ -1628,7 +1633,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration1_01'] = '10.0000'
         new_slugs['observationduration2_02'] = '20.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
 
     # Strings
 
@@ -1655,14 +1660,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&volumeid1=COISS'
         new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "volumeid1" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_string_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search string bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=volumeid&volumeid2=COISS'
         new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "volumeid2" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_string_good_qtype_contains(self):
         "[test_ui_api.py] /__normalizeurl: search string good qtype contains"
@@ -1744,28 +1749,28 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument1=COISS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "instrument1" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_mult_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search mult bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument2=COISS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "instrument2" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_mult_bad_12(self):
         "[test_ui_api.py] /__normalizeurl: search mult bad 12"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument1=COISS&instrument2=COISS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "instrument1" is unknown; it has been ignored.</li><li>Search term "instrument2" is unknown; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_mult_bad_val(self):
         "[test_ui_api.py] /__normalizeurl: search mult bad val"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument=COISS,XXX'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Instrument Name" had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_mult_bad_qtype_only(self):
         "[test_ui_api.py] /__normalizeurl: search mult bad qtype only"
@@ -1773,14 +1778,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument=COISS&qtype-instrument=only'
         new_slugs['instrument'] = 'COISS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-instrument" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_search_mult_clause_1(self):
         "[test_ui_api.py] /__normalizeurl: search mult clause 1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search field "Instrument Name" has a clause number but none is permitted; it has been removed.')
 
     def test__api_normalizeurl_search_mult_clause_2(self):
         "[test_ui_api.py] /__normalizeurl: search mult clause 2"
@@ -1788,7 +1793,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=instrument&instrument_01=COISS&instrument=COUVIS'
         new_slugs['instrument'] = 'COUVIS'
         new_slugs['widgets'] = 'instrument'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search field "Instrument Name" has a clause number but none is permitted; it has been removed.')
 
     ### Bad values
 
@@ -1800,7 +1805,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.X'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 2"
@@ -1808,7 +1813,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2=10.X'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_1_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 1 bad 2"
@@ -1817,7 +1822,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_bad_1_good_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 good 2"
@@ -1826,7 +1831,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_bad_1_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 bad 2"
@@ -1834,7 +1839,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.X&rightasc2=20.X'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.</li><li>Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_multi_good_1_bad_qtype(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 1 bad qtype"
@@ -1843,7 +1848,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     # Single column ranges
 
@@ -1852,14 +1857,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2=10.X'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" maximum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search single good 1 bad 2"
@@ -1867,7 +1872,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&observationduration2=20.X'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" maximum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_bad_1_good_2(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 good 2"
@@ -1875,14 +1880,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X&observationduration2=20.'
         new_slugs['observationduration2'] = '20.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_bad_1_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X&observationduration2=20.X'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_bad_qtype(self):
         "[test_ui_api.py] /__normalizeurl: search single good 1 bad qtype"
@@ -1890,7 +1895,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&qtype-observationduration=XXX'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_search_string_bad_qtype(self):
         "[test_ui_api.py] /__normalizeurl: search string bad qtype"
@@ -1899,7 +1904,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['volumeid'] = 'COISS'
         new_slugs['qtype-volumeid'] = 'contains'
         new_slugs['widgets'] = 'volumeid'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "volumeid" has an illegal value; it has been set to the default.')
 
     # Old slugs and duplicates
 
@@ -1910,7 +1915,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
         new_slugs['widgets'] = 'RINGGEOringradius'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_search_mult_old_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi old 2"
@@ -1919,7 +1924,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius2'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
         new_slugs['widgets'] = 'RINGGEOringradius'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_search_multi_old_12(self):
         "[test_ui_api.py] /__normalizeurl: search multi old 12"
@@ -1929,7 +1934,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius2'] = '20.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
         new_slugs['widgets'] = 'RINGGEOringradius'
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_search_multi_mix_new_old(self):
         "[test_ui_api.py] /__normalizeurl: search multi mix new 1 old 2"
@@ -2011,7 +2016,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: search not searchable"
         url = '/opus/__normalizeurl.json?**previewimages=XXX'
         new_slugs = dict(self.default_url_slugs)
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search field "**previewimages" is not searchable; it has been removed.')
 
     # Convert ringobsid to opusid
 
@@ -2028,20 +2033,20 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: search ringobsid bad"
         url = '/opus/__normalizeurl.json?ringobsid=S_IMG_VG2_ISS_4360846_N'
         new_slugs = dict(self.default_url_slugs)
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='RING OBS ID "S_IMG_VG2_ISS_4360846_N" not found; the ringobsid search term has been removed.')
 
     def test__api_normalizeurl_search_ringobsid_bad_2(self):
         "[test_ui_api.py] /__normalizeurl: search ringobsid bad 2"
         url = '/opus/__normalizeurl.json?ringobsid=XXX'
         new_slugs = dict(self.default_url_slugs)
-        self._run_url_slugs_equal(url, new_slugs)
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='RING OBS ID "XXX" not found; the ringobsid search term has been removed.')
 
     ### Real-world tests
 
     def test__api_normalizeurl_real_1(self):
         "[test_ui_api.py] /__normalizeurl: real 1"
         url = '/opus/__normalizeurl.json?planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_CO_ISS_1460961026_N'
-        expected = {'new_url': 'mission=Voyager&planet=Saturn&qtype-volumeid=contains&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,volumeid,observationtype&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'qtype-volumeid': 'contains'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,volumeid,observationtype'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
+        expected = {'new_url': 'mission=Voyager&planet=Saturn&time1=1980-09-27T02:16:00.000&time2=1980-09-28T02:17:00.000&qtype-time=any&observationtype=Image&qtype-volumeid=contains&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,mission,planet,observationtype,volumeid&order=time1,opusid&view=detail&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=co-iss-n1460961026', 'new_slugs': [{'mission': 'Voyager'}, {'planet': 'Saturn'}, {'time1': '1980-09-27T02:16:00.000'}, {'time2': '1980-09-28T02:17:00.000'}, {'qtype-time': 'any'}, {'observationtype': 'Image'}, {'qtype-volumeid': 'contains'}, {'cols': 'opusid,instrument,planet,target,time1,observationduration'}, {'widgets': 'time,mission,planet,observationtype,volumeid'}, {'order': 'time1,opusid'}, {'view': 'detail'}, {'browse': 'gallery'}, {'cart_browse': 'gallery'}, {'startobs': 1}, {'cart_startobs': 1}, {'detail': 'co-iss-n1460961026'}], 'msg': '<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We found the following issues with your bookmarked URL:</p><ul><li>Your URL uses the old defaults for selected metadata; they have been replaced with the new defaults.</li><li>You appear to be using an obsolete RINGOBS_ID (S_IMG_CO_ISS_1460961026_N) instead of the equivalent new OPUS_ID (co-iss-n1460961026); it has been converted for you.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>'}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_2(self):
@@ -2072,6 +2077,12 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: real 6"
         url = '/opus/__normalizeurl.json?SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&surfacegeometrytargetname=Pluto&qtype-SURFACEGEOplutophase=any&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
         expected = {"new_url": "SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&qtype-SURFACEGEOplutophase=any&surfacegeometrytargetname=Pluto&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"SURFACEGEOplutocenterresolution2": "5.00000"}, {"SURFACEGEOplutophase1": "160.000"}, {"qtype-SURFACEGEOplutophase": "any"}, {"surfacegeometrytargetname": "Pluto"}, {"cols": "opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2"}, {"widgets": "SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeurl_real_7(self):
+        "[test_ui_api.py] /__normalizeurl: real 7"
+        url = '/opus/__normalizeurl.json?wavelength1_06=7&wavelength2_06=8&wavelength1_08=5&wavelength1_09=10&qtype-wavelength_09=all&qtype-wavelength=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
+        expected = {"new_url": "qtype-wavelength_01=any&wavelength1_02=7.0000&wavelength2_02=8.0000&qtype-wavelength_02=any&wavelength1_03=5.0000&qtype-wavelength_03=any&wavelength1_04=10.0000&qtype-wavelength_04=all&cols=opusid,instrument,planet,target,time1,observationduration&widgets=wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"qtype-wavelength_01": "any"}, {"wavelength1_02": "7.0000"}, {"wavelength2_02": "8.0000"}, {"qtype-wavelength_02": "any"}, {"wavelength1_03": "5.0000"}, {"qtype-wavelength_03": "any"}, {"wavelength1_04": "10.0000"}, {"qtype-wavelength_04": "all"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
 # http://pds-rings-tools.seti.org/opus/#/planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_VG1_ISS_3353709_N
