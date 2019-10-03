@@ -102,9 +102,9 @@ var o_widgets = {
         // Create a new set of inputs when clicking the "+/OR" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
             console.log("click +/OR button");
-            let addInputIcon = $(".op-add-inputs").detach();
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
+            let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
             // Do not pass in true to clone(), otherwise event handlers will be attached
             // for multiple times and cause some weird behaviors.
@@ -137,8 +137,8 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
-            let addInputIcon = $(".op-add-inputs").detach();
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
+            let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             console.log("click remove icon");
             console.log(`slug after delete a set: ${slug}`);
             let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
@@ -808,8 +808,8 @@ var o_widgets = {
 
                 $(`#widget__${slug} .op-extra-search-inputs`).prepend(removeInputIcon);
 
-                if ($(".op-add-inputs").length > 0) {
-                    addInputIcon = $(".op-add-inputs").detach();
+                if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
+                    addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
                 $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
                 // $(`#widget__${slug} .widget-main`).append(addInputIcon);

@@ -402,7 +402,9 @@ var o_search = {
 
             switch ($(this).attr("class")) {  // form type
                 case "RANGE":
-                    let slugNoNum = $(this).attr("name").match(/-(.*)/)[1];
+                    let slugNoNum = ($(this).attr("name").match(/-(.*)_/) ?
+                                     $(this).attr("name").match(/-(.*)_/)[1] :
+                                     $(this).attr("name").match(/-(.*)/)[1]);
                     $(`#widget__${slugNoNum} select`).each(function() {
                         qtypes.push($(this).val());
                     });
@@ -410,7 +412,9 @@ var o_search = {
                     break;
 
                 case "STRING":
-                    let slug = $(this).attr("name").match(/-(.*)/)[1];
+                    let slug = ($(this).attr("name").match(/-(.*)_/) ?
+                                $(this).attr("name").match(/-(.*)_/)[1] :
+                                $(this).attr("name").match(/-(.*)/)[1]);
                     $(`#widget__${slug} select`).each(function() {
                         qtypes.push($(this).val());
                     });
@@ -646,7 +650,7 @@ var o_search = {
         console.log(o_search.slugRangeInputValidValueFromLastSearch);
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
-            let rootSlug = eachSlug.match(/(.*)_/) ? eachSlug.match(/(.*)_/)[1] : eachSlug;
+            let slugNoCounter = eachSlug.match(/(.*)_/) ? eachSlug.match(/(.*)_/)[1] : eachSlug;
             let inputCounter = eachSlug.match(/(.*)_/) ? eachSlug.match(/.*_(.*)/)[1] : "";
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
@@ -658,7 +662,7 @@ var o_search = {
                         $("#sidebar").addClass("search_overlay");
                         currentInput.addClass("search_input_invalid_no_focus");
                         currentInput.removeClass("search_input_invalid");
-                        currentInput.val(opus.selections[rootSlug][idx]);
+                        currentInput.val(opus.selections[slugNoCounter][idx]);
                     }
                     opus.allInputsValid = false;
                 }
@@ -673,10 +677,10 @@ var o_search = {
                     } else {
                         currentInput.val(value);
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
-                        if (opus.selections[rootSlug]) {
-                            opus.selections[rootSlug][idx] = value;
+                        if (opus.selections[slugNoCounter]) {
+                            opus.selections[slugNoCounter][idx] = value;
                         } else {
-                            opus.selections[rootSlug] = [value];
+                            opus.selections[slugNoCounter] = [value];
                         }
 
                         // No color border if the input value is valid

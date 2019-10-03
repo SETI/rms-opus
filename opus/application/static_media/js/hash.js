@@ -26,8 +26,8 @@ var o_hash = {
         $.each(opus.selections, function(key, value) {
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
-                let rootSlug = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
-                let qtypeSlug = `qtype-${rootSlug}`;
+                let slugNoNum = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
+                let qtypeSlug = `qtype-${slugNoNum}`;
 
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding before pushing
@@ -36,14 +36,12 @@ var o_hash = {
                     `${qtypeSlug}1` in opus.extras || `${qtypeSlug}2` in opus.extras) ||
                     key.match(/.*(1|2)/))) {
                     let numberOfInputs = encodedSelectionValues.length;
-                    console.log(`encodedSelectionValues`)
-                    console.log(encodedSelectionValues);
                     for(let trailingCounter = 1; trailingCounter <= numberOfInputs; trailingCounter++) {
                         let trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let newKey = `${key}_${trailingCounterString}`;
 
-                        if (encodedSelectionValues[trailingCounter-1] !== "null") {
+                        if (value[trailingCounter-1] !== null) {
                             hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
                     }
@@ -51,7 +49,7 @@ var o_hash = {
                     // Now we have null in opus.selections for RANGE & STRING inputs (to have
                     // the same data array length for inputs in the same widget), but we don't
                     // want null to show up in URL hash.
-                    if (encodedSelectionValues[0] !== "null") {
+                    if (value[0] !== null) {
                         hash.push(key + "=" + encodedSelectionValues.join(","));
                     }
                 }
@@ -70,7 +68,7 @@ var o_hash = {
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let newKey = `${key}_${trailingCounterString}`;
 
-                        if (encodedExtraValues[trailingCounter-1] !== "null") {
+                        if (value[trailingCounter-1] !== null) {
                             hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
                         }
                     }
@@ -231,9 +229,9 @@ var o_hash = {
 
             // EXPERIMENT
             if (!(slug in opus.prefs) && value) {
-                let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
                 let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
-                slug = rootSlug;
+                slug = slugNoCounter;
 
                 if (slug.startsWith("qtype-")) {
                     if (slugCounter) {
@@ -310,9 +308,9 @@ var o_hash = {
             // EXPERIMENT
             if (value) {
                 if (slug.match(/qtype-.*/)) {
-                    let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                    let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
                     let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
-                    slug = rootSlug;
+                    slug = slugNoCounter;
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
                         opus.extras[slug] = opus.extras[slug] ? opus.extras[slug] : [];
@@ -359,9 +357,9 @@ var o_hash = {
                     // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
                     //     opus.selections[slug] = [value];
                     // } else {
-                    let rootSlug = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
+                    let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
                     let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
-                    slug = rootSlug;
+                    slug = slugNoCounter;
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
                         opus.selections[slug] = opus.selections[slug] ? opus.selections[slug] : [];
@@ -396,17 +394,17 @@ var o_hash = {
          */
         for(const slug in selections) {
             if (slug.match(/.*(1|2)/)) {
-                let rootSlug = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
-                let qtypeSlug = `qtype-${rootSlug}`;
-                selections[`${rootSlug}1`] = selections[`${rootSlug}1`] ? selections[`${rootSlug}1`] : [];
-                selections[`${rootSlug}2`] = selections[`${rootSlug}2`] ? selections[`${rootSlug}2`] : [];
-                let longestLength = Math.max(selections[`${rootSlug}1`].length, selections[`${rootSlug}2`].length);
+                let slugNoNum = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
+                let qtypeSlug = `qtype-${slugNoNum}`;
+                selections[`${slugNoNum}1`] = selections[`${slugNoNum}1`] ? selections[`${slugNoNum}1`] : [];
+                selections[`${slugNoNum}2`] = selections[`${slugNoNum}2`] ? selections[`${slugNoNum}2`] : [];
+                let longestLength = Math.max(selections[`${slugNoNum}1`].length, selections[`${slugNoNum}2`].length);
 
-                while (selections[`${rootSlug}2`].length < longestLength) {
-                    selections[`${rootSlug}2`].push(null);
+                while (selections[`${slugNoNum}2`].length < longestLength) {
+                    selections[`${slugNoNum}2`].push(null);
                 }
-                while (selections[`${rootSlug}1`].length < longestLength) {
-                    selections[`${rootSlug}2`].push(null);
+                while (selections[`${slugNoNum}1`].length < longestLength) {
+                    selections[`${slugNoNum}2`].push(null);
                 }
                 while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                     extras[qtypeSlug].push(null);
