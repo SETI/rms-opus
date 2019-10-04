@@ -112,6 +112,10 @@ var o_widgets = {
             cloneInputs.addClass("op-extra-search-inputs");
             // Clear values in inputs
             cloneInputs.find("input").val("");
+            let defaultQtypeVal = cloneInputs.find("select") ? "any" : "";
+            if (defaultQtypeVal) {
+                cloneInputs.find("select").val(defaultQtypeVal);
+            }
 
             // let removeInputIcon = '<i class="fas fa-minus"></i>';
             let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
@@ -134,6 +138,8 @@ var o_widgets = {
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
             // TODO: Need to update hash
+
+            o_hash.updateHash();
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
