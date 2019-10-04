@@ -5,7 +5,7 @@
 
 <body class="app header-fixed sidebar-fixed aside-menu-fixed sidebar-lg-show">
     <div class="app-body container-fluid">
-        <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info">
+        <nav id="op-main-nav" class="navbar nav-pills fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom border-info op-no-select">
             <a class="navbar-brand" href="/opus">OPUS3</a>
             <ul id="op-tab" class="nav navbar-nav mr-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                 <li class="nav-item">
@@ -64,7 +64,7 @@
         </nav>
         {% block content %}
         <div class="tab-content border-0 container-fluid tab-full-width">
-            <div id="search" class="tab-pane fade" role="tabpanel" aria-labelledby="search-tab">
+            <div id="search" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="search-tab">
                 <div class="row flex-nowrap">
                     <div class="col pr-0 sidebar-area border-right">
                         <div id="sidebar-container" class="sidebar_wrapper ps-scrollbar">
@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            <div id="cart" class="tab-pane fade" role="tabpanel" aria-labelledby="cart-tab">
+            <div id="cart" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
                     <div class="col cart_details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
@@ -329,7 +329,7 @@
         <!--modal dialog for the metadata selector -->
         <div id="op-select-metadata" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" aria-labelledby="op-select-metadataLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
+                <div class="modal-content op-no-select">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">

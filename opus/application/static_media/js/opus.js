@@ -396,6 +396,9 @@ var opus = {
         // Go ahead and check to see if the blog has been updated recently
         opus.updateLastBlogDate();
 
+        // deselect any leftover selected text for clean slate
+        document.getSelection().removeAllRanges();
+
         switch(opus.prefs.view) {
             case "search":
                 window.scrollTo(0,0);
@@ -788,6 +791,7 @@ var opus = {
 
         let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
 
+        $("#op-help-panel").addClass("op-no-select");
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
@@ -813,6 +817,11 @@ var opus = {
             dataType: "html",
             success: function(page) {
                 $("#op-help-panel .loader").hide();
+
+                // make sure all text is deselected on init of help panel
+                document.getSelection().removeAllRanges();
+                $("#op-help-panel").removeClass("op-no-select");
+
                 let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
                 $("#op-help-panel .op-card-contents").html(contents);
                 $(".op-open-help .btn").on("click", function(e) {

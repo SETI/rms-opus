@@ -498,6 +498,11 @@ def api_normalize_url(request):
             return pi.body_qualified_label_results()
         return escape(old_slug)
 
+    def _escape_or_label(old_slug, pi):
+        if pi.display_results:
+            return pi.body_qualified_label()
+        return escape(old_slug)
+
     api_code = enter_api_call('api_normalize_url', request)
 
     if not request or request.GET is None:
@@ -526,7 +531,14 @@ def api_normalize_url(request):
     required_widgets_list = []
 
     handled_slugs = []
-    for slug in sorted(original_slugs): # Sort just to make tests deterministic
+
+    # Sort to make tests deterministic and to group qtype with search slugs
+    def _sort_func(key):
+        if key.startswith('qtype-'):
+            return key[6:]+'0' # Add 0 to sort before 1/2 suffixes
+        return key
+
+    for slug in sorted(original_slugs, key=_sort_func):
         if slug in settings.SLUGS_NOT_IN_DB:
             continue
         if slug in handled_slugs:
@@ -677,7 +689,7 @@ def api_normalize_url(request):
             else:
                 search1 = strip_numeric_suffix(pi.slug)+'1'
         if ((is_qtype and not is_range) or
-            (slug[-1] != '1' and slug[-1] != '2')):
+            (not is_qtype and slug[-1] != '1' and slug[-1] != '2')):
             # Not numeric
             pi1 = pi
             search1 = pi.slug
@@ -699,50 +711,61 @@ def api_normalize_url(request):
                         msg_list.append(msg)
                         continue
                     search1_val = new_search1_val
+
         valid_qtypes = None
+        qtype_default = None
         if is_range and not is_single_column_range(pi.param_qualified_name()):
             valid_qtypes = settings.RANGE_QTYPES
             qtype_default = valid_qtypes[0]
         if is_string:
             valid_qtypes = settings.STRING_QTYPES
             qtype_default = valid_qtypes[0]
-        if not valid_qtypes and is_qtype:
+
+        # It really only makes sense to look for a qtype field if there's a
+        # reason one would be present, but if the user gave us one anyway,
+        # we need to handle it so we can then ignore it and give an error.
+        # Same trick as above in case there is qtype-old and qtype-new.
+        # Note if we were already looking at the qtype, this will just
+        # find it again.
+        qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        found_qtype = False
+        if qtype_slug+clause_num_str in original_slugs:
+            found_qtype = qtype_slug+clause_num_str
+        elif pi.old_slug:
+            old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.old_slug)
+        if old_qtype_slug+clause_num_str in original_slugs:
+            found_qtype = old_qtype_slug+clause_num_str
+            if pi.old_slug:
+                handled_slugs.append('qtype-'
+                                     +strip_numeric_suffix(pi.old_slug)
+                                     +clause_num_str)
+            handled_slugs.append('qtype-'
+                                 +strip_numeric_suffix(pi.slug)
+                                 +clause_num_str)
+            if (valid_qtypes and
+                original_slugs[old_qtype_slug+clause_num_str]
+                    not in valid_qtypes):
+                msg = ('Query type "'+escape(orig_slug)
+                       +'" has an illegal value; '
+                       +'it has been set to the default.')
+                msg_list.append(msg)
+                qtype_val = qtype_default
+            else:
+                qtype_val = original_slugs[old_qtype_slug+clause_num_str]
+        elif qtype_default:
+            # Force a default qtype
+            qtype_val = qtype_default
+
+        if not valid_qtypes:
+            qtype_slug = None
+
+        if found_qtype and not valid_qtypes:
             # We have a qtype for a field that doesn't allow qtypes!
-            msg = ('Search term "'+escape(orig_slug)+'" is a query type for '
+            msg = ('Search term "'+escape(found_qtype)+'" is a query type for '
                    +'a field that does not allow query types; '
                    +'it has been ignored.')
             msg_list.append(msg)
-            continue
-        if valid_qtypes:
-            # Only look for a qtype field if there's a reason to have one
-            # Same trick as above in case there is qtype-old and qtype-new
-            # Note if we were already looking at the qtype, this will just
-            # find it again
-            qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
-            old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
-            if (old_qtype_slug+clause_num_str not in original_slugs and
-                pi.old_slug):
-                old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.old_slug)
-            if old_qtype_slug+clause_num_str in original_slugs:
-                if pi.old_slug:
-                    handled_slugs.append('qtype-'
-                                         +strip_numeric_suffix(pi.old_slug)
-                                         +clause_num_str)
-                handled_slugs.append('qtype-'
-                                     +strip_numeric_suffix(pi.slug)
-                                     +clause_num_str)
-                if (original_slugs[old_qtype_slug+clause_num_str]
-                    not in valid_qtypes):
-                    msg = ('Query type "'+escape(orig_slug)
-                           +'" has an illegal value; '
-                           +'it has been set to the default.')
-                    msg_list.append(msg)
-                    qtype_val = qtype_default
-                else:
-                    qtype_val = original_slugs[old_qtype_slug+clause_num_str]
-            else:
-                # Force a default qtype
-                qtype_val = qtype_default
 
         if qtype_slug == 'qtype-ringobsid':
             qtype_slug = 'qtype-opusid'
@@ -769,9 +792,15 @@ def api_normalize_url(request):
 
         if search1_val is not None:
             if selections[search1] is None:
-                msg = ('Search query for "'
-                       +_escape_or_label_results(search1, pi1)
-                       +'" had an illegal value; it has been ignored.')
+                if is_range:
+                    msg = ('Search query for "'
+                           +_escape_or_label(search1, pi1)
+                           +'" minimum had an illegal value; '
+                           +'it has been ignored.')
+                else:
+                    msg = ('Search query for "'
+                           +_escape_or_label_results(search1, pi1)
+                           +'" had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search1 = None
             else:
@@ -781,7 +810,7 @@ def api_normalize_url(request):
         if search2_val is not None:
             if selections[search2] is None:
                 msg = ('Search query for "'
-                       +_escape_or_label_results(search2, pi2)
+                       +_escape_or_label(search2, pi2)
                        +'" maximum had an illegal value; it has been ignored.')
                 msg_list.append(msg)
                 search2 = None
@@ -998,7 +1027,7 @@ def api_normalize_url(request):
             msg_list.append(msg)
             continue
         if not pi.display_results:
-            msg = ('Sort order metadata field "' + escape(col)
+            msg = ('Sort order metadata field "' + escape(order)
                    +'" is not displayable; it has been removed.')
             msg_list.append(msg)
             continue
