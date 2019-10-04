@@ -1682,7 +1682,7 @@ var o_browse = {
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
-                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use CTRL for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
+                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
                 galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
