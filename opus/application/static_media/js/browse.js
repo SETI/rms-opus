@@ -231,7 +231,7 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery, .op-data-table').on("click contextmenu", ".op-tools a", function(e) {
-            let retValue = false;
+            let retValue = false;   // do not use the default handler in this case...
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
 
@@ -239,7 +239,7 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
-                    retValue = undefined; // need to skip the default action to allow the context menu to work
+                    retValue = undefined; // need to use the default handler to allow the context menu to work
                     break;
 
                 case "cart":   // add to cart
@@ -422,7 +422,7 @@ var o_browse = {
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
-            let opusId = $(this).parent().data("id");
+            let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
 
             switch ($(this).data("action")) {
@@ -480,7 +480,7 @@ var o_browse = {
         });
 
         $(document).on("keydown click", function(e) {
-            // don't close the mini-menu on the shift key in case the user
+            // don't close the mini-menu on the shift/ctrl key in case the user
             // is trying to open a new window for detail
            if (!e.shiftKey && !e.ctrlKey) {
                 o_browse.hideMenu();
