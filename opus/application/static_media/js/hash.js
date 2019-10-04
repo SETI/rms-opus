@@ -232,7 +232,6 @@ var o_hash = {
                 let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
                 let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                 slug = slugNoCounter;
-
                 if (slug.startsWith("qtype-")) {
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
@@ -267,8 +266,10 @@ var o_hash = {
             }
             // END EXPERIMENT
         });
-        o_hash.alignDataInSelectionsAndExtras(selections, extras);
-
+        [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
+        // console.log(`getSelectionsExtrasFromHash`);
+        // console.log(selections);
+        // console.log(extras);
         return [selections, extras];
     },
 
@@ -376,14 +377,14 @@ var o_hash = {
             // END EXPERIMENT
         });
 
-        o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
+        [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
         console.log(`initFromHash`);
         console.log(opus.selections);
         console.log(opus.extras);
         opus.load();
     },
 
-    alignDataInSelectionsAndExtras: function(selections, extras) {
+    alignDataInSelectionsAndExtras: function(selectionsData, extrasData) {
         /**
          * Arrange data arrays in selections and extras. Make them the same
          * length if they are related to the same slug. For example:
@@ -392,36 +393,46 @@ var o_hash = {
          * Arrays for slugNameB and qtype-slugNameB will be the same length
          * (STRING input).
          */
+        let selections = Object.assign({}, selectionsData);
+        let extras = Object.assign({}, extrasData);
         for(const slug in selections) {
             if (slug.match(/.*(1|2)/)) {
                 let slugNoNum = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
                 selections[`${slugNoNum}1`] = selections[`${slugNoNum}1`] ? selections[`${slugNoNum}1`] : [];
                 selections[`${slugNoNum}2`] = selections[`${slugNoNum}2`] ? selections[`${slugNoNum}2`] : [];
-                let longestLength = Math.max(selections[`${slugNoNum}1`].length, selections[`${slugNoNum}2`].length);
+                extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
+
+                let longestLength = (Math.max(selections[`${slugNoNum}1`].length,
+                                              selections[`${slugNoNum}2`].length,
+                                              extras[qtypeSlug].length));
 
                 while (selections[`${slugNoNum}2`].length < longestLength) {
                     selections[`${slugNoNum}2`].push(null);
                 }
                 while (selections[`${slugNoNum}1`].length < longestLength) {
-                    selections[`${slugNoNum}2`].push(null);
+                    selections[`${slugNoNum}1`].push(null);
                 }
                 while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                     extras[qtypeSlug].push(null);
                 }
-            } else if (slug in extras) {
+            } else {
                 let qtypeSlug = `qtype-${slug}`;
-                selections[slug] = selections[slug] ? selections[slug] : [];
-                extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
-                let longestLength = Math.max(selections[slug].length, extras[qtypeSlug].length);
+                    if (qtypeSlug in extras) {
+                    selections[slug] = selections[slug] ? selections[slug] : [];
+                    extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
+                    let longestLength = Math.max(selections[slug].length, extras[qtypeSlug].length);
 
-                while (selections[slug].length < longestLength) {
-                    selections[slug].push(null);
-                }
-                while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                    extras[qtypeSlug].push(null);
+                    while (selections[slug].length < longestLength) {
+                        selections[slug].push(null);
+                    }
+                    while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
+                        extras[qtypeSlug].push(null);
+                    }
                 }
             }
         }
+
+        return [selections, extras];
     }
 };

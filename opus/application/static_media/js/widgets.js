@@ -137,8 +137,24 @@ var o_widgets = {
             o_widgets.renumberInputsAttributes(slug);
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-            // TODO: Need to update hash
 
+            // Update opus.selections & opus.extras
+            let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
+            let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
+            if (newlyAddedInput.hasClass("RANGE")) {
+                opus.selections[`${slug}1`].push(null);
+                opus.selections[`${slug}2`].push(null);
+                if (newlyAddedQtype.length > 0) {
+                    opus.extras[`qtype-${slug}`].push("any");
+                }
+            } else if (newlyAddedInput.hasClass("STRING")) {
+                opus.selections[slug].push(null);
+                if (newlyAddedQtype.length > 0) {
+                    opus.extras[`qtype-${slug}`].push("any");
+                }
+            }
+            console.log(opus.selections);
+            console.log(opus.extras);
             o_hash.updateHash();
         });
 
