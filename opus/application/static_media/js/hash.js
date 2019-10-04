@@ -229,8 +229,8 @@ var o_hash = {
 
             // EXPERIMENT
             if (!(slug in opus.prefs) && value) {
-                let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
-                let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
+                let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                 slug = slugNoCounter;
 
                 if (slug.startsWith("qtype-")) {
@@ -308,8 +308,8 @@ var o_hash = {
             // EXPERIMENT
             if (value) {
                 if (slug.match(/qtype-.*/)) {
-                    let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
-                    let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                    let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
+                    let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
@@ -357,8 +357,8 @@ var o_hash = {
                     // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
                     //     opus.selections[slug] = [value];
                     // } else {
-                    let slugNoCounter = slug.match(/(.*)_/) ? slug.match(/(.*)_/)[1] : slug;
-                    let slugCounter = slug.match(/_(.*)/) ? slug.match(/_(.*)/)[1] : "";
+                    let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
+                    let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);

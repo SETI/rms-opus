@@ -875,9 +875,7 @@ var o_widgets = {
 
                         for (const category of rangesDropdownCategories) {
                             let originalDataCategory = $(category).data("category");
-                            originalDataCategory = (originalDataCategory.match(/(.*)_/) ?
-                                                    originalDataCategory.match(/(.*)_/)[1] :
-                                                    originalDataCategory);
+                            originalDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
                             let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
                             o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
@@ -898,9 +896,7 @@ var o_widgets = {
 
                     for (const category of rangesDropdownCategories) {
                         let originalDataCategory = $(category).data("category");
-                        let updatedDataCategory = (originalDataCategory.match(/(.*)_/) ?
-                                                   originalDataCategory.match(/(.*)_/)[1] :
-                                                   originalDataCategory);
+                        let updatedDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
 
                         o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
                                                                  originalMinName);
@@ -916,9 +912,7 @@ var o_widgets = {
             let trailingCounterString = "";
 
             let originalStringName = stringInputs.attr("name");
-            originalStringName = (originalStringName.match(/(.*)_/) ?
-                                 originalStringName.match(/(.*)_/)[1] :
-                                 originalStringName);
+            originalStringName = opus.getSlugOrDataWithoutCounter(originalStringName);
 
             // If there are extra sets of STRING inputs, we reorder the following:
             // 1. name attribute inputs.
@@ -951,9 +945,7 @@ var o_widgets = {
             trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                      `0${trailingCounter}` : `${trailingCounter}`);
             let originalName = $(eachSearchElement).attr("name");
-            originalName = (originalName.match(/(.*)_/) ?
-                            originalName.match(/(.*)_/)[1] :
-                            originalName);
+            originalName = opus.getSlugOrDataWithoutCounter(originalName);
             let updatedName = `${originalName}_${trailingCounterString}`;
             $(eachSearchElement).attr("name", updatedName);
             renumberedData.push(updatedName);

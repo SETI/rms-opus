@@ -186,7 +186,7 @@ var o_search = {
         $("#search").on("change", "input.RANGE", function(e) {
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
-            let slug = inputName.match(/(.*)_/) ? inputName.match(/(.*)_/)[1] : inputName;
+            let slug = opus.getSlugOrDataWithoutCounter(inputName);
             console.log(`slug in change event: ${slug}`);
             console.log(opus.selections);
             let currentValue = $(this).val().trim();
@@ -237,7 +237,7 @@ var o_search = {
             console.log(`before update`);
             console.log(opus.selections[slug]);
             console.log(opus.selections);
-            let inputCounter = inputName.match(/(.*)_/) ? inputName.match(/.*_(.*)/)[1] : "";
+            let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             if (currentValue) {
                 // opus.selections[slug] = [currentValue];
@@ -650,8 +650,8 @@ var o_search = {
         console.log(o_search.slugRangeInputValidValueFromLastSearch);
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
-            let slugNoCounter = eachSlug.match(/(.*)_/) ? eachSlug.match(/(.*)_/)[1] : eachSlug;
-            let inputCounter = eachSlug.match(/(.*)_/) ? eachSlug.match(/.*_(.*)/)[1] : "";
+            let slugNoCounter = opus.getSlugOrDataWithoutCounter(eachSlug);
+            let inputCounter = opus.getSlugOrDataTrailingCounterStr(eachSlug);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
             if (value === null) {

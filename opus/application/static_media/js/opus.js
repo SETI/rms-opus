@@ -1077,6 +1077,25 @@ var opus = {
             $.cookie("visited", opus.splashVersion, {expires: 1000000});
             opus.displaySplashDialog();
         }
+    },
+
+    // The following two functions are used in multiple files: search.js,
+    // widgets.js and hash.js.
+    getSlugOrDataWithoutCounter: function(slugOrData) {
+        /**
+         * Takes in a slugOrData from input's name attribute and if there are
+         * multiple inputs, return the version without trailing counter.
+         */
+        return slugOrData.match(/(.*)_/) ? slugOrData.match(/(.*)_/)[1] : slugOrData;
+    },
+
+    getSlugOrDataTrailingCounterStr: function(slugOrData) {
+        /**
+         * Takes in a slugOrData from input's name attribute and if there are
+         * multiple inputs, return the trailing counter, else return an
+         * empty string.
+         */
+        return slugOrData.match(/_(.*)/) ? slugOrData.match(/_(.*)/)[1] : "";
     }
 }; // end opus namespace
 
