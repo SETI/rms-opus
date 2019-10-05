@@ -153,8 +153,6 @@ var o_widgets = {
                     opus.extras[`qtype-${slug}`].push("any");
                 }
             }
-            console.log(opus.selections);
-            console.log(opus.extras);
             o_hash.updateHash();
         });
 
@@ -164,11 +162,50 @@ var o_widgets = {
             console.log("click remove icon");
             console.log(`slug after delete a set: ${slug}`);
             let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
+
+            let inputElement = $(this).parent(".op-extra-search-inputs").find("input")
+            let qtypeElement = $(this).parent(".op-extra-search-inputs").find("select")
+            let slugNameFromInput = inputElement.attr("name");
+            let trailingCounterString = opus.getSlugOrDataTrailingCounterStr(slugNameFromInput);
+            console.log(`Click trash can`);
+            console.log(trailingCounterString);
+            let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
+            console.log(`trailingCounterString: ${idx}`);
+            console.log(`previous`);
+            console.log(opus.selections);
+            console.log(opus.extras);
+            if (inputElement.hasClass("RANGE")) {
+                let previousMinSelections = opus.selections[`${slug}1`];
+                let previousMaxSelections = opus.selections[`${slug}2`];
+                opus.selections[`${slug}1`] = (previousMinSelections.slice(0, idx)
+                                               .concat(previousMinSelections.slice(idx+1)));
+                opus.selections[`${slug}2`] = (previousMaxSelections.slice(0, idx)
+                                               .concat(previousMaxSelections.slice(idx+1)));
+                if (qtypeElement.length > 0) {
+                    let previousExtras = opus.extras[`qtype-${slug}`];
+                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
+                                                   .concat(previousExtras.slice(idx+1)));
+                }
+            } else if (inputElement.hasClass("STRING")) {
+                let previousSelections = opus.selections[`${slug}`];
+                opus.selections[`${slug}`] = (previousSelections.slice(0, idx)
+                                               .concat(previousSelections.slice(idx+1)));
+                if (qtypeElement.length > 0) {
+                    let previousExtras = opus.extras[`qtype-${slug}`];
+                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
+                                                  .concat(previousExtras.slice(idx+1)));
+                }
+            }
+
             inputSetToBeDeleted.remove();
             o_widgets.renumberInputsAttributes(slug);
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
             // TODO: Need to update hash
+            console.log(`after`);
+            console.log(opus.selections);
+            console.log(opus.extras);
+            o_hash.updateHash();
         });
         // END EXPERIMENT
     },
