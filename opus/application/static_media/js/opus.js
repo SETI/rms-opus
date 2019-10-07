@@ -131,6 +131,12 @@ var opus = {
 
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
 
+        // Align data in opus.selections and opus.extras to make sure empty
+        // inputs will also have null in opus.selections
+        [opus.selections, opus.extras] = (o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                                opus.extras));
+        // console.log(opus.selections)
+        // console.log(opus.extras)
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
         // one of them is undefined.
@@ -181,11 +187,20 @@ var opus = {
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
             console.log(`opus load before reload`);
+            console.log(`selections`);
             console.log(selections);
+            console.log(`opus.selections`);
             console.log(opus.selections);
+            console.log(`currentExtrasQ`);
             console.log(currentExtrasQ);
+            console.log(`opusExtrasQ`);
             console.log(opusExtrasQ);
+            console.log(`extras`);
+            console.log(extras);
+            console.log(`opus.extras`);
             console.log(opus.extras);
+            console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
+            console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 opus.selections = selections;

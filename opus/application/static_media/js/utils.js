@@ -15,13 +15,28 @@ var o_utils = {
      *
      **/
 
-
-    // this is for comparing selections to lastSelections
-    // expects an object whose values are all arrays
     areObjectsEqual: function(obj1, obj2) {
-      // perhaps not fabulous; see https://stackoverflow.com/questions/3791516/comparing-native-javascript-objects-with-jquery
-        return (JSON.stringify(obj1) == JSON.stringify(obj2));
-
+        /**
+         * This is for comparing selections or lastSelections
+         * Expects objects whose values are all arrays.
+         * NOTE: We don't want to use JSON.stringify to directly compare
+         * two objects because the order of keys in the object will matter
+         * in that case.
+         **/
+        if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+            return false;
+        }
+        for (const key in obj1) {
+            if (!(key in obj2)) {
+                return false;
+            } else {
+                // expect the array (value) of the same key to be the same for both objects
+                if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
+                    return false;
+                }
+            }
+        }
+        return true;
     },
 
     // num is an int

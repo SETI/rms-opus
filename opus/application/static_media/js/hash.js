@@ -266,10 +266,14 @@ var o_hash = {
             }
             // END EXPERIMENT
         });
+        console.log(`getSelectionsExtrasFromHash`);
+        console.log(`before align in getSelectionsExtrasFromHash`);
+        console.log(selections);
+        console.log(extras);
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
-        // console.log(`getSelectionsExtrasFromHash`);
-        // console.log(selections);
-        // console.log(extras);
+        console.log(`after align in getSelectionsExtrasFromHash`);
+        console.log(selections);
+        console.log(extras);
         return [selections, extras];
     },
 
@@ -412,11 +416,11 @@ var o_hash = {
                                               selections[`${slugNoNum}2`].length,
                                               extras[qtypeSlug].length));
 
-                while (selections[`${slugNoNum}2`].length < longestLength) {
-                    selections[`${slugNoNum}2`].push(null);
-                }
                 while (selections[`${slugNoNum}1`].length < longestLength) {
                     selections[`${slugNoNum}1`].push(null);
+                }
+                while (selections[`${slugNoNum}2`].length < longestLength) {
+                    selections[`${slugNoNum}2`].push(null);
                 }
                 while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                     extras[qtypeSlug].push(null);
@@ -434,6 +438,33 @@ var o_hash = {
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                         extras[qtypeSlug].push(null);
                     }
+                }
+            }
+        }
+
+        // When slug selections is empty but qtype-slug in extras exists, we will also
+        // make sure data in selections and qtype-slug are aligned.
+        for(const qtypeSlug in extras) {
+            if ((qtypeSlug.match(/qtype-(.*)/)[1] in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)/)[1]}1` in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)/)[1]}2` in selections)) {
+                continue;
+            }
+            let slug = qtypeSlug.match(/qtype-(.*)/)[1];
+            let longestLength = extras[qtypeSlug].length;
+            if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("RANGE")) {
+                selections[`${slug}1`] = selections[`${slug}1`] ? selections[`${slug}1`] : [];
+                selections[`${slug}2`] = selections[`${slug}2`] ? selections[`${slug}2`] : [];
+                while (selections[`${slug}1`].length < longestLength) {
+                    selections[`${slug}1`].push(null);
+                }
+                while (selections[`${slug}2`].length < longestLength) {
+                    selections[`${slug}2`].push(null);
+                }
+            } else if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("STRING")) {
+                selections[slug] = selections[slug] ? selections[slug] : [];
+                while (selections[slug].length < longestLength) {
+                    selections[slug].push(null);
                 }
             }
         }
