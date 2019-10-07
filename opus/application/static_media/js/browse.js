@@ -231,7 +231,7 @@ var o_browse = {
 
         // thumbnail overlay tools
         $('.gallery, .op-data-table').on("click contextmenu", ".op-tools a", function(e) {
-            let retValue = false;   // do not use the default handler in this case...
+            let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
 
@@ -446,7 +446,7 @@ var o_browse = {
                     o_browse.showDetail(e, opusId);
                      // need to not return false to allow the contextmenu to work
                      // unless... context menu was used with shift or ctrl key...
-                    retValue = (e.shiftKey || e.ctrlKey) ? false : undefined;
+                    retValue = (e.shiftKey || (e.ctrlKey || e.metaKey)) ? false : undefined;
                     break;
 
                 case "downloadCSV":
@@ -482,7 +482,7 @@ var o_browse = {
         $(document).on("keydown click", function(e) {
             // don't close the mini-menu on the shift/ctrl key in case the user
             // is trying to open a new window for detail
-           if (!e.shiftKey && !e.ctrlKey) {
+           if (!e.shiftKey && !(e.ctrlKey || e.metaKey)) {
                 o_browse.hideMenu();
             }
 
@@ -1171,7 +1171,6 @@ var o_browse = {
     },
 
     getDetailURL: function(opusId) {
-        let tab = opus.getCurrentTab();
         let hashArray = o_hash.getHashArray();
         hashArray.detail = opusId;
         hashArray.view = "detail";

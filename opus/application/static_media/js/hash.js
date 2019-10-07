@@ -157,7 +157,7 @@ var o_hash = {
 
     hashArrayToHashString: function(hashArray) {
         let hash = "";
-        $.each(hashArray, function(param,value) {
+        $.each(hashArray, function(param, value) {
             hash += `&${param}=${value}`;
         });
         return hash.substring(1);   // don't forget to strip off the first &, it is not needed
