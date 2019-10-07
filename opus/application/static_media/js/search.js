@@ -280,69 +280,87 @@ var o_search = {
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
-
-            let slug = $(this).attr("name");
+            console.log("change STRING");
+            let inputName = $(this).attr("name");
+            let slug = opus.getSlugOrDataWithoutCounter(inputName);
             let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
             // get values of all inputs
-            let values = [];
-            if (css_class == 'STRING') {
-                $("#widget__" + slug + ' input.STRING').each(function() {
-                    if ($(this).val()) {
-                        values.push($(this).val());
+            // let values = [];
+            // if (css_class == 'STRING') {
+            //     $("#widget__" + slug + ' input.STRING').each(function() {
+            //         if ($(this).val()) {
+            //             values.push($(this).val());
+            //         }
+            //     });
+
+                let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
+                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+                let currentValue = $(this).val().trim();
+                if (currentValue) {
+                    // opus.selections[slug] = [currentValue];
+                    if (opus.selections[slug]) {
+                        opus.selections[slug][idx] = currentValue;
+                    } else {
+                        opus.selections[slug] = [currentValue];
                     }
-                });
-
-                if (values.length) {
-                    opus.selections[slug] = values;
                 } else {
-                    delete opus.selections[slug];
+                    // delete opus.selections[slug];
+                    if (opus.selections[slug]) {
+                        opus.selections[slug][idx] = null;
+                    } else {
+                        opus.selections[slug] = [null];
+                    }
                 }
-            } else {
-                // range query
-                let slugNoNum = slug.match(/(.*)[1|2]/)[1];
-                // min
-                values = [];
-                $("#widget__" + slugNoNum + '1 input.op-range-input-min', '#search').each(function() {
-                    values[values.length] = $(this).val();
-                });
-                if (values.length == 0) {
-                    $("#widget__" + slugNoNum + ' input.op-range-input-min', '#search').each(function() {
-                        values[values.length] = $(this).val();
-                    });
-                }
-
-                if (values.length && values[0]) {
-                    opus.selections[slugNoNum + '1'] = values;
-                } else {
-                    delete opus.selections[slugNoNum + '1'];
-                }
-                // max
-                values = [];
-                $("#widget__" + slugNoNum + '1 input.op-range-input-max', '#search').each(function() {
-                    values[values.length] = $(this).val();
-                });
-                if (values.length == 0) {
-                    $("#widget__" + slugNoNum + ' input.op-range-input-max', '#search').each(function() {
-                        values[values.length] = $(this).val();
-                    });
-                }
-
-                if (values.length && values[0]) {
-                    opus.selections[slugNoNum + '2'] = values;
-                } else {
-                    delete opus.selections[slugNoNum + '2'];
-                }
-            }
+            console.log(opus.selections);
+            console.log(opus.extras);
+            // }
+            // else {
+            //     // range query
+            //     let slugNoNum = slug.match(/(.*)[1|2]/)[1];
+            //     // min
+            //     values = [];
+            //     $("#widget__" + slugNoNum + '1 input.op-range-input-min', '#search').each(function() {
+            //         values[values.length] = $(this).val();
+            //     });
+            //     if (values.length == 0) {
+            //         $("#widget__" + slugNoNum + ' input.op-range-input-min', '#search').each(function() {
+            //             values[values.length] = $(this).val();
+            //         });
+            //     }
+            //
+            //     if (values.length && values[0]) {
+            //         opus.selections[slugNoNum + '1'] = values;
+            //     } else {
+            //         delete opus.selections[slugNoNum + '1'];
+            //     }
+            //     // max
+            //     values = [];
+            //     $("#widget__" + slugNoNum + '1 input.op-range-input-max', '#search').each(function() {
+            //         values[values.length] = $(this).val();
+            //     });
+            //     if (values.length == 0) {
+            //         $("#widget__" + slugNoNum + ' input.op-range-input-max', '#search').each(function() {
+            //             values[values.length] = $(this).val();
+            //         });
+            //     }
+            //
+            //     if (values.length && values[0]) {
+            //         opus.selections[slugNoNum + '2'] = values;
+            //     } else {
+            //         delete opus.selections[slugNoNum + '2'];
+            //     }
+            // }
 
             if (opus.lastSelections && opus.lastSelections[slug]) {
-                if (opus.lastSelections[slug][0] === $(this).val().trim()) {
+                if (opus.lastSelections[slug][idx] === $(this).val().trim()) {
                     return;
                 }
             }
 
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
+            console.log(newHash);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
             Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
@@ -355,6 +373,7 @@ var o_search = {
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+            console.log(url);
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
