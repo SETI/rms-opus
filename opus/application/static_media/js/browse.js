@@ -422,7 +422,7 @@ var o_browse = {
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
-            let opusId = $(this).parent().attr("data-id");
+            let opusId = $(this).attr("data-id");
             o_browse.hideMenu();
 
             switch ($(this).data("action")) {
@@ -1185,8 +1185,9 @@ var o_browse = {
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
             $(e.target).parent().attr("href", url);
-        } else if (e.ctrlKey) {
+        } else if (e.ctrlKey || e.metaKey) {
             // open detail view in new browser tab
+            e.preventDefault();
             window.open(url, "_blank");
         } else if (e.shiftKey) {
             // open detail view in new window
