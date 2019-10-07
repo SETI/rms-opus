@@ -1762,6 +1762,11 @@ footer {
     white-space: nowrap;
 }
 
+.op-twitter {
+    bottom: .15em;
+    position: absolute;    
+}
+
 #op-help-panel {
     display: none;
     position: absolute;

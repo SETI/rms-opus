@@ -411,6 +411,21 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
+    def test__url_to_search_params_both_empty_min_empty_ok(self):
+        "[test_search.py] url_to_search_params: range with only missing min value allow_empty"
+        q = QueryDict('RINGGEOphase1=')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_ring_geometry.phase1': [None],
+                        'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_ring_geometry.phase': ['any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
     def test__url_to_search_params_both_empty_max(self):
         "[test_search.py] url_to_search_params: range with only missing max value"
         q = QueryDict('RINGGEOphase2=')
@@ -419,6 +434,21 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_both_empty_max_empty_ok(self):
+        "[test_search.py] url_to_search_params: range with only missing max value allow_empty"
+        q = QueryDict('RINGGEOphase2=')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_ring_geometry.phase1': [None],
+                        'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_ring_geometry.phase': ['any']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -439,6 +469,21 @@ class searchTests(TestCase):
         self.assertEqual(extras['order'], order_expected)
         self.assertEqual(extras['qtypes'], qtypes_expected)
 
+    def test__url_to_search_params_both_empty_min_max_empty_ok(self):
+        "[test_search.py] url_to_search_params: range with both missing allow_empty"
+        q = QueryDict('RINGGEOphase1=&RINGGEOphase2=')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_ring_geometry.phase1': [None],
+                        'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_ring_geometry.phase': ['any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
     def test__url_to_search_params_both_empty_qtype(self):
         "[test_search.py] url_to_search_params: range with both missing with qtype"
         q = QueryDict('qtype-RINGGEOphase=only')
@@ -447,6 +492,21 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_both_empty_qtype_empty_ok(self):
+        "[test_search.py] url_to_search_params: range with both missing with qtype allow_empty"
+        q = QueryDict('qtype-RINGGEOphase=only')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_ring_geometry.phase1': [None],
+                        'obs_ring_geometry.phase2': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_ring_geometry.phase': ['only']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -732,10 +792,52 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: search on a string value empty"
         q = QueryDict('note=')
         (selections, extras) = url_to_search_params(q)
-        sel_expected = {'obs_pds.note': ['']}
+        sel_expected = {}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_empty_empty_ok(self):
+        "[test_search.py] url_to_search_params: search on a string value empty allow_empty"
+        q = QueryDict('note=')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_pds.note': [None]}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_pds.note': ['contains']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_missing_qtype(self):
+        "[test_search.py] url_to_search_params: search on a missing string with qtype"
+        q = QueryDict('qtype-note=matches')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_stringsearch_missing_qtype_empty_ok(self):
+        "[test_search.py] url_to_search_params: search on a missing string with qtype allow_empty"
+        q = QueryDict('qtype-note=matches')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_pds.note': [None]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_pds.note': ['matches']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
