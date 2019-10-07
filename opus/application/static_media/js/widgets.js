@@ -112,7 +112,9 @@ var o_widgets = {
             cloneInputs.addClass("op-extra-search-inputs");
             // Clear values in inputs
             cloneInputs.find("input").val("");
-            let defaultQtypeVal = cloneInputs.find("select") ? "any" : "";
+            let defaultQtypeVal = (cloneInputs.find("select") ?
+                                   cloneInputs.find("option").first().val() :
+                                   "");
             if (defaultQtypeVal) {
                 cloneInputs.find("select").val(defaultQtypeVal);
             }
@@ -139,20 +141,35 @@ var o_widgets = {
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
             // Update opus.selections & opus.extras
+            let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
             if (newlyAddedInput.hasClass("RANGE")) {
-                opus.selections[`${slug}1`].push(null);
-                opus.selections[`${slug}2`].push(null);
+                opus.selections[`${slug}1`] = opus.selections[`${slug}1`] ? opus.selections[`${slug}1`] : [];
+                opus.selections[`${slug}2`] = opus.selections[`${slug}2`] ? opus.selections[`${slug}2`] : [];
+                while (opus.selections[`${slug}1`] .length < numberOfInputSets) {
+                    opus.selections[`${slug}1`] .push(null);
+                }
+                while (opus.selections[`${slug}2`] .length < numberOfInputSets) {
+                    opus.selections[`${slug}2`] .push(null);
+                }
+                // opus.selections[`${slug}1`].push(null);
+                // opus.selections[`${slug}2`].push(null);
                 if (newlyAddedQtype.length > 0) {
-                    opus.extras[`qtype-${slug}`].push("any");
+                    opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
             } else if (newlyAddedInput.hasClass("STRING")) {
-                opus.selections[slug].push(null);
+                opus.selections[slug] = opus.selections[slug] ? opus.selections[slug] : [];
+                while (opus.selections[slug] .length < numberOfInputSets) {
+                    opus.selections[slug] .push(null);
+                }
+                // opus.selections[slug].push(null);
                 if (newlyAddedQtype.length > 0) {
-                    opus.extras[`qtype-${slug}`].push("any");
+                    opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
             }
+            console.log(opus.selections);
+            console.log(opus.extras);
             o_hash.updateHash();
         });
 
@@ -620,9 +637,20 @@ var o_widgets = {
             // This will also put qtype in the url when a widget with qtype is open.
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
-            let qtype = "qtype-" + slug;
+
+            // fill opus.selections with null
+            // let inputs = $(`#widget__${slug} input`);
+            // if (inputs.hasClass("RANGE")) {
+            //     let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+            //     opus.selections[`${slug}1`] = new Array(numberOfInputSets).fill(null);
+            //     opus.selections[`${slug}2`] = new Array(numberOfInputSets).fill(null);
+            // } else if (inputs.hasClass("STRING")) {
+            //     let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+            //     opus.selections[slug] = new Array(numberOfInputSets).fill(null);
+            // }
 
             // NOTE: inputs & qtypes are not renumnered yet at this stage.
+            let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
 
@@ -654,6 +682,7 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
+                    o_hash.updateHash();
                 }
             }
 

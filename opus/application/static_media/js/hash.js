@@ -377,8 +377,12 @@ var o_hash = {
             // END EXPERIMENT
         });
 
-        [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
         console.log(`initFromHash`);
+        console.log("before");
+        console.log(opus.selections);
+        console.log(opus.extras);
+        [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
+        console.log("after");
         console.log(opus.selections);
         console.log(opus.extras);
         opus.load();
@@ -395,6 +399,7 @@ var o_hash = {
          */
         let selections = Object.assign({}, selectionsData);
         let extras = Object.assign({}, extrasData);
+
         for(const slug in selections) {
             if (slug.match(/.*(1|2)/)) {
                 let slugNoNum = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
@@ -418,7 +423,7 @@ var o_hash = {
                 }
             } else {
                 let qtypeSlug = `qtype-${slug}`;
-                    if (qtypeSlug in extras) {
+                if (qtypeSlug in extras) {
                     selections[slug] = selections[slug] ? selections[slug] : [];
                     extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
                     let longestLength = Math.max(selections[slug].length, extras[qtypeSlug].length);
