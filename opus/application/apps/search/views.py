@@ -418,7 +418,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
     # because it returns a dict.
     search_params = list(request_get.items())
     used_slugs = []
-    print(f'@@@@@@@@ search_params: {search_params}')
+
     if 'order' not in [x[0] for x in search_params]:
         # If there's no order slug, then force one
         search_params.append(('order', settings.DEFAULT_SORT_ORDER))
