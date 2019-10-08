@@ -17,7 +17,6 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    // EXPERIMENT
     updateHash: function(updateURL=true) {
         /**
          * Convert data from opus.selections and opus.extras into URL hash string
@@ -59,7 +58,6 @@ var o_hash = {
         $.each(opus.extras, function(key, value) {
             if (value.length) {
                 let encodedExtraValues = o_hash.encodeSlugValues(value);
-                // console.log(encodedExtraValues);
                 if (value.length > 1) {
                     let numberOfQtypeInputs = encodedExtraValues.length;
 
@@ -85,11 +83,9 @@ var o_hash = {
         if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
-        console.log(`hash from updateHash`);
-        console.log(hash);
+
         return hash.join("&");
     },
-    // END EXPERIMENT
 
     encodeSlugValues: function(slugValueArray) {
         /**
@@ -227,7 +223,6 @@ var o_hash = {
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
-            // EXPERIMENT
             if (!(slug in opus.prefs) && value) {
                 let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
                 let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
@@ -264,7 +259,6 @@ var o_hash = {
                     // }
                 }
             }
-            // END EXPERIMENT
         });
 
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
@@ -305,7 +299,6 @@ var o_hash = {
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
-            // EXPERIMENT
             if (value) {
                 if (slug.match(/qtype-.*/)) {
                     let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
@@ -373,17 +366,9 @@ var o_hash = {
                     // }
                 }
             }
-            // END EXPERIMENT
         });
 
-        console.log(`initFromHash`);
-        console.log("before");
-        console.log(opus.selections);
-        console.log(opus.extras);
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
-        console.log("after");
-        console.log(opus.selections);
-        console.log(opus.extras);
         opus.load();
     },
 

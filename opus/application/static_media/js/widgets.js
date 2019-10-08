@@ -98,10 +98,8 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
 
-        // EXPERIMENT AREA
         // Create a new set of inputs when clicking the "+/OR" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
-            console.log("click +/OR button");
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -126,15 +124,8 @@ var o_widgets = {
                             title="Delete this set of search inputs"' +
                             `data-widget="widget__${slug}" data-slug="${slug}">` +
                             '<i class="far fa-trash-alt"></i></button></li>';
-            // let removeInputIcon = '<li class="op-remove-inputs">' +
-            //                 '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
-            //                 title="Delete this set of search inputs"' +
-            //                 `data-widget="widget__${slug}" data-slug="${slug}">` +
-            //                 '<i class="fas fa-minus"></i></button></li>';
 
-            // $(`#${widgetId} .op-input`).append(removeInputIcon);
             cloneInputs.prepend(removeInputIcon);
-            // <i class="fas fa-minus"></i>
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
             // Make sure "+/OR" is attached to the right of last input set.
@@ -158,8 +149,7 @@ var o_widgets = {
                 while (opus.selections[`${slug}2`] .length < numberOfInputSets) {
                     opus.selections[`${slug}2`] .push(null);
                 }
-                // opus.selections[`${slug}1`].push(null);
-                // opus.selections[`${slug}2`].push(null);
+
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
@@ -168,34 +158,26 @@ var o_widgets = {
                 while (opus.selections[slug] .length < numberOfInputSets) {
                     opus.selections[slug] .push(null);
                 }
-                // opus.selections[slug].push(null);
+
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
             }
-            console.log(opus.selections);
-            console.log(opus.extras);
+
             o_hash.updateHash();
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            console.log("click remove icon");
-            console.log(`slug after delete a set: ${slug}`);
             let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
 
-            let inputElement = $(this).parent(".op-extra-search-inputs").find("input")
-            let qtypeElement = $(this).parent(".op-extra-search-inputs").find("select")
+            let inputElement = $(this).parent(".op-extra-search-inputs").find("input");
+            let qtypeElement = $(this).parent(".op-extra-search-inputs").find("select");
             let slugNameFromInput = inputElement.attr("name");
             let trailingCounterString = opus.getSlugOrDataTrailingCounterStr(slugNameFromInput);
-            console.log(`Click trash can`);
-            console.log(trailingCounterString);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
-            console.log(`trailingCounterString: ${idx}`);
-            console.log(`previous`);
-            console.log(opus.selections);
-            console.log(opus.extras);
+
             if (inputElement.hasClass("RANGE")) {
                 let previousMinSelections = opus.selections[`${slug}1`];
                 let previousMaxSelections = opus.selections[`${slug}2`];
@@ -223,13 +205,9 @@ var o_widgets = {
             o_widgets.renumberInputsAttributes(slug);
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-            // TODO: Need to update hash
-            console.log(`after`);
-            console.log(opus.selections);
-            console.log(opus.extras);
+
             o_hash.updateHash();
         });
-        // END EXPERIMENT
     },
 
     addPreprogrammedRangesBehaviors: function() {
@@ -643,24 +621,11 @@ var o_widgets = {
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
 
-            // fill opus.selections with null
-            // let inputs = $(`#widget__${slug} input`);
-            // if (inputs.hasClass("RANGE")) {
-            //     let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
-            //     opus.selections[`${slug}1`] = new Array(numberOfInputSets).fill(null);
-            //     opus.selections[`${slug}2`] = new Array(numberOfInputSets).fill(null);
-            // } else if (inputs.hasClass("STRING")) {
-            //     let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
-            //     opus.selections[slug] = new Array(numberOfInputSets).fill(null);
-            // }
-
             // NOTE: inputs & qtypes are not renumnered yet at this stage.
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
 
-            // console.log(hash);
-            // console.log(numberOfQtypeInputs);
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
@@ -683,7 +648,6 @@ var o_widgets = {
                     // set of inputs by values from opus.extras.
                     let qtypeDataIdx = 0;
                     for (const eachQtype of qtypeInputs) {
-                        // TODO: Might need to revisit later
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
@@ -872,19 +836,10 @@ var o_widgets = {
                 $('#widget__' + slug + ' .spinner').fadeOut('');
             }
 
-            ////// EXPERIMENT AREA //////
             let widgetInputs = $(`#widget__${slug} input`);
             o_widgets.renumberInputsAttributes(slug);
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
-                // let addInputIcon = '<hr class="shadow-divider my-0 ml-0 mr-0">' +
-                // let addInputIcon = '<button type="button" class="p-0 btn btn-small btn-link op-add-inputs-btn" \
-                //                title="Add a new set of search inputs"' +
-                //                `data-widget="widget__${slug}" data-slug="${slug}">` +
-                //                '<i class="fas fa-plus">/OR</i></button>';
-                // <i class="fas fa-plus-circle">
-                // <i class="fas fa-plus">
-                // <hr class="shadow-divider my-0 ml-0 mr-3">
                 let addInputIcon = '<li class="op-add-inputs">' +
                                '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
                                title="Add a new set of search inputs"' +
@@ -905,13 +860,11 @@ var o_widgets = {
                 }
                 $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
-                // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input. 
+                // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
                 if (widgetInputs.hasClass("STRING")) {
                     $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
                 }
-                // $(`#widget__${slug} .widget-main`).append(addInputIcon);
             }
-            ////// EXPERIMENT END //////
 
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
@@ -998,9 +951,6 @@ var o_widgets = {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let stringInputs = $(`#widget__${slug} input.STRING`);
             let qtypes = $(`#widget__${slug} select`);
-
-            let trailingCounter = 0;
-            let trailingCounterString = "";
 
             let originalStringName = stringInputs.attr("name");
             originalStringName = opus.getSlugOrDataWithoutCounter(originalStringName);

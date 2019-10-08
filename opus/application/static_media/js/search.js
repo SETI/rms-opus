@@ -71,11 +71,10 @@ var o_search = {
             $(this).removeClass("search_input_invalid_no_focus");
 
             // Open the dropdown properly when user tabs to focus in.
-            let slugName = $(this).data("slugname");
             let preprogrammedRangesDropdown = ($(this)
                                                .next(".op-preprogrammed-ranges")
                                                .find(".op-scrollable-menu"));
-            // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show")) {
@@ -187,8 +186,6 @@ var o_search = {
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
             let slug = opus.getSlugOrDataWithoutCounter(inputName);
-            console.log(`slug in change event: ${slug}`);
-            console.log(opus.selections);
             let currentValue = $(this).val().trim();
 
             if (o_search.rangesNameTotalMatchedCounter === 1) {
@@ -225,40 +222,30 @@ var o_search = {
                 let preprogrammedRangesDropdown = (inputToTriggerDropdown
                                                    .next(".op-preprogrammed-ranges")
                                                    .find(".op-scrollable-menu"));
-                // let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
-                // let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
+
                 if (preprogrammedRangesDropdown.hasClass("show")) {
                     inputToTriggerDropdown.dropdown("toggle");
                 }
             }
 
-            // TODO: Need to modify here later
-            console.log(`input RANGE change event handler function`);
-            console.log(`before update`);
-            console.log(opus.selections[slug]);
-            console.log(opus.selections);
             let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             if (currentValue) {
-                // opus.selections[slug] = [currentValue];
                 if (opus.selections[slug]) {
                     opus.selections[slug][idx] = currentValue;
                 } else {
                     opus.selections[slug] = [currentValue];
                 }
             } else {
-                // delete opus.selections[slug];
                 if (opus.selections[slug]) {
                     opus.selections[slug][idx] = null;
                 } else {
                     opus.selections[slug] = [null];
                 }
             }
-            console.log(`after update`);
-            console.log(opus.selections[slug]);
+
             let newHash = o_hash.updateHash(false);
-            console.log(`after updateHash`);
-            console.log(newHash);
+
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
             Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
@@ -280,77 +267,25 @@ var o_search = {
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
-            console.log("change STRING");
             let inputName = $(this).attr("name");
             let slug = opus.getSlugOrDataWithoutCounter(inputName);
-            let css_class = $(this).attr("class").split(' ')[0]; // class will be STRING, min or max
 
-            // get values of all inputs
-            // let values = [];
-            // if (css_class == 'STRING') {
-            //     $("#widget__" + slug + ' input.STRING').each(function() {
-            //         if ($(this).val()) {
-            //             values.push($(this).val());
-            //         }
-            //     });
-
-                let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
-                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-                let currentValue = $(this).val().trim();
-                if (currentValue) {
-                    // opus.selections[slug] = [currentValue];
-                    if (opus.selections[slug]) {
-                        opus.selections[slug][idx] = currentValue;
-                    } else {
-                        opus.selections[slug] = [currentValue];
-                    }
+            let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
+            let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+            let currentValue = $(this).val().trim();
+            if (currentValue) {
+                if (opus.selections[slug]) {
+                    opus.selections[slug][idx] = currentValue;
                 } else {
-                    // delete opus.selections[slug];
-                    if (opus.selections[slug]) {
-                        opus.selections[slug][idx] = null;
-                    } else {
-                        opus.selections[slug] = [null];
-                    }
+                    opus.selections[slug] = [currentValue];
                 }
-            console.log(opus.selections);
-            console.log(opus.extras);
-            // }
-            // else {
-            //     // range query
-            //     let slugNoNum = slug.match(/(.*)[1|2]/)[1];
-            //     // min
-            //     values = [];
-            //     $("#widget__" + slugNoNum + '1 input.op-range-input-min', '#search').each(function() {
-            //         values[values.length] = $(this).val();
-            //     });
-            //     if (values.length == 0) {
-            //         $("#widget__" + slugNoNum + ' input.op-range-input-min', '#search').each(function() {
-            //             values[values.length] = $(this).val();
-            //         });
-            //     }
-            //
-            //     if (values.length && values[0]) {
-            //         opus.selections[slugNoNum + '1'] = values;
-            //     } else {
-            //         delete opus.selections[slugNoNum + '1'];
-            //     }
-            //     // max
-            //     values = [];
-            //     $("#widget__" + slugNoNum + '1 input.op-range-input-max', '#search').each(function() {
-            //         values[values.length] = $(this).val();
-            //     });
-            //     if (values.length == 0) {
-            //         $("#widget__" + slugNoNum + ' input.op-range-input-max', '#search').each(function() {
-            //             values[values.length] = $(this).val();
-            //         });
-            //     }
-            //
-            //     if (values.length && values[0]) {
-            //         opus.selections[slugNoNum + '2'] = values;
-            //     } else {
-            //         delete opus.selections[slugNoNum + '2'];
-            //     }
-            // }
+            } else {
+                if (opus.selections[slug]) {
+                    opus.selections[slug][idx] = null;
+                } else {
+                    opus.selections[slug] = [null];
+                }
+            }
 
             if (opus.lastSelections && opus.lastSelections[slug]) {
                 if (opus.lastSelections[slug][idx] === $(this).val().trim()) {
@@ -360,7 +295,6 @@ var o_search = {
 
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
-            console.log(newHash);
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
             Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
@@ -373,7 +307,6 @@ var o_search = {
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            console.log(url);
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
 
@@ -657,16 +590,13 @@ var o_search = {
         opus.waitingForAllNormalizedAPI = true;
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
-        console.log(`allNormalizedApiCall`);
-        console.log(url);
         return $.getJSON(url);
     },
 
     validateRangeInput: function(normalizedInputData, removeSpinner=false) {
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
-        console.log(`validateRangeInput`);
-        console.log(o_search.slugRangeInputValidValueFromLastSearch);
+
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
             let slugNoCounter = opus.getSlugOrDataWithoutCounter(eachSlug);
@@ -711,7 +641,7 @@ var o_search = {
                 }
             }
         });
-        console.log(opus.selections);
+
         if (opus.allInputsValid) {
             o_hash.updateHash();
         } else {

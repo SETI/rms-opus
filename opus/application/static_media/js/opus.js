@@ -185,21 +185,7 @@ var opus = {
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
-            console.log(`opus load before reload`);
-            console.log(`selections`);
-            console.log(selections);
-            console.log(`opus.selections`);
-            console.log(opus.selections);
-            console.log(`currentExtrasQ`);
-            console.log(currentExtrasQ);
-            console.log(`opusExtrasQ`);
-            console.log(opusExtrasQ);
-            console.log(`extras`);
-            console.log(extras);
-            console.log(`opus.extras`);
-            console.log(opus.extras);
-            console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
-            console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
+
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 opus.selections = selections;
@@ -230,9 +216,7 @@ var opus = {
         // avoid a recursive api call
         opus.lastSelections = selections;
         opus.lastExtras = extras;
-        console.log(`opus load before normalized input`);
-        console.log(selections);
-        console.log(extras);
+
         // Force the Select Metadata dialog to refresh the next time we go to the browse
         // tab in case the categories are changed by this search.
         o_browse.selectMetadataDrawn = false;
@@ -893,9 +877,7 @@ var opus = {
 
         // set these to the current hash on opus init
         [opus.lastSelections, opus.lastExtras] = o_hash.getSelectionsExtrasFromHash();
-        // console.log(`opusInitialization`);
-        // console.log(opus.lastSelections);
-        // console.log(opus.lastExtras);
+
         // Initialize opus.prefs from the URL hash
         o_hash.initFromHash();
 
