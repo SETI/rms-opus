@@ -143,8 +143,13 @@ def api_get_widget(request, **kwargs):
     extras = {}
 
     if request and request.GET is not None:
-        (selections, extras) = url_to_search_params(request.GET,
-                                                    allow_errors=True)
+        if form_type in settings.RANGE_FORM_TYPES or form_type == 'STRING':
+            (selections, extras) = url_to_search_params(request.GET,
+                                                        allow_errors=True,
+                                                        allow_empty=True)
+        else:
+            (selections, extras) = url_to_search_params(request.GET,
+                                                        allow_errors=True)
         if selections is None: # XXX Really should throw an error of some kind
             selections = {}
             extras = {}

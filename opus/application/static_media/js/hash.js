@@ -83,7 +83,9 @@ var o_hash = {
         if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
-
+        console.log(`updateHash`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         return hash.join("&");
     },
 

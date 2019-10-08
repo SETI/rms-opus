@@ -418,7 +418,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
     # because it returns a dict.
     search_params = list(request_get.items())
     used_slugs = []
-
+    print(f'@@@@@@@@ search_params: {search_params}')
     if 'order' not in [x[0] for x in search_params]:
         # If there's no order slug, then force one
         search_params.append(('order', settings.DEFAULT_SORT_ORDER))
@@ -651,10 +651,20 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 # If both values are None, then don't include this slug at all
                 if new_param_qualified_names[0] not in selections:
                     selections[new_param_qualified_names[0]] = []
-                selections[new_param_qualified_names[0]].append(new_values[0])
+
+                if allow_empty and clause_num_str:
+                    selections[new_param_qualified_names[0]].insert(clause_num-1, new_values[0])
+                else:
+                    selections[new_param_qualified_names[0]].append(new_values[0])
+
                 if new_param_qualified_names[1] not in selections:
                     selections[new_param_qualified_names[1]] = []
-                selections[new_param_qualified_names[1]].append(new_values[1])
+
+                if allow_empty and clause_num_str:
+                    selections[new_param_qualified_names[1]].insert(clause_num-1, new_values[1])
+                else:
+                    selections[new_param_qualified_names[1]].append(new_values[1])
+
                 # There was at least one value added - include the qtype
                 if param_qualified_name_no_num not in qtypes:
                     qtypes[param_qualified_name_no_num] = []
@@ -687,7 +697,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
     # log.debug('url_to_search_params: GET %s *** Selections %s *** Extras %s',
     #           request_get, str(selections), str(extras))
-
+    print(f'@@@@@@@@ selections: {selections}')
+    print(f'@@@@@@@@ extras: {extras}')
     return selections, extras
 
 
