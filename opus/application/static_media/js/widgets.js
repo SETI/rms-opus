@@ -140,6 +140,11 @@ var o_widgets = {
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
+            // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
+            if ($(`#widget__${slug} input`).hasClass("STRING")) {
+                $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
+            }
+
             // Update opus.selections & opus.extras
             let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
@@ -893,13 +898,17 @@ var o_widgets = {
                                 `data-widget="widget__${slug}" data-slug="${slug}">` +
                                 '<i class="far fa-trash-alt"></i></button></li>';
 
-
                 $(`#widget__${slug} .op-extra-search-inputs`).prepend(removeInputIcon);
 
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
                 $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+
+                // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input. 
+                if (widgetInputs.hasClass("STRING")) {
+                    $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
+                }
                 // $(`#widget__${slug} .widget-main`).append(addInputIcon);
             }
             ////// EXPERIMENT END //////

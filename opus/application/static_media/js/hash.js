@@ -266,14 +266,9 @@ var o_hash = {
             }
             // END EXPERIMENT
         });
-        console.log(`getSelectionsExtrasFromHash`);
-        console.log(`before align in getSelectionsExtrasFromHash`);
-        console.log(selections);
-        console.log(extras);
+
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
-        console.log(`after align in getSelectionsExtrasFromHash`);
-        console.log(selections);
-        console.log(extras);
+
         return [selections, extras];
     },
 
@@ -442,8 +437,8 @@ var o_hash = {
             }
         }
 
-        // When slug selections is empty but qtype-slug in extras exists, we will also
-        // make sure data in selections and qtype-slug are aligned.
+        // When slug in selections is empty but qtype-slug in extras exists, we will also
+        // make sure data in selections and extras are aligned.
         for(const qtypeSlug in extras) {
             if ((qtypeSlug.match(/qtype-(.*)/)[1] in selections ||
                  `${qtypeSlug.match(/qtype-(.*)/)[1]}1` in selections ||

@@ -135,8 +135,7 @@ var opus = {
         // inputs will also have null in opus.selections
         [opus.selections, opus.extras] = (o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                 opus.extras));
-        // console.log(opus.selections)
-        // console.log(opus.extras)
+
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
         // one of them is undefined.
