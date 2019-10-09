@@ -103,10 +103,10 @@ var o_widgets = {
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
+            let firstExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
             // Do not pass in true to clone(), otherwise event handlers will be attached
             // for multiple times and cause some weird behaviors.
-            let cloneInputs = lastExistingSetOfInputs.clone();
+            let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
             // Clear values in inputs
             cloneInputs.find("input").val("");
@@ -117,24 +117,32 @@ var o_widgets = {
                 cloneInputs.find("select").val(defaultQtypeVal);
             }
 
-            // let removeInputIcon = '<i class="fas fa-minus"></i>';
-            let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
-                            '<li class="op-remove-inputs">' +
-                            '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
-                            title="Delete this set of search inputs"' +
-                            `data-widget="widget__${slug}" data-slug="${slug}">` +
-                            '<i class="far fa-trash-alt"></i></button></li>';
 
-            cloneInputs.prepend(removeInputIcon);
+            let orLabel = '<ul class="op-or-labels">OR</ul>';
+            let removeInputIcon = '<li class="op-remove-inputs">' +
+                                  '<button type="button" title="Delete this set of search inputs" \
+                                  class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                  `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                  '<i class="far fa-trash-alt"></i></button></li>';
+            // If first input set doesn't have remove icon, we add remove icon to the first
+            // input set, and add or label & remove icon to cloned input set, else we only
+            // or label to cloned input set.
+            if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
+                firstExistingSetOfInputs.prepend(removeInputIcon);
+                cloneInputs.prepend(orLabel + removeInputIcon);
+            } else {
+                cloneInputs.prepend(orLabel);
+            }
+
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
             // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
-            if ($(`#widget__${slug} input`).hasClass("STRING")) {
-                $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
-            }
+            // if ($(`#widget__${slug} input`).hasClass("STRING")) {
+            //     $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
+            // }
 
             // Update opus.selections & opus.extras
             let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
@@ -170,10 +178,10 @@ var o_widgets = {
         $("#search").on("click", ".op-remove-inputs", function(e) {
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            let inputSetToBeDeleted = $(this).parent(".op-extra-search-inputs");
+            let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
 
-            let inputElement = $(this).parent(".op-extra-search-inputs").find("input");
-            let qtypeElement = $(this).parent(".op-extra-search-inputs").find("select");
+            let inputElement = $(this).parent(".op-search-inputs-set").find("input");
+            let qtypeElement = $(this).parent(".op-search-inputs-set").find("select");
             let slugNameFromInput = inputElement.attr("name");
             let trailingCounterString = opus.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
@@ -202,7 +210,23 @@ var o_widgets = {
             }
 
             inputSetToBeDeleted.remove();
+
+            // Remove OR label and .op-extra-search-inputs if they exist in the first input set
+            let firstExistingSetOfInputs = $(`#widget__${slug} .op-search-inputs-set`).first();
+            firstExistingSetOfInputs.removeClass("op-extra-search-inputs");
+            if (firstExistingSetOfInputs.find(".op-or-labels").length !== 0) {
+                firstExistingSetOfInputs.find(".op-or-labels").remove();
+            }
+
+            // Remove the remove icon if we only have one input set left.
+            let numnerOfInputSet = $(`#widget__${slug} .op-search-inputs-set`).length;
+            if (numnerOfInputSet === 1) {
+                $(`#widget__${slug} .op-search-inputs-set .op-or-labels`).remove();
+                $(`#widget__${slug} .op-search-inputs-set .op-remove-inputs`).remove();
+            }
+
             o_widgets.renumberInputsAttributes(slug);
+
             // Make sure "+/OR" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
@@ -865,14 +889,18 @@ var o_widgets = {
                                `data-widget="widget__${slug}" data-slug="${slug}">` +
                                '<i class="fas fa-plus">/OR</i></button></li>';
 
-                let removeInputIcon = '<ul class="op-or-labels">OR</ul>' +
-                                '<li class="op-remove-inputs">' +
-                                '<button type="button" class="p-0 btn btn-small btn-link op-remove-inputs-btn" \
-                                title="Delete this set of search inputs"' +
-                                `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                '<i class="far fa-trash-alt"></i></button></li>';
+                let orLabel = '<ul class="op-or-labels">OR</ul>';
+                let removeInputIcon = '<li class="op-remove-inputs">' +
+                                      '<button type="button" title="Delete this set of search inputs" \
+                                      class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                      `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                      '<i class="far fa-trash-alt"></i></button></li>';
 
-                $(`#widget__${slug} .op-extra-search-inputs`).prepend(removeInputIcon);
+                let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+                if (numberOfInputSets > 1) {
+                    $(`#widget__${slug} .op-search-inputs-set`).first().prepend(removeInputIcon);
+                }
+                $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel + removeInputIcon);
 
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -880,9 +908,9 @@ var o_widgets = {
                 $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
                 // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
-                if (widgetInputs.hasClass("STRING")) {
-                    $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
-                }
+                // if (widgetInputs.hasClass("STRING")) {
+                //     $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
+                // }
             }
 
             opus.widgetsDrawn.unshift(slug);
