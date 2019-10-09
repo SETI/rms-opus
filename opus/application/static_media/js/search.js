@@ -202,7 +202,6 @@ var o_search = {
                         let minVal = $(singleRangeData).data("min");
                         let maxVal = $(singleRangeData).data("max");
                         let widgetId = $(singleRangeData).data("widget");
-                        // let minInputSlug = $(singleRangeData).parent(".container").data("mininput");
                         let minInputSlug = $(singleRangeData).parent(".container").attr("data-mininput");
 
                         // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
@@ -415,7 +414,6 @@ var o_search = {
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
             console.log($(e.target))
             let collapsibleContainerId = $(e.target).attr("id");
-            // let inputName = $(e.target).data("mininput");
             let inputName = $(e.target).attr("data-mininput");
             let widgetId = $(e.target).data("widget");
             console.log(`In show.bs.collapse container id: ${collapsibleContainerId}`);
@@ -477,7 +475,6 @@ var o_search = {
         }
 
         for (const category of preprogrammedRangesInfo) {
-            // let collapsibleContainerId = $(category).data("category");
             let collapsibleContainerId = $(category).attr("data-category");
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
             o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
