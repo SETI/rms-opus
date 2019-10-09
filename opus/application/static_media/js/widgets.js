@@ -118,7 +118,12 @@ var o_widgets = {
             }
 
 
-            let orLabel = '<ul class="op-or-labels">OR</ul>';
+            let orLabel = '<ul class="op-or-labels text-secondary">' +
+                          '<i class="fas fa-angle-double-left"></i>' +
+                          // '<hr class="op-or-label-divider">' +
+                          '&nbsp;OR&nbsp;' +
+                          // '<hr class="op-or-label-divider"></ul>';
+                          '<i class="fas fa-angle-double-right"></i></ul>';
             let removeInputIcon = '<li class="op-remove-inputs">' +
                                   '<button type="button" title="Delete this set of search inputs" \
                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
@@ -889,7 +894,12 @@ var o_widgets = {
                                `data-widget="widget__${slug}" data-slug="${slug}">` +
                                '<i class="fas fa-plus">/OR</i></button></li>';
 
-                let orLabel = '<ul class="op-or-labels">OR</ul>';
+                let orLabel = '<ul class="op-or-labels text-secondary">' +
+                              '<i class="fas fa-angle-double-left"></i>' +
+                              // '<hr class="op-or-label-divider">' +
+                              '&nbsp;OR&nbsp;' +
+                              // '<hr class="op-or-label-divider"></ul>';
+                              '<i class="fas fa-angle-double-right"></i></ul>';
                 let removeInputIcon = '<li class="op-remove-inputs">' +
                                       '<button type="button" title="Delete this set of search inputs" \
                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +

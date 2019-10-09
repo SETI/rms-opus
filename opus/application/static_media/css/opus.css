@@ -2162,5 +2162,16 @@ we have an invalid search) */
 .op-or-labels {
     position: relative;
     left: 30%;
-    /* font-weight: bold; */
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* Styling for horizontal divider between OR label when there are multiple
+searches */
+.op-or-label-divider {
+    border: 1px solid black;
+    margin: 0px;
+    display: inline-block;
+    width: 10%;
+    vertical-align: middle;
 }
