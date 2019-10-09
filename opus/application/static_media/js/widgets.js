@@ -85,7 +85,8 @@ var o_widgets = {
             let minVal = $(e.currentTarget).data("min");
             let maxVal = $(e.currentTarget).data("max");
             let widgetId = $(e.currentTarget).data("widget");
-            let minInputSlug = $(e.currentTarget).parent(".container").data("mininput");
+            // let minInputSlug = $(e.currentTarget).parent(".container").data("mininput");
+            let minInputSlug = $(e.currentTarget).parent(".container").attr("data-mininput");
 
             // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
@@ -268,8 +269,6 @@ var o_widgets = {
 
         let inputCounter = opus.getSlugOrDataTrailingCounterStr(minInputName);
         let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-        // let slug = opus.getSlugOrDataWithoutCounter(minInputName);
-        // let slugOrderNum = opus.getSlugOrDataTrailingCounterStr(minInputName);
 
         if (minVal) {
             minInput.val(minVal);
@@ -939,7 +938,8 @@ var o_widgets = {
                         let correspondingMinInputName = minInputNamesArray.shift();
 
                         for (const category of rangesDropdownCategories) {
-                            let originalDataCategory = $(category).data("category");
+                            // let originalDataCategory = $(category).data("category");
+                            let originalDataCategory = $(category).attr("data-category");
                             originalDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
                             let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
@@ -960,7 +960,8 @@ var o_widgets = {
                     let rangesDropdownCategories = preprogrammedRangesInfo.find("li");
 
                     for (const category of rangesDropdownCategories) {
-                        let originalDataCategory = $(category).data("category");
+                        // let originalDataCategory = $(category).data("category");
+                        let originalDataCategory = $(category).attr("data-category");
                         let updatedDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
 
                         o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
@@ -1026,7 +1027,7 @@ var o_widgets = {
          * will make sure the collapsible can work properly and is correctly
          * connected to corresponding input.
          */
-        $(rangesCategory).attr("data-category", updatedDataCategory);
+         $(rangesCategory).attr("data-category", updatedDataCategory);
         // This is used to connected each customized ranges dropdown to its
         // corresponding .op-range-input-min
         $(rangesCategory).attr("data-mininput", correspondingMinInput);
@@ -1054,7 +1055,8 @@ var o_widgets = {
          */
         let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
         for (const category of preprogrammedRangesInfo) {
-            let collapsibleContainerId = $(category).data("category");
+            // let collapsibleContainerId = $(category).data("category");
+            let collapsibleContainerId = $(category).attr("data-category");
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
 
             let maxNumOfDigitInMinDataFraction = 0;

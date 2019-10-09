@@ -202,7 +202,8 @@ var o_search = {
                         let minVal = $(singleRangeData).data("min");
                         let maxVal = $(singleRangeData).data("max");
                         let widgetId = $(singleRangeData).data("widget");
-                        let minInputSlug = $(singleRangeData).parent(".container").data("mininput");
+                        // let minInputSlug = $(singleRangeData).parent(".container").data("mininput");
+                        let minInputSlug = $(singleRangeData).parent(".container").attr("data-mininput");
 
                         // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
                         if ($(`#${widgetId} input.RANGE`).length !== 0) {
@@ -412,9 +413,15 @@ var o_search = {
         // When there is no matched characters of ranges names and the category is collapsed,
         // the empty category will not be expanded when user clicks it.
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
+            console.log($(e.target))
             let collapsibleContainerId = $(e.target).attr("id");
-            let inputName = $(e.target).data("mininput");
+            // let inputName = $(e.target).data("mininput");
+            let inputName = $(e.target).attr("data-mininput");
             let widgetId = $(e.target).data("widget");
+            console.log(`In show.bs.collapse container id: ${collapsibleContainerId}`);
+            console.log(`inputName: ${inputName}`);
+            console.log(`inputName: ${$(e.target).attr("data-mininput")}`);
+            console.log($(`#${widgetId} input.op-range-input-min[name="${inputName}"]`));
             let currentIuputValue = $(`#${widgetId} input.op-range-input-min[name="${inputName}"]`).val().trim();
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();
