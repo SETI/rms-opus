@@ -1424,7 +1424,8 @@ panel are properly separated */
 
 /* Reduce left space in each widget (from 50px to 10px) */
 #op-search-widgets ul {
-    padding-left: 10px;
+    /* padding-left: 10px; */
+    padding-left: 1%;
 }
 
 #op-search-widgets li {
