@@ -1645,7 +1645,8 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
-                galleryHtml += `<div class="op-thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
+                // DEBBY
+                galleryHtml += `<div class="op-thumbnail-container ${(item.cart_state !== false ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
                 galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
@@ -1657,14 +1658,16 @@ var o_browse = {
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use CTRL for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
+                // DEBBY
+                let buttonInfo = o_browse.cartButtonInfo((item.cart_state !== false ? 'add' : 'remove'));
                 galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 galleryHtml +=     '<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
 
                 // table row
-                let checked = item.in_cart ? " checked" : "";
+                // DEBBY
+                let checked = item.cart_state !== false ? " checked" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
                 let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="Toggle cart\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
