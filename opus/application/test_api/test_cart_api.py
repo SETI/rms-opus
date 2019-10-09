@@ -492,6 +492,23 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_remove_duplicate_recyclebin1(self):
+        "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456&recyclebin=0'
+        expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_remove_duplicate_multi(self):
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download multi"
         url = '/opus/__cart/reset.json'
@@ -513,6 +530,18 @@ class ApiCartTests(TestCase, ApiTestHelper):
         # Removing an unknown opusid doesn't throw an error
         url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_irx&reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_remove_bad_recyclebin1(self):
+        "[test_cart_api.py] /__cart/remove: bad OPUSID no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        # Removing an unknown opusid throws an error with recyclebin
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_irx&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: One or more OPUS_IDs not found; nothing removed from cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
@@ -584,6 +613,38 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_remove_mixture_recyclebin1(self):
+        "[test_cart_api.py] /__cart/remove: mixture no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=vg-iss-2-s-c4360010,co-vims-v1484528864_ir,go-ssi-c0347174400&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 2, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=vg-iss-2-s-c4360010&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 2, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=nh-mvic-mpf_000526016x&reqno=456'
+        expected = {'recycled_count': 2, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/add.json?opusid=vg-iss-2-s-c4360010&reqno=456'
+        expected = {'recycled_count': 1, 'count': 2, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=go-ssi-c0347174400&reqno=456'
+        expected = {'recycled_count': 1, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 1, 'count': 1, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_remove_mixture_multi(self):
         "[test_cart_api.py] /__cart/remove: mixture no download multi"
         url = '/opus/__cart/reset.json'
@@ -652,6 +713,20 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 789}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_remove_one_download_recyclebin1(self):
+        "[test_cart_api.py] /__cart/remove: good OPUSID with download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-iss-n1460961026&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-iss-n1460961026&reqno=123456&download=1&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 123456, "total_download_count": 0, "total_download_size": 0, "total_download_size_pretty": "0B", "product_cat_list": []}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=789'
+        expected = {'recycled_count': 1, 'count': 0, 'reqno': 789}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_add_two_remove_one_download(self):
         "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download"
         url = '/opus/__cart/reset.json'
@@ -667,6 +742,23 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected, ignore='tooltip')
         url = '/opus/__cart/status.json?reqno=789'
         expected = {'recycled_count': 0, 'count': 1, 'reqno': 789}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_add_two_remove_one_download_recyclebin1(self):
+        "[test_cart_api.py] /__cart/remove: two OPUSIDs remove one with download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-iss-n1460960868&download=0&reqno=101010100'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 101010100}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/add.json?opusid=co-iss-n1460960653&download=&reqno=101010101'
+        expected = {'error': False, 'recycled_count': 0, 'count': 2, 'reqno': 101010101}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/remove.json?opusid=co-iss-n1460960868&download=1&reqno=101010102&recyclebin=1'
+        expected = {"total_download_count": 21, "total_download_size": 13892943, "total_download_size_pretty": "13M", "product_cat_list": [["Metadata Products", [{"slug_name": "inventory", "tooltip": "Text files ([volume]_inventory.tab) that list every planet and moon inside the instrument field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.", "product_type": "Target Body Inventory", "product_count": 1, "download_count": 2, "download_size": 385596, "download_size_pretty": "376K"}, {"slug_name": "planet-geometry", "tooltip": "Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.", "product_type": "Planet Geometry Index", "product_count": 1, "download_count": 2, "download_size": 1364814, "download_size_pretty": "1M"}, {"slug_name": "moon-geometry", "tooltip": "Text files ([volume]_moon_summary.tab) that list the values of various surface geometry metadata for every moon in the field of view for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.", "product_type": "Moon Geometry Index", "product_count": 1, "download_count": 2, "download_size": 4111515, "download_size_pretty": "3M"}, {"slug_name": "ring-geometry", "tooltip": "Text files ([volume]_ring_summary.tab) that list the values of various ring plane intercept geometry metadata for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files.", "product_type": "Ring Geometry Index", "product_count": 1, "download_count": 2, "download_size": 2229982, "download_size_pretty": "2M"}]], ["Browse Products", [{"slug_name": "browse-thumb", "tooltip": "Thumbnail-size (often 100x100) non-linearly stretched preview JPEGs (*_thumb.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.", "product_type": "Browse Image (thumbnail)", "product_count": 1, "download_count": 1, "download_size": 995, "download_size_pretty": "995B"}, {"slug_name": "browse-small", "tooltip": "Small-size (often 256x256) non-linearly stretched preview JPEGs (*_small.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.", "product_type": "Browse Image (small)", "product_count": 1, "download_count": 1, "download_size": 3012, "download_size_pretty": "2K"}, {"slug_name": "browse-medium", "tooltip": "Medium-size (often 512x512) non-linearly stretched preview JPEGs (*_med.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are colored according to the filter used. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.", "product_type": "Browse Image (medium)", "product_count": 1, "download_count": 1, "download_size": 7892, "download_size_pretty": "7K"}, {"slug_name": "browse-full", "tooltip": "Full-size non-linearly stretched preview JPEGs (*_full.jpg) of observations created by the Ring-Moon Systems Node. Previews of images are not colored. Previews from non-imaging instruments attempt to represent the contents of observations in a visual way. Previews are not appropriate for scientific use.", "product_type": "Browse Image (full-size)", "product_count": 1, "download_count": 1, "download_size": 215079, "download_size_pretty": "210K"}]], ["Cassini ISS-Specific Products", [{"slug_name": "coiss-raw", "tooltip": "Raw image files (*.IMG) for Cassini ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are tlmtab.fmt, which describes the format of the VICAR binary header, and prefix.fmt, which describes the format of the binary prefix at the beginning of each line of imaging data.", "product_type": "Raw image", "product_count": 1, "download_count": 4, "download_size": 1104427, "download_size_pretty": "1M"}, {"slug_name": "coiss-calib", "tooltip": "Calibrated image files (*_CALIB.IMG) for Cassini ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the CISSCAL pipeline. They are in units of I/F. Associated labels (*.LBL) are text files that contain information about the image and its calibration.", "product_type": "Calibrated image", "product_count": 1, "download_count": 2, "download_size": 4206293, "download_size_pretty": "4M"}, {"slug_name": "coiss-thumb", "tooltip": "Thumbnail-size (50x50) non-linearly stretched preview JPEGs (*.jpeg_small) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.", "product_type": "Extra preview (thumbnail)", "product_count": 1, "download_count": 1, "download_size": 564, "download_size_pretty": "564B"}, {"slug_name": "coiss-medium", "tooltip": "Medium-size (256x256) non-linearly stretched preview JPEGs (*.jpeg) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.", "product_type": "Extra preview (medium)", "product_count": 1, "download_count": 1, "download_size": 2849, "download_size_pretty": "2K"}, {"slug_name": "coiss-full", "tooltip": "Full-size non-linearly stretched preview PNGs or TIFFs (*.png or *.tiff) of observations, supplied by the Cassini Imaging team. The previews are not colored and the stretch may be different from the browse images produced by the Ring-Moon Systems Node.", "product_type": "Extra preview (full)", "product_count": 1, "download_count": 1, "download_size": 259925, "download_size_pretty": "253K"}]]], 'error': False, 'recycled_count': 1, 'count': 1, 'reqno': 101010102}
+        self._run_json_equal(url, expected, ignore='tooltip')
+        url = '/opus/__cart/status.json?reqno=789'
+        expected = {'recycled_count': 1, 'count': 1, 'reqno': 789}
         self._run_json_equal(url, expected)
 
 

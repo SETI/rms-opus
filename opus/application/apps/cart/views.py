@@ -242,7 +242,7 @@ def api_edit_cart(request, action, **kwargs):
         Not in cart                             No effect
         In cart recycled=0                      Set recycled=1
         In cart recycled=1                      No effect
-        Bad opus_id                             No effect
+        Bad opus_id                             Error
     """
     api_code = enter_api_call('api_edit_cart', request)
 
@@ -560,6 +560,7 @@ def _get_download_info(product_types, session_id):
 
     The resulting totals are limited to the given product_types.
     ['all'] means return all product_types.
+    Items in the recycle bin are ignored.
 
     Returns dict containing:
         'total_download_count':       Total number of unique files
@@ -647,6 +648,7 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
+    sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
     sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000'
     sql += ') AS '+q('t1')+' '
     # End of nested SELECT #2
@@ -662,6 +664,7 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
+    sql += 'AND '+q('cart')+'.'+q('recycled')+'=0 '
     sql += 'AND '+q('obs_files')+'.'+q('short_name')+'='
     sql += q('t2')+'.'+q('short_name')+' '
     sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
