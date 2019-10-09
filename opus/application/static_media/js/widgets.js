@@ -266,23 +266,44 @@ var o_widgets = {
             slug = minInputName;
         }
 
+        let inputCounter = opus.getSlugOrDataTrailingCounterStr(minInputName);
+        let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+        // let slug = opus.getSlugOrDataWithoutCounter(minInputName);
+        // let slugOrderNum = opus.getSlugOrDataTrailingCounterStr(minInputName);
+
         if (minVal) {
             minInput.val(minVal);
-            // TODO: need to modify later
-            opus.selections[slug] = [minVal];
+            if (opus.selections[slug]) {
+                opus.selections[slug][idx] = minVal;
+            } else {
+                opus.selections[slug] = [minVal];
+            }
         } else {
             minInput.val("");
-            delete opus.selections[slug];
+            if (opus.selections[slug]) {
+                opus.selections[slug][idx] = null;
+            } else {
+                opus.selections[slug] = [null];
+            }
         }
 
         slug = slugName + "2" + slugOrderNum;
         let maxInput = $(`#${widgetId} input.op-range-input-max[name="${slug}"]`);
+        slug = slugName + "2";
         if (maxVal) {
             maxInput.val(maxVal);
-            opus.selections[slug] = [maxVal];
+            if (opus.selections[slug]) {
+                opus.selections[slug][idx] = maxVal;
+            } else {
+                opus.selections[slug] = [maxVal];
+            }
         } else {
             maxInput.val("");
-            delete opus.selections[slug];
+            if (opus.selections[slug]) {
+                opus.selections[slug][idx] = null;
+            } else {
+                opus.selections[slug] = [null];
+            }
         }
     },
 
