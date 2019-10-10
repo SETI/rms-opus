@@ -422,7 +422,7 @@ var o_browse = {
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
-            let opusId = $(this).attr("data-id");
+            let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
 
             switch ($(this).data("action")) {
