@@ -71,30 +71,15 @@ var o_hash = {
 
                         if (value[trailingCounter-1] !== null ||
                             opus.selections[anotherKey][trailingCounter-1] !== null) {
-                            if (qtypeSlug in opus.extras) {
-                                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
-                                let newQtype = ((numberOfInputSets === 1) ?
-                                                qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
-                                if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
-                                    hash.push(newQtype + "=" + encodedExtraValues[trailingCounter-1]);
-                                }
-                            }
+                            o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                           trailingCounter);
                         } else {
                             trailingCounterWithNullVal.push(trailingCounter);
                         }
                     }
 
                     for (const counter of trailingCounterWithNullVal) {
-                        let trailingCounterString = (`${counter}`.length === 1 ?
-                                                     `0${counter}` : `${counter}`);
-                        if (qtypeSlug in opus.extras) {
-                            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
-                            let newQtype = ((numberOfInputSets === 1) ?
-                                            qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
-                            if (opus.extras[qtypeSlug][counter-1] !== null) {
-                                hash.push(newQtype + "=" + encodedExtraValues[counter-1]);
-                            }
-                        }
+                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets, counter);
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[key] = true;
@@ -108,29 +93,14 @@ var o_hash = {
                         }
 
                         if (value[trailingCounter-1] !== null) {
-                            if ((qtypeSlug in opus.extras)) {
-                                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
-                                let newQtype = ((numberOfInputSets === 1) ?
-                                                qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
-                                if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
-                                    hash.push(newQtype + "=" + encodedExtraValues[trailingCounter-1]);
-                                }
-                            }
+                            o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                           trailingCounter);
                         } else {
                             trailingCounterWithNullVal.push(trailingCounter);
                         }
                     }
                     for (const counter of trailingCounterWithNullVal) {
-                        let trailingCounterString = (`${counter}`.length === 1 ?
-                                                     `0${counter}` : `${counter}`);
-                        if (qtypeSlug in opus.extras) {
-                            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
-                            let newQtype = ((numberOfInputSets === 1) ?
-                                            qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
-                            if (opus.extras[qtypeSlug][counter-1] !== null) {
-                                hash.push(newQtype + "=" + encodedExtraValues[counter-1]);
-                            }
-                        }
+                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets, counter);
                     }
                 }
             }
@@ -170,6 +140,25 @@ var o_hash = {
         }
 
         return hash.join("&");
+    },
+
+    updateURLHashFromExtras: function(hash, qtypeInExtras, numberOfInputSets, counter) {
+        /**
+         * Update the URL hash with data from opus.extras if the passed-in slug
+         * (qtypeInExtras) exists in opus.extras. The function will take in
+         * numberOfInputSets & counter to determine if trailingCounterString should
+         * be added to the final slug in URL hash.
+         */
+        let trailingCounterString = (`${counter}`.length === 1 ?
+                                     `0${counter}` : `${counter}`);
+        if (qtypeInExtras in opus.extras) {
+            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
+            let qtypeInURL = ((numberOfInputSets === 1) ?
+                            qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
+            if (opus.extras[qtypeInExtras][counter-1] !== null) {
+                hash.push(qtypeInURL + "=" + encodedExtraValues[counter-1]);
+            }
+        }
     },
 
     encodeSlugValues: function(slugValueArray) {
