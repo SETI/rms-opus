@@ -445,8 +445,8 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
                      // need to not return false to allow the contextmenu to work
-                     // unless... context menu was used with shift or ctrl key...
-                    retValue = (e.shiftKey || (e.ctrlKey || e.metaKey)) ? false : undefined;
+                     // unless... context menu was used with ctrl key...
+                    retValue = (e.ctrlKey || e.metaKey) ? false : undefined;
                     break;
 
                 case "downloadCSV":
@@ -480,9 +480,9 @@ var o_browse = {
         });
 
         $(document).on("keydown click", function(e) {
-            // don't close the mini-menu on the shift/ctrl key in case the user
+            // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
-           if (!e.shiftKey && !(e.ctrlKey || e.metaKey)) {
+           if (!(e.ctrlKey || e.metaKey)) {
                 o_browse.hideMenu();
             }
 
@@ -1188,10 +1188,7 @@ var o_browse = {
             // open detail view in new browser tab
             e.preventDefault();
             window.open(url, "_blank");
-        } else if (e.shiftKey) {
-            // open detail view in new window
-            window.open(url);
-        } else {
+        }  else {
             opus.prefs.detail = opusId;
             opus.changeTab("detail");
             $('a[href="#detail"]').tab("show");
