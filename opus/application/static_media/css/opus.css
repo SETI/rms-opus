@@ -2161,7 +2161,8 @@ we have an invalid search) */
 /* Styling for the text between each set of inputs in a widget */
 .op-or-labels {
     position: relative;
-    left: 30%;
+    /* left: 30%; */
+    left: 23%;
     font-style: italic;
     font-weight: bold;
 }
@@ -2169,7 +2170,7 @@ we have an invalid search) */
 /* Styling for horizontal divider between OR label when there are multiple
 searches */
 .op-or-label-divider {
-    border: 1px solid black;
+    border: 1px solid;
     margin: 0px;
     display: inline-block;
     width: 10%;

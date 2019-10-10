@@ -697,8 +697,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
     # log.debug('url_to_search_params: GET %s *** Selections %s *** Extras %s',
     #           request_get, str(selections), str(extras))
-    print(f'@@@@@@@@ selections: {selections}')
-    print(f'@@@@@@@@ extras: {extras}')
+
     return selections, extras
 
 

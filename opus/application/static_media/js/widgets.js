@@ -98,7 +98,7 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
 
-        // Create a new set of inputs when clicking the "+/OR" button in a widget.
+        // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
@@ -119,11 +119,11 @@ var o_widgets = {
 
 
             let orLabel = '<ul class="op-or-labels text-secondary">' +
-                          '<i class="fas fa-angle-double-left"></i>' +
-                          // '<hr class="op-or-label-divider">' +
+                          // '<i class="fas fa-angle-double-left"></i>' +
+                          '<hr class="op-or-label-divider">' +
                           '&nbsp;OR&nbsp;' +
-                          // '<hr class="op-or-label-divider"></ul>';
-                          '<i class="fas fa-angle-double-right"></i></ul>';
+                          '<hr class="op-or-label-divider"></ul>';
+                          // '<i class="fas fa-angle-double-right"></i></ul>';
             let removeInputIcon = '<li class="op-remove-inputs">' +
                                   '<button type="button" title="Delete this set of search inputs" \
                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
@@ -141,7 +141,7 @@ var o_widgets = {
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
-            // Make sure "+/OR" is attached to the right of last input set.
+            // Make sure "+ (OR)" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
             // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
@@ -232,7 +232,7 @@ var o_widgets = {
 
             o_widgets.renumberInputsAttributes(slug);
 
-            // Make sure "+/OR" is attached to the right of last input set.
+            // Make sure "+ (OR)" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
 
             o_hash.updateHash();
@@ -892,14 +892,14 @@ var o_widgets = {
                                '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
                                title="Add a new set of search inputs"' +
                                `data-widget="widget__${slug}" data-slug="${slug}">` +
-                               '<i class="fas fa-plus">/OR</i></button></li>';
+                               '<i class="fas fa-plus">&nbsp;(OR)</i></button></li>';
 
                 let orLabel = '<ul class="op-or-labels text-secondary">' +
-                              '<i class="fas fa-angle-double-left"></i>' +
-                              // '<hr class="op-or-label-divider">' +
+                              // '<i class="fas fa-angle-double-left"></i>' +
+                              '<hr class="op-or-label-divider">' +
                               '&nbsp;OR&nbsp;' +
-                              // '<hr class="op-or-label-divider"></ul>';
-                              '<i class="fas fa-angle-double-right"></i></ul>';
+                              '<hr class="op-or-label-divider"></ul>';
+                              // '<i class="fas fa-angle-double-right"></i></ul>';
                 let removeInputIcon = '<li class="op-remove-inputs">' +
                                       '<button type="button" title="Delete this set of search inputs" \
                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +

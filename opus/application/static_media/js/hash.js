@@ -22,34 +22,115 @@ var o_hash = {
          * Convert data from opus.selections and opus.extras into URL hash string
          */
         let hash = [];
+        console.log(`updateHash`);
+        console.log(opus.selections);
+        console.log(opus.extras);
+        let visited = {};
         $.each(opus.selections, function(key, value) {
+            if (visited[key]) {
+                return; // continue
+            }
+
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
+                let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
                 let qtypeSlug = `qtype-${slugNoNum}`;
-
+                let trailingCounterWithNullVal = [];
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding before pushing
                 // into hash array.
-                if (value.length > 1 && ((`${qtypeSlug}` in opus.extras ||
-                    `${qtypeSlug}1` in opus.extras || `${qtypeSlug}2` in opus.extras) ||
-                    key.match(/.*(1|2)/))) {
-                    let numberOfInputs = encodedSelectionValues.length;
-                    for(let trailingCounter = 1; trailingCounter <= numberOfInputs; trailingCounter++) {
+                if (key.match(/.*(1|2)/)) { // RANGE inputs
+                    let anotherKey = key.match(/.*1/) ? `${slugNoNum}2` : `${slugNoNum}1`;
+                    let anotherEncodedSelectionValues = o_hash.encodeSlugValues(opus.selections[anotherKey]);
+                    visited[key] = true;
+                    visited[anotherKey] = true;
+
+                    for(let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
-                        let newKey = `${key}_${trailingCounterString}`;
+                        let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
+                        let anotherNewKey = ((numberOfInputSets === 1) ?
+                                             anotherKey : `${anotherKey}_${trailingCounterString}`);
+
+                        if (key.match(/.*1/)) {
+                            if (value[trailingCounter-1] !== null) {
+                                hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
+                            }
+                            if (opus.selections[anotherKey][trailingCounter-1] !== null) {
+                                hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
+                            }
+                        } else {
+                            if (opus.selections[anotherKey][trailingCounter-1] !== null) {
+                                hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
+                            }
+                            if (value[trailingCounter-1] !== null) {
+                                hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
+                            }
+                        }
+
+                        if (value[trailingCounter-1] !== null ||
+                            opus.selections[anotherKey][trailingCounter-1] !== null) {
+                            if (qtypeSlug in opus.extras) {
+                                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                                let newQtype = ((numberOfInputSets === 1) ?
+                                                qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
+                                if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                    hash.push(newQtype + "=" + encodedExtraValues[trailingCounter-1]);
+                                }
+                            }
+                        } else {
+                            trailingCounterWithNullVal.push(trailingCounter);
+                        }
+                    }
+
+                    for (const counter of trailingCounterWithNullVal) {
+                        let trailingCounterString = (`${counter}`.length === 1 ?
+                                                     `0${counter}` : `${counter}`);
+                        if (qtypeSlug in opus.extras) {
+                            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            let newQtype = ((numberOfInputSets === 1) ?
+                                            qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
+                            if (opus.extras[qtypeSlug][counter-1] !== null) {
+                                hash.push(newQtype + "=" + encodedExtraValues[counter-1]);
+                            }
+                        }
+                    }
+                } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
+                    visited[key] = true;
+                    for(let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
+                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
                             hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
+
+                        if (value[trailingCounter-1] !== null) {
+                            if ((qtypeSlug in opus.extras)) {
+                                let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                                let newQtype = ((numberOfInputSets === 1) ?
+                                                qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
+                                if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                    hash.push(newQtype + "=" + encodedExtraValues[trailingCounter-1]);
+                                }
+                            }
+                        } else {
+                            trailingCounterWithNullVal.push(trailingCounter);
+                        }
                     }
-                } else {
-                    // Now we have null in opus.selections for RANGE & STRING inputs (to have
-                    // the same data array length for inputs in the same widget), but we don't
-                    // want null to show up in URL hash.
-                    if (value[0] !== null) {
-                        hash.push(key + "=" + encodedSelectionValues.join(","));
+                    for (const counter of trailingCounterWithNullVal) {
+                        let trailingCounterString = (`${counter}`.length === 1 ?
+                                                     `0${counter}` : `${counter}`);
+                        if (qtypeSlug in opus.extras) {
+                            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            let newQtype = ((numberOfInputSets === 1) ?
+                                            qtypeSlug : `${qtypeSlug}_${trailingCounterString}`);
+                            if (opus.extras[qtypeSlug][counter-1] !== null) {
+                                hash.push(newQtype + "=" + encodedExtraValues[counter-1]);
+                            }
+                        }
                     }
                 }
             }
@@ -67,11 +148,15 @@ var o_hash = {
                         let newKey = `${key}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
-                            hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
+                                hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            }
                         }
                     }
                 } else {
-                    hash.push(key + "=" + encodedExtraValues.join(","));
+                    if (!hash.includes(key + "=" + encodedExtraValues.join(","))) {
+                        hash.push(key + "=" + encodedExtraValues.join(","));
+                    }
                 }
             }
         });
@@ -79,13 +164,11 @@ var o_hash = {
         $.each(opus.prefs, function(key, value) {
             hash.push(key + "=" + value);
         });
-
+        console.log(hash);
         if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
-        console.log(`updateHash`);
-        console.log(opus.selections);
-        console.log(opus.extras);
+
         return hash.join("&");
     },
 

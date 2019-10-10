@@ -613,6 +613,8 @@ var opus = {
             // Encode and update new URL in browser:
             newURLHash = o_hash.encodeHashArray(newURLHash);
             newURLHash = newURLHash.join("&");
+            console.log(`normalized url: `);
+            console.log(newURLHash);
             window.location.hash = "/" + newURLHash;
 
             // Perform rest of initialization process
