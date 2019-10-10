@@ -239,6 +239,9 @@ var o_browse = {
                 case "info":  // detail page
                     o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
+                    if (e.which === 3) {    // right mouse click
+                        retValue = undefined; // need to use the default handler to allow the context menu to work
+                    }
                     break;
 
                 case "cart":   // add to cart
