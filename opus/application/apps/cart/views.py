@@ -216,7 +216,7 @@ def api_edit_cart(request, action, **kwargs):
             (?P<action>add|remove|addrange|removerange|addall).json
     Arguments: opusid=<ID>                  (add, remove)
                range=<OPUS_ID>,<OPUS_ID>    (addrange, removerange)
-               recyclebin=0/1               (remove, removerange)
+               recyclebin=0/1               (remove, removerange, addall)
                reqno=<N>
                [download=<N>]
 
@@ -226,11 +226,23 @@ def api_edit_cart(request, action, **kwargs):
 
     State transitions:
 
-    add/addrange/addall (recyclebin option ignored):
+    add/addrange (recyclebin option ignored):
         Not previously in cart                  Add to cart recycled=0
         Previously in cart recycled=0           No effect
         Previously in cart recycled=1           Set recycled=0
         Bad opus_id                             Error
+
+    addall recyclebin=0 (this means to take "all" from browse results or cart
+                         depending on "view=")
+        Not previously in cart                  Add to cart recycled=0
+        Previously in cart recycled=0           No effect
+        Previously in cart recycled=1           Set recycled=0
+
+    addall recyclebin=1 (this means to take "all" from browse results or
+                         cart+recycle bin depending on "view=")
+        Not previously in cart                  Add to cart recycled=0
+        Previously in cart recycled=0           No effect
+        Previously in cart recycled=1           Set recycled=0
 
     remove/removerange recyclebin=0
         Not in cart                             No effect
@@ -243,6 +255,17 @@ def api_edit_cart(request, action, **kwargs):
         In cart recycled=0                      Set recycled=1
         In cart recycled=1                      No effect
         Bad opus_id                             Error
+
+    For addrange/removerange/addall, if view=browse then the search parameters
+    are used to determine the opus_ids to operate on. If view=cart then the
+    entire cart is used (with the current sort order).
+
+    For addall, view=browse and view=cart change the source of "all".
+    For view=browse, ?recyclebin is ignored. For view=cart, recyclebin is
+    used to decide if only observations in the cart, or observations in the
+    cart+recycle bin, are used. This means that:
+                addall.json?view=cart&recyclebin=1
+    can be used to move everything from the recycle bin back into the main cart.
     """
     api_code = enter_api_call('api_edit_cart', request)
 
@@ -288,9 +311,10 @@ def api_edit_cart(request, action, **kwargs):
         err = _remove_from_cart_table(opus_id, session_id, recycle_bin,
                                       api_code)
     elif action in ('addrange', 'removerange'):
-        err = _edit_cart_range(request, session_id, action, api_code)
+        err = _edit_cart_range(request, session_id, action, recycle_bin,
+                               api_code)
     elif action == 'addall':
-        err = _edit_cart_addall(request, session_id, api_code)
+        err = _edit_cart_addall(request, session_id, recycle_bin, api_code)
     else: # pragma: no cover
         log.error('api_edit_cart: Unknown action %s: %s', action,
                   request.GET)
@@ -332,6 +356,8 @@ def api_reset_session(request):
     This is a PRIVATE API.
 
     Format: __cart/reset.json
+    Arguments: recyclebin=0/1
+
     """
     api_code = enter_api_call('api_reset_session', request)
 
@@ -342,16 +368,26 @@ def api_reset_session(request):
 
     session_id = get_session_id(request)
 
+    recycle_bin = request.GET.get('recyclebin', 0)
+    try:
+        recycle_bin = int(recycle_bin)
+    except:
+        log.error('api_reset_session: Bad value for recyclebin %s: %s', recycle_bin,
+                  request.GET)
+        ret = HttpResponseServerError(settings.HTTP500_INTERNAL_ERROR)
+        exit_api_call(api_code, ret)
+        return ret
+
     sql = 'DELETE FROM '+connection.ops.quote_name('cart')
     sql += ' WHERE session_id=%s'
     values = [session_id]
+    if recycle_bin:
+        sql += ' AND recycled=1'
     log.debug('api_reset_session SQL: %s %s', sql, values)
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
-    request.session.flush()
-    session_id = get_session_id(request) # Creates a new session id
-    ret = json_response('session reset')
+    ret = json_response('cart emptied')
     exit_api_call(api_code, ret)
     return ret
 
@@ -832,7 +868,7 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
         cursor.execute(sql, values)
     return False
 
-def _edit_cart_range(request, session_id, action, api_code):
+def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
     if not id_range:
@@ -853,11 +889,6 @@ def _edit_cart_range(request, session_id, action, api_code):
     temp_table_name = None
 
     if request.GET.get('view', 'browse') == 'cart':
-        # addrange for cart is not implemented because we don't have any
-        # way to figure out what the UI thinks is in this range.
-        if action == 'addrange':
-            return ('Internal Error: addrange is not implemented for '+
-                    'view=cart')
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
         all_order = request.GET.get('order', settings.DEFAULT_SORT_ORDER)
@@ -954,8 +985,12 @@ def _edit_cart_range(request, session_id, action, api_code):
         if len(results) == 0:
             log.error('_edit_cart_range: No OPUS ID "%s" in obs_general',
                       opus_id)
-            return (f'An OPUS ID was given to {action} that was not found '
-                    +'using the supplied search criteria')
+            if request.GET.get('view', 'browse') == 'cart':
+                return (f'An OPUS ID was given to {action} that was not found '
+                        +'in the cart')
+            else:
+                return (f'An OPUS ID was given to {action} that was not found '
+                        +'using the supplied search criteria')
         sort_orders.append(results[0][0])
 
     sql_where  = ' WHERE '
@@ -964,9 +999,10 @@ def _edit_cart_range(request, session_id, action, api_code):
     sql_where += q(user_query_table)+'.'+q('sort_order')
     sql_where += ' <= '+str(max(sort_orders))
 
-    if action == 'addrange':
+    if action == 'addrange' or (action == 'removerange' and recycle_bin):
         num_selections = get_cart_count(session_id)
 
+        sql_from_params = []
         sql_from = ' FROM '+q('obs_general')
         # INNER JOIN because we only want rows that exist in the
         # user_query_table
@@ -974,8 +1010,16 @@ def _edit_cart_range(request, session_id, action, api_code):
         sql_from += q(user_query_table)+'.'+q('id')+'='
         sql_from += q('obs_general')+'.'+q('id')
 
+        if action == 'removerange':
+            # Restrict to observations already in the cart
+            sql_from += ' INNER JOIN '+q('cart')+' ON '
+            sql_from += q('cart')+'.'+q('session_id')+'=%s AND '
+            sql_from_params.append(session_id)
+            sql_from += q('cart')+'.'+q('obs_general_id')+'='
+            sql_from += q('obs_general')+'.'+q('id')
+
         sql = 'SELECT COUNT(*)'+sql_from+sql_where
-        cursor.execute(sql)
+        cursor.execute(sql, sql_from_params)
         try:
             num_new = cursor.fetchone()[0]
         except DatabaseError as e: # pragma: no cover
@@ -998,20 +1042,30 @@ def _edit_cart_range(request, session_id, action, api_code):
                     +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
                     +f'allowed. None of the observations were added.')
 
-        values = [session_id]
+        sql_params = []
         sql = 'REPLACE INTO '+q('cart')+' ('
         sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
         sql += ','+q('recycled')+')'
         sql += ' SELECT %s,'
         sql += q('obs_general')+'.'+q('id')+','
+        sql_params.append(session_id)
         # We always set recycled to "0" on addrange. If an observation is
         # already in the cart, it won't be changed. If it's in the recycle bin,
-        # then it will have recycled set to 0.
-        sql += q('obs_general')+'.'+q('opus_id')+','+'0'
+        # then it will have recycled set to 0. The recycle_bin parameter is
+        # ignored.
+        sql += q('obs_general')+'.'+q('opus_id')
+        if action == 'addrange':
+            sql += ',0'
+        else:
+            # removerange with recyclebin=1 just means to set the recycled flag.
+            # In this case sql_from will be restricted to items already in the
+            # cart.
+            sql += ',1'
         sql += sql_from
+        sql_params += sql_from_params
 
-    elif action == 'removerange':
-        values = []
+    elif action == 'removerange': # recycle_bin == 0
+        sql_params = []
         sql = 'DELETE '
         sql += q('cart')+' FROM '+q('cart')+' INNER JOIN '
         sql += q(user_query_table)+' ON '
@@ -1025,8 +1079,8 @@ def _edit_cart_range(request, session_id, action, api_code):
 
     sql += sql_where
 
-    log.debug('_edit_cart_range SQL: %s %s', sql, values)
-    cursor.execute(sql, values)
+    log.debug('_edit_cart_range SQL: %s %s', sql, sql_params)
+    cursor.execute(sql, sql_params)
 
     if temp_table_name:
         sql = 'DROP TABLE '+q(temp_table_name)
@@ -1041,50 +1095,57 @@ def _edit_cart_range(request, session_id, action, api_code):
     return False
 
 
-def _edit_cart_addall(request, session_id, api_code):
+def _edit_cart_addall(request, session_id, recycle_bin, api_code):
     "Add all results from a search into the cart table."
-    view = request.GET.get('view', 'browse')
-    if view != 'browse':
-        # addall for cart is not implemented because it doesn't make sense.
-        return ('Internal Error: addall is not implemented for '+
-                f'view={view}')
-
-    count, user_query_table, err = get_result_count_helper(request, api_code)
-    if err is not None:
-        return err
-
-    # Note that this doesn't handle the case where some or all of the
-    # observations in the current search results are already in the cart. It's
-    # difficult to handle this well and would slow down the API, so we're just
-    # going to ignore it for now even though it's possible a user would run into
-    # it when adding all from a search that already contains observations that
-    # are in the cart.
-    num_selections = get_cart_count(session_id)
-    if num_selections+count > settings.MAX_SELECTIONS_ALLOWED:
-        return (f'Your request to add all {count:,d} observations '
-                +f'to the cart failed. The resulting cart would have more '
-                +f'than the maximum ({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                +f'allowed. None of the observations were added.')
-
     cursor = connection.cursor()
+    view = request.GET.get('view', 'browse')
+    if view == 'browse':
+        # We ignore recycle_bin here because it doesn't mean anything
+        count, user_query_table, err = get_result_count_helper(request, api_code)
+        if err is not None:
+            return err
 
-    values = [session_id]
-    q = connection.ops.quote_name
-    sql = 'REPLACE INTO '+q('cart')+' ('
-    sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
-    sql += ','+q('recycled')+')'
-    sql += ' SELECT %s,'
-    sql += q('obs_general')+'.'+q('id')+','+q('obs_general')+'.'+q('opus_id')
-    # Always set recycled=0
-    sql += ',0'
-    sql += ' FROM '+q('obs_general')
-    # INNER JOIN because we only want rows that exist in the
-    # user_query_table
-    sql += ' INNER JOIN '+q(user_query_table)+' ON '
-    sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
+        # Note that this doesn't handle the case where some or all of the
+        # observations in the current search results are already in the cart.
+        # It's difficult to handle this well and would slow down the API, so
+        # we're just going to ignore it for now even though it's possible a
+        # user would run into it when adding all from a search that already
+        # contains observations that are in the cart.
+        num_selections = get_cart_count(session_id)
+        if num_selections+count > settings.MAX_SELECTIONS_ALLOWED:
+            return (f'Your request to add all {count:,d} observations '
+                    +f'to the cart failed. The resulting cart would have more '
+                    +f'than the maximum ({settings.MAX_SELECTIONS_ALLOWED:,d}) '
+                    +f'allowed. None of the observations were added.')
 
-    log.debug('_edit_cart_addall SQL: %s %s', sql, values)
-    cursor.execute(sql, values)
+        values = [session_id]
+        q = connection.ops.quote_name
+        sql = 'REPLACE INTO '+q('cart')+' ('
+        sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
+        sql += ','+q('recycled')+')'
+        sql += ' SELECT %s,'
+        sql += q('obs_general')+'.'+q('id')+','+q('obs_general')+'.'+q('opus_id')
+        # Always set recycled=0
+        sql += ',0'
+        sql += ' FROM '+q('obs_general')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
+        sql += ' INNER JOIN '+q(user_query_table)+' ON '
+        sql += q(user_query_table)+'.'+q('id')+'='+q('obs_general')+'.'+q('id')
+
+        log.debug('_edit_cart_addall SQL: %s %s', sql, values)
+        cursor.execute(sql, values)
+
+    elif view == 'cart':
+        # Here recycle_bin determines whether or not we ignore the recycled
+        # column. Admittedly view=cart&recyclebin=0 is silly, but we still
+        # allow it and just don't do anything.
+        if recycle_bin:
+            values = [session_id]
+            q = connection.ops.quote_name
+            sql = 'UPDATE '+q('cart')+' SET recycled=0 WHERE session_id=%s'
+            log.debug('_edit_cart_addall SQL: %s %s', sql, values)
+            cursor.execute(sql, values)
 
     return False
 

@@ -301,7 +301,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'colls_startobs',
                    'cols', 'col_chooser', 'detail', 'download',
                    'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
-                   'range', 'reqno', 'request',
+                   'range', 'recyclebin', 'reqno', 'request',
                    'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
 # The root URL used to retrieve product files from a web server

@@ -1005,6 +1005,28 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_addrange_multi_recyclebin0(self):
+        "[test_cart_api.py] /__cart/addrange: multiple no download recyclebin=0"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=0'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_multi_recyclebin1(self):
+        "[test_cart_api.py] /__cart/addrange: multiple no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_addrange_multi_reverse(self):
         "[test_cart_api.py] /__cart/addrange: multiple reversed no download"
         url = '/opus/__cart/reset.json'
@@ -1196,6 +1218,34 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_removerange_add_one_recyclebin0(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=0"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
+        expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_add_one_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_removerange_duplicate(self):
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download"
         url = '/opus/__cart/reset.json'
@@ -1211,6 +1261,23 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_duplicate_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_duplicate2(self):
@@ -1375,15 +1442,138 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/addrange.json (cart): API TESTS #########
             ###########################################################
 
-    def test__api_cart_addrange_one_cart(self):
-        "[test_cart_api.py] /__cart/addrange: cart"
+    def test__api_cart_addrange_one_cart_missing(self):
+        "[test_cart_api.py] /__cart/addrange: cart missing"
         url = '/opus/__cart/reset.json'
         self._run_status_equal(url, 200)
         url = '/opus/__cart/addrange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: addrange is not implemented for view=cart', 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_bad_range1_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart bad range 1 no download"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir&reqno=456'
+        self._run_status_equal(url, 404, settings.HTTP404_BAD_OR_MISSING_RANGE)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_bad_range4_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart bad range 4 no download"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        self._run_status_equal(url, 404, settings.HTTP404_BAD_OR_MISSING_RANGE)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_duplicate_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_duplicate_cart_recyclebin0(self):
+        "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=0"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=0'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_duplicate_cart_recyclebin1(self):
+        "[test_cart_api.py] /__cart/addrange: cart one good OPUSID no download recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_bad_opusid_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart bad OPUSID no download"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484528864_irx,co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_multi_not_cart_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart OPUSID not in cart no download"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1484506475_ir,co-vims-v1484507574_vis&reqno=456'
+        expected = {'recycled_count': 0, 'count': 6, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484507574_vis&reqno=456'
+        expected = {'recycled_count': 0, 'count': 6, 'error': 'An OPUS ID was given to addrange that was not found in the cart', 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 6, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_duplicate2_too_many_33_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart_duplicate 2 no download too many 33"
+        settings.MAX_SELECTIONS_ALLOWED = 33
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        if settings.TEST_GO_LIVE:
+            expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        else:
+            expected = {'recycled_count': 0, 'count': 17, 'error': 'Your request to add 17 observations (OPUS IDs co-vims-v1488642557_ir to co-vims-v1488646261_ir) to the cart failed. The resulting cart would have more than the maximum (33) allowed. None of the observations were added.', 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addrange_duplicate2_too_many_34_cart(self):
+        "[test_cart_api.py] /__cart/addrange: cart duplicate 2 no download too many 34"
+        settings.MAX_SELECTIONS_ALLOWED = 34
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 
@@ -1405,6 +1595,20 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_removerange_add_one_cart_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: add+removerange one good OPUSID no download cart recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484504505_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484504505_ir,co-vims-v1484504505_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_removerange_duplicate_cart(self):
         "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download cart"
         url = '/opus/__cart/reset.json'
@@ -1416,10 +1620,27 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 0, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_duplicate_cart_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: duplicate OPUSID no download cart recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/add.json?opusid=co-vims-v1484528864_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&volumeid=COVIMS_0006&range=co-vims-v1484528864_ir,co-vims-v1484528864_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_cart(self):
@@ -1436,6 +1657,20 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
+    def test__api_cart_removerange_multi_cart_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: multiple no download cart recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1488642979_vis,co-vims-v1488644245_vis&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 7, 'count': 10, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
     def test__api_cart_removerange_multi_reverse_cart(self):
         "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart"
         url = '/opus/__cart/reset.json'
@@ -1448,6 +1683,20 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 10, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_removerange_multi_reverse_cart_recyclebin1(self):
+        "[test_cart_api.py] /__cart/removerange: multiple reversed no download cart recyclebin=1"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addrange.json?volumeid=COVIMS_0006&range=co-vims-v1488642557_ir,co-vims-v1488646261_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1488644245_vis,co-vims-v1488642979_vis&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 7, 'count': 10, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 7, 'count': 10, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_removerange_multi_sort_cart(self):
@@ -1463,7 +1712,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 13, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1488643823_vis,co-vims-v1488643823_vis&reqno=456'
-        expected = {'recycled_count': 0, 'count': 13, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 13, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 13, 'reqno': 456}
@@ -1481,7 +1730,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 106, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1488653840_ir,co-vims-v1488653840_ir&reqno=456'
-        expected = {'recycled_count': 0, 'count': 106, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 106, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 106, 'reqno': 456}
@@ -1499,7 +1748,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 12, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1488645839_ir,co-vims-v1488645839_vis&reqno=456'
-        expected = {'recycled_count': 0, 'count': 12, 'error': 'An OPUS ID was given to removerange that was not found using the supplied search criteria', 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 12, 'error': 'An OPUS ID was given to removerange that was not found in the cart', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 12, 'reqno': 456}
@@ -1535,17 +1784,6 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
-        self._run_json_equal(url, expected)
-
-    def test__api_cart_addall_one_cart(self):
-        "[test_cart_api.py] /__cart/addall: one time no download cart"
-        url = '/opus/__cart/reset.json'
-        self._run_status_equal(url, 200)
-        url = '/opus/__cart/addall.json?view=cart&volumeid=VGISS_6210&reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'error': 'Internal Error: addall is not implemented for view=cart', 'reqno': 456}
-        self._run_json_equal(url, expected)
-        url = '/opus/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_duplicate(self):
@@ -1713,6 +1951,84 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         expected = {'recycled_count': 0, 'count': 906, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+
+            ######################################################
+            ######### /__cart/<all> recyclebin API TESTS #########
+            ######################################################
+
+    def test__api_cart_add_remove_recyclebin(self):
+        "[test_cart_api.py] /__cart/add&remove: recyclebin"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3544, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3539, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1484506705_vis,co-vims-v1484507800_ir&reqno=456&recyclebin=0'
+        expected = {'recycled_count': 0, 'count': 3535, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 8, 'count': 3527, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=cart&range=co-vims-v1484509868_vis,co-vims-v1484510044_ir&reqno=456'
+        expected = {'recycled_count': 6, 'count': 3529, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addrange.json?view=browse&range=co-vims-v1484510714_ir,co-vims-v1484510890_ir&reqno=456'
+        expected = {'recycled_count': 3, 'count': 3532, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 3, 'count': 3532, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_recyclebin_reset(self):
+        "[test_cart_api.py] /__cart/reset: recyclebin"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3544, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 8, 'count': 3536, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/reset.json?recyclebin=1'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 3536, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/reset.json?recyclebin=0'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 456}
+        self._run_json_equal(url, expected)
+
+    def test__api_cart_addall_recyclebin(self):
+        "[test_cart_api.py] /__cart/addall: recyclebin"
+        url = '/opus/__cart/reset.json'
+        self._run_status_equal(url, 200)
+        url = '/opus/__cart/addall.json?volumeid=COVIMS_0006&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3544, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?volumeid=COVIMS_0006&range=co-vims-v1484504505_vis,co-vims-v1484506475_vis&reqno=456'
+        expected = {'recycled_count': 0, 'count': 3539, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/removerange.json?view=cart&range=co-vims-v1484509868_ir,co-vims-v1484510890_vis&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 8, 'count': 3531, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addall.json?view=cart&reqno=456' # Does nothing
+        expected = {'recycled_count': 8, 'count': 3531, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addall.json?view=cart&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 0, 'count': 3539, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/addall.json?view=cart&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 0, 'count': 3539, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/opus/__cart/status.json?reqno=456'
+        expected = {'recycled_count': 0, 'count': 3539, 'reqno': 456}
         self._run_json_equal(url, expected)
 
 
