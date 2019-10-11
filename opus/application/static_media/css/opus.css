@@ -982,6 +982,7 @@ panel */
 .op-cite-opus-btn {
     float: left;
     cursor: pointer;
+    outline: none;
 }
 
 /* Styling for download history button at the lower right of footer */
