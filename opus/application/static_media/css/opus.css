@@ -2106,7 +2106,7 @@ expanded/collapsed */
 }
 
 .op-hide-element {
-    display: none;
+    display: none !important;
 }
 
 /* Make palceholder hints visible when browser width is large enough */

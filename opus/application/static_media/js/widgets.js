@@ -7,6 +7,10 @@
 /* globals $ */
 /* globals o_hash, o_menu, o_search, o_utils, opus */
 
+// font awesome icon class
+const trashIcon = "far fa-trash-alt";
+const plusIcon = "fas fa-plus";
+
 /* jshint varstmt: false */
 var o_widgets = {
 /* jshint varstmt: true */
@@ -128,7 +132,7 @@ var o_widgets = {
                                   '<button type="button" title="Delete this set of search inputs" \
                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
                                   `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                  '<i class="far fa-trash-alt"></i></button></li>';
+                                  `<i class="${trashIcon}"></i></button></li>`;
             // If first input set doesn't have remove icon, we add remove icon to the first
             // input set, and add or label & remove icon to cloned input set, else we only
             // or label to cloned input set.
@@ -141,8 +145,19 @@ var o_widgets = {
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
+
             // Make sure "+ (OR)" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+            let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+            console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
+            console.log(`number of input sets: ${numberOfInputSets}`)
+            if (numberOfInputSets === opus.maxAllowedInputSets) {
+                $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
+            } else {
+                $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
+            }
+
+
 
             // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
             // if ($(`#widget__${slug} input`).hasClass("STRING")) {
@@ -150,7 +165,6 @@ var o_widgets = {
             // }
 
             // Update opus.selections & opus.extras
-            let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
             if (newlyAddedInput.hasClass("RANGE")) {
@@ -224,8 +238,8 @@ var o_widgets = {
             }
 
             // Remove the remove icon if we only have one input set left.
-            let numnerOfInputSet = $(`#widget__${slug} .op-search-inputs-set`).length;
-            if (numnerOfInputSet === 1) {
+            let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+            if (numberOfInputSets === 1) {
                 $(`#widget__${slug} .op-search-inputs-set .op-or-labels`).remove();
                 $(`#widget__${slug} .op-search-inputs-set .op-remove-inputs`).remove();
             }
@@ -234,6 +248,15 @@ var o_widgets = {
 
             // Make sure "+ (OR)" is attached to the right of last input set.
             $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+            console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
+            console.log(`number of input sets: ${numberOfInputSets}`)
+            if (numberOfInputSets === opus.maxAllowedInputSets) {
+                $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
+            } else {
+                $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
+            }
+
+
 
             o_hash.updateHash();
         });
@@ -656,8 +679,9 @@ var o_widgets = {
             opus.widgetElementsDrawn.unshift(slug);
 
         }
-        // console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
-        // console.log(o_hash.getHash());
+        console.log(`getWidget`);
+        console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
+        console.log(o_hash.getHash());
         $.ajax({
             url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
@@ -673,7 +697,7 @@ var o_widgets = {
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
-
+            console.log(numberOfQtypeInputs);
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
@@ -715,7 +739,8 @@ var o_widgets = {
 
             // If we have a string input widget open, initialize autocomplete for string input
             let displayDropDownList = true;
-            let stringInputDropDown = $(`input[name="${slug}"].STRING`).autocomplete({
+            // TODO: revisit here for autocomplete
+            let stringInputDropDown = $(`#widget__${slug} input[name="${slug}"].STRING`).autocomplete({
                 minLength: 1,
                 source: function(request, response) {
                     let currentValue = request.term;
@@ -892,7 +917,7 @@ var o_widgets = {
                                '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
                                title="Add a new set of search inputs"' +
                                `data-widget="widget__${slug}" data-slug="${slug}">` +
-                               '<i class="fas fa-plus">&nbsp;(OR)</i></button></li>';
+                               `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`;
 
                 let orLabel = '<ul class="op-or-labels text-secondary">' +
                               // '<i class="fas fa-angle-double-left"></i>' +
@@ -904,7 +929,7 @@ var o_widgets = {
                                       '<button type="button" title="Delete this set of search inputs" \
                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
                                       `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                      '<i class="far fa-trash-alt"></i></button></li>';
+                                      `<i class="${trashIcon}"></i></button></li>`;
 
                 let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
                 if (numberOfInputSets > 1) {
@@ -915,7 +940,17 @@ var o_widgets = {
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
+
                 $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+                console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
+                console.log(`number of input sets: ${numberOfInputSets}`)
+                if (numberOfInputSets === opus.maxAllowedInputSets) {
+                    $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
+                } else {
+                    $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
+                }
+
+
 
                 // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
                 // if (widgetInputs.hasClass("STRING")) {

@@ -301,6 +301,11 @@ var o_hash = {
                 let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
                 let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                 slug = slugNoCounter;
+
+                if (slugCounter > opus.maxAllowedInputSets) {
+                    return; //continue
+                }
+
                 if (slug.startsWith("qtype-")) {
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
@@ -368,6 +373,8 @@ var o_hash = {
         // just updating prefs here..
         hash = hash.split('&');
         hash = o_hash.decodeHashArray(hash);
+        console.log(`initFromHash`);
+        console.log(hash);
         $.each(hash, function(index, pair) {
             let idxOfFirstEqualSign = pair.indexOf("=");
             let slug = pair.slice(0, idxOfFirstEqualSign);
@@ -378,6 +385,11 @@ var o_hash = {
                     let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
+
+                    if (slugCounter > opus.maxAllowedInputSets) {
+                        return; //continue;
+                    }
+
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
                         opus.extras[slug] = opus.extras[slug] ? opus.extras[slug] : [];
@@ -427,6 +439,11 @@ var o_hash = {
                     let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
+
+                    if (slugCounter > opus.maxAllowedInputSets) {
+                        return; //continue;
+                    }
+
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
                         opus.selections[slug] = opus.selections[slug] ? opus.selections[slug] : [];
@@ -443,6 +460,9 @@ var o_hash = {
         });
 
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
+        console.log(opus.selections);
+        console.log(opus.extras);
+        console.log(`initFromHash done, ready to call opus.load`);
         opus.load();
     },
 

@@ -104,6 +104,9 @@ var opus = {
 
     currentBrowser: "",
 
+    // Max number of input sets per (RANGE or STRING) widget
+    maxAllowedInputSets: 10,
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
