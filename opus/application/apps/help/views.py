@@ -177,6 +177,25 @@ def api_splash(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
+def api_citing_opus(request):
+    """Renders the citing opus page.
+
+    This is a PRIVATE API.
+
+    Format: __help/citing.html
+    """
+    api_code = enter_api_call('api_citing_opus', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    ret = render(request, 'help/citing.html')
+    exit_api_call(api_code, ret)
+    return ret
+
 def api_guide(request):
     """Renders the API guide at opus/api.
 

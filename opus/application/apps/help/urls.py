@@ -8,7 +8,8 @@ from help.views import (
     api_tutorial,
     api_gettingstarted,
     api_splash,
-    api_guide
+    api_guide,
+    api_citing_opus,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     url(r'^__help/gettingstarted.html$', api_gettingstarted),
     url(r'^__help/splash.html$', api_splash),
     url(r'^__help/guide.html$', api_guide),  # api help pages
+    url(r'^__help/citing.html$', api_citing_opus),
 ]

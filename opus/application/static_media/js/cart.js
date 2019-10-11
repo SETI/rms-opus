@@ -565,7 +565,9 @@ var o_cart = {
         let tab = opus.getViewTab();
 
         // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") return;
+        if (tab === "#cart") {
+            return;
+        }
 
         let length = null;
         let fromIndex = null;

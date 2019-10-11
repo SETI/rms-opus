@@ -978,6 +978,12 @@ panel */
     display: none;
 }
 
+/* Styling for cite OPUS button at the lower left of footer */
+.op-cite-opus-btn {
+    float: left;
+    cursor: pointer;
+}
+
 /* Styling for download history button at the lower right of footer */
 .op-download-links-btn {
     float: right;
@@ -1764,7 +1770,7 @@ footer {
 
 .op-twitter {
     bottom: .15em;
-    position: absolute;    
+    position: absolute;
 }
 
 #op-help-panel {

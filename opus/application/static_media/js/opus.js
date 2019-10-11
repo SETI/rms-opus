@@ -739,6 +739,14 @@ var opus = {
                     break;
             }
         });
+
+        // Handle the "How to Cite OPUS" button
+        $(".app-footer .op-cite-opus-btn").on("click", function() {
+            opus.displayHelpPane("citing");
+        });
+
+
+
     },
 
     displayHelpPane: function(action) {
@@ -764,6 +772,10 @@ var opus = {
             case "guide":
                 url += "guide.html";
                 header = "OPUS API Guide";
+                break;
+            case "citing":
+                url += "citing.html";
+                header = "How to Cite OPUS";
                 break;
             case "gettingStarted":
                 url += "gettingstarted.html";
@@ -816,7 +828,6 @@ var opus = {
                 let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
                 $("#op-help-panel .op-card-contents").html(contents);
                 $(".op-open-help .btn").on("click", function(e) {
-                    let action = $(this).data("action");
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
                     $(contents).html(contentsHtml);
