@@ -229,8 +229,20 @@ var o_browse = {
             }
         });
 
+        // this event handler is here because the gallery may not yet be updated after a change to the
+        // metadata selection, so refresh the URL attached to the .thumbnail image.  This allows the
+        // user to right click and open in new tab w/out stale metadata.  Happens only on the gallery view.
+        $(".gallery").on("contextmenu", ".op-thumbnail-container", function(e) {
+            let opusId = $(this).data("id");
+            let obj = $(this).children("a").eq(0);
+            let url = o_browse.getDetailURL(opusId);
+            if (obj.length) {
+                obj.attr("href", url);
+            }
+        });
+
         // thumbnail overlay tools
-        $('.gallery, .op-data-table').on("click contextmenu", ".op-tools a", function(e) {
+        $(".gallery, .op-data-table").on("click contextmenu", ".op-tools a", function(e) {
             let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
@@ -450,9 +462,6 @@ var o_browse = {
 
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
-                     // need to not return false to allow the contextmenu to work
-                     // unless... context menu was used with ctrl key...
-                    retValue = (e.ctrlKey || e.metaKey) ? false : undefined;
                     break;
 
                 case "downloadCSV":
