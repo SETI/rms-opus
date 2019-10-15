@@ -234,14 +234,18 @@ var o_browse = {
             let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
+            let iconAction = $(this).data("icon");
+            if (e.which === 3) {    // right mouse click
+                // on any right click w/in the op-tools, display context menu and allow 'open in new tab'
+                // and as a side effect, the tool in focus has no effect, as the new tab will always be 'detail view'
+                iconAction = "info";
+                retValue = undefined; // need to use the default handler to allow the context menu to work
+            }
 
-            switch ($(this).data("icon")) {
+            switch (iconAction) {
                 case "info":  // detail page
                     o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
-                    if (e.which === 3) {    // right mouse click
-                        retValue = undefined; // need to use the default handler to allow the context menu to work
-                    }
                     break;
 
                 case "cart":   // add to cart
@@ -1671,8 +1675,10 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
+                let url = o_browse.getDetailURL(opusId);
+
                 galleryHtml += `<div class="op-thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
-                galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
+                galleryHtml += `<a href="${url}" class="thumbnail" data-image="${images.full.url}">`;
                 galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 galleryHtml += '<div class="modal-overlay">';
