@@ -431,7 +431,7 @@ var opus = {
          * If the "Help" panel is currently open, close it.
          */
         if ($("#op-help-panel").hasClass("active")) {
-            $(".op-cite-opus-btn").removeClass("op-no-select");
+            $(".op-cite-opus-btn").removeClass(".op-prevent-pointer-events");
             $("#op-help-panel").toggle("slide", {direction: "right"});
             $("#op-help-panel").removeClass("active");
             $(".op-overlay").removeClass("active");
@@ -747,13 +747,6 @@ var opus = {
                     break;
             }
         });
-
-        // Handle the "How to Cite OPUS" button
-        $(".app-footer .op-cite-opus-btn").on("click", function() {
-            if (!$(".op-cite-opus-btn").hasClass("op-no-select")) {
-                opus.displayHelpPane("citing");
-            }
-        });
     },
 
     displayHelpPane: function(action) {
@@ -802,7 +795,7 @@ var opus = {
         let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
 
         $("#op-help-panel").addClass("op-no-select");
-        $(".op-cite-opus-btn").addClass("op-no-select");
+        $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
