@@ -146,7 +146,7 @@ var o_hash = {
     },
 
     getHashArray: function() {
-        let hashArray = [];
+        let hashArray = {};
         let hashInfo = o_hash.getHash();
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
@@ -157,10 +157,10 @@ var o_hash = {
 
     hashArrayToHashString: function(hashArray) {
         let hash = "";
-        for (const param of hashArray) {
-            hash += "&"+param+"="+hashArray[param];
-        }
-        return hash;
+        $.each(hashArray, function(param, value) {
+            hash += `&${param}=${value}`;
+        });
+        return hash.substring(1);   // don't forget to strip off the first &, it is not needed
     },
 
     // get both selections and extras (qtype) from hash.
