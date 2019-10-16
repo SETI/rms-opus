@@ -229,12 +229,32 @@ var o_browse = {
             }
         });
 
+        // this event handler is here because the gallery may not yet be updated after a change to the
+        // metadata selection, so refresh the URL attached to the .thumbnail image.  This allows the
+        // user to right click and open in new tab w/out stale metadata.  Happens only on the gallery view.
+        $(".gallery").on("contextmenu", ".op-thumbnail-container", function(e) {
+            let opusId = $(this).data("id");
+            let obj = $(this).children("a").eq(0);
+            let url = o_browse.getDetailURL(opusId);
+            if (obj.length) {
+                obj.attr("href", url);
+            }
+        });
+
         // thumbnail overlay tools
-        $('.gallery, .op-data-table').on("click", ".op-tools a", function(e) {
+        $(".gallery, .op-data-table").on("click contextmenu", ".op-tools a", function(e) {
+            let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
             let opusId = $(this).parent().data("id");
+            let iconAction = $(this).data("icon");
+            if (e.which === 3) {    // right mouse click
+                // on any right click w/in the op-tools, display context menu and allow 'open in new tab'
+                // and as a side effect, the tool in focus has no effect, as the new tab will always be 'detail view'
+                iconAction = "info";
+                retValue = undefined; // need to use the default handler to allow the context menu to work
+            }
 
-            switch ($(this).data("icon")) {
+            switch (iconAction) {
                 case "info":  // detail page
                     o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
@@ -258,7 +278,7 @@ var o_browse = {
                     o_browse.showMenu(e, opusId);
                     break;
             }
-            return false;
+            return retValue;
         }); // end click a browse tools icon
 
         // do we need an on.resize for when the user makes the screen tiny?
@@ -419,6 +439,7 @@ var o_browse = {
         });
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
+            let retValue = false;
             let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenu();
 
@@ -428,6 +449,7 @@ var o_browse = {
                     // clicking on the cart/trash can aborts range select
                     o_browse.undoRangeSelect();
                     break;
+
                 case "range": // begin/end range
                     let tab = opus.getViewTab();
                     let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
@@ -437,19 +459,22 @@ var o_browse = {
                         o_cart.toggleInCart(fromOpusId, opusId);
                     }
                     break;
+
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
                     break;
+
                 case "downloadCSV":
                 case "downloadCSVAll":
                 case "downloadData":
                 case "downloadURL":
                     document.location.href = $(this).attr("href");
                     break;
+
                 case "help":
                     break;
             }
-            return false;
+            return retValue;
         });
 
         $(".op-observation-slider").slider({
@@ -470,7 +495,11 @@ var o_browse = {
         });
 
         $(document).on("keydown click", function(e) {
-            o_browse.hideMenu();
+            // don't close the mini-menu on the ctrl key in case the user
+            // is trying to open a new window for detail
+           if (!(e.ctrlKey || e.metaKey)) {
+                o_browse.hideMenu();
+            }
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 o_browse.hideGalleryViewModal();
@@ -1124,6 +1153,7 @@ var o_browse = {
         $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
+        $("#op-obs-menu [data-action='info']").attr("href", o_browse.getDetailURL(opusId));
         $("#op-obs-menu [data-action='downloadCSV']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv?cols=${opus.prefs.cols.join()}`);
         $("#op-obs-menu [data-action='downloadCSVAll']").attr("href",`/opus/__api/metadata_v2/${opusId}.csv`);
         $("#op-obs-menu [data-action='downloadData']").attr("href",`/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
@@ -1155,16 +1185,25 @@ var o_browse = {
             .attr("data-id", opusId);
     },
 
+    getDetailURL: function(opusId) {
+        let hashArray = o_hash.getHashArray();
+        hashArray.detail = opusId;
+        hashArray.view = "detail";
+        let link = "/opus/#/" + o_hash.hashArrayToHashString(hashArray);
+        return link;
+    },
+
     showDetail: function(e, opusId) {
-        opus.prefs.detail = opusId;
-        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        o_browse.hideMenu();
+        let url = o_browse.getDetailURL(opusId);
+        if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            let hashArray = o_hash.getHashArray();
-            hashArray.detail = opusId;
-            let link = "/opus/#/" + o_hash.hashArrayToHashString(hashArray);
-            link = link.replace("view=browse", "view=detail");
-            window.open(link, '_blank');
-        } else {
+            $(e.target).parent().attr("href", url);
+        } else if (e.ctrlKey || e.metaKey) {
+            // open detail view in new browser tab
+            e.preventDefault();
+            window.open(url, "_blank");
+        }  else {
             opus.prefs.detail = opusId;
             opus.changeTab("detail");
             $('a[href="#detail"]').tab("show");
@@ -1645,8 +1684,10 @@ var o_browse = {
 
                 // gallery
                 let images = item.images;
+                let url = o_browse.getDetailURL(opusId);
+
                 galleryHtml += `<div class="op-thumbnail-container ${(item.in_cart ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
-                galleryHtml += `<a href="#" class="thumbnail" data-image="${images.full.url}">`;
+                galleryHtml += `<a href="${url}" class="thumbnail" data-image="${images.full.url}">`;
                 galleryHtml += `<img class="img-thumbnail img-fluid" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 galleryHtml += '<div class="modal-overlay">';
@@ -1655,7 +1696,7 @@ var o_browse = {
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
-                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use CTRL for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
+                galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 let buttonInfo = o_browse.cartButtonInfo((item.in_cart ? 'add' : 'remove'));
                 galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
