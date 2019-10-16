@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, opus */
+/* globals o_browse, o_hash, o_utils, opus */
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.

@@ -4,6 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* jshint multistr: true */
+/* globals $ */
 
 /* jshint varstmt: false */
 var o_utils = {
@@ -66,7 +67,6 @@ $.fn.isOnScreen = function(scope, slop) {
     let elementHeight = target.outerHeight();
     let offset = elementHeight * slop;   // allow part of the object to be off screen
     let elementTop = target.offset().top;
-    let elementBottom = elementTop + elementHeight;
     // hack to take care of table header height
     if (this.is("tr")) {
         top += $("th").outerHeight();

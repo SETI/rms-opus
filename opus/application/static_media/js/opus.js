@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
 /* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
 
 // defining the opus namespace first; document ready comes after...

@@ -545,7 +545,9 @@ var o_browse = {
         let tab = opus.getViewTab();
 
         // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") return;
+        if (tab === "#cart") {
+            return;
+        }
 
         let fromOpusId = $(`${tab} .op-gallery-view`).data("infiniteScroll").options.rangeSelectOpusID;
         if (fromOpusId === undefined) {
@@ -1243,7 +1245,9 @@ var o_browse = {
         let tab = opus.getViewTab();
 
         // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") return;
+        if (tab === "#cart") {
+            return;
+        }
 
         let startElem = $(tab).find(".selected");
         if (startElem.length) {
