@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
 /* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
 
 // defining the opus namespace first; document ready comes after...
@@ -426,15 +426,23 @@ var opus = {
 
     },
 
-    hideHelpAndCartPanels: function() {
+    hideHelpPanel: function() {
         /**
-         * If the "Help" panel or cart download panel is currently open, close it.
+         * If the "Help" panel is currently open, close it.
          */
         if ($("#op-help-panel").hasClass("active")) {
+            $(".op-cite-opus-btn").removeClass(".op-prevent-pointer-events");
             $("#op-help-panel").toggle("slide", {direction: "right"});
             $("#op-help-panel").removeClass("active");
             $(".op-overlay").removeClass("active");
         }
+    },
+
+    hideHelpAndCartPanels: function() {
+        /**
+         * If the "Help" panel or cart download panel is currently open, close it.
+         */
+        opus.hideHelpPanel();
         if ($("#op-cart-download-panel").hasClass("active")) {
             $("#op-cart-download-panel").toggle("slide", {direction: "left"});
             $("#op-cart-download-panel").removeClass("active");
@@ -765,6 +773,10 @@ var opus = {
                 url += "guide.html";
                 header = "OPUS API Guide";
                 break;
+            case "citing":
+                url += "citing.html";
+                header = "How to Cite OPUS";
+                break;
             case "gettingStarted":
                 url += "gettingstarted.html";
                 header = "Getting Started";
@@ -783,6 +795,7 @@ var opus = {
         let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
 
         $("#op-help-panel").addClass("op-no-select");
+        $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
         $("#op-help-panel .op-header-text").html(`<h2>${header}</h2>`);
         $("#op-help-panel .op-card-contents").html("Loading... please wait.");
         $("#op-help-panel .loader").show();
@@ -816,7 +829,6 @@ var opus = {
                 let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
                 $("#op-help-panel .op-card-contents").html(contents);
                 $(".op-open-help .btn").on("click", function(e) {
-                    let action = $(this).data("action");
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
                     $(contents).html(contentsHtml);

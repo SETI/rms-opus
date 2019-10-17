@@ -147,3 +147,21 @@ class helpTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_splash(request)
+
+
+            ##############################################
+            ######### api_citing_opus UNIT TESTS #########
+            ##############################################
+
+    def test__api_citing_opus_no_request(self):
+        "[test_help.py] api_citing_opus: no request"
+        with self.assertRaises(Http404):
+            api_citing_opus(None)
+
+    def test__api_citing_opus_no_get(self):
+        "[test_help.py] api_citing_opus: no GET"
+        c = Client()
+        request = self.factory.get('__help/citing.html')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_citing_opus(request)

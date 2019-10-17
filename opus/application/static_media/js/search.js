@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, PerfectScrollbar */
-/* globals o_hash, o_menu, o_utils, o_widgets, opus */
+/* globals o_browse, o_hash, o_menu, o_utils, o_widgets, opus */
 
 /* jshint varstmt: false */
 var o_search = {
@@ -72,7 +72,6 @@ var o_search = {
 
             // Open the dropdown properly when user tabs to focus in.
             let slugName = $(this).data("slugname");
-            let inputToTriggerDropdown = $(`#widget__${slugName} input.op-range-input-min`);
             let preprogrammedRangesDropdown = $(`#widget__${slugName} .op-scrollable-menu`);
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) &&
