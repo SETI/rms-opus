@@ -6,6 +6,7 @@ class Cart(models.Model):
     session_id = models.CharField(max_length=80)
     obs_general = models.ForeignKey('search.ObsGeneral', models.DO_NOTHING)
     opus_id = models.CharField(max_length=40)
+    recycled = models.IntegerField()
     timestamp = models.DateTimeField()
 
     class Meta:

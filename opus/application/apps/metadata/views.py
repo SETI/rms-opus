@@ -604,11 +604,20 @@ def get_result_count_helper(request, api_code):
 
     return count, table, None
 
-def get_cart_count(session_id):
+def get_cart_count(session_id, recycled=False):
     "Return the number of items in the current cart."
-    count = Cart.objects.filter(session_id__exact=session_id).count()
-    return count
-
+    count = (Cart.objects
+             .filter(session_id__exact=session_id)
+             .filter(recycled=0)
+             .count())
+    if not recycled:
+        return count
+    recycled_count = (Cart.objects
+             .filter(session_id__exact=session_id)
+             .filter(recycled=1)
+             .count())
+    return count, recycled_count
+        
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):
     "Helper routine for api_get_fields."
