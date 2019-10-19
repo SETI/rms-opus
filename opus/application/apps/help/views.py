@@ -110,7 +110,7 @@ def api_faq(request):
     with open(os.path.join(path, faq_content_file), 'r') as stream:
         text = stream.read()
         try:
-            faq = yaml.load(text)
+            faq = yaml.load(text, Loader=yaml.FullLoader)
 
         except yaml.YAMLError as exc: # pragma: no cover
             log.error('api_faq error: %s', str(exc))
@@ -269,7 +269,7 @@ def api_guide(request):
         text = stream.read()
         text = text.replace('<HOST>', prefix)
         try:
-            guide = yaml.load(text)
+            guide = yaml.load(text, Loader=yaml.FullLoader)
 
         except yaml.YAMLError as exc: # pragma: no cover
             log.error('api_guide error: %s', str(exc))
