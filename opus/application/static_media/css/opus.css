@@ -984,6 +984,12 @@ panel */
     outline: none;
 }
 
+.op-cite-fixed-width {
+    font-family: monospace;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
 /* Styling for download history button at the lower right of footer */
 .op-download-links-btn {
     float: right;

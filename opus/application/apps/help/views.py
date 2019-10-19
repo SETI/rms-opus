@@ -4,8 +4,11 @@
 #
 ################################################################################
 
+import base64
+from io import BytesIO
 import logging
 import os
+import qrcode
 
 import oyaml as yaml # Cool package that preserves key order
 
@@ -192,7 +195,53 @@ def api_citing_opus(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = render(request, 'help/citing.html')
+    opus_search_url = request.GET.get('searchurl', None)
+    opus_state_url = request.GET.get('stateurl', None)
+
+    qr = qrcode.QRCode(
+        box_size=5,
+        border=4,
+    )
+    qr.add_data(settings.PUBLIC_OPUS_URL)
+    qr.make(fit=True)
+    basic_opus_qr = qr.make_image(fill_color='black', back_color='white')
+    buffered = BytesIO()
+    basic_opus_qr.save(buffered, format='PNG')
+    basic_opus_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+
+    opus_search_qr_str = None
+    if opus_search_url is not None:
+        qr = qrcode.QRCode(
+            box_size=5,
+            border=4,
+        )
+        qr.add_data(opus_search_url)
+        qr.make(fit=True)
+        opus_search_qr = qr.make_image(fill_color='black', back_color='white')
+        buffered = BytesIO()
+        opus_search_qr.save(buffered, format='PNG')
+        opus_search_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+
+    opus_state_qr_str = None
+    if opus_state_url is not None:
+        qr = qrcode.QRCode(
+            box_size=5,
+            border=4,
+        )
+        qr.add_data(opus_state_url)
+        qr.make(fit=True)
+        opus_state_qr = qr.make_image(fill_color='black', back_color='white')
+        buffered = BytesIO()
+        opus_state_qr.save(buffered, format='PNG')
+        opus_state_qr_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+
+    context = {'basic_opus_url': settings.PUBLIC_OPUS_URL,
+               'basic_opus_qr': basic_opus_qr_str,
+               'opus_search_url': opus_search_url,
+               'opus_search_qr': opus_search_qr_str,
+               'opus_state_url': opus_state_url,
+               'opus_state_qr': opus_state_qr_str}
+    ret = render(request, 'help/citing.html', context)
     exit_api_call(api_code, ret)
     return ret
 
