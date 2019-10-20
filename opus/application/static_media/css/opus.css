@@ -984,10 +984,21 @@ panel */
     outline: none;
 }
 
+.op-cite-container {
+    display: flex;
+    align-items: center;
+}
+
 .op-cite-fixed-width {
     font-family: monospace;
     font-size: 1rem;
     font-weight: 700;
+    word-break: break-all;
+}
+
+.op-cite-image {
+    float: left;
+    margin-right: 1rem;
 }
 
 /* Styling for download history button at the lower right of footer */

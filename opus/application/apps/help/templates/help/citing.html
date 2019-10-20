@@ -23,26 +23,35 @@
     <b>Save image as...</b></p>
 <br/>
 
-<h5>This QR Code Should Be Used to Cite OPUS as a Whole</h5>
-
-<p>Note: This does not include any specific data or search results.</p>
-<p><img src="data:image/png;charset=utf-8;base64,{{ basic_opus_qr }}" alt="QR Code for OPUS"></p>
-<p>(This encodes the URL <span class='op-cite-fixed-width'>https://pds-rings.seti.org/search/</span>)</p>
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ basic_opus_qr }}" alt="QR Code for OPUS">
+    <span>
+        This QR code should be used to cite OPUS as a whole.
+        Note: This does not include any specific data or search results.
+        <br/><br/>(This encodes the URL <span class='op-cite-fixed-width'>https://pds-rings.seti.org/search/</span>)
+    </span>
+</p>
+<br clear="left"/>
 <br/>
 
-<h5>This QR Code Represents Your Current Search Parameters</h5>
-
-<p>Someone scanning this QR code will run the same search you are currently running, but not see your
-    selection of metadata fields, sort order, etc.</p>
-<p><img src="data:image/png;charset=utf-8;base64,{{ opus_search_qr }}" alt="QR Code for OPUS Search"></p>
-<p>(This encodes the URL <span class='op-cite-fixed-width'>{{ opus_search_url }}</span>)</p>
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ opus_search_qr }}" alt="QR Code for OPUS Search">
+    <span>
+        This QR code represents your current search parameters.
+        Someone scanning this QR code will run the same search you are currently running, but not see your
+        selection of metadata fields, sort order, etc.
+        <br/><br/>(This encodes the URL <span class='op-cite-fixed-width'>{{ opus_search_url }}</span>)
+    </span>
+</p>
+<br clear="left"/>
 <br/>
 
-<h5>This QR Code Represents Your Complete Current State</h5>
-
-<p>It includes search terms, sort order,
-    metadata fields, which tab you are viewing (<b>Search</b>, <b>Browse Results</b>, <b>Cart</b>, or
-    <b>Detail</b>), and which specific observations you are looking at. Someone scanning this QR code will see
-    exactly what you were seeing before showing this Help panel (with the exception of minor changes due to browser size).</p>
-<p><img src="data:image/png;charset=utf-8;base64,{{ opus_state_qr }}" alt="QR Code for OPUS State"></p>
-<p>(This encodes the URL <span class='op-cite-fixed-width'>{{ opus_state_url }}</span>)</p>
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ opus_state_qr }}" alt="QR Code for OPUS State">
+    <span>
+        This QR code represents your complete current state.
+        It includes search terms, sort order, metadata fields, which tab you are viewing
+        (<b>Search</b>, <b>Browse Results</b>, <b>Cart</b>, or <b>Detail</b>),
+        and which specific observations you are looking at. Someone scanning this QR code will see
+        exactly what you were seeing before showing this Help panel (with the exception of minor changes
+        due to browser size).
+        <br/><br/>(This encodes your full current URL.)
+    </span>
+</p>
