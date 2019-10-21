@@ -1,7 +1,7 @@
 certifi==2018.11.29
 chardet==3.0.4
 coverage==4.5.2
-Django==2.1.5
+Django==2.1.11
 django-annoying==0.10.4
 django-memcached==0.1.2
 django-nose==1.4.5
