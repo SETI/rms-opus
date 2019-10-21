@@ -146,23 +146,8 @@ var o_widgets = {
             $(`#${widgetId} .op-input`).append(cloneInputs);
             o_widgets.renumberInputsAttributes(slug);
 
-            // Make sure "+ (OR)" is attached to the right of last input set.
-            $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
             let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
-            console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
-            console.log(`number of input sets: ${numberOfInputSets}`)
-            if (numberOfInputSets === opus.maxAllowedInputSets) {
-                $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
-            } else {
-                $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
-            }
-
-
-
-            // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
-            // if ($(`#widget__${slug} input`).hasClass("STRING")) {
-            //     $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
-            // }
+            o_widgets.attachAddInputIcon(slug, addInputIcon);
 
             // Update opus.selections & opus.extras
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
@@ -245,21 +230,26 @@ var o_widgets = {
             }
 
             o_widgets.renumberInputsAttributes(slug);
-
-            // Make sure "+ (OR)" is attached to the right of last input set.
-            $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-            console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
-            console.log(`number of input sets: ${numberOfInputSets}`)
-            if (numberOfInputSets === opus.maxAllowedInputSets) {
-                $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
-            } else {
-                $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
-            }
-
-
+            o_widgets.attachAddInputIcon(slug, addInputIcon);
 
             o_hash.updateHash();
         });
+    },
+
+    attachAddInputIcon: function(slug, addInputIcon) {
+        /**
+         * Make sure "+ (OR)" is attached to the right of last input set.
+         * Display or hide the icon based on the number of input sets.
+         */
+        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+        // console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
+        // console.log(`number of input sets: ${numberOfInputSets}`)
+        if (numberOfInputSets === opus.maxAllowedInputSets) {
+            $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
+        } else {
+            $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
+        }
     },
 
     addPreprogrammedRangesBehaviors: function() {
@@ -679,9 +669,9 @@ var o_widgets = {
             opus.widgetElementsDrawn.unshift(slug);
 
         }
-        console.log(`getWidget`);
-        console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
-        console.log(o_hash.getHash());
+        // console.log(`getWidget`);
+        // console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
+        // console.log(o_hash.getHash());
         $.ajax({
             url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
@@ -697,7 +687,7 @@ var o_widgets = {
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
-            console.log(numberOfQtypeInputs);
+            // console.log(numberOfQtypeInputs);
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
@@ -941,21 +931,8 @@ var o_widgets = {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
 
-                $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-                console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
-                console.log(`number of input sets: ${numberOfInputSets}`)
-                if (numberOfInputSets === opus.maxAllowedInputSets) {
-                    $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
-                } else {
-                    $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
-                }
+                o_widgets.attachAddInputIcon(slug, addInputIcon);
 
-
-
-                // Tune the STRING input remove icon so that it's aligned with the one next to RANGE input.
-                // if (widgetInputs.hasClass("STRING")) {
-                //     $(`#widget__${slug} .op-remove-inputs`).css("padding-left", "0.3em");
-                // }
             }
 
             opus.widgetsDrawn.unshift(slug);
