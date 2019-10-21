@@ -58,13 +58,14 @@ var o_widgets = {
         });
 
         // close a card
-        $('#search').on('click', '.close_card', function(myevent) {
+        $('#search').on('click', '.close_card', function(e) {
+            e.preventDefault();
             let slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
             let id = "#widget__"+slug;
             try {
                 $(id).remove();
-            } catch (e) {
+            } catch (error) {
                 console.log("error on close widget, id="+id);
             }
         });
@@ -112,8 +113,9 @@ var o_widgets = {
             // for multiple times and cause some weird behaviors.
             let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
-            // Clear values in inputs
+            // Clear values in inputs & .op-hide-element in dropdown
             cloneInputs.find("input").val("");
+            cloneInputs.find(".op-hide-element").removeClass("op-hide-element");
             let defaultQtypeVal = (cloneInputs.find("select") ?
                                    cloneInputs.find("option").first().val() :
                                    "");

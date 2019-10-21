@@ -44,7 +44,8 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    waitingForAllNormalizedAPI: false,
+    normalizeAllInputsInProgress: false,
+    normalizeSingleInputInProgress: false,
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // client side prefs, changes to these *do not trigger results to refresh*

@@ -147,8 +147,11 @@ var o_search = {
                 $(e.target).addClass("search_input_original");
                 return;
             }
-
+            console.log(`input event for RANGE input`);
+            console.log(o_search.slugNormalizeReqno[slug]);
+            console.log(o_search.slugNormalizeReqno);
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+            console.log(url);
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slug]) {
@@ -256,14 +259,17 @@ var o_search = {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
+            console.log(`change event on RANGE input`);
+            console.log(o_search.slugNormalizeReqno[inputName]);
+            console.log(o_search.slugNormalizeReqno);
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-
+            console.log(url);
             if ($(e.target).hasClass("input_currently_focused")) {
                 $(e.target).removeClass("input_currently_focused");
             }
 
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
@@ -305,9 +311,9 @@ var o_search = {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -412,7 +418,7 @@ var o_search = {
         // When there is no matched characters of ranges names and the category is collapsed,
         // the empty category will not be expanded when user clicks it.
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
-            console.log($(e.target))
+            console.log($(e.target));
             let collapsibleContainerId = $(e.target).attr("id");
             let inputName = $(e.target).attr("data-mininput");
             let widgetId = $(e.target).data("widget");
@@ -484,7 +490,8 @@ var o_search = {
                 let currentInputValue = currentValue.toLowerCase();
 
                 if (!currentValue) {
-                    $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
+                    // $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
+                    preprogrammedRangesDropdown.find("a.dropdown-item").removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);
                     for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
@@ -591,7 +598,7 @@ var o_search = {
         if (newHash.match(regexForHashWithSearchParams)) {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
-        opus.waitingForAllNormalizedAPI = true;
+        opus.normalizeAllInputsInProgress = true;
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
