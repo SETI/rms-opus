@@ -30,7 +30,8 @@ var o_hash = {
             if (visited[key]) {
                 return; // continue
             }
-
+            console.log(`updateHash`);
+            console.log(opus.selections);
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;

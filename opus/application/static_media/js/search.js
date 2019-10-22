@@ -88,6 +88,7 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(e) {
+            console.log(`focusout event on RANGE input`);
             let currentValue = $(this).val().trim();
             let slug = $(this).attr("name");
 
@@ -107,6 +108,15 @@ var o_search = {
 
             if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
                 $(this).addClass("search_input_invalid_no_focus");
+            }
+
+            // Close the dropdown properly when user focuses out.
+            let preprogrammedRangesDropdown = ($(this)
+                                               .next(".op-preprogrammed-ranges")
+                                               .find(".op-scrollable-menu"));
+            if (preprogrammedRangesDropdown.length !== 0 &&
+                preprogrammedRangesDropdown.hasClass("show")) {
+                $(this).dropdown("toggle");
             }
 
             o_widgets.isKeepingRangesDropdownOpen = false;
@@ -150,11 +160,13 @@ var o_search = {
             console.log(`input event for RANGE input`);
             console.log(o_search.slugNormalizeReqno[slug]);
             console.log(o_search.slugNormalizeReqno);
+            opus.normalizeInputForCharInProgress = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slug]) {
+                    opus.normalizeInputForCharInProgress = false;
                     return;
                 }
 
@@ -177,6 +189,8 @@ var o_search = {
                     $(e.target).removeClass("search_input_invalid_no_focus");
                     $(e.target).addClass("search_input_invalid");
                 }
+
+                opus.normalizeInputForCharInProgress = false;
             }); // end getJSON
         });
 
@@ -186,6 +200,9 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
+            if (o_widgets.isClosingWidget) {
+                return false;
+            }
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
             let slug = opus.getSlugOrDataWithoutCounter(inputName);
@@ -263,6 +280,7 @@ var o_search = {
             console.log(`change event on RANGE input`);
             console.log(o_search.slugNormalizeReqno[inputName]);
             console.log(o_search.slugNormalizeReqno);
+            opus.normalizeInputForAllFieldsInProgress = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
             if ($(e.target).hasClass("input_currently_focused")) {
@@ -273,6 +291,9 @@ var o_search = {
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
+            if (o_widgets.isClosingWidget) {
+                return false;
+            }
             let inputName = $(this).attr("name");
             let slug = opus.getSlugOrDataWithoutCounter(inputName);
 
@@ -312,6 +333,7 @@ var o_search = {
             }
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
+            opus.normalizeInputForAllFieldsInProgress = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
@@ -598,7 +620,7 @@ var o_search = {
         if (newHash.match(regexForHashWithSearchParams)) {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
-        opus.normalizeAllInputsInProgress = true;
+        opus.normalizeInputForAllFieldsInProgress = true;
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
@@ -681,6 +703,7 @@ var o_search = {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
+                opus.normalizeInputForAllFieldsInProgress = false;
                 return;
             }
 
@@ -713,6 +736,7 @@ var o_search = {
 
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
+            opus.normalizeInputForAllFieldsInProgress = false;
         });
     },
 

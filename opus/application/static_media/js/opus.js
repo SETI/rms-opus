@@ -44,8 +44,8 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    normalizeAllInputsInProgress: false,
-    normalizeSingleInputInProgress: false,
+    normalizeInputForAllFieldsInProgress: false,
+    normalizeInputForCharInProgress: false,
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // client side prefs, changes to these *do not trigger results to refresh*
@@ -189,21 +189,21 @@ var opus = {
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
-            // console.log(`opus load before reload`);
-            // console.log(`selections`);
-            // console.log(selections);
-            // console.log(`opus.selections`);
-            // console.log(opus.selections);
-            // console.log(`currentExtrasQ`);
-            // console.log(currentExtrasQ);
-            // console.log(`opusExtrasQ`);
-            // console.log(opusExtrasQ);
-            // console.log(`extras`);
-            // console.log(extras);
-            // console.log(`opus.extras`);
-            // console.log(opus.extras);
-            // console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
-            // console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
+            console.log(`opus load before reload`);
+            console.log(`selections`);
+            console.log(selections);
+            console.log(`opus.selections`);
+            console.log(opus.selections);
+            console.log(`currentExtrasQ`);
+            console.log(currentExtrasQ);
+            console.log(`opusExtrasQ`);
+            console.log(opusExtrasQ);
+            console.log(`extras`);
+            console.log(extras);
+            console.log(`opus.extras`);
+            console.log(opus.extras);
+            console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
+            console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 opus.selections = selections;
@@ -267,6 +267,7 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+            opus.normalizeInputForAllFieldsInProgress = false;
             return;
         }
 
@@ -301,7 +302,7 @@ var opus = {
                 o_browse.loadData(opus.getCurrentTab());
             }
         }
-
+        opus.normalizeInputForAllFieldsInProgress = false;
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);

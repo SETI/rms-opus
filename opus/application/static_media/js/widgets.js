@@ -24,6 +24,13 @@ var o_widgets = {
     lastStringSearchRequestNo: 0,
     // Use to make sure ranges dropdown is not closed by default or manually when it's set to true.
     isKeepingRangesDropdownOpen: false,
+    // This variable will be used to prevent search change event from being triggered
+    // when a widget is closed. When focusing out an input to click "x" directly, before
+    // the widget DOM is removed, an input change event will be triggered with values
+    // left in inputs. In this case, opus.selections will be messed up and cause a reload.
+    // We use this variable to prevent that input change event. When isClosingWidget is
+    // true, input change event handlers will do nothing.
+    isClosingWidget: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -60,6 +67,15 @@ var o_widgets = {
         // close a card
         $('#search').on('click', '.close_card', function(e) {
             e.preventDefault();
+            o_widgets.isClosingWidget = true;
+            if (opus.normalizeInputForCharInProgress ||
+                opus.normalizeInputForAllFieldsInProgress) {
+                console.log(`normalize input in progress`);
+                console.log(opus.normalizeInputForCharInProgress);
+                console.log(opus.normalizeInputForAllFieldsInProgress);
+                return false;
+            }
+
             let slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
             let id = "#widget__"+slug;
@@ -68,6 +84,7 @@ var o_widgets = {
             } catch (error) {
                 console.log("error on close widget, id="+id);
             }
+            o_widgets.isClosingWidget = false;
         });
 
         // close opened surfacegeo widget if user select another surfacegeo target
@@ -102,6 +119,28 @@ var o_widgets = {
         });
 
         o_widgets.addPreprogrammedRangesBehaviors();
+        o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    attachAddInputIcon: function(slug, addInputIcon) {
+        /**
+         * Make sure "+ (OR)" is attached to the right of last input set.
+         * Display or hide the icon based on the number of input sets.
+         */
+        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
+        if (numberOfInputSets === opus.maxAllowedInputSets) {
+            $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
+        } else {
+            $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
+        }
+    },
+
+    addAttachOrRemoveInputsBehaviors: function() {
+        /**
+         * Add event handlers for click events on "+ (OR)" and trash icons.
+         * These are behaviors of adding/removing inputs in a single widget.
+         */
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
@@ -238,22 +277,6 @@ var o_widgets = {
         });
     },
 
-    attachAddInputIcon: function(slug, addInputIcon) {
-        /**
-         * Make sure "+ (OR)" is attached to the right of last input set.
-         * Display or hide the icon based on the number of input sets.
-         */
-        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-        let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
-        // console.log(`reach max 10 input sets: ${numberOfInputSets === opus.maxAllowedInputSets}`)
-        // console.log(`number of input sets: ${numberOfInputSets}`)
-        if (numberOfInputSets === opus.maxAllowedInputSets) {
-            $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
-        } else {
-            $(`#widget__${slug} .op-add-inputs`).removeClass("op-hide-element");
-        }
-    },
-
     addPreprogrammedRangesBehaviors: function() {
         /**
          * Add customized event handlers for the general behaviors of preprogrammed ranges
@@ -387,8 +410,12 @@ var o_widgets = {
         let selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
+        console.log(`closeWidget`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                opus.normalizeInputForAllFieldsInProgress = false;
                 return;
             }
             o_search.validateRangeInput(normalizedData);
@@ -412,6 +439,7 @@ var o_widgets = {
 
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
+            opus.normalizeInputForAllFieldsInProgress = false;
         });
     },
 
