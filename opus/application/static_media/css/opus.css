@@ -2176,3 +2176,8 @@ searches */
     width: 10%;
     vertical-align: middle;
 }
+
+/* Disable a button (or a tag button) */
+.op-disable-btn {
+    pointer-events: none;
+}

@@ -200,6 +200,7 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
+            console.log(`RANGE input CHANGE event`);
             if (o_widgets.isClosingWidget) {
                 return false;
             }

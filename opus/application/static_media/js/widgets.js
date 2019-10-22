@@ -221,6 +221,14 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            if (opus.normalizeInputForCharInProgress ||
+                opus.normalizeInputForAllFieldsInProgress) {
+                console.log(`clicking trash when normalize input in progress`);
+                console.log(opus.normalizeInputForCharInProgress);
+                console.log(opus.normalizeInputForAllFieldsInProgress);
+                return false;
+            }
+            
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
