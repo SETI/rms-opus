@@ -161,12 +161,14 @@ var o_search = {
             console.log(o_search.slugNormalizeReqno[slug]);
             console.log(o_search.slugNormalizeReqno);
             opus.normalizeInputForCharInProgress = true;
+            o_widgets.disableCloseWidgetAndTrashIcons();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slug]) {
                     opus.normalizeInputForCharInProgress = false;
+                    o_widgets.disableCloseWidgetAndTrashIcons(false);
                     return;
                 }
 
@@ -191,6 +193,7 @@ var o_search = {
                 }
 
                 opus.normalizeInputForCharInProgress = false;
+                o_widgets.disableCloseWidgetAndTrashIcons(false);
             }); // end getJSON
         });
 
@@ -282,6 +285,7 @@ var o_search = {
             console.log(o_search.slugNormalizeReqno[inputName]);
             console.log(o_search.slugNormalizeReqno);
             opus.normalizeInputForAllFieldsInProgress = true;
+            o_widgets.disableCloseWidgetAndTrashIcons();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
             if ($(e.target).hasClass("input_currently_focused")) {
@@ -335,6 +339,7 @@ var o_search = {
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
             opus.normalizeInputForAllFieldsInProgress = true;
+            o_widgets.disableCloseWidgetAndTrashIcons();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
@@ -622,6 +627,7 @@ var o_search = {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
         opus.normalizeInputForAllFieldsInProgress = true;
+        o_widgets.disableCloseWidgetAndTrashIcons();
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         return $.getJSON(url);
@@ -705,6 +711,7 @@ var o_search = {
             // Make sure it's the final call before parsing normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
                 opus.normalizeInputForAllFieldsInProgress = false;
+                o_widgets.disableCloseWidgetAndTrashIcons(false);
                 return;
             }
 
@@ -738,6 +745,7 @@ var o_search = {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             opus.normalizeInputForAllFieldsInProgress = false;
+            o_widgets.disableCloseWidgetAndTrashIcons(false);
         });
     },
 

@@ -228,7 +228,7 @@ var o_widgets = {
                 console.log(opus.normalizeInputForAllFieldsInProgress);
                 return false;
             }
-            
+
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
@@ -424,6 +424,7 @@ var o_widgets = {
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
+                o_widgets.disableCloseWidgetAndTrashIcons(false);
                 return;
             }
             o_search.validateRangeInput(normalizedData);
@@ -448,6 +449,7 @@ var o_widgets = {
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
             opus.normalizeInputForAllFieldsInProgress = false;
+            o_widgets.disableCloseWidgetAndTrashIcons(false);
         });
     },
 
@@ -1232,6 +1234,19 @@ var o_widgets = {
             let autocompletePos = {left: inputPosition.left, top: inputPosition.top + inputHeight};
             $(`ul.ui-autocomplete[data-slug="${slug}"]`).offset(autocompletePos);
             $(`ul.ui-autocomplete[data-slug="${slug}"]`).width($(`input[name="${slug}"]`).width());
+        }
+    },
+
+    disableCloseWidgetAndTrashIcons: function(disable=true) {
+        /**
+         * Disable/enable "x" and trash icons in a widget.
+         */
+        if (disable) {
+            $(".op-remove-inputs").addClass("op-disable-btn");
+            $(".close_card").addClass("op-disable-btn");
+        } else {
+            $(".op-remove-inputs").removeClass("op-disable-btn");
+            $(".close_card").removeClass("op-disable-btn");
         }
     }
 };

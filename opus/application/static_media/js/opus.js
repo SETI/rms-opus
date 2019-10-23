@@ -268,6 +268,7 @@ var opus = {
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
             opus.normalizeInputForAllFieldsInProgress = false;
+            o_widgets.disableCloseWidgetAndTrashIcons(false);
             return;
         }
 
@@ -303,6 +304,7 @@ var opus = {
             }
         }
         opus.normalizeInputForAllFieldsInProgress = false;
+        o_widgets.disableCloseWidgetAndTrashIcons(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
