@@ -472,7 +472,7 @@ var o_hash = {
         let selections = Object.assign({}, selectionsData);
         let extras = Object.assign({}, extrasData);
 
-        for(const slug in selections) {
+        for (const slug in selections) {
             if (slug.match(/.*(1|2)/)) {
                 let slugNoNum = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
@@ -512,7 +512,7 @@ var o_hash = {
 
         // When slug in selections is empty but qtype-slug in extras exists, we will also
         // make sure data in selections and extras are aligned.
-        for(const qtypeSlug in extras) {
+        for (const qtypeSlug in extras) {
             if ((qtypeSlug.match(/qtype-(.*)/)[1] in selections ||
                  `${qtypeSlug.match(/qtype-(.*)/)[1]}1` in selections ||
                  `${qtypeSlug.match(/qtype-(.*)/)[1]}2` in selections)) {
