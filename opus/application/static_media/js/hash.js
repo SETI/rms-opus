@@ -22,16 +22,12 @@ var o_hash = {
          * Convert data from opus.selections and opus.extras into URL hash string
          */
         let hash = [];
-        // console.log(`updateHash`);
-        // console.log(opus.selections);
-        // console.log(opus.extras);
         let visited = {};
         $.each(opus.selections, function(key, value) {
             if (visited[key]) {
                 return; // continue
             }
-            console.log(`updateHash`);
-            console.log(opus.selections);
+
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;
@@ -135,7 +131,7 @@ var o_hash = {
         $.each(opus.prefs, function(key, value) {
             hash.push(key + "=" + value);
         });
-        // console.log(hash);
+
         if (updateURL && opus.allInputsValid) {
             window.location.hash = '/' + hash.join('&');
         }
@@ -374,8 +370,7 @@ var o_hash = {
         // just updating prefs here..
         hash = hash.split('&');
         hash = o_hash.decodeHashArray(hash);
-        // console.log(`initFromHash`);
-        // console.log(hash);
+
         $.each(hash, function(index, pair) {
             let idxOfFirstEqualSign = pair.indexOf("=");
             let slug = pair.slice(0, idxOfFirstEqualSign);
@@ -461,9 +456,7 @@ var o_hash = {
         });
 
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
-        // console.log(opus.selections);
-        // console.log(opus.extras);
-        // console.log(`initFromHash done, ready to call opus.load`);
+
         opus.load();
     },
 

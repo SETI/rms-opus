@@ -88,7 +88,6 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(e) {
-            console.log(`focusout event on RANGE input`);
             let currentValue = $(this).val().trim();
             let slug = $(this).attr("name");
 
@@ -157,13 +156,11 @@ var o_search = {
                 $(e.target).addClass("search_input_original");
                 return;
             }
-            console.log(`input event for RANGE input`);
-            console.log(o_search.slugNormalizeReqno[slug]);
-            console.log(o_search.slugNormalizeReqno);
+
             opus.normalizeInputForCharInProgress = true;
             o_widgets.disableCloseWidgetAndTrashIcons();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            console.log(url);
+
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slug]) {
@@ -203,7 +200,6 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
-            console.log(`RANGE input CHANGE event`);
             if (o_widgets.isClosingWidget) {
                 return false;
             }
@@ -281,13 +277,11 @@ var o_search = {
             }
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
-            console.log(`change event on RANGE input`);
-            console.log(o_search.slugNormalizeReqno[inputName]);
-            console.log(o_search.slugNormalizeReqno);
+
             opus.normalizeInputForAllFieldsInProgress = true;
             o_widgets.disableCloseWidgetAndTrashIcons();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            console.log(url);
+
             if ($(e.target).hasClass("input_currently_focused")) {
                 $(e.target).removeClass("input_currently_focused");
             }
@@ -446,14 +440,10 @@ var o_search = {
         // When there is no matched characters of ranges names and the category is collapsed,
         // the empty category will not be expanded when user clicks it.
         $(`#search`).on("show.bs.collapse", ".op-scrollable-menu .container", function(e) {
-            console.log($(e.target));
             let collapsibleContainerId = $(e.target).attr("id");
             let inputName = $(e.target).attr("data-mininput");
             let widgetId = $(e.target).data("widget");
-            console.log(`In show.bs.collapse container id: ${collapsibleContainerId}`);
-            console.log(`inputName: ${inputName}`);
-            console.log(`inputName: ${$(e.target).attr("data-mininput")}`);
-            console.log($(`#${widgetId} input.op-range-input-min[name="${inputName}"]`));
+
             let currentIuputValue = $(`#${widgetId} input.op-range-input-min[name="${inputName}"]`).val().trim();
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();

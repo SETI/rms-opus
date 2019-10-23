@@ -70,9 +70,6 @@ var o_widgets = {
             o_widgets.isClosingWidget = true;
             if (opus.normalizeInputForCharInProgress ||
                 opus.normalizeInputForAllFieldsInProgress) {
-                console.log(`normalize input in progress`);
-                console.log(opus.normalizeInputForCharInProgress);
-                console.log(opus.normalizeInputForAllFieldsInProgress);
                 return false;
             }
 
@@ -223,9 +220,6 @@ var o_widgets = {
         $("#search").on("click", ".op-remove-inputs", function(e) {
             if (opus.normalizeInputForCharInProgress ||
                 opus.normalizeInputForAllFieldsInProgress) {
-                console.log(`clicking trash when normalize input in progress`);
-                console.log(opus.normalizeInputForCharInProgress);
-                console.log(opus.normalizeInputForAllFieldsInProgress);
                 return false;
             }
 
@@ -418,9 +412,6 @@ var o_widgets = {
         let selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
-        console.log(`closeWidget`);
-        console.log(opus.selections);
-        console.log(opus.extras);
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
@@ -682,7 +673,6 @@ var o_widgets = {
 
      // adds a widget and its behaviors, adjusts the opus.prefs variable to include this widget, will not update the hash
     getWidget: function(slug, formscolumn) {
-        // console.log(`getWidget`);
         if (!slug) {
             return;
         }
@@ -709,9 +699,7 @@ var o_widgets = {
             opus.widgetElementsDrawn.unshift(slug);
 
         }
-        // console.log(`getWidget`);
-        // console.log("/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash());
-        // console.log(o_hash.getHash());
+
         $.ajax({
             url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
@@ -727,7 +715,7 @@ var o_widgets = {
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
-            // console.log(numberOfQtypeInputs);
+
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
