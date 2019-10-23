@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, opus */
+/* globals o_browse, o_hash, o_utils, opus */
 
 // The download options left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
@@ -24,6 +24,9 @@ const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
                                      "<h3 class='popover-header'></h3>" +
                                      "<div class='popover-body'></div>" +
                                      "<div class='popover-footer'>" +
+                                     "<a tabindex='0' role='button' class='op-cite-opus-btn op-no-select'>" +
+                                     "How to Cite OPUS" +
+                                     "</a>" +
                                      "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
                                      "type='button' title='Clear all history' disabled>Clear All</button></div>" +
                                      "</div>";
@@ -203,6 +206,13 @@ var o_cart = {
 
         $(document).on("click", ".op-clear-history-btn", function() {
             o_cart.clearDownloadLinksHistory();
+        });
+
+        // Handle the "How to Cite OPUS" button
+        $(document).on("click", ".op-cite-opus-btn", function() {
+            if (!$(".op-cite-opus-btn").hasClass("op-prevent-pointer-events")) {
+                opus.displayHelpPane("citing");
+            }
         });
     },
 
@@ -565,7 +575,9 @@ var o_cart = {
         let tab = opus.getViewTab();
 
         // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") return;
+        if (tab === "#cart") {
+            return;
+        }
 
         let length = null;
         let fromIndex = null;

@@ -17,10 +17,7 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(updateURL=true) {
-        /**
-         * Convert data from opus.selections and opus.extras into URL hash string
-         */
+    updateHash: function(updateURL=true, searchOnly=false) {
         let hash = [];
         let visited = {};
         $.each(opus.selections, function(key, value) {
@@ -128,12 +125,14 @@ var o_hash = {
             }
         });
 
-        $.each(opus.prefs, function(key, value) {
-            hash.push(key + "=" + value);
-        });
+        if (!searchOnly) {
+            $.each(opus.prefs, function(key, value) {
+                hash.push(key + "=" + value);
+            });
 
-        if (updateURL && opus.allInputsValid) {
-            window.location.hash = '/' + hash.join('&');
+            if (updateURL && opus.allInputsValid) {
+                window.location.hash = '/' + hash.join('&');
+            }
         }
 
         return hash.join("&");
@@ -260,7 +259,7 @@ var o_hash = {
     },
 
     getHashArray: function() {
-        let hashArray = [];
+        let hashArray = {};
         let hashInfo = o_hash.getHash();
         $.each(hashInfo.split('&'), function(index, valuePair) {
             let paramArray = valuePair.split("=");
@@ -271,10 +270,10 @@ var o_hash = {
 
     hashArrayToHashString: function(hashArray) {
         let hash = "";
-        for (const param of hashArray) {
-            hash += "&"+param+"="+hashArray[param];
-        }
-        return hash;
+        $.each(hashArray, function(param, value) {
+            hash += `&${param}=${value}`;
+        });
+        return hash.substring(1);   // don't forget to strip off the first &, it is not needed
     },
 
     // get both selections and extras (qtype) from hash.

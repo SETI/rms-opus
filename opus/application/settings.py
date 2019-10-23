@@ -304,6 +304,9 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'range', 'reqno', 'request',
                    'types', 'view', 'widgets', 'widgets2', '__sessionid')
 
+# The public URL to access OPUS
+PUBLIC_OPUS_URL = 'https://pds-rings.seti.org/search/'
+
 # The root URL used to retrieve product files from a web server
 PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
 
@@ -359,7 +362,7 @@ STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_SELECTIONS_ALLOWED = 10000
-MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 250
+MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 10000
 MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
 MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a session

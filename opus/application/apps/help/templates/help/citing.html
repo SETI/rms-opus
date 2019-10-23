@@ -1,0 +1,57 @@
+{% load static %}
+
+<p>OPUS (Outer Planets Unified Search) is a service of the
+    <a href="https://pds-rings.seti.org/" target="_blank">Ring-Moon Systems Node</a>
+    of NASA's <a href="https://pds.jpl.nasa.gov/" target="_blank">Planetary Data System (PDS)</a>.</p>
+
+<p>If you use OPUS in your own research, we would appreciate an acknowledgment in your paper,
+    poster, or presentation. You may describe OPUS as "The PDS Ring-Moon Systems Node's OPUS search service".
+    We would also appreciate if you would drop us a note to let us know about it.</p>
+
+<h1>NASA PDS Logo</h1>
+
+<p>You may use the following public-domain logo to represent NASA PDS. To save the logo to your computer,
+    right-click on the image and select <b>Save image as...</b></p>
+
+<p><a href="{% static 'img/pds_logo.png'%}" target="_blank"><img height="200" src="{% static 'img/pds_logo.png'%}" alt="NASA PDS Logo"></a></p>
+
+<h1>OPUS QR Codes</h1>
+
+<p>In addition, you may wish to use one of the following QR codes
+    in your presentation or poster. These codes allow someone with a smartphone to easily browse to
+    a URL representing your data set. To save one of these QR codes to your computer, right-click on the image and select
+    <b>Save image as...</b></p>
+<br/>
+
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ basic_opus_qr }}" alt="QR Code for OPUS">
+    <span>
+        This QR code should be used to cite OPUS as a whole.
+        Note: This does not include any specific data or search results.
+        <br/><br/>(This encodes the URL <span class='op-cite-fixed-width'>https://pds-rings.seti.org/search/</span>)
+    </span>
+</p>
+<br clear="left"/>
+<br/>
+
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ opus_search_qr }}" alt="QR Code for OPUS Search">
+    <span>
+        This QR code represents your current search parameters.
+        Someone scanning this QR code will run the same search you are currently running, but not see your
+        selection of metadata fields, sort order, etc.
+        <br/><br/>(This encodes the URL <span class='op-cite-fixed-width'>{{ opus_search_url }}</span>)
+    </span>
+</p>
+<br clear="left"/>
+<br/>
+
+<p class="op-cite-container"><img class="op-cite-image" src="data:image/png;charset=utf-8;base64,{{ opus_state_qr }}" alt="QR Code for OPUS State">
+    <span>
+        This QR code represents your complete current state.
+        It includes search terms, sort order, metadata fields, which tab you are viewing
+        (<b>Search</b>, <b>Browse Results</b>, <b>Cart</b>, or <b>Detail</b>),
+        and which specific observations you are looking at. Someone scanning this QR code will see
+        exactly what you were seeing before showing this Help panel (with the exception of minor changes
+        due to browser size).
+        <br/><br/>(This encodes your full current URL.)
+    </span>
+</p>

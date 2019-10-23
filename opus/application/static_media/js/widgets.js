@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $ */
-/* globals o_hash, o_menu, o_search, o_utils, opus */
+/* globals o_browse, o_hash, o_menu, o_search, o_utils, opus */
 
 // font awesome icon class
 const trashIcon = "far fa-trash-alt";
