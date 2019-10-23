@@ -66,6 +66,7 @@ var o_widgets = {
 
         // close a card
         $('#search').on('click', '.close_card', function(e) {
+            console.log("click x button to close widget");
             e.preventDefault();
             o_widgets.isClosingWidget = true;
             if (opus.normalizeInputForCharInProgress ||
@@ -175,8 +176,9 @@ var o_widgets = {
             // input set, and add or label & remove icon to cloned input set, else we only
             // or label to cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
-                firstExistingSetOfInputs.prepend(removeInputIcon);
-                cloneInputs.prepend(orLabel + removeInputIcon);
+                firstExistingSetOfInputs.append(removeInputIcon);
+                cloneInputs.prepend(orLabel);
+                cloneInputs.append(removeInputIcon);
             } else {
                 cloneInputs.prepend(orLabel);
             }
@@ -218,6 +220,9 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            console.log("click trash icon");
+            console.log(opus.normalizeInputForCharInProgress);
+            console.log(opus.normalizeInputForAllFieldsInProgress);
             if (opus.normalizeInputForCharInProgress ||
                 opus.normalizeInputForAllFieldsInProgress) {
                 return false;
@@ -951,9 +956,10 @@ var o_widgets = {
 
                 let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
                 if (numberOfInputSets > 1) {
-                    $(`#widget__${slug} .op-search-inputs-set`).first().prepend(removeInputIcon);
+                    $(`#widget__${slug} .op-search-inputs-set`).first().append(removeInputIcon);
                 }
-                $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel + removeInputIcon);
+                $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel);
+                $(`#widget__${slug} .op-extra-search-inputs`).append(removeInputIcon);
 
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();

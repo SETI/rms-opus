@@ -88,6 +88,7 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(e) {
+            console.log(`focus out an RANGE input`);
             let currentValue = $(this).val().trim();
             let slug = $(this).attr("name");
 

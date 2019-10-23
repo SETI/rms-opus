@@ -2178,8 +2178,8 @@ we have an invalid search) */
 
 /* Styling for the button to delete a set of inputs in a widget */
 .op-remove-inputs {
-    position: relative;
-    left: 0;
+    /* position: relative;
+    left: 0; */
 }
 
 .op-remove-inputs-btn, .op-add-inputs-btn {
