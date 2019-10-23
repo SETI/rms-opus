@@ -96,6 +96,8 @@ var o_hash = {
                     for (const counter of trailingCounterWithNullVal) {
                         o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets, counter);
                     }
+                } else { // Multi/single choice inputs
+                    hash.push(key + "=" + encodedSelectionValues.join(","));
                 }
             }
         });
