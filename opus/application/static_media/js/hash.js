@@ -17,7 +17,7 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(updateURL=true) {
+    updateHash: function(updateURL=true, searchOnly=false) {
         let hash = [];
         $.each(opus.selections, function(key, value) {
             if (value.length) {
@@ -33,12 +33,14 @@ var o_hash = {
             }
         });
 
-        $.each(opus.prefs, function(key, value) {
-            hash.push(key + "=" + value);
-        });
+        if (!searchOnly) {
+            $.each(opus.prefs, function(key, value) {
+                hash.push(key + "=" + value);
+            });
 
-        if (updateURL && opus.allInputsValid) {
-            window.location.hash = '/' + hash.join('&');
+            if (updateURL && opus.allInputsValid) {
+                window.location.hash = '/' + hash.join('&');
+            }
         }
 
         return hash.join("&");

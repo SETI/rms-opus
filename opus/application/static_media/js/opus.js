@@ -774,7 +774,9 @@ var opus = {
                 header = "OPUS API Guide";
                 break;
             case "citing":
-                url += "citing.html";
+                let searchHash = o_hash.updateHash(false, true);
+                url += "citing.html?stateurl=" + encodeURIComponent(window.location);
+                url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";
                 break;
             case "gettingStarted":
@@ -833,7 +835,7 @@ var opus = {
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
                     $(contents).html(contentsHtml);
                     let newTabWindow = window.open("", "_blank");
-                    $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, "https://tools.pds-rings.seti.org/static_media"));
+                    $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, o_utils.getWindowURLPrefix()+"/static_media"));
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
