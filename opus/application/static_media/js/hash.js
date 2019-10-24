@@ -18,6 +18,9 @@ var o_hash = {
 
     // updates the hash according to user selections
     updateHash: function(updateURL=true, searchOnly=false) {
+        console.log(`updateHash`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         let hash = [];
         let visited = {};
         $.each(opus.selections, function(key, value) {
@@ -159,7 +162,7 @@ var o_hash = {
         }
     },
 
-    encodeSlugValues: function(slugValueArray) {
+    encodeSlugValues: function(slugValueArray, dateTimeSlug=false) {
         /**
          * Take in a slug value array (like opus.selections, each element
          * will be a list of values for the slug) and encode all values in the
@@ -171,6 +174,11 @@ var o_hash = {
         for (const val of slugValueArray) {
             let value = encodeURIComponent(val);
             value = value.replace(/\%20/g, "+");
+
+            if (dateTimeSlug) {
+                value = value.replace(/\%3A/g, ":");
+            }
+
             slugValue.push(value);
         }
 
@@ -338,8 +346,14 @@ var o_hash = {
             }
         });
 
+        // console.log(`getSelectionsExtrasFromHash`);
+        // console.log(`before`);
+        // console.log(selections);
+        // console.log(extras);
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
-
+        // console.log(`after`);
+        // console.log(selections);
+        // console.log(extras);
         return [selections, extras];
     },
 
@@ -455,9 +469,14 @@ var o_hash = {
                 }
             }
         });
-
+        console.log(`initFromHash`);
+        console.log(`before`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
-
+        console.log(`after`);
+        console.log(opus.selections);
+        console.log(opus.extras);
         opus.load();
     },
 
@@ -479,11 +498,14 @@ var o_hash = {
                 let qtypeSlug = `qtype-${slugNoNum}`;
                 selections[`${slugNoNum}1`] = selections[`${slugNoNum}1`] ? selections[`${slugNoNum}1`] : [];
                 selections[`${slugNoNum}2`] = selections[`${slugNoNum}2`] ? selections[`${slugNoNum}2`] : [];
-                extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
-
                 let longestLength = (Math.max(selections[`${slugNoNum}1`].length,
+                                              selections[`${slugNoNum}2`].length));
+                if (qtypeSlug in extras) {
+                    longestLength = (Math.max(selections[`${slugNoNum}1`].length,
                                               selections[`${slugNoNum}2`].length,
                                               extras[qtypeSlug].length));
+                }
+                // extras[qtypeSlug] = extras[qtypeSlug] ? extras[qtypeSlug] : [];
 
                 while (selections[`${slugNoNum}1`].length < longestLength) {
                     selections[`${slugNoNum}1`].push(null);
@@ -491,8 +513,10 @@ var o_hash = {
                 while (selections[`${slugNoNum}2`].length < longestLength) {
                     selections[`${slugNoNum}2`].push(null);
                 }
-                while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                    extras[qtypeSlug].push(null);
+                if (qtypeSlug in extras) {
+                    while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
+                        extras[qtypeSlug].push(null);
+                    }
                 }
             } else {
                 let qtypeSlug = `qtype-${slug}`;
@@ -537,7 +561,7 @@ var o_hash = {
                 }
             }
         }
-
+        
         return [selections, extras];
     }
 };

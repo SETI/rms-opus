@@ -142,6 +142,10 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
+            console.log(`click add another input`);
+            console.log(`before`);
+            console.log(opus.selections);
+            console.log(opus.extras);
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -192,6 +196,7 @@ var o_widgets = {
             // Update opus.selections & opus.extras
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
+            console.log(newlyAddedQtype.length);
             if (newlyAddedInput.hasClass("RANGE")) {
                 opus.selections[`${slug}1`] = opus.selections[`${slug}1`] ? opus.selections[`${slug}1`] : [];
                 opus.selections[`${slug}2`] = opus.selections[`${slug}2`] ? opus.selections[`${slug}2`] : [];
@@ -215,7 +220,9 @@ var o_widgets = {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
             }
-
+            console.log(`after`);
+            console.log(opus.selections);
+            console.log(opus.extras);
             o_hash.updateHash();
         });
 

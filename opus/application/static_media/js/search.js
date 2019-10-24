@@ -249,6 +249,7 @@ var o_search = {
                 }
             }
 
+            let pairedSlug = slug.match(/.*1/) ? `${slugName}2` : `${slugName}1`;
             let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             if (currentValue) {
