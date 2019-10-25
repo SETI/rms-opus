@@ -304,6 +304,10 @@ var o_hash = {
 
     // get both selections and extras (qtype) from hash.
     getSelectionsExtrasFromHash: function() {
+        // console.log(`getSelectionsExtrasFromHash`);
+        // console.log(`before`);
+        // console.log(selections);
+        // console.log(extras);
         let hash = o_hash.getHash();
         if (!hash) {
             return [undefined, undefined];
@@ -359,17 +363,86 @@ var o_hash = {
                     }
                     // }
                 }
+            } else if (slug === "widgets" && value) {
+                // Loop through widgets and check if there is any widget with RANGE or STRING input
+                // but without qtype, we will put those in selections as well.
+                $.each(value.split(","), function(idx, widgetSlug) {
+                    if (`qtype-${widgetSlug}` in extras) {
+                        return;
+                    }
+
+                    let inputInAWidget = $(`#widget__${widgetSlug} input`);
+                    if (inputInAWidget.length === 0) {
+                        return;
+                    }
+
+                    // Sync up selections and opus.selections when a set of inputs is removed or added
+                    // so that page will not reload in these two cases.
+                    if (inputInAWidget.hasClass("RANGE")) {
+                        if (!(`${widgetSlug}1` in selections) && !(`${widgetSlug}2` in selections) &&
+                            !(`${widgetSlug}1` in opus.selections) && !(`${widgetSlug}2` in opus.selections)) {
+                            selections[`${widgetSlug}1`] = [null];
+                            selections[`${widgetSlug}2`] = [null];
+                            opus.selections[`${widgetSlug}1`] = [null];
+                            opus.selections[`${widgetSlug}2`] = [null];
+                        } else {
+                            selections[`${widgetSlug}1`] = (selections[`${widgetSlug}1`] ?
+                                                            selections[`${widgetSlug}1`] : []);
+                            selections[`${widgetSlug}2`] = (selections[`${widgetSlug}2`] ?
+                                                            selections[`${widgetSlug}2`] : []);
+                            opus.selections[`${widgetSlug}1`] = (opus.selections[`${widgetSlug}1`] ?
+                                                                 opus.selections[`${widgetSlug}1`] : []);
+                            opus.selections[`${widgetSlug}2`] = (opus.selections[`${widgetSlug}2`] ?
+                                                                 opus.selections[`${widgetSlug}2`] : []);
+
+                            let opusSelectionsLen1 = opus.selections[`${widgetSlug}1`].length;
+                            let opusSelectionsLen2 = opus.selections[`${widgetSlug}2`].length;
+                            // Sync up selections and opus.selections when a new set of input is added.
+                            while (selections[`${widgetSlug}1`].length < opusSelectionsLen1) {
+                                selections[`${widgetSlug}1`].push(null);
+                            }
+                            while (selections[`${widgetSlug}2`].length < opusSelectionsLen2) {
+                                selections[`${widgetSlug}2`].push(null);
+                            }
+                            // Sync up selections and opus.selections when a set of input is removed.
+                            while (selections[`${widgetSlug}1`].length > opusSelectionsLen1) {
+                                selections[`${widgetSlug}1`].pop();
+                            }
+                            while (selections[`${widgetSlug}2`].length > opusSelectionsLen2) {
+                                selections[`${widgetSlug}2`].pop();
+                            }
+                        }
+                    } else if (inputInAWidget.hasClass("STRING")) {
+                        if (!(widgetSlug in selections) && !(widgetSlug in opus.selections)) {
+                            selections[widgetSlug] = [null];
+                            opus.selections[widgetSlug] = [null];
+                        } else {
+                            selections[widgetSlug] = (selections[widgetSlug] ?
+                                                      selections[widgetSlug] : []);
+                            opus.selections[widgetSlug] = (opus.selections[widgetSlug] ?
+                                                           opus.selections[widgetSlug] : []);
+
+                            let opusSelectionsLen = opus.selections[widgetSlug].length;
+                            // Sync up selections and opus.selections when a new set of input is added.
+                            while (selections[widgetSlug].length < opusSelectionsLen) {
+                                selections[widgetSlug].push(null);
+                            }
+                            // Sync up selections and opus.selections when a set of input is removed.
+                            while (selections[widgetSlug].length > opusSelectionsLen) {
+                                selections[widgetSlug].pop();
+                            }
+                        }
+                    }
+                });
             }
         });
 
-        // console.log(`getSelectionsExtrasFromHash`);
-        // console.log(`before`);
-        // console.log(selections);
-        // console.log(extras);
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
         // console.log(`after`);
         // console.log(selections);
+        // console.log(opus.selections);
         // console.log(extras);
+        // console.log(opus.extras);
         return [selections, extras];
     },
 
@@ -393,6 +466,10 @@ var o_hash = {
     },
 
     initFromHash: function() {
+        // console.log(`initFromHash`);
+        // console.log(`before`);
+        // console.log(opus.selections);
+        // console.log(opus.extras);
         let hash = o_hash.getHash();
         if (!hash) {
             return;
@@ -485,14 +562,11 @@ var o_hash = {
                 }
             }
         });
-        console.log(`initFromHash`);
-        console.log(`before`);
-        console.log(opus.selections);
-        console.log(opus.extras);
+
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
-        console.log(`after`);
-        console.log(opus.selections);
-        console.log(opus.extras);
+        // console.log(`after`);
+        // console.log(opus.selections);
+        // console.log(opus.extras);
         opus.load();
     },
 
