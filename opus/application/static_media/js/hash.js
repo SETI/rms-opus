@@ -30,6 +30,9 @@ var o_hash = {
 
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
+                if (o_hash.isDateTimeSlug(key)) {
+                    encodedSelectionValues = o_hash.encodeSlugValues(value, true);
+                }
                 let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
                 let qtypeSlug = `qtype-${slugNoNum}`;
@@ -40,6 +43,9 @@ var o_hash = {
                 if (key.match(/.*(1|2)/)) { // RANGE inputs
                     let anotherKey = key.match(/.*1/) ? `${slugNoNum}2` : `${slugNoNum}1`;
                     let anotherEncodedSelectionValues = o_hash.encodeSlugValues(opus.selections[anotherKey]);
+                    if (o_hash.isDateTimeSlug(anotherKey)) {
+                        anotherEncodedSelectionValues = o_hash.encodeSlugValues(opus.selections[anotherKey], true);
+                    }
                     visited[key] = true;
                     visited[anotherKey] = true;
 
@@ -108,6 +114,9 @@ var o_hash = {
         $.each(opus.extras, function(key, value) {
             if (value.length) {
                 let encodedExtraValues = o_hash.encodeSlugValues(value);
+                if (o_hash.isDateTimeSlug(key)) {
+                    encodedExtraValues = o_hash.encodeSlugValues(value, true);
+                }
                 if (value.length > 1) {
                     let numberOfQtypeInputs = encodedExtraValues.length;
 
@@ -154,6 +163,9 @@ var o_hash = {
                                      `0${counter}` : `${counter}`);
         if (qtypeInExtras in opus.extras) {
             let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
+            if (o_hash.isDateTimeSlug(qtypeInExtras)) {
+                encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras], true);
+            }
             let qtypeInURL = ((numberOfInputSets === 1) ?
                             qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
             if (opus.extras[qtypeInExtras][counter-1] !== null) {
@@ -202,7 +214,11 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             let valueArray = value.split(",");
-            valueArray = o_hash.encodeSlugValues(valueArray);
+            if (o_hash.isDateTimeSlug(slug)) {
+                valueArray = o_hash.encodeSlugValues(valueArray, true);
+            } else {
+                valueArray = o_hash.encodeSlugValues(valueArray);
+            }
             value = valueArray.join(",");
 
             hash.push(`${slug}=${value}`);
@@ -561,7 +577,22 @@ var o_hash = {
                 }
             }
         }
-        
+
         return [selections, extras];
+    },
+
+    isDateTimeSlug: function(slug) {
+        /**
+         * Check if the slug will have date time strings as values. This
+         * will be used to determine if ":" should be encoded.
+         */
+        let dateTimeSlug = (["productcreationtime(1|2)", "publicationdate(1|2)",
+                             ".*ert(1|2)", "time(1|2)"]);
+        for (const singleSlug of dateTimeSlug) {
+            if (slug.match(singleSlug)) {
+                return true;
+            }
+        }
+        return false;
     }
 };
