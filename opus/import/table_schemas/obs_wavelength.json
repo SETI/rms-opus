@@ -78,7 +78,7 @@
         "pi_slug": "wavelength1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "micron",
+        "pi_units": "microns",
         "pi_ranges": "obs_wavelength",
         "pi_field_hints1": "Wavelength or Color",
         "pi_field_hints2": "",
@@ -108,7 +108,7 @@
         "pi_slug": "wavelength2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "micron",
+        "pi_units": "microns",
         "comments": "Definition derived from the PSDD and modified for our purposes. For units format, refer to wavelength1."
     },
     {
@@ -138,7 +138,7 @@
         "pi_slug": "waveres1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "micron/pixel",
+        "pi_units": "microns/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are converted from math to micron or micron/pixel, so we round up to .6f"
     },
     {
@@ -165,7 +165,7 @@
         "pi_slug": "waveres2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "micron/pixel",
+        "pi_units": "microns/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_res1"
     },
     {

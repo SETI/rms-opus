@@ -433,16 +433,91 @@ RANGE_FUNCTIONS = {
 
 # Unit translation table
 # db name : displayed name
-UNIT_TRANSLATION = {
-    "cm^-1" : "cm^-1",
-    "cm^-1/pixel" : "cm^-1/pixel",
-    "degrees" : "degrees",
-    "degrees/pixel" : "degrees/pixel",
-    "km" : "km",
-    "km/pixel" : "km/pixel",
-    "micron" : "microns",
-    "micron/pixel" : "microns/pixel",
-    "milliseconds" : "ms",
-    "pixels" : "pixels",
-    "seconds" : "secs",
+UNIT_CONVERSION = {
+    'cm^-1':
+        {
+            'display_name': 'cm^-1',
+            'conversions': {
+
+            }
+        },
+    'cm^-1/pixel':
+        {
+            'display_name': 'cm^-1/pixel',
+            'conversions': {
+
+            }
+        },
+    'degrees':
+        {
+            'display_name': 'degrees',
+            'conversions': {
+
+            }
+        },
+    'degrees/pixel':
+        {
+            'display_name': 'degrees/pixel',
+            'conversions': {
+
+            }
+        },
+    'km':
+        {
+            'display_name': 'km',
+            'conversions': {
+                'cm': 1e-5,
+                'm': 1e-3
+            }
+        },
+    'km/pixel':
+        {
+            'display_name': 'km/pixel',
+            'conversions': {
+
+            }
+        },
+    'microns':
+        {
+            'display_name': 'microns',
+            'conversions': {
+
+            }
+        },
+    'microns/pixel':
+        {
+            'display_name': 'microns/pixel',
+            'conversions': {
+
+            }
+        },
+    'milliseconds':
+        {
+            'display_name': 'msec',
+            'conversions': {
+
+            }
+        },
+    'pixels':
+        {
+            'display_name': 'pixels',
+            'conversions': {
+
+            }
+        },
+    'seconds':
+        {
+            'display_name': 'secs',
+            'conversions': {
+
+            }
+        },
 }
+
+def convert_to_default_unit(val, default_unit, unit):
+    if val is None:
+        return val
+    if default_unit == unit:
+        return val
+    assert default_unit in UNIT_CONVERSION
+    return val * UNIT_CONVERSION[default_unit]['conversions'][unit]

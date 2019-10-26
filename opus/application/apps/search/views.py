@@ -372,7 +372,8 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             lists and represent the user's selections.
         The 2nd dict is any extras being passed by user, like qtypes that
             define what types of queries will be performed for each
-            param-value set in the first dict, or sort order.
+            param-value set in the first dict, units for numeric values,
+            or sort order.
 
     NOTE: Pass request_get = request.GET to this func please
     (This func doesn't return an http response so unit tests freak if you
@@ -411,6 +412,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
     selections = {}
     extras = {}
     qtypes = {}
+    units = {}
     order_params = []
     order_descending_params = []
 
@@ -462,12 +464,22 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         # Find the master param_info
         param_info = None
         is_qtype = None
+        is_unit = None
         if slug.startswith('qtype-'): # like qtype-time=all
             is_qtype = True
             slug = slug[6:]
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: qtype slug has '+
+                          'numeric suffix "%s"', orig_slug)
+                return None, None
+            param_info = get_param_info_by_slug(slug, 'qtype')
+        elif slug.startswith('unit-'): # like unit-observationduration=msec
+            is_unit = True
+            slug = slug[5:]
+            slug_no_num = strip_numeric_suffix(slug)
+            if slug_no_num != slug:
+                log.error('url_to_search_params: unit slug has '+
                           'numeric suffix "%s"', orig_slug)
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
@@ -496,6 +508,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             used_slugs.append(pi_slug_no_num+'1'+clause_num_str)
             used_slugs.append(pi_slug_no_num+'2'+clause_num_str)
             used_slugs.append('qtype-'+pi_slug_no_num+clause_num_str)
+            used_slugs.append('unit-'+pi_slug_no_num+clause_num_str)
         if param_info.old_slug:
             # Kill off all the old slugs - this prevents cases where someone
             # uses the new slug and old slug names in the same query.
@@ -504,6 +517,58 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             used_slugs.append(pi_old_slug_no_num+'1'+clause_num_str)
             used_slugs.append(pi_old_slug_no_num+'2'+clause_num_str)
             used_slugs.append('qtype-'+pi_old_slug_no_num+clause_num_str)
+            used_slugs.append('unit-'+pi_old_slug_no_num+clause_num_str)
+
+        # Look for an associated qtype.
+        # Use the original slug name here since we hope if someone says
+        # XXX=5 then they also say qtype-XXX=all
+        qtype_slug = 'qtype-'+slug_no_num+clause_num_str
+        valid_qtypes = None
+        if form_type not in settings.MULT_FORM_TYPES:
+            valid_qtypes = settings.STRING_QTYPES
+            if form_type in settings.RANGE_FORM_TYPES:
+                valid_qtypes = settings.RANGE_QTYPES
+        qtype_val = None
+        if qtype_slug in request_get:
+            qtype_val = request_get[qtype_slug]
+            if valid_qtypes is None or qtype_val not in valid_qtypes:
+                if allow_errors: # pragma: no cover
+                    # We never actually hit this because normalizeurl catches
+                    # the bad qtype first
+                    qtype_val = None
+                else:
+                    log.error('url_to_search_params: Bad qtype value for '
+                              +'"%s": %s', qtype_slug, str(qtype_val))
+                    return None, None
+        else:
+            if valid_qtypes is not None:
+                qtype_val = valid_qtypes[0] # Default if not specified
+
+        # Look for an associated unit.
+        # Use the original slug name here since we hope if someone says
+        # XXX=5 then they also say unit-XXX=msec
+        unit_slug = 'unit-'+slug_no_num+clause_num_str
+        default_unit_info = opus_support.UNIT_CONVERSION.get(param_info.units,
+                                                             None)
+        print(default_unit_info)
+        valid_units = None
+        if default_unit_info is not None:
+            valid_units = list(default_unit_info['conversions'].keys())
+        unit_val = None
+        if unit_slug in request_get:
+            unit_val = request_get[unit_slug]
+            if (valid_units is None or
+                (unit_val not in valid_units and unit_val != param_info.units)):
+                if allow_errors: # pragma: no cover
+                    # We never actually hit this because normalizeurl catches
+                    # the bad unit first
+                    unit_val = None
+                else:
+                    log.error('url_to_search_params: Bad unit value for '
+                              +'"%s": %s', unit_slug, str(unit_val))
+                    return None, None
+        else:
+            unit_val = param_info.units # Default if not specified
 
         if form_type in settings.MULT_FORM_TYPES:
             # MULT types have no qtype, units, or 1/2 split.
@@ -512,10 +577,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 log.error('url_to_search_params: Mult field "%s" has clause'
                           +' number where none permitted', orig_slug)
                 return None, None
-            if is_qtype:
-                log.error('url_to_search_params: Mult field "%s" has qtype',
-                          orig_slug)
-                return None, None
+            # Presence of qtype or unit slug will be caught earalier
 
             # If nothing is specified, just ignore the slug.
             values = [x.strip() for x in value.split(',')]
@@ -531,7 +593,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             # Mult form types can be sorted and uniquified to save duplicate
             # queries being built.
             # No other form types can be sorted since their ordering
-            # corresponds to qtype ordering.
+            # corresponds to qtype/unit ordering.
             new_val = sorted(set(values))
             # Now check to see if the mult values are all valid
             mult_name = get_mult_name(param_qualified_name)
@@ -559,28 +621,6 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             continue
 
         # This is either a RANGE or a STRING type.
-
-        # Look for an associated qtype.
-        # Use the original slug name here since we hope if someone says
-        # XXX=5 then they also say qtype-XXX=all
-        qtype_slug = 'qtype-'+slug_no_num+clause_num_str
-        valid_qtypes = settings.STRING_QTYPES
-        if form_type in settings.RANGE_FORM_TYPES:
-            valid_qtypes = settings.RANGE_QTYPES
-        qtype_val = None
-        if qtype_slug in request_get:
-            qtype_val = request_get[qtype_slug]
-            if qtype_val not in valid_qtypes:
-                if allow_errors: # pragma: no cover
-                    # We never actually hit this because normalizeurl catches
-                    # the bad qtype first
-                    qtype_val = None
-                else:
-                    log.error('url_to_search_params: Bad qtype value for '
-                              +'"%s": %s', qtype_slug, str(qtype_val))
-                    return None, None
-        else:
-            qtype_val = valid_qtypes[0] # Default if not specified
 
         if form_type in settings.RANGE_FORM_TYPES:
             # For RANGE form types, there can be 1/2 slugs. Just ignore the slug
@@ -639,12 +679,19 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 new_param_qualified_names.append(new_param_qualified_name)
                 new_values.append(new_value)
             if return_slugs:
-                # Always include qtype no matter what
+                if not is_single_column_range(param_qualified_name_no_num):
+                    # Always include qtype no matter what
+                    # The following if should always be true because we only hit
+                    # this once for each slug
+                    if param_qualified_name_no_num not in qtypes: # pragma: no cover
+                        qtypes[param_qualified_name_no_num] = []
+                    qtypes[param_qualified_name_no_num].append(qtype_val)
+                # Always include unit no matter what
                 # The following if should always be true because we only hit
                 # this once for each slug
-                if param_qualified_name_no_num not in qtypes: # pragma: no cover
-                    qtypes[param_qualified_name_no_num] = []
-                qtypes[param_qualified_name_no_num].append(qtype_val)
+                if param_qualified_name_no_num not in units: # pragma: no cover
+                    units[param_qualified_name_no_num] = []
+                units[param_qualified_name_no_num].append(unit_val)
             elif (allow_empty or
                   new_values[0] is not None or
                   new_values[1] is not None):
@@ -655,14 +702,23 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 if new_param_qualified_names[1] not in selections:
                     selections[new_param_qualified_names[1]] = []
                 selections[new_param_qualified_names[1]].append(new_values[1])
-                # There was at least one value added - include the qtype
-                if param_qualified_name_no_num not in qtypes:
-                    qtypes[param_qualified_name_no_num] = []
-                qtypes[param_qualified_name_no_num].append(qtype_val)
+                if not is_single_column_range(param_qualified_name_no_num):
+                    # There was at least one value added - include the qtype
+                    if param_qualified_name_no_num not in qtypes:
+                        qtypes[param_qualified_name_no_num] = []
+                    qtypes[param_qualified_name_no_num].append(qtype_val)
+                # There was at least one value added - include the unit
+                if param_qualified_name_no_num not in units:
+                    units[param_qualified_name_no_num] = []
+                units[param_qualified_name_no_num].append(unit_val)
             continue
 
         # For STRING form types, there is only a single slug. Just ignore the
         # slug we're currently looking at and start over for simplicity.
+        if is_unit or unit_val is not None:
+            log.error('url_to_search_params: String field "%s" has unit',
+                      orig_slug)
+            return None, None
         new_value = None
         new_slug = slug_no_num+clause_num_str
         if new_slug in request_get:
@@ -670,6 +726,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         if return_slugs:
             selections[slug] = new_value
             qtypes[slug] = qtype_val
+            units[slug] = unit_val
         elif (allow_empty or
               (new_value is not None and
                new_value != '')):
@@ -684,6 +741,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             qtypes[param_qualified_name_no_num].append(qtype_val)
 
     extras['qtypes'] = qtypes
+    extras['units'] = units
 
     # log.debug('url_to_search_params: GET %s *** Selections %s *** Extras %s',
     #           request_get, str(selections), str(extras))
@@ -826,8 +884,19 @@ def set_user_search_number(selections, extras):
     units_json = None
     units_hash = 'NONE' # Needed for UNIQUE constraint to work
     if 'units' in extras:
-        units_json = str(json.dumps(sort_dictionary(extras['units'])))
-        units_hash = hashlib.md5(str.encode(units_json)).hexdigest()
+        units = extras['units']
+        # Remove units that aren't used for searching because they don't
+        # do anything to make the search unique
+        new_units = {}
+        for unit, val in units.items():
+            unit_no_num = strip_numeric_suffix(unit)
+            if (unit_no_num in selections or
+                unit_no_num+'1' in selections or
+                unit_no_num+'2' in selections):
+                new_units[unit] = val
+        if len(new_units):
+            units_json = str(json.dumps(sort_dictionary(new_units)))
+            units_hash = hashlib.md5(str.encode(units_json)).hexdigest()
 
     order_json = None
     order_hash = 'NONE' # Needed for UNIQUE constraint to work
@@ -900,7 +969,8 @@ def get_param_info_by_slug(slug, source):
 
     If source == 'qtype', then this is a qtype for a column. Qtypes don't have
     any numeric suffix, even if though the columns do, so we just add on a '1'
-    if we don't find the original name.
+    if we don't find the original name. This also gets used for looking up
+    'unit' slugs.
 
     If source == 'search', then this is a search term. Numeric search terms
     can always have a '1' or '2' suffix even for single-column ranges.
@@ -1008,6 +1078,7 @@ def get_param_info_by_slug(slug, source):
 def construct_query_string(selections, extras):
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
+    all_units = extras['units'] if 'units' in extras else []
     finished_ranges = [] # Ranges are done for both sides at once so track
                          # which are finished to avoid duplicates
 
@@ -1041,6 +1112,10 @@ def construct_query_string(selections, extras):
             qtypes = all_qtypes[param_qualified_name_no_num]
         else:
             qtypes = []
+        if param_qualified_name_no_num in all_units:
+            units = all_units[param_qualified_name_no_num]
+        else:
+            units = []
 
         (form_type, form_type_func,
          form_type_format) = parse_form_type(param_info.form_type)
@@ -1091,12 +1166,12 @@ def construct_query_string(selections, extras):
                 # Both sides of range must be defined by user for this to work.
                 clause, params = get_longitude_query(selections,
                                                      param_qualified_name,
-                                                     qtypes)
+                                                     qtypes, units)
             else:
                 # Get the range query object and append it to the query
                 clause, params = get_range_query(selections,
                                                  param_qualified_name,
-                                                 qtypes)
+                                                 qtypes, units)
 
             if clause is None:
                 return None, None
@@ -1250,7 +1325,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     return clause, params
 
-def get_range_query(selections, param_qualified_name, qtypes):
+def get_range_query(selections, param_qualified_name, qtypes, units):
     """Builds query for numeric ranges.
 
     This can either be a single column range (one table column holds the value)
@@ -1297,22 +1372,30 @@ def get_range_query(selections, param_qualified_name, qtypes):
     quoted_param_qualified_name_max = (quoted_cat_name+'.'
                                        +connection.ops.quote_name(name_max))
 
-    if len(qtypes) == 0:
+    if qtypes is None or len(qtypes) == 0:
         qtypes = ['any'] * len(values_min)
 
-    if len(qtypes) != len(values_min) or len(values_min) != len(values_max):
-        log.error('get_range_query: Inconsistent qtype/min/max lengths '
+    if units is None or len(units) == 0:
+        units = [param_info.units] * len(values_min)
+
+    if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
+        len(values_min) != len(values_max)):
+        log.error('get_range_query: Inconsistent qtype/unit/min/max lengths '
                   +'for "%s"'
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_qualified_name, str(selections), str(qtypes))
+                  +'*** Selections %s *** Qtypes %s *** Units %s',
+                  param_qualified_name, str(selections), str(qtypes),
+                  str(units))
         return None, None
 
     clauses = []
     params = []
 
     for idx in range(len(values_min)):
-        value_min = values_min[idx]
-        value_max = values_max[idx]
+        unit = units[idx]
+        value_min = opus_support.convert_to_default_unit(values_min[idx],
+                                                         param_info.units, unit)
+        value_max = opus_support.convert_to_default_unit(values_max[idx],
+                                                         param_info.units, unit)
         qtype = qtypes[idx]
 
         clause = ''
@@ -1359,8 +1442,9 @@ def get_range_query(selections, param_qualified_name, qtypes):
         else:
             log.error('get_range_query: Unknown qtype "%s" '
                       +'for "%s"'
-                      +'*** Selections %s *** Qtypes %s ***',
-                      qtype, param_qualified_name, str(selections), str(qtypes))
+                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      qtype, param_qualified_name, str(selections), str(qtypes),
+                      str(units))
 
     if len(clauses) == 1:
         clause = clauses[0]
@@ -1369,7 +1453,7 @@ def get_range_query(selections, param_qualified_name, qtypes):
 
     return clause, params
 
-def get_longitude_query(selections, param_qualified_name, qtypes):
+def get_longitude_query(selections, param_qualified_name, qtypes, units):
     """Builds query for longitude ranges.
 
     Both sides of the range must be specified.
@@ -1405,22 +1489,30 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
     name_max = name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num
 
-    if len(qtypes) == 0:
+    if qtypes is None or len(qtypes) == 0:
         qtypes = ['any'] * len(values_min)
 
-    if len(qtypes) != len(values_min) or len(values_min) != len(values_max):
-        log.error('get_longitude_query: Inconsistent qtype/min/max lengths '
+    if units is None or len(units) == 0:
+        units = [param_info.units] * len(values_min)
+
+    if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
+        len(values_min) != len(values_max)):
+        log.error('get_longitude_query: Inconsistent qtype/unit/min/max lengths '
                   +'for "%s"'
-                  +'*** Selections %s *** Qtypes %s ***',
-                  param_qualified_name, str(selections), str(qtypes))
+                  +'*** Selections %s *** Qtypes %s *** Units %s',
+                  param_qualified_name, str(selections), str(qtypes),
+                  str(units))
         return None, None
 
     clauses = []
     params = []
 
     for idx in range(len(values_min)):
-        value_min = values_min[idx]
-        value_max = values_max[idx]
+        unit = units[idx]
+        value_min = opus_support.convert_to_default_unit(values_min[idx],
+                                                         param_info.units, unit)
+        value_max = opus_support.convert_to_default_unit(values_max[idx],
+                                                         param_info.units, unit)
         qtype = qtypes[idx]
 
         if value_min is None and value_max is None:
@@ -1437,7 +1529,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
             new_qtypes = [qtype]
             clause, r_params = get_range_query(new_selections,
                                                param_qualified_name,
-                                               new_qtypes)
+                                               new_qtypes, None)
             params += r_params
 
         elif is_single_column_range(param_qualified_name):
@@ -1488,8 +1580,9 @@ def get_longitude_query(selections, param_qualified_name, qtypes):
             else:
                 log.error('get_longitude_query: Unknown qtype "%s" '
                           +'for "%s"'
-                          +'*** Selections %s *** Qtypes %s ***',
-                          qtype, param_name, str(selections), str(qtypes))
+                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                          param_qualified_name, str(selections), str(qtypes),
+                          str(units))
 
         if clause:
             clauses.append(clause)
