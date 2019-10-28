@@ -688,7 +688,12 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 new_value = None
             if param_qualified_name_no_num not in selections:
                 selections[param_qualified_name_no_num] = []
-            selections[param_qualified_name_no_num].append(new_value)
+
+            if allow_empty and clause_num_str:
+                selections[param_qualified_name_no_num].insert(clause_num-1, new_value)
+            else:
+                selections[param_qualified_name_no_num].append(new_value)
+
             if param_qualified_name_no_num not in qtypes:
                 qtypes[param_qualified_name_no_num] = []
             qtypes[param_qualified_name_no_num].append(qtype_val)
