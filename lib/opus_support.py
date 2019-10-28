@@ -466,8 +466,8 @@ UNIT_CONVERSION = {
         {
             'display_name': 'km',
             'conversions': {
-                'cm': 1e-5,
-                'm': 1e-3
+                'cm': ('cm', 1e-5),
+                'm': ('m', 1e-3),
             }
         },
     'km/pixel':
@@ -509,7 +509,7 @@ UNIT_CONVERSION = {
         {
             'display_name': 'secs',
             'conversions': {
-
+                'milliseconds': ('msecs', 1e-3),
             }
         },
 }

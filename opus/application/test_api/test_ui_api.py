@@ -416,16 +416,19 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?qtype-rightasc=any'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     # Lonely qtype - these are qtypes without matching searches but with
     # widgets
+
     def test__api_normalizeurl_lonely_qtype_used_any(self):
         "[test_ui_api.py] /__normalizeurl: lonely qtype used any"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=any'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_any_clause_1(self):
@@ -434,6 +437,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_1=only'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'only'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_any_clause_2(self):
@@ -442,6 +446,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_2=only'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'only'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_any_clause_1_2(self):
@@ -451,6 +456,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc_01'] = 'all'
         new_slugs['qtype-rightasc_02'] = 'only'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_any_clause_10_20(self):
@@ -460,6 +467,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc_01'] = 'all'
         new_slugs['qtype-rightasc_02'] = 'only'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_any_bad(self):
@@ -468,6 +477,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration=any'
         new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_lonely_qtype_used_any_bad_clause(self):
@@ -476,6 +486,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&qtype-observationduration_2=any'
         new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration_2" is a query type for a field that does not allow query types; it has been ignored.')
 
     def test__api_normalizeurl_lonely_qtype_used_all(self):
@@ -484,6 +495,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=all'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'all'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_only(self):
@@ -492,6 +504,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=only'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'only'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_lonely_qtype_used_multi_badval_XXX(self):
@@ -500,6 +513,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=XXX'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_contains(self):
@@ -508,6 +522,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc=contains'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_badval_contains_2(self):
@@ -516,6 +531,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&qtype-rightasc_2=contains'
         new_slugs['widgets'] = 'rightasc'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc_2" has an illegal value; it has been set to the default.')
 
     def test__api_normalizeurl_lonely_qtype_used_contains(self):
@@ -573,6 +589,99 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'volumeid'
         new_slugs['qtype-volumeid'] = 'contains'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-volumeid" has an illegal value; it has been set to the default.')
+
+    ### Lonely unit - these are units without matching searches or widgets
+
+    def test__api_normalizeurl_lonely_unit_bad_slug(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit bad slug"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?unit-fredethel=km'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-fredethel" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_lonely_unit_not_used(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit not used"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?unit-rightasc=degrees'
+        new_slugs['widgets'] = 'rightasc'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_not_used_not_default(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit not used not default unit"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?unit-observationduration=milliseconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'milliseconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    # Lonely unit - these are units without matching searches but with
+    # widgets
+
+    def test__api_normalizeurl_lonely_unit_used_degrees(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used degrees"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration=seconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_used_any_clause_1_not_default(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used only _1 not default"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_1=milliseconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'milliseconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_used_any_clause_2_not_default(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used only _2 not default"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_2=milliseconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'milliseconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_used_any_clause_1_2_not_default(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used all/only _1_2 not default"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_1=seconds&unit-observationduration_2=milliseconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'milliseconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_used_any_clause_10_20(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used all/only _10_20"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_10=milliseconds&unit-observationduration_20=seconds'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration_01'] = 'milliseconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_lonely_unit_used_any_bad(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used any bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=planet&unit-planet=seconds'
+        new_slugs['widgets'] = 'planet'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-planet" is a unit for a field that does not allow units; it has been ignored.')
+
+    def test__api_normalizeurl_lonely_unit_used_any_bad_clause(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used any bad _2"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=volumeid&unit-volumeid_2=seconds'
+        new_slugs['widgets'] = 'volumeid'
+        new_slugs['qtype-volumeid'] = 'contains'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-volumeid_2" is a unit for a field that does not allow units; it has been ignored.')
+
+    def test__api_normalizeurl_lonely_unit_used_multi_badval_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: lonely unit used multi badval XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration=XXX'
+        new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Unit "unit-observationduration" has an illegal value; it has been set to the default.')
 
     ### widgets=
 
@@ -717,6 +826,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc1=10.'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
@@ -726,6 +836,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc2=10.'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
@@ -735,6 +846,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc2=10.&rightasc1=5.'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['rightasc1'] = '5.000000'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['widgets'] = 'rightasc'
@@ -745,6 +857,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc2=10.&rightasc1=5.&widgets=instrument'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['rightasc1'] = '5.000000'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['widgets'] = 'instrument,rightasc'
@@ -755,6 +868,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?rightasc2_20=10.&rightasc1_20=5.&widgets=instrument'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['rightasc1'] = '5.000000'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['widgets'] = 'instrument,rightasc'
@@ -1153,6 +1267,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1='
         new_slugs['rightasc1'] = ''
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1162,6 +1277,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1171,6 +1287,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2=10.'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1181,6 +1298,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1190,6 +1308,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&qtype-rightasc=only'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'only'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1199,6 +1318,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&qtype-rightasc=XXX'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
@@ -1208,6 +1328,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2=10.&qtype-rightasc=all'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'all'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1218,6 +1339,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1228,6 +1350,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'only'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1237,6 +1360,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_1=10.'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1246,6 +1370,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_2=10.'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1257,6 +1382,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1_02'] = '10.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1268,6 +1395,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1_02'] = '10.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1277,6 +1406,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_1=10.'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1286,6 +1416,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2_2=10.'
         new_slugs['rightasc2'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1297,6 +1428,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2_02'] = '10.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1308,6 +1441,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2_02'] = '10.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1318,6 +1453,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1329,6 +1465,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2_02'] = '20.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1359,6 +1497,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_01=10.&rightasc2_XXX=20.'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc2_XXX" has a bad clause number; it has been ignored.')
 
@@ -1368,6 +1507,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.&rightasc2_01=20.'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" has a bad clause number; it has been ignored.')
 
@@ -1379,6 +1519,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc1_02'] = '10.000000'
         new_slugs['qtype-rightasc_01'] = 'any'
         new_slugs['qtype-rightasc_02'] = 'only'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
 
@@ -1390,6 +1532,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['rightasc2_02'] = '20.000000'
         new_slugs['qtype-rightasc_01'] = 'only'
         new_slugs['qtype-rightasc_02'] = 'any'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
 
@@ -1413,6 +1557,11 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc_03'] = 'only'
         new_slugs['qtype-rightasc_04'] = 'any'
         new_slugs['qtype-rightasc_05'] = 'all'
+        new_slugs['unit-rightasc_01'] = 'degrees'
+        new_slugs['unit-rightasc_02'] = 'degrees'
+        new_slugs['unit-rightasc_03'] = 'degrees'
+        new_slugs['unit-rightasc_04'] = 'degrees'
+        new_slugs['unit-rightasc_05'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "rightasc1_0" has a bad clause number; it has been ignored.</li><li>Search term "rightasc2_0" has a bad clause number; it has been ignored.</li><li>Search term "qtype-rightasc_0" has a bad clause number; it has been ignored.</li>')
 
@@ -1423,6 +1572,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1='
         new_slugs['observationduration1'] = ''
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1432,6 +1582,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=&observationduration2='
         new_slugs['observationduration1'] = ''
         new_slugs['observationduration2'] = ''
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1440,6 +1591,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1448,6 +1600,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2=10.'
         new_slugs['observationduration2'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1457,6 +1610,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&observationduration2=20.'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1465,6 +1619,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&qtype-observationduration=only'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
@@ -1473,6 +1628,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2=10.&qtype-observationduration=all'
         new_slugs['observationduration2'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='does not allow query')
 
@@ -1482,6 +1638,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&observationduration2=20.&qtype-observationduration=any'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
@@ -1491,6 +1648,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&observationduration2=20.&qtype-observationduration=only'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
@@ -1499,6 +1657,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1507,6 +1666,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_2=10.'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1516,6 +1676,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_2=10.&observationduration1_1=20.'
         new_slugs['observationduration1_01'] = '20.0000'
         new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1525,6 +1687,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_20=10.&observationduration1_10=20.'
         new_slugs['observationduration1_01'] = '20.0000'
         new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1533,6 +1697,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_1=10.'
         new_slugs['observationduration2'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1541,6 +1706,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_2=10.'
         new_slugs['observationduration2'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1550,6 +1716,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_2=10.&observationduration2_1=20.'
         new_slugs['observationduration2_01'] = '20.0000'
         new_slugs['observationduration2_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1559,6 +1727,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2_20=10.&observationduration2_10=20.'
         new_slugs['observationduration2_01'] = '20.0000'
         new_slugs['observationduration2_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1568,6 +1738,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_01=20.'
         new_slugs['observationduration1'] = '10.0000'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1577,6 +1748,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_1=20.'
         new_slugs['observationduration1_01'] = '10.0000'
         new_slugs['observationduration2_02'] = '20.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1606,6 +1779,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_01=10.&observationduration2_XXX=20.'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration2_XXX" has a bad clause number; it has been ignored.')
 
@@ -1614,6 +1788,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.&observationduration2_01=20.'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" has a bad clause number; it has been ignored.')
 
@@ -1623,6 +1798,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
         new_slugs['observationduration2_01'] = '20.0000'
         new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
 
@@ -1632,6 +1809,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_02=20.&qtype-observationduration_1=only&qtype-observationduration_XXX=only'
         new_slugs['observationduration1_01'] = '10.0000'
         new_slugs['observationduration2_02'] = '20.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
 
@@ -1804,6 +1983,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.X'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.')
 
@@ -1812,6 +1992,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc2=10.X'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.')
 
@@ -1821,6 +2002,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&rightasc2=20.X'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.')
 
@@ -1830,6 +2012,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.X&rightasc2=20.'
         new_slugs['rightasc2'] = '20.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.')
 
@@ -1838,6 +2021,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.X&rightasc2=20.X'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search query for "Right Ascension [General]" minimum had an illegal value; it has been ignored.</li><li>Search query for "Right Ascension [General]" maximum had an illegal value; it has been ignored.</li>')
 
@@ -1847,6 +2031,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&qtype-rightasc=XXX'
         new_slugs['rightasc1'] = '10.000000'
         new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Query type "qtype-rightasc" has an illegal value; it has been set to the default.')
 
@@ -1857,6 +2042,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X'
         new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_bad_2(self):
@@ -1864,6 +2050,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration2=10.X'
         new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" maximum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_bad_2(self):
@@ -1871,6 +2058,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&observationduration2=20.X'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" maximum had an illegal value; it has been ignored.')
 
@@ -1879,6 +2067,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X&observationduration2=20.'
         new_slugs['observationduration2'] = '20.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
@@ -1887,6 +2076,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.X&observationduration2=20.X'
         new_slugs['widgets'] = 'observationduration'
+        new_slugs['unit-observationduration'] = 'seconds'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Observation Duration [General]" minimum had an illegal value; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_bad_qtype(self):
@@ -1894,6 +2084,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1=10.&qtype-observationduration=XXX'
         new_slugs['observationduration1'] = '10.0000'
+        new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-observationduration" is a query type for a field that does not allow query types; it has been ignored.')
 
@@ -1914,6 +2105,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&ringradius1=10.'
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
@@ -1923,6 +2115,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&ringradius2=10.'
         new_slugs['RINGGEOringradius2'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
@@ -1933,6 +2126,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['RINGGEOringradius2'] = '20.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
@@ -1943,6 +2137,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['RINGGEOringradius2'] = '20.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1953,6 +2148,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['RINGGEOringradius2'] = '20.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1962,6 +2158,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         new_slugs['RINGGEOringradius1'] = '20.000000' # Parsed in alphabetical order
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1971,6 +2168,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         new_slugs['RINGGEOringradius2'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'any'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1980,6 +2178,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&ringradius1=10.&qtype-ringradius=only'
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'only'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1989,6 +2188,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&ringradius1=10.&qtype-RINGGEOringradius=only'
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'only'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -1998,6 +2198,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&RINGGEOringradius1=10.&qtype-ringradius=only'
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'only'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -2007,6 +2208,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=RINGGEOringradius&RINGGEOringradius1=10.&qtype-RINGGEOringradius=only'
         new_slugs['RINGGEOringradius1'] = '10.000000'
         new_slugs['qtype-RINGGEOringradius'] = 'only'
+        new_slugs['unit-RINGGEOringradius'] = 'km'
         new_slugs['widgets'] = 'RINGGEOringradius'
         self._run_url_slugs_equal(url, new_slugs)
 
@@ -2076,13 +2278,13 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_real_6(self):
         "[test_ui_api.py] /__normalizeurl: real 6"
         url = '/opus/__normalizeurl.json?SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&surfacegeometrytargetname=Pluto&qtype-SURFACEGEOplutophase=any&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
-        expected = {"new_url": "SURFACEGEOplutocenterresolution2=5.00000&SURFACEGEOplutophase1=160.000&qtype-SURFACEGEOplutophase=any&surfacegeometrytargetname=Pluto&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"SURFACEGEOplutocenterresolution2": "5.00000"}, {"SURFACEGEOplutophase1": "160.000"}, {"qtype-SURFACEGEOplutophase": "any"}, {"surfacegeometrytargetname": "Pluto"}, {"cols": "opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2"}, {"widgets": "SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        expected = {"new_url": 'SURFACEGEOplutocenterresolution2=5.00000&unit-SURFACEGEOplutocenterresolution=km/pixel&SURFACEGEOplutophase1=160.000&qtype-SURFACEGEOplutophase=any&unit-SURFACEGEOplutophase=degrees&surfacegeometrytargetname=Pluto&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=', "new_slugs": [{"SURFACEGEOplutocenterresolution2": "5.00000"}, {'unit-SURFACEGEOplutocenterresolution': 'km/pixel'}, {"SURFACEGEOplutophase1": "160.000"}, {"qtype-SURFACEGEOplutophase": "any"}, {'unit-SURFACEGEOplutophase': 'degrees'}, {"surfacegeometrytargetname": "Pluto"}, {"cols": "opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2"}, {"widgets": "SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_7(self):
         "[test_ui_api.py] /__normalizeurl: real 7"
         url = '/opus/__normalizeurl.json?wavelength1_06=7&wavelength2_06=8&wavelength1_08=5&wavelength1_09=10&qtype-wavelength_09=all&qtype-wavelength=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
-        expected = {"new_url": "qtype-wavelength_01=any&wavelength1_02=7.0000&wavelength2_02=8.0000&qtype-wavelength_02=any&wavelength1_03=5.0000&qtype-wavelength_03=any&wavelength1_04=10.0000&qtype-wavelength_04=all&cols=opusid,instrument,planet,target,time1,observationduration&widgets=wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"qtype-wavelength_01": "any"}, {"wavelength1_02": "7.0000"}, {"wavelength2_02": "8.0000"}, {"qtype-wavelength_02": "any"}, {"wavelength1_03": "5.0000"}, {"qtype-wavelength_03": "any"}, {"wavelength1_04": "10.0000"}, {"qtype-wavelength_04": "all"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        expected = {"new_url": 'qtype-wavelength_01=any&unit-wavelength_01=microns&wavelength1_02=7.0000&wavelength2_02=8.0000&qtype-wavelength_02=any&unit-wavelength_02=microns&wavelength1_03=5.0000&qtype-wavelength_03=any&unit-wavelength_03=microns&wavelength1_04=10.0000&qtype-wavelength_04=all&unit-wavelength_04=microns&cols=opusid,instrument,planet,target,time1,observationduration&widgets=wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=', "new_slugs": [{"qtype-wavelength_01": "any"}, {'unit-wavelength_01': 'microns'}, {"wavelength1_02": "7.0000"}, {"wavelength2_02": "8.0000"}, {"qtype-wavelength_02": "any"}, {'unit-wavelength_02': 'microns'}, {"wavelength1_03": "5.0000"}, {"qtype-wavelength_03": "any"}, {'unit-wavelength_03': 'microns'}, {"wavelength1_04": "10.0000"}, {"qtype-wavelength_04": "all"}, {'unit-wavelength_04': 'microns'}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
 # http://pds-rings-tools.seti.org/opus/#/planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_VG1_ISS_3353709_N

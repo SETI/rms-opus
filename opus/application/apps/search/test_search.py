@@ -35,7 +35,7 @@ class searchTests(TestCase):
     def setUp(self):
         self._empty_user_searches()
         self.maxDiff = None
-        # logging.disable(logging.ERROR)
+        logging.disable(logging.ERROR)
 
     def tearDown(self):
         self._empty_user_searches()
@@ -388,13 +388,19 @@ class searchTests(TestCase):
         self.assertIsNone(selections)
 
     def test__url_to_search_params_times_bad_qtype_3(self):
-        "[test_search.py] url_to_search_params: bad qtype 3"
+        "[test_search.py] url_to_search_params: bad qtype slug 3"
         q = QueryDict('qtype-time1=all')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
+    def test__url_to_search_params_times_bad_qtype_4(self):
+        "[test_search.py] url_to_search_params: bad qtype slug 4"
+        q = QueryDict('qtype-XXX=all')
+        (selections, extras) = url_to_search_params(q)
+        self.assertIsNone(selections)
+
     def test__url_to_search_params_times_bad_unit_1(self):
-        "[test_search.py] url_to_search_params: bad unit 1"
+        "[test_search.py] url_to_search_params: bad unit slug 1"
         q = QueryDict('unit-time1=secs')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)

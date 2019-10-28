@@ -321,7 +321,8 @@ def api_string_search_choices(request, slug):
                 raise ret
             final_results = []
 
-    if final_results is None:
+    if final_results is None: # pragma: no cover
+        # This is always true except when BOTH queries time out
         final_results = []
         more = True
         while more:
@@ -555,11 +556,11 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         valid_units = None
         if default_unit_info is not None:
             valid_units = list(default_unit_info['conversions'].keys())
+            valid_units.append(param_info.units)
         unit_val = None
         if unit_slug in request_get:
             unit_val = request_get[unit_slug]
-            if (valid_units is None or
-                (unit_val not in valid_units and unit_val != param_info.units)):
+            if valid_units is None or unit_val not in valid_units:
                 if allow_errors: # pragma: no cover
                     # We never actually hit this because normalizeurl catches
                     # the bad unit first
