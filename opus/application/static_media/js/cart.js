@@ -110,7 +110,7 @@ var o_cart = {
             }
         });
 
-        // Click to open the download options panel when that nav-link is availabe
+        // Click to open the download options panel when that nav-link is available
         $("#cart").on("click", ".op-cart-slide-download-panel", function(e) {
             o_cart.displayCartLeftPane();
             $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
@@ -440,10 +440,23 @@ var o_cart = {
             return;
         }
         o_cart.totalObsCount = status.count;
-        o_cart.hideCartCountSpinner(o_cart.totalObsCount);
+        o_cart.hideCartCountSpinner(status.count, status.recycled_count);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
             o_cart.hideDownloadSpinner(status.total_download_size_pretty,
                                        o_utils.addCommas(status.total_download_count));
+        }
+
+        // update the panel numbers if we received them...
+        if (status.product_cat_list !== undefined) {
+            for (let index = 0; index < status.product_cat_list.length; index++) {
+                let slugList = status.product_cat_list[index][1];
+                for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
+                    let slugName = slugList[slugNdx].slug_name;
+                    $(`#op-product-${slugName} .op-options-obs`).html(slugList[slugNdx].product_count);
+                    $(`#op-product-${slugName} .op-options-files`).html(slugList[slugNdx].download_count);
+                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+                }
+            }
         }
     },
 
@@ -513,23 +526,26 @@ var o_cart = {
         return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
-    emptyCart: function(returnToSearch=false) {
+    // 3 actions:
+    // Empty Cart - empty the cart completely;
+    // Empty Recycle Bin - empty the recycle bin
+    // Restore Recycle Bin - restore all observations in the recycle bin to the cart
+    emptyCartOrRecycleBin: function(what) {
         // to disable clicks:
         o_utils.disableUserInteraction();
 
+        // what == "cart" or "recycleBin"
+        let recycleBin = (what === "cart" ? 0 : 1);
+
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {
+        $.getJSON(`/opus/__cart/reset.json?recyclebin=${recycleBin}`, function(data) {
             o_cart.reloadObservationData = true;
             o_cart.observationData = {};
-            if (!returnToSearch) {
-                opus.changeTab("cart");
-            } else {
-                opus.changeTab("search");
-            }
+            $("#op-cart-count").html(data.count);
+            $("#op-recycled-count").html(data.recycled_count);
+            opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
-
-        $("#op-cart-count").html("0");
 
         let buttonInfo = o_browse.cartButtonInfo("in");
         $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
@@ -537,19 +553,48 @@ var o_cart = {
         $(".op-data-table-view input").prop("checked", false);
     },
 
+    restoreRecycleBin: function() {
+        // to disable clicks:
+        o_utils.disableUserInteraction();
+
+        let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
+
+        $.getJSON(url, function(statusData) {
+            if (statusData.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(statusData);
+            o_utils.enableUserInteraction();
+        });
+
+        let buttonInfo = o_browse.cartButtonInfo("out");
+        let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
+        $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        $(selector).prop("title", buttonInfo.title);
+        $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
+    },
+
     // action = add/remove/addrange/removerange/addall
     getEditURL: function(opusId, action) {
         let tab = opus.getViewTab();
         let url = "/opus/__cart/" + action + ".json?";
+        // only add to recycle bin if the edit occurs on the #cart tab
+        let recycleBin = (tab === "#cart" ? 1 : 0);
         switch (action) {
             case "add":
+                url += `opusid=${opusId}`;
+                break;
+
             case "remove":
-                url += "opusid=" + opusId;
+                url += `opusid=${opusId}&recyclebin=${recycleBin}`;
+                break;
+
+            case "addrange":
+                url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
             case "removerange":
-            case "addrange":
-                url += `range=${opusId}&${o_hash.getHash()}`;
+                url += `range=${opusId}&${o_hash.getHash()}&recyclebin=${recycleBin}`;
                 break;
 
             case "addall":
@@ -559,7 +604,7 @@ var o_cart = {
 
         // Minor performance check - if we don't need a total download size, don't bother
         // Only the cart tab is interested in updating that count at this time.
-        if (tab === "cart") {
+        if (tab === "#cart") {
             url += "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
         return url;
@@ -573,11 +618,6 @@ var o_cart = {
 
     toggleInCart: function(fromOpusId, toOpusId) {
         let tab = opus.getViewTab();
-
-        // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") {
-            return;
-        }
 
         let length = null;
         let fromIndex = null;
@@ -643,17 +683,22 @@ var o_cart = {
             } else {
                 $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                     let opusId = $(elem).data("id");
-                    /// NOTE: we need to mark the elements on BOTH browse and cart page
+                    /// NOTE: we need to mark the elements on BOTH browse and cart page for delete but not recycle bin
                     if (action === "add") {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                        $(`#cart tr[data-id=${opusId}]`).removeClass("text-success op-recycled");
+                        $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).addClass("op-hide-element");
                     } else {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                        $(`#cart tr[data-id=${opusId}]`).addClass("text-success op-recycled");
+                        $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).removeClass("op-hide-element");
                     }
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
                 o_cart.updateCartStatus(statusData);
             }
+            o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
         o_browse.undoRangeSelect(tab);
@@ -663,12 +708,19 @@ var o_cart = {
     showCartCountSpinner: function() {
         if (o_cart.cartCountSpinnerTimer === null) {
             o_cart.cartCountSpinnerTimer = setTimeout(function() {
-                $("#op-cart-count").html(opus.spinner); }, opus.spinnerDelay);
+                $("#op-cart-count").html(opus.spinner);
+                if ($("#op-recycled-count").length) {
+                    $("#op-recycled-count").html(opus.spinner);
+                }
+            }, opus.spinnerDelay);
         }
     },
 
-    hideCartCountSpinner: function(cartCount) {
+    hideCartCountSpinner: function(cartCount, recycledCount) {
         $("#op-cart-count").html(cartCount);
+        if ($("#op-recycled-count").length) {
+            $("#op-recycled-count").html(recycledCount);
+        }
         if (o_cart.cartCountSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.cartCountSpinnerTimer);

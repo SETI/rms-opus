@@ -378,6 +378,10 @@ ul.op-search-menu {
     text-align: center;
 }
 
+#cart tr.op-recycled {
+    text-decoration: line-through;
+}
+
 #op-confirm-modal {
     border-radius: 6px;
     border-width: 3px;
@@ -396,7 +400,8 @@ ul.op-search-menu {
     width: 74%;
 }
 
-.op-thumbnail-container .modal-overlay {
+.op-thumbnail-container .op-modal-overlay,
+.op-thumbnail-container .op-recycle-overlay {
     position: absolute;
     text-align: center;
     padding-left: 1em;
@@ -404,11 +409,20 @@ ul.op-search-menu {
     width: 100%;
     top: 50%;
     left: 50%;
+}
+
+.op-thumbnail-container .op-modal-overlay {
     opacity: 0;
     z-index: -1;
 }
 
-.op-thumbnail-container .modal-show {
+.op-thumbnail-container .op-recycle-overlay {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    z-index: 999;
+}
+
+.op-thumbnail-container .op-modal-show {
     z-index: 999;
     -webkit-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
@@ -419,10 +433,16 @@ ul.op-search-menu {
     opacity: 1;
 }
 
-tr.modal-show {
+tr.op-modal-show {
     color: #167495;
     opacity: 0.92;
     filter: alpha(opacity=92);
+}
+
+.op-thumbnail-container .op-recycle-overlay.op-modal-show {
+    -webkit-transform: scale(0.4) translate(-210%, -270%);
+    -moz-transform: scale(0.4) translate(-210%, -270%);
+    transform: scale(0.4) translate(-210%, -270%);
 }
 
 .op-thumbnail-container .content-text {
@@ -1176,22 +1196,26 @@ nav.panel-heading {
 
 #cart .op-download-options {
     display: inline-flex;
-    padding: 0.5em 0.5em 0;
-}
-
-#cart .op-download-options a {
-    opacity: 0.6 !important;
-    text-decoration: none;
-}
-
-#cart .op-download-options a:hover {
-    opacity: 1 !important;
-    text-decoration: none;
 }
 
 /* Make sure ps container is NOT a flexbox (display: flex) */
 #cart #op-download-options-container {
     display: block;
+}
+
+#cart .op-cart-actions {
+    display: inline-flex;
+    padding: 0.5em 0.5em 0;
+}
+
+#cart .op-cart-actions a {
+    opacity: 0.6 !important;
+    text-decoration: none;
+}
+
+#cart .op-cart-actions a:hover {
+    opacity: 1 !important;
+    text-decoration: none;
 }
 
 /* Cart view navbar responsiveness */

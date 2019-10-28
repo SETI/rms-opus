@@ -729,7 +729,13 @@ var opus = {
                             opus.handleResetButtons(false);
                             break;
                         case "op-empty-cart":
-                            o_cart.emptyCart();
+                            o_cart.emptyCartOrRecycleBin("cart");
+                            break;
+                        case "op-empty-recycle-bin":
+                            o_cart.emptyCartOrRecycleBin("recycleBin");
+                            break;
+                        case "op-restore-recycle-bin":
+                            o_cart.restoreRecycleBin();
                             break;
                     }
                     $(`#${target}`).modal("hide");

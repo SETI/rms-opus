@@ -358,6 +358,12 @@ def api_reset_session(request):
     Format: __cart/reset.json
     Arguments: recyclebin=0/1
 
+    Returns dict containing:
+        'count':                    Total number of items in cart NOT in
+                                        recycle bin
+        'recycled_count':           Total number of items in cart IN
+                                        recycle bin
+
     """
     api_code = enter_api_call('api_reset_session', request)
 
@@ -387,7 +393,12 @@ def api_reset_session(request):
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
-    ret = json_response('cart emptied')
+    count, recycled_count = get_cart_count(session_id, recycled=True)
+    info = {}
+    info['count'] = count
+    info['recycled_count'] = recycled_count
+
+    ret = json_response(info)
     exit_api_call(api_code, ret)
     return ret
 
@@ -596,7 +607,7 @@ def _get_download_info(product_types, session_id):
 
     The resulting totals are limited to the given product_types.
     ['all'] means return all product_types.
-    Items in the recycle bin are ignored.
+    Product types for items in the recycle bin are returned with values of 0.
 
     Returns dict containing:
         'total_download_count':       Total number of unique files
@@ -623,9 +634,72 @@ def _get_download_info(product_types, session_id):
     q = connection.ops.quote_name
 
     values = []
-    sql = 'SELECT '
+    sql = 'SELECT DISTINCT '
 
-# The prototype query:
+    # Retrieve the distinct list of product types for all observations, including the ones in the
+    # recycle bin.  This is used to allow the items on the cart to be added/removed from the recycle bin
+    # and update the download options panel without redrawing the cart page on every edit.
+    sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
+    sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
+    sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
+    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')
+    sql += 'FROM '+q('obs_files')+' '
+    sql += 'INNER JOIN '+q('cart')+' ON '
+    sql += q('cart')+'.'+q('obs_general_id')+'='
+    sql += q('obs_files')+'.'+q('obs_general_id')+' '
+    sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
+    values.append(session_id)
+    sql += 'ORDER BY '+q('sort')
+
+    log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    results = cursor.fetchall()
+
+    product_cats = []
+    product_cat_list = []
+    product_dict_by_short_name = {}
+
+    for res in results:
+        (category, sort_order, short_name, full_name) = res
+
+        pretty_name = category
+        if category == 'standard':
+            pretty_name = 'Standard Data Products'
+        elif category == 'metadata':
+            pretty_name = 'Metadata Products'
+        elif category == 'browse':
+            pretty_name = 'Browse Products'
+        elif category == 'diagram':
+            pretty_name = 'Diagram Products'
+        else:
+            pretty_name = category + '-Specific Products'
+        key = (category, pretty_name)
+        if key not in product_cats:
+            product_cats.append(key)
+            cur_product_list = []
+            product_cat_list.append((pretty_name, cur_product_list))
+        try:
+            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
+                                            term=short_name)
+            tooltip = entry.definition
+        except Definitions.DoesNotExist:
+            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
+                      short_name)
+            tooltip = None
+        product_dict_entry = {
+            'slug_name': short_name,
+            'tooltip': tooltip,
+            'product_type': full_name,
+            'product_count': 0,
+            'download_count': 0,
+            'download_size': 0,
+            'download_size_pretty': 0
+        }
+        cur_product_list.append(product_dict_entry)
+        product_dict_by_short_name[short_name] = product_dict_entry
+
+
 # SELECT obs_files.short_name,
 #        count(distinct obs_files.opus_id) as product_count,
 #        count(distinct obs_files.logical_path) as download_count,
@@ -643,7 +717,8 @@ def _get_download_info(product_types, session_id):
 #   AND obs_files.opus_id in ('co-iss-n1460960653', 'co-iss-n1460960868')
 # GROUP BY obs_files.category, obs_files.sort_order, obs_files.short_name, t2.download_size
 # ORDER BY sort_order;
-
+    values = []
+    sql = 'SELECT '
 
     # For a given short_name, the category, sort_order, and full_name are
     # always the same. Thus we can group by all four and it's the same as
@@ -716,8 +791,6 @@ def _get_download_info(product_types, session_id):
 
     total_download_size = 0
     total_download_count = 0
-    product_cats = []
-    product_cat_list = []
 
     for res in results:
         (category, sort_order, short_name, full_name,
@@ -728,40 +801,10 @@ def _get_download_info(product_types, session_id):
         if product_types == ['all'] or short_name in product_types:
             total_download_size += download_size
             total_download_count += download_count
-        pretty_name = category
-        if category == 'standard':
-            pretty_name = 'Standard Data Products'
-        elif category == 'metadata':
-            pretty_name = 'Metadata Products'
-        elif category == 'browse':
-            pretty_name = 'Browse Products'
-        elif category == 'diagram':
-            pretty_name = 'Diagram Products'
-        else:
-            pretty_name = category + '-Specific Products'
-        key = (category, pretty_name)
-        if key not in product_cats:
-            product_cats.append(key)
-            cur_product_list = []
-            product_cat_list.append((pretty_name, cur_product_list))
-        try:
-            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE',
-                                            term=short_name)
-            tooltip = entry.definition
-        except Definitions.DoesNotExist:
-            log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%s"',
-                      short_name)
-            tooltip = None
-        product_dict_entry = {
-            'slug_name': short_name,
-            'tooltip': tooltip,
-            'product_type': full_name,
-            'product_count': product_count,
-            'download_count': download_count,
-            'download_size': download_size,
-            'download_size_pretty': nice_file_size(download_size)
-        }
-        cur_product_list.append(product_dict_entry)
+            product_dict_by_short_name[short_name]['product_count'] = product_count
+            product_dict_by_short_name[short_name]['download_count'] = download_count
+            product_dict_by_short_name[short_name]['download_size'] = download_size
+            product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
 
     ret = {
         'total_download_count': total_download_count,

@@ -180,16 +180,6 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <ul class="nav navbar-nav flex-sm-row">
-                                    <li class="nav-item">
-                                        <div>
-                                            <button type="button" class="btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart">
-                                                <i class="fas fa-trash-alt"></i>&nbsp;Empty Cart
-                                            </button>
-                                        </div>
-                                    </li>
-                                </ul>
-
                             </div>
                             <div class="op-sort-order-container">
                                 <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
@@ -197,21 +187,20 @@
                                 </span>&nbsp;
                                 <ul class="sort-contents list-inline"></ul>
                             </div>
-                            <div class="op-download-options">
+							<div class="op-cart-actions">
                                 <li class="list-inline-item">
-                                    <a href="#" class="op-download-csv text-info" download title="Download CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Download Metadata CSV</a>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from cart"><i class="fas fa-trash-alt"></i>
+										&nbsp;Empty Cart</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <div id="create_zip_data_file">
-                                        <a href="#" class="downloadData text-info" title="Download a zipped data archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download Data Archive</a>
-                                    </div>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin" title="Remove all observations from recycle bin"><i class="fas fa-recycle"></i>
+										&nbsp;Empty Recycle Bin</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <div id="create_zip_url_file">
-                                        <a href="#" class="downloadURL text-info" title="Download a zipped URL archive of all observations in cart using selected products"><i class="fas fa-download"></i>&nbsp;Download URL Archive</a>
-                                    </div>
-                                </li>
-                            </div>
+                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin" title="Restore all observations from recycle bin"><i class="fas fa-undo"></i>
+										&nbsp;Restore Recycle Bin&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
+                                </li>							
+							</div>
                             <div class="op-cart-toggle-download-panel">
                                 <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download options panel">
                                    <i class="fas fa-arrow-left"></i>
@@ -378,6 +367,28 @@
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from your cart?"
             target="op-empty-cart"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-empty-recycle-bin"
+            confirm_title="Confirm Remove All Observations From Recycle Bin"
+            confirm_msg="Are you sure you want to remove all observations from your recycle bin?"
+            target="op-empty-recycle-bin"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-restore-recycle-bin"
+            confirm_title="Confirm Restore All Observations From Recycle Bin"
+            confirm_msg="Are you sure you want to restore all observations to your cart from the recycle bin?"
+            target="op-restore-recycle-bin"
             yes_text="Yes"
             no_text="No"
             allow_close=True
