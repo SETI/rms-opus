@@ -474,9 +474,12 @@ def api_normalize_url(request):
         return escape(old_slug)
 
     def _escape_or_label(old_slug, pi):
-        if pi.display_results:
+        if pi.display_results: # pragma: no cover
+            # We don't currently support any display terms that aren't
+            # also search terms
             return pi.body_qualified_label()
-        return escape(old_slug)
+        else:
+            return escape(old_slug)
 
     api_code = enter_api_call('api_normalize_url', request)
 
@@ -683,8 +686,6 @@ def api_normalize_url(request):
             search1 = pi.slug
             if slug+clause_num_str in original_slugs:
                 search1_val = original_slugs[slug+clause_num_str]
-                if is_string and search1_val is None:
-                    search1_val = ''
                 # If we're searching for ringobsid, convert it to opusid and
                 # also convert the parameter to the new opusid format
                 if pi.slug == 'ringobsid':
@@ -768,7 +769,7 @@ def api_normalize_url(request):
             unit_default = pi.units
             default_unit_info = opus_support.UNIT_CONVERSION.get(unit_default,
                                                                  None)
-            if default_unit_info is not None:
+            if default_unit_info is not None: # pragma: no cover
                 valid_units = list(default_unit_info['conversions'].keys())
                 valid_units.append(pi.units)
 
@@ -855,8 +856,6 @@ def api_normalize_url(request):
                 search1 = None
             else:
                 search1_val = selections[search1]
-                if isinstance(search1_val, (list, tuple)):
-                    search1_val = search1_val[0]
         if search2_val is not None:
             if selections[search2] is None:
                 msg = ('Search query for "'

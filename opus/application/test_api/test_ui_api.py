@@ -1565,6 +1565,26 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "rightasc1_0" has a bad clause number; it has been ignored.</li><li>Search term "rightasc2_0" has a bad clause number; it has been ignored.</li><li>Search term "qtype-rightasc_0" has a bad clause number; it has been ignored.</li>')
 
+    def test__api_normalizeurl_search_multi_good_1_unit_only(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 unit only"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&unit-rightasc=degrees'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_multi_good_1_unit_bad(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good 1 unit bad"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1=10.&unit-rightasc=XXX'
+        new_slugs['rightasc1'] = '10.000000'
+        new_slugs['qtype-rightasc'] = 'any'
+        new_slugs['unit-rightasc'] = 'degrees'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Unit "unit-rightasc" has an illegal value; it has been set to the default.')
+
     # Single column ranges
 
     def test__api_normalizeurl_search_single_empty(self):
@@ -1814,6 +1834,28 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
 
+    def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_units(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&unit-observationduration_1=seconds&unit-observationduration_XXX=milliseconds'
+        new_slugs['observationduration2_01'] = '20.0000'
+        new_slugs['observationduration1_02'] = '10.0000'
+        new_slugs['unit-observationduration_01'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" has a bad clause number; it has been ignored.')
+
+    def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_units(self):
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX units"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_02=20.&unit-observationduration_1=milliseconds&unit-observationduration_XXX=milliseconds'
+        new_slugs['observationduration1_01'] = '10.0000'
+        new_slugs['observationduration2_02'] = '20.0000'
+        new_slugs['unit-observationduration_01'] = 'milliseconds'
+        new_slugs['unit-observationduration_02'] = 'seconds'
+        new_slugs['widgets'] = 'observationduration'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" has a bad clause number; it has been ignored.')
+
     # Strings
 
     def test__api_normalizeurl_search_string_good(self):
@@ -1904,6 +1946,34 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-volumeid_03'] = 'matches'
         new_slugs['widgets'] = 'volumeid'
         self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_missing_lines(self):
+        "[test_ui_api.py] /__normalizeurl: search single missing lines"
+        new_slugs = dict(self.default_url_slugs)
+        # Doesn't have a unit
+        url = '/opus/__normalizeurl.json?widgets=COISSmissinglines&COISSmissinglines1=10&COISSmissinglines2=20'
+        new_slugs['COISSmissinglines1'] = '10'
+        new_slugs['COISSmissinglines2'] = '20'
+        new_slugs['widgets'] = 'COISSmissinglines'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_single_missing_lines_unit(self):
+        "[test_ui_api.py] /__normalizeurl: search single missing lines unit"
+        new_slugs = dict(self.default_url_slugs)
+        # Doesn't have a unit
+        url = '/opus/__normalizeurl.json?widgets=COISSmissinglines&COISSmissinglines1=10&COISSmissinglines2=20&unit-COISSmissinglines=degrees'
+        new_slugs['COISSmissinglines1'] = '10'
+        new_slugs['COISSmissinglines2'] = '20'
+        new_slugs['widgets'] = 'COISSmissinglines'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-COISSmissinglines" is a unit for a field that does not allow units; it has been ignored.')
+
+    def test__api_normalizeurl_search_single_missing_lines_floating(self):
+        "[test_ui_api.py] /__normalizeurl: search single missing lines floating point"
+        new_slugs = dict(self.default_url_slugs)
+        # Doesn't have a unit
+        url = '/opus/__normalizeurl.json?widgets=COISSmissinglines&COISSmissinglines1=10.&COISSmissinglines2=20.'
+        new_slugs['widgets'] = 'COISSmissinglines'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search query for "Missing Lines [Cassini ISS]" minimum had an illegal value; it has been ignored.')
 
     # Mult field
 
