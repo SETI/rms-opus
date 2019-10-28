@@ -62,7 +62,7 @@ def api_normalize_input(request):
     """
     api_code = enter_api_call('api_normalize_input', request)
 
-    if not request or request.GET is None: # pragma: no coverage
+    if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
@@ -124,7 +124,7 @@ def api_string_search_choices(request, slug):
     """
     api_code = enter_api_call('api_string_search_choices', request)
 
-    if not request or request.GET is None: # pragma: no coverage
+    if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
@@ -395,19 +395,21 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
     from search.views import *
     from django.http import QueryDict
-    q = QueryDict("planet=Saturn&volumeid=COISS_2&
-                   qtype-volumeid=begins&
-                   order=time1,-RINGGEOringcenterdistance")
+    q = QueryDict("planet=Saturn&volumeid=COISS_2&qtype-volumeid=begins&rightasc1=10&order=time1,-RINGGEOringcenterdistance")
     (selections,extras) = url_to_search_params(q)
     selections
-        {u'obs_general.planet_id': [u'Saturn'],
-         u'obs_pds.volume_id': [u'COISS_2']}
+        {'obs_general.planet_id': ['Saturn'],
+         'obs_pds.volume_id': ['COISS_2'],
+         'obs_general.right_asc1': [10.0],
+         'obs_general.right_asc2': [None]}
     extras
-        {'order':
-            ([u'obs_general.time1', u'obs_ring_geometry.ring_center_distance'],
-             [False, True]),
-         'qtypes':
-            {u'obs_pds.volume_id': [u'begins']}}
+        {'order': (['obs_general.time1',
+                    'obs_ring_geometry.ring_center_distance',
+                    'obs_general.opus_id'],
+                   [False, True, False]),
+         'qtypes': {'obs_pds.volume_id': ['begins'],
+                    'obs_general.right_asc': ['any']},
+         'units': {'obs_general.right_asc': ['degrees']}}
     """
     selections = {}
     extras = {}
@@ -550,7 +552,6 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         unit_slug = 'unit-'+slug_no_num+clause_num_str
         default_unit_info = opus_support.UNIT_CONVERSION.get(param_info.units,
                                                              None)
-        print(default_unit_info)
         valid_units = None
         if default_unit_info is not None:
             valid_units = list(default_unit_info['conversions'].keys())
@@ -715,7 +716,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
         # For STRING form types, there is only a single slug. Just ignore the
         # slug we're currently looking at and start over for simplicity.
-        if is_unit or unit_val is not None:
+        if is_unit or unit_val is not None: # pragma: no cover
+            # We shouldn't ever get here because string fields have no valid
+            # units and this will be caught above
             log.error('url_to_search_params: String field "%s" has unit',
                       orig_slug)
             return None, None
@@ -780,13 +783,13 @@ def get_user_query_table(selections, extras, api_code=None):
     """
     cursor = connection.cursor()
 
-    if selections is None or extras is None:
+    if selections is None or extras is None: # pragma: no cover
         # This should never happen...
         return None
 
     # Create a cache key
     cache_table_num, cache_new_flag = set_user_search_number(selections, extras)
-    if cache_table_num is None:
+    if cache_table_num is None: # pragma: no cover
         log.error('get_user_query_table: Failed to make entry in user_searches'+
                   ' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -810,13 +813,13 @@ def get_user_query_table(selections, extras, api_code=None):
     # a MYSQL_TABLE_ALREADY_EXISTS exception and we can just return the table
     # name.
     sql, params = construct_query_string(selections, extras)
-    if sql is None:
+    if sql is None: # pragma: no cover
         log.error('get_user_query_table: construct_query_string failed'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
         return None
 
-    if not sql:
+    if not sql: # pragma: no cover
         log.error('get_user_query_table: Query string is empty'
                   +' *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -832,8 +835,8 @@ def get_user_query_table(selections, extras, api_code=None):
     try:
         time1 = time.time()
         cursor.execute(create_sql, tuple(params))
-    except DatabaseError as e:
-        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS:
+    except DatabaseError as e: # pragma: no cover
+        if e.args[0] == MYSQL_TABLE_ALREADY_EXISTS: # pragma: no cover
             cache.set(cache_key, cache_table_name)
             return cache_table_name
         log.error('get_user_query_table: "%s" with params "%s" failed with '
@@ -858,7 +861,7 @@ def set_user_search_number(selections, extras):
     indicating if this is a new entry in user_searches so the cache table
     shouldn't exist yet.
     """
-    if selections is None or extras is None:
+    if selections is None or extras is None: # pragma: no cover
         return None, False
 
     selections_json = str(json.dumps(sort_dictionary(selections)))
@@ -938,7 +941,7 @@ def set_user_search_number(selections, extras):
                                      qtypes_hash=qtypes_hash,
                                      units_hash=units_hash,
                                      order_hash=order_hash)
-    except UserSearches.MultipleObjectsReturned:
+    except UserSearches.MultipleObjectsReturned: # pragma: no cover
         # This really shouldn't be possible
         s = UserSearches.objects.filter(selections_hash=selections_hash,
                                         qtypes_hash=qtypes_hash,
@@ -978,7 +981,7 @@ def get_param_info_by_slug(slug, source):
     assert source in ('col', 'widget', 'qtype', 'search')
 
     # Qtypes are forbidden from having a numeric suffix`
-    if source == 'qtype' and slug[-1] in ('1', '2'):
+    if source == 'qtype' and slug[-1] in ('1', '2'): # pragma: no cover
         log.error('get_param_info_by_slug: Qtype slug "%s" has unpermitted '+
                   'numeric suffix', slug)
         return None
@@ -1008,7 +1011,7 @@ def get_param_info_by_slug(slug, source):
             # already dealt with above.
             (form_type, form_type_func,
              form_type_format) = parse_form_type(ret.form_type)
-            if form_type in settings.RANGE_FORM_TYPES:
+            if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover
                 # Whoops! We are missing the numeric suffix.
                 return None
 
@@ -1180,7 +1183,7 @@ def construct_query_string(selections, extras):
                 clause_params += params
                 obs_tables.add(cat_name)
 
-        elif form_type == 'STRING':
+        elif form_type == 'STRING': # pragma: no cover
             clause, params = get_string_query(selections, param_qualified_name,
                                               qtypes)
             if clause is None:
@@ -1189,9 +1192,10 @@ def construct_query_string(selections, extras):
             clause_params += params
             obs_tables.add(cat_name)
 
-        else:
+        else: # pragma: no cover
             log.error('construct_query_string: Unknown field type "%s" for '
                       +'param "%s"', form_type, param_qualified_name)
+            return None, None
 
     # Make the ordering SQL
     order_sql = ''
@@ -1254,6 +1258,8 @@ def get_string_query(selections, param_qualified_name, qtypes):
         matches
         excludes
     """
+    if selections is None or param_qualified_name not in selections:
+        return None, None
     values = selections[param_qualified_name]
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
@@ -1275,7 +1281,7 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     if len(qtypes) != len(values):
         log.error('get_string_query: Inconsistent qtype/values lengths '
-                  +'for "%s"'
+                  +'for "%s" '
                   +'*** Selections %s *** Qtypes %s ***',
                   param_qualified_name, str(selections), str(qtypes))
         return None, None
@@ -1311,11 +1317,11 @@ def get_string_query(selections, param_qualified_name, qtypes):
             params.append('%'+value+'%')
         else:
             log.error('_get_string_query: Unknown qtype "%s" '
-                      +'for "%s"'
+                      +'for "%s" '
                       +'*** Selections %s *** Qtypes %s ***',
                       qtype, param_qualified_name, str(selections), str(qtypes))
             return None, None
-        if clause:
+        if clause: # pragma: no cover
             clauses.append(clause)
 
     if len(clauses) == 1:
@@ -1336,6 +1342,9 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
         all
         only
     """
+    if selections is None:
+        return None, None
+
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
     if not param_info:
         return None, None
@@ -1352,6 +1361,12 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     values_min = selections.get(param_qualified_name_min, [])
     values_max = selections.get(param_qualified_name_max, [])
 
+    if qtypes is None or len(qtypes) == 0:
+        qtypes = ['any'] * len(values_min)
+
+    if units is None or len(units) == 0:
+        units = [param_info.units] * len(values_min)
+
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
     cat_name = param_info.category_name
@@ -1364,6 +1379,14 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
         param_qualified_name_min = param_qualified_name_no_num
         param_qualified_name_max = param_qualified_name_no_num
         name_min = name_max = name_no_num
+        for qtype in qtypes:
+            if qtype != 'any':
+                log.error('get_range_query: bad qtype "%s" '
+                          +'for "%s" '
+                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                          qtype, param_qualified_name,
+                          str(selections), str(qtypes), str(units))
+                return None, None
         # qtypes are meaningless for single column ranges!
         qtypes = ['any'] * len(values_min)
 
@@ -1372,16 +1395,10 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     quoted_param_qualified_name_max = (quoted_cat_name+'.'
                                        +connection.ops.quote_name(name_max))
 
-    if qtypes is None or len(qtypes) == 0:
-        qtypes = ['any'] * len(values_min)
-
-    if units is None or len(units) == 0:
-        units = [param_info.units] * len(values_min)
-
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
         log.error('get_range_query: Inconsistent qtype/unit/min/max lengths '
-                  +'for "%s"'
+                  +'for "%s" '
                   +'*** Selections %s *** Qtypes %s *** Units %s',
                   param_qualified_name, str(selections), str(qtypes),
                   str(units))
@@ -1392,10 +1409,20 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
     for idx in range(len(values_min)):
         unit = units[idx]
-        value_min = opus_support.convert_to_default_unit(values_min[idx],
-                                                         param_info.units, unit)
-        value_max = opus_support.convert_to_default_unit(values_max[idx],
-                                                         param_info.units, unit)
+        try:
+            value_min = opus_support.convert_to_default_unit(values_min[idx],
+                                                             param_info.units,
+                                                             unit)
+            value_max = opus_support.convert_to_default_unit(values_max[idx],
+                                                             param_info.units,
+                                                             unit)
+        except KeyError:
+            log.error('get_range_query: Unknown unit "%s" for "%s" '
+                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      unit, param_qualified_name, str(selections), str(qtypes),
+                      str(units))
+            return None, None
+
         qtype = qtypes[idx]
 
         clause = ''
@@ -1441,10 +1468,11 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
         else:
             log.error('get_range_query: Unknown qtype "%s" '
-                      +'for "%s"'
+                      +'for "%s" '
                       +'*** Selections %s *** Qtypes %s *** Units %s',
-                      qtype, param_qualified_name, str(selections), str(qtypes),
-                      str(units))
+                      qtype, param_qualified_name,
+                      str(selections), str(qtypes), str(units))
+            return None, None
 
     if len(clauses) == 1:
         clause = clauses[0]
@@ -1463,6 +1491,8 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
         all
         only
     """
+    if selections is None:
+        return None, None
 
     param_info = _get_param_info_by_qualified_name(param_qualified_name)
     if not param_info:
@@ -1498,7 +1528,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
         log.error('get_longitude_query: Inconsistent qtype/unit/min/max lengths '
-                  +'for "%s"'
+                  +'for "%s" '
                   +'*** Selections %s *** Qtypes %s *** Units %s',
                   param_qualified_name, str(selections), str(qtypes),
                   str(units))
@@ -1509,10 +1539,20 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
 
     for idx in range(len(values_min)):
         unit = units[idx]
-        value_min = opus_support.convert_to_default_unit(values_min[idx],
-                                                         param_info.units, unit)
-        value_max = opus_support.convert_to_default_unit(values_max[idx],
-                                                         param_info.units, unit)
+        try:
+            value_min = opus_support.convert_to_default_unit(values_min[idx],
+                                                             param_info.units,
+                                                             unit)
+            value_max = opus_support.convert_to_default_unit(values_max[idx],
+                                                             param_info.units,
+                                                             unit)
+        except KeyError:
+            log.error('get_longitude_query: Unknown unit "%s" for "%s" '
+                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      unit, param_qualified_name, str(selections), str(qtypes),
+                      str(units))
+            return None, None
+
         qtype = qtypes[idx]
 
         if value_min is None and value_max is None:
@@ -1530,10 +1570,18 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
             clause, r_params = get_range_query(new_selections,
                                                param_qualified_name,
                                                new_qtypes, None)
+            if clause is None:
+                return None, None
             params += r_params
 
         elif is_single_column_range(param_qualified_name):
             # A single column range doesn't have center and d_ fields
+            if qtype != 'any':
+                log.error('get_longitude_query: Bad qtype "%s" for "%s" '
+                          +'*** Selections %s *** Qtypes %s *** Units %s',
+                          qtype, param_qualified_name,
+                          str(selections), str(qtypes), str(units))
+                return None, None
             quoted_param_qualified_name = (quoted_cat_name+'.'
                                            +connection.ops.quote_name(name_no_num))
             if value_max >= value_min:
@@ -1581,10 +1629,11 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                 log.error('get_longitude_query: Unknown qtype "%s" '
                           +'for "%s"'
                           +'*** Selections %s *** Qtypes %s *** Units %s',
-                          param_qualified_name, str(selections), str(qtypes),
-                          str(units))
+                          qtype, param_qualified_name,
+                          str(selections), str(qtypes),  str(units))
+                return None, None
 
-        if clause:
+        if clause: # pragma: no cover
             clauses.append(clause)
 
     if len(clauses) == 1:

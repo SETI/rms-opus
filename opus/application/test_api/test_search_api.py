@@ -86,6 +86,18 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         url = '/opus/__api/normalizeinput.json?fredethel=1234&reqno=123'
         self._run_status_equal(url, 404)
 
+    def test__api_normalizeinput_string_empty(self):
+        "[test_search_api.py] /api/normalizeinput: string empty"
+        url = '/opus/__api/normalizeinput.json?note=&reqno=123'
+        expected = {"note": "", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_string(self):
+        "[test_search_api.py] /api/normalizeinput: string"
+        url = '/opus/__api/normalizeinput.json?note=FRED&reqno=123'
+        expected = {"note": "FRED", "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_int_empty(self):
         "[test_search_api.py] /api/normalizeinput: integer empty"
         url = '/opus/__api/normalizeinput.json?levels1=&reqno=123'
