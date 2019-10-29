@@ -455,13 +455,6 @@ UNIT_CONVERSION = {
 
             }
         },
-    'degrees/pixel':
-        {
-            'display_name': 'degrees/pixel',
-            'conversions': {
-
-            }
-        },
     'km':
         {
             'display_name': 'km',
@@ -491,25 +484,18 @@ UNIT_CONVERSION = {
 
             }
         },
-    'milliseconds':
-        {
-            'display_name': 'msec',
-            'conversions': {
-
-            }
-        },
-    'pixels':
-        {
-            'display_name': 'pixels',
-            'conversions': {
-
-            }
-        },
     'seconds':
         {
             'display_name': 'secs',
             'conversions': {
                 'milliseconds': ('msecs', 1e-3),
+            }
+        },
+    'milliseconds':
+        {
+            'display_name': 'msec',
+            'conversions': {
+
             }
         },
 }

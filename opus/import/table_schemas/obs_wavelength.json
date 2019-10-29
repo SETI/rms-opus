@@ -279,7 +279,7 @@
         "pi_slug": "wavenores2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "cm^-1",
+        "pi_units": "cm^-1/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no_res1."
     },
     {
