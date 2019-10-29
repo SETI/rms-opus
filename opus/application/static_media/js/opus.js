@@ -264,6 +264,10 @@ var opus = {
          * that will eventually return the result count.
          */
 
+        console.log(`getResultCount`);
+        console.log(normalizedData.reqno);
+        console.log(opus.lastAllNormalizeRequestNo);
+
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
@@ -286,6 +290,7 @@ var opus = {
             return;
         } else {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
+            $("#sidebar").removeClass("search_overlay");
         }
 
         if (opus.getCurrentTab() === "browse") {

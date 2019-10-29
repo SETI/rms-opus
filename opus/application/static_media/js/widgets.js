@@ -310,7 +310,44 @@ var o_widgets = {
                 }
             }
 
-            o_hash.updateHash();
+            o_search.allNormalizedApiCall().then(function(normalizedData) {
+                console.log(`allNormalizedApiCall when clicking trash icon`);
+                console.log(normalizedData.reqno);
+                console.log(opus.lastAllNormalizeRequestNo);
+                console.log(normalizedData);
+                if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                    opus.normalizeInputForAllFieldsInProgress = false;
+                    o_widgets.disableCloseWidgetAndTrashIcons(false);
+                    return;
+                }
+                o_search.validateRangeInput(normalizedData);
+
+                if (opus.allInputsValid) {
+                    $("input.RANGE").removeClass("search_input_valid");
+                    $("input.RANGE").removeClass("search_input_invalid");
+                    $("input.RANGE").addClass("search_input_original");
+                    $("#sidebar").removeClass("search_overlay");
+                    $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+                    if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                        // Put back normal hinting info
+                        opus.widgetsDrawn.forEach(function(eachSlug) {
+                            o_search.getHinting(eachSlug);
+                        });
+                    }
+                    $(".op-browse-tab").removeClass("op-disabled-nav-link");
+                } else {
+                    $(".op-browse-tab").addClass("op-disabled-nav-link");
+                }
+
+                console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
+                o_hash.updateHash(opus.allInputsValid);
+
+                opus.normalizeInputForAllFieldsInProgress = false;
+                o_widgets.disableCloseWidgetAndTrashIcons(false);
+            });
+
+            // console.log(opus.selections);
+            // o_hash.updateHash();
         });
     },
 
@@ -1160,10 +1197,14 @@ var o_widgets = {
          * Disable/enable "x" and trash icons in a widget.
          */
         if (disable) {
-            $(".op-remove-inputs").addClass("op-disable-btn");
+            // $(".op-remove-inputs").addClass("op-disable-btn");
+            $(".op-remove-inputs button").addClass("op-btn-tag-disable");
+
             $(".close_card").addClass("op-disable-btn");
         } else {
-            $(".op-remove-inputs").removeClass("op-disable-btn");
+            // $(".op-remove-inputs").removeClass("op-disable-btn");
+            $(".op-remove-inputs button").removeClass("op-btn-tag-disable");
+
             $(".close_card").removeClass("op-disable-btn");
         }
     },
