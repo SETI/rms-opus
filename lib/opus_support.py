@@ -520,4 +520,4 @@ def convert_to_default_unit(val, default_unit, unit):
     if default_unit == unit:
         return val
     assert default_unit in UNIT_CONVERSION
-    return val * UNIT_CONVERSION[default_unit]['conversions'][unit]
+    return val * UNIT_CONVERSION[default_unit]['conversions'][unit][1]
