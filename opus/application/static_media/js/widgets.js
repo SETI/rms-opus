@@ -196,7 +196,7 @@ var o_widgets = {
             // Update opus.selections & opus.extras
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
-            console.log(newlyAddedQtype.length);
+
             if (newlyAddedInput.hasClass("RANGE")) {
                 opus.selections[`${slug}1`] = opus.selections[`${slug}1`] ? opus.selections[`${slug}1`] : [];
                 opus.selections[`${slug}2`] = opus.selections[`${slug}2`] ? opus.selections[`${slug}2`] : [];
@@ -218,6 +218,17 @@ var o_widgets = {
 
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
+                }
+
+                // Init autocomplete
+                let widgetInputs = $(`#widget__${slug} input`);
+                // Since inputs are renumber, we have to update the corresponding autocomplete.
+                // We will destory all old autocomplete and re-init for each input.
+                o_widgets.destroyAutocomplete(slug);
+                // loop through each input set and re-init autocomplete for each of them
+                for (const singleInput of widgetInputs) {
+                    let slugWithCounter = $(singleInput).attr("name");
+                    o_widgets.initAutocomplete(slug, slugWithCounter);
                 }
             }
             console.log(`after`);
@@ -286,6 +297,18 @@ var o_widgets = {
 
             o_widgets.renumberInputsAttributes(slug);
             o_widgets.attachAddInputIcon(slug, addInputIcon);
+
+            let widgetInputs = $(`#widget__${slug} input`);
+            if (widgetInputs.hasClass("STRING")) {
+                // Since inputs are renumber, we have to update the corresponding autocomplete.
+                // We will destory all old autocomplete and re-init for each input.
+                o_widgets.destroyAutocomplete(slug);
+                // loop through each input set and re-init autocomplete for each of them
+                for (const singleInput of widgetInputs) {
+                    let slugWithCounter = $(singleInput).attr("name");
+                    o_widgets.initAutocomplete(slug, slugWithCounter);
+                }
+            }
 
             o_hash.updateHash();
         });
@@ -767,31 +790,6 @@ var o_widgets = {
                 }
             });
 
-            // if ($(`#widget__${slug} input`).hasClass("STRING")) {
-            //     // let inputSets = $(`#widget__${slug} .op-search-inputs-set`);
-            //     let inputSets = $(`#widget__${slug} input`);
-            //     // let numberOfInputSets = inputSets.length;
-            //
-            //     for (const eachInputSet of inputSets) {
-            //         console.log($(eachInputSet).attr("name"));
-            //     }
-            //     // loop through each input set and init autocomplete for each of them
-            //     o_widgets.initAutocomplete(slug);
-            // }
-            //
-            // // close autocomplete dropdown menu when y-axis scrolling happens
-            // $("#widget-container").on("ps-scroll-y", function() {
-            //     $("input.STRING").autocomplete("close");
-            //
-            //     // Close dropdown list when ps scrolling is happening in widget container
-            //     if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
-            //         // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
-            //         // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
-            //         // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
-            //         $(`#${widget} input.op-range-input-min`).dropdown("toggle");
-            //     }
-            // });
-
             // Prevent overscrolling on ps in widget container when scrolling inside dropdown
             // list has reached to both ends
             $(".op-scrollable-menu").on("scroll wheel", function(e) {
@@ -830,14 +828,14 @@ var o_widgets = {
             let widgetInputs = $(`#widget__${slug} input`);
             o_widgets.renumberInputsAttributes(slug);
 
-            if ($(`#widget__${slug} input`).hasClass("STRING")) {
+            if (widgetInputs.hasClass("STRING")) {
                 // let inputSets = $(`#widget__${slug} .op-search-inputs-set`);
                 // let inputSets = $(`#widget__${slug} input`);
                 // let numberOfInputSets = inputSets.length;
 
                 // loop through each input set and init autocomplete for each of them
                 for (const singleInput of widgetInputs) {
-                    console.log($(singleInput).attr("name"));
+                    // console.log($(singleInput).attr("name"));
                     let slugWithCounter = $(singleInput).attr("name");
                     o_widgets.initAutocomplete(slug, slugWithCounter);
                 }
@@ -845,7 +843,7 @@ var o_widgets = {
 
             // close autocomplete dropdown menu when y-axis scrolling happens
             $("#widget-container").on("ps-scroll-y", function() {
-                $("input.STRING").autocomplete("close");
+                $(`#widget__${slug} input.STRING`).autocomplete("close");
 
                 // Close dropdown list when ps scrolling is happening in widget container
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
@@ -1141,14 +1139,19 @@ var o_widgets = {
          * Make sure jquery ui autocomplete dropdown is attached right below
          * the corresponding input when browser is resized.
          */
-        if ($("ul.ui-autocomplete").is(":visible")) {
-            let slug = $("ul.ui-autocomplete").data("slug");
-            let inputPosition = $(`input[name="${slug}"]`).offset();
-            let inputHeight = $(`input[name="${slug}"]`).outerHeight();
+        let autocompleteDropdown = $("ul.ui-autocomplete");
+        for (const singleDropdown of autocompleteDropdown) {
+            if ($(singleDropdown).find("li").length > 0 && $(singleDropdown).is(":visible")) {
+                let slug = $(singleDropdown).attr("data-slug");
+                let slugWithCounter = $(singleDropdown).attr("data-input");
 
-            let autocompletePos = {left: inputPosition.left, top: inputPosition.top + inputHeight};
-            $(`ul.ui-autocomplete[data-slug="${slug}"]`).offset(autocompletePos);
-            $(`ul.ui-autocomplete[data-slug="${slug}"]`).width($(`input[name="${slug}"]`).width());
+                let inputPosition = $(`input[name="${slugWithCounter}"]`).offset();
+                let inputHeight = $(`input[name="${slugWithCounter}"]`).outerHeight();
+
+                let autocompletePos = {left: inputPosition.left, top: inputPosition.top + inputHeight};
+                $(singleDropdown).offset(autocompletePos);
+                $(singleDropdown).width($(`input[name="${slugWithCounter}"]`).width());
+            }
         }
     },
 
@@ -1162,6 +1165,12 @@ var o_widgets = {
         } else {
             $(".op-remove-inputs").removeClass("op-disable-btn");
             $(".close_card").removeClass("op-disable-btn");
+        }
+    },
+
+    destroyAutocomplete: function(slug) {
+        if ($(`#widget__${slug} input.STRING`).autocomplete().length !== 0) {
+            $(`#widget__${slug} input.STRING`).autocomplete("destroy");
         }
     },
 
@@ -1205,10 +1214,12 @@ var o_widgets = {
                 if (newHash.match(regexForHashWithSearchParams)) {
                     newHash = newHash.match(regexForHashWithSearchParams)[1];
 
+                    // Make sure the existing STRING input value is not passed to stringsearchchoices
+                    // API call. This will make sure each autocomplete dropdown results for individual
+                    // input will not be affected by others.
                     let hashArray = newHash.split("&");
                     let newHashArray = [];
                     for (const slugValuePair of hashArray) {
-                        console.log(slugValuePair);
                         let slugParam = slugValuePair.split("=")[0];
                         if (slugParam === slugWithCounter || !slugParam.match(slug) ||
                             slugParam.startsWith("qtype-")) {
@@ -1250,10 +1261,13 @@ var o_widgets = {
                     response(displayDropDownList ? hintsOfString : null);
                 });
             },
-            focus: function(focusEvent, ui) {
+            focus: function(e, ui) {
                 return false;
             },
-            select: function(selectEvent, ui) {
+            select: function(e, ui) {
+                // console.log($(selectEvent.target).attr("name"));
+                // console.log(slugWithCounter);
+                slugWithCounter = $(e.target).attr("name");
                 let displayValue = o_search.extractHtmlContent(ui.item.label);
                 $(`input[name="${slugWithCounter}"]`).val(displayValue);
                 $(`input[name="${slugWithCounter}"]`).trigger("change");
@@ -1261,16 +1275,17 @@ var o_widgets = {
                 // opus.selections[slug] = [displayValue];
                 // o_hash.updateHash();
                 return false;
-            },
+            }
         })
-        .keyup(function(keyupEvent) {
+        .keyup(function(e) {
             /*
             When "enter" key is pressed:
             (1) autocomplete dropdown list is closed
             (2) change event is triggered if input is an empty string
             */
-            if (keyupEvent.which === 13) {
+            if (e.which === 13) {
                 displayDropDownList = false;
+                slugWithCounter = $(e.target).attr("name");
                 $(`input[name="${slugWithCounter}"]`).autocomplete("close");
                 let currentStringInputValue = $(`input[name="${slugWithCounter}"]`).val().trim();
                 if (currentStringInputValue === "") {
@@ -1280,13 +1295,14 @@ var o_widgets = {
                 displayDropDownList = true;
             }
         })
-        .focusout(function(focusoutEvent) {
+        .focusout(function(e) {
+            slugWithCounter = $(e.target).attr("name");
             let currentStringInputValue = $(`input[name="${slugWithCounter}"]`).val().trim();
             if (currentStringInputValue === "") {
                 $(`input[name="${slugWithCounter}"]`).trigger("change");
             }
         })
-        .data( "ui-autocomplete" );
+        .data("ui-autocomplete");
 
         // element with ui-autocomplete-category class will not be selectable
         let menuWidget = $(`input[name="${slugWithCounter}"].STRING`).autocomplete("widget");
@@ -1296,6 +1312,7 @@ var o_widgets = {
             // Add header and footer for dropdown list
             stringInputDropDown._renderMenu = function(ul, items) {
                 ul.attr("data-slug", slug);
+                ul.attr("data-input", slugWithCounter);
                 let self = this;
                 $.each(items, function(index, item) {
                    self._renderItem(ul, item );
