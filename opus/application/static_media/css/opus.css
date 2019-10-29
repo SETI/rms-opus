@@ -1897,19 +1897,16 @@ input[type="text"].search_input_original {
 
 input[type="text"].search_input_valid {
     border: 3px solid #9EEEBB;
-    /* margin: -2px; */
 }
 
 input[type="text"].search_input_invalid {
     border: 3px solid #FFD700;
     background-color: #EEECEC;
-    /* margin: -2px; */
 }
 
 input[type="text"].search_input_invalid_no_focus {
     background-color: #F6AFAF;
     border: 3px solid #F6AFAF;
-    margin: -2px;
 }
 
 .search_overlay {

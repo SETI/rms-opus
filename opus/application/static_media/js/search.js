@@ -255,6 +255,7 @@ var o_search = {
             let pairedSlug = slug.match(/.*1/) ? `${slugName}2` : `${slugName}1`;
             let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+            // save an old copy here
             if (currentValue) {
                 if (opus.selections[slug]) {
                     opus.selections[slug][idx] = currentValue;
@@ -270,7 +271,7 @@ var o_search = {
             }
 
             let newHash = o_hash.updateHash(false);
-
+            //  restore opus.selections to old copy
             /*
             We are relying on URL order now to parse and get slugs before "&view" in the URL
             Opus will rewrite the URL when a URL is pasted, and all the search related slugs will be moved ahead of "&view"
@@ -734,8 +735,8 @@ var o_search = {
             console.log(o_search.lastSlugNormalizeRequestNo);
 
             console.log(slug);
-            // if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
-            if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
+            if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
+            // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
                 o_widgets.disableCloseWidgetAndTrashIcons(false);
                 return;
