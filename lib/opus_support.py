@@ -434,54 +434,60 @@ RANGE_FUNCTIONS = {
 # Unit translation table
 # db name : displayed name
 UNIT_CONVERSION = {
-    'cm^-1':
+    '1/cm':
         {
             'display_name': 'cm^-1',
             'conversions': {
-
+                '1/m':         ('m^-1', 1e-2),
             }
         },
-    'cm^-1/pixel':
+    '1/cm/pixel':
         {
             'display_name': 'cm^-1/pixel',
             'conversions': {
-
+                '1/m/pixel':   ('m^-1/pixel', 1e-2),
             }
         },
     'degrees':
         {
             'display_name': 'degrees',
             'conversions': {
-
+                'hourangle':    ('hour angle', 360./24.),
+                'radians':      ('radians', 180./3.141592653589)
             }
         },
     'km':
         {
             'display_name': 'km',
             'conversions': {
-                'cm': ('cm', 1e-5),
-                'm': ('m', 1e-3),
+                'saturnradii':  ('Rj (60330)', 60330.),
+                'jupiterradii': ('Rs (71492)', 71492.),
+                'neptuneradii': ('Rn (25225)', 25225.),
+                'uranusradii':  ('Ru (25559)', 25559.),
             }
         },
     'km/pixel':
         {
             'display_name': 'km/pixel',
             'conversions': {
-
             }
         },
     'microns':
         {
             'display_name': 'microns',
             'conversions': {
-
+                'angstroms':    ('angstroms', 1e-4),
+                'nm':           ('nm', 1e-3),
+                'cm':           ('cm', 1e3),
             }
         },
     'microns/pixel':
         {
             'display_name': 'microns/pixel',
             'conversions': {
-
+                'angstroms/pixel':    ('angstroms', 1e-4),
+                'nm/pixel':           ('nm', 1e-3),
+                'cm/pixel':           ('cm', 1e3),
             }
         },
     'seconds':
@@ -489,13 +495,16 @@ UNIT_CONVERSION = {
             'display_name': 'secs',
             'conversions': {
                 'milliseconds': ('msecs', 1e-3),
+                'minutes':      ('minutes', 60.),
+                'hours':        ('hours', 60.*60.),
+                'days':         ('days', 60.*60.*24.),
             }
         },
     'milliseconds':
         {
             'display_name': 'msec',
             'conversions': {
-
+                'seconds':      ('secs', 1e3),
             }
         },
 }
