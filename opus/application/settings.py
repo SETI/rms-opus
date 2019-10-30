@@ -302,7 +302,8 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'cols', 'col_chooser', 'detail', 'download',
                    'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
                    'range', 'reqno', 'request',
-                   'types', 'view', 'widgets', 'widgets2', '__sessionid')
+                   'types', 'units', 'view', 'widgets', 'widgets2',
+                   '__sessionid')
 
 # The public URL to access OPUS
 PUBLIC_OPUS_URL = 'https://pds-rings.seti.org/search/'
@@ -383,6 +384,7 @@ HTTP404_UNKNOWN_RING_OBS_ID = 'Unknown RINGOBSID'
 HTTP404_UNKNOWN_CATEGORY = 'Unknown category'
 HTTP404_MISSING_REQNO = 'Missing reqno'
 HTTP404_BAD_OR_MISSING_RANGE = 'Bad or missing range'
+HTTP404_UNKNOWN_UNITS = 'Unknown units'
 
 HTTP500_SEARCH_FAILED = 'Search failed'
 HTTP500_SQL_FAILED = 'SQL query failed'

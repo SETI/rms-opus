@@ -320,14 +320,15 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
             __api/meta/range/endpoints/(?P<slug>[-\w]+).json
     Arguments: Normal search arguments
-               reqno=<N> (Required for internal, ignored for external)
+               units=<unit> (Optional, gives units to return in)
+               reqno=<N>    (Required for internal, ignored for external)
 
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
     Returned JSON:
-        {"min": 63.592, "max": 88.637, "nulls": 2365}
+        {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km"}
       or
-        {"min": 63.592, "max": 88.637, "nulls": 2365, "reqno": 123}
+        {"min": 63.592, "max": 88.637, "nulls": 2365, units: "km", "reqno": 123}
 
         Note that min and max can be strings, not just real numbers. This
         happens, for example, with spacecraft clock counts, and may also happen
@@ -342,12 +343,13 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
                 <dt>min</dt><dd>0.0000</dd>
                 <dt>max</dt><dd>50000.0000</dd>
                 <dt>nulls</dt><dd>11</dd>
+                <dt>units</dt><dd>km</dd>
             </dl>
         </body>
 
     Returned CSV:
-        min,max,nulls
-        0.0000,50000.0000,11
+        min,max,nulls,units
+        0.0000,50000.0000,11,km
     """
     api_code = enter_api_call('api_get_range_endpoints', request)
 
@@ -364,10 +366,20 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
+    units = request.GET.get('units', param_info.units)
+    if not opus_support.is_valid_unit(param_info.units, units):
+        log.error('get_range_endpoints: Bad units "%s" for '+
+                  'slug %s', str(units), str(slug))
+        ret = Http404(settings.HTTP404_UNKNOWN_UNITS)
+        exit_api_call(api_code, ret)
+        raise ret
+
     param_name = param_info.name # Just name
     param_qualified_name = param_info.param_qualified_name() # category.name
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
+    form_type_format = opus_support.adjust_format_string_for_units(
+            form_type_format, param_info.units, units)
     table_name = param_info.category_name
     try:
         table_model = apps.get_model('search',
@@ -418,7 +430,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
 
     # Is this result already cached?
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
-                 + ':rangeep:' + qualified_param_name_no_num)
+                 + ':rangeep:' + qualified_param_name_no_num
+                 + ':units:' + units)
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
         if cache_num is None: # pragma: no cover
@@ -460,6 +473,14 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             range_endpoints['nulls'] = (results.all().extra(where=[where])
                                                      .count())
 
+        range_endpoints['min'] = opus_support.convert_from_default_unit(
+                                            range_endpoints['min'],
+                                            param_info.units,
+                                            units)
+        range_endpoints['max'] = opus_support.convert_from_default_unit(
+                                            range_endpoints['max'],
+                                            param_info.units,
+                                            units)
         range_endpoints['min'] = format_metadata_number_or_func(
                                                 range_endpoints['min'],
                                                 form_type_func,
@@ -481,6 +502,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             raise ret
         range_endpoints['reqno'] = reqno
 
+    range_endpoints['units'] = units
+
     if fmt == 'json':
         ret = json_response(range_endpoints)
     elif fmt == 'html':
@@ -489,8 +512,9 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     elif fmt == 'csv':
         ret = csv_response(slug, [[range_endpoints['min'],
                                    range_endpoints['max'],
-                                   range_endpoints['nulls']]],
-                           ['min', 'max', 'nulls'])
+                                   range_endpoints['nulls'],
+                                   range_endpoints['units']]],
+                           ['min', 'max', 'nulls', 'units'])
     else:
         log.error('api_get_range_endpoints: Unknown format "%s"', fmt)
         ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)

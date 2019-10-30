@@ -6,6 +6,8 @@
 # MRS 6/5/18
 ################################################################################
 
+import numpy as np
+
 import julian
 
 ################################################################################
@@ -507,3 +509,37 @@ def convert_to_default_unit(val, default_unit, unit):
         return val
     assert default_unit in UNIT_CONVERSION
     return val * UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+
+def convert_from_default_unit(val, default_unit, unit):
+    if val is None:
+        return val
+    if default_unit is None or default_unit == unit:
+        return val
+    assert default_unit in UNIT_CONVERSION
+    return val / UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+
+def get_valid_units(default_unit):
+    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+    valid_units = None
+    if default_unit_info is not None:
+        valid_units = list(default_unit_info['conversions'].keys())
+        valid_units.append(default_unit)
+    return valid_units
+
+def is_valid_unit(default_unit, unit):
+    if default_unit == unit:
+        return True
+    return unit in UNIT_CONVERSION[default_unit]['conversions']
+
+def adjust_format_string_for_units(format, default_unit, unit):
+    if default_unit is None or default_unit == unit:
+        return format
+    print(format, default_unit, unit)
+    if not format.startswith('.') or not format.endswith('f'):
+        return format
+    assert default_unit in UNIT_CONVERSION
+    factor = int(np.ceil(np.log10(
+                UNIT_CONVERSION[default_unit]['conversions'][unit][1])))
+    dec = max(int(format[1:-1]) + factor, 0)
+    print(dec)
+    return '.' + str(dec) + 'f'

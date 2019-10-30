@@ -551,12 +551,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say unit-XXX=msec
         unit_slug = 'unit-'+slug_no_num+clause_num_str
-        default_unit_info = opus_support.UNIT_CONVERSION.get(param_info.units,
-                                                             None)
-        valid_units = None
-        if default_unit_info is not None:
-            valid_units = list(default_unit_info['conversions'].keys())
-            valid_units.append(param_info.units)
+        valid_units = opus_support.get_valid_units(param_info.units)
         unit_val = None
         if unit_slug in request_get:
             unit_val = request_get[unit_slug]
