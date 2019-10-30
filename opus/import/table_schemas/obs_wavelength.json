@@ -195,8 +195,8 @@
         "pi_slug": "waveno1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "cm^-1",
-        "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is cm^-1, rounding up to .1f."
+        "pi_units": "1/cm",
+        "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is 1/cm, rounding up to .1f."
     },
     {
         "field_name": "wave_no2",
@@ -222,7 +222,7 @@
         "pi_slug": "waveno2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "cm^-1",
+        "pi_units": "1/cm",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no1."
     },
     {
@@ -252,7 +252,7 @@
         "pi_slug": "wavenores1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "cm^-1/pixel",
+        "pi_units": "1/cm/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
     },
     {
@@ -279,7 +279,7 @@
         "pi_slug": "wavenores2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "cm^-1/pixel",
+        "pi_units": "1/cm/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no_res1."
     },
     {
