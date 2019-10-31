@@ -146,6 +146,13 @@ var o_widgets = {
             console.log(`before`);
             console.log(opus.selections);
             console.log(opus.extras);
+            // When normalize input api is in progress, we have to disable "+ (OR)" so
+            // that no renumber will not happen. This will make sure the corresponding
+            // input in validateRangeInput is selected correctly for highlighting borders. 
+            if (opus.normalizeInputForCharInProgress ||
+                opus.normalizeInputForAllFieldsInProgress) {
+                return false;
+            }
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -317,7 +324,7 @@ var o_widgets = {
                 console.log(normalizedData);
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                     opus.normalizeInputForAllFieldsInProgress = false;
-                    o_widgets.disableCloseWidgetAndTrashIcons(false);
+                    o_widgets.disableButtonsInAWidget(false);
                     return;
                 }
                 o_search.validateRangeInput(normalizedData);
@@ -343,7 +350,7 @@ var o_widgets = {
                 o_hash.updateHash(opus.allInputsValid);
 
                 opus.normalizeInputForAllFieldsInProgress = false;
-                o_widgets.disableCloseWidgetAndTrashIcons(false);
+                o_widgets.disableButtonsInAWidget(false);
             });
 
             // console.log(opus.selections);
@@ -487,7 +494,7 @@ var o_widgets = {
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
-                o_widgets.disableCloseWidgetAndTrashIcons(false);
+                o_widgets.disableButtonsInAWidget(false);
                 return;
             }
             o_search.validateRangeInput(normalizedData);
@@ -512,7 +519,7 @@ var o_widgets = {
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
             opus.normalizeInputForAllFieldsInProgress = false;
-            o_widgets.disableCloseWidgetAndTrashIcons(false);
+            o_widgets.disableButtonsInAWidget(false);
         });
     },
 
@@ -1192,19 +1199,17 @@ var o_widgets = {
         }
     },
 
-    disableCloseWidgetAndTrashIcons: function(disable=true) {
+    disableButtonsInAWidget: function(disable=true) {
         /**
-         * Disable/enable "x" and trash icons in a widget.
+         * Disable/enable "x", "+ (OR)" and trash icons in a widget.
          */
         if (disable) {
-            // $(".op-remove-inputs").addClass("op-disable-btn");
-            $(".op-remove-inputs button").addClass("op-btn-tag-disable");
-
+            $(".op-remove-inputs").addClass("op-disable-btn");
+            $(".op-add-inputs").addClass("op-disable-btn");
             $(".close_card").addClass("op-disable-btn");
         } else {
-            // $(".op-remove-inputs").removeClass("op-disable-btn");
-            $(".op-remove-inputs button").removeClass("op-btn-tag-disable");
-
+            $(".op-remove-inputs").removeClass("op-disable-btn");
+            $(".op-add-inputs").removeClass("op-disable-btn");
             $(".close_card").removeClass("op-disable-btn");
         }
     },

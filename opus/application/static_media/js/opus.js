@@ -191,9 +191,11 @@ var opus = {
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
             console.log(`opus load before reload`);
             console.log(`selections`);
-            console.log(selections);
+            console.log(JSON.stringify(selections));
             console.log(`opus.selections`);
-            console.log(opus.selections);
+            console.log(JSON.stringify(opus.selections));
+            console.log(`opus.lastselections`);
+            console.log(JSON.stringify(opus.lastselections));
             console.log(`currentExtrasQ`);
             console.log(currentExtrasQ);
             console.log(`opusExtrasQ`);
@@ -272,7 +274,7 @@ var opus = {
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
             opus.normalizeInputForAllFieldsInProgress = false;
-            o_widgets.disableCloseWidgetAndTrashIcons(false);
+            o_widgets.disableButtonsInAWidget(false);
             return;
         }
 
@@ -287,6 +289,8 @@ var opus = {
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
+            opus.normalizeInputForAllFieldsInProgress = false;
+            o_widgets.disableButtonsInAWidget(false);
             return;
         } else {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
@@ -309,7 +313,7 @@ var opus = {
             }
         }
         opus.normalizeInputForAllFieldsInProgress = false;
-        o_widgets.disableCloseWidgetAndTrashIcons(false);
+        o_widgets.disableButtonsInAWidget(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);

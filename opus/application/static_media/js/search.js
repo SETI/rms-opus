@@ -160,14 +160,14 @@ var o_search = {
             }
 
             opus.normalizeInputForCharInProgress = true;
-            o_widgets.disableCloseWidgetAndTrashIcons();
+            o_widgets.disableButtonsInAWidget();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
 
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slugWithCounter]) {
                     opus.normalizeInputForCharInProgress = false;
-                    o_widgets.disableCloseWidgetAndTrashIcons(false);
+                    o_widgets.disableButtonsInAWidget(false);
                     return;
                 }
 
@@ -192,7 +192,7 @@ var o_search = {
                 }
 
                 opus.normalizeInputForCharInProgress = false;
-                o_widgets.disableCloseWidgetAndTrashIcons(false);
+                o_widgets.disableButtonsInAWidget(false);
             }); // end getJSON
         });
 
@@ -285,7 +285,7 @@ var o_search = {
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
 
             opus.normalizeInputForAllFieldsInProgress = true;
-            o_widgets.disableCloseWidgetAndTrashIcons();
+            o_widgets.disableButtonsInAWidget();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
             console.log(newHash);
@@ -340,7 +340,7 @@ var o_search = {
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
             opus.normalizeInputForAllFieldsInProgress = true;
-            o_widgets.disableCloseWidgetAndTrashIcons();
+            o_widgets.disableButtonsInAWidget();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
         });
@@ -624,7 +624,7 @@ var o_search = {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
         opus.normalizeInputForAllFieldsInProgress = true;
-        o_widgets.disableCloseWidgetAndTrashIcons();
+        o_widgets.disableButtonsInAWidget();
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
         console.log(url);
@@ -738,7 +738,7 @@ var o_search = {
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
             // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
-                o_widgets.disableCloseWidgetAndTrashIcons(false);
+                o_widgets.disableButtonsInAWidget(false);
                 return;
             }
 
@@ -750,7 +750,7 @@ var o_search = {
             if (!opus.allInputsValid) {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
                 opus.normalizeInputForAllFieldsInProgress = false;
-                o_widgets.disableCloseWidgetAndTrashIcons(false);
+                o_widgets.disableButtonsInAWidget(false);
                 return;
             }
 
@@ -774,7 +774,7 @@ var o_search = {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             opus.normalizeInputForAllFieldsInProgress = false;
-            o_widgets.disableCloseWidgetAndTrashIcons(false);
+            o_widgets.disableButtonsInAWidget(false);
         });
     },
 
