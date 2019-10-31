@@ -1061,7 +1061,7 @@ var o_browse = {
         }
         $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
         // update startobs in url when scrolling
-        o_hash.updateHash(true);
+        o_hash.updateHash();
     },
 
     getScrollbarOffset: function(obsNum, currentScrollObsNum) {
@@ -1741,7 +1741,7 @@ var o_browse = {
 
         o_browse.hidePageLoaderSpinner();
         o_browse.updateSliderHandle(view);
-        o_hash.updateHash(true);
+        o_hash.updateHash();
     },
 
     initTable: function(tab, columns, columnsNoUnits) {

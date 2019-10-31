@@ -1005,6 +1005,23 @@ panel */
     outline: none;
 }
 
+.op-cite-container {
+    display: flex;
+    align-items: center;
+}
+
+.op-cite-fixed-width {
+    font-family: monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    word-break: break-all;
+}
+
+.op-cite-image {
+    float: left;
+    margin-right: 1rem;
+}
+
 /* Styling for download history button at the lower right of footer */
 .op-download-links-btn {
     float: right;
@@ -1086,6 +1103,12 @@ div.gallery {
 nav.panel-heading {
     flex-direction: column;
     align-items: flex-start;
+}
+
+/* Make sure browse navbar tab (flex item, icon + text) will take up enough space
+to stay in one line */
+#browse .browse-nav-container .navbar-nav {
+    min-width: fit-content;
 }
 
 @media (max-width: 992px) {
@@ -1193,6 +1216,12 @@ nav.panel-heading {
 /* Make options of 2nd navbar and slider stay at the left end of the 2nd navbar */
 #cart .op-cart-nav-container {
     justify-content: flex-start;
+}
+
+/* Make sure cart navbar tab (flex item, icon + text) will take up enough space
+to stay in one line */
+#cart .op-cart-nav-container .navbar-nav {
+    min-width: fit-content;
 }
 
 #cart .op-download-options {
