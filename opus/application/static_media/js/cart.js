@@ -526,6 +526,17 @@ var o_cart = {
         return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
+    cartButtonInfo: function(status) {
+        let tab = opus.getViewTab();
+        let icon = "fas fa-undo";
+        let title = "Restore from recycle bin";
+        if (status != "remove") {
+            icon = "fas fa-recycle";
+            title = "Move to recycle bin";
+        }
+        return  {"icon":icon, "title":title};
+    },
+
     // 3 actions:
     // Empty Cart - empty the cart completely;
     // Empty Recycle Bin - empty the recycle bin
@@ -547,7 +558,7 @@ var o_cart = {
             o_utils.enableUserInteraction();
         });
 
-        let buttonInfo = o_browse.cartButtonInfo("in");
+        let buttonInfo = opus.getViewNamespace().cartButtonInfo("remove");
         $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
         $(".op-data-table-view input").prop("checked", false);
@@ -567,7 +578,7 @@ var o_cart = {
             o_utils.enableUserInteraction();
         });
 
-        let buttonInfo = o_browse.cartButtonInfo("out");
+        let buttonInfo = opus.getViewNamespace().cartButtonInfo("restore");
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo.title);
@@ -666,7 +677,7 @@ var o_cart = {
 
         // just so we don't have to continually check for both addrange and add...
         action = (action === "addrange" || action === "add" ? "add" : action);
-        let status = (action === "add" ?  "out" : "in");
+        let status = (action === "add" ?  "add" : "remove");
         let checked = (action === "add");
 
         $.when(o_cart.sendEditRequest(url)).done(function(statusData) {

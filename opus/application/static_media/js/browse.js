@@ -1135,8 +1135,8 @@ var o_browse = {
         if ($("#op-obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
-        let inCart = (o_cart.isIn(opusId) ? "" : "in");
-        let buttonInfo = o_browse.cartButtonInfo(inCart);
+        let inCart = (o_cart.isIn(opusId) ? "" : "remove");
+        let buttonInfo = opus.getViewNamespace().cartButtonInfo(inCart);
         $("#op-obs-menu .dropdown-header").html(opusId);
         $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
@@ -1152,10 +1152,10 @@ var o_browse = {
         let rangeSelected = o_browse.isRangeSelectEnabled(tab);
         let rangeText = "";
         if (rangeSelected !== undefined) {
-            let addRemoveText = (tab === "#cart" ? (rangeSelected === "removerange" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(rangeSelected === "removerange" ? "remove range from" : "add range to")} cart here`);
+            let addRemoveText = (tab === "#cart" ? (rangeSelected === "removerange" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(rangeSelected === "removerange" ? "remove range from" : "add range to")} cart`);
             rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText}`;
         } else {
-            let addRemoveText = (tab === "#cart" ? (inCart !== "in" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(inCart !== "in" ? "remove range from" : "add range to")} cart here`);
+            let addRemoveText = (tab === "#cart" ? (inCart !== "in" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(inCart !== "in" ? "remove range from" : "add range to")} cart`);
             rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText}`;
         }
 
@@ -1691,7 +1691,7 @@ var o_browse = {
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 // DEBBY
-                let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? 'add' : 'remove'));
+                let buttonInfo = opus.getViewNamespace().cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
                 galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
                 galleryHtml +=     '<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
@@ -2341,16 +2341,16 @@ var o_browse = {
     cartButtonInfo: function(status) {
         let tab = opus.getViewTab();
         let icon = "fas fa-cart-plus";
-        let title = (tab === "#browse" ? "Add to cart" : "Restore from recycle bin");
-        if (status != "in" && status != "remove") {
+        let title = "Add to cart";
+        if (status != "remove") {
             icon = "far fa-trash-alt";
-            title = (tab === "#browse" ? "Remove from cart" : "Move to recycle bin");
+            title = "Remove from cart";
         }
         return  {"icon":icon, "title":title};
     },
 
     updateCartIcon: function(opusId, action) {
-        let buttonInfo = o_browse.cartButtonInfo(action);
+        let buttonInfo = opus.getViewNamespace().cartButtonInfo(action);
         let selector = `.op-thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo.title);
@@ -2394,8 +2394,8 @@ var o_browse = {
         $("#galleryViewContents .contents").html(html);
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
-        let status = o_cart.isIn(opusId) ? "" : "in";
-        let buttonInfo = o_browse.cartButtonInfo(status);
+        let status = o_cart.isIn(opusId) ? "" : "remove";
+        let buttonInfo = opus.getViewNamespace().cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
@@ -2409,13 +2409,6 @@ var o_browse = {
         // mini-menu like the hamburger on the observation/gallery page
         html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $("#galleryViewContents .bottom").html(html);
-
-        // disable edit of the cart from the cart page for awhile
-        if (opus.getViewTab() === "#cart") {
-            $(".op-cart-toggle").hide();
-        } else {
-            $(".op-cart-toggle").show();
-        }
     },
 
     updateGalleryView: function(opusId) {
