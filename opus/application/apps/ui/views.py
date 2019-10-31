@@ -509,6 +509,7 @@ def api_normalize_url(request):
     required_widgets_list = []
 
     handled_slugs = []
+    units_by_slug = {} # To enforce a single unit for all clauses of a slug
 
     # Sort to make tests deterministic and to group qtype and unit
     # with search slugs
@@ -763,15 +764,8 @@ def api_normalize_url(request):
 
         ### Handle units ###
 
-        valid_units = None
-        unit_default = None
-        if pi.units:
-            unit_default = pi.units
-            default_unit_info = opus_support.UNIT_CONVERSION.get(unit_default,
-                                                                 None)
-            if default_unit_info is not None: # pragma: no cover
-                valid_units = list(default_unit_info['conversions'].keys())
-                valid_units.append(pi.units)
+        unit_default = pi.units
+        valid_units = opus_support.get_valid_units(pi.units)
 
         # It really only makes sense to look for a unit field if there's a
         # reason one would be present, but if the user gave us one anyway,
@@ -798,7 +792,7 @@ def api_normalize_url(request):
             if (valid_units and
                 original_slugs[old_unit_slug+clause_num_str]
                     not in valid_units):
-                msg = ('Unit "'+escape(orig_slug)
+                msg = ('Unit "'+escape(found_unit)
                        +'" has an illegal value; '
                        +'it has been set to the default.')
                 msg_list.append(msg)
@@ -813,11 +807,28 @@ def api_normalize_url(request):
             unit_slug = None
 
         if found_unit and not valid_units:
-            # We have a unit for a field that doesn't allow units!
-            msg = ('Search term "'+escape(found_unit)+'" is a unit for '
-                   +'a field that does not allow units; '
-                   +'it has been ignored.')
-            msg_list.append(msg)
+                # We have a unit for a field that doesn't allow units!
+                msg = ('Search term "'+escape(found_unit)+'" is a unit for '
+                       +'a field that does not allow units; '
+                       +'it has been ignored.')
+                msg_list.append(msg)
+
+        if unit_slug in units_by_slug:
+            if unit_val != units_by_slug[unit_slug]:
+                if found_unit:
+                    msg = ('Search term "'+escape(found_unit)+'" is a unit that'
+                           +' is inconsistent with the units for previous'
+                           +' instances of this search field; it has been'
+                           +' ignored.')
+                else:
+                    msg = ('No unit specified for "'+escape(orig_slug)
+                           +'" but units were specified for other instances '
+                           +'of this search field; the previous units have '
+                           +'been used.')
+                msg_list.append(msg)
+                unit_val = units_by_slug[unit_slug]
+        else:
+            units_by_slug[unit_slug] = unit_val
 
         # Now normalize all the values
         # Note that search1/2_val are strings

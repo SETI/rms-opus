@@ -648,8 +648,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_1=seconds&unit-observationduration_2=milliseconds'
         new_slugs['widgets'] = 'observationduration'
         new_slugs['unit-observationduration_01'] = 'seconds'
-        new_slugs['unit-observationduration_02'] = 'milliseconds'
-        self._run_url_slugs_equal(url, new_slugs)
+        new_slugs['unit-observationduration_02'] = 'seconds'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "unit-observationduration_2" is a unit that is inconsistent with the units for previous instances of this search field; it has been ignored.</li>')
 
     def test__api_normalizeurl_lonely_unit_used_any_clause_10_20(self):
         "[test_ui_api.py] /__normalizeurl: lonely unit used all/only _10_20"
@@ -657,8 +657,8 @@ class ApiUITests(TestCase, ApiTestHelper):
         url = '/opus/__normalizeurl.json?widgets=observationduration&unit-observationduration_10=milliseconds&unit-observationduration_20=seconds'
         new_slugs['widgets'] = 'observationduration'
         new_slugs['unit-observationduration_01'] = 'milliseconds'
-        new_slugs['unit-observationduration_02'] = 'seconds'
-        self._run_url_slugs_equal(url, new_slugs)
+        new_slugs['unit-observationduration_02'] = 'milliseconds'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "unit-observationduration_20" is a unit that is inconsistent with the units for previous instances of this search field; it has been ignored.</li>')
 
     def test__api_normalizeurl_lonely_unit_used_any_bad(self):
         "[test_ui_api.py] /__normalizeurl: lonely unit used any bad"
@@ -1565,6 +1565,30 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "rightasc1_0" has a bad clause number; it has been ignored.</li><li>Search term "rightasc2_0" has a bad clause number; it has been ignored.</li><li>Search term "qtype-rightasc_0" has a bad clause number; it has been ignored.</li>')
 
+    def test__api_normalizeurl_search_multi_complicated_clause_2(self):
+        "[test_ui_api.py] /__normalizeurl: search multi good complicated clause 2"
+        new_slugs = dict(self.default_url_slugs)
+        # No clause is 10
+        # _01 is 21/11
+        # _1 is 12
+        # _12 is 22
+        # qtype_20 is None
+        url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_01=21.&rightasc2_01=11.&rightasc2_02=12.&qtype-rightasc_02=only&rightasc1_12=22.&qtype-rightasc_20=all&unit-rightasc_01=radians&unit-rightasc_20=hourangle'
+        new_slugs['rightasc1_01'] = '21'
+        new_slugs['rightasc2_01'] = '11'
+        new_slugs['rightasc2_02'] = '12'
+        new_slugs['rightasc1_03'] = '22'
+        new_slugs['qtype-rightasc_01'] = 'any'
+        new_slugs['qtype-rightasc_02'] = 'only'
+        new_slugs['qtype-rightasc_03'] = 'any'
+        new_slugs['qtype-rightasc_04'] = 'all'
+        new_slugs['unit-rightasc_01'] = 'radians'
+        new_slugs['unit-rightasc_02'] = 'radians'
+        new_slugs['unit-rightasc_03'] = 'radians'
+        new_slugs['unit-rightasc_04'] = 'radians'
+        new_slugs['widgets'] = 'rightasc'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>No unit specified for \"rightasc1_12\" but units were specified for other instances of this search field; the previous units have been used.</li><li>No unit specified for \"rightasc2_02\" but units were specified for other instances of this search field; the previous units have been used.</li><li>Search term \"unit-rightasc_20\" is a unit that is inconsistent with the units for previous instances of this search field; it has been ignored.</li>')
+
     def test__api_normalizeurl_search_multi_good_1_unit_only(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 1 unit only"
         new_slugs = dict(self.default_url_slugs)
@@ -1852,7 +1876,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration1_01'] = '10'
         new_slugs['observationduration2_02'] = '20'
         new_slugs['unit-observationduration_01'] = 'milliseconds'
-        new_slugs['unit-observationduration_02'] = 'seconds'
+        new_slugs['unit-observationduration_02'] = 'milliseconds'
         new_slugs['widgets'] = 'observationduration'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" has a bad clause number; it has been ignored.')
 
