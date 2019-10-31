@@ -534,7 +534,7 @@ def get_valid_units(default_unit):
     valid_units = None
     if default_unit_info is not None:
         valid_units = list(default_unit_info['conversions'].keys())
-        valid_units.append(default_unit)
+        valid_units = [default_unit] + valid_units
     return valid_units
 
 def is_valid_unit(default_unit, unit):

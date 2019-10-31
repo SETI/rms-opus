@@ -668,6 +668,8 @@ def get_fields_info(fmt, slug=None, collapse=False):
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
             entry['full_search_label'] = f.body_qualified_label()
+            entry['default_units'] = f.units
+            entry['available_units'] = opus_support.get_valid_units(f.units)
             collapsed_slug = f.slug
             if collapse:
                 entry['category'] = table_name.label.replace('Saturn',
@@ -701,13 +703,14 @@ def get_fields_info(fmt, slug=None, collapse=False):
         labels = ['Slug', 'Category',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Old Slug'
+                  'Old Slug', 'Units'
                  ]
         rows = [(v['slug'], v['category'],
                  v['search_label'], v['label'],
                  v['full_search_label'],
                  v['full_label'],
-                 v['old_slug']) for k,v in return_obj.items()]
+                 v['old_slug'],
+                 v['available_units']) for k,v in return_obj.items()]
         ret = csv_response('fields', rows, labels)
     else:
         log.error('get_fields_info: Unknown format "%s"', fmt)
