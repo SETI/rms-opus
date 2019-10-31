@@ -425,6 +425,7 @@ ul.op-search-menu {
 
 .op-thumbnail-container .op-modal-show {
     z-index: 999;
+    filter: contrast(200%) drop-shadow(3px 2px 2px black);
     -webkit-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
