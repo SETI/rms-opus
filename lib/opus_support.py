@@ -462,6 +462,7 @@ UNIT_CONVERSION = {
         {
             'display_name': 'km',
             'conversions': {
+                'm':            ('m', 1e-3),
                 'saturnradii':  ('Rj (60330)', 60330.),
                 'jupiterradii': ('Rs (71492)', 71492.),
                 'neptuneradii': ('Rn (25225)', 25225.),
@@ -472,6 +473,7 @@ UNIT_CONVERSION = {
         {
             'display_name': 'km/pixel',
             'conversions': {
+                'm/pixel':      ('m/pixel', 1e3),
             }
         },
     'microns':
@@ -480,7 +482,7 @@ UNIT_CONVERSION = {
             'conversions': {
                 'angstroms':    ('angstroms', 1e-4),
                 'nm':           ('nm', 1e-3),
-                'cm':           ('cm', 1e3),
+                'cm':           ('cm', 1e4),
             }
         },
     'microns/pixel':
@@ -489,7 +491,7 @@ UNIT_CONVERSION = {
             'conversions': {
                 'angstroms/pixel':    ('angstroms', 1e-4),
                 'nm/pixel':           ('nm', 1e-3),
-                'cm/pixel':           ('cm', 1e3),
+                'cm/pixel':           ('cm', 1e4),
             }
         },
     'seconds':
@@ -543,12 +545,15 @@ def is_valid_unit(default_unit, unit):
 def adjust_format_string_for_units(format, default_unit, unit):
     if default_unit is None or default_unit == unit:
         return format
-    print(format, default_unit, unit)
     if not format.startswith('.') or not format.endswith('f'):
         return format
     assert default_unit in UNIT_CONVERSION
+    # The behavior of ceil is to increase the number of positive numbers
+    # (which is adding decimal places), which is good. And it's to decrease
+    # the absolute value of negative numbers (which is removing decimal places),
+    # which is also good. In both cases we're being conservative - adding too
+    # many or removing too few.
     factor = int(np.ceil(np.log10(
                 UNIT_CONVERSION[default_unit]['conversions'][unit][1])))
     dec = max(int(format[1:-1]) + factor, 0)
-    print(dec)
     return '.' + str(dec) + 'f'

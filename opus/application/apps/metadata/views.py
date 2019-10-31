@@ -431,7 +431,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     # Is this result already cached?
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  + ':rangeep:' + qualified_param_name_no_num
-                 + ':units:' + units)
+                 + ':units:' + str(units))
     if user_table:
         cache_num, cache_new_flag = set_user_search_number(selections, extras)
         if cache_num is None: # pragma: no cover

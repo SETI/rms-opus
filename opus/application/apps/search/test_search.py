@@ -1,6 +1,3 @@
-# XXXX ADD MORE UNITS TESTS
-# XXXX ADD TESTS FOR ALLOW_ERRORS AND RETURN_SLUGS
-# xxxx MOVE TO ROB-PDS-OPUS
 # search/test_search.py
 
 # These tests require the following volumes, imported in this order:
@@ -1983,9 +1980,9 @@ class searchTests(TestCase):
     def test__range_query_clause_3_units_various(self):
         "[test_search.py] range_query: clause 3 some each None units various"
         # We don't use 6xxx as the last value here because the floating point inaccuracy makes the assert fail
-        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 8000000000.],
+        selections = {'obs_ring_geometry.ring_radius1': [10000000., None, 80000000.],
                       'obs_ring_geometry.ring_radius2': [40000000., 50000., None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['m', 'km', 'cm'])
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['only', 'any', 'all'], ['m', 'km', 'm'])
         print(sql)
         print(params)
         # 10000 to 40000
