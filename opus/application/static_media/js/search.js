@@ -255,6 +255,8 @@ var o_search = {
             let pairedSlug = slug.match(/.*1/) ? `${slugName}2` : `${slugName}1`;
             let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
+
+            console.log(`CurrentValue: ${currentValue}, idx: ${idx}`)
             // save an old copy here
             if (currentValue) {
                 if (opus.selections[slug]) {
@@ -651,7 +653,10 @@ var o_search = {
                         $("#sidebar").addClass("search_overlay");
                         currentInput.addClass("search_input_invalid_no_focus");
                         currentInput.removeClass("search_input_invalid");
-                        currentInput.val(opus.selections[slugNoCounter][idx]);
+                        if (opus.selections[slugNoCounter][idx]) {
+                            currentInput.val(opus.selections[slugNoCounter][idx]);
+                        }
+                        opus.selections[slugNoCounter][idx] = null;
                     }
                     opus.allInputsValid = false;
                 }
@@ -673,10 +678,7 @@ var o_search = {
                         }
 
                         // No color border if the input value is valid
-                        currentInput.addClass("search_input_original");
-                        currentInput.removeClass("search_input_invalid_no_focus");
-                        currentInput.removeClass("search_input_invalid");
-                        currentInput.removeClass("search_input_valid");
+                        o_search.clearInputBorder(currentInput);
                     }
                 }
             }
@@ -698,11 +700,12 @@ var o_search = {
         // console.log(`selections`);
         // console.log(selections);
         console.log(`opus.selections`);
-        console.log(opus.selections);
+        console.log(JSON.stringify(opus.selections));
 
         if (opus.allInputsValid) {
             o_hash.updateHash();
         } else {
+            o_hash.updateHash();
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
@@ -735,8 +738,8 @@ var o_search = {
             console.log(o_search.lastSlugNormalizeRequestNo);
 
             console.log(slug);
-            if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
-            // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
+            // if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
+            if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;
@@ -966,5 +969,15 @@ var o_search = {
             }
         }); // end mults ajax
 
+    },
+
+    clearInputBorder: function(input) {
+        /**
+         * clear the border of an input, remove any invalid border of an input.
+         */
+        input.addClass("search_input_original");
+        input.removeClass("search_input_invalid_no_focus");
+        input.removeClass("search_input_invalid");
+        input.removeClass("search_input_valid");
     },
 };

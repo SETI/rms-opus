@@ -19,8 +19,8 @@ var o_hash = {
     // updates the hash according to user selections
     updateHash: function(updateURL=true, searchOnly=false) {
         console.log(`updateHash`);
-        console.log(opus.selections);
-        console.log(opus.extras);
+        console.log(JSON.stringify(opus.selections));
+        console.log(JSON.stringify(opus.extras));
         console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
         let hash = [];
         let visited = {};
@@ -145,7 +145,8 @@ var o_hash = {
                 hash.push(key + "=" + value);
             });
 
-            if (updateURL && opus.allInputsValid) {
+            if (updateURL) {
+            // if (updateURL && opus.allInputsValid) {
                 console.log(`URL updated !!!`);
                 window.location.hash = '/' + hash.join('&');
             }

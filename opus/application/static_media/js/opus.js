@@ -206,8 +206,13 @@ var opus = {
             console.log(opus.extras);
             console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
             console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
+
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
+
+                if (o_widgets.isClosingInput) {
+                    return;
+                }
                 opus.selections = selections;
                 opus.extras = extras;
                 location.reload();
@@ -256,7 +261,18 @@ var opus = {
         // the back end is implemented, where the result count needs to finish so the
         // cache table has been created before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
-        // both backend changes and a change here to remove the sequential dependence.
+        // both backend changes and a change here to remove the sequential dependence
+        console.log(`allNormalizedApiCall from load`);
+        console.log(`opus.allInputsValid in load: ${opus.allInputsValid}`);
+        // if (opus.allInputsValid) {
+        //     o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
+        // } else {
+        //     // try reset allInputsValid ?
+        //     $("#op-result-count").text("?");
+        //     $("#browse .op-observation-number").html("?");
+        //     $(".op-browse-tab").addClass("op-disabled-nav-link");
+        //     $(".spinner").fadeOut("");
+        // }
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
@@ -269,6 +285,7 @@ var opus = {
         console.log(`getResultCount`);
         console.log(normalizedData.reqno);
         console.log(opus.lastAllNormalizeRequestNo);
+        console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
 
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
@@ -278,6 +295,16 @@ var opus = {
             return;
         }
 
+        // if (!opus.allInputsValid) {
+        //     $("#op-result-count").text("?");
+        //     $("#browse .op-observation-number").html("?");
+        //     $(".op-browse-tab").addClass("op-disabled-nav-link");
+        //     $(".spinner").fadeOut("");
+        //     opus.allInputsValid = true;
+        //     opus.normalizeInputForAllFieldsInProgress = false;
+        //     o_widgets.disableButtonsInAWidget(false);
+        //     return;
+        // }
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This sets the opus.allInputsValid
         // flag used below and also updates the hash.

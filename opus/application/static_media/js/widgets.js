@@ -32,6 +32,14 @@ var o_widgets = {
     // true, input change event handlers will do nothing.
     isClosingWidget: false,
 
+    // This variable will used to prevent page reload when an input is closed and waiting
+    // for the return of normalized input api. When an input is closed, there will be a
+    // mismatched between selections (from URL) and opus.selections, they will be matched
+    // after updateHash is called in the callback function when normalized input api is
+    // returned. So in the middle of this process, we have to make sure page won't reload
+    // in opus.load.
+    isClosingInput: false,
+
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
@@ -143,6 +151,7 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
+            e.preventDefault();
             console.log(`click add another input`);
             console.log(`before`);
             console.log(opus.selections);
@@ -163,6 +172,7 @@ var o_widgets = {
             // for multiple times and cause some weird behaviors.
             let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
+            o_search.clearInputBorder(cloneInputs);
             // Clear values in inputs & .op-hide-element in dropdown
             cloneInputs.find("input").val("");
             cloneInputs.find(".op-hide-element").removeClass("op-hide-element");
@@ -250,6 +260,8 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            e.preventDefault();
+            o_widgets.isClosingInput = true;
             console.log("click trash icon");
             console.log(opus.normalizeInputForCharInProgress);
             console.log(opus.normalizeInputForAllFieldsInProgress);
@@ -324,44 +336,46 @@ var o_widgets = {
                 }
             }
 
-            // o_search.allNormalizedApiCall().then(function(normalizedData) {
-            //     console.log(`allNormalizedApiCall when clicking trash icon`);
-            //     console.log(normalizedData.reqno);
-            //     console.log(opus.lastAllNormalizeRequestNo);
-            //     console.log(normalizedData);
-            //     if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-            //         opus.normalizeInputForAllFieldsInProgress = false;
-            //         o_widgets.disableButtonsInAWidget(false);
-            //         return;
-            //     }
-            //     o_search.validateRangeInput(normalizedData);
-            //
-            //     if (opus.allInputsValid) {
-            //         $("input.RANGE").removeClass("search_input_valid");
-            //         $("input.RANGE").removeClass("search_input_invalid");
-            //         $("input.RANGE").addClass("search_input_original");
-            //         $("#sidebar").removeClass("search_overlay");
-            //         $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
-            //         if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
-            //             // Put back normal hinting info
-            //             opus.widgetsDrawn.forEach(function(eachSlug) {
-            //                 o_search.getHinting(eachSlug);
-            //             });
-            //         }
-            //         $(".op-browse-tab").removeClass("op-disabled-nav-link");
-            //     } else {
-            //         $(".op-browse-tab").addClass("op-disabled-nav-link");
-            //     }
-            //
-            //     console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
-            //     o_hash.updateHash(opus.allInputsValid);
-            //
-            //     opus.normalizeInputForAllFieldsInProgress = false;
-            //     o_widgets.disableButtonsInAWidget(false);
-            // });
+            console.log(`call allNormalizedApiCall when closing an input`);
+            o_search.allNormalizedApiCall().then(function(normalizedData) {
+                console.log(`allNormalizedApiCall when clicking trash icon`);
+                console.log(normalizedData.reqno);
+                console.log(opus.lastAllNormalizeRequestNo);
+                console.log(normalizedData);
+                if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                    opus.normalizeInputForAllFieldsInProgress = false;
+                    o_widgets.disableButtonsInAWidget(false);
+                    return;
+                }
+                o_search.validateRangeInput(normalizedData);
 
-            console.log(JSON.stringify(opus.selections));
-            o_hash.updateHash();
+                if (opus.allInputsValid) {
+                    $("input.RANGE").removeClass("search_input_valid");
+                    $("input.RANGE").removeClass("search_input_invalid");
+                    $("input.RANGE").addClass("search_input_original");
+                    $("#sidebar").removeClass("search_overlay");
+                    $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+                    if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                        // Put back normal hinting info
+                        opus.widgetsDrawn.forEach(function(eachSlug) {
+                            o_search.getHinting(eachSlug);
+                        });
+                    }
+                    $(".op-browse-tab").removeClass("op-disabled-nav-link");
+                } else {
+                    $(".op-browse-tab").addClass("op-disabled-nav-link");
+                }
+
+                console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
+                o_hash.updateHash(opus.allInputsValid);
+
+                opus.normalizeInputForAllFieldsInProgress = false;
+                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.isClosingInput = false;
+            });
+
+            // console.log(JSON.stringify(opus.selections));
+            // o_hash.updateHash();
         });
     },
 
