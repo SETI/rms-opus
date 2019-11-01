@@ -1519,7 +1519,6 @@ panel are properly separated */
 }
 
 .widget-main ul li {
-    margin-right: 5px;
     display: inline;
     list-style-type: none;
 }
@@ -2187,8 +2186,7 @@ we have an invalid search) */
 
 /* Styling for the button to delete a set of inputs in a widget */
 .op-remove-inputs {
-    /* position: relative;
-    left: 0; */
+    margin-left: 10px;
 }
 
 .op-remove-inputs-btn, .op-add-inputs-btn {
@@ -2197,9 +2195,7 @@ we have an invalid search) */
 
 /* Styling for the text between each set of inputs in a widget */
 .op-or-labels {
-    position: relative;
-    /* left: 30%; */
-    left: 23%;
+    text-align: center;
     font-style: italic;
     font-weight: bold;
 }
@@ -2212,6 +2208,7 @@ searches */
     display: inline-block;
     width: 10%;
     vertical-align: middle;
+    opacity: 0.5;
 }
 
 /* Disable a button (or a tag button) */
@@ -2223,4 +2220,10 @@ searches */
     pointer-events: none;
     /* color: grey; */
     /* opacity: 0.5; */
+}
+
+/* Styling to make each input set takes up the width that will fit its contents */
+.op-search-inputs-set {
+    width: fit-content;
+    width: -moz-fit-content;
 }

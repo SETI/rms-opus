@@ -126,6 +126,7 @@ var o_widgets = {
          * Display or hide the icon based on the number of input sets.
          */
         $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        // $(`#widget__${slug} .op-input-area`).append(addInputIcon);
         let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
         if (numberOfInputSets === opus.maxAllowedInputSets) {
             $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
@@ -148,7 +149,7 @@ var o_widgets = {
             console.log(opus.extras);
             // When normalize input api is in progress, we have to disable "+ (OR)" so
             // that no renumber will not happen. This will make sure the corresponding
-            // input in validateRangeInput is selected correctly for highlighting borders. 
+            // input in validateRangeInput is selected correctly for highlighting borders.
             if (opus.normalizeInputForCharInProgress ||
                 opus.normalizeInputForAllFieldsInProgress) {
                 return false;
@@ -157,6 +158,7 @@ var o_widgets = {
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let firstExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
+            let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).last();
             // Do not pass in true to clone(), otherwise event handlers will be attached
             // for multiple times and cause some weird behaviors.
             let cloneInputs = firstExistingSetOfInputs.clone();
@@ -188,10 +190,13 @@ var o_widgets = {
             // or label to cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
                 firstExistingSetOfInputs.append(removeInputIcon);
-                cloneInputs.prepend(orLabel);
+                firstExistingSetOfInputs.append(orLabel);
+                // cloneInputs.prepend(orLabel);
                 cloneInputs.append(removeInputIcon);
             } else {
-                cloneInputs.prepend(orLabel);
+                lastExistingSetOfInputs.append(orLabel);
+                cloneInputs.find(".op-or-labels").remove();
+                // cloneInputs.prepend(orLabel);
             }
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
@@ -290,9 +295,11 @@ var o_widgets = {
 
             // Remove OR label and .op-extra-search-inputs if they exist in the first input set
             let firstExistingSetOfInputs = $(`#widget__${slug} .op-search-inputs-set`).first();
+            let lastExistingSetOfInputs = $(`#widget__${slug} .op-search-inputs-set`).last();
             firstExistingSetOfInputs.removeClass("op-extra-search-inputs");
-            if (firstExistingSetOfInputs.find(".op-or-labels").length !== 0) {
-                firstExistingSetOfInputs.find(".op-or-labels").remove();
+
+            if (lastExistingSetOfInputs.find(".op-or-labels").length !== 0) {
+                lastExistingSetOfInputs.find(".op-or-labels").remove();
             }
 
             // Remove the remove icon if we only have one input set left.
@@ -317,44 +324,44 @@ var o_widgets = {
                 }
             }
 
-            o_search.allNormalizedApiCall().then(function(normalizedData) {
-                console.log(`allNormalizedApiCall when clicking trash icon`);
-                console.log(normalizedData.reqno);
-                console.log(opus.lastAllNormalizeRequestNo);
-                console.log(normalizedData);
-                if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                    opus.normalizeInputForAllFieldsInProgress = false;
-                    o_widgets.disableButtonsInAWidget(false);
-                    return;
-                }
-                o_search.validateRangeInput(normalizedData);
+            // o_search.allNormalizedApiCall().then(function(normalizedData) {
+            //     console.log(`allNormalizedApiCall when clicking trash icon`);
+            //     console.log(normalizedData.reqno);
+            //     console.log(opus.lastAllNormalizeRequestNo);
+            //     console.log(normalizedData);
+            //     if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+            //         opus.normalizeInputForAllFieldsInProgress = false;
+            //         o_widgets.disableButtonsInAWidget(false);
+            //         return;
+            //     }
+            //     o_search.validateRangeInput(normalizedData);
+            //
+            //     if (opus.allInputsValid) {
+            //         $("input.RANGE").removeClass("search_input_valid");
+            //         $("input.RANGE").removeClass("search_input_invalid");
+            //         $("input.RANGE").addClass("search_input_original");
+            //         $("#sidebar").removeClass("search_overlay");
+            //         $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+            //         if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+            //             // Put back normal hinting info
+            //             opus.widgetsDrawn.forEach(function(eachSlug) {
+            //                 o_search.getHinting(eachSlug);
+            //             });
+            //         }
+            //         $(".op-browse-tab").removeClass("op-disabled-nav-link");
+            //     } else {
+            //         $(".op-browse-tab").addClass("op-disabled-nav-link");
+            //     }
+            //
+            //     console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
+            //     o_hash.updateHash(opus.allInputsValid);
+            //
+            //     opus.normalizeInputForAllFieldsInProgress = false;
+            //     o_widgets.disableButtonsInAWidget(false);
+            // });
 
-                if (opus.allInputsValid) {
-                    $("input.RANGE").removeClass("search_input_valid");
-                    $("input.RANGE").removeClass("search_input_invalid");
-                    $("input.RANGE").addClass("search_input_original");
-                    $("#sidebar").removeClass("search_overlay");
-                    $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
-                    if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
-                        // Put back normal hinting info
-                        opus.widgetsDrawn.forEach(function(eachSlug) {
-                            o_search.getHinting(eachSlug);
-                        });
-                    }
-                    $(".op-browse-tab").removeClass("op-disabled-nav-link");
-                } else {
-                    $(".op-browse-tab").addClass("op-disabled-nav-link");
-                }
-
-                console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
-                o_hash.updateHash(opus.allInputsValid);
-
-                opus.normalizeInputForAllFieldsInProgress = false;
-                o_widgets.disableButtonsInAWidget(false);
-            });
-
-            // console.log(opus.selections);
-            // o_hash.updateHash();
+            console.log(JSON.stringify(opus.selections));
+            o_hash.updateHash();
         });
     },
 
@@ -900,10 +907,10 @@ var o_widgets = {
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
                 let addInputIcon = '<li class="op-add-inputs">' +
-                               '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
-                               title="Add a new set of search inputs"' +
-                               `data-widget="widget__${slug}" data-slug="${slug}">` +
-                               `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`;
+                                   '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
+                                   title="Add a new set of search inputs"' +
+                                   `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                   `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`;
 
                 let orLabel = '<ul class="op-or-labels text-secondary">' +
                               // '<i class="fas fa-angle-double-left"></i>' +
@@ -921,8 +928,9 @@ var o_widgets = {
                 if (numberOfInputSets > 1) {
                     $(`#widget__${slug} .op-search-inputs-set`).first().append(removeInputIcon);
                 }
-                $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel);
+                // $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel);
                 $(`#widget__${slug} .op-extra-search-inputs`).append(removeInputIcon);
+                $(`#widget__${slug} .op-search-inputs-set:not(:last)`).append(orLabel);
 
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
