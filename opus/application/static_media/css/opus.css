@@ -805,7 +805,7 @@ when window sized is narrow */
     min-height: 75vh;
 }
 
-#galleryViewContents .metadata {
+#galleryViewContents .op-metadata-details {
     overflow-y: auto;
     /* Make #galleryView modal right contents shrink vertically
     95% for the metadata info, 5% for the bottom icons */
@@ -817,7 +817,7 @@ when window sized is narrow */
 }
 
 @media (max-height: 300px) {
-    #galleryViewContents .metadata {
+    #galleryViewContents .op-metadata-details {
         height: 85%;
     }
     #galleryView .bottom {

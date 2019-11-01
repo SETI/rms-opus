@@ -304,7 +304,7 @@
                         <div class="row">
                             <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
                             <div class="right col-lg-5 col-sm">
-                                <div class="metadata">
+                                <div class="op-metadata-details">
                                     <div class="contents"></div>
                                 </div>
                                 <div class="detail"></div>
@@ -326,7 +326,7 @@
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
-                    <div class="modal-body metadata" id="op-select-metadata-contents"></div>
+                    <div class="modal-body op-select-metadata-details" id="op-select-metadata-contents"></div>
                     <div class="modal-footer">
                         <div class="left-container">
                             <button type="reset" class="btn btn-info">Reset to Default</button>
@@ -375,7 +375,7 @@
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-recycle-bin"
-            confirm_title="Confirm Remove All Observations From Recycle Bin"
+            confirm_title="Confirm Empty Cart Recycle Bin"
             confirm_msg="Are you sure you want to remove all observations from your recycle bin?"
             target="op-empty-recycle-bin"
             yes_text="Yes"
@@ -386,7 +386,7 @@
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-restore-recycle-bin"
-            confirm_title="Confirm Restore All Observations From Recycle Bin"
+            confirm_title="Confirm Restore All Recycled Observations To Cart"
             confirm_msg="Are you sure you want to restore all observations to your cart from the recycle bin?"
             target="op-restore-recycle-bin"
             yes_text="Yes"

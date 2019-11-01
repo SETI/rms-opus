@@ -28,7 +28,7 @@ var o_browse = {
         maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     // only in o_browse
-    modalScrollbar: new PerfectScrollbar("#galleryViewContents .metadata", {
+    modalScrollbar: new PerfectScrollbar("#galleryViewContents .op-metadata-details", {
         minScrollbarLength: opus.minimumPSLength
     }),
 
@@ -1136,9 +1136,9 @@ var o_browse = {
             o_browse.hideMenu();
         }
         let inCart = (o_cart.isIn(opusId) ? "" : "remove");
-        let buttonInfo = opus.getViewNamespace().cartButtonInfo(inCart);
+        let buttonInfo = o_browse.cartButtonInfo(inCart);
         $("#op-obs-menu .dropdown-header").html(opusId);
-        $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo.icon}"></i>${buttonInfo.title}`);
+        $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo[tab].icon}"></i>${buttonInfo[tab].title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("data-id", opusId);
         $("#op-obs-menu [data-action='info']").attr("href", o_browse.getDetailURL(opusId));
@@ -1152,11 +1152,9 @@ var o_browse = {
         let rangeSelected = o_browse.isRangeSelectEnabled(tab);
         let rangeText = "";
         if (rangeSelected !== undefined) {
-            let addRemoveText = (tab === "#cart" ? (rangeSelected === "removerange" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(rangeSelected === "removerange" ? "remove range from" : "add range to")} cart`);
-            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${addRemoveText}`;
+            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${buttonInfo[tab].rangeTitle}`;
         } else {
-            let addRemoveText = (tab === "#cart" ? (inCart !== "in" ? "move range to recycle bin" : "restore range from cart recycle bin") : `${(inCart !== "in" ? "remove range from" : "add range to")} cart`);
-            rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${addRemoveText}`;
+            rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${buttonInfo[tab].rangeTitle}`;
         }
 
         $("#op-obs-menu .dropdown-item[data-action='range']").html(rangeText);
@@ -1376,7 +1374,7 @@ var o_browse = {
     renderSelectMetadata: function() {
         if (!o_browse.selectMetadataDrawn) {
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
-            $(".modal-body.metadata").load( url, function(response, status, xhr)  {
+            $(".modal-body.op-select-metadata-details").load( url, function(response, status, xhr)  {
                 o_browse.selectMetadataDrawn = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -1682,7 +1680,7 @@ var o_browse = {
                 galleryHtml += '</div></a>';
 
                 // recycle bin icon container
-                galleryHtml += `<div class="op-recycle-overlay ${(item.cart_state === "recycle" ? '' : 'op-hide-element')}">`;
+                galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')}">`;
                 galleryHtml += '<p class="content-text"><i class="fas fa-recycle fa-4x text-success" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
 
@@ -1691,8 +1689,8 @@ var o_browse = {
                 galleryHtml +=     '<a href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
                 // DEBBY
-                let buttonInfo = opus.getViewNamespace().cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
-                galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo.title}"><i class="${buttonInfo.icon} fa-xs"></i></a>`;
+                let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
+                galleryHtml +=     `<a href="#" data-icon="cart" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-xs"></i></a>`;
                 galleryHtml +=     '<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
@@ -1700,7 +1698,7 @@ var o_browse = {
                 // table row
                 // DEBBY
                 let checked = item.cart_state === "cart" ? " checked" : "";
-                let recycled = item.cart_state === "recycle" ? "class='text-success op-recycled'" : "";
+                let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "class='text-success op-recycled'" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
                 let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="Toggle cart\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
@@ -2321,17 +2319,17 @@ var o_browse = {
     },
 
     adjustBrowseDialogPS: function() {
-        let containerHeight = $("#galleryViewContents .metadata").height();
-        let browseDialogHeight = $(".metadata .contents").height();
+        let containerHeight = $("#galleryViewContents .op-metadata-details").height();
+        let browseDialogHeight = $("#galleryViewContents .op-metadata-details .contents").height();
 
         if (o_browse.modalScrollbar) {
             if (containerHeight > browseDialogHeight) {
-                if (!$("#galleryViewContents .metadata .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $("#galleryViewContents .metadata .ps__rail-y").addClass("hide_ps__rail-y");
+                if (!$("#galleryViewContents .op-metadata-details .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $("#galleryViewContents .op-metadata-details .ps__rail-y").addClass("hide_ps__rail-y");
                     o_browse.modalScrollbar.settings.suppressScrollY = true;
                 }
             } else {
-                $("#galleryViewContents .metadata .ps__rail-y").removeClass("hide_ps__rail-y");
+                $("#galleryViewContents .op-metadata-details .ps__rail-y").removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
             }
             o_browse.modalScrollbar.update();
@@ -2340,25 +2338,37 @@ var o_browse = {
 
     cartButtonInfo: function(status) {
         let tab = opus.getViewTab();
-        let icon = "fas fa-cart-plus";
-        let title = "Add to cart";
+        let browse_icon = "fas fa-cart-plus";
+        let browse_title = "Add to cart";
+        let browse_rangeTitle = "add range";
+        let cart_icon = "fas fa-undo";
+        let cart_title = "Restore from recycle bin";
+        let cart_rangeTitle = "restore range from recycle bin";
         if (status != "remove") {
-            icon = "far fa-trash-alt";
-            title = "Remove from cart";
+            browse_icon = "far fa-trash-alt";
+            browse_title = "Remove from cart";
+            browse_rangeTitle = "remove range";
+            cart_icon = "fas fa-recycle";
+            cart_title = "Move to recycle bin";
+            cart_rangeTitle = "move range to recycle bin";
         }
-        return  {"icon":icon, "title":title};
+        return  {"#browse": {"icon":browse_icon, "title":browse_title, "rangeTitle":browse_rangeTitle},
+                 "#cart":   {"icon":cart_icon,   "title":cart_title,   "rangeTitle":cart_rangeTitle}};
     },
 
     updateCartIcon: function(opusId, action) {
-        let buttonInfo = opus.getViewNamespace().cartButtonInfo(action);
+        let buttonInfo = o_browse.cartButtonInfo(action);
         let selector = `.op-thumb-overlay [data-id=${opusId}] [data-icon="cart"]`;
-        $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(selector).prop("title", buttonInfo.title);
+        $.each(["#browse", "#cart"], function(index, tab) {
+            $(`${tab} ${selector}`).html(`<i class="${buttonInfo[tab].icon} fa-xs"></i>`);
+            $(`${tab} ${selector}`).prop("title", buttonInfo[tab].title);
+        });
 
+        let tab = opus.getViewTab();
         let modalCartSelector = `#galleryViewContents .bottom .op-cart-toggle[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
-            $(modalCartSelector).html(`<i class="${buttonInfo.icon} fa-2x"></i>`);
-            $(modalCartSelector).prop("title", `${buttonInfo.title} (spacebar)`);
+            $(modalCartSelector).html(`<i class="${buttonInfo[tab].icon} fa-2x"></i>`);
+            $(modalCartSelector).prop("title", `${buttonInfo[tab].title} (spacebar)`);
         }
     },
 
@@ -2378,6 +2388,7 @@ var o_browse = {
 
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
+        let tab = opus.getViewTab();
         o_browse.metadataDetailOpusId = opusId;
 
         // list columns + values
@@ -2395,10 +2406,10 @@ var o_browse = {
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
         let status = o_cart.isIn(opusId) ? "" : "remove";
-        let buttonInfo = opus.getViewNamespace().cartButtonInfo(status);
+        let buttonInfo = o_browse.cartButtonInfo(status);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo.title} (spacebar)"><i class="${buttonInfo.icon} fa-2x float-left"></i></a></div>`;
+        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
         html += `<div class="col text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");

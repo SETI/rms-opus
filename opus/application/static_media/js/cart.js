@@ -526,17 +526,6 @@ var o_cart = {
         return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
-    cartButtonInfo: function(status) {
-        let tab = opus.getViewTab();
-        let icon = "fas fa-undo";
-        let title = "Restore from recycle bin";
-        if (status != "remove") {
-            icon = "fas fa-recycle";
-            title = "Move to recycle bin";
-        }
-        return  {"icon":icon, "title":title};
-    },
-
     // 3 actions:
     // Empty Cart - empty the cart completely;
     // Empty Recycle Bin - empty the recycle bin
@@ -558,8 +547,8 @@ var o_cart = {
             o_utils.enableUserInteraction();
         });
 
-        let buttonInfo = opus.getViewNamespace().cartButtonInfo("remove");
-        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
+        let buttonInfo = o_browse.cartButtonInfo("remove");
+        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
         $(".op-data-table-view input").prop("checked", false);
     },
@@ -578,10 +567,10 @@ var o_cart = {
             o_utils.enableUserInteraction();
         });
 
-        let buttonInfo = opus.getViewNamespace().cartButtonInfo("restore");
+        let buttonInfo = o_browse.cartButtonInfo("restore");
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
-        $(selector).html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(selector).prop("title", buttonInfo.title);
+        $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
+        $(selector).prop("title", buttonInfo["#cart"].title);
         $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
     },
 
@@ -699,10 +688,16 @@ var o_cart = {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
                         $(`#cart tr[data-id=${opusId}]`).removeClass("text-success op-recycled");
                         $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).addClass("op-hide-element");
+                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").addClass("op-hide-element");
+                        }
                     } else {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
                         $(`#cart tr[data-id=${opusId}]`).addClass("text-success op-recycled");
                         $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).removeClass("op-hide-element");
+                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").removeClass("op-hide-element");
+                        }
                     }
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
