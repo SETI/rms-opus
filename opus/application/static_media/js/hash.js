@@ -16,8 +16,10 @@ var o_hash = {
      *
      **/
 
-    // updates the hash according to user selections
     updateHash: function(updateURL=true, searchOnly=false, selections=opus.selections) {
+        /**
+         * updates the hash & URL based on the selections passed in.
+         */
         console.log(`updateHash`);
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.selections));

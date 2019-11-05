@@ -44,8 +44,19 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
+
+    // An object stores the input (slug) & boolean value to indicate whether the normalize input
+    // API (for all fields) is in progress:
+    // Key: input slug that triggers the normalize input API call. (Use "all" for API from getResultCount)
+    // Value: true & false to indicate whether the API is in progress.
     normalizeInputForAllFieldsInProgress: {},
-    normalizeInputForCharInProgress: false,
+    // An object stores the input (slug) & boolean value to indicate whether the normalize input
+    // API (for a character) is in progress:
+    // Key: input slug that triggers the normalize input API call. (Use "all" for API
+    // from getResultCount)
+    // Value: true & false to indicate whether the API is in progress.
+    normalizeInputForCharInProgress: {},
+
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // client side prefs, changes to these *do not trigger results to refresh*
@@ -1193,7 +1204,15 @@ var opus = {
     },
 
     isAnyNormalizeInputInProgress: function() {
+        /**
+         * Check if any normalize input API call is in progress
+         */
         for (const val of Object.values(opus.normalizeInputForAllFieldsInProgress)) {
+            if (val) {
+                return true;
+            }
+        }
+        for (const val of Object.values(opus.normalizeInputForCharInProgress)) {
             if (val) {
                 return true;
             }

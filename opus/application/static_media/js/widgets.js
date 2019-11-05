@@ -77,8 +77,7 @@ var o_widgets = {
             console.log("click x button to close widget");
             e.preventDefault();
             o_widgets.isClosingWidget = true;
-            if (opus.normalizeInputForCharInProgress ||
-                opus.isAnyNormalizeInputInProgress()) {
+            if (opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
 
@@ -159,8 +158,7 @@ var o_widgets = {
             // When normalize input api is in progress, we have to disable "+ (OR)" so
             // that no renumber will not happen. This will make sure the corresponding
             // input in validateRangeInput is selected correctly for highlighting borders.
-            if (opus.normalizeInputForCharInProgress ||
-                opus.isAnyNormalizeInputInProgress()) {
+            if (opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
 
@@ -265,8 +263,7 @@ var o_widgets = {
             console.log("click trash icon");
             console.log(opus.normalizeInputForCharInProgress);
             console.log(opus.normalizeInputForAllFieldsInProgress);
-            if (opus.normalizeInputForCharInProgress ||
-                opus.isAnyNormalizeInputInProgress()) {
+            if (opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
             o_widgets.isRemovingInput = true;
