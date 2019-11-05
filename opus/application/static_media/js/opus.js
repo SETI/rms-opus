@@ -44,7 +44,7 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    normalizeInputForAllFieldsInProgress: false,
+    normalizeInputForAllFieldsInProgress: {},
     normalizeInputForCharInProgress: false,
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
@@ -178,6 +178,16 @@ var opus = {
         let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
             o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
+            console.log(`selections & last selections are the same`);
+            console.log(`opus.force_load: ${opus.force_load}`);
+            console.log(`selections`);
+            console.log(JSON.stringify(selections));
+            console.log(`opus.lastselections`);
+            console.log(JSON.stringify(opus.lastselections));
+            console.log(`currentExtrasQ`);
+            console.log(JSON.stringify(currentExtrasQ));
+            console.log(`lastExtrasQ`);
+            console.log(JSON.stringify(lastExtrasQ));
             if (!opus.force_load) {
                 return;
             }
@@ -197,20 +207,36 @@ var opus = {
             console.log(`opus.lastselections`);
             console.log(JSON.stringify(opus.lastselections));
             console.log(`currentExtrasQ`);
-            console.log(currentExtrasQ);
+            console.log(JSON.stringify(currentExtrasQ));
             console.log(`opusExtrasQ`);
-            console.log(opusExtrasQ);
+            console.log(JSON.stringify(opusExtrasQ));
             console.log(`extras`);
-            console.log(extras);
+            console.log(JSON.stringify(extras));
             console.log(`opus.extras`);
             console.log(opus.extras);
+            console.log(`o_search.slugRangeInputValidValueFromLastSearch`);
+            console.log(o_search.slugRangeInputValidValueFromLastSearch);
+            console.log(`opus.isAnyNormalizeInputInProgress()`);
+            console.log(opus.isAnyNormalizeInputInProgress());
+            console.log(opus.normalizeInputForAllFieldsInProgress);
             console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
             console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
 
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
 
-                if (o_widgets.isClosingInput) {
+                // Make sure page will not reload in these cases:
+                // 1) When it's in the middle of an input removal process. After normalize input API
+                // call returns at the end of an input removal, URL and opus.selections will get updated
+                // correctly.
+                // 2) When normalize input API is in progress. URL and opus.selections will get
+                // updated correctly after the return of API call.
+                // 3) When there is an invalid input. If there is an invalid values, there will be a
+                // mismatch between URL and opus.selections, and the invalid value in opus.selections
+                // will be removed when it's removed from UI.
+                if (o_widgets.isRemovingInput ||
+                    opus.isAnyNormalizeInputInProgress() ||
+                    !opus.allInputsValid) {
                     return;
                 }
                 opus.selections = selections;
@@ -264,6 +290,7 @@ var opus = {
         // both backend changes and a change here to remove the sequential dependence
         console.log(`allNormalizedApiCall from load`);
         console.log(`opus.allInputsValid in load: ${opus.allInputsValid}`);
+        console.log(`o_widgets.isAddingInput in load: ${o_widgets.isAddingInput}`);
         // if (opus.allInputsValid) {
         //     o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
         // } else {
@@ -290,7 +317,7 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-            opus.normalizeInputForAllFieldsInProgress = false;
+            opus.normalizeInputForAllFieldsInProgress["all"] = false;
             o_widgets.disableButtonsInAWidget(false);
             return;
         }
@@ -308,7 +335,7 @@ var opus = {
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This sets the opus.allInputsValid
         // flag used below and also updates the hash.
-        o_search.validateRangeInput(normalizedData, true);
+        o_search.validateRangeInput(normalizedData, true, "all");
 
         if (!opus.allInputsValid) {
             // We don't try to get a result count if any of the inputs are invalid.
@@ -316,7 +343,7 @@ var opus = {
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
-            opus.normalizeInputForAllFieldsInProgress = false;
+            opus.normalizeInputForAllFieldsInProgress["all"] = false;
             o_widgets.disableButtonsInAWidget(false);
             return;
         } else {
@@ -339,7 +366,7 @@ var opus = {
                 o_browse.loadData(opus.getCurrentTab());
             }
         }
-        opus.normalizeInputForAllFieldsInProgress = false;
+        opus.normalizeInputForAllFieldsInProgress["all"] = false;
         o_widgets.disableButtonsInAWidget(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
@@ -1163,7 +1190,17 @@ var opus = {
          * empty string.
          */
         return slugOrData.match(/_(.*)/) ? slugOrData.match(/_(.*)/)[1] : "";
-    }
+    },
+
+    isAnyNormalizeInputInProgress: function() {
+        for (const val of Object.values(opus.normalizeInputForAllFieldsInProgress)) {
+            if (val) {
+                return true;
+            }
+        }
+        return false;
+    },
+
 }; // end opus namespace
 
 $(document).ready(function() {

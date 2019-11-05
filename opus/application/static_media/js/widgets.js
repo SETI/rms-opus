@@ -38,7 +38,7 @@ var o_widgets = {
     // after updateHash is called in the callback function when normalized input api is
     // returned. So in the middle of this process, we have to make sure page won't reload
     // in opus.load.
-    isClosingInput: false,
+    isRemovingInput: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -78,7 +78,7 @@ var o_widgets = {
             e.preventDefault();
             o_widgets.isClosingWidget = true;
             if (opus.normalizeInputForCharInProgress ||
-                opus.normalizeInputForAllFieldsInProgress) {
+                opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
 
@@ -160,9 +160,10 @@ var o_widgets = {
             // that no renumber will not happen. This will make sure the corresponding
             // input in validateRangeInput is selected correctly for highlighting borders.
             if (opus.normalizeInputForCharInProgress ||
-                opus.normalizeInputForAllFieldsInProgress) {
+                opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
+
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -261,14 +262,14 @@ var o_widgets = {
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
             e.preventDefault();
-            o_widgets.isClosingInput = true;
             console.log("click trash icon");
             console.log(opus.normalizeInputForCharInProgress);
             console.log(opus.normalizeInputForAllFieldsInProgress);
             if (opus.normalizeInputForCharInProgress ||
-                opus.normalizeInputForAllFieldsInProgress) {
+                opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
+            o_widgets.isRemovingInput = true;
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
@@ -343,11 +344,12 @@ var o_widgets = {
                 console.log(opus.lastAllNormalizeRequestNo);
                 console.log(normalizedData);
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                    opus.normalizeInputForAllFieldsInProgress = false;
+                    opus.normalizeInputForAllFieldsInProgress["all"] = false;
                     o_widgets.disableButtonsInAWidget(false);
+                    o_widgets.isRemovingInput = false;
                     return;
                 }
-                o_search.validateRangeInput(normalizedData);
+                o_search.validateRangeInput(normalizedData, false, "all");
 
                 if (opus.allInputsValid) {
                     $("input.RANGE").removeClass("search_input_valid");
@@ -369,9 +371,9 @@ var o_widgets = {
                 console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
                 o_hash.updateHash(opus.allInputsValid);
 
-                opus.normalizeInputForAllFieldsInProgress = false;
+                opus.normalizeInputForAllFieldsInProgress["all"] = false;
                 o_widgets.disableButtonsInAWidget(false);
-                o_widgets.isClosingInput = false;
+                o_widgets.isRemovingInput = false;
             });
 
             // console.log(JSON.stringify(opus.selections));
@@ -514,11 +516,11 @@ var o_widgets = {
 
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                opus.normalizeInputForAllFieldsInProgress = false;
+                opus.normalizeInputForAllFieldsInProgress["all"] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;
             }
-            o_search.validateRangeInput(normalizedData);
+            o_search.validateRangeInput(normalizedData, false, "all");
 
             if (opus.allInputsValid) {
                 $("input.RANGE").removeClass("search_input_valid");
@@ -539,7 +541,7 @@ var o_widgets = {
 
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
-            opus.normalizeInputForAllFieldsInProgress = false;
+            opus.normalizeInputForAllFieldsInProgress["all"] = false;
             o_widgets.disableButtonsInAWidget(false);
         });
     },

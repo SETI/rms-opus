@@ -40,6 +40,7 @@ var o_search = {
     slugMultsReqno: {},
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
+    selectionsTriggerNormalizeInputBySlug: {},
 
     // Based on user's input, store the number of matched info by category, for example:
     // In ring radius, when user types "ha":
@@ -256,7 +257,8 @@ var o_search = {
             let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
-            console.log(`CurrentValue: ${currentValue}, idx: ${idx}`)
+            console.log(`CurrentValue: ${currentValue}, idx: ${idx}`);
+
             // save an old copy here
             if (currentValue) {
                 if (opus.selections[slug]) {
@@ -272,6 +274,7 @@ var o_search = {
                 }
             }
 
+            o_search.selectionsTriggerNormalizeInputBySlug[inputName] = JSON.parse(JSON.stringify(opus.selections));
             let newHash = o_hash.updateHash(false);
             //  restore opus.selections to old copy
             /*
@@ -284,9 +287,9 @@ var o_search = {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
+            o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
 
-            opus.normalizeInputForAllFieldsInProgress = true;
+            opus.normalizeInputForAllFieldsInProgress[inputName] = true;
             o_widgets.disableButtonsInAWidget();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             console.log(url);
@@ -295,7 +298,7 @@ var o_search = {
                 $(e.target).removeClass("input_currently_focused");
             }
 
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
@@ -328,6 +331,7 @@ var o_search = {
                 }
             }
 
+            o_search.selectionsTriggerNormalizeInputBySlug[inputName] = JSON.parse(JSON.stringify(opus.selections));
             // make a normalized call to avoid changing url whenever there is an invalid range input value
             let newHash = o_hash.updateHash(false);
             /*
@@ -340,11 +344,11 @@ var o_search = {
                 newHash = newHash.match(regexForHashWithSearchParams)[1];
             }
             o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slug] = o_search.lastSlugNormalizeRequestNo;
-            opus.normalizeInputForAllFieldsInProgress = true;
+            o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
+            opus.normalizeInputForAllFieldsInProgress[inputName] = true;
             o_widgets.disableButtonsInAWidget();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slug, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -615,6 +619,8 @@ var o_search = {
     },
 
     allNormalizedApiCall: function() {
+        console.log(`allNormalizedApiCall`);
+        o_search.selectionsTriggerNormalizeInputBySlug["all"] = JSON.parse(JSON.stringify(opus.selections));
         let newHash = o_hash.updateHash(false);
         /*
         We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -625,7 +631,7 @@ var o_search = {
         if (newHash.match(regexForHashWithSearchParams)) {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
-        opus.normalizeInputForAllFieldsInProgress = true;
+        opus.normalizeInputForAllFieldsInProgress["all"] = true;
         o_widgets.disableButtonsInAWidget();
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
@@ -633,7 +639,7 @@ var o_search = {
         return $.getJSON(url);
     },
 
-    validateRangeInput: function(normalizedInputData, removeSpinner=false) {
+    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=null) {
         console.log(`validateRangeInput`);
         console.log(normalizedInputData);
         opus.allInputsValid = true;
@@ -656,7 +662,10 @@ var o_search = {
                         if (opus.selections[slugNoCounter][idx]) {
                             currentInput.val(opus.selections[slugNoCounter][idx]);
                         }
-                        opus.selections[slugNoCounter][idx] = null;
+                        // opus.selections[slugNoCounter][idx] = null;
+                        if (slug) {
+                            o_search.selectionsTriggerNormalizeInputBySlug[slug][slugNoCounter][idx] = null;
+                        }
                     }
                     opus.allInputsValid = false;
                 }
@@ -673,8 +682,14 @@ var o_search = {
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                         if (opus.selections[slugNoCounter]) {
                             opus.selections[slugNoCounter][idx] = value;
+                            if (slug) {
+                                o_search.selectionsTriggerNormalizeInputBySlug[slug][slugNoCounter][idx] = [value];
+                            }
                         } else {
                             opus.selections[slugNoCounter] = [value];
+                            if (slug) {
+                                o_search.selectionsTriggerNormalizeInputBySlug[slug][slugNoCounter] = [value];
+                            }
                         }
 
                         // No color border if the input value is valid
@@ -700,12 +715,14 @@ var o_search = {
         // console.log(`selections`);
         // console.log(selections);
         console.log(`opus.selections`);
+        let selections = slug ? o_search.selectionsTriggerNormalizeInputBySlug[slug] : opus.selections;
+        console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.selections));
 
         if (opus.allInputsValid) {
-            o_hash.updateHash();
+            o_hash.updateHash(true, false, selections);
         } else {
-            o_hash.updateHash();
+            o_hash.updateHash(true, false, selections);
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
@@ -738,27 +755,29 @@ var o_search = {
             console.log(o_search.lastSlugNormalizeRequestNo);
 
             console.log(slug);
-            // if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
-            if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
-                opus.normalizeInputForAllFieldsInProgress = false;
+            if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
+            // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
+                opus.normalizeInputForAllFieldsInProgress[slug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;
             }
 
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
-            o_search.validateRangeInput(normalizedInputData, true);
+            o_search.validateRangeInput(normalizedInputData, true, slug);
             console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.allInputsValid) {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
-                opus.normalizeInputForAllFieldsInProgress = false;
+                opus.normalizeInputForAllFieldsInProgress[slug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;
             }
 
             o_search.rangesNameTotalMatchedCounter = 0;
-            o_hash.updateHash();
+            // let selections = o_search.selectionsTriggerNormalizeInputBySlug[slug];
+            // o_hash.updateHash(true, false, selections);
+            // o_hash.updateHash();
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
@@ -776,7 +795,7 @@ var o_search = {
 
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
-            opus.normalizeInputForAllFieldsInProgress = false;
+            opus.normalizeInputForAllFieldsInProgress[slug] = false;
             o_widgets.disableButtonsInAWidget(false);
         });
     },

@@ -17,14 +17,15 @@ var o_hash = {
      **/
 
     // updates the hash according to user selections
-    updateHash: function(updateURL=true, searchOnly=false) {
+    updateHash: function(updateURL=true, searchOnly=false, selections=opus.selections) {
         console.log(`updateHash`);
+        console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.selections));
         console.log(JSON.stringify(opus.extras));
         console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
         let hash = [];
         let visited = {};
-        $.each(opus.selections, function(key, value) {
+        $.each(selections, function(key, value) {
             if (visited[key]) {
                 return; // continue
             }
@@ -43,9 +44,9 @@ var o_hash = {
                 // into hash array.
                 if (key.match(/.*(1|2)/)) { // RANGE inputs
                     let anotherKey = key.match(/.*1/) ? `${slugNoNum}2` : `${slugNoNum}1`;
-                    let anotherEncodedSelectionValues = o_hash.encodeSlugValues(opus.selections[anotherKey]);
+                    let anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey]);
                     if (o_hash.isDateTimeSlug(anotherKey)) {
-                        anotherEncodedSelectionValues = o_hash.encodeSlugValues(opus.selections[anotherKey], true);
+                        anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey], true);
                     }
                     visited[key] = true;
                     visited[anotherKey] = true;
@@ -61,11 +62,11 @@ var o_hash = {
                             if (value[trailingCounter-1] !== null) {
                                 hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                             }
-                            if (opus.selections[anotherKey][trailingCounter-1] !== null) {
+                            if (selections[anotherKey][trailingCounter-1] !== null) {
                                 hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
                             }
                         } else {
-                            if (opus.selections[anotherKey][trailingCounter-1] !== null) {
+                            if (selections[anotherKey][trailingCounter-1] !== null) {
                                 hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
                             }
                             if (value[trailingCounter-1] !== null) {
@@ -74,7 +75,7 @@ var o_hash = {
                         }
 
                         if (value[trailingCounter-1] !== null ||
-                            opus.selections[anotherKey][trailingCounter-1] !== null) {
+                            selections[anotherKey][trailingCounter-1] !== null) {
                             o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                            trailingCounter);
                         } else {
