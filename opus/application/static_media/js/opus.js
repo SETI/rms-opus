@@ -47,15 +47,19 @@ var opus = {
 
     // An object stores the input (slug) & boolean value to indicate whether the normalize input
     // API (for all fields) is in progress:
-    // Key: input slug that triggers the normalize input API call. (Use "all" for API from getResultCount)
+    // Key: input slug that triggers the normalize input API call. (Use opus.allSlug for API from getResultCount)
     // Value: true & false to indicate whether the API is in progress.
     normalizeInputForAllFieldsInProgress: {},
     // An object stores the input (slug) & boolean value to indicate whether the normalize input
     // API (for a character) is in progress:
-    // Key: input slug that triggers the normalize input API call. (Use "all" for API
+    // Key: input slug that triggers the normalize input API call. (Use opus.allSlug for API
     // from getResultCount)
     // Value: true & false to indicate whether the API is in progress.
     normalizeInputForCharInProgress: {},
+    // The key in normalizeInputForAllFieldsInProgress, normalizeInputForCharInProgress, or
+    // selectionsForNormalizeInputBySlug object. It will store the info of the normalize
+    // input API call triggered from o_search.allNormalizedApiCall() (not from any specific input).
+    allSlug: "all",
 
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
@@ -184,21 +188,10 @@ var opus = {
         // search fields that aren't actually being searched on because when the user changes
         // such a q-type, there's no point in redoing the search since the results will be
         // identical.
-
         let currentExtrasQ = o_hash.extrasWithoutUnusedQtypes(selections, extras);
         let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
             o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
-            console.log(`selections & last selections are the same`);
-            console.log(`opus.force_load: ${opus.force_load}`);
-            console.log(`selections`);
-            console.log(JSON.stringify(selections));
-            console.log(`opus.lastselections`);
-            console.log(JSON.stringify(opus.lastselections));
-            console.log(`currentExtrasQ`);
-            console.log(JSON.stringify(currentExtrasQ));
-            console.log(`lastExtrasQ`);
-            console.log(JSON.stringify(lastExtrasQ));
             if (!opus.force_load) {
                 return;
             }
@@ -328,7 +321,7 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-            opus.normalizeInputForAllFieldsInProgress["all"] = false;
+            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
             o_widgets.disableButtonsInAWidget(false);
             return;
         }
@@ -346,7 +339,7 @@ var opus = {
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This sets the opus.allInputsValid
         // flag used below and also updates the hash.
-        o_search.validateRangeInput(normalizedData, true, "all");
+        o_search.validateRangeInput(normalizedData, true);
 
         if (!opus.allInputsValid) {
             // We don't try to get a result count if any of the inputs are invalid.
@@ -354,7 +347,7 @@ var opus = {
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
-            opus.normalizeInputForAllFieldsInProgress["all"] = false;
+            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
             o_widgets.disableButtonsInAWidget(false);
             return;
         } else {
@@ -377,7 +370,7 @@ var opus = {
                 o_browse.loadData(opus.getCurrentTab());
             }
         }
-        opus.normalizeInputForAllFieldsInProgress["all"] = false;
+        opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
         o_widgets.disableButtonsInAWidget(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;

@@ -628,7 +628,7 @@ var o_search = {
 
     allNormalizedApiCall: function() {
         console.log(`allNormalizedApiCall`);
-        o_search.selectionsForNormalizeInputBySlug["all"] = JSON.parse(JSON.stringify(opus.selections));
+        o_search.selectionsForNormalizeInputBySlug[opus.allSlug] = JSON.parse(JSON.stringify(opus.selections));
         let newHash = o_hash.updateHash(false);
         /*
         We are relying on URL order now to parse and get slugs before "&view" in the URL
@@ -639,7 +639,7 @@ var o_search = {
         if (newHash.match(regexForHashWithSearchParams)) {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
-        opus.normalizeInputForAllFieldsInProgress["all"] = true;
+        opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
         o_widgets.disableButtonsInAWidget();
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
@@ -647,7 +647,7 @@ var o_search = {
         return $.getJSON(url);
     },
 
-    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=null) {
+    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=opus.allSlug) {
         /**
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
@@ -675,9 +675,7 @@ var o_search = {
                             currentInput.val(opus.selections[slugNoCounter][idx]);
                         }
                         // opus.selections[slugNoCounter][idx] = null;
-                        if (slug) {
-                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = null;
-                        }
+                        o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = null;
                     }
                     opus.allInputsValid = false;
                 }
@@ -694,14 +692,10 @@ var o_search = {
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                         if (opus.selections[slugNoCounter]) {
                             opus.selections[slugNoCounter][idx] = value;
-                            if (slug) {
-                                o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = [value];
-                            }
+                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = [value];
                         } else {
                             opus.selections[slugNoCounter] = [value];
-                            if (slug) {
-                                o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter] = [value];
-                            }
+                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter] = [value];
                         }
 
                         // No color border if the input value is valid

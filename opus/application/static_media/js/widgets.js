@@ -341,12 +341,12 @@ var o_widgets = {
                 console.log(opus.lastAllNormalizeRequestNo);
                 console.log(normalizedData);
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                    opus.normalizeInputForAllFieldsInProgress["all"] = false;
+                    opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
                     o_widgets.disableButtonsInAWidget(false);
                     o_widgets.isRemovingInput = false;
                     return;
                 }
-                o_search.validateRangeInput(normalizedData, false, "all");
+                o_search.validateRangeInput(normalizedData, false);
 
                 if (opus.allInputsValid) {
                     $("input.RANGE").removeClass("search_input_valid");
@@ -368,7 +368,7 @@ var o_widgets = {
                 console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
                 o_hash.updateHash(opus.allInputsValid);
 
-                opus.normalizeInputForAllFieldsInProgress["all"] = false;
+                opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 o_widgets.isRemovingInput = false;
             });
@@ -513,11 +513,11 @@ var o_widgets = {
 
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                opus.normalizeInputForAllFieldsInProgress["all"] = false;
+                opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;
             }
-            o_search.validateRangeInput(normalizedData, false, "all");
+            o_search.validateRangeInput(normalizedData, false);
 
             if (opus.allInputsValid) {
                 $("input.RANGE").removeClass("search_input_valid");
@@ -538,7 +538,7 @@ var o_widgets = {
 
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
-            opus.normalizeInputForAllFieldsInProgress["all"] = false;
+            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
             o_widgets.disableButtonsInAWidget(false);
         });
     },
