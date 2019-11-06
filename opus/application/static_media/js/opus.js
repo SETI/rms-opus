@@ -203,28 +203,6 @@ var opus = {
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
-            console.log(`opus load before reload`);
-            console.log(`selections`);
-            console.log(JSON.stringify(selections));
-            console.log(`opus.selections`);
-            console.log(JSON.stringify(opus.selections));
-            console.log(`opus.lastselections`);
-            console.log(JSON.stringify(opus.lastselections));
-            console.log(`currentExtrasQ`);
-            console.log(JSON.stringify(currentExtrasQ));
-            console.log(`opusExtrasQ`);
-            console.log(JSON.stringify(opusExtrasQ));
-            console.log(`extras`);
-            console.log(JSON.stringify(extras));
-            console.log(`opus.extras`);
-            console.log(opus.extras);
-            console.log(`o_search.slugRangeInputValidValueFromLastSearch`);
-            console.log(o_search.slugRangeInputValidValueFromLastSearch);
-            console.log(`opus.isAnyNormalizeInputInProgress()`);
-            console.log(opus.isAnyNormalizeInputInProgress());
-            console.log(opus.normalizeInputForAllFieldsInProgress);
-            console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
-            console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
 
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
@@ -292,18 +270,6 @@ var opus = {
         // cache table has been created before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
         // both backend changes and a change here to remove the sequential dependence
-        console.log(`allNormalizedApiCall from load`);
-        console.log(`opus.allInputsValid in load: ${opus.allInputsValid}`);
-        console.log(`o_widgets.isAddingInput in load: ${o_widgets.isAddingInput}`);
-        // if (opus.allInputsValid) {
-        //     o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
-        // } else {
-        //     // try reset allInputsValid ?
-        //     $("#op-result-count").text("?");
-        //     $("#browse .op-observation-number").html("?");
-        //     $(".op-browse-tab").addClass("op-disabled-nav-link");
-        //     $(".spinner").fadeOut("");
-        // }
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
@@ -312,12 +278,6 @@ var opus = {
          * Given the result of the search parameter normalization, execute the search
          * that will eventually return the result count.
          */
-
-        console.log(`getResultCount`);
-        console.log(normalizedData.reqno);
-        console.log(opus.lastAllNormalizeRequestNo);
-        console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
-
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
@@ -326,16 +286,6 @@ var opus = {
             return;
         }
 
-        // if (!opus.allInputsValid) {
-        //     $("#op-result-count").text("?");
-        //     $("#browse .op-observation-number").html("?");
-        //     $(".op-browse-tab").addClass("op-disabled-nav-link");
-        //     $(".spinner").fadeOut("");
-        //     opus.allInputsValid = true;
-        //     opus.normalizeInputForAllFieldsInProgress = false;
-        //     o_widgets.disableButtonsInAWidget(false);
-        //     return;
-        // }
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This sets the opus.allInputsValid
         // flag used below and also updates the hash.

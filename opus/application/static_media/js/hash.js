@@ -20,11 +20,6 @@ var o_hash = {
         /**
          * updates the hash & URL based on the selections passed in.
          */
-        console.log(`updateHash`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(opus.selections));
-        console.log(JSON.stringify(opus.extras));
-        console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
         let hash = [];
         let visited = {};
         $.each(selections, function(key, value) {
@@ -149,12 +144,10 @@ var o_hash = {
             });
 
             if (updateURL) {
-            // if (updateURL && opus.allInputsValid) {
-                console.log(`URL updated !!!`);
                 window.location.hash = '/' + hash.join('&');
             }
         }
-        console.log(hash);
+
         return hash.join("&");
     },
 
@@ -310,10 +303,6 @@ var o_hash = {
 
     // get both selections and extras (qtype) from hash.
     getSelectionsExtrasFromHash: function() {
-        // console.log(`getSelectionsExtrasFromHash`);
-        // console.log(`before`);
-        // console.log(selections);
-        // console.log(extras);
         let hash = o_hash.getHash();
         if (!hash) {
             return [undefined, undefined];
@@ -444,11 +433,7 @@ var o_hash = {
         });
 
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
-        // console.log(`after`);
-        // console.log(selections);
-        // console.log(opus.selections);
-        // console.log(extras);
-        // console.log(opus.extras);
+
         return [selections, extras];
     },
 
@@ -472,10 +457,6 @@ var o_hash = {
     },
 
     initFromHash: function() {
-        // console.log(`initFromHash`);
-        // console.log(`before`);
-        // console.log(opus.selections);
-        // console.log(opus.extras);
         let hash = o_hash.getHash();
         if (!hash) {
             return;
@@ -570,9 +551,7 @@ var o_hash = {
         });
 
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections, opus.extras);
-        // console.log(`after`);
-        // console.log(opus.selections);
-        // console.log(opus.extras);
+
         opus.load();
     },
 

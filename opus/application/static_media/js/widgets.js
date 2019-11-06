@@ -74,7 +74,6 @@ var o_widgets = {
 
         // close a card
         $('#search').on('click', '.close_card', function(e) {
-            console.log("click x button to close widget");
             e.preventDefault();
             o_widgets.isClosingWidget = true;
             if (opus.isAnyNormalizeInputInProgress()) {
@@ -151,10 +150,6 @@ var o_widgets = {
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
             e.preventDefault();
-            console.log(`click add another input`);
-            console.log(`before`);
-            console.log(opus.selections);
-            console.log(opus.extras);
             // When normalize input api is in progress, we have to disable "+ (OR)" so
             // that no renumber will not happen. This will make sure the corresponding
             // input in validateRangeInput is selected correctly for highlighting borders.
@@ -252,17 +247,12 @@ var o_widgets = {
                     o_widgets.initAutocomplete(slug, slugWithCounter);
                 }
             }
-            console.log(`after`);
-            console.log(opus.selections);
-            console.log(opus.extras);
+
             o_hash.updateHash();
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
             e.preventDefault();
-            console.log("click trash icon");
-            console.log(opus.normalizeInputForCharInProgress);
-            console.log(opus.normalizeInputForAllFieldsInProgress);
             if (opus.isAnyNormalizeInputInProgress()) {
                 return false;
             }
@@ -334,12 +324,8 @@ var o_widgets = {
                 }
             }
 
-            console.log(`call allNormalizedApiCall when closing an input`);
             o_search.allNormalizedApiCall().then(function(normalizedData) {
-                console.log(`allNormalizedApiCall when clicking trash icon`);
-                console.log(normalizedData.reqno);
-                console.log(opus.lastAllNormalizeRequestNo);
-                console.log(normalizedData);
+
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                     opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
                     o_widgets.disableButtonsInAWidget(false);
@@ -365,16 +351,12 @@ var o_widgets = {
                     $(".op-browse-tab").addClass("op-disabled-nav-link");
                 }
 
-                console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
                 o_hash.updateHash(opus.allInputsValid);
 
                 opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 o_widgets.isRemovingInput = false;
             });
-
-            // console.log(JSON.stringify(opus.selections));
-            // o_hash.updateHash();
         });
     },
 
@@ -893,13 +875,8 @@ var o_widgets = {
             o_widgets.renumberInputsAttributes(slug);
 
             if (widgetInputs.hasClass("STRING")) {
-                // let inputSets = $(`#widget__${slug} .op-search-inputs-set`);
-                // let inputSets = $(`#widget__${slug} input`);
-                // let numberOfInputSets = inputSets.length;
-
                 // loop through each input set and init autocomplete for each of them
                 for (const singleInput of widgetInputs) {
-                    // console.log($(singleInput).attr("name"));
                     let slugWithCounter = $(singleInput).attr("name");
                     o_widgets.initAutocomplete(slug, slugWithCounter);
                 }
@@ -1253,18 +1230,12 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                // let values = [];
                 let inputCounter = opus.getSlugOrDataTrailingCounterStr(slugWithCounter);
                 let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-                console.log(`autocomplete`);
-                console.log(request.term);
-                console.log(`source idx: `);
-                console.log(idx);
+
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
 
-                // values.push(currentValue);
-                // opus.selections[slug] = values;
                 if (opus.selections[slug]) {
                     opus.selections[slug][idx] = currentValue;
                 } else {
@@ -1300,8 +1271,7 @@ var o_widgets = {
                     return;
                 }
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
-                console.log(url);
-                console.log(o_search.slugStringSearchChoicesReqno);
+
                 $.getJSON(url, function(stringSearchChoicesData) {
                     if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slugWithCounter]) {
                         return;
@@ -1332,8 +1302,6 @@ var o_widgets = {
                 return false;
             },
             select: function(e, ui) {
-                // console.log($(selectEvent.target).attr("name"));
-                // console.log(slugWithCounter);
                 slugWithCounter = $(e.target).attr("name");
                 let displayValue = o_search.extractHtmlContent(ui.item.label);
                 $(`input[name="${slugWithCounter}"]`).val(displayValue);
