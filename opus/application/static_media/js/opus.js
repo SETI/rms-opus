@@ -269,7 +269,7 @@ var opus = {
         // the back end is implemented, where the result count needs to finish so the
         // cache table has been created before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
-        // both backend changes and a change here to remove the sequential dependence
+        // both backend changes and a change here to remove the sequential dependence.
         o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 

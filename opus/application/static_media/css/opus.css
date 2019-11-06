@@ -1459,7 +1459,6 @@ panel are properly separated */
 
 /* Reduce left space in each widget (from 50px to 10px) */
 #op-search-widgets ul {
-    /* padding-left: 10px; */
     padding-left: 1%;
 }
 
@@ -2177,13 +2176,6 @@ we have an invalid search) */
     pointer-events: none;
 }
 
-/* Styling for the button to add multiple sets of inputs in a widget */
-.op-add-inputs-btn {
-    /* margin-left: 30%; */
-    /* position: relative;
-    left: 30%; */
-}
-
 /* Styling for the button to delete a set of inputs in a widget */
 .op-remove-inputs {
     margin-left: 10px;
@@ -2218,8 +2210,6 @@ searches */
 
 .op-btn-tag-disable {
     pointer-events: none;
-    /* color: grey; */
-    /* opacity: 0.5; */
 }
 
 /* Styling to make each input set takes up the width that will fit its contents */

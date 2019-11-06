@@ -132,7 +132,6 @@ var o_widgets = {
          * Display or hide the icon based on the number of input sets.
          */
         $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
-        // $(`#widget__${slug} .op-input-area`).append(addInputIcon);
         let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
         if (numberOfInputSets === opus.maxAllowedInputSets) {
             $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
@@ -179,11 +178,10 @@ var o_widgets = {
 
 
             let orLabel = '<ul class="op-or-labels text-secondary">' +
-                          // '<i class="fas fa-angle-double-left"></i>' +
                           '<hr class="op-or-label-divider">' +
                           '&nbsp;OR&nbsp;' +
                           '<hr class="op-or-label-divider"></ul>';
-                          // '<i class="fas fa-angle-double-right"></i></ul>';
+
             let removeInputIcon = '<li class="op-remove-inputs">' +
                                   '<button type="button" title="Delete this set of search inputs" \
                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
@@ -195,12 +193,10 @@ var o_widgets = {
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
                 firstExistingSetOfInputs.append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
-                // cloneInputs.prepend(orLabel);
                 cloneInputs.append(removeInputIcon);
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
-                // cloneInputs.prepend(orLabel);
             }
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
@@ -890,7 +886,6 @@ var o_widgets = {
                 if ($(`#${widget} .op-scrollable-menu`).hasClass("show")) {
                     // Note: the selector to toggle dropdown should be the one with data-toggle="dropdown"
                     // or "dropdown-toggle" class, and in this case it's the li (.op-ranges-dropdown-menu).
-                    // $(`#${widget} .op-ranges-dropdown-menu`).dropdown("toggle");
                     $(`#${widget} input.op-range-input-min`).dropdown("toggle");
                 }
             });
@@ -903,11 +898,10 @@ var o_widgets = {
                                    `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`;
 
                 let orLabel = '<ul class="op-or-labels text-secondary">' +
-                              // '<i class="fas fa-angle-double-left"></i>' +
                               '<hr class="op-or-label-divider">' +
                               '&nbsp;OR&nbsp;' +
                               '<hr class="op-or-label-divider"></ul>';
-                              // '<i class="fas fa-angle-double-right"></i></ul>';
+
                 let removeInputIcon = '<li class="op-remove-inputs">' +
                                       '<button type="button" title="Delete this set of search inputs" \
                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
@@ -918,7 +912,7 @@ var o_widgets = {
                 if (numberOfInputSets > 1) {
                     $(`#widget__${slug} .op-search-inputs-set`).first().append(removeInputIcon);
                 }
-                // $(`#widget__${slug} .op-extra-search-inputs`).prepend(orLabel);
+
                 $(`#widget__${slug} .op-extra-search-inputs`).append(removeInputIcon);
                 $(`#widget__${slug} .op-search-inputs-set:not(:last)`).append(orLabel);
 

@@ -232,12 +232,6 @@ def api_get_widget(request, **kwargs):
                            '<ul class="op-extra-search-inputs op-search-inputs-set">' + \
                            str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
                            '</ul>'
-
-                # if length > 1 and key != length - 1:
-                #     # Add div or br tag between each set of range search to make
-                #     # sure each set is in a seprate line
-                #     form = form + '</span><div style="clear: both;"></div><span class="op-extra-search-inputs">'
-                #     # form = form + '</span><div style="clear: both;"></div></section><section><span class="widget_form">'
                 key = key+1
 
     elif form_type == 'STRING':

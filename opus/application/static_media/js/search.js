@@ -665,7 +665,7 @@ var o_search = {
                         if (opus.selections[slugNoCounter][idx]) {
                             currentInput.val(opus.selections[slugNoCounter][idx]);
                         }
-                        // opus.selections[slugNoCounter][idx] = null;
+
                         o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = null;
                     }
                     opus.allInputsValid = false;
@@ -750,9 +750,6 @@ var o_search = {
             }
 
             o_search.rangesNameTotalMatchedCounter = 0;
-            // let selections = o_search.selectionsForNormalizeInputBySlug[slug];
-            // o_hash.updateHash(true, false, selections);
-            // o_hash.updateHash();
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
