@@ -1084,6 +1084,12 @@ nav.panel-heading {
     align-items: flex-start;
 }
 
+/* Make sure browse navbar tab (flex item, icon + text) will take up enough space
+to stay in one line */
+#browse .browse-nav-container .navbar-nav {
+    min-width: fit-content;
+}
+
 @media (max-width: 992px) {
     /* keep the 2nd navbar in a row when window is narrow */
     #browse .browse-nav-container .navbar-nav {
@@ -1189,6 +1195,12 @@ nav.panel-heading {
 /* Make options of 2nd navbar and slider stay at the left end of the 2nd navbar */
 #cart .op-cart-nav-container {
     justify-content: flex-start;
+}
+
+/* Make sure cart navbar tab (flex item, icon + text) will take up enough space
+to stay in one line */
+#cart .op-cart-nav-container .navbar-nav {
+    min-width: fit-content;
 }
 
 #cart .op-download-options {
