@@ -653,11 +653,11 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     selections[new_param_qualified_names[0]] = []
 
                 if allow_empty and clause_num_str:
-                    range_selection0 = selections[new_param_qualified_names[0]]
-                    len0 = len(range_selection0)
-                    if len0 < clause_num:
-                        range_selection0 += [None] * (clause_num - len0)
-                    range_selection0[clause_num - 1] = new_values[0]
+                    range_min_selection = selections[new_param_qualified_names[0]]
+                    len_min = len(range_min_selection)
+                    if len_min < clause_num:
+                        range_min_selection += [None] * (clause_num - len_min)
+                    range_min_selection[clause_num - 1] = new_values[0]
                 else:
                     selections[new_param_qualified_names[0]].append(new_values[0])
 
@@ -665,11 +665,11 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     selections[new_param_qualified_names[1]] = []
 
                 if allow_empty and clause_num_str:
-                    range_selection1 = selections[new_param_qualified_names[1]]
-                    len1 = len(range_selection1)
-                    if len1 < clause_num:
-                        range_selection1 += [None] * (clause_num - len1)
-                    range_selection1[clause_num - 1] = new_values[1]
+                    range_max_selection = selections[new_param_qualified_names[1]]
+                    len_max = len(range_max_selection)
+                    if len_max < clause_num:
+                        range_max_selection += [None] * (clause_num - len_max)
+                    range_max_selection[clause_num - 1] = new_values[1]
                 else:
                     selections[new_param_qualified_names[1]].append(new_values[1])
 
@@ -698,11 +698,11 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 selections[param_qualified_name_no_num] = []
 
             if allow_empty and clause_num_str:
-                string_selection = selections[param_qualified_name_no_num]
-                len_s = len(string_selection)
+                str_selection = selections[param_qualified_name_no_num]
+                len_s = len(str_selection)
                 if len_s < clause_num:
-                    string_selection += [None] * (clause_num - len_s)
-                string_selection[clause_num - 1] = new_value
+                    str_selection += [None] * (clause_num - len_s)
+                str_selection[clause_num - 1] = new_value
             else:
                 selections[param_qualified_name_no_num].append(new_value)
 

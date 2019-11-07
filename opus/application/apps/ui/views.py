@@ -143,13 +143,9 @@ def api_get_widget(request, **kwargs):
     extras = {}
 
     if request and request.GET is not None:
-        if form_type in settings.RANGE_FORM_TYPES or form_type == 'STRING':
-            (selections, extras) = url_to_search_params(request.GET,
-                                                        allow_errors=True,
-                                                        allow_empty=True)
-        else:
-            (selections, extras) = url_to_search_params(request.GET,
-                                                        allow_errors=True)
+        (selections, extras) = url_to_search_params(request.GET,
+                                                    allow_errors=True,
+                                                    allow_empty=True)
         if selections is None: # XXX Really should throw an error of some kind
             selections = {}
             extras = {}
@@ -194,9 +190,9 @@ def api_get_widget(request, **kwargs):
         length = len1 if len1 > len2 else len2
 
         if not length: # param is not constrained
-            form = '<ul class="op-search-inputs-set">' + \
-                   str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                   '</ul>'
+            form = ('<ul class="op-search-inputs-set">'
+                    +str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                    +'</ul>')
 
         else: # param is constrained
             if form_type_func is None:
@@ -222,17 +218,16 @@ def api_get_widget(request, **kwargs):
                 except (IndexError, KeyError, ValueError, TypeError) as e:
                     form_vals[slug2] = None
 
-                if key == 0:
-                    form = form + \
-                           '<ul class="op-search-inputs-set">' + \
-                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</ul>'
-                else:
-                    form = form + \
-                           '<ul class="op-extra-search-inputs op-search-inputs-set">' + \
-                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</ul>'
-                key = key+1
+                extra_str = ''
+                if key != 0:
+                    extra_str = 'op-extra-search-inputs'
+
+                form += ('<ul class="op-search-inputs-set '
+                         +extra_str + '">'
+                         +str(SearchForm(form_vals,
+                                         auto_id=auto_id).as_ul())
+                         +'</ul>')
+                key += 1
 
     elif form_type == 'STRING':
         auto_id = False
@@ -240,21 +235,20 @@ def api_get_widget(request, **kwargs):
             key = 0
             for value in selections[param_qualified_name]:
                 form_vals[slug] = value
-                if key == 0:
-                    form = form + \
-                           '<ul class="op-search-inputs-set">' + \
-                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</ul>'
-                else:
-                    form = form + \
-                           '<ul class="op-extra-search-inputs op-search-inputs-set">' + \
-                           str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                           '</ul>'
-                key = key+1
+                extra_str = ''
+                if key != 0:
+                    extra_str = 'op-extra-search-inputs'
+
+                form += ('<ul class="op-search-inputs-set '
+                         +extra_str + '">'
+                         +str(SearchForm(form_vals,
+                                         auto_id=auto_id).as_ul())
+                         +'</ul>')
+                key += 1
         else:
-            form = '<ul class="op-search-inputs-set">' + \
-                   str(SearchForm(form_vals, auto_id=auto_id).as_ul()) + \
-                   '</ul>'
+            form = ('<ul class="op-search-inputs-set">'
+                    +str(SearchForm(form_vals, auto_id=auto_id).as_ul())
+                    +'</ul>')
 
     # MULT form types
     elif form_type in settings.MULT_FORM_TYPES:
@@ -287,13 +281,18 @@ def api_get_widget(request, **kwargs):
                 glabel = group_info.label if group_info.label else 'Other'
                 if glabel == 'NULL': glabel = 'Other'
                 if model.objects.filter(grouping=gvalue)[0:1]:
-                    form +=  "\n\n" + \
-                             '<div class="mult_group_label_container mult_group_' + str(glabel) + '">' + \
-                             '<span class="indicator fa fa-plus"></span>' + \
-                             '<span class="mult_group_label">' + str(glabel) + '</span></div>' + \
-                             '<ul class="mult_group">' +  \
-                             SearchForm(form_vals, auto_id = '%s_' + str(gvalue), grouping=gvalue).as_ul() + \
-                             '</ul>';
+                    form +=  ("\n\n"
+                              +'<div class="mult_group_label_container'
+                              +' mult_group_' + str(glabel) + '">'
+                              +'<span class="indicator fa fa-plus">'
+                              +'</span>'
+                              +'<span class="mult_group_label">'
+                              +str(glabel) + '</span></div>'
+                              +'<ul class="mult_group">'
+                              +SearchForm(form_vals,
+                                          auto_id = '%s_' + str(gvalue),
+                                          grouping=gvalue).as_ul()
+                              +'</ul>');
 
         except FieldError:
             # this model does not have grouping
