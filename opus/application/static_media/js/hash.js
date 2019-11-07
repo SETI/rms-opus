@@ -15,7 +15,6 @@ var o_hash = {
      *  changing, reading, and initiating a session from the browser hash
      *
      **/
-
     updateHash: function(updateURL=true, searchOnly=false, selections=opus.selections) {
         /**
          * updates the hash & URL based on the selections passed in.
@@ -29,9 +28,6 @@ var o_hash = {
 
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
-                if (o_hash.isDateTimeSlug(key)) {
-                    encodedSelectionValues = o_hash.encodeSlugValues(value, true);
-                }
                 let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
                 let qtypeSlug = `qtype-${slugNoNum}`;
@@ -42,13 +38,10 @@ var o_hash = {
                 if (key.match(/.*(1|2)/)) { // RANGE inputs
                     let anotherKey = key.match(/.*1/) ? `${slugNoNum}2` : `${slugNoNum}1`;
                     let anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey]);
-                    if (o_hash.isDateTimeSlug(anotherKey)) {
-                        anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey], true);
-                    }
                     visited[key] = true;
                     visited[anotherKey] = true;
 
-                    for(let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
+                    for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
@@ -85,7 +78,7 @@ var o_hash = {
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[key] = true;
-                    for(let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
+                    for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = (`${trailingCounter}`.length === 1 ?
                                                      `0${trailingCounter}` : `${trailingCounter}`);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
@@ -113,9 +106,6 @@ var o_hash = {
         $.each(opus.extras, function(key, value) {
             if (value.length) {
                 let encodedExtraValues = o_hash.encodeSlugValues(value);
-                if (o_hash.isDateTimeSlug(key)) {
-                    encodedExtraValues = o_hash.encodeSlugValues(value, true);
-                }
                 if (value.length > 1) {
                     let numberOfQtypeInputs = encodedExtraValues.length;
 
@@ -162,9 +152,6 @@ var o_hash = {
                                      `0${counter}` : `${counter}`);
         if (qtypeInExtras in opus.extras) {
             let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
-            if (o_hash.isDateTimeSlug(qtypeInExtras)) {
-                encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras], true);
-            }
             let qtypeInURL = ((numberOfInputSets === 1) ?
                             qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
             if (opus.extras[qtypeInExtras][counter-1] !== null) {
@@ -173,7 +160,7 @@ var o_hash = {
         }
     },
 
-    encodeSlugValues: function(slugValueArray, dateTimeSlug=false) {
+    encodeSlugValues: function(slugValueArray) {
         /**
          * Take in a slug value array (like opus.selections, each element
          * will be a list of values for the slug) and encode all values in the
@@ -185,10 +172,8 @@ var o_hash = {
         for (const val of slugValueArray) {
             let value = encodeURIComponent(val);
             value = value.replace(/\%20/g, "+");
-
-            if (dateTimeSlug) {
-                value = value.replace(/\%3A/g, ":");
-            }
+            // All ":" in the search string will be unencoded.
+            value = value.replace(/\%3A/g, ":");
 
             slugValue.push(value);
         }
@@ -213,11 +198,8 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             let valueArray = value.split(",");
-            if (o_hash.isDateTimeSlug(slug)) {
-                valueArray = o_hash.encodeSlugValues(valueArray, true);
-            } else {
-                valueArray = o_hash.encodeSlugValues(valueArray);
-            }
+            valueArray = o_hash.encodeSlugValues(valueArray);
+
             value = valueArray.join(",");
 
             hash.push(`${slug}=${value}`);
@@ -638,20 +620,5 @@ var o_hash = {
         }
 
         return [selections, extras];
-    },
-
-    isDateTimeSlug: function(slug) {
-        /**
-         * Check if the slug will have date time strings as values. This
-         * will be used to determine if ":" should be encoded.
-         */
-        let dateTimeSlug = (["productcreationtime(1|2)", "publicationdate(1|2)",
-                             ".*ert(1|2)", "time(1|2)"]);
-        for (const singleSlug of dateTimeSlug) {
-            if (slug.match(singleSlug)) {
-                return true;
-            }
-        }
-        return false;
     }
 };
