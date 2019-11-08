@@ -520,7 +520,6 @@ def api_normalize_url(request):
     new_url_suffix_list = []
     new_url_search_list = []
     old_ui_slug_flag = False
-    clause_mapping = {}
 
     #
     # Handle search slugs including qtypes
@@ -529,11 +528,17 @@ def api_normalize_url(request):
     required_widgets_list = []
 
     handled_slugs = []
+    search_slugs_by_clause = {}
 
     # Sort to make tests deterministic and to group qtype with search slugs
     def _sort_func(key):
+        clause_num_str = ''
+        if '_' in key:
+            clause_num_str = key[key.index('_'):]
+            key = key[:key.index('_')]
         if key.startswith('qtype-'):
-            return key[6:]+'0' # Add 0 to sort before 1/2 suffixes
+            key = key[6:]+'0' # Add 0 to sort before 1/2 suffixes
+        key += clause_num_str
         return key
 
     for slug in sorted(original_slugs, key=_sort_func):
@@ -719,9 +724,7 @@ def api_normalize_url(request):
             valid_qtypes = settings.STRING_QTYPES
             qtype_default = valid_qtypes[0]
 
-        # It really only makes sense to look for a qtype field if there's a
-        # reason one would be present, but if the user gave us one anyway,
-        # we need to handle it so we can then ignore it and give an error.
+        # Look for an associated qtype.
         # Same trick as above in case there is qtype-old and qtype-new.
         # Note if we were already looking at the qtype, this will just
         # find it again.
@@ -819,18 +822,16 @@ def api_normalize_url(request):
                     # for strings, and strings never have a '2' slug
                     search2_val = search2_val[0]
 
-        # Store the clause so we can renumber them later
-        key = (search1, search2, qtype_slug)
-        if key not in clause_mapping:
-            clause_mapping[key] = []
-        clause_mapping[key].append(clause_num_str)
-
-        if search1 and search1_val is not None:
-            new_url_search_list.append([search1+clause_num_str, search1_val])
-        if search2 and search2_val is not None:
-            new_url_search_list.append([search2+clause_num_str, search2_val])
-        if qtype_slug: # Always include the qtype
-            new_url_search_list.append([qtype_slug+clause_num_str, qtype_val])
+        # Store the search/qtype slugs and values for later use so we can
+        # add them to the URL in numerical clause order once we know what
+        # all the clause numbers actually are.
+        slug_no_num = strip_numeric_suffix(pi.slug)
+        if slug_no_num not in search_slugs_by_clause:
+            search_slugs_by_clause[slug_no_num] = []
+        search_slugs_by_clause[slug_no_num].append((clause_num_str,
+                                                    search1, search1_val,
+                                                    search2, search2_val,
+                                                    qtype_slug, qtype_val))
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
@@ -840,33 +841,31 @@ def api_normalize_url(request):
         else:
             required_widgets_list.append(strip_numeric_suffix(pi.slug))
 
+    print(search_slugs_by_clause)
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
-    for key in clause_mapping:
-        clause_mapping[key].sort(key=lambda x: (0 if x == '' else int(x[1:]),
-                                                x))
+    for search_slug, search_list in search_slugs_by_clause.items():
+        search_list.sort(key=lambda x: (0 if x[0] == '' else int(x[0][1:]),
+                                        x))
 
-    # Renumber all of the search clauses to be in order starting with 1
-    for url_entry in new_url_search_list:
-        url_slug = url_entry[0]
-        if '_' not in url_slug:
-            url_base = url_slug
-            url_clause = ''
-        else:
-            url_base = url_slug[:url_slug.index('_')]
-            url_clause = url_slug[url_slug.index('_'):]
-        for key, clauses in clause_mapping.items():
-            for key_slug in key:
-                if key_slug != url_base:
-                    continue
-                clause_num = clauses.index(url_clause)
-                # clause_num starts with 0 here, but we really want to start
-                # with _1
-                # If there is only a single clause, then don't put any suffix
-                new_clause = ''
-                if len(clauses) > 1:
-                    new_clause = ('_%02d' % (clause_num+1))
-                url_entry[0] = url_base + new_clause
+    for search_slug in sorted(search_slugs_by_clause.keys()):
+        for idx, search_data in enumerate(search_slugs_by_clause[search_slug]):
+            (clause_str,
+             search1, search1_val,
+             search2, search2_val,
+             qtype, qtype_val) = search_data
+            clause_num_str = ''
+            if len(search_slugs_by_clause[search_slug]) != 1:
+                clause_num_str = '_%02d' % (idx+1)
+            if search1 and search1_val is not None:
+                new_url_search_list.append([search1+clause_num_str,
+                                            search1_val])
+            if search2 and search2_val is not None:
+                new_url_search_list.append([search2+clause_num_str,
+                                            search2_val])
+            if qtype: # Always include the qtype
+                new_url_search_list.append([qtype+clause_num_str,
+                                            qtype_val])
 
     #
     # Deal with all the slugs we know about that AREN'T search terms.
