@@ -29,26 +29,25 @@ var o_hash = {
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;
-                let slugNoNum = key.match(/.*(1|2)/) ? key.match(/(.*)[1|2]/)[1] : key;
+                let slugNoNum = key.match(/.*(1|2)$/) ? key.match(/(.*)[1|2]$/)[1] : key;
                 let qtypeSlug = `qtype-${slugNoNum}`;
                 let trailingCounterWithNullVal = [];
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding before pushing
                 // into hash array.
-                if (key.match(/.*(1|2)/)) { // RANGE inputs
-                    let anotherKey = key.match(/.*1/) ? `${slugNoNum}2` : `${slugNoNum}1`;
+                if (key.match(/.*(1|2)$/)) { // RANGE inputs
+                    let anotherKey = key.match(/.*1$/) ? `${slugNoNum}2` : `${slugNoNum}1`;
                     let anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey]);
                     visited[key] = true;
                     visited[anotherKey] = true;
 
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
-                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
                         let anotherNewKey = ((numberOfInputSets === 1) ?
                                              anotherKey : `${anotherKey}_${trailingCounterString}`);
 
-                        if (key.match(/.*1/)) {
+                        if (key.match(/.*1$/)) {
                             if (value[trailingCounter-1] !== null) {
                                 hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                             }
@@ -79,8 +78,7 @@ var o_hash = {
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[key] = true;
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
-                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
@@ -110,8 +108,7 @@ var o_hash = {
                     let numberOfQtypeInputs = encodedExtraValues.length;
 
                     for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
-                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                     `0${trailingCounter}` : `${trailingCounter}`);
+                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
                         let newKey = `${key}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
@@ -148,8 +145,7 @@ var o_hash = {
          * numberOfInputSets & counter to determine if trailingCounterString should
          * be added to the final slug in URL hash.
          */
-        let trailingCounterString = (`${counter}`.length === 1 ?
-                                     `0${counter}` : `${counter}`);
+        let trailingCounterString = ("0" + counter).slice(-2);
         if (qtypeInExtras in opus.extras) {
             let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
             let qtypeInURL = ((numberOfInputSets === 1) ?
@@ -550,8 +546,8 @@ var o_hash = {
         let extras = Object.assign({}, extrasData);
 
         for (const slug in selections) {
-            if (slug.match(/.*(1|2)/)) {
-                let slugNoNum = slug.match(/.*(1|2)/) ? slug.match(/(.*)[1|2]/)[1] : slug;
+            if (slug.match(/.*(1|2)$/)) {
+                let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
                 selections[`${slugNoNum}1`] = selections[`${slugNoNum}1`] ? selections[`${slugNoNum}1`] : [];
                 selections[`${slugNoNum}2`] = selections[`${slugNoNum}2`] ? selections[`${slugNoNum}2`] : [];

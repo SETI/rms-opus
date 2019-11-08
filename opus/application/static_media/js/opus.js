@@ -1134,7 +1134,8 @@ var opus = {
          * Takes in a slugOrData from input's name attribute and if there are
          * multiple inputs, return the version without trailing counter.
          */
-        return slugOrData.match(/(.*)_/) ? slugOrData.match(/(.*)_/)[1] : slugOrData;
+        return (slugOrData.match(/(.*)_[0-9]{2}$/) ?
+                slugOrData.match(/(.*)_[0-9]{2}$/)[1] : slugOrData);
     },
 
     getSlugOrDataTrailingCounterStr: function(slugOrData) {
@@ -1143,7 +1144,8 @@ var opus = {
          * multiple inputs, return the trailing counter, else return an
          * empty string.
          */
-        return slugOrData.match(/_(.*)/) ? slugOrData.match(/_(.*)/)[1] : "";
+        return (slugOrData.match(/_([0-9]{2})$/) ?
+                slugOrData.match(/_([0-9]{2})$/)[1] : "");
     },
 
     isAnyNormalizeInputInProgress: function() {

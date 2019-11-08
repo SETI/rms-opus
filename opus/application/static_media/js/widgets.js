@@ -405,9 +405,9 @@ var o_widgets = {
 
         let slug = "";
         let slugOrderNum = "";
-        if (minInputName.match(/(.*)_/)) {
-            slug = minInputName.match(/(.*)_/)[1];
-            slugOrderNum = minInputName.match(/.*(_.*)/)[1];
+        if (minInputName.match(/(.*)_[0-9]{2}$/)) {
+            slug = minInputName.match(/(.*)_[0-9]{2}$/)[1];
+            slugOrderNum = minInputName.match(/.*_([0-9]{2})$/)[1];
         } else {
             slug = minInputName;
         }
@@ -455,7 +455,7 @@ var o_widgets = {
 
         let slugNoNum;
         try {
-            slugNoNum = slug.match(/(.*)[1|2]/)[1];
+            slugNoNum = slug.match(/(.*)[1|2]$/)[1];
         } catch (e) {
             slugNoNum = slug;
         }
@@ -636,8 +636,8 @@ var o_widgets = {
          let slugMin = false;
          let slugMax = false;
          let slugNoNum = false;
-         if (slug.match(/.*(1|2)/)) {
-             slugNoNum = slug.match(/(.*)[1|2]/)[1];
+         if (slug.match(/.*(1|2)$/)) {
+             slugNoNum = slug.match(/(.*)[1|2]$/)[1];
              slugMin = slugNoNum + '1';
              slugMax = slugNoNum + '2';
          }
@@ -971,8 +971,7 @@ var o_widgets = {
                     for (const eachRangeDropdown of preprogrammedRangesInfo) {
                         let rangesDropdownCategories = $(eachRangeDropdown).find("li");
                         trailingCounter++;
-                        trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                 `0${trailingCounter}` : `${trailingCounter}`);
+                        trailingCounterString = ("0" + trailingCounter).slice(-2);
                         let correspondingMinInputName = minInputNamesArray.shift();
 
                         for (const category of rangesDropdownCategories) {
@@ -1041,8 +1040,7 @@ var o_widgets = {
 
         for (const eachSearchElement of targetSearchElements) {
             trailingCounter++;
-            trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                     `0${trailingCounter}` : `${trailingCounter}`);
+            trailingCounterString = ("0" + trailingCounter).slice(-2);
             let originalName = $(eachSearchElement).attr("name");
             originalName = opus.getSlugOrDataWithoutCounter(originalName);
             let updatedName = `${originalName}_${trailingCounterString}`;

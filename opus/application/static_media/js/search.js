@@ -397,9 +397,9 @@ var o_search = {
 
             switch ($(this).attr("class")) {  // form type
                 case "RANGE":
-                    let slugNoNum = ($(this).attr("name").match(/-(.*)_/) ?
-                                     $(this).attr("name").match(/-(.*)_/)[1] :
-                                     $(this).attr("name").match(/-(.*)/)[1]);
+                    let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
+                                     $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                                     $(this).attr("name").match(/-(.*)$/)[1]);
                     $(`#widget__${slugNoNum} select`).each(function() {
                         qtypes.push($(this).val());
                     });
@@ -407,9 +407,9 @@ var o_search = {
                     break;
 
                 case "STRING":
-                    let slug = ($(this).attr("name").match(/-(.*)_/) ?
-                                $(this).attr("name").match(/-(.*)_/)[1] :
-                                $(this).attr("name").match(/-(.*)/)[1]);
+                    let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
+                                $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                                $(this).attr("name").match(/-(.*)$/)[1]);
                     $(`#widget__${slug} select`).each(function() {
                         qtypes.push($(this).val());
                     });
