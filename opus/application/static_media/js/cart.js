@@ -446,6 +446,14 @@ var o_cart = {
                                        o_utils.addCommas(status.total_download_count));
         }
 
+        if (status.recycled_count === 0) {
+            $("[data-target='#op-empty-recycle-bin']").addClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin']").addClass("op-button-disabled");
+        } else {
+            $("[data-target='#op-empty-recycle-bin']").removeClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin']").removeClass("op-button-disabled");
+        }
+
         // update the panel numbers if we received them...
         if (status.product_cat_list !== undefined) {
             for (let index = 0; index < status.product_cat_list.length; index++) {
@@ -533,6 +541,7 @@ var o_cart = {
     emptyCartOrRecycleBin: function(what) {
         // to disable clicks:
         o_utils.disableUserInteraction();
+        o_browse.hideGalleryViewModal();
 
         // what == "cart" or "recycleBin"
         let recycleBin = (what === "cart" ? 0 : 1);
@@ -556,13 +565,11 @@ var o_cart = {
     restoreRecycleBin: function() {
         // to disable clicks:
         o_utils.disableUserInteraction();
+        let tab = opus.getViewTab();
 
         let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
 
         $.getJSON(url, function(statusData) {
-            if (statusData.reqno < o_cart.lastRequestNo) {
-                return;
-            }
             o_cart.updateCartStatus(statusData);
             o_utils.enableUserInteraction();
         });
@@ -572,6 +579,11 @@ var o_cart = {
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo["#cart"].title);
         $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
+        $(`.op-thumbnail-container[data-id]`).addClass("op-in-cart");
+        $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
+        $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");
+        $(`#galleryViewContents .op-cart-toggle`).attr("title", `${buttonInfo[tab].title} (spacebar)`);
+        $(`#galleryViewContents .op-cart-toggle`).html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
     // action = add/remove/addrange/removerange/addall

@@ -361,7 +361,8 @@ ul.op-search-menu {
 }
 
 #browse .op-in-cart {
-    border: medium solid #097da5;
+    border: thick solid #097da5;
+    border-radius: 5px;
 }
 
 #cart .remove {
