@@ -210,8 +210,8 @@ var o_widgets = {
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
 
             if (newlyAddedInput.hasClass("RANGE")) {
-                opus.selections[`${slug}1`] = opus.selections[`${slug}1`] ? opus.selections[`${slug}1`] : [];
-                opus.selections[`${slug}2`] = opus.selections[`${slug}2`] ? opus.selections[`${slug}2`] : [];
+                opus.selections[`${slug}1`] = opus.selections[`${slug}1`] || [];
+                opus.selections[`${slug}2`] = opus.selections[`${slug}2`] || [];
                 while (opus.selections[`${slug}1`] .length < numberOfInputSets) {
                     opus.selections[`${slug}1`] .push(null);
                 }
@@ -223,7 +223,7 @@ var o_widgets = {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
             } else if (newlyAddedInput.hasClass("STRING")) {
-                opus.selections[slug] = opus.selections[slug] ? opus.selections[slug] : [];
+                opus.selections[slug] = opus.selections[slug] || [];
                 while (opus.selections[slug] .length < numberOfInputSets) {
                     opus.selections[slug] .push(null);
                 }
