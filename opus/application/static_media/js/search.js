@@ -731,7 +731,6 @@ var o_search = {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
-            // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress[slug] = false;
                 o_widgets.disableButtonsInAWidget(false);
                 return;

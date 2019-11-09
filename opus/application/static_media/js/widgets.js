@@ -792,6 +792,10 @@ var o_widgets = {
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
+            console.log(`getWidget_done`);
+            console.log(numberOfQtypeInputs);
+            console.log(slug);
+            console.log(qtypeInputs);
 
             if (numberOfQtypeInputs !== 0) {
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
@@ -809,6 +813,7 @@ var o_widgets = {
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
+                    console.log(JSON.stringify(opus.extras[qtype]));
                     o_hash.updateHash();
                 } else if (numberOfQtypeInputs > 1) {
                     // When there are multiple qtype inputs, update qtype options for each
@@ -818,6 +823,7 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
+                    console.log(JSON.stringify(opus.extras[qtype]));
                     o_hash.updateHash();
                 }
             }

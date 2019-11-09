@@ -19,13 +19,27 @@ var o_hash = {
         /**
          * updates the hash & URL based on the selections passed in.
          */
+        console.log(`=== updateHash ===`);
+        console.log(JSON.stringify(selections));
+        // 1. sort selections to be in alphabetical order
+        // 2. if current counter has no value, check if there is any qtype, if so, insert qtype
+        // 3. With above 2 steps, I think the 3rd loop can be removed
         let hash = [];
         let visited = {};
-        $.each(selections, function(key, value) {
-            if (visited[key]) {
-                return; // continue
-            }
 
+        // Make sure selections and extras are aligned before updating hash.
+        // This will avoid issue that qtype is not properly updated in the URL hash when a
+        // widget just open and opus.selections is not updated.
+        [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
+        console.log(`selections after alignment`);
+        console.log(JSON.stringify(selections));
+        let sortedKeys = Object.keys(selections).sort();
+        console.log(sortedKeys);
+        for (const key of sortedKeys) {
+            if (visited[key]) {
+                continue; // continue
+            }
+            let value = selections[key];
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;
@@ -62,18 +76,8 @@ var o_hash = {
                                 hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                             }
                         }
-
-                        if (value[trailingCounter-1] !== null ||
-                            selections[anotherKey][trailingCounter-1] !== null) {
-                            o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                           trailingCounter);
-                        } else {
-                            trailingCounterWithNullVal.push(trailingCounter);
-                        }
-                    }
-
-                    for (const counter of trailingCounterWithNullVal) {
-                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets, counter);
+                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                       trailingCounter);
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[key] = true;
@@ -84,46 +88,38 @@ var o_hash = {
                         if (value[trailingCounter-1] !== null) {
                             hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
-
-                        if (value[trailingCounter-1] !== null) {
-                            o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                           trailingCounter);
-                        } else {
-                            trailingCounterWithNullVal.push(trailingCounter);
-                        }
-                    }
-                    for (const counter of trailingCounterWithNullVal) {
-                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets, counter);
+                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                       trailingCounter);
                     }
                 } else { // Multi/single choice inputs
                     hash.push(key + "=" + encodedSelectionValues.join(","));
                 }
             }
-        });
+        }
 
-        $.each(opus.extras, function(key, value) {
-            if (value.length) {
-                let encodedExtraValues = o_hash.encodeSlugValues(value);
-                if (value.length > 1) {
-                    let numberOfQtypeInputs = encodedExtraValues.length;
-
-                    for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
-                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
-                        let newKey = `${key}_${trailingCounterString}`;
-
-                        if (value[trailingCounter-1] !== null) {
-                            if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
-                                hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
-                            }
-                        }
-                    }
-                } else {
-                    if (!hash.includes(key + "=" + encodedExtraValues.join(","))) {
-                        hash.push(key + "=" + encodedExtraValues.join(","));
-                    }
-                }
-            }
-        });
+        // $.each(opus.extras, function(key, value) {
+        //     if (value.length) {
+        //         let encodedExtraValues = o_hash.encodeSlugValues(value);
+        //         if (value.length > 1) {
+        //             let numberOfQtypeInputs = encodedExtraValues.length;
+        //
+        //             for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
+        //                 let trailingCounterString = ("0" + trailingCounter).slice(-2);
+        //                 let newKey = `${key}_${trailingCounterString}`;
+        //
+        //                 if (value[trailingCounter-1] !== null) {
+        //                     if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
+        //                         hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+        //                     }
+        //                 }
+        //             }
+        //         } else {
+        //             if (!hash.includes(key + "=" + encodedExtraValues.join(","))) {
+        //                 hash.push(key + "=" + encodedExtraValues.join(","));
+        //             }
+        //         }
+        //     }
+        // });
 
         if (!searchOnly) {
             $.each(opus.prefs, function(key, value) {
@@ -134,7 +130,7 @@ var o_hash = {
                 window.location.hash = '/' + hash.join('&');
             }
         }
-
+        console.log(hash);
         return hash.join("&");
     },
 
@@ -145,11 +141,15 @@ var o_hash = {
          * numberOfInputSets & counter to determine if trailingCounterString should
          * be added to the final slug in URL hash.
          */
+        console.log(`updateURLHashFromExtras`);
+        console.log(JSON.stringify(opus.extras));
         let trailingCounterString = ("0" + counter).slice(-2);
         if (qtypeInExtras in opus.extras) {
             let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
             let qtypeInURL = ((numberOfInputSets === 1) ?
-                            qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
+                              qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
+            console.log(`check if qtype in extras before pushing to URL: ${qtypeInExtras}`);
+            console.log(JSON.stringify(opus.extras[qtypeInExtras][counter-1]));
             if (opus.extras[qtypeInExtras][counter-1] !== null) {
                 hash.push(qtypeInURL + "=" + encodedExtraValues[counter-1]);
             }
