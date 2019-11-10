@@ -30,7 +30,7 @@ var o_hash = {
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
         // widget just open and opus.selections is not updated.
-        [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
+        // [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
         console.log(`selections after alignment`);
         console.log(JSON.stringify(selections));
         let sortedKeys = Object.keys(selections).sort();
@@ -534,8 +534,10 @@ var o_hash = {
          * Arrays for slugNameB and qtype-slugNameB will be the same length
          * (STRING input).
          */
-        let selections = Object.assign({}, selectionsData);
-        let extras = Object.assign({}, extrasData);
+        // let selections = Object.assign({}, selectionsData);
+        // let extras = Object.assign({}, extrasData);
+        let selections = JSON.parse(JSON.stringify(selectionsData));
+        let extras = JSON.parse(JSON.stringify(extrasData));
 
         for (const slug in selections) {
             if (slug.match(/.*(1|2)$/)) {

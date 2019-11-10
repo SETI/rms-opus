@@ -208,6 +208,7 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
+            console.log(`input.RANGE change event triggered.`);
             if (o_widgets.isClosingWidget) {
                 return false;
             }
@@ -645,6 +646,7 @@ var o_search = {
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
          */
+        console.log(`validateRangeInput`);
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
 
@@ -683,7 +685,7 @@ var o_search = {
                         o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                         if (opus.selections[slugNoCounter]) {
                             opus.selections[slugNoCounter][idx] = value;
-                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = [value];
+                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = value;
                         } else {
                             opus.selections[slugNoCounter] = [value];
                             o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter] = [value];
