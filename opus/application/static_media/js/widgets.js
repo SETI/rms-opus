@@ -261,7 +261,7 @@ var o_widgets = {
             let inputElement = $(this).parent(".op-search-inputs-set").find("input");
             let qtypeElement = $(this).parent(".op-search-inputs-set").find("select");
             let slugNameFromInput = inputElement.attr("name");
-            let trailingCounterString = opus.getSlugOrDataTrailingCounterStr(slugNameFromInput);
+            let trailingCounterString = o_utils.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
 
             if (inputElement.hasClass("RANGE")) {
@@ -324,7 +324,7 @@ var o_widgets = {
 
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                     opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-                    o_widgets.disableButtonsInAWidget(false);
+                    o_widgets.disableButtonsInWidgets(false);
                     o_widgets.isRemovingInput = false;
                     return;
                 }
@@ -350,7 +350,7 @@ var o_widgets = {
                 o_hash.updateHash(opus.allInputsValid);
 
                 opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.disableButtonsInWidgets(false);
                 o_widgets.isRemovingInput = false;
             });
         });
@@ -412,7 +412,7 @@ var o_widgets = {
             slug = minInputName;
         }
 
-        let inputCounter = opus.getSlugOrDataTrailingCounterStr(minInputName);
+        let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(minInputName);
         let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
         if (minVal) {
@@ -492,7 +492,7 @@ var o_widgets = {
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                 opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.disableButtonsInWidgets(false);
                 return;
             }
             o_search.validateRangeInput(normalizedData, false);
@@ -517,7 +517,7 @@ var o_widgets = {
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
             opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-            o_widgets.disableButtonsInAWidget(false);
+            o_widgets.disableButtonsInWidgets(false);
         });
     },
 
@@ -976,7 +976,7 @@ var o_widgets = {
 
                         for (const category of rangesDropdownCategories) {
                             let originalDataCategory = $(category).attr("data-category");
-                            originalDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
+                            originalDataCategory = o_utils.getSlugOrDataWithoutCounter(originalDataCategory);
                             let updatedDataCategory = `${originalDataCategory}_${trailingCounterString}`;
 
                             o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
@@ -997,7 +997,7 @@ var o_widgets = {
 
                     for (const category of rangesDropdownCategories) {
                         let originalDataCategory = $(category).attr("data-category");
-                        let updatedDataCategory = opus.getSlugOrDataWithoutCounter(originalDataCategory);
+                        let updatedDataCategory = o_utils.getSlugOrDataWithoutCounter(originalDataCategory);
 
                         o_widgets.updateRangesCollapseAttributes(category, updatedDataCategory,
                                                                  originalMinName);
@@ -1010,7 +1010,7 @@ var o_widgets = {
             let qtypes = $(`#widget__${slug} select`);
 
             let originalStringName = stringInputs.attr("name");
-            originalStringName = opus.getSlugOrDataWithoutCounter(originalStringName);
+            originalStringName = o_utils.getSlugOrDataWithoutCounter(originalStringName);
 
             // If there are extra sets of STRING inputs, we reorder the following:
             // 1. name attribute inputs.
@@ -1042,7 +1042,7 @@ var o_widgets = {
             trailingCounter++;
             trailingCounterString = ("0" + trailingCounter).slice(-2);
             let originalName = $(eachSearchElement).attr("name");
-            originalName = opus.getSlugOrDataWithoutCounter(originalName);
+            originalName = o_utils.getSlugOrDataWithoutCounter(originalName);
             let updatedName = `${originalName}_${trailingCounterString}`;
             $(eachSearchElement).attr("name", updatedName);
             renumberedData.push(updatedName);
@@ -1189,7 +1189,7 @@ var o_widgets = {
         }
     },
 
-    disableButtonsInAWidget: function(disable=true) {
+    disableButtonsInWidgets: function(disable=true) {
         /**
          * Disable/enable "x", "+ (OR)" and trash icons in a widget.
          */
@@ -1222,7 +1222,7 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                let inputCounter = opus.getSlugOrDataTrailingCounterStr(slugWithCounter);
+                let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(slugWithCounter);
                 let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
                 o_widgets.lastStringSearchRequestNo++;

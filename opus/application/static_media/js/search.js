@@ -137,7 +137,7 @@ var o_search = {
             }
 
             let slug = $(this).attr("name");
-            let slugWithCounter = opus.getSlugOrDataWithoutCounter(slug);
+            let slugWithCounter = o_utils.getSlugOrDataWithoutCounter(slug);
             let currentValue = $(this).val().trim();
 
             // Check if there is any match between input values and ranges names
@@ -166,14 +166,14 @@ var o_search = {
             }
 
             opus.normalizeInputForCharInProgress[slug] = true;
-            o_widgets.disableButtonsInAWidget();
+            o_widgets.disableButtonsInWidgets();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
 
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slugWithCounter]) {
                     opus.normalizeInputForCharInProgress[slug] = false;
-                    o_widgets.disableButtonsInAWidget(false);
+                    o_widgets.disableButtonsInWidgets(false);
                     return;
                 }
 
@@ -198,7 +198,7 @@ var o_search = {
                 }
 
                 opus.normalizeInputForCharInProgress[slug] = false;
-                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.disableButtonsInWidgets(false);
             }); // end getJSON
         });
 
@@ -214,7 +214,7 @@ var o_search = {
             }
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
-            let slug = opus.getSlugOrDataWithoutCounter(inputName);
+            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
 
             let currentValue = $(this).val().trim();
 
@@ -258,7 +258,7 @@ var o_search = {
                 }
             }
 
-            let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
+            let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
             if (currentValue) {
@@ -293,7 +293,7 @@ var o_search = {
             o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
 
             opus.normalizeInputForAllFieldsInProgress[inputName] = true;
-            o_widgets.disableButtonsInAWidget();
+            o_widgets.disableButtonsInWidgets();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
 
             if ($(e.target).hasClass("input_currently_focused")) {
@@ -308,9 +308,9 @@ var o_search = {
                 return false;
             }
             let inputName = $(this).attr("name");
-            let slug = opus.getSlugOrDataWithoutCounter(inputName);
+            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
 
-            let inputCounter = opus.getSlugOrDataTrailingCounterStr(inputName);
+            let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             let currentValue = $(this).val().trim();
             if (currentValue) {
@@ -349,7 +349,7 @@ var o_search = {
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[inputName] = o_search.lastSlugNormalizeRequestNo;
             opus.normalizeInputForAllFieldsInProgress[inputName] = true;
-            o_widgets.disableButtonsInAWidget();
+            o_widgets.disableButtonsInWidgets();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
             o_search.parseFinalNormalizedInputDataAndUpdateHash(inputName, url);
         });
@@ -634,7 +634,7 @@ var o_search = {
             newHash = newHash.match(regexForHashWithSearchParams)[1];
         }
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
-        o_widgets.disableButtonsInAWidget();
+        o_widgets.disableButtonsInWidgets();
         opus.lastAllNormalizeRequestNo++;
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + opus.lastAllNormalizeRequestNo;
 
@@ -652,8 +652,8 @@ var o_search = {
 
         $.each(normalizedInputData, function(eachSlug, value) {
             let currentInput = $(`input[name="${eachSlug}"]`);
-            let slugNoCounter = opus.getSlugOrDataWithoutCounter(eachSlug);
-            let inputCounter = opus.getSlugOrDataTrailingCounterStr(eachSlug);
+            let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(eachSlug);
+            let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(eachSlug);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
             if (value === null) {
@@ -734,7 +734,7 @@ var o_search = {
             // Make sure it's the final call before parsing normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
                 opus.normalizeInputForAllFieldsInProgress[slug] = false;
-                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.disableButtonsInWidgets(false);
                 return;
             }
 
@@ -746,7 +746,7 @@ var o_search = {
             if (!opus.allInputsValid) {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
                 opus.normalizeInputForAllFieldsInProgress[slug] = false;
-                o_widgets.disableButtonsInAWidget(false);
+                o_widgets.disableButtonsInWidgets(false);
                 return;
             }
 
@@ -769,7 +769,7 @@ var o_search = {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             opus.normalizeInputForAllFieldsInProgress[slug] = false;
-            o_widgets.disableButtonsInAWidget(false);
+            o_widgets.disableButtonsInWidgets(false);
         });
     },
 

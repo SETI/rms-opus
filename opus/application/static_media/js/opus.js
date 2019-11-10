@@ -152,8 +152,8 @@ var opus = {
 
         // Align data in opus.selections and opus.extras to make sure empty
         // inputs will also have null in opus.selections
-        [opus.selections, opus.extras] = (o_hash.alignDataInSelectionsAndExtras(opus.selections,
-                                                                                opus.extras));
+        [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                               opus.extras);
 
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
@@ -303,7 +303,7 @@ var opus = {
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
             opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-            o_widgets.disableButtonsInAWidget(false);
+            o_widgets.disableButtonsInWidgets(false);
             return;
         }
 
@@ -319,7 +319,7 @@ var opus = {
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
             opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-            o_widgets.disableButtonsInAWidget(false);
+            o_widgets.disableButtonsInWidgets(false);
             return;
         } else {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
@@ -342,7 +342,7 @@ var opus = {
             }
         }
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
-        o_widgets.disableButtonsInAWidget(false);
+        o_widgets.disableButtonsInWidgets(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -1146,27 +1146,6 @@ var opus = {
             $.cookie("visited", opus.splashVersion, {expires: 1000000});
             opus.displaySplashDialog();
         }
-    },
-
-    // The following two functions are used in multiple files: search.js,
-    // widgets.js and hash.js.
-    getSlugOrDataWithoutCounter: function(slugOrData) {
-        /**
-         * Takes in a slugOrData from input's name attribute and if there are
-         * multiple inputs, return the version without trailing counter.
-         */
-        return (slugOrData.match(/(.*)_[0-9]{2}$/) ?
-                slugOrData.match(/(.*)_[0-9]{2}$/)[1] : slugOrData);
-    },
-
-    getSlugOrDataTrailingCounterStr: function(slugOrData) {
-        /**
-         * Takes in a slugOrData from input's name attribute and if there are
-         * multiple inputs, return the trailing counter, else return an
-         * empty string.
-         */
-        return (slugOrData.match(/_([0-9]{2})$/) ?
-                slugOrData.match(/_([0-9]{2})$/)[1] : "");
     },
 
     isAnyNormalizeInputInProgress: function() {

@@ -293,8 +293,8 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             if (!(slug in opus.prefs) && value) {
-                let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
-                let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
+                let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
+                let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                 slug = slugNoCounter;
 
                 if (slugCounter > opus.maxAllowedInputSets) {
@@ -443,8 +443,8 @@ var o_hash = {
 
             if (value) {
                 if (slug.match(/qtype-.*/)) {
-                    let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
-                    let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
+                    let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
+                    let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
 
                     if (slugCounter > opus.maxAllowedInputSets) {
@@ -497,8 +497,8 @@ var o_hash = {
                     // if ($(`input[name="${slug}"]`).hasClass("STRING")) {
                     //     opus.selections[slug] = [value];
                     // } else {
-                    let slugNoCounter = opus.getSlugOrDataWithoutCounter(slug);
-                    let slugCounter = opus.getSlugOrDataTrailingCounterStr(slug);
+                    let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
+                    let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
 
                     if (slugCounter > opus.maxAllowedInputSets) {
