@@ -379,7 +379,7 @@ ul.op-search-menu {
     text-align: center;
 }
 
-#cart tr.op-recycled {
+#cart tr.op-recycled td:not(.op-table-tools) {
     text-decoration: line-through;
 }
 
