@@ -59,18 +59,22 @@
                     </div>
                     {% for product_info in product_list %}
                         <div id="op-product-{{ product_info.slug_name }}" class="row no-gutters border-bottom border-light">
-                            <div class="col-7">
-                                <span>
+                            <div class="row col-7 no-gutters">
+                                <div class="col col-sm-1">
                                     <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
                                         {% if product_info.product_count > 0 %}
                                             checked
                                         {% endif %}
                                     >
+                                </div>
+                                <div class="col col-sm-1">
                                     {% if product_info.tooltip %}
-                                        &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                        <i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
                                     {% endif %}
-                                    <span class="op-product-type-full-name">{{ product_info.product_type }}</span>
-                                </span>
+                                </div>
+                                <div class="col col-lg">
+                                    {{ product_info.product_type }}
+                                </div>
                             </div>
                             <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
                             <div class="op-options-files col text-right">{{ product_info.download_count|intcomma }}</div>
