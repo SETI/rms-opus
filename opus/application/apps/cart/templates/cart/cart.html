@@ -15,16 +15,16 @@
             </div>
             <div class="op-download-options">
                 <li class="list-inline-item">
-                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
+                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                 </li>
                 <li class="list-inline-item">
                     <div id="create_zip_data_file">
-                        <a href="#" class="downloadData btn btn-outline-primary" title="Download a zipped data archive of all observations in cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
+                        <a href="#" class="downloadData btn btn-outline-primary" title="Download a zipped data archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
                     </div>
                 </li>
                 <li class="list-inline-item">
                     <div id="create_zip_url_file">
-                        <a href="#" class="downloadURL btn btn-outline-primary" title="Download a zipped URL archive of all observations in cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
+                        <a href="#" class="downloadURL btn btn-outline-primary" title="Download a zipped URL archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
                     </div>
                 </li>
             </div>
@@ -69,7 +69,7 @@
                                     {% if product_info.tooltip %}
                                         &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
                                     {% endif %}
-                                    {{ product_info.product_type }}
+                                    <span class="op-product-type-full-name">{{ product_info.product_type }}</span>
                                 </span>
                             </div>
                             <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
