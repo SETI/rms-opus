@@ -1215,8 +1215,11 @@ var o_browse = {
         let galleryElement = o_browse.getGalleryElement(opusId);
         let obsNum = galleryElement.data("obs");
         let action = (galleryElement.hasClass("op-in-cart") ? "removerange" : "addrange");
-        let actionText = (action === "removerange" ? "Remove range from" : "Add range to");
-        $(`${tab} .op-range-select-info-box`).html(`${actionText} cart starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
+        let actionText = (action === "removerange" ? "Remove range from cart" : "Add range to cart");
+        if (tab === "#cart") {
+            actionText = (action === "removerange" ? "Move range to recycle bin" : "Restore range from recycle bin");
+        }
+        $(`${tab} .op-range-select-info-box`).html(`${actionText} starting at observation #${obsNum} ${opusId}  (ESC to cancel)`).addClass("op-range-select");
         $(`${tab} .op-gallery-view`).infiniteScroll({
             "rangeSelectOpusID": opusId,
             "rangeSelectObsNum": obsNum,

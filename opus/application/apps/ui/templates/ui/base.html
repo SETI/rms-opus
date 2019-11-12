@@ -194,7 +194,7 @@
                                 </li>
                                 <li class="list-inline-item">
                                     <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin" title="Remove all observations from recycle bin to cart"><i class="fas fa-recycle"></i>
-										&nbsp;Empty Cart Recycle Bin</a>
+										&nbsp;Empty Recycle Bin</a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin" title="Restore all observations from recycle bin to cart"><i class="fas fa-undo"></i>
@@ -202,9 +202,9 @@
                                 </li>							
 							</div>
                             <div class="op-cart-toggle-download-panel">
-                                <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download options panel">
+                                <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
                                    <i class="fas fa-arrow-left"></i>
-                                   <span>&nbsp;Download Options</span>
+                                   <span>&nbsp;Download Data</span>
                                </button>
                             </div>
                         </nav>
@@ -365,7 +365,7 @@
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
             confirm_title="Confirm Remove All Observations From Cart"
-            confirm_msg="Are you sure you want to remove all observations from your cart?"
+            confirm_msg="Are you sure you want to remove all observations from the cart?"
             target="op-empty-cart"
             yes_text="Yes"
             no_text="No"
@@ -375,8 +375,8 @@
         %}
         {% include "ui/confirm_modal.html" with
             id_name="op-empty-recycle-bin"
-            confirm_title="Confirm Empty Cart Recycle Bin"
-            confirm_msg="Are you sure you want to remove all observations from your recycle bin?"
+            confirm_title="Confirm Empty Recycle Bin"
+            confirm_msg="Are you sure you want to remove all observations from the recycle bin?"
             target="op-empty-recycle-bin"
             yes_text="Yes"
             no_text="No"
@@ -387,7 +387,7 @@
         {% include "ui/confirm_modal.html" with
             id_name="op-restore-recycle-bin"
             confirm_title="Confirm Restore All Recycled Observations To Cart"
-            confirm_msg="Are you sure you want to restore all observations to your cart from the recycle bin?"
+            confirm_msg="Are you sure you want to restore all observations from the recycle bin to the cart?"
             target="op-restore-recycle-bin"
             yes_text="Yes"
             no_text="No"

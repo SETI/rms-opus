@@ -6,7 +6,7 @@
 /* globals $, PerfectScrollbar */
 /* globals o_browse, o_hash, o_utils, opus */
 
-// The download options left pane will become a slide panel when screen width
+// The download data left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
 const cartLeftPaneThreshold = 1160;
 // Max height for the contents of download links history (.popover-body) before we enable PS.
@@ -110,7 +110,7 @@ var o_cart = {
             }
         });
 
-        // Click to open the download options panel when that nav-link is available
+        // Click to open the download data panel when that nav-link is available
         $("#cart").on("click", ".op-cart-slide-download-panel", function(e) {
             o_cart.displayCartLeftPane();
             $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
@@ -119,7 +119,7 @@ var o_cart = {
             });
         });
 
-        // Clicking on the "X" in the corner of the download options panel
+        // Clicking on the "X" in the corner of the download data panel
         $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
@@ -218,7 +218,7 @@ var o_cart = {
 
     updateDownloadFileInfo: function() {
         /**
-         * Update file info after selecting/deselecting download options.
+         * Update file info after selecting/deselecting download data.
          */
         o_cart.showDownloadSpinner();
         let add_to_url = o_cart.getDownloadFiltersChecked();
@@ -245,7 +245,7 @@ var o_cart = {
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
             $(checkboxesOptions).prop("checked", false);
         } else {
-            opus.logError("Target button in download options left pane has the wrong class.");
+            opus.logError("Target button in download data left pane has the wrong class.");
         }
         $(target).prop("disabled", true);
         $(target).siblings().prop("disabled", false);
@@ -290,21 +290,19 @@ var o_cart = {
 
     displayCartLeftPane: function() {
         /**
-         * Move download options elements between original left pane and slide panel
+         * Move download data elements between original left pane and slide panel
          * depending on the screen width
          */
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
         if ($(window).width() <= cartLeftPaneThreshold) {
-            $(html).find(".op-download-options-header h1").remove();
-            $("#op-cart-download-panel .op-header-text").html("<h2>Download Options</h2>");
+            $("#op-cart-download-panel .op-header-text").html("<h2>Download Data</h2>");
             $("#op-cart-download-panel .op-card-contents").html(html);
+            $(".op-download-panel-title").hide();
         } else {
             opus.hideHelpAndCartPanels();
-            if ($(html).find(".op-download-options-header h1").length === 0) {
-                $(html).find(".op-download-options-header").prepend("<h1>Download Options</h1>");
-            }
             $(".cart_details").html(html);
+            $(".op-download-panel-title").show();
         }
         o_cart.adjustProductInfoHeight();
     },
@@ -509,7 +507,7 @@ var o_cart = {
                         suppressScrollX: true,
                     });
 
-                    // Depending on the screen width, we move download options elements
+                    // Depending on the screen width, we move download data elements
                     // to either original left pane or slide panel
                     o_cart.displayCartLeftPane();
 

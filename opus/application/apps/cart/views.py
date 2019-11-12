@@ -638,7 +638,7 @@ def _get_download_info(product_types, session_id):
 
     # Retrieve the distinct list of product types for all observations, including the ones in the
     # recycle bin.  This is used to allow the items on the cart to be added/removed from the recycle bin
-    # and update the download options panel without redrawing the cart page on every edit.
+    # and update the download data panel without redrawing the cart page on every edit.
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '

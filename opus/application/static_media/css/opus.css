@@ -909,7 +909,7 @@ a:-webkit-any-link, a::any-link {
 .op-button-disabled {
     pointer-events: none;
     cursor: default;
-    opacity: 0.1;
+    opacity: 0.1 !important;
 }
 
 #cart .cart-gallery-side {
@@ -932,7 +932,7 @@ a:-webkit-any-link, a::any-link {
     outline: none;
 }
 
-/* Remove the focus/hover background for "v" & "x" icon in download options
+/* Remove the focus/hover background for "v" & "x" icon in download data
 panel */
 #cart .op-cart-select-btn:hover, #cart .op-cart-deselect-btn:hover,
 #cart .op-cart-select-btn:focus, #cart .op-cart-deselect-btn:focus {
@@ -945,7 +945,7 @@ panel */
     overflow: hidden;
 }
 
-/* Remove pointer when button is disabled in download options */
+/* Remove pointer when button is disabled in download data */
 #cart #op-download-options-container button:disabled {
     pointer-events: none;
 }
@@ -973,7 +973,7 @@ panel */
     position: relative;
 }
 
-/* Make Total Size and Total Files stay in one line in download options */
+/* Make Total Size and Total Files stay in one line in download data */
 .op-total-size, .op-total-download {
     display: inline;
 }
@@ -992,7 +992,7 @@ panel */
 .cart_details {
     border-left: .3em double black;
     padding-left: 2em;
-    /* Fix the width of download options area */
+    /* Fix the width of download data area */
     min-width: 36em;
     max-width: 36em;
 }
@@ -1241,7 +1241,7 @@ to stay in one line */
 }
 
 #cart .op-cart-actions a {
-    opacity: 0.6 !important;
+    opacity: 0.6;
     text-decoration: none;
 }
 
@@ -1304,7 +1304,7 @@ to stay in one line */
 }
 
 @media (max-width: 1160px) {
-    /* Hide download options pane when screen is narrow */
+    /* Hide download data pane when screen is narrow */
     .cart_details {
         display: none;
         max-width: 40%;
@@ -1334,7 +1334,7 @@ to stay in one line */
     }
 }
 
-/* Remove the nav-link for opening up download options panel when screen
+/* Remove the nav-link for opening up download data panel when screen
 is wide enough */
 @media (min-width: 1161px) {
     .op-cart-toggle-download-panel {
@@ -1343,7 +1343,7 @@ is wide enough */
     }
 }
 
-/* download options panel */
+/* download data panel */
 #op-cart-download-panel {
     display: none;
     position: absolute;
@@ -1355,7 +1355,7 @@ is wide enough */
     width: 36em;
 }
 
-/* Make sure "x" and download options title in header of download options
+/* Make sure "x" and download data title in header of download data
 panel are properly separated */
 #op-cart-download-panel .card-header {
     display: flex;
