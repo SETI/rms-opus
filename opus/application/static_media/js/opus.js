@@ -58,7 +58,7 @@ var opus = {
     normalizeInputForCharInProgress: {},
     // The key in normalizeInputForAllFieldsInProgress, normalizeInputForCharInProgress, or
     // selectionsForNormalizeInputBySlug object. It will store the info of the normalize
-    // input API call triggered from o_search.allNormalizedApiCall() (not from any specific input).
+    // input API call triggered from o_search.allNormalizeInputApiCall() (not from any specific input).
     allSlug: "all",
 
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
@@ -269,7 +269,7 @@ var opus = {
         $(".op-menu-text.spinner").addClass("op-show-spinner");
         $("#op-search-widgets .spinner").fadeIn();
 
-        // Mark the changes as complete. We have to do this before allNormalizedApiCall to
+        // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
         // avoid a recursive api call
         opus.lastSelections = selections;
         opus.lastExtras = extras;
@@ -284,7 +284,7 @@ var opus = {
         o_browse.clearBrowseObservationDataAndEraseDOM(leaveStartObs);
 
         // Update the UI in the following order:
-        // 1) Normalize all the inputs and check for validity (allNormalizedApiCall)
+        // 1) Normalize all the inputs and check for validity (allNormalizeInputApiCall)
         // 2) Perform the search and get the result count (getResultCount)
         // 3a) Update the result count badge(s) (updateSearchTabHinting)
         // 3b) Update all the search hinting (updateSearchTabHinting)
@@ -294,7 +294,7 @@ var opus = {
         // cache table has been created before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
         // both backend changes and a change here to remove the sequential dependence.
-        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
+        o_search.allNormalizeInputApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
     getResultCount: function(normalizedData) {

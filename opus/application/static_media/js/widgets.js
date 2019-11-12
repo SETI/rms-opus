@@ -120,7 +120,7 @@ var o_widgets = {
                 o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
                 $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
-                $(`#${widgetId} input.RANGE`).trigger("change");
+                $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
             }
         });
 
@@ -320,7 +320,7 @@ var o_widgets = {
                 }
             }
 
-            o_search.allNormalizedApiCall().then(function(normalizedData) {
+            o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -490,7 +490,7 @@ var o_widgets = {
         let selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
-        o_search.allNormalizedApiCall().then(function(normalizedData) {
+        o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                 delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 o_widgets.disableButtonsInWidgets(false);

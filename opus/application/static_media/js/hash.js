@@ -21,11 +21,6 @@ var o_hash = {
          */
         console.log(`=== updateHash ===`);
         console.log(JSON.stringify(selections));
-        // 1. sort selections to be in alphabetical order
-        // 2. if current counter has no value, check if there is any qtype, if so, insert qtype
-        // 3. With above 2 steps, I think the 3rd loop can be removed
-        let hash = [];
-        let visited = {};
 
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
@@ -33,57 +28,89 @@ var o_hash = {
         [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
         console.log(`selections after alignment`);
         console.log(JSON.stringify(selections));
-        let sortedKeys = Object.keys(selections).sort();
-        console.log(sortedKeys);
-        for (const key of sortedKeys) {
-            if (visited[key]) {
-                continue; // continue
+
+        // let hashStrFromSelections = o_hash.getHashStrFromSelections(selections);
+        // let hashStrFromOPUSPrefs  = "";
+        let hashStr = "";
+        if (!searchOnly) {
+            // hashStrFromOPUSPrefs = "&" + o_hash.getHashStrFromOPUSPrefs();
+            hashStr = o_hash.getFullHashStr(selections);
+
+            if (updateURL) {
+                window.location.hash = '/' + hashStr;
             }
-            let value = selections[key];
+        } else {
+            hashStr = o_hash.getHashStrFromSelections(selections);
+        }
+        console.log(hashStr);
+        console.log(hashStr.split("&"));
+        return hashStr;
+    },
+
+    getHashStrFromSelections: function(selections=opus.selections) {
+        /**
+         * Get the hash string from selections, ignore any slug in opus.prefs.
+         * Hash string will be in alphabetical & slug counter order.
+         */
+        let hash = [];
+        let visited = {};
+        //  sort in alphabetical order with case insensitive
+        let sortedSlugs = Object.keys(selections).sort(function(a, b) {
+            return a.localeCompare(b, 'en', {'sensitivity': 'base'});
+        });
+
+        for (const slug of sortedSlugs) {
+            if (visited[slug]) {
+                continue;
+            }
+            let value = selections[slug];
             if (value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;
-                let slugNoNum = key.match(/.*(1|2)$/) ? key.match(/(.*)[1|2]$/)[1] : key;
+                let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
 
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding before pushing
                 // into hash array.
-                if (key.match(/.*(1|2)$/)) { // RANGE inputs
-                    let anotherKey = key.match(/.*1$/) ? `${slugNoNum}2` : `${slugNoNum}1`;
-                    let anotherEncodedSelectionValues = o_hash.encodeSlugValues(selections[anotherKey]);
-                    visited[key] = true;
-                    visited[anotherKey] = true;
+                if (slug.match(/.*(1|2)$/)) { // RANGE inputs
+                    let oppositeSuffixSlug = slug.match(/.*1$/) ? `${slugNoNum}2` : `${slugNoNum}1`;
+                    let oppositeSuffixEncodedSelectionValues = o_hash.encodeSlugValues(selections[oppositeSuffixSlug]);
+
+                    let slug1 = slug;
+                    let slug2 = oppositeSuffixSlug;
+                    let slug1EncodedSelections = encodedSelectionValues;
+                    let slug2EncodedSelections = oppositeSuffixEncodedSelectionValues;
+                    if (slug.match(/.*2$/)) {
+                        slug1 = oppositeSuffixSlug;
+                        slug2 = slug;
+                        slug1EncodedSelections = oppositeSuffixEncodedSelectionValues;
+                        slug2EncodedSelections = encodedSelectionValues;
+                    }
+
+                    visited[slug1] = true;
+                    visited[slug2] = true;
 
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
-                        let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
-                        let anotherNewKey = ((numberOfInputSets === 1) ?
-                                             anotherKey : `${anotherKey}_${trailingCounterString}`);
+                        let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
+                        let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
 
-                        if (key.match(/.*1$/)) {
-                            if (value[trailingCounter-1] !== null) {
-                                hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
-                            }
-                            if (selections[anotherKey][trailingCounter-1] !== null) {
-                                hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
-                            }
-                        } else {
-                            if (selections[anotherKey][trailingCounter-1] !== null) {
-                                hash.push(anotherNewKey + "=" + anotherEncodedSelectionValues[trailingCounter-1]);
-                            }
-                            if (value[trailingCounter-1] !== null) {
-                                hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
-                            }
-                        }
+                         if (selections[slug1][trailingCounter-1] !== null) {
+                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
+                         }
+                         if (selections[slug2][trailingCounter-1] !== null) {
+                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
+                         }
+
                         o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                        trailingCounter);
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
-                    visited[key] = true;
+                    visited[slug] = true;
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
-                        let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
+                        let newKey = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
                             hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
@@ -92,46 +119,40 @@ var o_hash = {
                                                        trailingCounter);
                     }
                 } else { // Multi/single choice inputs
-                    hash.push(key + "=" + encodedSelectionValues.join(","));
+                    hash.push(slug + "=" + encodedSelectionValues.join(","));
                 }
             }
         }
 
-        // $.each(opus.extras, function(key, value) {
-        //     if (value.length) {
-        //         let encodedExtraValues = o_hash.encodeSlugValues(value);
-        //         if (value.length > 1) {
-        //             let numberOfQtypeInputs = encodedExtraValues.length;
-        //
-        //             for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
-        //                 let trailingCounterString = ("0" + trailingCounter).slice(-2);
-        //                 let newKey = `${key}_${trailingCounterString}`;
-        //
-        //                 if (value[trailingCounter-1] !== null) {
-        //                     if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
-        //                         hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
-        //                     }
-        //                 }
-        //             }
-        //         } else {
-        //             if (!hash.includes(key + "=" + encodedExtraValues.join(","))) {
-        //                 hash.push(key + "=" + encodedExtraValues.join(","));
-        //             }
-        //         }
-        //     }
-        // });
-
-        if (!searchOnly) {
-            $.each(opus.prefs, function(key, value) {
-                hash.push(key + "=" + value);
-            });
-
-            if (updateURL) {
-                window.location.hash = '/' + hash.join('&');
-            }
-        }
-        console.log(hash);
         return hash.join("&");
+    },
+
+    getHashStrFromOPUSPrefs: function() {
+        /**
+         * Get the hash string from opus.prefs
+         */
+        let hash = [];
+        $.each(opus.prefs, function(key, value) {
+            hash.push(key + "=" + value);
+        });
+        return hash.join("&");
+    },
+
+    getFullHashStr: function(selections=opus.selections) {
+        /**
+         * Get the full hash string from search params and opus.prefs
+         */
+        let hashStrFromSelections = o_hash.getHashStrFromSelections(selections);
+        let hashStrFromOPUSPrefs = "&" + o_hash.getHashStrFromOPUSPrefs();
+        return hashStrFromSelections + hashStrFromOPUSPrefs;
+    },
+
+    updateURL: function() {
+        /**
+         * Update URL with full hash string
+         */
+        let fullHashStr = o_hash.getFullHashStr();
+        window.location.hash = '/' + fullHashStr;
     },
 
     updateURLHashFromExtras: function(hash, qtypeInExtras, numberOfInputSets, counter) {

@@ -44,7 +44,7 @@ var o_search = {
     // An object stores selections for each normalize input API call. After normalize
     // input API returns, the stored selections will be used to update URL in updateHash.
     // Key: input slug that triggers the normalize input API call. (Use "all" for API
-    // from allNormalizedApiCall)
+    // from allNormalizeInputApiCall)
     // Value: selections used to call normalize input API.
     selectionsForNormalizeInputBySlug: {},
 
@@ -97,7 +97,9 @@ var o_search = {
         $("#search").on("focusout", "input.RANGE", function(e) {
             let currentValue = $(this).val().trim();
             let slug = $(this).attr("name");
-
+            console.log(`range input focus out, slug: ${slug}`);
+            console.log(`has search input invalid: ${$(this).hasClass("search_input_invalid")}`);
+            console.log(`has some matched & with ${currentValue}: ${o_search.rangesNameTotalMatchedCounter > 1 && currentValue}`);
             // Disable browse tab nav link when user focuses out and there is a change of value
             // in range input. The button will be enabled or keep disabled based on the
             // result of input validation in parseFinalNormalizedInputDataAndUpdateHash.
@@ -240,7 +242,7 @@ var o_search = {
                             o_search.rangesNameTotalMatchedCounter = 0;
                             // close dropdown and trigger the search
                             $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
-                            $(`#${widgetId} input.RANGE`).trigger("change");
+                            $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             return;
                         }
                         break;
@@ -622,7 +624,7 @@ var o_search = {
         $(".op-scrollable-menu").scrollTop(0);
     },
 
-    allNormalizedApiCall: function() {
+    allNormalizeInputApiCall: function() {
         o_search.selectionsForNormalizeInputBySlug[opus.allSlug] = JSON.parse(JSON.stringify(opus.selections));
         let newHash = o_hash.updateHash(false);
         /*

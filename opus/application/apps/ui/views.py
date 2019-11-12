@@ -841,14 +841,14 @@ def api_normalize_url(request):
         else:
             required_widgets_list.append(strip_numeric_suffix(pi.slug))
 
-    print(search_slugs_by_clause)
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
     for search_slug, search_list in search_slugs_by_clause.items():
         search_list.sort(key=lambda x: (0 if x[0] == '' else int(x[0][1:]),
                                         x))
 
-    for search_slug in sorted(search_slugs_by_clause.keys()):
+    for search_slug in sorted(search_slugs_by_clause.keys(),
+                              key=str.lower):
         for idx, search_data in enumerate(search_slugs_by_clause[search_slug]):
             (clause_str,
              search1, search1_val,
