@@ -32,13 +32,15 @@ var o_widgets = {
     // true, input change event handlers will do nothing.
     isClosingWidget: false,
 
-    // This variable will used to prevent page reload when an input is closed and waiting
+    // These two variables will used to prevent page reload when an input is closed and waiting
     // for the return of normalized input api. When an input is closed, there will be a
     // mismatched between selections (from URL) and opus.selections, they will be matched
     // after updateHash is called in the callback function when normalized input api is
     // returned. So in the middle of this process, we have to make sure page won't reload
-    // in opus.load.
+    // in opus.load. Similar for adding input, after updateHash is called, selections and
+    // opus.selections will be matched.
     isRemovingInput: false,
+    isAddingInput: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -149,12 +151,7 @@ var o_widgets = {
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
             e.preventDefault();
-            // When normalize input api is in progress, we have to disable "+ (OR)" so
-            // that no renumber will not happen. This will make sure the corresponding
-            // input in validateRangeInput is selected correctly for highlighting borders.
-            if (opus.isAnyNormalizeInputInProgress()) {
-                return false;
-            }
+            o_widgets.isAddingInput = true;
 
             let widgetId = $(this).data("widget");
             let slug = $(this).data("slug");
@@ -187,9 +184,11 @@ var o_widgets = {
                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
                                   `data-widget="widget__${slug}" data-slug="${slug}">` +
                                   `<i class="${trashIcon}"></i></button></li>`;
-            // If first input set doesn't have remove icon, we add remove icon to the first
-            // input set, and add or label & remove icon to cloned input set, else we only
-            // or label to cloned input set.
+
+            // Before attaching a new (cloned from the first input set) input set:
+            // If the first input set doesn't have remove icon, we add remove icon & "OR" label
+            // to the first input set, and add remove icon to cloned input set, else we add "OR"
+            // label to the last input set and remove "OR" label from cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
                 firstExistingSetOfInputs.append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
@@ -213,10 +212,10 @@ var o_widgets = {
                 opus.selections[`${slug}1`] = opus.selections[`${slug}1`] || [];
                 opus.selections[`${slug}2`] = opus.selections[`${slug}2`] || [];
                 while (opus.selections[`${slug}1`] .length < numberOfInputSets) {
-                    opus.selections[`${slug}1`] .push(null);
+                    opus.selections[`${slug}1`].push(null);
                 }
                 while (opus.selections[`${slug}2`] .length < numberOfInputSets) {
-                    opus.selections[`${slug}2`] .push(null);
+                    opus.selections[`${slug}2`].push(null);
                 }
 
                 if (newlyAddedQtype.length > 0) {
@@ -224,8 +223,8 @@ var o_widgets = {
                 }
             } else if (newlyAddedInput.hasClass("STRING")) {
                 opus.selections[slug] = opus.selections[slug] || [];
-                while (opus.selections[slug] .length < numberOfInputSets) {
-                    opus.selections[slug] .push(null);
+                while (opus.selections[slug].length < numberOfInputSets) {
+                    opus.selections[slug].push(null);
                 }
 
                 if (newlyAddedQtype.length > 0) {
@@ -245,6 +244,7 @@ var o_widgets = {
             }
 
             o_hash.updateHash();
+            o_widgets.isAddingInput = false;
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
@@ -323,7 +323,7 @@ var o_widgets = {
             o_search.allNormalizedApiCall().then(function(normalizedData) {
 
                 if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                    opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+                    delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                     o_widgets.disableButtonsInWidgets(false);
                     o_widgets.isRemovingInput = false;
                     return;
@@ -349,7 +349,7 @@ var o_widgets = {
 
                 o_hash.updateHash(opus.allInputsValid);
 
-                opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+                delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 o_widgets.disableButtonsInWidgets(false);
                 o_widgets.isRemovingInput = false;
             });
@@ -399,6 +399,7 @@ var o_widgets = {
         /**
          * Fill both ranges inputs with values passed in to the function.
          */
+        console.log(`fillRangesInputs: min: ${minVal}, max: ${maxVal}`);
         let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
@@ -491,7 +492,7 @@ var o_widgets = {
 
         o_search.allNormalizedApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-                opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+                delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 o_widgets.disableButtonsInWidgets(false);
                 return;
             }
@@ -516,7 +517,7 @@ var o_widgets = {
 
             o_hash.updateHash(opus.allInputsValid);
             o_widgets.updateWidgetCookies();
-            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
         });
     },
@@ -788,7 +789,7 @@ var o_widgets = {
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
 
-            // NOTE: inputs & qtypes are not renumnered yet at this stage.
+            // NOTE: inputs & qtypes are not renumbered yet at this stage.
             let qtype = "qtype-" + slug;
             let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
@@ -971,7 +972,7 @@ var o_widgets = {
                     for (const eachRangeDropdown of preprogrammedRangesInfo) {
                         let rangesDropdownCategories = $(eachRangeDropdown).find("li");
                         trailingCounter++;
-                        trailingCounterString = ("0" + trailingCounter).slice(-2);
+                        trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let correspondingMinInputName = minInputNamesArray.shift();
 
                         for (const category of rangesDropdownCategories) {
@@ -1040,7 +1041,7 @@ var o_widgets = {
 
         for (const eachSearchElement of targetSearchElements) {
             trailingCounter++;
-            trailingCounterString = ("0" + trailingCounter).slice(-2);
+            trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
             let originalName = $(eachSearchElement).attr("name");
             originalName = o_utils.getSlugOrDataWithoutCounter(originalName);
             let updatedName = `${originalName}_${trailingCounterString}`;
@@ -1195,11 +1196,11 @@ var o_widgets = {
          */
         if (disable) {
             $(".op-remove-inputs").addClass("op-disable-btn");
-            $(".op-add-inputs").addClass("op-disable-btn");
+            // $(".op-add-inputs").addClass("op-disable-btn");
             $(".close_card").addClass("op-disable-btn");
         } else {
             $(".op-remove-inputs").removeClass("op-disable-btn");
-            $(".op-add-inputs").removeClass("op-disable-btn");
+            // $(".op-add-inputs").removeClass("op-disable-btn");
             $(".close_card").removeClass("op-disable-btn");
         }
     },
@@ -1236,11 +1237,11 @@ var o_widgets = {
 
                 let newHash = o_hash.updateHash(false);
                 /*
-                We are relying on URL order now to parse and get slugs before "&view" in the URL
-                Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&view"
+                We are relying on URL order now to parse and get slugs before "&cols" in the URL
+                Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&cols"
                 Refer to hash.js getSelectionsFromHash and updateHash functions
                 */
-                let regexForHashWithSearchParams = /(.*)&view/;
+                let regexForHashWithSearchParams = /(.*)&cols/;
                 if (newHash.match(regexForHashWithSearchParams)) {
                     newHash = newHash.match(regexForHashWithSearchParams)[1];
 

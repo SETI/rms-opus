@@ -92,6 +92,20 @@ var o_utils = {
          */
         return (slugOrData.match(/_([0-9]{2})$/) ?
                 slugOrData.match(/_([0-9]{2})$/)[1] : "");
+    },
+
+    convertToTrailingCounterStr: function(num, numOfDigits=2) {
+        /**
+         * Takes in a number and left zero padding to a string with the specify
+         * number of digits, by default we want a 2-digits string:
+         * 1 -> "01"
+         * 2 -> "02"
+         * ...
+         * 9 -> "09"
+         * 10 -> "10"
+         */
+        numOfDigits *= -1;
+        return ("0" + num).slice(numOfDigits);
     }
 };
 

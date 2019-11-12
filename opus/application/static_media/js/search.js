@@ -172,7 +172,7 @@ var o_search = {
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slugWithCounter]) {
-                    opus.normalizeInputForCharInProgress[slug] = false;
+                    delete opus.normalizeInputForCharInProgress[slug];
                     o_widgets.disableButtonsInWidgets(false);
                     return;
                 }
@@ -197,7 +197,7 @@ var o_search = {
                     $(e.target).addClass("search_input_invalid");
                 }
 
-                opus.normalizeInputForCharInProgress[slug] = false;
+                delete opus.normalizeInputForCharInProgress[slug];
                 o_widgets.disableButtonsInWidgets(false);
             }); // end getJSON
         });
@@ -274,7 +274,7 @@ var o_search = {
                     opus.selections[slug] = [null];
                 }
             }
-
+            console.log(`CurrentVal: ${currentValue}, idx: ${idx}, inputName: ${inputName}`);
             // Keep a record of selections for current normalize input API call.
             // It will be used to call updateHash in validateRangeInput.
             o_search.selectionsForNormalizeInputBySlug[inputName] = JSON.parse(JSON.stringify(opus.selections));
@@ -295,7 +295,8 @@ var o_search = {
             opus.normalizeInputForAllFieldsInProgress[inputName] = true;
             o_widgets.disableButtonsInWidgets();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-
+            console.log(`url for normalize input from RANGE change event`);
+            console.log(url);
             if ($(e.target).hasClass("input_currently_focused")) {
                 $(e.target).removeClass("input_currently_focused");
             }
@@ -733,7 +734,7 @@ var o_search = {
         $.getJSON(url, function(normalizedInputData) {
             // Make sure it's the final call before parsing normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
-                opus.normalizeInputForAllFieldsInProgress[slug] = false;
+                delete opus.normalizeInputForAllFieldsInProgress[slug];
                 o_widgets.disableButtonsInWidgets(false);
                 return;
             }
@@ -745,7 +746,7 @@ var o_search = {
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.allInputsValid) {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
-                opus.normalizeInputForAllFieldsInProgress[slug] = false;
+                delete opus.normalizeInputForAllFieldsInProgress[slug];
                 o_widgets.disableButtonsInWidgets(false);
                 return;
             }
@@ -768,7 +769,7 @@ var o_search = {
 
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
-            opus.normalizeInputForAllFieldsInProgress[slug] = false;
+            delete opus.normalizeInputForAllFieldsInProgress[slug];
             o_widgets.disableButtonsInWidgets(false);
         });
     },

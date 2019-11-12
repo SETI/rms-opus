@@ -237,7 +237,10 @@ var opus = {
                 // 3) When there is an invalid input. If there is an invalid values, there will be a
                 // mismatch between URL and opus.selections, and the invalid value in opus.selections
                 // will be removed when it's removed from UI.
+                // 4) When it's in the middle of an input adding process. After updateHash, URL and opus.selections
+                // will get updated correctly.
                 if (o_widgets.isRemovingInput ||
+                    o_widgets.isAddingInput ||
                     opus.isAnyNormalizeInputInProgress() ||
                     !opus.allInputsValid) {
                     return;
@@ -302,7 +305,7 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
-            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
             return;
         }
@@ -318,7 +321,7 @@ var opus = {
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
-            opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
             return;
         } else {
@@ -341,7 +344,7 @@ var opus = {
                 o_browse.loadData(opus.getCurrentTab());
             }
         }
-        opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = false;
+        delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
         o_widgets.disableButtonsInWidgets(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
@@ -1152,17 +1155,8 @@ var opus = {
         /**
          * Check if any normalize input API call is in progress
          */
-        for (const val of Object.values(opus.normalizeInputForAllFieldsInProgress)) {
-            if (val) {
-                return true;
-            }
-        }
-        for (const val of Object.values(opus.normalizeInputForCharInProgress)) {
-            if (val) {
-                return true;
-            }
-        }
-        return false;
+        return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
+                Object.keys(opus.normalizeInputForCharInProgress).length > 0);
     },
 
 }; // end opus namespace

@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $ */
-/* globals opus */
+/* globals opus, o_utils*/
 
 /* jshint varstmt: false */
 var o_hash = {
@@ -30,7 +30,7 @@ var o_hash = {
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
         // widget just open and opus.selections is not updated.
-        // [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
+        [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
         console.log(`selections after alignment`);
         console.log(JSON.stringify(selections));
         let sortedKeys = Object.keys(selections).sort();
@@ -45,7 +45,7 @@ var o_hash = {
                 let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = key.match(/.*(1|2)$/) ? key.match(/(.*)[1|2]$/)[1] : key;
                 let qtypeSlug = `qtype-${slugNoNum}`;
-                let trailingCounterWithNullVal = [];
+
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding before pushing
                 // into hash array.
@@ -56,7 +56,7 @@ var o_hash = {
                     visited[anotherKey] = true;
 
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
-                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
+                        let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
                         let anotherNewKey = ((numberOfInputSets === 1) ?
                                              anotherKey : `${anotherKey}_${trailingCounterString}`);
@@ -82,7 +82,7 @@ var o_hash = {
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[key] = true;
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
-                        let trailingCounterString = ("0" + trailingCounter).slice(-2);
+                        let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let newKey = (numberOfInputSets === 1) ? key : `${key}_${trailingCounterString}`;
 
                         if (value[trailingCounter-1] !== null) {
@@ -141,7 +141,7 @@ var o_hash = {
          * numberOfInputSets & counter to determine if trailingCounterString should
          * be added to the final slug in URL hash.
          */
-        let trailingCounterString = ("0" + counter).slice(-2);
+        let trailingCounterString = o_utils.convertToTrailingCounterStr(counter);
         if (qtypeInExtras in opus.extras) {
             let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
             let qtypeInURL = ((numberOfInputSets === 1) ?
