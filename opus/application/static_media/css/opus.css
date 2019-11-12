@@ -1898,25 +1898,30 @@ gap next to ps */
 /* Remove the reddish focus outline on Linux Chrome that makes it look like an
    invalid value using our color scheme. This color is what is used on Macs. */
 input:focus {
-    outline: auto #5E9ED6;
+    outline: none;
+    border: 1px solid;
+}
+
+input[type="text"] {
+    border: 1px solid #D5D5D5;
 }
 
 input[type="text"].search_input_original {
-    border: 2px solid #D5D5D5;
+    border: 1px solid #D5D5D5;
 }
 
 input[type="text"].search_input_valid {
-    border: 3px solid #9EEEBB;
+    border: 1px solid #9EEEBB;
 }
 
 input[type="text"].search_input_invalid {
-    border: 3px solid #FFD700;
     background-color: #EEECEC;
+    border: 1px solid #FFD700;
 }
 
 input[type="text"].search_input_invalid_no_focus {
     background-color: #F6AFAF;
-    border: 3px solid #F6AFAF;
+    border: 1px solid #F6AFAF;
 }
 
 .search_overlay {
