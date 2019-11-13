@@ -53,8 +53,10 @@ var o_search = {
     // { "jupiter-inner-satellites": 0, "jupiter-rings": 1, "neptune-inner-satellites": 1, "neptune-rings": 0,
     //   "saturn-regular-satellites": 0, "saturn-rings": 0, "uranus-inner-satellites": 0, "uranus-rings": 3 }
     rangesNameMatchedCounterByCategory: {},
-    // Store the total number of matched info in a widget's ranges dropdown, in above example, it's 5.
-    rangesNameTotalMatchedCounter: 0,
+    // Store the total number of matched info of an input in a widget's ranges dropdown,
+    // in above example, it's 5. We use slug as the key to tell which input set the user
+    // is currently focusing in.
+    rangesNameTotalMatchedCounter: {},
     // Use to determine if we should automatically expand/collapse ranges info. If it's set
     // to true, we will automatically expand/collapse ranges info depending on the matched letters.
     isTriggeredFromInput: false,
@@ -65,6 +67,8 @@ var o_search = {
     addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(e) {
+            console.log(`focus event`);
+            console.log(o_search.rangesNameTotalMatchedCounter);
             let slug = $(this).attr("name");
             let currentValue = $(this).val().trim();
 
@@ -82,8 +86,11 @@ var o_search = {
                                                .next(".op-preprogrammed-ranges")
                                                .find(".op-scrollable-menu"));
 
+            console.log(!currentValue||o_search.rangesNameTotalMatchedCounter[slug] > 0);
+            o_search.rangesNameTotalMatchedCounter[slug] = (o_search.rangesNameTotalMatchedCounter[slug] ||
+                                                                 0);
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
-                (!currentValue || o_search.rangesNameTotalMatchedCounter > 0) &&
+                (!currentValue || o_search.rangesNameTotalMatchedCounter[slug] > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show")) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
                 $(this).dropdown("toggle");
@@ -95,11 +102,13 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE", function(e) {
+            console.log(`focusout event`);
+            console.log(o_search.rangesNameTotalMatchedCounter);
             let currentValue = $(this).val().trim();
             let slug = $(this).attr("name");
             console.log(`range input focus out, slug: ${slug}`);
             console.log(`has search input invalid: ${$(this).hasClass("search_input_invalid")}`);
-            console.log(`has some matched & with ${currentValue}: ${o_search.rangesNameTotalMatchedCounter > 1 && currentValue}`);
+            console.log(`has some matched & with ${currentValue}: ${o_search.rangesNameTotalMatchedCounter[slug] > 1 && currentValue}`);
             // Disable browse tab nav link when user focuses out and there is a change of value
             // in range input. The button will be enabled or keep disabled based on the
             // result of input validation in parseFinalNormalizedInputDataAndUpdateHash.
@@ -114,9 +123,9 @@ var o_search = {
                 $(this).removeClass("search_input_invalid");
             }
 
-            if (o_search.rangesNameTotalMatchedCounter > 1 && currentValue) {
-                $(this).addClass("search_input_invalid_no_focus");
-            }
+            // if (o_search.rangesNameTotalMatchedCounter[slug] > 1 && currentValue) {
+            //     $(this).addClass("search_input_invalid_no_focus");
+            // }
 
             // Close the dropdown properly when user focuses out.
             let preprogrammedRangesDropdown = ($(this)
@@ -219,8 +228,9 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
 
             let currentValue = $(this).val().trim();
-
-            if (o_search.rangesNameTotalMatchedCounter === 1) {
+            o_search.rangesNameTotalMatchedCounter[inputName] = (o_search.rangesNameTotalMatchedCounter[inputName] ||
+                                                                 0);
+            if (o_search.rangesNameTotalMatchedCounter[inputName] === 1) {
                 let matchedCatId = "";
                 for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
                     if (o_search.rangesNameMatchedCounterByCategory[eachCat] === 1) {
@@ -239,7 +249,7 @@ var o_search = {
                         // NOTE: We need support both RANGE & STRING inputs, for now we implement RANGE first.
                         if ($(`#${widgetId} input.RANGE`).length !== 0) {
                             o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
-                            o_search.rangesNameTotalMatchedCounter = 0;
+                            o_search.rangesNameTotalMatchedCounter[inputName] = 0;
                             // close dropdown and trigger the search
                             $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
@@ -487,8 +497,11 @@ var o_search = {
             if (minInput.length === 0) {
                 return;
             }
+            let inputName = minInput.attr("name");
             let currentValue = minInput.val().trim();
-            if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
+            o_search.rangesNameTotalMatchedCounter[inputName] = (o_search.rangesNameTotalMatchedCounter[inputName] ||
+                                                                 0);
+            if (o_search.rangesNameTotalMatchedCounter[inputName] === 0 && currentValue) {
                 e.preventDefault();
             }
         });
@@ -560,15 +573,15 @@ var o_search = {
 
         // If there is one or more matched ranges names, don't perform input validation.
         o_search.performInputValidation = true;
-        o_search.rangesNameTotalMatchedCounter = 0;
+        o_search.rangesNameTotalMatchedCounter[inputName] = 0;
         for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
             if (o_search.rangesNameMatchedCounterByCategory[eachCat] !== 0) {
                 o_search.performInputValidation = false;
-                o_search.rangesNameTotalMatchedCounter += o_search.rangesNameMatchedCounterByCategory[eachCat];
+                o_search.rangesNameTotalMatchedCounter[inputName] += o_search.rangesNameMatchedCounterByCategory[eachCat];
             }
         }
 
-        if (o_search.rangesNameTotalMatchedCounter === 0 && currentValue) {
+        if (o_search.rangesNameTotalMatchedCounter[inputName] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
                 inputToTriggerDropdown.dropdown("toggle");
             }
@@ -753,7 +766,7 @@ var o_search = {
                 return;
             }
 
-            o_search.rangesNameTotalMatchedCounter = 0;
+            o_search.rangesNameTotalMatchedCounter[slug] = 0;
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {

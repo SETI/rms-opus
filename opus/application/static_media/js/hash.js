@@ -29,20 +29,16 @@ var o_hash = {
         console.log(`selections after alignment`);
         console.log(JSON.stringify(selections));
 
-        // let hashStrFromSelections = o_hash.getHashStrFromSelections(selections);
-        // let hashStrFromOPUSPrefs  = "";
         let hashStr = "";
         if (!searchOnly) {
-            // hashStrFromOPUSPrefs = "&" + o_hash.getHashStrFromOPUSPrefs();
             hashStr = o_hash.getFullHashStr(selections);
-
             if (updateURL) {
                 window.location.hash = '/' + hashStr;
             }
         } else {
             hashStr = o_hash.getHashStrFromSelections(selections);
         }
-        console.log(hashStr);
+
         console.log(hashStr.split("&"));
         return hashStr;
     },

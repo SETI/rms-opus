@@ -119,7 +119,7 @@ var o_widgets = {
             if ($(`#${widgetId} input.RANGE`).length !== 0) {
                 o_widgets.fillRangesInputs(widgetId, minInputSlug, maxVal, minVal);
                 // close dropdown and trigger the search
-                $(`#${widgetId} input.op-range-input-min`).dropdown("toggle");
+                $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
             }
         });
