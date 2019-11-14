@@ -1044,7 +1044,7 @@ var o_browse = {
             opus.prefs[startObsLabel] = obsNum;
 
             $(`${tab} .op-observation-number`).html(o_utils.addCommas(obsNum));
-            let numberWidth = o_utils.addCommas(maxSliderVal).length*0.5+0.7;
+            let numberWidth = o_utils.addCommas(maxSliderVal).length*0.55+0.7;
             $(`${tab} .op-slider-pointer`).css("width", `${numberWidth}em`);
             // See https://stackoverflow.com/questions/5540170/jquery-ui-sliders-hops-when-clicked
             $(`${tab} .op-slider-pointer`).css("margin-left", `-${numberWidth/2}em`);
