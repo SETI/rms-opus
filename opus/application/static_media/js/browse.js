@@ -1050,6 +1050,7 @@ var o_browse = {
             $(`${tab} .op-slider-pointer`).css("margin-left", `-${numberWidth/2}em`);
             // This offsets the slider bar from the "Observation #" text
             $(`${tab} .op-observation-slider`).css("margin-left", `${numberWidth/2-0.5}em`);
+            $(`${tab} .op-observation-slider`).css("margin-right", `${numberWidth/2-0.5}em`);
 
             // just make the step size the number of the obserations across the page...
             // if the observations have not yet been rendered, leave the default, it will get changed later
