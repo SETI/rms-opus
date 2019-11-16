@@ -308,7 +308,8 @@ var opus = {
         // spurious result counts that we won't use anyway
         console.log(`return from allNormalizeInputApiCall in getResultCount`);
         console.log(opus.lastAllNormalizeRequestNo);
-        if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+        // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+        if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
             return;
@@ -1159,9 +1160,9 @@ var opus = {
         /**
          * Check if any normalize input API call is in progress
          */
-        return Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0;
-        // return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
-        //         Object.keys(opus.normalizeInputForCharInProgress).length > 0);
+        // return Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0;
+        return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
+                Object.keys(opus.normalizeInputForCharInProgress).length > 0);
     },
 
 }; // end opus namespace

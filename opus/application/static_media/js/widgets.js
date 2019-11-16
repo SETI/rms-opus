@@ -208,6 +208,12 @@ var o_widgets = {
             }
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
+            // Prevent overscrolling for newly added dropdown. 
+            let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
+            newlyAddedDropdown.on("scroll wheel", function(scrollingEvent) {
+                scrollingEvent.stopPropagation();
+            });
+
             o_widgets.renumberInputsAttributes(slug);
 
             let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
@@ -366,7 +372,8 @@ var o_widgets = {
 
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
-                    if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                    // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                    if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                         o_widgets.disableButtonsInWidgets(false);
                         o_widgets.isRemovingInput = false;
@@ -537,7 +544,8 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
-            if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+            // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+            if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 o_widgets.disableButtonsInWidgets(false);
                 return;
