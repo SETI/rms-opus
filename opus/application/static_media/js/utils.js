@@ -82,8 +82,6 @@ var o_utils = {
          */
         return (slugOrData.match(/^([^_]*)_.*/) ?
                 slugOrData.match(/^([^_]*)_.*/)[1] : slugOrData);
-        // return (slugOrData.match(/(.*)_[0-9]+$/) ?
-        //         slugOrData.match(/(.*)_[0-9]+$/)[1] : slugOrData);
     },
 
     getSlugOrDataTrailingCounterStr: function(slugOrData) {

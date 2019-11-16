@@ -19,17 +19,10 @@ var o_hash = {
         /**
          * updates the hash & URL based on the selections passed in.
          */
-        console.log(`=== updateHash ===`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(opus.extras));
-
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
         // widget just open and opus.selections is not updated.
         [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
-        console.log(`selections after alignment`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(opus.extras));
 
         let hashStr = "";
         if (!searchOnly) {
@@ -40,8 +33,6 @@ var o_hash = {
         } else {
             hashStr = o_hash.getHashStrFromSelections(selections);
         }
-
-        console.log(hashStr.split("&"));
         return hashStr;
     },
 
@@ -130,9 +121,6 @@ var o_hash = {
                             if (uniqueid) {
                                 slugWithCounter = `${slug}_${uniqueid}_${trailingCounterString}`;
                             }
-                            // slugWithCounter = ((numberOfInputSets === 1) ?
-                            //                    `${slug}_${uniqueid}` :
-                            //                    `${slug}_${uniqueid}_${trailingCounterString}`);
                         }
 
                         if (value[trailingCounter-1] !== null) {
@@ -640,8 +628,7 @@ var o_hash = {
                 }
                 if (qtypeSlug in extras) {
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                        // extras[qtypeSlug].push(null); // TODO: Need to push in default value
-                        extras[qtypeSlug].push(rangeQtypeDefaultVal); // TODO: Need to push in default value
+                        extras[qtypeSlug].push(rangeQtypeDefaultVal);
                     }
                 }
             } else {
@@ -655,8 +642,7 @@ var o_hash = {
                         selections[slug].push(null);
                     }
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                        // extras[qtypeSlug].push(null); // TODO: Need to push in default value
-                        extras[qtypeSlug].push(strQtypeDefaultVal); // TODO: Need to push in default value
+                        extras[qtypeSlug].push(strQtypeDefaultVal);
                     }
                 }
             }

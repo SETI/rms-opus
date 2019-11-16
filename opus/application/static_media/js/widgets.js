@@ -152,7 +152,6 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
-            console.log("@@@@@@@@@@ click + (OR) to add new inputs");
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -208,7 +207,7 @@ var o_widgets = {
             }
 
             $(`#${widgetId} .op-input`).append(cloneInputs);
-            // Prevent overscrolling for newly added dropdown. 
+            // Prevent overscrolling for newly added dropdown.
             let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
             newlyAddedDropdown.on("scroll wheel", function(scrollingEvent) {
                 scrollingEvent.stopPropagation();
@@ -266,11 +265,7 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
-            console.log("@@@@@@@@@@ click - to remove new inputs");
             e.preventDefault();
-            // if (opus.isAnyNormalizeInputInProgress()) {
-            //     return false;
-            // }
             o_widgets.isRemovingInput = true;
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
@@ -368,8 +363,6 @@ var o_widgets = {
                 o_widgets.disableButtonsInWidgets(false);
                 o_widgets.isRemovingInput = false;
             } else {
-
-
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
                     // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
@@ -452,7 +445,6 @@ var o_widgets = {
         /**
          * Fill both ranges inputs with values passed in to the function.
          */
-        console.log(`fillRangesInputs: min: ${minVal}, max: ${maxVal}`);
         let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
@@ -1236,7 +1228,6 @@ var o_widgets = {
         let autocompleteDropdown = $("ul.ui-autocomplete");
         for (const singleDropdown of autocompleteDropdown) {
             if ($(singleDropdown).find("li").length > 0 && $(singleDropdown).is(":visible")) {
-                let slug = $(singleDropdown).attr("data-slug");
                 let slugWithCounter = $(singleDropdown).attr("data-input");
 
                 let inputPosition = $(`input[name="${slugWithCounter}"]`).offset();
@@ -1251,15 +1242,11 @@ var o_widgets = {
 
     disableButtonsInWidgets: function(disable=true) {
         /**
-         * Disable/enable "x", "+ (OR)" and trash icons in a widget.
+         * Disable/enable "x" button in a widget.
          */
         if (disable) {
-            // $(".op-remove-inputs").addClass("op-disable-btn");
-            // $(".op-add-inputs").addClass("op-disable-btn");
             $(".close_card").addClass("op-disable-btn");
         } else {
-            // $(".op-remove-inputs").removeClass("op-disable-btn");
-            // $(".op-add-inputs").removeClass("op-disable-btn");
             $(".close_card").removeClass("op-disable-btn");
         }
     },
