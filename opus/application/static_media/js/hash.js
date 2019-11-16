@@ -21,6 +21,7 @@ var o_hash = {
          */
         console.log(`=== updateHash ===`);
         console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
 
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
@@ -28,6 +29,7 @@ var o_hash = {
         [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
         console.log(`selections after alignment`);
         console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
 
         let hashStr = "";
         if (!searchOnly) {
@@ -43,7 +45,7 @@ var o_hash = {
         return hashStr;
     },
 
-    getHashStrFromSelections: function(selections=opus.selections) {
+    getHashStrFromSelections: function(selections=opus.selections, forAPICall=false) {
         /**
          * Get the hash string from selections, ignore any slug in opus.prefs.
          * Hash string will be in alphabetical & slug counter order.
@@ -92,12 +94,26 @@ var o_hash = {
                         let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
                         let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
 
-                         if (selections[slug1][trailingCounter-1] !== null) {
-                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
-                         }
-                         if (selections[slug2][trailingCounter-1] !== null) {
-                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
-                         }
+                        if (forAPICall) {
+                            let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
+                                             .attr("data-uniqueid"));
+                            let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
+                                             .attr("data-uniqueid"));
+
+                            if (uniqueid1) {
+                                slug1WithCounter = `${slug1}_${uniqueid1}_${trailingCounterString}`;
+                            }
+                            if (uniqueid2) {
+                                slug2WithCounter = `${slug2}_${uniqueid2}_${trailingCounterString}`;
+                            }
+                        }
+
+                        if (selections[slug1][trailingCounter-1] !== null) {
+                            hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
+                        }
+                        if (selections[slug2][trailingCounter-1] !== null) {
+                            hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
+                        }
 
                         o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                        trailingCounter);
@@ -106,10 +122,21 @@ var o_hash = {
                     visited[slug] = true;
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
-                        let newKey = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
+                        let slugWithCounter = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
+
+                        if (forAPICall) {
+                            let uniqueid = ($(`#widget__${slugNoNum} input[name="${slugWithCounter}"]`)
+                                            .attr("data-uniqueid"));
+                            if (uniqueid) {
+                                slugWithCounter = `${slug}_${uniqueid}_${trailingCounterString}`;
+                            }
+                            // slugWithCounter = ((numberOfInputSets === 1) ?
+                            //                    `${slug}_${uniqueid}` :
+                            //                    `${slug}_${uniqueid}_${trailingCounterString}`);
+                        }
 
                         if (value[trailingCounter-1] !== null) {
-                            hash.push(newKey + "=" + encodedSelectionValues[trailingCounter-1]);
+                            hash.push(slugWithCounter + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
                         o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                        trailingCounter);
@@ -551,11 +578,10 @@ var o_hash = {
          * Arrays for slugNameB and qtype-slugNameB will be the same length
          * (STRING input).
          */
-        // let selections = Object.assign({}, selectionsData);
-        // let extras = Object.assign({}, extrasData);
         let selections = JSON.parse(JSON.stringify(selectionsData));
         let extras = JSON.parse(JSON.stringify(extrasData));
-
+        let rangeQtypeDefaultVal = "any";
+        let strQtypeDefaultVal = "contains";
         for (const slug in selections) {
             if (slug.match(/.*(1|2)$/)) {
                 let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
@@ -578,7 +604,8 @@ var o_hash = {
                 }
                 if (qtypeSlug in extras) {
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                        extras[qtypeSlug].push(null);
+                        // extras[qtypeSlug].push(null); // TODO: Need to push in default value
+                        extras[qtypeSlug].push(rangeQtypeDefaultVal); // TODO: Need to push in default value
                     }
                 }
             } else {
@@ -592,7 +619,8 @@ var o_hash = {
                         selections[slug].push(null);
                     }
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
-                        extras[qtypeSlug].push(null);
+                        // extras[qtypeSlug].push(null); // TODO: Need to push in default value
+                        extras[qtypeSlug].push(strQtypeDefaultVal); // TODO: Need to push in default value
                     }
                 }
             }
@@ -601,13 +629,14 @@ var o_hash = {
         // When slug in selections is empty but qtype-slug in extras exists, we will also
         // make sure data in selections and extras are aligned.
         for (const qtypeSlug in extras) {
-            if ((qtypeSlug.match(/qtype-(.*)/)[1] in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)/)[1]}1` in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)/)[1]}2` in selections)) {
+            if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
                 continue;
             }
-            let slug = qtypeSlug.match(/qtype-(.*)/)[1];
+            let slug = qtypeSlug.match(/qtype-(.*)$/)[1];
             let longestLength = extras[qtypeSlug].length;
+
             if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("RANGE")) {
                 selections[`${slug}1`] = selections[`${slug}1`] || [];
                 selections[`${slug}2`] = selections[`${slug}2`] || [];

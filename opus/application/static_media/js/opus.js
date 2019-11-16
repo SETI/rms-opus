@@ -212,12 +212,14 @@ var opus = {
             console.log(JSON.stringify(opus.lastselections));
             console.log(`currentExtrasQ`);
             console.log(JSON.stringify(currentExtrasQ));
+            console.log(`lastExtrasQ`);
+            console.log(JSON.stringify(lastExtrasQ));
             console.log(`opusExtrasQ`);
             console.log(JSON.stringify(opusExtrasQ));
             console.log(`extras`);
             console.log(JSON.stringify(extras));
             console.log(`opus.extras`);
-            console.log(opus.extras);
+            console.log(JSON.stringify(opus.extras));
             console.log(`o_search.slugRangeInputValidValueFromLastSearch`);
             console.log(o_search.slugRangeInputValidValueFromLastSearch);
             console.log(`opus.isAnyNormalizeInputInProgress()`);
@@ -304,6 +306,8 @@ var opus = {
          */
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
+        console.log(`return from allNormalizeInputApiCall in getResultCount`);
+        console.log(opus.lastAllNormalizeRequestNo);
         if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
@@ -1155,8 +1159,9 @@ var opus = {
         /**
          * Check if any normalize input API call is in progress
          */
-        return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
-                Object.keys(opus.normalizeInputForCharInProgress).length > 0);
+        return Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0;
+        // return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
+        //         Object.keys(opus.normalizeInputForCharInProgress).length > 0);
     },
 
 }; // end opus namespace

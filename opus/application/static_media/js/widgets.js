@@ -42,6 +42,8 @@ var o_widgets = {
     isRemovingInput: false,
     isAddingInput: false,
 
+    uniqueIdForInputs: 100,
+
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
@@ -150,6 +152,7 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
+            console.log("@@@@@@@@@@ click + (OR) to add new inputs");
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -163,8 +166,7 @@ var o_widgets = {
             let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
             o_search.clearInputBorder(cloneInputs);
-            // Clear values in inputs & .op-hide-element in dropdown
-            cloneInputs.find("input").val("");
+            // Clear .op-hide-element in dropdown
             cloneInputs.find(".op-hide-element").removeClass("op-hide-element");
             let defaultQtypeVal = (cloneInputs.find("select") ?
                                    cloneInputs.find("option").first().val() :
@@ -173,6 +175,13 @@ var o_widgets = {
                 cloneInputs.find("select").val(defaultQtypeVal);
             }
 
+            // Assign unique id to new inputs.
+            for (const eachInput of cloneInputs.find("input")) {
+                o_widgets.uniqueIdForInputs += 1;
+                $(eachInput).attr("data-uniqueid", o_widgets.uniqueIdForInputs);
+                // Clear values in inputs.
+                $(eachInput).val("");
+            }
 
             let orLabel = '<ul class="op-or-labels text-secondary">' +
                           '<hr class="op-or-label-divider">' +
@@ -244,14 +253,18 @@ var o_widgets = {
             }
 
             o_hash.updateHash();
+            // This will make sure normalize input api from opus.load is not called.
+            opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
+            opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
             o_widgets.isAddingInput = false;
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            console.log("@@@@@@@@@@ click - to remove new inputs");
             e.preventDefault();
-            if (opus.isAnyNormalizeInputInProgress()) {
-                return false;
-            }
+            // if (opus.isAnyNormalizeInputInProgress()) {
+            //     return false;
+            // }
             o_widgets.isRemovingInput = true;
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
@@ -264,9 +277,15 @@ var o_widgets = {
             let trailingCounterString = o_utils.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
 
+            let isRemovingEmptySet = true;
+
             if (inputElement.hasClass("RANGE")) {
                 let previousMinSelections = opus.selections[`${slug}1`];
                 let previousMaxSelections = opus.selections[`${slug}2`];
+                if (previousMaxSelections[idx] || previousMinSelections[idx]) {
+                    isRemovingEmptySet = false;
+                }
+
                 opus.selections[`${slug}1`] = (previousMinSelections.slice(0, idx)
                                                .concat(previousMinSelections.slice(idx+1)));
                 opus.selections[`${slug}2`] = (previousMaxSelections.slice(0, idx)
@@ -278,6 +297,10 @@ var o_widgets = {
                 }
             } else if (inputElement.hasClass("STRING")) {
                 let previousSelections = opus.selections[`${slug}`];
+                if (previousSelections[idx]) {
+                    isRemovingEmptySet = false;
+                }
+
                 opus.selections[`${slug}`] = (previousSelections.slice(0, idx)
                                                .concat(previousSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
@@ -320,39 +343,62 @@ var o_widgets = {
                 }
             }
 
-            o_search.allNormalizeInputApiCall().then(function(normalizedData) {
+            // When we delete a set of inputs while there is a normalize input running,
+            // we will trigger another normalize input call to make sure the latest
+            // opus.selections get synced up properly. Because when parsing the return
+            // data from a normalize input call (in validateRangeInput), there is no way
+            // for us to tell if any idx changes (elements got removed) happened in
+            // opus.selections, and this will mess up opus.selections. By calling one final
+            // normalize input, the latest opus.selections will be used for this api call,
+            // and opus.selections will get updated properly at the end.
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                o_hash.updateHash();
+                if (isRemovingEmptySet) {
+                    // Make sure normalize input api from opus.load is not called when an
+                    // empty set is removed.
+                    opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
+                    opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
+                }
+                o_widgets.disableButtonsInWidgets(false);
+                o_widgets.isRemovingInput = false;
+            } else {
 
-                if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+
+                o_search.allNormalizeInputApiCall().then(function(normalizedData) {
+
+                    if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+                        delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+                        o_widgets.disableButtonsInWidgets(false);
+                        o_widgets.isRemovingInput = false;
+                        return;
+                    }
+                    o_search.validateRangeInput(normalizedData, false);
+
+                    if (opus.allInputsValid) {
+                        $("input.RANGE").removeClass("search_input_valid");
+                        $("input.RANGE").removeClass("search_input_invalid");
+                        $("input.RANGE").addClass("search_input_original");
+                        $("#sidebar").removeClass("search_overlay");
+                        $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
+                        if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                            // Put back normal hinting info
+                            opus.widgetsDrawn.forEach(function(eachSlug) {
+                                o_search.getHinting(eachSlug);
+                            });
+                        }
+                        $(".op-browse-tab").removeClass("op-disabled-nav-link");
+                    } else {
+                        $(".op-browse-tab").addClass("op-disabled-nav-link");
+                    }
+
+                    o_hash.updateHash(opus.allInputsValid);
+
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                     o_widgets.disableButtonsInWidgets(false);
                     o_widgets.isRemovingInput = false;
-                    return;
-                }
-                o_search.validateRangeInput(normalizedData, false);
+                });
 
-                if (opus.allInputsValid) {
-                    $("input.RANGE").removeClass("search_input_valid");
-                    $("input.RANGE").removeClass("search_input_invalid");
-                    $("input.RANGE").addClass("search_input_original");
-                    $("#sidebar").removeClass("search_overlay");
-                    $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
-                    if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
-                        // Put back normal hinting info
-                        opus.widgetsDrawn.forEach(function(eachSlug) {
-                            o_search.getHinting(eachSlug);
-                        });
-                    }
-                    $(".op-browse-tab").removeClass("op-disabled-nav-link");
-                } else {
-                    $(".op-browse-tab").addClass("op-disabled-nav-link");
-                }
-
-                o_hash.updateHash(opus.allInputsValid);
-
-                delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-                o_widgets.disableButtonsInWidgets(false);
-                o_widgets.isRemovingInput = false;
-            });
+            }
         });
     },
 
@@ -923,6 +969,11 @@ var o_widgets = {
 
                 o_widgets.attachAddInputIcon(slug, addInputIcon);
 
+                // Assign unique id for each input field.
+                for (const eachInput of widgetInputs) {
+                    o_widgets.uniqueIdForInputs += 1;
+                    $(eachInput).attr("data-uniqueid", o_widgets.uniqueIdForInputs);
+                }
             }
 
             opus.widgetsDrawn.unshift(slug);
@@ -1195,11 +1246,11 @@ var o_widgets = {
          * Disable/enable "x", "+ (OR)" and trash icons in a widget.
          */
         if (disable) {
-            $(".op-remove-inputs").addClass("op-disable-btn");
+            // $(".op-remove-inputs").addClass("op-disable-btn");
             // $(".op-add-inputs").addClass("op-disable-btn");
             $(".close_card").addClass("op-disable-btn");
         } else {
-            $(".op-remove-inputs").removeClass("op-disable-btn");
+            // $(".op-remove-inputs").removeClass("op-disable-btn");
             // $(".op-add-inputs").removeClass("op-disable-btn");
             $(".close_card").removeClass("op-disable-btn");
         }
