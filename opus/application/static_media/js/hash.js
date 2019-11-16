@@ -147,6 +147,42 @@ var o_hash = {
             }
         }
 
+        // For slugs only exist in extras, make sure they are updated in URL.
+        // This will make sure multiple empty input sets can show up after page reloads.
+        for (const qtypeSlug in opus.extras) {
+            if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
+                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
+                continue;
+            }
+            let value = opus.extras[qtypeSlug];
+            if (value.length) {
+                let encodedExtraValues = o_hash.encodeSlugValues(value);
+
+                if (value.length > 1) {
+                    let numberOfQtypeInputs = encodedExtraValues.length;
+
+                    for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
+                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
+                                                    `0${trailingCounter}` : `${trailingCounter}`);
+                        let newKey = `${qtypeSlug}_${trailingCounterString}`;
+
+                        if (value[trailingCounter-1] !== null) {
+                            // if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
+                            //     hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            // }
+                            hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                        }
+                    }
+                } else {
+                    // if (!hash.includes(qtypeSlug + "=" + encodedExtraValues.join(","))) {
+                    //     hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
+                    // }
+                    hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
+                }
+            }
+        }
+
         return hash.join("&");
     },
 
