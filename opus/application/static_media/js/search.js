@@ -57,12 +57,14 @@ var o_search = {
     // in above example, it's 5. We use slug as the key to tell which input set the user
     // is currently focusing in.
     rangesNameTotalMatchedCounter: {},
+    // Store rangesNameMatchedCounterByCategory for each input field. Use slug + id as the key.
+    inputsRangesNameMatchedInfo:{},
     // Use to determine if we should automatically expand/collapse ranges info. If it's set
     // to true, we will automatically expand/collapse ranges info depending on the matched letters.
     isTriggeredFromInput: false,
     // Use to determine if user's input should proceed with validation and search when user types in
-    // ranges names.
-    performInputValidation: true,
+    // ranges names. We use slug with uniqueid as the key.
+    performInputValidation: {}, // true
 
     addSearchBehaviors: function() {
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
@@ -73,8 +75,10 @@ var o_search = {
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
 
-            if (o_search.slugRangeInputValidValueFromLastSearch[slugWithId] || currentValue === "" ||
-                !o_search.performInputValidation || !$(this).hasClass("search_input_invalid_no_focus")) {
+            o_search.performInputValidation[slugWithId] = (o_search.performInputValidation[slugWithId] ||
+                                                           true);
+            if (o_search.slugRangeInputValidValueFromLastSearch[slugWithId] ||
+                currentValue === "" || !o_search.performInputValidation[slugWithId] || !$(this).hasClass("search_input_invalid_no_focus")) {
                 $(this).addClass("search_input_original");
             } else {
                 $(this).addClass("search_input_invalid");
@@ -87,8 +91,9 @@ var o_search = {
                                                .next(".op-preprogrammed-ranges")
                                                .find(".op-scrollable-menu"));
 
-            o_search.rangesNameTotalMatchedCounter[slugWithId] = (o_search.rangesNameTotalMatchedCounter[slugWithId] ||
-                                                                 0);
+            o_search.rangesNameTotalMatchedCounter[slugWithId] =
+            (o_search.rangesNameTotalMatchedCounter[slugWithId] || 0);
+
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
                 !preprogrammedRangesDropdown.hasClass("show")) {
@@ -167,7 +172,7 @@ var o_search = {
             3) Input value didn't match any ranges names
             */
             if (currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slugWithId] ||
-                !o_search.performInputValidation) {
+                !o_search.performInputValidation[slugWithId]) {
                 $(e.target).removeClass("search_input_valid search_input_invalid");
                 $(e.target).removeClass("search_input_invalid_no_focus");
                 $(e.target).addClass("search_input_original");
@@ -230,8 +235,9 @@ var o_search = {
                                                                  0);
             if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 1) {
                 let matchedCatId = "";
-                for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
-                    if (o_search.rangesNameMatchedCounterByCategory[eachCat] === 1) {
+                let currentinputsRangesNameMatchedInfo = o_search.inputsRangesNameMatchedInfo[slugWithId] || {};
+                for (const eachCat in currentinputsRangesNameMatchedInfo) {
+                    if (currentinputsRangesNameMatchedInfo[eachCat] === 1) {
                         matchedCatId = `#${eachCat}`;
                         break;
                     }
@@ -429,7 +435,12 @@ var o_search = {
         $(`#search`).on("hidden.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId]) {
+                let inputName = $(e.target).attr("data-mininput");
+                let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
+                let uniqueid = $(`input.op-range-input-min[name="${inputName}"]`).attr("data-uniqueid");
+                let slugWithId = `${slug}_${uniqueid}`;
+                let currentinputsRangesNameMatchedInfo = o_search.inputsRangesNameMatchedInfo[slugWithId] || {};
+                if (currentinputsRangesNameMatchedInfo[collapsibleContainerId]) {
                     $(e.target).collapse("show");
                 }
             }
@@ -441,7 +452,12 @@ var o_search = {
         $(`#search`).on("shown.bs.collapse", ".op-scrollable-menu .container", function(e) {
             if (o_search.isTriggeredFromInput) {
                 let collapsibleContainerId = $(e.target).attr("id");
-                if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0) {
+                let inputName = $(e.target).attr("data-mininput");
+                let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
+                let uniqueid = $(`input.op-range-input-min[name="${inputName}"]`).attr("data-uniqueid");
+                let slugWithId = `${slug}_${uniqueid}`;
+                let currentinputsRangesNameMatchedInfo = o_search.inputsRangesNameMatchedInfo[slugWithId] || {};
+                if (currentinputsRangesNameMatchedInfo[collapsibleContainerId] === 0) {
                     $(e.target).collapse("hide");
                 }
             }
@@ -453,9 +469,12 @@ var o_search = {
             let collapsibleContainerId = $(e.target).attr("id");
             let inputName = $(e.target).attr("data-mininput");
             let widgetId = $(e.target).data("widget");
-
+            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
+            let uniqueid = $(`input.op-range-input-min[name="${inputName}"]`).attr("data-uniqueid");
+            let slugWithId = `${slug}_${uniqueid}`;
+            let currentinputsRangesNameMatchedInfo = o_search.inputsRangesNameMatchedInfo[slugWithId] || {};
             let currentIuputValue = $(`#${widgetId} input.op-range-input-min[name="${inputName}"]`).val().trim();
-            if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0 && currentIuputValue) {
+            if (currentinputsRangesNameMatchedInfo[collapsibleContainerId] === 0 && currentIuputValue) {
                 e.preventDefault();
             }
         });
@@ -514,13 +533,15 @@ var o_search = {
 
         // If ranges info is not available, return from the function.
         if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("op-range-input-min")) {
-            o_search.performInputValidation = true;
+            o_search.performInputValidation[slugWithId] = true;
             return;
         }
-
+        // Reset matched info
+        o_search.rangesNameMatchedCounterByCategory = {};
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).attr("data-category");
             let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+
             o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
 
             for (const singleRangeData of rangesInfoInOneCategory) {
@@ -560,14 +581,15 @@ var o_search = {
         }
 
         // If there is one or more matched ranges names, don't perform input validation.
-        o_search.performInputValidation = true;
+        o_search.performInputValidation[slugWithId] = true;
         o_search.rangesNameTotalMatchedCounter[slugWithId] = 0;
         for (const eachCat in o_search.rangesNameMatchedCounterByCategory) {
             if (o_search.rangesNameMatchedCounterByCategory[eachCat] !== 0) {
-                o_search.performInputValidation = false;
+                o_search.performInputValidation[slugWithId] = false;
                 o_search.rangesNameTotalMatchedCounter[slugWithId] += o_search.rangesNameMatchedCounterByCategory[eachCat];
             }
         }
+        o_search.inputsRangesNameMatchedInfo[slugWithId] = JSON.parse(JSON.stringify(o_search.rangesNameMatchedCounterByCategory));
 
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
@@ -665,6 +687,8 @@ var o_search = {
             // inputs), so we have to parse the return data based on unique id.
             let uniqueid = o_utils.getSlugUniqueIdStr(eachSlug);
             let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(eachSlug);
+            let slugWithId = `${slugNoCounter}_${uniqueid}`;
+
             let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(eachSlug);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
             let currentInput = $(`input[name="${eachSlug}"]`);
@@ -701,10 +725,10 @@ var o_search = {
                     we will not overwrite its displayed value.
                     */
                     if (currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        o_search.slugRangeInputValidValueFromLastSearch[slugWithId] = value;
                     } else {
                         currentInput.val(value);
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        o_search.slugRangeInputValidValueFromLastSearch[slugWithId] = value;
                         if (opus.selections[slugNoCounter]) {
                             opus.selections[slugNoCounter][idx] = value;
                             o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = value;
@@ -820,10 +844,6 @@ var o_search = {
                 o_widgets.disableButtonsInWidgets(false);
                 return;
             }
-            // } else {
-            //     opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
-            //     opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
-            // }
 
             o_search.rangesNameTotalMatchedCounter[slug] = 0;
             if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
