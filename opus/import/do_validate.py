@@ -70,7 +70,8 @@ NAME='{field_name}'"""
         {q('pi1')}.{q('category_name')}={q('pi2')}.{q('category_name')} AND
         {q('pi1')}.{q('disp_order')}={q('pi2')}.{q('disp_order')} AND
         ({q('pi1')}.display=1 OR {q('pi1')}.{q('display_results')}=1) AND
-        ({q('pi2')}.display=1 OR {q('pi2')}.{q('display_results')}=1)
+        ({q('pi2')}.display=1 OR {q('pi2')}.{q('display_results')}=1) AND
+        {q('pi1')}.{q('id')}!={q('pi2')}.{q('id')}
         LIMIT 1,1)"""
     res = db.general_select(cmd)
     for cat_name, field_name in res:
@@ -81,7 +82,8 @@ NAME='{field_name}'"""
     cmd = f"""
 {q('category_name')}, {q('name')} FROM {q(pi_table_name)} {q('pi1')} WHERE EXISTS
     (SELECT 1 FROM {q(pi_table_name)} {q('pi2')} WHERE
-        {q('pi1')}.{q('slug')}={q('pi2')}.{q('slug')}
+        {q('pi1')}.{q('slug')}={q('pi2')}.{q('slug')} AND
+        {q('pi1')}.{q('id')}!={q('pi2')}.{q('id')}
         LIMIT 1,1)"""
     res = db.general_select(cmd)
     for cat_name, field_name in res:

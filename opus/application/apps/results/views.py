@@ -425,6 +425,9 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
                     Limit results to particular categories. Categories can be
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
+               url_cols=<cols>
+                    If given, include these column names in the URLs for each
+                    search icon for mults/strings in the internal HTML output.
 
     Can return JSON, HTML, or CSV.
 
@@ -491,6 +494,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         raise ret
 
     cats = request.GET.get('cats', False)
+    url_cols = request.GET.get('url_cols', False)
 
     data = OrderedDict()     # Holds data struct to be returned
     all_info = OrderedDict() # Holds all the param info objects
@@ -593,7 +597,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         ret = csv_response(opus_id, csv_data)
     elif fmt == 'html':
         context = {'data': data,
-                   'all_info': all_info}
+                   'all_info': all_info,
+                   'url_cols': url_cols}
         if internal:
             ret = render(request, 'results/detail_metadata_internal.html', context)
         else:
@@ -1466,6 +1471,8 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
     if fmt == 'csv':
         return csv_response(opus_id, page, labels)
 
+    url_cols = request.GET.get('url_cols', False)
+
     # We're just screwing backwards compatibility here and always returning
     # the slug names instead of supporting the support database-internal names
     # that used to be supplied by the metadata API.
@@ -1480,13 +1487,17 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
             for slug, label, result in zip(slug_list, labels, page[0]):
                 pi = get_param_info_by_slug(slug, 'col')
                 data.append({label: (result, pi)})
+            context = {'data': data,
+                       'url_cols': url_cols}
             return render(request,
                           'results/detail_metadata_slugs_internal.html',
-                          {'data': data})
+                          context)
         for label, result in zip(labels, page[0]):
             data.append({label: result})
+        context = {'data': data,
+                   'url_cols': url_cols}
         return render(request, 'results/detail_metadata_slugs.html',
-                      {'data': data})
+                      context)
 
     log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
     ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
