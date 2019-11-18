@@ -310,6 +310,7 @@ var o_search = {
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
+            console.log(`STRING input change event`);
             if (o_widgets.isClosingWidget) {
                 return false;
             }
@@ -340,7 +341,7 @@ var o_search = {
                     return;
                 }
             }
-
+            console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
             // Keep a record of selections for current normalize input API call.
             // It will be used to call updateHash in validateRangeInput.
             o_search.selectionsForNormalizeInputBySlug[slugWithId] = JSON.parse(JSON.stringify(opus.selections));
@@ -351,6 +352,7 @@ var o_search = {
             opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
             o_widgets.disableButtonsInWidgets();
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+            console.log(url)
             o_search.parseFinalNormalizedInputDataAndUpdateHash(slugWithId, url);
         });
 
@@ -674,6 +676,8 @@ var o_search = {
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
          */
+        console.log(`validateRangeInput`);
+        console.log(JSON.stringify(normalizedInputData));
         opus.allInputsValid = true;
         o_search.slugRangeInputValidValueFromLastSearch = {};
 
@@ -745,7 +749,10 @@ var o_search = {
         });
 
         let selections = slug ? o_search.selectionsForNormalizeInputBySlug[slug] : opus.selections;
-
+        console.log(`Before syncing up`);
+        console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
+        console.log(JSON.stringify(removedSelectionsIdxBySlug));
         // TODO: put this into a function
         // The following for loop is trying to remove values from selections & extras if the
         // corresponding inputs are removed.
@@ -793,7 +800,9 @@ var o_search = {
                 }
             }
         }
-
+        console.log(`opus.allInputsValid: ${opus.allInputsValid}`);
+        console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
         if (opus.allInputsValid) {
             o_hash.updateHash(true, false, selections);
         } else {

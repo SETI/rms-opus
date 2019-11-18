@@ -43,6 +43,7 @@ var o_widgets = {
     isAddingInput: false,
 
     uniqueIdForInputs: 100,
+    centerOrLabelDone: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -365,7 +366,6 @@ var o_widgets = {
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
-                    // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
                     if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                         o_widgets.disableButtonsInWidgets(false);
@@ -536,7 +536,6 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
-            // if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 o_widgets.disableButtonsInWidgets(false);
@@ -841,6 +840,7 @@ var o_widgets = {
             let numberOfQtypeInputs = qtypeInputs.length;
 
             if (numberOfQtypeInputs !== 0) {
+                qtypeInputs.parent("li").addClass("op-qtype-input");
                 let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
@@ -1281,30 +1281,21 @@ var o_widgets = {
                     opus.selections[slug] = [currentValue];
                 }
 
-                let newHash = o_hash.updateHash(false);
-                /*
-                We are relying on URL order now to parse and get slugs before "&cols" in the URL
-                Opus will rewrite the URL when a URL is pasted, all the search related slugs would be moved ahead of "&cols"
-                Refer to hash.js getSelectionsFromHash and updateHash functions
-                */
-                let regexForHashWithSearchParams = /(.*)&cols/;
-                if (newHash.match(regexForHashWithSearchParams)) {
-                    newHash = newHash.match(regexForHashWithSearchParams)[1];
-
-                    // Make sure the existing STRING input value is not passed to stringsearchchoices
-                    // API call. This will make sure each autocomplete dropdown results for individual
-                    // input will not be affected by others.
-                    let hashArray = newHash.split("&");
-                    let newHashArray = [];
-                    for (const slugValuePair of hashArray) {
-                        let slugParam = slugValuePair.split("=")[0];
-                        if (slugParam === slugWithCounter || !slugParam.match(slug) ||
-                            slugParam.startsWith("qtype-")) {
-                            newHashArray.push(slugValuePair);
-                        }
+                let newHash = o_hash.getHashStrFromSelections();
+                // Make sure the existing STRING input value is not passed to stringsearchchoices
+                // API call. This will make sure each autocomplete dropdown results for individual
+                // input will not be affected by others.
+                let hashArray = newHash.split("&");
+                let newHashArray = [];
+                for (const slugValuePair of hashArray) {
+                    let slugParam = slugValuePair.split("=")[0];
+                    if (slugParam === slugWithCounter || !slugParam.match(slug) ||
+                        slugParam.startsWith("qtype-")) {
+                        newHashArray.push(slugValuePair);
                     }
-                    newHash = newHashArray.join("&");
                 }
+                newHash = newHashArray.join("&");
+
                 // Avoid calling api when some inputs are not valid
                 if (!opus.allInputsValid) {
                     return;

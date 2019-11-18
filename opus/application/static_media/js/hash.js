@@ -22,8 +22,13 @@ var o_hash = {
         // Make sure selections and extras are aligned before updating hash.
         // This will avoid issue that qtype is not properly updated in the URL hash when a
         // widget just open and opus.selections is not updated.
+        console.log(`updateHash`);
+        console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
         [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
-
+        console.log(`after alignment`);
+        console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(opus.extras));
         let hashStr = "";
         if (!searchOnly) {
             hashStr = o_hash.getFullHashStr(selections);
@@ -33,6 +38,7 @@ var o_hash = {
         } else {
             hashStr = o_hash.getHashStrFromSelections(selections);
         }
+        console.log(hashStr.split("&"));
         return hashStr;
     },
 
