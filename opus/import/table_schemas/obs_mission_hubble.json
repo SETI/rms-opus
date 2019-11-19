@@ -322,7 +322,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_mission_hubble_aperture_type"
+            "obs_mission_hubble_<INST>_aperture_type"
         ],
         "definition": "The name of the aperture used for the observation.",
         "pi_category_name": "obs_mission_hubble",
@@ -576,6 +576,32 @@
               [   4, "NONE", "None",  50, "Y", null],
               [   5,   null, "NULL",  60, "Y", null]
           ]
+    },
+    {
+        "field_name": "optical_element",
+        "field_type": "char6",
+        "field_notnull": false,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_optical_element"
+        ],
+        "definition": "The name of the optical element (grating, mirror, or prism) for the observation.",
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "OPTICAL_ELEMENT_NAME",
+        "pi_disp_order": 45,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "STIS Optical Element",
+        "pi_label_results": "STIS Optical Element",
+        "pi_old_slug": null,
+        "pi_slug": "HSTopticalelement",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
     },
     {
         "put_mults_here": true

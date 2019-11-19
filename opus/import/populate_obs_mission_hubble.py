@@ -770,20 +770,14 @@ def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
     general_row = metadata['obs_general_row']
     obs_type = general_row['observation_type']
 
+    if obs_type != 'SPI':
+        return None
+
+    index_row = metadata['index_row']
+    element = index_row['OPTICAL_ELEMENT_NAME'].upper()
+    # TBD
     return None
-    # if obs_type == 'IMG':
-    #     return None
-    #
-    # wl_row = metadata['obs_wavelength_row']
-    # wl1 = wl_row['wavelength1']
-    # wl2 = wl_row['wavelength2']
-    # res1 = wl_row['wave_res1']
-    # res2 = wl_row['wave_res2']
-    #
-    # if wl1 is None or wl2 is None or res1 is None or res2 is None:
-    #     return None
-    #
-    # return (wl2-wl1) / ((res1+res2)/2.)
+
 
 def populate_obs_wavelength_HSTSTIS_polarization_type(**kwargs):
     return 'NONE'
@@ -946,7 +940,7 @@ def populate_obs_mission_hubble_filter_name(**kwargs):
     ret = instrument[3:] + '-' + filter_name
     return (ret, ret)
 
-def populate_obs_mission_hubble_aperture_type(**kwargs):
+def populate_obs_mission_hubble_HSTx_aperture_type(**kwargs):
     metadata = kwargs['metadata']
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
@@ -964,6 +958,35 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
             f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
+
+populate_obs_mission_hubble_HSTACS_aperture_type = populate_obs_mission_hubble_HSTx_aperture_type
+populate_obs_mission_hubble_HSTNICMOS_aperture_type = populate_obs_mission_hubble_HSTx_aperture_type
+populate_obs_mission_hubble_HSTWFC3_aperture_type = populate_obs_mission_hubble_HSTx_aperture_type
+populate_obs_mission_hubble_HSTWFPC2_aperture_type = populate_obs_mission_hubble_HSTx_aperture_type
+
+def populate_obs_mission_hubble_HSTSTIS_aperture_type(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    # Aperture type is wrong in HSTSTIS index (pds-webserver #27)
+    aperture = index_row['PROPOSED_APERTURE_TYPE']
+    ret = instrument[3:] + '-' + aperture
+    return (ret, ret)
+
+def populate_obs_mission_hubble_HSTx_optical_element(**kwargs):
+    return None
+
+populate_obs_mission_hubble_HSTACS_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTNICMOS_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTWFC3_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTWFPC2_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+
+def populate_obs_mission_hubble_HSTSTIS_optical_element(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    element = index_row['OPTICAL_ELEMENT_NAME'].upper()
+    return (element, element)
 
 def populate_obs_mission_hubble_HSTACS_targeted_detector_id(**kwargs):
     return None

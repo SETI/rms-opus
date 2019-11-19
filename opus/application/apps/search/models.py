@@ -1072,6 +1072,19 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
         db_table = 'mult_obs_mission_hubble_instrument_mode_id'
 
 
+class MultObsMissionHubbleOpticalElement(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_mission_hubble_optical_element'
+
+
 class MultObsMissionHubblePc1Flag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1560,6 +1573,7 @@ class ObsMissionHubble(models.Model):
     wf3_flag = models.CharField(max_length=3, blank=True, null=True)
     wf4_flag = models.CharField(max_length=3, blank=True, null=True)
     targeted_detector_id = models.CharField(max_length=3, blank=True, null=True)
+    optical_element = models.CharField(max_length=6)
     mult_obs_mission_hubble_detector = models.ForeignKey(MultObsMissionHubbleDetectorId, models.DO_NOTHING)
     mult_obs_mission_hubble_fine_guidance_system_lock_type = models.ForeignKey(MultObsMissionHubbleFineGuidanceSystemLockType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_fine_guidance_system_lock_type')
     mult_obs_mission_hubble_filter_name = models.ForeignKey(MultObsMissionHubbleFilterName, models.DO_NOTHING, db_column='mult_obs_mission_hubble_filter_name')
@@ -1568,6 +1582,7 @@ class ObsMissionHubble(models.Model):
     mult_obs_mission_hubble_exposure_type = models.ForeignKey(MultObsMissionHubbleExposureType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_exposure_type')
     mult_obs_mission_hubble_gain_mode = models.ForeignKey(MultObsMissionHubbleGainModeId, models.DO_NOTHING)
     mult_obs_mission_hubble_instrument_mode = models.ForeignKey(MultObsMissionHubbleInstrumentModeId, models.DO_NOTHING)
+    mult_obs_mission_hubble_optical_element = models.ForeignKey(MultObsMissionHubbleOpticalElement, models.DO_NOTHING, db_column='mult_obs_mission_hubble_optical_element')
     mult_obs_mission_hubble_pc1_flag = models.ForeignKey(MultObsMissionHubblePc1Flag, models.DO_NOTHING, db_column='mult_obs_mission_hubble_pc1_flag')
     mult_obs_mission_hubble_wf2_flag = models.ForeignKey(MultObsMissionHubbleWf2Flag, models.DO_NOTHING, db_column='mult_obs_mission_hubble_wf2_flag')
     mult_obs_mission_hubble_wf3_flag = models.ForeignKey(MultObsMissionHubbleWf3Flag, models.DO_NOTHING, db_column='mult_obs_mission_hubble_wf3_flag')
