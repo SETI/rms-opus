@@ -55,6 +55,7 @@ var o_cart = {
     reloadObservationData: true, // start over by reloading all data
     observationData: {},  // holds observation column data
     totalObsCount : undefined,
+    recycledCount : undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
@@ -438,6 +439,7 @@ var o_cart = {
             return;
         }
         o_cart.totalObsCount = status.count;
+        o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
             o_cart.hideDownloadSpinner(status.total_download_size_pretty,

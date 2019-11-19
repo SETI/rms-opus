@@ -716,6 +716,17 @@ var opus = {
             }
         });
 
+        $(".op-confirm-modal").on("show.bs.modal", function (e) {
+            let modal = $(this).attr("id");
+            if (modal === "op-empty-cart") {
+                if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
+                    $("#op-empty-cart .modal-body").html("Are you sure you want to remove all observations from the cart and the recycle bin?");
+                } else {
+                    $("#op-empty-cart .modal-body").html("Are you sure you want to remove all observations from the cart?");
+                }
+            }
+        });
+
         // Handle the Submit or Cancel buttons for the various confirm modals we can pop up
         $(".op-confirm-modal").on("click", ".btn", function() {
             let target = $(this).data("target");

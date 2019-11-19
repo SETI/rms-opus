@@ -909,7 +909,7 @@ a:-webkit-any-link, a::any-link {
 .op-button-disabled {
     pointer-events: none;
     cursor: default;
-    opacity: 0.25 !important;
+    opacity: 0.30 !important;
 }
 
 #cart .cart-gallery-side {
@@ -1303,22 +1303,36 @@ to stay in one line */
     }
 }
 
+@media (max-height: 510px) {
+    /* Hide download data pane when the screen is too short */
+    .cart_details {
+        display: none;
+    }
+}
+
 @media (max-width: 1160px) {
-    /* Hide download data pane when screen is narrow */
+    /* Hide download data pane when the screen is too narrow */
     .cart_details {
         display: none;
         max-width: 40%;
         min-width: 10%;
         padding-left: 0px;
-
     }
 
     /* Add a nav-link option for user to open the donwload options panel
-    when screen is narrow */
+    when the screen is too narrow */
     .op-cart-toggle-download-panel {
         display: flex !important;
         padding-left: 0.5em;
         padding-top: 0.5em;
+    }
+
+    @media (max-height: 510px) {
+        /* Remove the nav-link for opening up download data panel when screen
+        is too small to see download data options */
+        .op-cart-toggle-download-panel {
+            display: none !important;
+        }
     }
 
     /* Make sure gallery-contents not cut off by the right edge of the
@@ -1339,7 +1353,6 @@ is wide enough */
 @media (min-width: 1161px) {
     .op-cart-toggle-download-panel {
         display: none !important;
-
     }
 }
 
