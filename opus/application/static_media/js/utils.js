@@ -82,6 +82,8 @@ var o_utils = {
          */
         return (slugOrData.match(/^([^_]*)_.*/) ?
                 slugOrData.match(/^([^_]*)_.*/)[1] : slugOrData);
+        // return (slugOrData.match(/(.*)_[0-9]{2}$/) ?
+        //         slugOrData.match(/(.*)_[0-9]{2}$/)[1] : slugOrData);
     },
 
     getSlugOrDataTrailingCounterStr: function(slugOrData) {
@@ -94,19 +96,10 @@ var o_utils = {
                 slugOrData.match(/_([0-9]+)$/)[1] : "");
     },
 
-    getSlugUniqueIdStr: function(slug) {
-        /**
-         * Takes in a slug from normalize input api call and if there is
-         * unique id, return the unique id, else return an empty string.
-         */
-        return (slug.match(/_([0-9]+)_.*$/) ?
-                slug.match(/_([0-9]+)_.*$/)[1] : "");
-    },
-
     convertToTrailingCounterStr: function(num, numOfDigits=2) {
         /**
          * Takes in a number and left zero pad the give number to the
-         * specified number of digits. By default, we want a 2-digit string. 
+         * specified number of digits. By default, we want a 2-digit string.
          * 1 -> "01"
          * 2 -> "02"
          * ...

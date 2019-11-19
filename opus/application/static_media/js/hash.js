@@ -25,7 +25,7 @@ var o_hash = {
         console.log(`updateHash`);
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.extras));
-        [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
+        // [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
         console.log(`after alignment`);
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.extras));
@@ -42,10 +42,10 @@ var o_hash = {
         return hashStr;
     },
 
-    getHashStrFromSelections: function(selections=opus.selections, forAPICall=false) {
+    getHashStrFromSelections: function(selections=opus.selections, useFieldUniqueIDs=false) {
         /**
-         * Get the hash string from selections, ignore any slug in opus.prefs.
-         * Hash string will be in alphabetical & slug counter order.
+         * Get the hash string from selections only. No info from opus.prefs will be used
+         * to create this string. Hash string will be in alphabetical & slug counter order.
          */
         let hash = [];
         let visited = {};
@@ -66,8 +66,8 @@ var o_hash = {
                 let qtypeSlug = `qtype-${slugNoNum}`;
 
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
-                // we attach the trailing counter string to the slug and assign the corresponding before pushing
-                // into hash array.
+                // we attach the trailing counter string to the slug and assign the corresponding selection value
+                // before pushing it into hash array.
                 if (slug.match(/.*(1|2)$/)) { // RANGE inputs
                     let oppositeSuffixSlug = slug.match(/.*1$/) ? `${slugNoNum}2` : `${slugNoNum}1`;
                     let oppositeSuffixEncodedSelectionValues = o_hash.encodeSlugValues(selections[oppositeSuffixSlug]);
@@ -91,17 +91,17 @@ var o_hash = {
                         let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
                         let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
 
-                        if (forAPICall) {
+                        if (useFieldUniqueIDs) {
                             let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
                                              .attr("data-uniqueid"));
                             let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
                                              .attr("data-uniqueid"));
 
                             if (uniqueid1) {
-                                slug1WithCounter = `${slug1}_${uniqueid1}_${trailingCounterString}`;
+                                slug1WithCounter = `${slug1}_${uniqueid1}`;
                             }
                             if (uniqueid2) {
-                                slug2WithCounter = `${slug2}_${uniqueid2}_${trailingCounterString}`;
+                                slug2WithCounter = `${slug2}_${uniqueid2}`;
                             }
                         }
 
@@ -121,11 +121,11 @@ var o_hash = {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let slugWithCounter = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
 
-                        if (forAPICall) {
+                        if (useFieldUniqueIDs) {
                             let uniqueid = ($(`#widget__${slugNoNum} input[name="${slugWithCounter}"]`)
                                             .attr("data-uniqueid"));
                             if (uniqueid) {
-                                slugWithCounter = `${slug}_${uniqueid}_${trailingCounterString}`;
+                                slugWithCounter = `${slug}_${uniqueid}`;
                             }
                         }
 

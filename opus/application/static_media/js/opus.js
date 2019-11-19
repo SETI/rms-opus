@@ -89,7 +89,8 @@ var opus = {
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
 
-    allInputsValid: true,
+    // An object that stores normalize input validation result for each range input.
+    rangeInputFieldsValidation: {},
 
     force_load: true, // set this to true to force load() when selections haven't changed
 
@@ -244,7 +245,7 @@ var opus = {
                 if (o_widgets.isRemovingInput ||
                     o_widgets.isAddingInput ||
                     opus.isAnyNormalizeInputInProgress() ||
-                    !opus.allInputsValid) {
+                    !opus.areRangeInputsValid()) {
                     return;
                 }
                 opus.selections = selections;
@@ -313,11 +314,11 @@ var opus = {
         }
 
         // Take the results from the normalization, check for errors, and update the
-        // UI to show the user if anything is wrong. This sets the opus.allInputsValid
-        // flag used below and also updates the hash.
+        // UI to show the user if anything is wrong. This updates the
+        // opus.rangeInputFieldsValidation and also updates the hash.
         o_search.validateRangeInput(normalizedData, true);
 
-        if (!opus.allInputsValid) {
+        if (!opus.areRangeInputsValid()) {
             // We don't try to get a result count if any of the inputs are invalid.
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
@@ -362,7 +363,7 @@ var opus = {
         // We don't update the search hinting if any of the inputs are invalid.
         // The hints were previously marked as "?" in validateRangeInput so they
         // will just stay that way.
-        if (!opus.allInputsValid || !resultCountData) {
+        if (!opus.areRangeInputsValid() || !resultCountData) {
             return;
         }
 
@@ -1155,11 +1156,23 @@ var opus = {
 
     isAnyNormalizeInputInProgress: function() {
         /**
-         * Check if any normalize input API call is in progress
+         * Check if any normalize input API call is in progress.
          */
-        // return Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0;
         return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
                 Object.keys(opus.normalizeInputForCharInProgress).length > 0);
+    },
+
+    areRangeInputsValid: function() {
+        /**
+         * Check if all range inputs are valid.
+         */
+        for (const slugWithId in opus.rangeInputFieldsValidation) {
+            if (opus.rangeInputFieldsValidation[slugWithId] === false) {
+                return false;
+            }
+        }
+
+        return true;
     },
 
 }; // end opus namespace

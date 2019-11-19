@@ -124,6 +124,14 @@ var o_widgets = {
                 // close dropdown and trigger the search
                 $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`).dropdown("toggle");
                 $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).trigger("change");
+
+                let minInput = $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`);
+                let slug = o_utils.getSlugOrDataWithoutCounter(minInputSlug);
+                let slugName = minInput.attr("data-slugname");
+                let uniqueid = minInput.attr("data-uniqueid");
+                let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
+                $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`)
+                .trigger("change");
             }
         });
 
@@ -153,6 +161,7 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
+            console.log(`click + (OR) to add an input (+)`);
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -175,13 +184,10 @@ var o_widgets = {
                 cloneInputs.find("select").val(defaultQtypeVal);
             }
 
-            // Assign unique id to new inputs.
-            for (const eachInput of cloneInputs.find("input")) {
-                o_widgets.uniqueIdForInputs += 1;
-                $(eachInput).attr("data-uniqueid", o_widgets.uniqueIdForInputs);
-                // Clear values in inputs.
-                $(eachInput).val("");
-            }
+            // Assign unique id to new inputs. Inputs in the same set will have the same id.
+            o_widgets.uniqueIdForInputs += 1;
+            cloneInputs.find("input").attr("data-uniqueid", o_widgets.uniqueIdForInputs);
+            cloneInputs.find("input").val("");
 
             let orLabel = '<ul class="op-or-labels text-secondary">' +
                           '<hr class="op-or-label-divider">' +
@@ -266,6 +272,7 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            console.log(`click trash icon to delete an input (-)`);
             e.preventDefault();
             o_widgets.isRemovingInput = true;
 
@@ -312,6 +319,8 @@ var o_widgets = {
                 }
             }
 
+            o_widgets.removeInputsValidationInfo(inputElement);
+
             inputSetToBeDeleted.remove();
 
             // Remove OR label and .op-extra-search-inputs if they exist in the first input set
@@ -355,7 +364,7 @@ var o_widgets = {
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
                 o_hash.updateHash();
-                if (isRemovingEmptySet) {
+                if (isRemovingEmptySet || !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
                     opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
@@ -374,7 +383,7 @@ var o_widgets = {
                     }
                     o_search.validateRangeInput(normalizedData, false);
 
-                    if (opus.allInputsValid) {
+                    if (opus.areRangeInputsValid()) {
                         $("input.RANGE").removeClass("search_input_valid");
                         $("input.RANGE").removeClass("search_input_invalid");
                         $("input.RANGE").addClass("search_input_original");
@@ -391,7 +400,7 @@ var o_widgets = {
                         $(".op-browse-tab").addClass("op-disabled-nav-link");
                     }
 
-                    o_hash.updateHash(opus.allInputsValid);
+                    o_hash.updateHash(opus.areRangeInputsValid());
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                     o_widgets.disableButtonsInWidgets(false);
@@ -448,33 +457,23 @@ var o_widgets = {
         let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
-
+        console.log(`fillRANGE minInput`);
+        console.log($(minInput));
         let slug = "";
         let slugOrderNum = "";
         if (minInputName.match(/(.*)_[0-9]{2}$/)) {
             slug = minInputName.match(/(.*)_[0-9]{2}$/)[1];
-            slugOrderNum = minInputName.match(/.*_([0-9]{2})$/)[1];
+            slugOrderNum = minInputName.match(/.*(_[0-9]{2})$/)[1];
         } else {
             slug = minInputName;
         }
 
         let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(minInputName);
         let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-
         if (minVal) {
             minInput.val(minVal);
-            if (opus.selections[slug]) {
-                opus.selections[slug][idx] = minVal;
-            } else {
-                opus.selections[slug] = [minVal];
-            }
         } else {
             minInput.val("");
-            if (opus.selections[slug]) {
-                opus.selections[slug][idx] = null;
-            } else {
-                opus.selections[slug] = [null];
-            }
         }
 
         slug = slugName + "2" + slugOrderNum;
@@ -482,18 +481,22 @@ var o_widgets = {
         slug = slugName + "2";
         if (maxVal) {
             maxInput.val(maxVal);
-            if (opus.selections[slug]) {
-                opus.selections[slug][idx] = maxVal;
-            } else {
-                opus.selections[slug] = [maxVal];
-            }
         } else {
             maxInput.val("");
-            if (opus.selections[slug]) {
-                opus.selections[slug][idx] = null;
-            } else {
-                opus.selections[slug] = [null];
-            }
+        }
+    },
+
+    removeInputsValidationInfo: function(inputs) {
+        /**
+         * Remove input validation info in opus.rangeInputFieldsValidation when a input or a widget
+         * is removed.
+         */
+        for (const inputField of inputs) {
+            let inputName = $(inputField).attr("name");
+            let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
+            let uniqueid = $(inputField).attr("data-uniqueid");
+            let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
+            delete opus.rangeInputFieldsValidation[slugWithId];
         }
     },
 
@@ -535,6 +538,9 @@ var o_widgets = {
         let selector = `li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
+        let inputs = $(`#widget__${slugNoNum} input`);
+        o_widgets.removeInputsValidationInfo(inputs);
+
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -543,7 +549,7 @@ var o_widgets = {
             }
             o_search.validateRangeInput(normalizedData, false);
 
-            if (opus.allInputsValid) {
+            if (opus.areRangeInputsValid()) {
                 $("input.RANGE").removeClass("search_input_valid");
                 $("input.RANGE").removeClass("search_input_invalid");
                 $("input.RANGE").addClass("search_input_original");
@@ -560,7 +566,7 @@ var o_widgets = {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
 
-            o_hash.updateHash(opus.allInputsValid);
+            o_hash.updateHash(opus.areRangeInputsValid());
             o_widgets.updateWidgetCookies();
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
@@ -969,10 +975,11 @@ var o_widgets = {
 
                 o_widgets.attachAddInputIcon(slug, addInputIcon);
 
-                // Assign unique id for each input field.
-                for (const eachInput of widgetInputs) {
+                let widgetInputSets = $(`#widget__${slug} .op-search-inputs-set`);
+                // Assign unique id for each input set. Inputs in the same set will have the same id.
+                for (const eachInputSet of widgetInputSets) {
                     o_widgets.uniqueIdForInputs += 1;
-                    $(eachInput).attr("data-uniqueid", o_widgets.uniqueIdForInputs);
+                    $(eachInputSet).find("input").attr("data-uniqueid", o_widgets.uniqueIdForInputs);
                 }
             }
 
@@ -1297,7 +1304,7 @@ var o_widgets = {
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
-                if (!opus.allInputsValid) {
+                if (!opus.areRangeInputsValid()) {
                     return;
                 }
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
