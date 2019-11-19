@@ -26,9 +26,9 @@ var o_hash = {
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.extras));
         // [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
-        console.log(`after alignment`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(opus.extras));
+        // console.log(`after alignment`);
+        // console.log(JSON.stringify(selections));
+        // console.log(JSON.stringify(opus.extras));
         let hashStr = "";
         if (!searchOnly) {
             hashStr = o_hash.getFullHashStr(selections);
@@ -196,8 +196,9 @@ var o_hash = {
          * Get the full hash string from search params and opus.prefs
          */
         let hashStrFromSelections = o_hash.getHashStrFromSelections(selections);
-        let hashStrFromOPUSPrefs = "&" + o_hash.getHashStrFromOPUSPrefs();
-        return hashStrFromSelections + hashStrFromOPUSPrefs;
+        let hashStrFromOPUSPrefs =  o_hash.getHashStrFromOPUSPrefs();
+        return (hashStrFromSelections ?
+                hashStrFromSelections + "&" + hashStrFromOPUSPrefs : hashStrFromOPUSPrefs);
     },
 
     updateURL: function() {

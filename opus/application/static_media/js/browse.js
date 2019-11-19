@@ -120,7 +120,7 @@ var o_browse = {
                 o_browse.countTableRows();
             }
 
-            o_hash.updateHash();
+            o_hash.updateURL();
             o_browse.updateBrowseNav();
             // reset scroll position
             window.scrollTo(0, 0); // restore previous scroll position
@@ -362,7 +362,7 @@ var o_browse = {
             opus.prefs.order = orderBy.match(/opusid/) ? [orderBy] : [orderBy, opusidOrder];
             o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, isDescending, targetSlug);
 
-            o_hash.updateHash();
+            o_hash.updateURL();
             o_browse.renderSortedDataFromBeginning();
 
             return false;
@@ -388,7 +388,7 @@ var o_browse = {
             // NOTE: we will find a better way to do this using data-xxx in the future.
             $(this).closest(".list-inline-item").remove();
 
-            o_hash.updateHash();
+            o_hash.updateURL();
             // o_browse.updatePage();
             o_browse.renderSortedDataFromBeginning();
         });
@@ -427,7 +427,7 @@ var o_browse = {
             }
 
             // order in the url will get updated right away
-            o_hash.updateHash();
+            o_hash.updateURL();
 
             // o_browse.updatePage();
             o_browse.renderSortedDataFromBeginning();
@@ -1067,7 +1067,7 @@ var o_browse = {
         }
         $(`${tab} .op-slider-nav`).removeClass("op-button-disabled");
         // update startobs in url when scrolling
-        o_hash.updateHash();
+        o_hash.updateURL();
     },
 
     getScrollbarOffset: function(obsNum, currentScrollObsNum) {
@@ -1305,7 +1305,7 @@ var o_browse = {
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
                 let tab = opus.getViewTab();
                 o_browse.clearObservationData(true); // Leave startobs alone
-                o_hash.updateHash(); // This makes the changes visible to the user
+                o_hash.updateURL(); // This makes the changes visible to the user
                 o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData(opus.prefs.view);
             } else {
@@ -1655,7 +1655,7 @@ var o_browse = {
                     // handle a corner case where a user has changed the startobs to be greater than total_obs_count
                     // just reset back to 1 and get a new page
                     opus.prefs[o_browse.getStartObsLabel()] = 1;
-                    o_hash.updateHash();
+                    o_hash.updateURL();
                     $("#galleryViewContents").addClass("op-disabled");
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 } else {
@@ -1755,7 +1755,7 @@ var o_browse = {
 
         o_browse.hidePageLoaderSpinner();
         o_browse.updateSliderHandle(view);
-        o_hash.updateHash();
+        o_hash.updateURL();
     },
 
     initTable: function(tab, columns, columnsNoUnits) {
@@ -1855,7 +1855,7 @@ var o_browse = {
             opus.prefs.order.push(fullSlug);
         });
         $(".sort-contents").html(listHtml);
-        o_hash.updateHash();
+        o_hash.updateURL();
     },
 
     // number of images that can be fit in current window size
