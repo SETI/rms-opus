@@ -457,8 +457,7 @@ var o_widgets = {
         let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
-        console.log(`fillRANGE minInput`);
-        console.log($(minInput));
+
         let slug = "";
         let slugOrderNum = "";
         if (minInputName.match(/(.*)_[0-9]{2}$/)) {
@@ -488,8 +487,8 @@ var o_widgets = {
 
     removeInputsValidationInfo: function(inputs) {
         /**
-         * Remove input validation info in opus.rangeInputFieldsValidation when a input or a widget
-         * is removed.
+         * Remove input validation info in opus.rangeInputFieldsValidation when an input
+         * or a widget is removed.
          */
         for (const inputField of inputs) {
             let inputName = $(inputField).attr("name");

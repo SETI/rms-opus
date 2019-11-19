@@ -41,13 +41,6 @@ var o_search = {
     slugEndpointsReqno: {},
     slugRangeInputValidValueFromLastSearch: {},
 
-    // An object stores selections for each normalize input API call. After normalize
-    // input API returns, the stored selections will be used to update URL in updateHash.
-    // Key: input slug that triggers the normalize input API call. (Use "all" for API
-    // from allNormalizeInputApiCall)
-    // Value: selections used to call normalize input API.
-    selectionsForNormalizeInputBySlug: {},
-
     // Based on user's input, store the number of matched info by category, for example:
     // In ring radius, when user types "ha":
     // { "jupiter-inner-satellites": 0, "jupiter-rings": 1, "neptune-inner-satellites": 1, "neptune-rings": 0,
@@ -281,24 +274,8 @@ var o_search = {
             let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
-            // if (currentValue) {
-            //     if (opus.selections[slug]) {
-            //         opus.selections[slug][idx] = currentValue;
-            //     } else {
-            //         opus.selections[slug] = [currentValue];
-            //     }
-            // } else {
-            //     if (opus.selections[slug]) {
-            //         opus.selections[slug][idx] = null;
-            //     } else {
-            //         opus.selections[slug] = [null];
-            //     }
-            // }
             console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
-            // Keep a record of selections for current normalize input API call.
-            // It will be used to call updateHash in validateRangeInput.
-            o_search.selectionsForNormalizeInputBySlug[slugWithId] = JSON.parse(JSON.stringify(opus.selections));
-            // let newHash = o_hash.getHashStrFromSelections(opus.selections, true);
+            // Call normalize input api with only the slug and value from current input.
             let newHash = `${slugWithId}=${currentValue}`;
 
             o_search.lastSlugNormalizeRequestNo++;
@@ -348,18 +325,8 @@ var o_search = {
                 }
             }
             console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
-            // Keep a record of selections for current normalize input API call.
-            // It will be used to call updateHash in validateRangeInput.
-            o_search.selectionsForNormalizeInputBySlug[slugWithId] = JSON.parse(JSON.stringify(opus.selections));
-            let newHash = o_hash.getHashStrFromSelections(opus.selections, true);
 
-            o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
-            opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
-            o_widgets.disableButtonsInWidgets();
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            console.log(url);
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slugWithId, url);
+            o_hash.updateHash();
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -657,7 +624,6 @@ var o_search = {
 
     allNormalizeInputApiCall: function() {
         console.log(`allNormalizeInputApiCall`);
-        o_search.selectionsForNormalizeInputBySlug[opus.allSlug] = JSON.parse(JSON.stringify(opus.selections));
         let newHash = o_hash.getHashStrFromSelections(opus.selections, true);
 
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
@@ -697,11 +663,12 @@ var o_search = {
             let inputName = currentInput.attr("name") || "";
             let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(inputName);
             let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-            console.log(`idx: ${idx}`);
+            console.log(`idx: ${idx}, inputName: ${inputName}, slugWithId: ${slugWithId}, eachSlug: ${eachSlug}`);
+            console.log(currentInput);
             if (currentInput.length === 0) {
                 removedSelectionsIdxBySlug[slugNoCounter] = removedSelectionsIdxBySlug[slugNoCounter] || [];
                 removedSelectionsIdxBySlug[slugNoCounter].push(idx);
-                return; // continue;
+                return; // continue to the next iteration;
             }
 
             if (value === null) {
@@ -712,11 +679,8 @@ var o_search = {
                         $("#sidebar").addClass("search_overlay");
                         currentInput.addClass("search_input_invalid_no_focus");
                         currentInput.removeClass("search_input_invalid");
-                        // if (opus.selections[slugNoCounter][idx]) {
-                        //     currentInput.val(opus.selections[slugNoCounter][idx]);
-                        // }
+
                         opus.selections[slugNoCounter][idx] = currentInput.val();
-                        o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = null;
                     }
 
                     opus.rangeInputFieldsValidation[eachSlug] = false;
@@ -728,19 +692,17 @@ var o_search = {
                     we will not overwrite its displayed value.
                     */
                     if (currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
-                        o_search.slugRangeInputValidValueFromLastSearch[slugWithId] = value;
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                     } else {
                         currentInput.val(value);
-                        o_search.slugRangeInputValidValueFromLastSearch[slugWithId] = value;
+                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
                         if (value === "") {
                             value = null;
                         }
                         if (opus.selections[slugNoCounter]) {
                             opus.selections[slugNoCounter][idx] = value;
-                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter][idx] = value;
                         } else {
                             opus.selections[slugNoCounter] = [value];
-                            o_search.selectionsForNormalizeInputBySlug[slug][slugNoCounter] = [value];
                         }
 
                         // No color border if the input value is valid
@@ -751,59 +713,12 @@ var o_search = {
             }
         });
 
-        // let selections = slug ? o_search.selectionsForNormalizeInputBySlug[slug] : opus.selections;
         let selections = opus.selections;
         console.log(`Before syncing up`);
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(opus.extras));
         console.log(JSON.stringify(removedSelectionsIdxBySlug));
-        // TODO: put this into a function
-        // The following for loop is trying to remove values from selections & extras if the
-        // corresponding inputs are removed.
-        // let visited = {};
-        // for (const slugNoCounter in removedSelectionsIdxBySlug) {
-        //     if (!(slugNoCounter in selections)) {
-        //         continue;
-        //     }
-        //     if (visited[slugNoCounter]) {
-        //         continue;
-        //     }
-        //     visited[slugNoCounter] = true;
-        //     for (const idx of removedSelectionsIdxBySlug[slugNoCounter]) {
-        //         let inputElement = $(`input[name*="${slugNoCounter}"]`);
-        //         let slugNoNum = inputElement.attr("data-slugname");
-        //         let qtypeElement = $(`select[name*="qtype-${slugNoNum}"]`);
-        //         if (inputElement.hasClass("RANGE")) {
-        //             let oppositeSuffixSlug = (slugNoCounter.match(/(.*)1$/) ?
-        //                                       `${slugNoCounter.match(/(.*)1$/)[1]}2` :
-        //                                       `${slugNoCounter.match(/(.*)2$/)[1]}1`);
-        //             let previousSelections1 = selections[slugNoCounter];
-        //             let previousSelections2 = selections[oppositeSuffixSlug];
-        //
-        //             selections[slugNoCounter] = (previousSelections1.slice(0, idx)
-        //                                          .concat(previousSelections1.slice(idx+1)));
-        //             selections[oppositeSuffixSlug] = (previousSelections2.slice(0, idx)
-        //                                               .concat(previousSelections2.slice(idx+1)));
-        //
-        //             if (qtypeElement.length > 0) {
-        //                 let previousExtras = opus.extras[`qtype-${slugNoNum}`];
-        //                 opus.extras[`qtype-${slugNoNum}`] = (previousExtras.slice(0, idx)
-        //                                                      .concat(previousExtras.slice(idx+1)));
-        //             }
-        //             visited[oppositeSuffixSlug] = true;
-        //         } else if (inputElement.hasClass("STRING")) {
-        //             let previousSelections = selections[slugNoCounter];
-        //
-        //             selections[slugNoCounter] = (previousSelections.slice(0, idx)
-        //                                         .concat(previousSelections.slice(idx+1)));
-        //             if (qtypeElement.length > 0) {
-        //                 let previousExtras = opus.extras[`qtype-${slugNoNum}`];
-        //                 opus.extras[`qtype-${slugNoNum}`] = (previousExtras.slice(0, idx)
-        //                                                      .concat(previousExtras.slice(idx+1)));
-        //             }
-        //         }
-        //     }
-        // }
+
         console.log(`opus.allInputsValid: ${opus.areRangeInputsValid()}`);
         console.log(JSON.stringify(opus.rangeInputFieldsValidation));
         console.log(JSON.stringify(selections));
@@ -812,9 +727,6 @@ var o_search = {
             (slug === opus.allSlug && opus.areRangeInputsValid())) {
             o_hash.updateHash(true, false, selections);
         } else {
-            // o_hash.updateHash(true, false, selections);
-            // opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
-            // opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
@@ -847,7 +759,6 @@ var o_search = {
             console.log(o_search.slugNormalizeReqno[slug]);
             // Make sure data is from the final normalize input call before parsing
             // normalizedInputData
-            // if (normalizedInputData.reqno < o_search.lastSlugNormalizeRequestNo) {
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 o_widgets.disableButtonsInWidgets(false);

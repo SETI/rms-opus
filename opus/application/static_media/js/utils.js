@@ -80,10 +80,8 @@ var o_utils = {
          * Takes in a slugOrData from input's name attribute and if there are
          * multiple inputs, return the version without trailing counter.
          */
-        return (slugOrData.match(/^([^_]*)_.*/) ?
-                slugOrData.match(/^([^_]*)_.*/)[1] : slugOrData);
-        // return (slugOrData.match(/(.*)_[0-9]{2}$/) ?
-        //         slugOrData.match(/(.*)_[0-9]{2}$/)[1] : slugOrData);
+        return (slugOrData.match(/(.*)_[0-9]+$/) ?
+                slugOrData.match(/(.*)_[0-9]+$/)[1] : slugOrData);
     },
 
     getSlugOrDataTrailingCounterStr: function(slugOrData) {

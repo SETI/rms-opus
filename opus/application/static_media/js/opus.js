@@ -57,8 +57,8 @@ var opus = {
     // Value: true & false to indicate whether the API is in progress.
     normalizeInputForCharInProgress: {},
     // The key in normalizeInputForAllFieldsInProgress, normalizeInputForCharInProgress, or
-    // selectionsForNormalizeInputBySlug object. It will store the info of the normalize
-    // input API call triggered from o_search.allNormalizeInputApiCall() (not from any specific input).
+    // object. It will store the info of the normalize input API call triggered from
+    // o_search.allNormalizeInputApiCall() (not from any specific input).
     allSlug: "all",
 
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
