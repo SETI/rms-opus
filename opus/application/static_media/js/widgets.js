@@ -35,9 +35,9 @@ var o_widgets = {
     // These two variables will used to prevent page reload when an input is closed and waiting
     // for the return of normalized input api. When an input is closed, there will be a
     // mismatched between selections (from URL) and opus.selections, they will be matched
-    // after updateHash is called in the callback function when normalized input api is
+    // after updateURL is called in the callback function when normalized input api is
     // returned. So in the middle of this process, we have to make sure page won't reload
-    // in opus.load. Similar for adding input, after updateHash is called, selections and
+    // in opus.load. Similar for adding input, after updateURL is called, selections and
     // opus.selections will be matched.
     isRemovingInput: false,
     isAddingInput: false,
@@ -264,7 +264,7 @@ var o_widgets = {
                 }
             }
 
-            o_hash.updateHash();
+            o_hash.updateURL();
             // This will make sure normalize input api from opus.load is not called.
             opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
             opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
@@ -363,7 +363,7 @@ var o_widgets = {
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
-                o_hash.updateHash();
+                o_hash.updateURL();
                 if (isRemovingEmptySet || !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
@@ -400,7 +400,9 @@ var o_widgets = {
                         $(".op-browse-tab").addClass("op-disabled-nav-link");
                     }
 
-                    o_hash.updateHash(opus.areRangeInputsValid());
+                    if (opus.areRangeInputsValid()) {
+                        o_hash.updateURL();
+                    }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                     o_widgets.disableButtonsInWidgets(false);
@@ -565,7 +567,10 @@ var o_widgets = {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
 
-            o_hash.updateHash(opus.areRangeInputsValid());
+            if (opus.areRangeInputsValid()) {
+                o_hash.updateURL();
+            }
+
             o_widgets.updateWidgetCookies();
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             o_widgets.disableButtonsInWidgets(false);
@@ -581,7 +586,7 @@ var o_widgets = {
             });
             opus.prefs.widgets = widgets;
 
-            o_hash.updateHash();
+            o_hash.updateURL();
 
             o_widgets.updateWidgetCookies();
     },
@@ -861,7 +866,7 @@ var o_widgets = {
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
-                    o_hash.updateHash();
+                    o_hash.updateURL();
                 } else if (numberOfQtypeInputs > 1) {
                     // When there are multiple qtype inputs, update qtype options for each
                     // set of inputs by values from opus.extras.
@@ -870,7 +875,7 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
-                    o_hash.updateHash();
+                    o_hash.updateURL();
                 }
             }
 
@@ -1342,9 +1347,6 @@ var o_widgets = {
                 let displayValue = o_search.extractHtmlContent(ui.item.label);
                 $(`input[name="${slugWithCounter}"]`).val(displayValue);
                 $(`input[name="${slugWithCounter}"]`).trigger("change");
-                // If an item in the list is selected, we update the hash with selected value
-                // opus.selections[slug] = [displayValue];
-                // o_hash.updateHash();
                 return false;
             }
         })

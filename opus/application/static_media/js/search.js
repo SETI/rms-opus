@@ -326,7 +326,7 @@ var o_search = {
             }
             console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
 
-            o_hash.updateHash();
+            o_hash.updateURL();
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -364,7 +364,7 @@ var o_search = {
                     delete opus.selections[id];
                 }
             }
-            o_hash.updateHash();
+            o_hash.updateURL();
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
@@ -393,7 +393,7 @@ var o_search = {
                     break;
             }
 
-            o_hash.updateHash();
+            o_hash.updateURL();
         });
     },
 
@@ -725,7 +725,7 @@ var o_search = {
         console.log(JSON.stringify(opus.extras));
         if (opus.rangeInputFieldsValidation[slug] ||
             (slug === opus.allSlug && opus.areRangeInputsValid())) {
-            o_hash.updateHash(true, false, selections);
+            o_hash.updateURL();
         } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
