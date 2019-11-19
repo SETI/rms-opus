@@ -240,7 +240,7 @@ var opus = {
                 // 3) When there is an invalid input. If there is an invalid values, there will be a
                 // mismatch between URL and opus.selections, and the invalid value in opus.selections
                 // will be removed when it's removed from UI.
-                // 4) When it's in the middle of an input adding process. After updateHash, URL and opus.selections
+                // 4) When it's in the middle of an input adding process. After updateURL and opus.selections
                 // will get updated correctly.
                 if (o_widgets.isRemovingInput ||
                     o_widgets.isAddingInput ||
@@ -454,7 +454,7 @@ var opus = {
 
         // Update the state with the newly selected view
         opus.prefs.view = tab ? tab : opus.prefs.view;
-        o_hash.updateHash();
+        o_hash.updateURL();
 
         // Go ahead and check to see if the blog has been updated recently
         opus.updateLastBlogDate();
@@ -589,7 +589,7 @@ var opus = {
         // Reload the search menu to get the proper checkmarks and categories
         o_menu.getNewSearchMenu();
 
-        o_hash.updateHash();
+        o_hash.updateURL();
 
         // Start the main timer again
         opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
@@ -846,7 +846,7 @@ var opus = {
                 header = "OPUS API Guide";
                 break;
             case "citing":
-                let searchHash = o_hash.updateHash(false, true);
+                let searchHash = o_hash.getHashStrFromSelections();
                 url += "citing.html?stateurl=" + encodeURIComponent(window.location);
                 url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";

@@ -232,8 +232,9 @@ var o_hash = {
          * Take in a slug value array (like opus.selections, each element
          * will be a list of values for the slug) and encode all values in the
          * array. Return an array that contains encoded values for the
-         * slug. This function will be called in updateHash to make sure
-         * slug values in the hash are all encoded before updating the URL.
+         * slug. This function will be called in getHashStrFromSelections to
+         * make sure slug values in the hash are all encoded before updating
+         * the URL.
          */
         let slugValue = [];
         for (const val of slugValueArray) {
