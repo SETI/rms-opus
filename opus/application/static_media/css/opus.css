@@ -1303,14 +1303,14 @@ to stay in one line */
     }
 }
 
-@media (max-height: 510px) {
+@media (max-height: 460px) {
     /* Hide download data pane when the screen is too short */
     .cart_details {
         display: none;
     }
 }
 
-@media (max-width: 1160px) {
+@media (max-width: 1100px) {
     /* Hide download data pane when the screen is too narrow */
     .cart_details {
         display: none;
@@ -1327,7 +1327,7 @@ to stay in one line */
         padding-top: 0.5em;
     }
 
-    @media (max-height: 510px) {
+    @media (max-height: 460px) {
         /* Remove the nav-link for opening up download data panel when screen
         is too small to see download data options */
         .op-cart-toggle-download-panel {

@@ -438,6 +438,9 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
+        $("#op-cart-count").html(status.count);
+        $("#op-recycled-count").html(status.recycled_count);
+
         o_cart.totalObsCount = status.count;
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
@@ -547,19 +550,19 @@ var o_cart = {
         let recycleBin = (what === "cart" ? 0 : 1);
 
         // change indicator to zero and let the server know:
-        $.getJSON(`/opus/__cart/reset.json?recyclebin=${recycleBin}`, function(data) {
+        $.getJSON(`/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`, function(data) {
             o_cart.reloadObservationData = true;
+            o_browse.reloadObservationData = true;
             o_cart.observationData = {};
-            $("#op-cart-count").html(data.count);
-            $("#op-recycled-count").html(data.recycled_count);
+            o_cart.updateCartStatus(data);
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
 
-        let buttonInfo = o_browse.cartButtonInfo("remove");
-        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
-        $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
-        $(".op-data-table-view input").prop("checked", false);
+/*        let buttonInfo = o_browse.cartButtonInfo("remove");
+        $("#cart .op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
+        $("#cart .op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
+        $("#cart .op-data-table-view input").prop("checked", false); */
     },
 
     restoreRecycleBin: function() {
@@ -574,12 +577,12 @@ var o_cart = {
             o_utils.enableUserInteraction();
         });
 
+        o_browse.reloadObservationData = true;
         let buttonInfo = o_browse.cartButtonInfo("restore");
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo["#cart"].title);
         $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
-        $(`.op-thumbnail-container[data-id]`).addClass("op-in-cart");
         $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
         $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");
         $(`#galleryViewContents .op-cart-toggle`).attr("title", `${buttonInfo[tab].title} (spacebar)`);

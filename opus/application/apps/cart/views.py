@@ -356,13 +356,37 @@ def api_reset_session(request):
     This is a PRIVATE API.
 
     Format: __cart/reset.json
-    Arguments: recyclebin=0/1
+    Arguments: reqno=<N>
+               recyclebin=0/1
+               [download=<N>]
 
     Returns dict containing:
-        'count':                    Total number of items in cart NOT in
-                                        recycle bin
-        'recycled_count':           Total number of items in cart IN
-                                        recycle bin
+        In all cases:
+            'count':                    Total number of items in cart NOT in
+                                            recycle bin
+            'recycled_count':           Total number of items in cart IN
+                                            recycle bin
+
+        If download=1:
+            'total_download_count':       Total number of unique files
+            'total_download_size':        Total size of unique files (bytes)
+            'total_download_size_pretty': Total size of unique files (pretty format)
+            'product_cat_list':           List of categories and info:
+                [
+                 [<Product Type Category>,
+                  [{'slug_name':            Like "browse-thumb"
+                    'product_type':         Like "Browse Image (thumbnail)"
+                    'product_count':        Number of opus_ids in this category
+                    'download_count':       Number of unique files in this category
+                    'download_size':        Size of unique files in this category
+                                                (bytes)
+                    'download_size_pretty': Size of unique files in this category
+                                                (pretty format)
+                   }
+                  ], ...
+                 ], ...
+                ]
+
 
     """
     api_code = enter_api_call('api_reset_session', request)
@@ -373,6 +397,13 @@ def api_reset_session(request):
         raise ret
 
     session_id = get_session_id(request)
+
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_reset_session: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
 
     recycle_bin = request.GET.get('recyclebin', 0)
     try:
@@ -393,11 +424,23 @@ def api_reset_session(request):
     cursor = connection.cursor()
     cursor.execute(sql, values)
 
+    download = request.GET.get('download', 0)
+    try:
+        download = int(download)
+    except:
+        pass
+    if download:
+        product_types_str = request.GET.get('types', 'all')
+        product_types = product_types_str.split(',')
+        info = _get_download_info(product_types, session_id)
+    else:
+        info = {}
+
     count, recycled_count = get_cart_count(session_id, recycled=True)
-    info = {}
+
     info['count'] = count
     info['recycled_count'] = recycled_count
-
+    info['reqno'] = reqno
     ret = json_response(info)
     exit_api_call(api_code, ret)
     return ret
