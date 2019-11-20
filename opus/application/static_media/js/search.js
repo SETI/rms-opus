@@ -107,7 +107,7 @@ var o_search = {
             let slugWithId = `${slug}_${uniqueid}`;
             // Disable browse tab nav link when user focuses out and there is a change of value
             // in range input. The button will be enabled or keep disabled based on the
-            // result of input validation in parseFinalNormalizedInputDataAndUpdateHash.
+            // result of input validation in parseFinalNormalizedInputDataAndUpdateURL.
             if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slugWithId]) ||
                 (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slugWithId])) {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
@@ -289,7 +289,7 @@ var o_search = {
                 $(e.target).removeClass("input_currently_focused");
             }
 
-            o_search.parseFinalNormalizedInputDataAndUpdateHash(slugWithId, url);
+            o_search.parseFinalNormalizedInputDataAndUpdateURL(slugWithId, url);
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
@@ -326,7 +326,7 @@ var o_search = {
             }
             console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
 
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -364,7 +364,7 @@ var o_search = {
                     delete opus.selections[id];
                 }
             }
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
@@ -393,7 +393,7 @@ var o_search = {
                     break;
             }
 
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
         });
     },
 
@@ -725,7 +725,7 @@ var o_search = {
         console.log(JSON.stringify(opus.extras));
         if (opus.rangeInputFieldsValidation[slug] ||
             (slug === opus.allSlug && opus.areRangeInputsValid())) {
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
         } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
@@ -748,12 +748,12 @@ var o_search = {
         }
     },
 
-    parseFinalNormalizedInputDataAndUpdateHash: function(slug, url) {
+    parseFinalNormalizedInputDataAndUpdateURL: function(slug, url) {
         /**
          * Parse the return data from a normalize input API call. validateRangeInput
          * is called here.
          */
-        console.log(`parseFinalNormalizedInputDataAndUpdateHash: ${slug}`);
+        console.log(`parseFinalNormalizedInputDataAndUpdateURL: ${slug}`);
         $.getJSON(url, function(normalizedInputData) {
             console.log(o_search.slugNormalizeReqno);
             console.log(o_search.slugNormalizeReqno[slug]);

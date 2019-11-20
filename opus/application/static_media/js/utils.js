@@ -73,15 +73,13 @@ var o_utils = {
         return urlPrefix;
     },
 
-    // The following two functions are used in multiple files: search.js,
-    // widgets.js and hash.js.
     getSlugOrDataWithoutCounter: function(slugOrData) {
         /**
          * Takes in a slugOrData from input's name attribute and if there are
          * multiple inputs, return the version without trailing counter.
          */
-        return (slugOrData.match(/(.*)_[0-9]+$/) ?
-                slugOrData.match(/(.*)_[0-9]+$/)[1] : slugOrData);
+        let slugNoCounterMatchObj = slugOrData.match(/(.*)_[0-9]+$/);
+        return (slugNoCounterMatchObj ? slugNoCounterMatchObj[1] : slugOrData);
     },
 
     getSlugOrDataTrailingCounterStr: function(slugOrData) {
@@ -90,8 +88,8 @@ var o_utils = {
          * multiple inputs, return the trailing counter, else return an
          * empty string.
          */
-        return (slugOrData.match(/_([0-9]+)$/) ?
-                slugOrData.match(/_([0-9]+)$/)[1] : "");
+        let trailingCounterMatchObj = slugOrData.match(/_([0-9]+)$/);
+        return (trailingCounterMatchObj ? trailingCounterMatchObj[1] : "");
     },
 
     convertToTrailingCounterStr: function(num, numOfDigits=2) {

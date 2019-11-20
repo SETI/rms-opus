@@ -264,7 +264,7 @@ var o_widgets = {
                 }
             }
 
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
             // This will make sure normalize input api from opus.load is not called.
             opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
             opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
@@ -363,7 +363,7 @@ var o_widgets = {
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
-                o_hash.updateURL();
+                o_hash.updateURLFromCurrentHash();
                 if (isRemovingEmptySet || !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
@@ -401,7 +401,7 @@ var o_widgets = {
                     }
 
                     if (opus.areRangeInputsValid()) {
-                        o_hash.updateURL();
+                        o_hash.updateURLFromCurrentHash();
                     }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -568,7 +568,7 @@ var o_widgets = {
             }
 
             if (opus.areRangeInputsValid()) {
-                o_hash.updateURL();
+                o_hash.updateURLFromCurrentHash();
             }
 
             o_widgets.updateWidgetCookies();
@@ -586,7 +586,7 @@ var o_widgets = {
             });
             opus.prefs.widgets = widgets;
 
-            o_hash.updateURL();
+            o_hash.updateURLFromCurrentHash();
 
             o_widgets.updateWidgetCookies();
     },
@@ -866,7 +866,7 @@ var o_widgets = {
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
-                    o_hash.updateURL();
+                    o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
                     // When there are multiple qtype inputs, update qtype options for each
                     // set of inputs by values from opus.extras.
@@ -875,7 +875,7 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
-                    o_hash.updateURL();
+                    o_hash.updateURLFromCurrentHash();
                 }
             }
 

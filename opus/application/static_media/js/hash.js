@@ -15,51 +15,41 @@ var o_hash = {
      *  changing, reading, and initiating a session from the browser hash
      *
      **/
-    updateHash: function(updateURL=true, searchOnly=false, selections=opus.selections) {
+    getHashStrFromSelections: function(useFieldUniqueIDs=false) {
         /**
-         * updates the hash & URL based on the selections passed in.
+         * Get the hash string from selections only. Hash string will be in alphabetical
+         * & slug counter order. When useFieldUniqueIDs is set to true, it will create
+         * the hash string with slugs + inputs' uniqueid, and it's used for normalize
+         * input API call.
          */
-        // Make sure selections and extras are aligned before updating hash.
-        // This will avoid issue that qtype is not properly updated in the URL hash when a
-        // widget just open and opus.selections is not updated.
-        console.log(`updateHash`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(opus.extras));
-        // [selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(selections, opus.extras);
-        // console.log(`after alignment`);
-        // console.log(JSON.stringify(selections));
-        // console.log(JSON.stringify(opus.extras));
-        let hashStr = "";
-        if (!searchOnly) {
-            hashStr = o_hash.getFullHashStr(selections);
-            if (updateURL) {
-                window.location.hash = '/' + hashStr;
-            }
-        } else {
-            hashStr = o_hash.getHashStrFromSelections(selections);
-        }
-        console.log(hashStr.split("&"));
-        return hashStr;
-    },
-
-    getHashStrFromSelections: function(selections=opus.selections, useFieldUniqueIDs=false) {
-        /**
-         * Get the hash string from selections only. No info from opus.prefs will be used
-         * to create this string. Hash string will be in alphabetical & slug counter order.
-         */
+        console.log(`getHashStrFromSelections`);
         let hash = [];
         let visited = {};
         //  sort in alphabetical order with case insensitive
-        let sortedSlugs = Object.keys(selections).sort(function(a, b) {
-            return a.localeCompare(b, 'en', {'sensitivity': 'base'});
+        let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
+        let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
+            let trailingCounterStr = "";
+            a = o_hash.convertSlugForSorting(a);
+            b = o_hash.convertSlugForSorting(b);
+            if (a > b) {
+                return 1;
+            } else if (a < b) {
+                return -1;
+            } else {
+                return 0;
+            }
         });
+        // let sortedSlugs = Object.keys(opus.selections).sort(function(a, b) {
+        //     return a.localeCompare(b, 'en', {'sensitivity': 'base'});
+        // });
 
+        console.log(sortedSlugs);
         for (const slug of sortedSlugs) {
             if (visited[slug]) {
                 continue;
             }
-            let value = selections[slug];
-            if (value.length) {
+            let value = opus.selections[slug];
+            if (value && value.length) {
                 let encodedSelectionValues = o_hash.encodeSlugValues(value);
                 let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
@@ -70,17 +60,17 @@ var o_hash = {
                 // before pushing it into hash array.
                 if (slug.match(/.*(1|2)$/)) { // RANGE inputs
                     let oppositeSuffixSlug = slug.match(/.*1$/) ? `${slugNoNum}2` : `${slugNoNum}1`;
-                    let oppositeSuffixEncodedSelectionValues = o_hash.encodeSlugValues(selections[oppositeSuffixSlug]);
+                    let oppositeSuffixEncodedSelectionValues = (o_hash.encodeSlugValues(
+                                                                opus.selections[oppositeSuffixSlug]));
 
                     let slug1 = slug;
                     let slug2 = oppositeSuffixSlug;
                     let slug1EncodedSelections = encodedSelectionValues;
                     let slug2EncodedSelections = oppositeSuffixEncodedSelectionValues;
                     if (slug.match(/.*2$/)) {
-                        slug1 = oppositeSuffixSlug;
-                        slug2 = slug;
-                        slug1EncodedSelections = oppositeSuffixEncodedSelectionValues;
-                        slug2EncodedSelections = encodedSelectionValues;
+                        [slug1, slug2] = [slug2, slug1];
+                        [slug1EncodedSelections, slug2EncodedSelections] = ([slug2EncodedSelections,
+                                                                            slug1EncodedSelections]);
                     }
 
                     visited[slug1] = true;
@@ -105,15 +95,19 @@ var o_hash = {
                             }
                         }
 
-                        if (selections[slug1][trailingCounter-1] !== null) {
+                        if (opus.selections[slug1][trailingCounter-1] !== null) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
-                        if (selections[slug2][trailingCounter-1] !== null) {
+                        if (opus.selections[slug2][trailingCounter-1] !== null) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
-                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                       trailingCounter);
+                        if (qtypeSlug in opus.extras) {
+                            visited[qtypeSlug] = true;
+                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                        trailingCounter);
+                        }
+
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
                     visited[slug] = true;
@@ -132,52 +126,99 @@ var o_hash = {
                         if (value[trailingCounter-1] !== null) {
                             hash.push(slugWithCounter + "=" + encodedSelectionValues[trailingCounter-1]);
                         }
-                        o_hash.updateURLHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                       trailingCounter);
+                        if (qtypeSlug in opus.extras) {
+                            visited[qtypeSlug] = true;
+                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                                                        trailingCounter);
+                        }
                     }
                 } else { // Multi/single choice inputs
                     hash.push(slug + "=" + encodedSelectionValues.join(","));
                 }
-            }
-        }
+            } else { // qtypeSlug
+                // For slugs only exist in extras, make sure they are updated in the hash.
+                // This will make sure multiple empty input sets can show up after page reloads.
+                let qtypeSlug = slug;
+                if (visited[qtypeSlug]) {
+                    continue;
+                }
+                let qtypeValue = opus.extras[qtypeSlug];
+                if (qtypeValue.length) {
+                    let encodedExtraValues = o_hash.encodeSlugValues(qtypeValue);
 
-        // For slugs only exist in extras, make sure they are updated in URL.
-        // This will make sure multiple empty input sets can show up after page reloads.
-        for (const qtypeSlug in opus.extras) {
-            if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
-                continue;
-            }
-            let value = opus.extras[qtypeSlug];
-            if (value.length) {
-                let encodedExtraValues = o_hash.encodeSlugValues(value);
+                    if (qtypeValue.length > 1) {
+                        let numberOfQtypeInputs = encodedExtraValues.length;
 
-                if (value.length > 1) {
-                    let numberOfQtypeInputs = encodedExtraValues.length;
+                        for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
+                            let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
+                            let newKey = `${qtypeSlug}_${trailingCounterString}`;
 
-                    for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
-                        let trailingCounterString = (`${trailingCounter}`.length === 1 ?
-                                                    `0${trailingCounter}` : `${trailingCounter}`);
-                        let newKey = `${qtypeSlug}_${trailingCounterString}`;
-
-                        if (value[trailingCounter-1] !== null) {
-                            // if (!hash.includes(newKey + "=" + encodedExtraValues[trailingCounter-1])) {
-                            //     hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
-                            // }
-                            hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            if (qtypeValue[trailingCounter-1] !== null) {
+                                hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            }
                         }
+                    } else {
+                        hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
                     }
-                } else {
-                    // if (!hash.includes(qtypeSlug + "=" + encodedExtraValues.join(","))) {
-                    //     hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
-                    // }
-                    hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
                 }
             }
         }
 
+        // For slugs only exist in extras, make sure they are updated in the hash.
+        // This will make sure multiple empty input sets can show up after page reloads.
+        // for (const qtypeSlug in opus.extras) {
+        //     if (visited[qtypeSlug]) {
+        //         continue;
+        //     }
+        //     // let slugMatchObj = qtypeSlug.match(/qtype-(.*)$/);
+        //     // let slugName = qtypeSlug.match(/qtype-(.*)$/) ? qtypeSlug.match(/qtype-(.*)$/)[1] : "";
+        //     // if ((qtypeSlug.match(/qtype-(.*)$/)[1] in opus.selections ||
+        //     //      `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in opus.selections ||
+        //     //      `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in opus.selections)) {
+        //     //     continue;
+        //     // }
+        //     let value = opus.extras[qtypeSlug];
+        //     if (value.length) {
+        //         let encodedExtraValues = o_hash.encodeSlugValues(value);
+        //
+        //         if (value.length > 1) {
+        //             let numberOfQtypeInputs = encodedExtraValues.length;
+        //
+        //             for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
+        //                 let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
+        //                 let newKey = `${qtypeSlug}_${trailingCounterString}`;
+        //
+        //                 if (value[trailingCounter-1] !== null) {
+        //                     hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+        //                 }
+        //             }
+        //         } else {
+        //             hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
+        //         }
+        //     }
+        // }
+
+        console.log(hash);
+
         return hash.join("&");
+    },
+
+    convertSlugForSorting: function(slug) {
+        /**
+         * This function converts the slug for comparison in .sort callback function.
+         */
+        slug = slug.toLowerCase();
+        let trailingCounter = "";
+        if (slug.includes("_")) {
+            let idx = slug.indexOf("_");
+            trailingCounter = slug.slice(idx);
+            slug = slug.slice(0, idx);
+        }
+        if (slug.startsWith("qtype-")) {
+            slug = slug.slice(6) + "3";
+        }
+        slug += trailingCounter;
+        return slug;
     },
 
     getHashStrFromOPUSPrefs: function() {
@@ -191,39 +232,40 @@ var o_hash = {
         return hash.join("&");
     },
 
-    getFullHashStr: function(selections=opus.selections) {
+    getFullHashStr: function() {
         /**
          * Get the full hash string from search params and opus.prefs
          */
-        let hashStrFromSelections = o_hash.getHashStrFromSelections(selections);
+        let hashStrFromSelections = o_hash.getHashStrFromSelections();
         let hashStrFromOPUSPrefs =  o_hash.getHashStrFromOPUSPrefs();
         return (hashStrFromSelections ?
                 hashStrFromSelections + "&" + hashStrFromOPUSPrefs : hashStrFromOPUSPrefs);
     },
 
-    updateURL: function() {
+    updateURLFromCurrentHash: function() {
         /**
          * Update URL with full hash string
          */
+        console.log(`=== updateURLFromCurrentHash ===`);
+        console.log(JSON.stringify(opus.selections));
+        console.log(JSON.stringify(opus.extras));
         let fullHashStr = o_hash.getFullHashStr();
+        console.log(fullHashStr.split("&"));
         window.location.hash = '/' + fullHashStr;
     },
 
-    updateURLHashFromExtras: function(hash, qtypeInExtras, numberOfInputSets, counter) {
+    updateHashFromExtras: function(hash, qtypeInExtras, numberOfInputSets, counter) {
         /**
-         * Update the URL hash with data from opus.extras if the passed-in slug
-         * (qtypeInExtras) exists in opus.extras. The function will take in
+         * Update the hash with data from opus.extras. The function will take in
          * numberOfInputSets & counter to determine if trailingCounterString should
-         * be added to the final slug in URL hash.
+         * be added to the final slug in the hash.
          */
         let trailingCounterString = o_utils.convertToTrailingCounterStr(counter);
-        if (qtypeInExtras in opus.extras) {
-            let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
-            let qtypeInURL = ((numberOfInputSets === 1) ?
-                              qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
-            if (opus.extras[qtypeInExtras][counter-1] !== null) {
-                hash.push(qtypeInURL + "=" + encodedExtraValues[counter-1]);
-            }
+        let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
+        let qtypeInURL = ((numberOfInputSets === 1) ?
+                          qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
+        if (opus.extras[qtypeInExtras][counter-1] !== null) {
+            hash.push(qtypeInURL + "=" + encodedExtraValues[counter-1]);
         }
     },
 
@@ -374,7 +416,7 @@ var o_hash = {
                 slug = slugNoCounter;
 
                 if (slugCounter > opus.maxAllowedInputSets) {
-                    return; //continue
+                    return; // continue to next iteration
                 }
 
                 if (slug.startsWith("qtype-")) {
@@ -412,68 +454,8 @@ var o_hash = {
                 // Loop through widgets and check if there is any widget with RANGE or STRING input
                 // but without qtype, we will put those in selections as well.
                 $.each(value.split(","), function(idx, widgetSlug) {
-                    if (`qtype-${widgetSlug}` in extras) {
-                        return;
-                    }
-
-                    let inputInAWidget = $(`#widget__${widgetSlug} input`);
-                    if (inputInAWidget.length === 0) {
-                        return;
-                    }
-
-                    // Sync up selections and opus.selections when a set of inputs is removed or added
-                    // so that page will not reload in these two cases.
-                    if (inputInAWidget.hasClass("RANGE")) {
-                        if (!(`${widgetSlug}1` in selections) && !(`${widgetSlug}2` in selections) &&
-                            !(`${widgetSlug}1` in opus.selections) && !(`${widgetSlug}2` in opus.selections)) {
-                            selections[`${widgetSlug}1`] = [null];
-                            selections[`${widgetSlug}2`] = [null];
-                            opus.selections[`${widgetSlug}1`] = [null];
-                            opus.selections[`${widgetSlug}2`] = [null];
-                        } else {
-                            selections[`${widgetSlug}1`] = selections[`${widgetSlug}1`] || [];
-                            selections[`${widgetSlug}2`] = selections[`${widgetSlug}2`] || [];
-
-                            opus.selections[`${widgetSlug}1`] = opus.selections[`${widgetSlug}1`] || [];
-                            opus.selections[`${widgetSlug}2`] = opus.selections[`${widgetSlug}2`] || [];
-
-                            let opusSelectionsLen1 = opus.selections[`${widgetSlug}1`].length;
-                            let opusSelectionsLen2 = opus.selections[`${widgetSlug}2`].length;
-                            // Sync up selections and opus.selections when a new set of input is added.
-                            while (selections[`${widgetSlug}1`].length < opusSelectionsLen1) {
-                                selections[`${widgetSlug}1`].push(null);
-                            }
-                            while (selections[`${widgetSlug}2`].length < opusSelectionsLen2) {
-                                selections[`${widgetSlug}2`].push(null);
-                            }
-                            // Sync up selections and opus.selections when a set of input is removed.
-                            while (selections[`${widgetSlug}1`].length > opusSelectionsLen1) {
-                                selections[`${widgetSlug}1`].pop();
-                            }
-                            while (selections[`${widgetSlug}2`].length > opusSelectionsLen2) {
-                                selections[`${widgetSlug}2`].pop();
-                            }
-                        }
-                    } else if (inputInAWidget.hasClass("STRING")) {
-                        if (!(widgetSlug in selections) && !(widgetSlug in opus.selections)) {
-                            selections[widgetSlug] = [null];
-                            opus.selections[widgetSlug] = [null];
-                        } else {
-                            selections[widgetSlug] = selections[widgetSlug] || [];
-                            opus.selections[widgetSlug] = opus.selections[widgetSlug] || [];
-
-
-                            let opusSelectionsLen = opus.selections[widgetSlug].length;
-                            // Sync up selections and opus.selections when a new set of input is added.
-                            while (selections[widgetSlug].length < opusSelectionsLen) {
-                                selections[widgetSlug].push(null);
-                            }
-                            // Sync up selections and opus.selections when a set of input is removed.
-                            while (selections[widgetSlug].length > opusSelectionsLen) {
-                                selections[widgetSlug].pop();
-                            }
-                        }
-                    }
+                    o_hash.SyncUpWithOPUSSelectionsForWidgetsWithNoQtype(selections,
+                                                                         extras, widgetSlug);
                 });
             }
         });
@@ -481,6 +463,75 @@ var o_hash = {
         [selections, extras] = o_hash.alignDataInSelectionsAndExtras(selections, extras);
 
         return [selections, extras];
+    },
+
+    SyncUpWithOPUSSelectionsForWidgetsWithNoQtype: function(selections, extras, widgetSlug) {
+        /**
+         * Takes in a widgetSlug and check if the widget has STRING or RANGE input
+         * without qtype, if so, sync up the opus.selections with selections.
+         */
+        if (`qtype-${widgetSlug}` in extras) {
+            return;
+        }
+
+        let inputInAWidget = $(`#widget__${widgetSlug} input`);
+        if (inputInAWidget.length === 0) {
+            return;
+        }
+
+        // Sync up selections and opus.selections when a set of inputs is removed or added
+        // so that page will not reload in these two cases.
+        if (inputInAWidget.hasClass("RANGE")) {
+            if (!(`${widgetSlug}1` in selections) && !(`${widgetSlug}2` in selections) &&
+                !(`${widgetSlug}1` in opus.selections) && !(`${widgetSlug}2` in opus.selections)) {
+                selections[`${widgetSlug}1`] = [null];
+                selections[`${widgetSlug}2`] = [null];
+                opus.selections[`${widgetSlug}1`] = [null];
+                opus.selections[`${widgetSlug}2`] = [null];
+            } else {
+                selections[`${widgetSlug}1`] = selections[`${widgetSlug}1`] || [];
+                selections[`${widgetSlug}2`] = selections[`${widgetSlug}2`] || [];
+
+                opus.selections[`${widgetSlug}1`] = opus.selections[`${widgetSlug}1`] || [];
+                opus.selections[`${widgetSlug}2`] = opus.selections[`${widgetSlug}2`] || [];
+
+                let opusSelectionsLen1 = opus.selections[`${widgetSlug}1`].length;
+                let opusSelectionsLen2 = opus.selections[`${widgetSlug}2`].length;
+                // Sync up selections and opus.selections when a new set of input is added.
+                while (selections[`${widgetSlug}1`].length < opusSelectionsLen1) {
+                    selections[`${widgetSlug}1`].push(null);
+                }
+                while (selections[`${widgetSlug}2`].length < opusSelectionsLen2) {
+                    selections[`${widgetSlug}2`].push(null);
+                }
+                // Sync up selections and opus.selections when a set of input is removed.
+                while (selections[`${widgetSlug}1`].length > opusSelectionsLen1) {
+                    selections[`${widgetSlug}1`].pop();
+                }
+                while (selections[`${widgetSlug}2`].length > opusSelectionsLen2) {
+                    selections[`${widgetSlug}2`].pop();
+                }
+            }
+        } else if (inputInAWidget.hasClass("STRING")) {
+            if (!(widgetSlug in selections) && !(widgetSlug in opus.selections)) {
+                selections[widgetSlug] = [null];
+                opus.selections[widgetSlug] = [null];
+            } else {
+                selections[widgetSlug] = selections[widgetSlug] || [];
+                opus.selections[widgetSlug] = opus.selections[widgetSlug] || [];
+
+
+                let opusSelectionsLen = opus.selections[widgetSlug].length;
+                // Sync up selections and opus.selections when a new set of input is added.
+                while (selections[widgetSlug].length < opusSelectionsLen) {
+                    selections[widgetSlug].push(null);
+                }
+                // Sync up selections and opus.selections when a set of input is removed.
+                while (selections[widgetSlug].length > opusSelectionsLen) {
+                    selections[widgetSlug].pop();
+                }
+            }
+        }
     },
 
     extrasWithoutUnusedQtypes: function(selections, extras) {
@@ -507,8 +558,7 @@ var o_hash = {
         if (!hash) {
             return;
         }
-        // first are any custom widget sizes in the hash?
-        // just updating prefs here..
+
         hash = hash.split('&');
         hash = o_hash.decodeHashArray(hash);
 
@@ -524,7 +574,7 @@ var o_hash = {
                     slug = slugNoCounter;
 
                     if (slugCounter > opus.maxAllowedInputSets) {
-                        return; //continue;
+                        return; // continue to next iteration
                     }
 
                     if (slugCounter) {
@@ -578,7 +628,7 @@ var o_hash = {
                     slug = slugNoCounter;
 
                     if (slugCounter > opus.maxAllowedInputSets) {
-                        return; //continue;
+                        return; // continue to next iteration
                     }
 
                     if (slugCounter) {

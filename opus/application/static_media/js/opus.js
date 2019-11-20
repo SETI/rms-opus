@@ -454,7 +454,7 @@ var opus = {
 
         // Update the state with the newly selected view
         opus.prefs.view = tab ? tab : opus.prefs.view;
-        o_hash.updateURL();
+        o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
         opus.updateLastBlogDate();
@@ -589,7 +589,7 @@ var opus = {
         // Reload the search menu to get the proper checkmarks and categories
         o_menu.getNewSearchMenu();
 
-        o_hash.updateURL();
+        o_hash.updateURLFromCurrentHash();
 
         // Start the main timer again
         opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
