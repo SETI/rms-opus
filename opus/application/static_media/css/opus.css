@@ -1,3 +1,9 @@
+/* opus-specific values live here... */
+:root {
+    --op-cart-panel-width-break: 1100px;
+    --op-cart-panel-height-break: 460px;
+}
+
 body {
     overflow: hidden;
 }
@@ -1200,7 +1206,7 @@ to stay in one line */
   that the empty cart button is always adjacent, not overlaid, by this container. */
 #cart .op-cart-nav-container {
     display: flex;
-    width: calc(100% - 10.5em);
+    width: 100%;
 }
 /* Styling for slider's height and width in cart page */
 #cart .op-cart-nav-container .op-observation-slider {
@@ -1350,7 +1356,7 @@ to stay in one line */
 
 /* Remove the nav-link for opening up download data panel when screen
 is wide enough */
-@media (min-width: 1161px) {
+@media (min-width: 1101px) {
     .op-cart-toggle-download-panel {
         display: none !important;
     }
