@@ -1044,7 +1044,13 @@ var o_browse = {
             opus.prefs[startObsLabel] = obsNum;
 
             $(`${tab} .op-observation-number`).html(o_utils.addCommas(obsNum));
-            $(`${tab} .op-slider-pointer`).css("width", `${o_utils.addCommas(maxSliderVal).length*0.7}em`);
+            let numberWidth = o_utils.addCommas(maxSliderVal).length*0.55+0.7;
+            $(`${tab} .op-slider-pointer`).css("width", `${numberWidth}em`);
+            // See https://stackoverflow.com/questions/5540170/jquery-ui-sliders-hops-when-clicked
+            $(`${tab} .op-slider-pointer`).css("margin-left", `-${numberWidth/2}em`);
+            // This offsets the slider bar from the "Observation #" text
+            $(`${tab} .op-observation-slider`).css("margin-left", `${numberWidth/2-0.5}em`);
+            $(`${tab} .op-observation-slider`).css("margin-right", `${numberWidth/2-0.5}em`);
 
             // just make the step size the number of the obserations across the page...
             // if the observations have not yet been rendered, leave the default, it will get changed later
