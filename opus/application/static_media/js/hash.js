@@ -22,29 +22,23 @@ var o_hash = {
          * the hash string with slugs + inputs' uniqueid, and it's used for normalize
          * input API call.
          */
-        console.log(`getHashStrFromSelections`);
         let hash = [];
         let visited = {};
 
         let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
         //  sort in alphabetical order with case insensitive
         let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
-            let trailingCounterStr = "";
             a = o_hash.convertSlugForSorting(a);
             b = o_hash.convertSlugForSorting(b);
             if (a > b) {
-                return 1;
+                return 1; // a will have higher idx than b
             } else if (a < b) {
-                return -1;
+                return -1; // a will have lower idx than b
             } else {
                 return 0;
             }
         });
-        // let sortedSlugs = Object.keys(opus.selections).sort(function(a, b) {
-        //     return a.localeCompare(b, 'en', {'sensitivity': 'base'});
-        // });
 
-        console.log(sortedSlugs);
         for (const slug of sortedSlugs) {
             if (visited[slug]) {
                 continue;
@@ -165,42 +159,6 @@ var o_hash = {
             }
         }
 
-        // For slugs only exist in extras, make sure they are updated in the hash.
-        // This will make sure multiple empty input sets can show up after page reloads.
-        // for (const qtypeSlug in opus.extras) {
-        //     if (visited[qtypeSlug]) {
-        //         continue;
-        //     }
-        //     // let slugMatchObj = qtypeSlug.match(/qtype-(.*)$/);
-        //     // let slugName = qtypeSlug.match(/qtype-(.*)$/) ? qtypeSlug.match(/qtype-(.*)$/)[1] : "";
-        //     // if ((qtypeSlug.match(/qtype-(.*)$/)[1] in opus.selections ||
-        //     //      `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in opus.selections ||
-        //     //      `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in opus.selections)) {
-        //     //     continue;
-        //     // }
-        //     let value = opus.extras[qtypeSlug];
-        //     if (value.length) {
-        //         let encodedExtraValues = o_hash.encodeSlugValues(value);
-        //
-        //         if (value.length > 1) {
-        //             let numberOfQtypeInputs = encodedExtraValues.length;
-        //
-        //             for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
-        //                 let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
-        //                 let newKey = `${qtypeSlug}_${trailingCounterString}`;
-        //
-        //                 if (value[trailingCounter-1] !== null) {
-        //                     hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
-        //                 }
-        //             }
-        //         } else {
-        //             hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
-        //         }
-        //     }
-        // }
-
-        console.log(hash);
-
         return hash.join("&");
     },
 
@@ -247,11 +205,7 @@ var o_hash = {
         /**
          * Update URL with full hash string
          */
-        console.log(`=== updateURLFromCurrentHash ===`);
-        console.log(JSON.stringify(opus.selections));
-        console.log(JSON.stringify(opus.extras));
         let fullHashStr = o_hash.getFullHashStr();
-        console.log(fullHashStr.split("&"));
         window.location.hash = '/' + fullHashStr;
     },
 

@@ -161,7 +161,6 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
-            console.log(`click + (OR) to add an input (+)`);
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -271,7 +270,6 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
-            console.log(`click trash icon to delete an input (-)`);
             e.preventDefault();
             o_widgets.isRemovingInput = true;
 
@@ -467,8 +465,6 @@ var o_widgets = {
             slug = minInputName;
         }
 
-        let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(minInputName);
-        let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
         if (minVal) {
             minInput.val(minVal);
         } else {
