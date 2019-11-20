@@ -212,6 +212,12 @@ var o_widgets = {
             let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
             o_widgets.attachAddInputIcon(slug, addInputIcon);
 
+            // Restore the dropdown status, including removing all highlighted texts
+            // and collapse all ranges categories.
+            let inputToTriggerDropdown = ($(`#widget__${slug} .op-search-inputs-set:last`)
+                                          .find("input:first"));
+            o_widgets.restoreRangesInfoDropdownStatus(inputToTriggerDropdown);
+
             // Update opus.selections & opus.extras
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
@@ -477,6 +483,33 @@ var o_widgets = {
             let uniqueid = $(inputField).attr("data-uniqueid");
             let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
             delete opus.rangeInputFieldsValidation[slugWithId];
+        }
+    },
+
+    restoreRangesInfoDropdownStatus: function(targetInput) {
+        /**
+         * Remove all highlighted text and make sure all category are collpased
+         */
+        let preprogrammedRangesDropdown = (targetInput
+                                           .next(".op-preprogrammed-ranges")
+                                           .find(".op-scrollable-menu"));
+        let preprogrammedRangesInfo = preprogrammedRangesDropdown.find("li");
+
+        // If ranges info is not available, return from the function.
+        if (preprogrammedRangesDropdown.length === 0 || !$(targetInput).hasClass("op-range-input-min")) {
+            return;
+        }
+
+        for (const category of preprogrammedRangesInfo) {
+            let collapsibleContainerId = $(category).attr("data-category");
+            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+
+            for (const singleRangeData of rangesInfoInOneCategory) {
+                o_search.removeHighlightedRangesName(singleRangeData);
+                $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).removeClass("op-hide-element");
+                $(singleRangeData).removeClass("op-hide-element");
+                $(`#${collapsibleContainerId}`).collapse("hide");
+            }
         }
     },
 

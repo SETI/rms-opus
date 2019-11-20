@@ -537,6 +537,7 @@ var o_search = {
                         $(`#${collapsibleContainerId}`).collapse("show");
                     }
                 } else {
+                    o_search.removeHighlightedRangesName(singleRangeData);
                     // Hide the item if it doesn't match the input keyword
                     $(singleRangeData).addClass("op-hide-element");
                 }
