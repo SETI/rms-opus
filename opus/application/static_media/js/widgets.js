@@ -266,8 +266,7 @@ var o_widgets = {
 
             o_hash.updateURLFromCurrentHash();
             // This will make sure normalize input api from opus.load is not called.
-            opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
-            opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
+            opus.updateOPUSLastSelectionsWithOPUSSelections();
             o_widgets.isAddingInput = false;
         });
 
@@ -367,8 +366,7 @@ var o_widgets = {
                 if (isRemovingEmptySet || !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
-                    opus.lastSelections = JSON.parse(JSON.stringify(opus.selections));
-                    opus.lastExtras = JSON.parse(JSON.stringify(opus.extras));
+                    opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
                 o_widgets.disableButtonsInWidgets(false);
                 o_widgets.isRemovingInput = false;

@@ -326,6 +326,11 @@ var o_search = {
             }
             console.log(`currentVal: ${currentValue}, idx: ${idx}, slug: ${slug}`);
 
+            // If there is an invalid value, and user still updates string input,
+            // update the last selections to prevent allNormalizeInputApiCall.
+            if (!opus.areRangeInputsValid()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
             o_hash.updateURLFromCurrentHash();
         });
 
@@ -364,6 +369,12 @@ var o_search = {
                     delete opus.selections[id];
                 }
             }
+
+            // If there is an invalid value, and user still updates mult input,
+            // update the last selections to prevent allNormalizeInputApiCall.
+            if (!opus.areRangeInputsValid()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
             o_hash.updateURLFromCurrentHash();
         });
 
@@ -392,7 +403,11 @@ var o_search = {
                     opus.extras[`qtype-${slug}`] = qtypes;
                     break;
             }
-
+            // If there is an invalid value, and user still updates qtype input,
+            // update the last selections to prevent allNormalizeInputApiCall.
+            if (!opus.areRangeInputsValid()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
             o_hash.updateURLFromCurrentHash();
         });
     },
@@ -564,7 +579,7 @@ var o_search = {
                 o_search.rangesNameTotalMatchedCounter[slugWithId] += o_search.rangesNameMatchedCounterByCategory[eachCat];
             }
         }
-        o_search.inputsRangesNameMatchedInfo[slugWithId] = JSON.parse(JSON.stringify(o_search.rangesNameMatchedCounterByCategory));
+        o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
 
         if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 0 && currentValue) {
             if (preprogrammedRangesDropdown.hasClass("show")) {
@@ -725,6 +740,9 @@ var o_search = {
         console.log(JSON.stringify(opus.extras));
         if (opus.rangeInputFieldsValidation[slug] ||
             (slug === opus.allSlug && opus.areRangeInputsValid())) {
+            if (!opus.areRangeInputsValid()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
             o_hash.updateURLFromCurrentHash();
         } else {
             $("#op-result-count").text("?");

@@ -15,7 +15,6 @@ var o_utils = {
      *  some utils
      *
      **/
-
     areObjectsEqual: function(obj1, obj2) {
         /**
          * This is for comparing selections or lastSelections
@@ -103,6 +102,13 @@ var o_utils = {
          * 10 -> "10"
          */
         return ("0" + num).slice(-numOfDigits);
+    },
+
+    // Deep clone an object with arrays as values.
+    // NOTE: the following method won't deep clone values if they are functions
+    // or inner objects. In our case, we only have arrays as values.
+    deepCloneObj: function(obj) {
+        return JSON.parse(JSON.stringify(obj));
     }
 };
 

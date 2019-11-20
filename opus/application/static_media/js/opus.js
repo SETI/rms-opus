@@ -1175,6 +1175,15 @@ var opus = {
         return true;
     },
 
+    updateOPUSLastSelectionsWithOPUSSelections: function() {
+        /**
+         * Update opus.lastSelections & opus.lastExtras with opus.selections
+         * and opus.extras.
+         */
+        opus.lastSelections = o_utils.deepCloneObj(opus.selections);
+        opus.lastExtras = o_utils.deepCloneObj(opus.extras);
+    },
+
 }; // end opus namespace
 
 $(document).ready(function() {

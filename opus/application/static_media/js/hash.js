@@ -25,8 +25,9 @@ var o_hash = {
         console.log(`getHashStrFromSelections`);
         let hash = [];
         let visited = {};
-        //  sort in alphabetical order with case insensitive
+
         let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
+        //  sort in alphabetical order with case insensitive
         let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
             let trailingCounterStr = "";
             a = o_hash.convertSlugForSorting(a);
@@ -660,8 +661,8 @@ var o_hash = {
          * Arrays for slugNameB and qtype-slugNameB will be the same length
          * (STRING input).
          */
-        let selections = JSON.parse(JSON.stringify(selectionsData));
-        let extras = JSON.parse(JSON.stringify(extrasData));
+        let selections = o_utils.deepCloneObj(selectionsData);
+        let extras = o_utils.deepCloneObj(extrasData);
         let rangeQtypeDefaultVal = "any";
         let strQtypeDefaultVal = "contains";
         for (const slug in selections) {
