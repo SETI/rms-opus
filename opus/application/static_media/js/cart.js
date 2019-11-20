@@ -8,7 +8,11 @@
 
 // The download data left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 1160;
+const cartLeftPaneThreshold = 1100;
+// The download data left pane will be closed when the screen width is equal to
+// or less than the current threshold and the screen height is also less than
+// the height threshold
+const cartLeftPaneMinHeight = 460;
 // Max height for the contents of download links history (.popover-body) before we enable PS.
 const downloadLinksPBMaxHeight = 200;
 // Html string for customized popover window. The reason we don't put the whole html
@@ -569,6 +573,7 @@ var o_cart = {
         // to disable clicks:
         o_utils.disableUserInteraction();
         let tab = opus.getViewTab();
+        o_cart.lastRequestNo++;
 
         let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
 

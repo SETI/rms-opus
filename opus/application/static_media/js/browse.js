@@ -2314,6 +2314,13 @@ var o_browse = {
 
         // make sure slider is updated when window is resized
         o_browse.updateSliderHandle(view, browserResized, isDOMChanged);
+
+        // if the browser is past the @media break both vertically and horizontally,
+        // close the download data panel
+        if (tab === "#cart" &&
+            $(window).width() <= cartLeftPaneThreshold && $(window).height() <= cartLeftPaneMinHeight) {
+            opus.hideHelpAndCartPanels();
+        }
     },
 
     adjustTableSize: function() {
