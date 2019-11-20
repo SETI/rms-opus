@@ -149,6 +149,7 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
+            console.log(`click (+) to add an input`);
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -264,6 +265,7 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
+            console.log(`click (-) to remove an input`);
             e.preventDefault();
             o_widgets.isRemovingInput = true;
 
@@ -278,6 +280,11 @@ var o_widgets = {
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
 
             let isRemovingEmptySet = true;
+
+            // Check if there is any selections change. This flag will be used to determine
+            // if normalize input should be run when removing an empty input set.
+            let noSelectionsChange = (o_utils.areObjectsEqual(opus.selections, opus.lastSelections) &&
+                                      o_utils.areObjectsEqual(opus.extras, opus.lastExtras));
 
             if (inputElement.hasClass("RANGE")) {
                 let previousMinSelections = opus.selections[`${slug}1`];
@@ -354,12 +361,16 @@ var o_widgets = {
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
-                o_hash.updateURLFromCurrentHash();
-                if (isRemovingEmptySet || !opus.areRangeInputsValid()) {
+                console.log(`last selections in removing input`);
+                console.log(JSON.stringify(opus.lastSelections));
+                console.log(JSON.stringify(opus.lastExtras));
+                if ((noSelectionsChange && isRemovingEmptySet) ||
+                    !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
+                o_hash.updateURLFromCurrentHash();
                 o_widgets.isRemovingInput = false;
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {

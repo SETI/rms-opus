@@ -22,6 +22,13 @@ var o_hash = {
          * the hash string with slugs + inputs' uniqueid, and it's used for normalize
          * input API call.
          */
+        console.log(`getHashStrFromSelections`);
+        console.log(JSON.stringify(opus.selections));
+        console.log(JSON.stringify(opus.extras));
+        console.log(`last selections`);
+        console.log(JSON.stringify(opus.lastSelections));
+        console.log(JSON.stringify(opus.lastExtras));
+        console.log(`opus.areRangeInputsValid(): ${opus.areRangeInputsValid()}`);
         let hash = [];
         let visited = {};
 
@@ -158,7 +165,7 @@ var o_hash = {
                 }
             }
         }
-
+        console.log(hash);
         return hash.join("&");
     },
 
@@ -205,6 +212,7 @@ var o_hash = {
         /**
          * Update URL with full hash string
          */
+        console.log(`=== updateURLFromCurrentHash ===`);
         let fullHashStr = o_hash.getFullHashStr();
         window.location.hash = '/' + fullHashStr;
     },
