@@ -285,7 +285,6 @@ var opus = {
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-            o_widgets.disableButtonsInWidgets(false);
             return;
         }
 
@@ -301,7 +300,6 @@ var opus = {
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-            o_widgets.disableButtonsInWidgets(false);
             return;
         } else {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
@@ -324,7 +322,6 @@ var opus = {
             }
         }
         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-        o_widgets.disableButtonsInWidgets(false);
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);

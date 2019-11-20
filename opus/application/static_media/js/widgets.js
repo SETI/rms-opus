@@ -24,13 +24,6 @@ var o_widgets = {
     lastStringSearchRequestNo: 0,
     // Use to make sure ranges dropdown is not closed by default or manually when it's set to true.
     isKeepingRangesDropdownOpen: false,
-    // This variable will be used to prevent search change event from being triggered
-    // when a widget is closed. When focusing out an input to click "x" directly, before
-    // the widget DOM is removed, an input change event will be triggered with values
-    // left in inputs. In this case, opus.selections will be messed up and cause a reload.
-    // We use this variable to prevent that input change event. When isClosingWidget is
-    // true, input change event handlers will do nothing.
-    isClosingWidget: false,
 
     // These two variables will used to prevent page reload when an input is closed and waiting
     // for the return of normalized input api. When an input is closed, there will be a
@@ -80,10 +73,6 @@ var o_widgets = {
         // close a card
         $('#search').on('click', '.close_card', function(e) {
             e.preventDefault();
-            o_widgets.isClosingWidget = true;
-            if (opus.isAnyNormalizeInputInProgress()) {
-                return false;
-            }
 
             let slug = $(this).data('slug');
             o_widgets.closeWidget(slug);
@@ -93,7 +82,6 @@ var o_widgets = {
             } catch (error) {
                 console.log("error on close widget, id="+id);
             }
-            o_widgets.isClosingWidget = false;
         });
 
         // close opened surfacegeo widget if user select another surfacegeo target
@@ -366,14 +354,12 @@ var o_widgets = {
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_widgets.disableButtonsInWidgets(false);
                 o_widgets.isRemovingInput = false;
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
                     if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-                        o_widgets.disableButtonsInWidgets(false);
                         o_widgets.isRemovingInput = false;
                         return;
                     }
@@ -401,7 +387,6 @@ var o_widgets = {
                     }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-                    o_widgets.disableButtonsInWidgets(false);
                     o_widgets.isRemovingInput = false;
                 });
 
@@ -539,7 +524,6 @@ var o_widgets = {
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-                o_widgets.disableButtonsInWidgets(false);
                 return;
             }
             o_search.validateRangeInput(normalizedData, false);
@@ -567,7 +551,6 @@ var o_widgets = {
 
             o_widgets.updateWidgetCookies();
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
-            o_widgets.disableButtonsInWidgets(false);
         });
     },
 
@@ -1242,17 +1225,6 @@ var o_widgets = {
                 $(singleDropdown).offset(autocompletePos);
                 $(singleDropdown).width($(`input[name="${slugWithCounter}"]`).width());
             }
-        }
-    },
-
-    disableButtonsInWidgets: function(disable=true) {
-        /**
-         * Disable/enable "x" button in a widget.
-         */
-        if (disable) {
-            $(".close_card").addClass("op-disable-btn");
-        } else {
-            $(".close_card").removeClass("op-disable-btn");
         }
     },
 
