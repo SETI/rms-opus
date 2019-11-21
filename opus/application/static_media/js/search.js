@@ -246,8 +246,7 @@ var o_search = {
                             $(`#widget__${slugName} input.op-range-input-min[name="${inputName}"]`).dropdown("toggle");
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
-                            $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`)
-                            .trigger("change");
+                            $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
                             return;
                         }
                         break;

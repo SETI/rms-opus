@@ -71,8 +71,8 @@ var o_hash = {
                     let slug2EncodedSelections = oppositeSuffixEncodedSelectionValues;
                     if (slug.match(/.*2$/)) {
                         [slug1, slug2] = [slug2, slug1];
-                        [slug1EncodedSelections, slug2EncodedSelections] = ([slug2EncodedSelections,
-                                                                            slug1EncodedSelections]);
+                        [slug1EncodedSelections, slug2EncodedSelections] = [slug2EncodedSelections,
+                                                                            slug1EncodedSelections];
                     }
 
                     visited[slug1] = true;

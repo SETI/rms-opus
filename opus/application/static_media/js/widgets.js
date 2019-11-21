@@ -118,8 +118,7 @@ var o_widgets = {
                 let slugName = minInput.attr("data-slugname");
                 let uniqueid = minInput.attr("data-uniqueid");
                 let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
-                $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`)
-                .trigger("change");
+                $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
             }
         });
 
@@ -177,16 +176,16 @@ var o_widgets = {
             cloneInputs.find("input").attr("data-uniqueid", o_widgets.uniqueIdForInputs);
             cloneInputs.find("input").val("");
 
-            let orLabel = '<ul class="op-or-labels text-secondary">' +
-                          '<hr class="op-or-label-divider">' +
-                          '&nbsp;OR&nbsp;' +
-                          '<hr class="op-or-label-divider"></ul>';
+            let orLabel = ('<ul class="op-or-labels text-secondary">' +
+                           '<hr class="op-or-label-divider">' +
+                           '&nbsp;OR&nbsp;' +
+                           '<hr class="op-or-label-divider"></ul>');
 
-            let removeInputIcon = '<li class="op-remove-inputs">' +
-                                  '<button type="button" title="Delete this set of search inputs" \
-                                  class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
-                                  `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                  `<i class="${trashIcon}"></i></button></li>`;
+            let removeInputIcon = ('<li class="op-remove-inputs">' +
+                                   '<button type="button" title="Delete this set of search inputs" \
+                                   class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                   `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                   `<i class="${trashIcon}"></i></button></li>`);
 
             // Before attaching a new (cloned from the first input set) input set:
             // If the first input set doesn't have remove icon, we add remove icon & "OR" label
@@ -989,22 +988,22 @@ var o_widgets = {
             });
 
             if (widgetInputs.hasClass("RANGE") || widgetInputs.hasClass("STRING")) {
-                let addInputIcon = '<li class="op-add-inputs">' +
-                                   '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
-                                   title="Add a new set of search inputs"' +
-                                   `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                   `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`;
+                let addInputIcon = ('<li class="op-add-inputs">' +
+                                    '<button type="button" class="ml-2 p-0 btn btn-small btn-link op-add-inputs-btn" \
+                                    title="Add a new set of search inputs"' +
+                                    `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                    `<i class="${plusIcon}">&nbsp;(OR)</i></button></li>`);
 
-                let orLabel = '<ul class="op-or-labels text-secondary">' +
-                              '<hr class="op-or-label-divider">' +
-                              '&nbsp;OR&nbsp;' +
-                              '<hr class="op-or-label-divider"></ul>';
+                let orLabel = ('<ul class="op-or-labels text-secondary">' +
+                               '<hr class="op-or-label-divider">' +
+                               '&nbsp;OR&nbsp;' +
+                               '<hr class="op-or-label-divider"></ul>');
 
-                let removeInputIcon = '<li class="op-remove-inputs">' +
-                                      '<button type="button" title="Delete this set of search inputs" \
-                                      class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
-                                      `data-widget="widget__${slug}" data-slug="${slug}">` +
-                                      `<i class="${trashIcon}"></i></button></li>`;
+                let removeInputIcon = ('<li class="op-remove-inputs">' +
+                                       '<button type="button" title="Delete this set of search inputs" \
+                                       class="p-0 btn btn-small btn-link op-remove-inputs-btn"' +
+                                       `data-widget="widget__${slug}" data-slug="${slug}">` +
+                                       `<i class="${trashIcon}"></i></button></li>`);
 
                 let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
                 if (numberOfInputSets > 1) {
@@ -1322,16 +1321,17 @@ var o_widgets = {
                     opus.selections[slug] = [currentValue];
                 }
 
+                console.log(`autocomplete hash`);
                 let newHash = o_hash.getHashStrFromSelections();
-                // Make sure the existing STRING input value is not passed to stringsearchchoices
-                // API call. This will make sure each autocomplete dropdown results for individual
-                // input will not be affected by others.
+                // // Make sure the existing STRING input value is not passed to stringsearchchoices
+                // // API call. This will make sure each autocomplete dropdown results for individual
+                // // input will not be affected by others.
                 let hashArray = newHash.split("&");
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
                     let slugParam = slugValuePair.split("=")[0];
                     if (slugParam === slugWithCounter || !slugParam.match(slug) ||
-                        slugParam.startsWith("qtype-")) {
+                        slugParam === `qtype-${slugWithCounter}`) {
                         newHashArray.push(slugValuePair);
                     }
                 }
@@ -1341,8 +1341,9 @@ var o_widgets = {
                 if (!opus.areRangeInputsValid()) {
                     return;
                 }
+                console.log(newHash);
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
-
+                console.log(url);
                 $.getJSON(url, function(stringSearchChoicesData) {
                     if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slugWithCounter]) {
                         return;
