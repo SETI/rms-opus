@@ -1406,7 +1406,6 @@ panel are properly separated */
 @media (max-width: 700px) {
     .browse-nav-container li {
         padding: 0;
-        text-align: center;
     }
     .browse-nav-container {
         width: 100%;
