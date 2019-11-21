@@ -2317,9 +2317,19 @@ var o_browse = {
 
         // if the browser is past the @media break both vertically and horizontally,
         // close the download data panel
-        if (tab === "#cart" &&
-            $(window).width() <= cartLeftPaneThreshold && $(window).height() <= cartLeftPaneMinHeight) {
-            opus.hideHelpAndCartPanels();
+        if (tab === "#cart" && $(window).height() <= cartLeftPaneMinHeight) {
+            if ($(window).width() <= cartLeftPaneThreshold) {
+                opus.hideHelpAndCartPanels();
+            }
+            $(".op-download-links-btn").html("Download Not Available");
+            $(".op-download-links-btn").addClass("op-a-tag-btn-disabled");
+            $(".app-footer .op-download-links-btn").popover("hide");
+        } else {
+            $(".op-download-links-btn").html("Download Links History");
+            if ($(".op-zipped-files > li").length > 1) {
+                $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
+                $(".app-footer .op-download-links-btn").popover("show");
+            }
         }
     },
 

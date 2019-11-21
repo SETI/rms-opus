@@ -442,9 +442,6 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        $("#op-cart-count").html(status.count);
-        $("#op-recycled-count").html(status.recycled_count);
-
         o_cart.totalObsCount = status.count;
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
@@ -467,9 +464,9 @@ var o_cart = {
                 let slugList = status.product_cat_list[index][1];
                 for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
                     let slugName = slugList[slugNdx].slug_name;
-                    $(`#op-product-${slugName} .op-options-obs`).html(slugList[slugNdx].product_count);
-                    $(`#op-product-${slugName} .op-options-files`).html(slugList[slugNdx].download_count);
-                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+                    $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
+                    $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
+                    $(`#op-product-${slugName} .op-options-size`).html(o_utils.addCommas(slugList[slugNdx].download_size_pretty));
                 }
             }
         }
@@ -743,9 +740,9 @@ var o_cart = {
     },
 
     hideCartCountSpinner: function(cartCount, recycledCount) {
-        $("#op-cart-count").html(cartCount);
+        $("#op-cart-count").html(o_utils.addCommas(cartCount));
         if ($("#op-recycled-count").length) {
-            $("#op-recycled-count").html(recycledCount);
+            $("#op-recycled-count").html(o_utils.addCommas(recycledCount));
         }
         if (o_cart.cartCountSpinnerTimer !== null) {
             // This should always be true - we're just being careful
@@ -769,7 +766,7 @@ var o_cart = {
         $(".op-total-size .spinner").removeClass("op-show-spinner");
         $(".op-total-download .spinner").removeClass("op-show-spinner");
         $("#op-total-download-size").html(downloadSize).fadeIn();
-        $("#op-total-download-count").html(downloadCount).fadeIn();
+        $("#op-total-download-count").html(o_utils.addCommas(downloadCount)).fadeIn();
         if (o_cart.downloadSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.downloadSpinnerTimer);
