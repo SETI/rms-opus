@@ -233,8 +233,7 @@ var o_cart = {
             if (info.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSpinner(info.total_download_size_pretty,
-                                       o_utils.addCommas(info.total_download_count));
+            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
         });
     },
 
@@ -446,8 +445,7 @@ var o_cart = {
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
-            o_cart.hideDownloadSpinner(status.total_download_size_pretty,
-                                       o_utils.addCommas(status.total_download_count));
+            o_cart.hideDownloadSpinner(status.total_download_size_pretty, status.total_download_count);
         }
 
         if (status.recycled_count === 0) {
@@ -549,9 +547,12 @@ var o_cart = {
 
         // what == "cart" or "recycleBin"
         let recycleBin = (what === "cart" ? 0 : 1);
+        o_cart.lastRequestNo++;
 
         // change indicator to zero and let the server know:
-        $.getJSON(`/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`, function(data) {
+        let url = `/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`;
+
+        $.getJSON(url, function(data) {
             o_cart.reloadObservationData = true;
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
@@ -765,8 +766,13 @@ var o_cart = {
     hideDownloadSpinner: function(downloadSize, downloadCount) {
         $(".op-total-size .spinner").removeClass("op-show-spinner");
         $(".op-total-download .spinner").removeClass("op-show-spinner");
-        $("#op-total-download-size").html(downloadSize).fadeIn();
-        $("#op-total-download-count").html(o_utils.addCommas(downloadCount)).fadeIn();
+
+        // for cart/download data panel only
+        if (downloadSize !== undefined && downloadCount !== undefined) {
+            $("#op-total-download-size").html(downloadSize).fadeIn();
+            $("#op-total-download-count").html(o_utils.addCommas(downloadCount)).fadeIn();
+        }
+        
         if (o_cart.downloadSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.downloadSpinnerTimer);
