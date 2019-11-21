@@ -148,7 +148,6 @@ var o_widgets = {
 
         // Create a new set of inputs when clicking the "+ (OR)" button in a widget.
         $("#search").on("click", ".op-add-inputs-btn", function(e) {
-            console.log(`click (+) to add an input`);
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
@@ -263,7 +262,7 @@ var o_widgets = {
             }
 
             if (!opus.isAnyNormalizeInputInProgress()) {
-                if (noSelectionsChange || !opus.areRangeInputsValid()) {
+                if ((noSelectionsChange && opus.areRangeInputsValid())|| !opus.areRangeInputsValid()) {
                     // This will make sure normalize input api from opus.load is not called.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
@@ -273,7 +272,6 @@ var o_widgets = {
         });
 
         $("#search").on("click", ".op-remove-inputs", function(e) {
-            console.log(`click (-) to remove an input`);
             e.preventDefault();
             o_widgets.isRemovingInput = true;
 
@@ -369,9 +367,6 @@ var o_widgets = {
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
-                console.log(`last selections in removing input`);
-                console.log(JSON.stringify(opus.lastSelections));
-                console.log(JSON.stringify(opus.lastExtras));
                 if ((noSelectionsChange && isRemovingEmptySet) ||
                     !opus.areRangeInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
@@ -1321,7 +1316,6 @@ var o_widgets = {
                     opus.selections[slug] = [currentValue];
                 }
 
-                console.log(`autocomplete hash`);
                 let newHash = o_hash.getHashStrFromSelections();
                 // // Make sure the existing STRING input value is not passed to stringsearchchoices
                 // // API call. This will make sure each autocomplete dropdown results for individual
@@ -1341,9 +1335,7 @@ var o_widgets = {
                 if (!opus.areRangeInputsValid()) {
                     return;
                 }
-                console.log(newHash);
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
-                console.log(url);
                 $.getJSON(url, function(stringSearchChoicesData) {
                     if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slugWithCounter]) {
                         return;

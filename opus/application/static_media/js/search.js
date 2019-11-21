@@ -211,7 +211,6 @@ var o_search = {
         Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
-            console.log(`RANGE input change event`);
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
@@ -266,13 +265,13 @@ var o_search = {
 
             // Call normalize input api with only the slug and value from current input.
             let newHash = `${slugWithId}=${currentValue}`;
-            console.log(`currentValue: ${currentValue}`);
+
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
 
             opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-            console.log(url);
+
             if ($(e.target).hasClass("input_currently_focused")) {
                 $(e.target).removeClass("input_currently_focused");
             }
@@ -281,7 +280,6 @@ var o_search = {
         });
 
         $('#search').on("change", 'input.STRING', function(event) {
-            console.log(`STRING input change event`);
             let inputName = $(this).attr("name");
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
 
@@ -307,7 +305,7 @@ var o_search = {
                     return;
                 }
             }
-            console.log(`currentValue: ${currentValue}`);
+
             // If there is an invalid value, and user still updates string input,
             // update the last selections to prevent allNormalizeInputApiCall.
             if (!opus.areRangeInputsValid()) {
@@ -621,14 +619,12 @@ var o_search = {
     },
 
     allNormalizeInputApiCall: function() {
-        console.log(`allNormalizeInputApiCall`);
         let newHash = o_hash.getHashStrFromSelections(opus.selections, true);
 
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
         o_search.lastSlugNormalizeRequestNo++;
 
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-        console.log(url);
         return $.getJSON(url);
     },
 
@@ -637,8 +633,6 @@ var o_search = {
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
          */
-        console.log(`validateRangeInput`);
-        console.log(normalizedInputData);
         o_search.slugRangeInputValidValueFromLastSearch = {};
 
         $.each(normalizedInputData, function(eachSlug, value) {
@@ -702,8 +696,6 @@ var o_search = {
             }
         });
 
-        console.log(JSON.stringify(opus.selections));
-        console.log(`opus.areRangeInputsValid(): ${opus.areRangeInputsValid()}`);
         if (opus.rangeInputFieldsValidation[slug] ||
             (slug === opus.allSlug && opus.areRangeInputsValid())) {
 
@@ -747,7 +739,6 @@ var o_search = {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 return;
             }
-            console.log(`parseFinalNormalizedInputDataAndUpdateURL`);
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateRangeInput(normalizedInputData, true, slug);
