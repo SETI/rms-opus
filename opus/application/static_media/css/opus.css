@@ -1266,7 +1266,6 @@ to stay in one line */
     }
     /* Make slider move down to 2nd line when screen is narrow */
     #cart .op-cart-nav-container {
-        flex-wrap: wrap;
         width: 100%;
     }
     /* Style the width of slider when it moves to the 2nd line */
@@ -1275,7 +1274,6 @@ to stay in one line */
     }
 
     #cart .op-sort-order-container {
-        padding-top: 1.9em;
     }
 
     /* move the second line down to make room for the slider*/
@@ -1289,8 +1287,6 @@ to stay in one line */
     line when screen is narrow */
     #cart .browse-nav-container .navbar-nav {
         flex-direction: row;
-        flex-wrap: wrap;
-        width: 100%;
     }
 
     /* Make the 2nd navbar options + slider take up 80% of width when screen is narrow */
