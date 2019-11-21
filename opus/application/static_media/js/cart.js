@@ -464,7 +464,7 @@ var o_cart = {
                     let slugName = slugList[slugNdx].slug_name;
                     $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
                     $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
-                    $(`#op-product-${slugName} .op-options-size`).html(o_utils.addCommas(slugList[slugNdx].download_size_pretty));
+                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
                 }
             }
         }
@@ -544,6 +544,7 @@ var o_cart = {
         // to disable clicks:
         o_utils.disableUserInteraction();
         o_browse.hideGalleryViewModal();
+        o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
 
         // what == "cart" or "recycleBin"
@@ -571,6 +572,7 @@ var o_cart = {
     restoreRecycleBin: function() {
         // to disable clicks:
         o_utils.disableUserInteraction();
+        o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
 
         let tab = opus.getViewTab();
