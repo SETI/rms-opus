@@ -544,6 +544,7 @@ var o_cart = {
         // to disable clicks:
         o_utils.disableUserInteraction();
         o_browse.hideGalleryViewModal();
+        o_cart.showDownloadSpinner();
 
         // what == "cart" or "recycleBin"
         let recycleBin = (what === "cart" ? 0 : 1);
@@ -570,6 +571,8 @@ var o_cart = {
     restoreRecycleBin: function() {
         // to disable clicks:
         o_utils.disableUserInteraction();
+        o_cart.showDownloadSpinner();
+
         let tab = opus.getViewTab();
         o_cart.lastRequestNo++;
 
@@ -772,7 +775,7 @@ var o_cart = {
             $("#op-total-download-size").html(downloadSize).fadeIn();
             $("#op-total-download-count").html(o_utils.addCommas(downloadCount)).fadeIn();
         }
-        
+
         if (o_cart.downloadSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.downloadSpinnerTimer);
