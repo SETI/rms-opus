@@ -966,6 +966,10 @@ panel */
     position: relative;
 }
 
+#cart .op-data-archive-notes hr {
+    border-top: 3px double;
+}
+
 #cart .op-product-type-table-body .ps__rail-y {
     background-color: transparent !important;
 }
