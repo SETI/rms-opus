@@ -226,8 +226,8 @@ var opus = {
             console.log(`opus.isAnyNormalizeInputInProgress()`);
             console.log(opus.isAnyNormalizeInputInProgress());
             console.log(opus.normalizeInputForAllFieldsInProgress);
-            console.log(!o_utils.areObjectsEqual(selections, opus.selections) );
-            console.log(!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ));
+            console.log(`Not same selection?: ${!o_utils.areObjectsEqual(selections, opus.selections)}`);
+            console.log(`Not same extras?: ${!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)}`);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
 
@@ -312,6 +312,7 @@ var opus = {
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         }
+        console.log(`getResultCount`);
 
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This updates the

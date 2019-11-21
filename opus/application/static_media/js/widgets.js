@@ -223,6 +223,11 @@ var o_widgets = {
             let newlyAddedInput = $(`#widget__${slug} .op-search-inputs-set input`).last();
             let newlyAddedQtype = $(`#widget__${slug} .op-search-inputs-set select`).last();
 
+            // Check if there is any selections change. This flag will be used to determine
+            // if normalize input should be run when removing an empty input set.
+            let noSelectionsChange = (o_utils.areObjectsEqual(opus.selections, opus.lastSelections) &&
+                                      o_utils.areObjectsEqual(opus.extras, opus.lastExtras));
+
             if (newlyAddedInput.hasClass("RANGE")) {
                 opus.selections[`${slug}1`] = opus.selections[`${slug}1`] || [];
                 opus.selections[`${slug}2`] = opus.selections[`${slug}2`] || [];
@@ -258,9 +263,13 @@ var o_widgets = {
                 }
             }
 
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                if (noSelectionsChange || !opus.areRangeInputsValid()) {
+                    // This will make sure normalize input api from opus.load is not called.
+                    opus.updateOPUSLastSelectionsWithOPUSSelections();
+                }
+            }
             o_hash.updateURLFromCurrentHash();
-            // This will make sure normalize input api from opus.load is not called.
-            opus.updateOPUSLastSelectionsWithOPUSSelections();
             o_widgets.isAddingInput = false;
         });
 
@@ -455,8 +464,11 @@ var o_widgets = {
          * Fill both ranges inputs with values passed in to the function.
          */
         let minInput = $(`#${widgetId} input.op-range-input-min[name="${minInputSlug}"]`);
+        let uniqueid = minInput.attr("data-uniqueid");
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
+        opus.rangeInputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
+        opus.rangeInputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
 
         let slug = "";
         let slugOrderNum = "";
@@ -480,6 +492,14 @@ var o_widgets = {
             maxInput.val(maxVal);
         } else {
             maxInput.val("");
+        }
+
+        // clear validation border & background
+        for (const input of [minInput, maxInput]) {
+            input.addClass("search_input_original");
+            input.removeClass("search_input_invalid_no_focus");
+            input.removeClass("search_input_invalid");
+            input.removeClass("search_input_valid");
         }
     },
 
