@@ -891,12 +891,12 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
 
     # Subtract out the number of observations already in the cart, whether in
     # the recycle bin or not, since these won't count towards the total.
-    cart_res = (Cart.objects
-                .filter(session_id__exact=session_id)
-                .filter(opus_id__in=opus_id_list)
-                .values_list('opus_id', 'obs_general_id'))
+    incart_count = (Cart.objects
+                    .filter(session_id__exact=session_id)
+                    .filter(opus_id__in=opus_id_list)
+                    .count())
 
-    if (num_cart_and_recycle+len(general_res)-len(cart_res) >
+    if (num_cart_and_recycle+len(general_res)-incart_count >
         settings.MAX_SELECTIONS_ALLOWED):
         if len(general_res) == 1:
             return (f'Your request to add OPUS ID {opus_id_list[0]} to the '
@@ -1139,7 +1139,6 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
 
             # Subtract the number of observations that are already in the cart
             sql = 'SELECT COUNT(*)'+sql_from+sql_incart+sql_where
-            print(sql)
             cursor.execute(sql, sql_from_params+sql_incart_params)
             try:
                 num_old = cursor.fetchone()[0]
@@ -1217,18 +1216,37 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
     cursor = connection.cursor()
     view = request.GET.get('view', 'browse')
     if view == 'browse':
+        q = connection.ops.quote_name
+
         # We ignore recycle_bin here because it doesn't mean anything
         count, user_query_table, err = get_result_count_helper(request, api_code)
         if err is not None:
             return err
 
-        # Subtract off the number of observations already in the cart or
-        # recycle bin because adding them back won't change the count.
         num_cart_and_recycle = (Cart.objects
                                 .filter(session_id__exact=session_id)
                                 .count())
 
-        if count-num_cart_and_recycle > settings.MAX_SELECTIONS_ALLOWED:
+        # Subtract off the number of observations already in the cart or
+        # recycle bin because adding them back won't change the count.
+        sql = 'SELECT COUNT(*) FROM '+q('cart')
+        # INNER JOIN because we only want rows that exist in the
+        # user_query_table
+        sql += ' INNER JOIN '+q(user_query_table)+' ON '
+        sql += q(user_query_table)+'.'+q('id')+'='
+        sql += q('cart')+'.'+q('obs_general_id')
+        sql += ' WHERE session_id=%s'
+        values = [session_id]
+        cursor.execute(sql, values)
+        try:
+            num_dup = cursor.fetchone()[0]
+        except DatabaseError as e: # pragma: no cover
+            log.error('_edit_cart_addall: SQL query failed for request %s: '
+                      +' SQL "%s" ERR "%s"', request.GET, sql, e)
+            ret = HttpResponseServerError(settings.HTTP500_SQL_FAILED)
+            return ret
+
+        if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
             return (f'Your request to add all {count:,d} observations '
                     +f'to the cart failed. The resulting cart and recycle bin '
                     +f'would have more than the maximum '
@@ -1236,7 +1254,6 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
                     +f'allowed. None of the observations were added.')
 
         values = [session_id]
-        q = connection.ops.quote_name
         sql = 'REPLACE INTO '+q('cart')+' ('
         sql += q('session_id')+','+q('obs_general_id')+','+q('opus_id')
         sql += ','+q('recycled')+')'
