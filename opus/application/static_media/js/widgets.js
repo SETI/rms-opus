@@ -262,7 +262,7 @@ var o_widgets = {
             }
 
             if (!opus.isAnyNormalizeInputInProgress()) {
-                if ((noSelectionsChange && opus.areRangeInputsValid())|| !opus.areRangeInputsValid()) {
+                if (noSelectionsChange || !opus.areRangeInputsValid()) {
                     // This will make sure normalize input api from opus.load is not called.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
