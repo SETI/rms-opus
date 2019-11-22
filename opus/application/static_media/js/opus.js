@@ -44,7 +44,23 @@ var opus = {
     // avoiding race conditions in ajax calls
     lastAllNormalizeRequestNo: 0,
     lastResultCountRequestNo: 0,
-    waitingForAllNormalizedAPI: false,
+
+    // An object stores the input (slug) & boolean value to indicate whether the normalize input
+    // API (for all fields) is in progress:
+    // Key: input slug that triggers the normalize input API call. (Use opus.allSlug for API from getResultCount)
+    // Value: true & false to indicate whether the API is in progress.
+    normalizeInputForAllFieldsInProgress: {},
+    // An object stores the input (slug) & boolean value to indicate whether the normalize input
+    // API (for a character) is in progress:
+    // Key: input slug that triggers the normalize input API call. (Use opus.allSlug for API
+    // from getResultCount)
+    // Value: true & false to indicate whether the API is in progress.
+    normalizeInputForCharInProgress: {},
+    // The key in normalizeInputForAllFieldsInProgress, normalizeInputForCharInProgress, or
+    // object. It will store the info of the normalize input API call triggered from
+    // o_search.allNormalizeInputApiCall() (not from any specific input).
+    allSlug: "all",
+
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
     // client side prefs, changes to these *do not trigger results to refresh*
@@ -73,7 +89,8 @@ var opus = {
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
 
-    allInputsValid: true,
+    // An object that stores normalize input validation result for each range input.
+    rangeInputFieldsValidation: {},
 
     force_load: true, // set this to true to force load() when selections haven't changed
 
@@ -104,6 +121,9 @@ var opus = {
 
     currentBrowser: "",
 
+    // Max number of input sets per (RANGE or STRING) widget
+    maxAllowedInputSets: 10,
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
@@ -130,6 +150,11 @@ var opus = {
          */
 
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
+
+        // Align data in opus.selections and opus.extras to make sure empty
+        // inputs will also have null in opus.selections
+        [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                               opus.extras);
 
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
@@ -167,7 +192,7 @@ var opus = {
         let currentExtrasQ = o_hash.extrasWithoutUnusedQtypes(selections, extras);
         let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
-                                    o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
+            o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
             if (!opus.force_load) {
                 return;
             }
@@ -181,6 +206,25 @@ var opus = {
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
+
+                // Make sure page will not reload in these cases:
+                // 1) When it's in the middle of an input removal process. After normalize input API
+                // call returns at the end of an input removal, URL and opus.selections will get updated
+                // correctly.
+                // 2) When normalize input API is in progress. URL and opus.selections will get
+                // updated correctly after the return of API call.
+                // 3) When there is an invalid input. If there is an invalid values, there will be a
+                // mismatch between URL and opus.selections, and the invalid value in opus.selections
+                // will be removed when it's removed from UI.
+                // 4) When it's in the middle of an input adding process. After updateURL and opus.selections
+                // will get updated correctly.
+                if (o_widgets.isRemovingInput ||
+                    o_widgets.isAddingInput ||
+                    opus.isAnyNormalizeInputInProgress() ||
+                    !opus.areRangeInputsValid()) {
+                    return;
+                }
+
                 opus.selections = selections;
                 opus.extras = extras;
                 location.reload();
@@ -205,7 +249,7 @@ var opus = {
         $(".op-menu-text.spinner").addClass("op-show-spinner");
         $("#op-search-widgets .spinner").fadeIn();
 
-        // Mark the changes as complete. We have to do this before allNormalizedApiCall to
+        // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
         // avoid a recursive api call
         opus.lastSelections = selections;
         opus.lastExtras = extras;
@@ -220,7 +264,7 @@ var opus = {
         o_browse.clearBrowseObservationDataAndEraseDOM(leaveStartObs);
 
         // Update the UI in the following order:
-        // 1) Normalize all the inputs and check for validity (allNormalizedApiCall)
+        // 1) Normalize all the inputs and check for validity (allNormalizeInputApiCall)
         // 2) Perform the search and get the result count (getResultCount)
         // 3a) Update the result count badge(s) (updateSearchTabHinting)
         // 3b) Update all the search hinting (updateSearchTabHinting)
@@ -230,7 +274,7 @@ var opus = {
         // cache table has been created before hinting can be performed. However, at
         // some point we would like to be able to do these in parallel. This will require
         // both backend changes and a change here to remove the sequential dependence.
-        o_search.allNormalizedApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
+        o_search.allNormalizeInputApiCall().then(opus.getResultCount).then(opus.updateSearchTabHinting);
     },
 
     getResultCount: function(normalizedData) {
@@ -238,27 +282,29 @@ var opus = {
          * Given the result of the search parameter normalization, execute the search
          * that will eventually return the result count.
          */
-
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
-        if (normalizedData.reqno < opus.lastAllNormalizeRequestNo) {
+        if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
+            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         }
 
         // Take the results from the normalization, check for errors, and update the
-        // UI to show the user if anything is wrong. This sets the opus.allInputsValid
-        // flag used below and also updates the hash.
+        // UI to show the user if anything is wrong. This updates the
+        // opus.rangeInputFieldsValidation and also updates the hash.
         o_search.validateRangeInput(normalizedData, true);
 
-        if (!opus.allInputsValid) {
+        if (!opus.areRangeInputsValid()) {
             // We don't try to get a result count if any of the inputs are invalid.
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
             $(".op-browse-tab").addClass("op-disabled-nav-link");
+            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         } else {
             $(".op-browse-tab").removeClass("op-disabled-nav-link");
+            $("#sidebar").removeClass("search_overlay");
         }
 
         if (opus.getCurrentTab() === "browse") {
@@ -276,7 +322,7 @@ var opus = {
                 o_browse.loadData(opus.getCurrentTab());
             }
         }
-
+        delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -291,7 +337,7 @@ var opus = {
         // We don't update the search hinting if any of the inputs are invalid.
         // The hints were previously marked as "?" in validateRangeInput so they
         // will just stay that way.
-        if (!opus.allInputsValid || !resultCountData) {
+        if (!opus.areRangeInputsValid() || !resultCountData) {
             return;
         }
 
@@ -382,7 +428,7 @@ var opus = {
 
         // Update the state with the newly selected view
         opus.prefs.view = tab ? tab : opus.prefs.view;
-        o_hash.updateHash();
+        o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
         opus.updateLastBlogDate();
@@ -517,7 +563,7 @@ var opus = {
         // Reload the search menu to get the proper checkmarks and categories
         o_menu.getNewSearchMenu();
 
-        o_hash.updateHash();
+        o_hash.updateURLFromCurrentHash();
 
         // Start the main timer again
         opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
@@ -774,7 +820,7 @@ var opus = {
                 header = "OPUS API Guide";
                 break;
             case "citing":
-                let searchHash = o_hash.updateHash(false, true);
+                let searchHash = o_hash.getHashStrFromSelections();
                 url += "citing.html?stateurl=" + encodeURIComponent(window.location);
                 url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";
@@ -1080,7 +1126,38 @@ var opus = {
             $.cookie("visited", opus.splashVersion, {expires: 1000000});
             opus.displaySplashDialog();
         }
-    }
+    },
+
+    isAnyNormalizeInputInProgress: function() {
+        /**
+         * Check if any normalize input API call is in progress.
+         */
+        return (Object.keys(opus.normalizeInputForAllFieldsInProgress).length > 0 ||
+                Object.keys(opus.normalizeInputForCharInProgress).length > 0);
+    },
+
+    areRangeInputsValid: function() {
+        /**
+         * Check if all range inputs are valid.
+         */
+        for (const slugWithId in opus.rangeInputFieldsValidation) {
+            if (opus.rangeInputFieldsValidation[slugWithId] === false) {
+                return false;
+            }
+        }
+
+        return true;
+    },
+
+    updateOPUSLastSelectionsWithOPUSSelections: function() {
+        /**
+         * Update opus.lastSelections & opus.lastExtras with opus.selections
+         * and opus.extras.
+         */
+        opus.lastSelections = o_utils.deepCloneObj(opus.selections);
+        opus.lastExtras = o_utils.deepCloneObj(opus.extras);
+    },
+
 }; // end opus namespace
 
 $(document).ready(function() {

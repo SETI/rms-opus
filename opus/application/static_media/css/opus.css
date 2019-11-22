@@ -1459,7 +1459,7 @@ panel are properly separated */
 
 /* Reduce left space in each widget (from 50px to 10px) */
 #op-search-widgets ul {
-    padding-left: 10px;
+    padding-left: 1%;
 }
 
 #op-search-widgets li {
@@ -1490,6 +1490,12 @@ panel are properly separated */
 .widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
+    line-height: 1;
+}
+
+/* Make qtype (i) icon align vertically with inputs */
+.widget-main .op-range-qtype-helper a {
+    vertical-align: middle;
 }
 
 #op-qtype-tooltip {
@@ -1512,7 +1518,6 @@ panel are properly separated */
 }
 
 .widget-main ul li {
-    margin-right: 5px;
     display: inline;
     list-style-type: none;
 }
@@ -1523,7 +1528,6 @@ panel are properly separated */
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
-    overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
 }
@@ -1894,7 +1898,12 @@ gap next to ps */
 /* Remove the reddish focus outline on Linux Chrome that makes it look like an
    invalid value using our color scheme. This color is what is used on Macs. */
 input:focus {
-    outline: auto #5E9ED6;
+    outline: none;
+    border: 1px solid;
+}
+
+input[type="text"] {
+    border: 1px solid #D5D5D5;
 }
 
 input[type="text"].search_input_original {
@@ -1902,20 +1911,17 @@ input[type="text"].search_input_original {
 }
 
 input[type="text"].search_input_valid {
-    border: 3px solid #9EEEBB;
-    margin: -2px;
+    border: 1px solid #9EEEBB;
 }
 
 input[type="text"].search_input_invalid {
-    border: 3px solid #FFD700;
     background-color: #EEECEC;
-    margin: -2px;
+    border: 1px solid #FFD700;
 }
 
 input[type="text"].search_input_invalid_no_focus {
     background-color: #F6AFAF;
-    border: 3px solid #F6AFAF;
-    margin: -2px;
+    border: 1px solid #F6AFAF;
 }
 
 .search_overlay {
@@ -2140,7 +2146,7 @@ expanded/collapsed */
 }
 
 .op-hide-element {
-    display: none;
+    display: none !important;
 }
 
 /* Make palceholder hints visible when browser width is large enough */
@@ -2173,4 +2179,63 @@ wiggling when mouse over autocomplete menu items */
 we have an invalid search) */
 .op-disabled-nav-link {
     pointer-events: none;
+}
+
+/* Styling for the button to delete a set of inputs in a widget */
+.op-remove-inputs {
+    margin-left: 10px;
+}
+
+.op-remove-inputs-btn, .op-add-inputs-btn {
+    background: transparent !important;
+}
+
+/* Styling for the text between each set of inputs in a widget */
+.op-or-labels {
+    text-align: center;
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* Styling for horizontal divider between OR label when there are multiple
+searches */
+.op-or-label-divider {
+    border: 1px solid;
+    margin: 0px;
+    display: inline-block;
+    width: 10%;
+    vertical-align: middle;
+    opacity: 0.5;
+}
+
+/* Disable a button (or a tag button) */
+.op-disable-btn {
+    pointer-events: none;
+}
+
+.op-btn-tag-disable {
+    pointer-events: none;
+}
+
+/* Styling to make each input set takes up the width that will fit its contents */
+.op-search-inputs-set {
+    width: fit-content;
+    width: -moz-fit-content;
+}
+
+/* Hide the element but still keep its space. This is used for dummy items placed
+at the right of -- OR -- label. */
+.op-visibility-hidden {
+    visibility: hidden;
+}
+
+/* Styling for dummy items */
+#op-search-widgets .op-dummy-item1, #op-search-widgets .op-dummy-item2 {
+    display: inline-block;
+}
+
+@media (max-width: 1000px) {
+    .op-dummy-item1, .op-dummy-item2 {
+        display: none !important;
+    }
 }

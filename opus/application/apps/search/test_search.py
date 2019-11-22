@@ -783,6 +783,80 @@ class searchTests(TestCase):
         print(extras)
         self.assertIsNone(selections)
 
+    ###################
+    ### ALLOW EMPTY ###
+    ###################
+
+    def test__url_to_search_params_range_input_allow_empty_1(self):
+        "[test_search.py] url_to_search_params: search allowing empty range input set 1"
+        q = QueryDict('wavelength1_02=0.0100&wavelength2_03=0.4000')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_wavelength.wavelength1': [None, 0.01, None],
+                        'obs_wavelength.wavelength2': [None, None, 0.4]}
+        qtypes_expected = {'obs_wavelength.wavelength': [None, 'any', 'any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_range_input_allow_empty_2(self):
+        "[test_search.py] url_to_search_params: search allowing empty range input set 2"
+        q = QueryDict('qtype-wavelength_03=any')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_wavelength.wavelength1': [None, None, None],
+                        'obs_wavelength.wavelength2': [None, None, None]}
+        qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_range_input_allow_empty_3(self):
+        "[test_search.py] url_to_search_params: search allowing empty range input set 3"
+        q = QueryDict('wavelength1_03=0.0100')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_wavelength.wavelength1': [None, None, 0.01],
+                        'obs_wavelength.wavelength2': [None, None, None]}
+        qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_range_input_allow_empty_4(self):
+        "[test_search.py] url_to_search_params: search allowing empty range input set 4"
+        q = QueryDict('wavelength2_03=0.4000')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_wavelength.wavelength1': [None, None, None],
+                        'obs_wavelength.wavelength2': [None, None, 0.4]}
+        qtypes_expected = {'obs_wavelength.wavelength': [None, None, 'any']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_string_input_allow_empty_1(self):
+        "[test_search.py] url_to_search_params: search allowing empty string input set 1"
+        q = QueryDict('volumeid_03=COISS')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_pds.volume_id': [None, None, 'COISS']}
+        qtypes_expected = {'obs_pds.volume_id': [None, None, 'contains']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
+    def test__url_to_search_params_string_input_allow_empty_2(self):
+        "[test_search.py] url_to_search_params: search allowing empty string input set 2"
+        q = QueryDict('qtype-volumeid_03=contains')
+        (selections, extras) = url_to_search_params(q, allow_empty=True)
+        sel_expected = {'obs_pds.volume_id': [None, None, None]}
+        qtypes_expected = {'obs_pds.volume_id': [None, None, 'contains']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+
 
     ######################
     ### STRING FORMATS ###

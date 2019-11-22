@@ -651,14 +651,50 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 # If both values are None, then don't include this slug at all
                 if new_param_qualified_names[0] not in selections:
                     selections[new_param_qualified_names[0]] = []
-                selections[new_param_qualified_names[0]].append(new_values[0])
+
+                if allow_empty and clause_num_str:
+                    range_min_selection = selections[
+                                                new_param_qualified_names[0]]
+                    len_min = len(range_min_selection)
+                    # Note: clause_num here will not be a very large
+                    # number because allow_empty is only True when it's
+                    # called from api_get_widget, and in that case,
+                    # clause numbers have already been normalized.
+                    if len_min < clause_num:
+                        range_min_selection += [None] * (clause_num-len_min)
+                    range_min_selection[clause_num-1] = new_values[0]
+                else:
+                    selections[new_param_qualified_names[0]].append(
+                                                                new_values[0])
+
                 if new_param_qualified_names[1] not in selections:
                     selections[new_param_qualified_names[1]] = []
-                selections[new_param_qualified_names[1]].append(new_values[1])
-                # There was at least one value added - include the qtype
+
+                if allow_empty and clause_num_str:
+                    range_max_selection = selections[
+                                                new_param_qualified_names[1]]
+                    len_max = len(range_max_selection)
+                    if len_max < clause_num:
+                        range_max_selection += [None] * (clause_num-len_max)
+                    range_max_selection[clause_num-1] = new_values[1]
+                else:
+                    selections[new_param_qualified_names[1]].append(
+                                                                new_values[1])
+
+                # There was at least one value added or allow_empty is set -
+                # include the qtype
                 if param_qualified_name_no_num not in qtypes:
                     qtypes[param_qualified_name_no_num] = []
-                qtypes[param_qualified_name_no_num].append(qtype_val)
+
+                if allow_empty and clause_num_str:
+                    range_qtype = qtypes[param_qualified_name_no_num]
+                    len_qtype = len(range_qtype)
+                    if len_qtype < clause_num:
+                        range_qtype += [None] * (clause_num-len_qtype)
+                    range_qtype[clause_num-1] = qtype_val
+                else:
+                    qtypes[param_qualified_name_no_num].append(qtype_val)
+
             continue
 
         # For STRING form types, there is only a single slug. Just ignore the
@@ -678,10 +714,27 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                 new_value = None
             if param_qualified_name_no_num not in selections:
                 selections[param_qualified_name_no_num] = []
-            selections[param_qualified_name_no_num].append(new_value)
+
+            if allow_empty and clause_num_str:
+                str_selection = selections[param_qualified_name_no_num]
+                len_s = len(str_selection)
+                if len_s < clause_num:
+                    str_selection += [None] * (clause_num-len_s)
+                str_selection[clause_num-1] = new_value
+            else:
+                selections[param_qualified_name_no_num].append(new_value)
+
             if param_qualified_name_no_num not in qtypes:
                 qtypes[param_qualified_name_no_num] = []
-            qtypes[param_qualified_name_no_num].append(qtype_val)
+
+            if allow_empty and clause_num_str:
+                str_qtype = qtypes[param_qualified_name_no_num]
+                len_qtype = len(str_qtype)
+                if len_qtype < clause_num:
+                    str_qtype += [None] * (clause_num-len_qtype)
+                str_qtype[clause_num-1] = qtype_val
+            else:
+                qtypes[param_qualified_name_no_num].append(qtype_val)
 
     extras['qtypes'] = qtypes
 

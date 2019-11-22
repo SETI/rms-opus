@@ -39,7 +39,7 @@ var o_menu = {
                   o_widgets.getWidget(slug,'#op-search-widgets');
              }
 
-             o_hash.updateHash();
+             o_hash.updateURLFromCurrentHash();
              return false;
          });
 
