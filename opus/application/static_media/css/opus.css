@@ -2222,3 +2222,20 @@ searches */
     width: fit-content;
     width: -moz-fit-content;
 }
+
+/* Hide the element but still keep its space. This is used for dummy items placed
+at the right of -- OR -- label. */
+.op-visibility-hidden {
+    visibility: hidden;
+}
+
+/* Styling for dummy items */
+#op-search-widgets .op-dummy-item1, #op-search-widgets .op-dummy-item2 {
+    display: inline-block;
+}
+
+@media (max-width: 1000px) {
+    .op-dummy-item1, .op-dummy-item2 {
+        display: none !important;
+    }
+}

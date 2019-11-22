@@ -199,6 +199,22 @@ var o_widgets = {
                 cloneInputs.find(".op-or-labels").remove();
             }
 
+            // Add dummy qtype to center "-- OR --".
+            let numberOfQtypeInputs = $(`#widget__${slug} .op-qtype-input`).length;
+            if (numberOfQtypeInputs !== 0) {
+                let qtypeItem = $(`#widget__${slug} .op-qtype-input:first`);
+                let qtypeHelperItem = $(`#widget__${slug} .op-range-qtype-helper:first`);
+                let [dummyItem1, dummyItem2] = o_widgets.createInvisibleDummyItems(slug);
+                if (dummyItem1) {
+                    $(`#widget__${slug} .op-or-labels:last`).append(dummyItem1);
+                    $(`#widget__${slug} .op-dummy-item1`).width(qtypeItem.width());
+                }
+                if (dummyItem2) {
+                    $(`#widget__${slug} .op-or-labels:last`).append(dummyItem2);
+                    $(`#widget__${slug} .op-dummy-item2`).width(qtypeHelperItem.width());
+                }
+            }
+
             $(`#${widgetId} .op-input`).append(cloneInputs);
             // Prevent overscrolling for newly added dropdown.
             let newlyAddedDropdown = $(`#${widgetId} .op-search-inputs-set:last .op-scrollable-menu`);
@@ -1008,6 +1024,21 @@ var o_widgets = {
                 $(`#widget__${slug} .op-extra-search-inputs`).append(removeInputIcon);
                 $(`#widget__${slug} .op-search-inputs-set:not(:last)`).append(orLabel);
 
+                // Add dummy items to the right of "-- OR --" to make it center.
+                if (numberOfQtypeInputs !== 0) {
+                    let qtypeItem = $(`#widget__${slug} .op-qtype-input:first`);
+                    let qtypeHelperItem = $(`#widget__${slug} .op-range-qtype-helper:first`);
+                    let [dummyItem1, dummyItem2] = o_widgets.createInvisibleDummyItems(slug);
+                    if (dummyItem1) {
+                        $(`#widget__${slug} .op-or-labels`).append(dummyItem1);
+                        $(`#widget__${slug} .op-dummy-item1`).width(qtypeItem.width());
+                    }
+                    if (dummyItem2) {
+                        $(`#widget__${slug} .op-or-labels`).append(dummyItem2);
+                        $(`#widget__${slug} .op-dummy-item2`).width(qtypeHelperItem.width());
+                    }
+                }
+
                 if ($(`#widget__${slug} .op-add-inputs`).length > 0) {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
@@ -1431,5 +1462,19 @@ var o_widgets = {
                 .appendTo(ul);
             };
         }
+    },
+
+    createInvisibleDummyItems: function(slug) {
+        /**
+         * Create invisible dummy items based on the existence of qtype and
+         * qtype helper in a widget.
+         */
+        let qtypeItem = $(`#widget__${slug} .op-qtype-input:first`);
+        let qtypeHelperItem = $(`#widget__${slug} .op-range-qtype-helper:first`);
+        let dummyItem1 = (qtypeItem.length ?
+                          '<li class="op-dummy-item1 op-visibility-hidden">&nbsp;</li>' : '');
+        let dummyItem2 = (qtypeHelperItem.length ?
+                          '<li class="op-dummy-item2 op-visibility-hidden">&nbsp;</li>' : '');
+        return [dummyItem1, dummyItem2];
     }
 };
