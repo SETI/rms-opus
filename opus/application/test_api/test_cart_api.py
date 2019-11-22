@@ -2218,33 +2218,32 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
-        expected = {'recycled_count': 0, 'count': 17, 'error': False, 'reqno': 456}
+        expected = {'recycled_count': 0, 'count': 17, 'reqno': 456}
         self._run_json_equal(url, expected)
 
-    def test__api_cart_addall_too_many_905_recyclebin(self):
-        "[test_cart_api.py] /__cart/addall: addall no download too many 906 recyclebin"
+    def test__api_cart_addall_too_many_906_recyclebin_2(self):
+        "[test_cart_api.py] /__cart/addall: addall no download too many 906 recyclebin 2"
         settings.MAX_SELECTIONS_ALLOWED = 906
         url = '/opus/__cart/reset.json?reqno=42'
         expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
         self._run_json_equal(url, expected)
-        url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
-        expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
+        url = '/opus/__cart/add.json?opusid=co-vims-v1488642557_ir&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        url = '/opus/__cart/remove.json?opusid=vg-iss-2-s-c4360018&reqno=456&recyclebin=1'
-        expected = {'recycled_count': 1, 'count': 905, 'error': False, 'reqno': 456}
+        url = '/opus/__cart/remove.json?opusid=co-vims-v1488642557_ir&reqno=456&recyclebin=1'
+        expected = {'recycled_count': 1, 'count': 0, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
-        settings.MAX_SELECTIONS_ALLOWED = 905
         url = '/opus/__cart/addall.json?volumeid=VGISS_6210&reqno=456'
         if settings.TEST_GO_LIVE:
-            expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
+            expected = {'recycled_count': 1, 'count': 906, 'error': False, 'reqno': 456}
         else:
-            expected = {'recycled_count': 1, 'count': 905, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (905) allowed. None of the observations were added.', 'reqno': 456}
+            expected = {'recycled_count': 1, 'count': 0, 'error': 'Your request to add all 906 observations to the cart failed. The resulting cart and recycle bin would have more than the maximum (906) allowed. None of the observations were added.', 'reqno': 456}
         self._run_json_equal(url, expected)
         url = '/opus/__cart/status.json?reqno=456'
         if settings.TEST_GO_LIVE:
-            expected = {'recycled_count': 0, 'count': 906, 'error': False, 'reqno': 456}
+            expected = {'recycled_count': 1, 'count': 906, 'reqno': 456}
         else:
-            expected = {'recycled_count': 1, 'count': 905, 'error': False, 'reqno': 456}
+            expected = {'recycled_count': 1, 'count': 0, 'reqno': 456}
         self._run_json_equal(url, expected)
 
     def test__api_cart_addall_too_many_906_recyclebin(self):
