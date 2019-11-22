@@ -2,8 +2,8 @@
 <div id="cart-sidebar" class="w-100">
     <div id="cart_summary" class="well well-lg">
         <div class="op-download-options-header border-bottom border-light">
-            <h1>Download Options</h1>
-            <div>
+            <span class="op-download-panel-title"><h1>Download Data</h1></span>
+            <div class="op-cart-totals mb-1">
                 <p class="op-total-size mb-0 mr-3">Total Size (before zip):
                     <span class="spinner">&nbsp;</span>
                     <span id="op-total-download-size">{{ total_download_size_pretty }}</span>
@@ -13,6 +13,22 @@
                     <span id="op-total-download-count">{{ total_download_count|intcomma }}</span>
                 </p>
             </div>
+            <div class="op-download-options">
+                <li class="list-inline-item">
+                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
+                </li>
+                <li class="list-inline-item">
+                    <div id="create_zip_data_file">
+                        <a href="#" class="downloadData btn btn-outline-primary" title="Download a zipped data archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
+                    </div>
+                </li>
+                <li class="list-inline-item">
+                    <div id="create_zip_url_file">
+                        <a href="#" class="downloadURL btn btn-outline-primary" title="Download a zipped URL archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
+                    </div>
+                </li>
+            </div>
+            <h1>Download Options</h1>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
             <div class="mb-3">
                 <button class="op-cart-select-all-btn btn btn-sm btn-primary" type="button">
@@ -42,26 +58,41 @@
                         </div>
                     </div>
                     {% for product_info in product_list %}
-                        <div class="row no-gutters border-bottom border-light">
-                            <div class="col-7">
-                                <span>
+                        <div id="op-product-{{ product_info.slug_name }}" class="row no-gutters border-bottom border-light">
+                            <div class="row col-7 no-gutters">
+                                <div class="col col-sm-1">
                                     <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
                                         {% if product_info.product_count > 0 %}
                                             checked
                                         {% endif %}
                                     >
+                                </div>
+                                <div class="col col-sm-1">
                                     {% if product_info.tooltip %}
-                                        &nbsp;&nbsp;<i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                        <i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
                                     {% endif %}
+                                </div>
+                                <div class="col col-lg">
                                     {{ product_info.product_type }}
-                                </span>
+                                </div>
                             </div>
-                            <div class="col text-right">{{ product_info.product_count|intcomma }}</div>
-                            <div class="col text-right">{{ product_info.download_count|intcomma }}</div>
-                            <div class="col text-right">{{ product_info.download_size_pretty }}</div>
+                            <div class="op-options-obs col text-right">{{ product_info.product_count|intcomma }}</div>
+                            <div class="op-options-files col text-right">{{ product_info.download_count|intcomma }}</div>
+                            <div class="op-options-size col text-right">{{ product_info.download_size_pretty }}</div>
                         </div>
                     {% endfor %}
                 {% endfor %}
+                <div class="op-data-archive-notes">
+                    <hr class="mt-2 mb-2">
+                    In addition to the selected product types, the following files are always included
+                    in all archives:
+                    <ul>
+                        <li>The metadata CSV (data.csv)</li>
+                        <li>The URLs of all data products (urls.txt)</li>
+                        <li>The checksums of all data products (checksum.txt)</li>
+                        <li>The manifest listing each OPUS ID and the files associated with it (manifest.txt)</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

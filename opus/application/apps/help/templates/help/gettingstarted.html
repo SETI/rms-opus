@@ -182,17 +182,32 @@ data OPUS has to offer.</p>
 
 <h3>The Cart</h3>
 
-<p>The cart allows you to collect observations for future downloading. As
-    described above, you can add or remove individual observations, or ranges
-    of observations, from the <b>Browse Results</b> tab. The number of
-    observations in the cart will be displayed next to the <b>Cart</b> tab.</p>
+<p>The cart contains observations for future downloading. As described above,
+    you can add or remove individual observations or ranges of observations
+    from the <b>Browse Results</b> tab. The number of observations in the cart
+    is displayed next to the <b>Cart</b> tab.</p>
 
-<p>The <b>Cart</b> tab allows you to view and navigate through your cart in the
-    same way the <b>Browse</b> tab allows you to view and navigate through your
-    total result set. In addition, the <b>Download Options</b> pane on the left
-    shows the estimated total download size of your cart as well as which data
+<p>The <b>Cart</b> tab allows you to view and navigate through the cart in the
+    same way the <b>Browse</b> tab allows you to view and navigate through the
+    total result set. In addition, the <b>Download Data</b> pane on the left
+    shows the estimated total download size of the cart as well as which data
     products will be included in a download. The individual products can be
     selected or removed to reduce the file size.</p>
+
+<p>While on the <b>Cart</b> tab, you can move observations to the recycle bin
+    rather than removing them from the cart entirely. These observations will
+    be marked with <i class="fas fa-recycle text-success"></i>. You can also
+    restore observations from the recycle bin to the cart. Observations may
+    be moved to the recycle bin or restored to the cart as individual
+    observations or as ranges of observations. In addition, all observations in
+    the recycle bin can be moved to the cart at once by clicking on <b>Restore
+    Recycle Bin to Cart</b>. All observations can be removed from the recycle
+    bin by clicking on <b>Empty Recycle Bin</b>.</p>
+
+<p>Observations in the recycle bin are not counted as part of the total result
+    count, nor will they be included in the downloaded data. The total number of
+    observations currently in the recycle bin will be displayed next to the
+    <b>Restore Recycle Bin to Cart option.</p>
 
 <p>Three basic methods of download are provided:</p>
 
@@ -201,10 +216,10 @@ data OPUS has to offer.</p>
         containing one row per observation. The rows contain all of the
         metadata fields selected using the <b>Select Metadata</b> option. On
         the <b>Cart</b> tab, the <i class="fas fa-file-csv"></i><b>Metadata
-        CSV</b> option will include all of the observations in your cart.
+        CSV</b> option will include all of the observations in the cart.
         On the <b>Browse</b> tab, the
         <i class="fas fa-download"></i><b>Download CSV (all results)</b>
-        option will include <em>all</em> of the observations in your result set
+        option will include <em>all</em> of the observations in the result set
         (which may be a lot!).
         The <i class="fas fa-bars fa-xs"></i> menu may also be used to create
         a metadata CSV file for a single observation.</li>
@@ -213,7 +228,7 @@ data OPUS has to offer.</p>
         product checksums, a manifest showing which files are included, and
         a file containing the URLs for each data product. On the <b>Cart</b>
         tab, the <i class="fas fa-download"></i><b>Data Archive</b> option will
-        include all observations in your cart in the zip file. You may also
+        include all observations in the cart in the zip file. You may also
         download a data archive for all data relevant data products for a
         single observation using the
         <i class="fas fa-bars fa-xs"></i> menu.</li>
