@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, o_utils, opus */
+/* globals o_browse, o_hash, o_utils, o_selectMetadata, opus */
 
 // The download data left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
@@ -311,6 +311,14 @@ var o_cart = {
         o_cart.adjustProductInfoHeight();
     },
 
+    isScreenNarrow: function(tab) {
+        return (tab === "#cart" && $(window).height() <= cartLeftPaneMinHeight);
+    },
+
+    isScreenShort: function(tab) {
+        return (tab === "#cart" && $(window).width() <= cartLeftPaneThreshold);
+    },
+
     // download filters
     getDownloadFiltersChecked: function() {
         // returned as url string
@@ -488,7 +496,7 @@ var o_cart = {
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
 
         o_browse.updateBrowseNav();
-        o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
+        o_selectMetadata.render();   // just do this in background so there's no delay when we want it...
 
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".op-zipped-files", "#cart").html();

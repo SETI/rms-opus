@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _ */
-/* globals o_browse, o_cart, o_search, opus */
+/* globals o_browse, o_cart, o_search, o_selectMetadata, opus */
 
 /* jshint varstmt: false */
 var o_mutationObserver = {
@@ -50,9 +50,9 @@ var o_mutationObserver = {
 
         let adjustProductInfoHeight = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustHelpPanelHeight = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustSelectMetadataHeight = _.debounce(o_browse.adjustSelectMetadataHeight, 200);
-        let hideOrShowSelectMetadataMenuPS = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
-        let hideOrShowSelectedMetadataPS = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
+        let adjustSelectMetadataHeight = _.debounce(o_selectMetadata.adjustHeight, 200);
+        let hideOrShowSelectMetadataMenuPS = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
+        let hideOrShowSelectedMetadataPS = _.debounce(o_selectMetadata.hideOrShowPS, 200);
         let adjustBrowseDialogPS = _.debounce(o_browse.adjustBrowseDialogPS, 200);
 
         // Init MutationObserver with a callback function. Callback will be called when changes are detected.
@@ -167,13 +167,13 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.hideOrShowSelectMetadataMenuPS();
+                        o_selectMetadata.hideOrShowMenuPS();
                         // if the collapse opens below the viewable area, move the scrollbar
                         // only move the scrollbar if we open the menu item
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.target.classList.value.match(/show/) &&
                             !lastElement.isOnScreen(".op-all-metadata-column", 1)) {
-                            let containerHeight = o_browse.selectMetadataMenuContainerHeight();
+                            let containerHeight = o_selectMetadata.menuContainerHeight();
                             let containerTop = $(".op-all-metadata-column").offset().top;
                             let containerBottom = containerHeight + containerTop;
                             let elementTop = lastElement.offset().top;
@@ -194,12 +194,12 @@ var o_mutationObserver = {
                         // Note we call the original version here, not the debounced
                         // version, because we need the PS to be visible instantly in
                         // order for scrollTop to work below.
-                        o_browse.hideOrShowSelectedMetadataPS();
+                        o_selectMetadata.hideOrShowPS();
                         // if the new item appears below the viewable area, move the scrollbar
                         let lastElement = $(mutation.target).children().last();
                         if (mutation.addedNodes.length !== 0 &&
                             !lastElement.isOnScreen(".op-selected-metadata-column", 1)) {
-                            let containerHeight = o_browse.selectedMetadataContainerHeight();
+                            let containerHeight = o_selectMetadata.containerHeight();
                             let containerTop = $(".op-selected-metadata-column").offset().top;
                             let containerBottom = containerHeight + containerTop;
                             let elementTop = lastElement.offset().top;
