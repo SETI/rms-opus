@@ -481,22 +481,33 @@ def api_create_download(request, opus_id=None):
     else:
         num_selections = (Cart.objects
                           .filter(session_id__exact=session_id)
+                          .filter(recycled=0)
                           .count())
         if url_file_only:
             max_selections = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
+            if num_selections > max_selections:
+                ret = json_response({'error':
+                     f'You are attempting to download more than the maximum '
+                    +f'permitted number ({max_selections}) of observations in '
+                    +f'a URL archive. Please reduce the number of '
+                    +f'observations you are trying to download.'})
+                exit_api_call(api_code, ret)
+                return ret
         else:
             max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
-        if num_selections > max_selections:
-            ret = json_response({'error':
-                 f'You are attempting to download more than the maximum '
-                +f'permitted number ({max_selections}) of observations in '
-                +f'a data archive. Please either reduce the number of '
-                +f'observations you are trying to download or download a URL '
-                +f'archive instead and then retrieve the data products using '
-                +f'"wget".'})
-            exit_api_call(api_code, ret)
-            return ret
-        res = (Cart.objects.filter(session_id__exact=session_id)
+            if num_selections > max_selections:
+                ret = json_response({'error':
+                     f'You are attempting to download more than the maximum '
+                    +f'permitted number ({max_selections}) of observations in '
+                    +f'a data archive. Please either reduce the number of '
+                    +f'observations you are trying to download or download a '
+                    +f'URL archive instead and then retrieve the data products '
+                    +f'using "wget".'})
+                exit_api_call(api_code, ret)
+                return ret
+        res = (Cart.objects
+               .filter(session_id__exact=session_id)
+               .filter(recycled=0)
                .values_list('opus_id'))
         opus_ids = [x[0] for x in res]
         return_directly = False
@@ -514,11 +525,6 @@ def api_create_download(request, opus_id=None):
     # abspath
     files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)
-
-    if not files:
-        ret = json_response({'error': 'No files found'})
-        exit_api_call(api_code, ret)
-        return ret
 
     zip_base_file_name = _zip_filename(opus_id, url_file_only)
     zip_root = zip_base_file_name.split('.')[0]
@@ -622,12 +628,6 @@ def api_create_download(request, opus_id=None):
     os.remove(manifest_file_name)
     os.remove(csv_file_name)
     os.remove(url_file_name)
-
-    if not added:
-        log.error('No files found for download cart %s', manifest_file_name)
-        ret = json_response({'error': 'No files found'})
-        exit_api_call(api_code, ret)
-        return ret
 
     if return_directly:
         response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
