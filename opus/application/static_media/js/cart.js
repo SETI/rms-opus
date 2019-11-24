@@ -502,8 +502,6 @@ var o_cart = {
                 success: function(html) {
                     // this div lives in the in the nav menu template
                     $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
-                    $(".op-cart-select-all-btn").prop("disabled", true);
-                    $(".op-cart-select-btn").prop("disabled", true);
 
                     // Init perfect scrollbar when .op-download-options-product-types is rendered.
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
@@ -702,7 +700,6 @@ var o_cart = {
                     $("#op-cart-status-error-msg .modal-body").text(statusData.error);
                     $("#op-cart-status-error-msg").modal("show");
                 }
-                o_cart.updateCartStatus(statusData);
             } else {
                 $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                     let opusId = $(elem).data("id");
@@ -725,8 +722,8 @@ var o_cart = {
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
-                o_cart.updateCartStatus(statusData);
             }
+            o_cart.updateCartStatus(statusData);
             o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
