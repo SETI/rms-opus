@@ -588,6 +588,7 @@ var o_cart = {
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo["#cart"].title);
+        $(`#cart .op-thumbnail-container`).addClass("op-in-cart");
         $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
         $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
         $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");

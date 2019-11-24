@@ -14,7 +14,7 @@
                 </p>
             </div>
             <div class="op-download-options
-                    {% if count < 1 %}
+                    {% if count < 1 and recycled_count < 1 %}
                         op-button-disabled
                     {% endif %}
                 ">
@@ -36,14 +36,14 @@
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
             <div class="mb-3">
                 <button class="op-cart-select-all-btn btn btn-sm btn-primary
-                    {% if count < 1 %}
+                    {% if count < 1 and recycled_count < 1  %}
                         op-button-disabled
                     {% endif %}
                     " type="button">
                     <i class="fas fa-check"></i>&nbsp;&nbsp;Select all product types
                 </button>
                 <button class="op-cart-deselect-all-btn btn btn-sm btn-danger
-                    {% if count < 1 %}
+                    {% if count < 1 and recycled_count < 1  %}
                         op-button-disabled
                     {% endif %}
                 " type="button">
