@@ -456,6 +456,12 @@ var o_cart = {
             $("[data-target='#op-restore-recycle-bin']").removeClass("op-button-disabled");
         }
 
+        if (status.count === 0) {
+            $(".op-download-options").addClass("op-button-disabled");
+        } else {
+            $(".op-download-options").removeClass("op-button-disabled");            
+        }
+
         // update the panel numbers if we received them...
         if (status.product_cat_list !== undefined) {
             for (let index = 0; index < status.product_cat_list.length; index++) {
