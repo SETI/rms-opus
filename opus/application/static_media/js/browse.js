@@ -2356,7 +2356,6 @@ var o_browse = {
     },
 
     cartButtonInfo: function(status) {
-        let tab = opus.getViewTab();
         let browse_icon = "fas fa-cart-plus";
         let browse_title = "Add to cart";
         let browse_rangeTitle = "add range";
