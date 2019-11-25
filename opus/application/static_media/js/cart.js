@@ -441,7 +441,7 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        o_cart.totalObsCount = status.count;
+        o_cart.totalObsCount = status.count + status.recycled_count;
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
@@ -459,7 +459,7 @@ var o_cart = {
         if (status.count === 0) {
             $(".op-download-options").addClass("op-button-disabled");
         } else {
-            $(".op-download-options").removeClass("op-button-disabled");            
+            $(".op-download-options").removeClass("op-button-disabled");
         }
 
         // update the panel numbers if we received them...
