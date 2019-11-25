@@ -13,7 +13,11 @@
                     <span id="op-total-download-count">{{ total_download_count|intcomma }}</span>
                 </p>
             </div>
-            <div class="op-download-options">
+            <div class="op-download-options
+                    {% if count < 1 and recycled_count < 1 %}
+                        op-button-disabled
+                    {% endif %}
+                ">
                 <li class="list-inline-item">
                     <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                 </li>
@@ -31,10 +35,18 @@
             <h1>Download Options</h1>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
             <div class="mb-3">
-                <button class="op-cart-select-all-btn btn btn-sm btn-primary" type="button">
+                <button class="op-cart-select-all-btn btn btn-sm btn-primary
+                    {% if count < 1 and recycled_count < 1  %}
+                        op-button-disabled
+                    {% endif %}
+                    " type="button">
                     <i class="fas fa-check"></i>&nbsp;&nbsp;Select all product types
                 </button>
-                <button class="op-cart-deselect-all-btn btn btn-sm btn-danger" type="button">
+                <button class="op-cart-deselect-all-btn btn btn-sm btn-danger
+                    {% if count < 1 and recycled_count < 1  %}
+                        op-button-disabled
+                    {% endif %}
+                " type="button">
                     <i class="fas fa-times"></i>&nbsp;&nbsp;Deselect all product types
                 </button>
             </div>

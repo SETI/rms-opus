@@ -88,6 +88,10 @@ def api_view_cart(request):
     product_types = ['all']
 
     info = _get_download_info(product_types, session_id)
+    count, recycled_count = get_cart_count(session_id, recycled=True)
+
+    info['count'] = count
+    info['recycled_count'] = recycled_count
 
     template = 'cart/cart.html'
     ret = render(request, template, info)

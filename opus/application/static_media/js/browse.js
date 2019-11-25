@@ -2328,7 +2328,6 @@ var o_browse = {
             $(".op-download-links-btn").html("Download Links History");
             if ($(".op-zipped-files > li").length > 1) {
                 $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
-                $(".app-footer .op-download-links-btn").popover("show");
             }
         }
     },
