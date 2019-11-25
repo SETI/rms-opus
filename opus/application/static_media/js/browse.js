@@ -2284,19 +2284,14 @@ var o_browse = {
 
     calculateGalleryWidth: function(view) {
         let tab = opus.getViewTab(view);
-        let width = $(`${tab} .gallery-contents`).width();
+        // This is the width of container that contains all thumbnail images.
+        let width = $(`${tab} .gallery-contents .gallery`).width();
         if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
                 let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
                 width -= leftPanelWidth;
             }
-        } else {
-            // We don't know why, but the .gallery-contents container is always
-            // a little bit too wide, but it's consistent between browsers.
-            // It's like there's a hidden margin that the browser is using to
-            // compute reflow. This hack fixes that.
-            width -= (tab === "#cart" ? 4 : 6);
         }
         return width;
     },
@@ -2360,7 +2355,6 @@ var o_browse = {
     },
 
     cartButtonInfo: function(status) {
-        let tab = opus.getViewTab();
         let browse_icon = "fas fa-cart-plus";
         let browse_title = "Add to cart";
         let browse_rangeTitle = "add range";
