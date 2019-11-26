@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
 /* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
 
 // defining the opus namespace first; document ready comes after...
@@ -256,7 +256,7 @@ var opus = {
 
         // Force the Select Metadata dialog to refresh the next time we go to the browse
         // tab in case the categories are changed by this search.
-        o_browse.selectMetadataDrawn = false;
+        o_selectMetadata.rendered = false;
 
         // Clear the gallery and table views on the browse tab so we start afresh when the data
         // returns. There's no point in clearing the cart tab since the search doesn't
@@ -681,8 +681,8 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_browse.hideOrShowSelectMetadataMenuPS, 200);
-        let hideOrShowSelectedMetadataPSDB = _.debounce(o_browse.hideOrShowSelectedMetadataPS, 200);
+        let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
+        let hideOrShowSelectedMetadataPSDB = _.debounce(o_selectMetadata.hideOrShowPS, 200);
         let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
@@ -693,7 +693,7 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            o_browse.adjustSelectMetadataHeight();
+            o_selectMetadata.adjustHeight();
             hideOrShowSelectMetadataMenuPSDB();
             hideOrShowSelectedMetadataPSDB();
             adjustBrowseDialogPSDB();
