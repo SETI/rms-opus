@@ -714,15 +714,15 @@ narrow */
     cursor: grab;
 }
 
-.op-selected-metadata-column ul li .unselect:hover {
+.op-selected-metadata-unselect:hover {
     cursor: default;
 }
 
-.op-selected-metadata-column ul li .info:hover {
+.op-selected-metadata-info:hover {
     cursor: default;
 }
 
-.op-selected-metadata-column .unselect {
+.op-selected-metadata-unselect {
     float: right;
 }
 

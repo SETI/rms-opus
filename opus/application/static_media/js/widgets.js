@@ -589,7 +589,7 @@ var o_widgets = {
         delete opus.extras[`qtype-${slugNoNum}`];
         delete opus.extras[`z-${slugNoNum}`];
 
-        let selector = `li [data-slug='${slug}']`;
+        let selector = `.op-search-menu li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
