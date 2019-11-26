@@ -37,6 +37,9 @@ var o_widgets = {
 
     uniqueIdForInputs: 100,
     centerOrLabelDone: false,
+    // This flag is used to let opus.load know that a widget just opened and we don't
+    // want to perform a search when a widget has just opened.
+    isGetWidgetDone: false,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
@@ -555,7 +558,7 @@ var o_widgets = {
     },
 
     closeWidget: function(slug) {
-
+        let isRemovingEmptyWidget = true;
         let slugNoNum;
         try {
             slugNoNum = slug.match(/(.*)[1|2]$/)[1];
@@ -595,6 +598,13 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
+        // Check if the widget to be removed has empty values on all inputs.
+        for (const input of inputs) {
+            if ($(input).val() && $(input).val().trim()) {
+                isRemovingEmptyWidget = false;
+            }
+        }
+
         o_widgets.removeInputsValidationInfo(inputs);
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
@@ -619,6 +629,11 @@ var o_widgets = {
                 $(".op-browse-tab").removeClass("op-disabled-nav-link");
             } else {
                 $(".op-browse-tab").addClass("op-disabled-nav-link");
+            }
+
+            // If the closing widget has empty values, don't perform a search.
+            if (isRemovingEmptyWidget) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
             if (opus.areRangeInputsValid()) {
@@ -1051,6 +1066,7 @@ var o_widgets = {
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
             o_search.getHinting(slug);
+            o_widgets.isGetWidgetDone = true;
         }); // end callback for .done()
     }, // end getWidget function
 
