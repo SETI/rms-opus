@@ -156,7 +156,7 @@ var opus = {
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                opus.extras);
 
-        // If we just open a widget, we don't want to perform a search.
+        // If we just opened a widget, we don't want to perform a search
         if (o_widgets.isGetWidgetDone) {
             opus.updateOPUSLastSelectionsWithOPUSSelections();
             o_widgets.isGetWidgetDone = false;

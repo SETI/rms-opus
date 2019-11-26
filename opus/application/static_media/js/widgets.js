@@ -37,8 +37,8 @@ var o_widgets = {
 
     uniqueIdForInputs: 100,
     centerOrLabelDone: false,
-    // This is flag is used to let opus.load know that a widget just opened and we don't
-    // want to perform a search when a widget is open.
+    // This flag is used to let opus.load know that a widget just opened and we don't
+    // want to perform a search when a widget has just opened.
     isGetWidgetDone: false,
 
     addWidgetBehaviors: function() {
