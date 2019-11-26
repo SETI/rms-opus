@@ -1313,6 +1313,7 @@ def _csv_helper(request, opus_id, api_code=None):
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                                      request,
                                                      use_cart=(opus_id is None),
+                                                     ignore_recycle_bin=True,
                                                      limit='all',
                                                      opus_id=opus_id,
                                                      api_code=api_code)
