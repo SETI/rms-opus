@@ -1348,7 +1348,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # Thanks to the way templates work, we can fake up a TableNames object
         # by using a standard dictionary.
         search_div = {'table_name': 'search_fields',
-                      'label': 'Search Fields',
+                      'label': 'Current Search Fields',
                       'start_expanded': True}
         divs = [search_div] + list(divs)
         menu_data.setdefault('search_fields', OrderedDict())
