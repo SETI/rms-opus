@@ -1005,6 +1005,7 @@ def api_get_categories_for_search(request):
 ################################################################################
 
 def get_search_results_chunk(request, use_cart=None,
+                             ignore_recycle_bin=False,
                              cols=None, prepend_cols=None, append_cols=None,
                              limit=None, opus_id=None,
                              start_obs=None,
@@ -1020,6 +1021,8 @@ def get_search_results_chunk(request, use_cart=None,
         use_cart            Ignore the search parameters and instead use the
                             observations stored in the cart table for
                             this session.
+        ignore_recycle_bin  If True, ignore entries in the recycle bin. Only
+                            valid if use_cart is True.
         cols                If specified, overrides the columns in request.
         prepend_cols        A string to prepend to the column list.
         append_cols         A string to append to the column list.
@@ -1347,6 +1350,10 @@ def get_search_results_chunk(request, use_cart=None,
         sql += connection.ops.quote_name('cart')+'.'
         sql += connection.ops.quote_name('session_id')+'=%s'
         params.append(session_id)
+        if ignore_recycle_bin:
+            sql += ' AND '
+            sql += connection.ops.quote_name('cart')+'.'
+            sql += connection.ops.quote_name('recycled')+'=0'
 
         # Note we don't need to add in a special cart JOIN here for
         # return_cart_states, because we're already joining in the
