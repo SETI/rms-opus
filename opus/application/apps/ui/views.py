@@ -351,18 +351,27 @@ def api_get_metadata_selector(request):
     """
     api_code = enter_api_call('api_get_metadata_selector', request)
 
-    slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    slugs = cols_to_slug_list(slugs)
+    col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    col_slugs = cols_to_slug_list(col_slugs)
+    col_slugs = filter(None, col_slugs) # Eliminate empty slugs
+    if not col_slugs:
+        col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
+    col_slugs_info = OrderedDict()
+    for col_slug in col_slugs:
+        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col')
 
-    slugs = filter(None, slugs)
-    if not slugs:
-        slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
-    all_slugs_info = OrderedDict()
-    for slug in slugs:
-        all_slugs_info[slug] = get_param_info_by_slug(slug, 'col')
-    menu = _get_menu_labels(request, 'selector')
+    search_slugs_info = []
+    search_slugs = request.GET.get('widgets', None)
+    if search_slugs:
+        search_slugs = cols_to_slug_list(search_slugs)
+        search_slugs = filter(None, search_slugs) # Eliminate empty slugs
+        for search_slug in search_slugs:
+            search_slugs_info.append(get_param_info_by_slug(search_slug,
+                                                            'widget'))
 
-    menu['all_slugs_info'] = all_slugs_info
+    menu = _get_menu_labels(request, 'selector', search_slugs_info)
+
+    menu['all_slugs_info'] = col_slugs_info
     menu['which'] = 'selector'
     ret = render(request, "ui/select_metadata.html", menu)
 
@@ -1237,7 +1246,7 @@ def api_dummy(request, *args, **kwargs):
 #
 ################################################################################
 
-def _get_menu_labels(request, labels_view):
+def _get_menu_labels(request, labels_view, search_slugs_info=None):
     "Return the categories in the menu for the search form."
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
@@ -1281,10 +1290,12 @@ def _get_menu_labels(request, labels_view):
         if p.sub_heading not in sub_headings[p.category_name]:
             sub_headings[p.category_name].append(p.sub_heading)
 
-    # build a nice data struct for the mu&*!#$@!ing template
     menu_data = {}
     menu_data['labels_view'] = labels_view
+
     for d in divs:
+        d.start_expanded = (d.table_name == 'obs_general' and
+                            not search_slugs_info)
         menu_data.setdefault(d.table_name, OrderedDict())
 
         # XXX This really shouldn't be here!!
@@ -1331,5 +1342,23 @@ def _get_menu_labels(request, labels_view):
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
                 menu_data[d.table_name].setdefault('data', []).append(p)
+
+    # If there are any search slugs, put those in first
+    if labels_view == 'selector' and search_slugs_info:
+        # Thanks to the way templates work, we can fake up a TableNames object
+        # by using a standard dictionary.
+        search_div = {'table_name': 'search_fields',
+                      'label': 'Search Fields',
+                      'start_expanded': True}
+        divs = [search_div] + list(divs)
+        menu_data.setdefault('search_fields', OrderedDict())
+        menu_data['search_fields']['has_sub_heading'] = False
+        for p in search_slugs_info:
+            menu_data['search_fields'].setdefault('data', []).append(p)
+            if p.slug[-1] == '1':
+                # This is a numeric range field, so we want to add both
+                # the min and max slugs to the list.
+                p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
+                menu_data['search_fields'].setdefault('data', []).append(p2)
 
     return {'menu': {'data': menu_data, 'divs': divs}}
