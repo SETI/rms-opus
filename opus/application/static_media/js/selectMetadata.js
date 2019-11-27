@@ -70,7 +70,7 @@ var o_selectMetadata = {
         });
 
         // removes chosen column
-        $("#op-select-metadata .op-selected-metadata-column").on("click", "li .unselect", function() {
+        $("#op-select-metadata .op-selected-metadata-column").on("click", "li .op-selected-metadata-unselect", function() {
             let slug = $(this).parent().attr("id").split('__')[1];
             o_selectMetadata.removeColumn(slug);
             return false;
@@ -105,7 +105,7 @@ var o_selectMetadata = {
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
                 // we need to unhighlight the selected widgets
-                o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
+                o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "op-selected-metadata-unselect");
 
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
@@ -126,6 +126,9 @@ var o_selectMetadata = {
                     cursor: "grab",
                     stop: function(event, ui) { o_selectMetadata.metadataDragged(this); }
                 });
+                if (opus.prefs.cols.length <= 1) {
+                    $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
+                }
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
             });
@@ -143,24 +146,28 @@ var o_selectMetadata = {
 
         let label = $(menuSelector).data("qualifiedlabel");
         let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
-        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="info">&nbsp;${info}</span>${label}<span class="unselect"><i class="far fa-trash-alt"></span></li>`;
+        let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
-            $(".op-selected-metadata-column .unselect").show();
+            $(".op-selected-metadata-column .op-selected-metadata-unselect").show();
         }
     },
 
     removeColumn: function(slug) {
+        let colIndex = $.inArray(slug, opus.prefs.cols);
+        if (colIndex < 0 || opus.prefs.cols.length <= 1) {
+            return;
+        }
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector, "unselected");
 
-        opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols), 1);
+        opus.prefs.cols.splice(colIndex, 1);
         $(`#cchoose__${slug}`).fadeOut(200, function() {
             $(this).remove();
+            if ($(".op-selected-metadata-column li").length <= 1) {
+                $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
+            }
         });
-        if (opus.prefs.cols.length <= 1) {
-            $(".op-selected-metadata-column .unselect").hide();
-        }
     },
 
     // columns can be reordered wrt each other in 'metadata selector' by dragging them
