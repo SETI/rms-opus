@@ -147,14 +147,14 @@ var o_selectMetadata = {
     },
 
     removeColumn: function(slug) {
-        // always have a least one in the list
-        if (opus.prefs.cols.length <=1 ) {
+        let colIndex = $.inArray(slug, opus.prefs.cols);
+        if (colIndex < 0 || opus.prefs.cols.length <= 1) {
             return;
         }
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector, "unselected");
 
-        opus.prefs.cols.splice($.inArray(slug,opus.prefs.cols), 1);
+        opus.prefs.cols.splice(colIndex, 1);
         $(`#cchoose__${slug}`).fadeOut(200, function() {
             $(this).remove();
             if ($(".op-selected-metadata-column li").length <= 1) {
