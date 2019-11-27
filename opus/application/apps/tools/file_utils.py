@@ -62,6 +62,9 @@ def get_pds_products(opus_id_list,
     if not isinstance(opus_id_list, (list, tuple)):
         opus_id_list = [opus_id_list]
 
+    if len(opus_id_list) == 0 or len(product_types) == 0:
+        return {}
+        
     results = OrderedDict() # Dict of opus_ids
 
     cursor = connection.cursor()

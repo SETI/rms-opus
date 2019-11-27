@@ -147,6 +147,10 @@ var o_selectMetadata = {
     },
 
     removeColumn: function(slug) {
+        // always have a least one in the list
+        if (opus.prefs.cols.length <=1 ) {
+            return;
+        }
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector, "unselected");
 

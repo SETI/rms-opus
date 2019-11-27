@@ -156,6 +156,12 @@ var opus = {
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                opus.extras);
 
+        // If we just opened a widget, we don't want to perform a search
+        if (o_widgets.isGetWidgetDone) {
+            opus.updateOPUSLastSelectionsWithOPUSSelections();
+            o_widgets.isGetWidgetDone = false;
+        }
+
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
         // one of them is undefined.

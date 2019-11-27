@@ -1140,8 +1140,8 @@ var o_browse = {
         if ($("#op-obs-menu").hasClass("show")) {
             o_browse.hideMenu();
         }
-        let inCart = (o_cart.isIn(opusId) ? "" : "remove");
-        let buttonInfo = o_browse.cartButtonInfo(inCart);
+        let action = (o_cart.isIn(opusId) ? "" : "remove");
+        let buttonInfo = o_browse.cartButtonInfo(action);
         $("#op-obs-menu .dropdown-header").html(opusId);
         $("#op-obs-menu [data-action='cart']").html(`<i class="${buttonInfo[tab].icon}"></i>${buttonInfo[tab].title}`);
         $("#op-obs-menu [data-action='cart']").attr("data-id", opusId);
@@ -1157,7 +1157,8 @@ var o_browse = {
         let rangeSelected = o_browse.isRangeSelectEnabled(tab);
         let rangeText = "";
         if (rangeSelected !== undefined) {
-            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${buttonInfo[tab].rangeTitle}`;
+            let rangeButtonInfo = o_browse.cartButtonInfo(rangeSelected === "removerange" ? "" : "remove");
+            rangeText = `<i class='fas fa-sign-out-alt fa-rotate-180'></i>End ${rangeButtonInfo[tab].rangeTitle}`;
         } else {
             rangeText = `<i class='fas fa-sign-out-alt'></i>Start ${buttonInfo[tab].rangeTitle}`;
         }
@@ -2019,19 +2020,14 @@ var o_browse = {
 
     calculateGalleryWidth: function(view) {
         let tab = opus.getViewTab(view);
-        let width = $(`${tab} .gallery-contents`).width();
+        // This is the width of container that contains all thumbnail images.
+        let width = $(`${tab} .gallery-contents .gallery`).width();
         if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
                 let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
                 width -= leftPanelWidth;
             }
-        } else {
-            // We don't know why, but the .gallery-contents container is always
-            // a little bit too wide, but it's consistent between browsers.
-            // It's like there's a hidden margin that the browser is using to
-            // compute reflow. This hack fixes that.
-            width -= (tab === "#cart" ? 4 : 6);
         }
         return width;
     },
@@ -2063,7 +2059,6 @@ var o_browse = {
             $(".op-download-links-btn").html("Download Links History");
             if ($(".op-zipped-files > li").length > 1) {
                 $(".op-download-links-btn").removeClass("op-a-tag-btn-disabled");
-                $(".app-footer .op-download-links-btn").popover("show");
             }
         }
     },
@@ -2095,14 +2090,14 @@ var o_browse = {
         }
     },
 
-    cartButtonInfo: function(status) {
+    cartButtonInfo: function(action) {
         let browse_icon = "fas fa-cart-plus";
         let browse_title = "Add to cart";
         let browse_rangeTitle = "add range";
         let cart_icon = "fas fa-undo";
         let cart_title = "Restore from recycle bin";
         let cart_rangeTitle = "restore range from recycle bin";
-        if (status != "remove") {
+        if (action !== "remove") {
             browse_icon = "far fa-trash-alt";
             browse_title = "Remove from cart";
             browse_rangeTitle = "remove range";
@@ -2163,8 +2158,8 @@ var o_browse = {
         $("#galleryViewContents .contents").html(html);
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
-        let status = o_cart.isIn(opusId) ? "" : "remove";
-        let buttonInfo = o_browse.cartButtonInfo(status);
+        let action = o_cart.isIn(opusId) ? "" : "remove";
+        let buttonInfo = o_browse.cartButtonInfo(action);
 
         // prev/next buttons - put this in galleryView html...
         html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;

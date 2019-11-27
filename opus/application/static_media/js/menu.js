@@ -71,7 +71,7 @@ var o_menu = {
             // open menu items that were open before
             $("#sidebar").toggleClass("op-redraw-menu");
             $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#sidebar #search-submenu-${category}`).length != 0) {
+                if ($(`#sidebar #search-submenu-${category}`).length !== 0) {
                     $(`#sidebar #search-submenu-${category}`).collapse("show");
                 } else {
                     // this is if the surface geometry target is no longer applicable so it's not
