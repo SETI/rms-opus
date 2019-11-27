@@ -325,7 +325,8 @@ def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
-def format_metadata_number_or_func(val, form_type_func, form_type_format):
+def format_metadata_number_or_func(val, form_type_func, form_type_format,
+                                   keep_trailing_zeros=False):
     if val is None:
         return None
     if form_type_func:
@@ -340,7 +341,10 @@ def format_metadata_number_or_func(val, form_type_func, form_type_format):
     if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
         form_type_format = form_type_format.replace('f', 'e')
     try:
-        return format(val, form_type_format)
+        ret = format(val, form_type_format)
+        if not keep_trailing_zeros and '.' in ret:
+            ret = ret.rstrip('0').rstrip('.')
+        return ret
     except TypeError:
         return str(val)
 
