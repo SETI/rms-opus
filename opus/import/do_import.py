@@ -1465,15 +1465,22 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
         (category, sort_order_num, short_name, full_name) = product_type
-        pref = (category[:3]+category[-3:]).upper()
         if category == 'standard':
-            pref = '000001'
+            pref = 'ZZZZZ1'
         elif category == 'metadata':
-            pref = '000002'
+            pref = 'ZZZZZ2'
         elif category == 'browse':
-            pref = '000003'
+            pref = 'ZZZZZ3'
         elif category == 'diagram':
-            pref = '000004'
+            pref = 'ZZZZZ4'
+        else:
+            pref_list = category.split(' ')
+            pref = pref_list[0][:3]
+            if len(pref_list) == 1:
+                pref += pref_list[0][-3:]
+            else:
+                pref += pref_list[-1][:3]
+            pref = pref.upper()
         sort_order = pref + ('%03d' % sort_order_num)
         list_of_sublists = products[product_type]
         for sublist in list_of_sublists:
