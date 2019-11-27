@@ -48,10 +48,10 @@
             "TAB:supp_index",
             "INSTRUMENT_COMPRESSION_TYPE"
         ],
-        "definition": "Compression type. The options are LOSSLESS, LOSSY, or PACKETIZED. See the SOC_INST_ICD in the DOCUMENT subdirectory for more information.",
         "pi_category_name": "obs_instrument_nhmvic",
         "pi_dict_context": "NHMVIC",
         "pi_dict_name": "INSTRUMENT_COMPRESSION_TYPE",
+        "definition": "The type of compression used for the image: Lossless (but compressed), Lossy (using JPEG compression), or Packetized (lossless and uncompressed).",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
