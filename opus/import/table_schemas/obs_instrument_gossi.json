@@ -203,7 +203,7 @@
         ],
         "val_min": 2,
         "val_max": 61,
-        "definition": "Scan rate of the camera read out in seconds. Valid 2.333, 8.667, 30.333, 60.667",
+        "definition": "The scan rate of the camera readout in seconds. Values are 2.333, 8.667, 15.166, 30.333, and 60.667.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "FRAME_DURATION",
@@ -230,7 +230,7 @@
             "TAB:index",
             "OBSTRUCTION_ID"
         ],
-        "definition": "Identifies if a boom or other type of obstruction were obscuring the view of the camera during the exposure. Valid values include: POSSIBLE, NOT POSSIBLE, OR PRESENCE VERIFIED.",
+        "definition": "Identifies if a boom or other type of obstruction was obscuring the view of the camera during the exposure. Values are Possible, Not Possible, or Presence Verified.",
         "pi_category_name": "obs_instrument_gossi",
         "pi_dict_context": "GOSSI",
         "pi_dict_name": "OBSTRUCTION_ID",
