@@ -301,8 +301,8 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'colls_startobs',
                    'cols', 'col_chooser', 'detail', 'download',
                    'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
-                   'range', 'reqno', 'request',
-                   'types', 'units', 'view', 'widgets', 'widgets2',
+                   'range', 'recyclebin', 'reqno', 'request',
+                   'types', 'url_cols', 'units', 'view', 'widgets', 'widgets2',
                    '__sessionid')
 
 # The public URL to access OPUS

@@ -473,7 +473,7 @@ UNIT_CONVERSION = {
         {
             'display_name': 'km/pixel',
             'conversions': {
-                'm/pixel':      ('m/pixel', 1e3),
+                'm/pixel':      ('m/pixel', 1e-3),
             }
         },
     'microns':
