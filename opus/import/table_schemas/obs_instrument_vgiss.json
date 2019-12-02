@@ -249,7 +249,7 @@
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
         "pi_dict_name": "FILTER_NUMBER",
-        "definition": "The optical filter number (0-7), which contains the unique number associated with the optical filter for the image. It is needed to differentiate between the two CLEAR and two GREEN filters on the Voyager narrow angle camera. For the NAC, 0 and 4 are Clear, 1 is Violet, 2 is Blue, 3 is Orange, 5 and 6 are Green, and 7 is UV. For the WAC, 0 is Methane-JST, 1 is Blue, 2 is Clear, 3 is Violet, 4 is Sodium-D, 5 is Green, 6 is Methane-U, and 7 is Orange. Given the different numerings, this field must be paired with the Camera field to make sense.",
+        "definition": "The optical filter number (0-7), which contains the unique number associated with the optical filter for the image. It is needed to differentiate between the two CLEAR and two GREEN filters on the Voyager narrow angle camera. For the NAC, 0 and 4 are Clear, 1 is Violet, 2 is Blue, 3 is Orange, 5 and 6 are Green, and 7 is UV. For the WAC, 0 is Methane-JST, 1 is Blue, 2 is Clear, 3 is Violet, 4 is Sodium-D, 5 is Green, 6 is Methane-U, and 7 is Orange. Given the different numberings, this field must be paired with the Camera field to make sense.",
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
