@@ -59,7 +59,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
     parser.add_argument('--configuration', dest='"opus.configuration"',
-                        help="location of pyghon configuration file")
+                        help="location of python configuration file")
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
