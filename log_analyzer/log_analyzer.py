@@ -81,7 +81,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     # Another fake argument we need
     args.ip_to_host_converter = IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local)
 
-    module = importlib.import_module("opus.session_info")
+    module = importlib.import_module("opus.configuration")
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
     log_parser = LogParser(configuration, **vars(args))
 
