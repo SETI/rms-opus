@@ -318,7 +318,7 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    units = param_info.get_units()
+    valid_units = opus_support.get_valid_units(param_info.units)
     ranges = param_info.get_ranges_info()
 
     template = "ui/widget.html"
@@ -331,7 +331,7 @@ def api_get_widget(request, **kwargs):
         "form_type": form_type,
         "range_form_types": settings.RANGE_FORM_TYPES,
         "mult_form_types": settings.MULT_FORM_TYPES,
-        "units": units,
+        "valid_units": valid_units,
         "ranges": ranges
     }
     ret = render(request, template, context)

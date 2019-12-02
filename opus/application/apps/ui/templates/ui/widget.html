@@ -11,7 +11,15 @@
         <h6 class="card-title mt-0">
             <div>
                 <i class="fas fa-info-circle" title="{{ tooltip|safe }}"></i>
-                {{ label }} {{ units }}
+                {{ label }}&nbsp;
+                {% if valid_units %}
+                    <select class="unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
+                        {% for unit in valid_units %}
+                            <option value="{{ unit }}">{{ unit }}</option>
+                        {% endfor %}
+                    <select>
+                {% endif %}
+                <!-- {{ label }} {{ units }} -->
                 <span class="spinner">&nbsp;</span>
             </div>
             <span class="float-right border-left border-dark">
@@ -40,7 +48,6 @@
                     {% if intro %}
                         <div class="text-info">
                             {{ intro }}
-
                         </div>
                     {% endif %}
 
