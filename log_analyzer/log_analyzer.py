@@ -10,7 +10,7 @@ from pathlib import Path
 import pytz
 from typing import List, Optional, cast
 
-from abstract_session_info import AbstractConfiguration
+from abstract_configuration import AbstractConfiguration
 from log_entry import LogReader
 from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
@@ -58,6 +58,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
+    parser.add_argument('--configuration', dest='"opus.configuration"',
+                        help="location of pyghon configuration file")
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)

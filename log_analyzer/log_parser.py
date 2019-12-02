@@ -8,7 +8,7 @@ from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tupl
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from abstract_session_info import AbstractConfiguration, AbstractSessionInfo
+from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
 from log_entry import LogEntry
 
