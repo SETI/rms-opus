@@ -100,6 +100,11 @@ var opus = {
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
     menuState: {"cats": ["obs_general"]},
 
+    // opusID of the current slide show/gallery view observation.
+    // Note that both browse and cart use the same dialog for galleryView, so we
+    //      only need one variable to represent the last observation in that dialog
+    metadataDetailOpusId: "",
+
     // these are for the process that detects there was a change in the selection criteria and
     // updates things
     mainTimer: false,
