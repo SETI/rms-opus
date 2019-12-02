@@ -1861,7 +1861,7 @@ var o_browse = {
         o_browse.showPageLoaderSpinner();
         // if the selectedMetadata columns were updated while the galleryView slide was open,
         // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
-        let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
+        let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show");
 
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
