@@ -4,11 +4,15 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, o_utils, opus */
+/* globals o_browse, o_hash, o_utils, o_selectMetadata, opus */
 
-// The download options left pane will become a slide panel when screen width
+// The download data left pane will become a slide panel when screen width
 // is equal to or less than the threshold point.
-const cartLeftPaneThreshold = 1160;
+const cartLeftPaneThreshold = 1100;
+// The download data left pane will be closed when the screen width is equal to
+// or less than the current threshold and the screen height is also less than
+// the height threshold
+const cartLeftPaneMinHeight = 460;
 // Max height for the contents of download links history (.popover-body) before we enable PS.
 const downloadLinksPBMaxHeight = 200;
 // Html string for customized popover window. The reason we don't put the whole html
@@ -55,6 +59,7 @@ var o_cart = {
     reloadObservationData: true, // start over by reloading all data
     observationData: {},  // holds observation column data
     totalObsCount : undefined,
+    recycledCount : undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
@@ -110,7 +115,7 @@ var o_cart = {
             }
         });
 
-        // Click to open the download options panel when that nav-link is availabe
+        // Click to open the download data panel when that nav-link is available
         $("#cart").on("click", ".op-cart-slide-download-panel", function(e) {
             o_cart.displayCartLeftPane();
             $("#op-cart-download-panel").toggle("slide", {direction:"left"}, function() {
@@ -119,7 +124,7 @@ var o_cart = {
             });
         });
 
-        // Clicking on the "X" in the corner of the download options panel
+        // Clicking on the "X" in the corner of the download data panel
         $("#op-cart-download-panel .close, .op-overlay").on("click", function() {
             opus.hideHelpAndCartPanels();
             return false;
@@ -218,7 +223,7 @@ var o_cart = {
 
     updateDownloadFileInfo: function() {
         /**
-         * Update file info after selecting/deselecting download options.
+         * Update file info after selecting/deselecting download data.
          */
         o_cart.showDownloadSpinner();
         let add_to_url = o_cart.getDownloadFiltersChecked();
@@ -228,8 +233,7 @@ var o_cart = {
             if (info.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSpinner(info.total_download_size_pretty,
-                                       o_utils.addCommas(info.total_download_count));
+            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
         });
     },
 
@@ -245,7 +249,7 @@ var o_cart = {
                     $(target).hasClass("op-cart-deselect-all-btn"))) {
             $(checkboxesOptions).prop("checked", false);
         } else {
-            opus.logError("Target button in download options left pane has the wrong class.");
+            opus.logError("Target button in download data left pane has the wrong class.");
         }
         $(target).prop("disabled", true);
         $(target).siblings().prop("disabled", false);
@@ -290,23 +294,29 @@ var o_cart = {
 
     displayCartLeftPane: function() {
         /**
-         * Move download options elements between original left pane and slide panel
+         * Move download data elements between original left pane and slide panel
          * depending on the screen width
          */
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
         if ($(window).width() <= cartLeftPaneThreshold) {
-            $(html).find(".op-download-options-header h1").remove();
-            $("#op-cart-download-panel .op-header-text").html("<h2>Download Options</h2>");
+            $("#op-cart-download-panel .op-header-text").html("<h2>Download Data</h2>");
             $("#op-cart-download-panel .op-card-contents").html(html);
+            $(".op-download-panel-title").hide();
         } else {
             opus.hideHelpAndCartPanels();
-            if ($(html).find(".op-download-options-header h1").length === 0) {
-                $(html).find(".op-download-options-header").prepend("<h1>Download Options</h1>");
-            }
             $(".cart_details").html(html);
+            $(".op-download-panel-title").show();
         }
         o_cart.adjustProductInfoHeight();
+    },
+
+    isScreenNarrow: function(tab) {
+        return (tab === "#cart" && $(window).height() <= cartLeftPaneMinHeight);
+    },
+
+    isScreenShort: function(tab) {
+        return (tab === "#cart" && $(window).width() <= cartLeftPaneThreshold);
     },
 
     // download filters
@@ -439,11 +449,38 @@ var o_cart = {
         if (status.reqno < o_cart.lastRequestNo) {
             return;
         }
-        o_cart.totalObsCount = status.count;
-        o_cart.hideCartCountSpinner(o_cart.totalObsCount);
+        o_cart.totalObsCount = status.count + status.recycled_count;
+        o_cart.recycledCount = status.recycled_count;
+        o_cart.hideCartCountSpinner(status.count, status.recycled_count);
         if (status.total_download_size_pretty !== undefined && status.total_download_count !== undefined) {
-            o_cart.hideDownloadSpinner(status.total_download_size_pretty,
-                                       o_utils.addCommas(status.total_download_count));
+            o_cart.hideDownloadSpinner(status.total_download_size_pretty, status.total_download_count);
+        }
+
+        if (status.recycled_count === 0) {
+            $("[data-target='#op-empty-recycle-bin']").addClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin']").addClass("op-button-disabled");
+        } else {
+            $("[data-target='#op-empty-recycle-bin']").removeClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin']").removeClass("op-button-disabled");
+        }
+
+        if (status.count === 0) {
+            $(".op-download-options").addClass("op-button-disabled");
+        } else {
+            $(".op-download-options").removeClass("op-button-disabled");
+        }
+
+        // update the panel numbers if we received them...
+        if (status.product_cat_list !== undefined) {
+            for (let index = 0; index < status.product_cat_list.length; index++) {
+                let slugList = status.product_cat_list[index][1];
+                for (let slugNdx = 0; slugNdx < slugList.length; slugNdx++) {
+                    let slugName = slugList[slugNdx].slug_name;
+                    $(`#op-product-${slugName} .op-options-obs`).html(o_utils.addCommas(slugList[slugNdx].product_count));
+                    $(`#op-product-${slugName} .op-options-files`).html(o_utils.addCommas(slugList[slugNdx].download_count));
+                    $(`#op-product-${slugName} .op-options-size`).html(slugList[slugNdx].download_size_pretty);
+                }
+            }
         }
     },
 
@@ -465,7 +502,7 @@ var o_cart = {
         opus.getViewNamespace().galleryBoundingRect = o_browse.countGalleryImages();
 
         o_browse.updateBrowseNav();
-        o_browse.renderSelectMetadata();   // just do this in background so there's no delay when we want it...
+        o_selectMetadata.render();   // just do this in background so there's no delay when we want it...
 
         if (o_cart.reloadObservationData) {
             let zippedFiles_html = $(".op-zipped-files", "#cart").html();
@@ -479,8 +516,6 @@ var o_cart = {
                 success: function(html) {
                     // this div lives in the in the nav menu template
                     $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
-                    $(".op-cart-select-all-btn").prop("disabled", true);
-                    $(".op-cart-select-btn").prop("disabled", true);
 
                     // Init perfect scrollbar when .op-download-options-product-types is rendered.
                     o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
@@ -488,7 +523,7 @@ var o_cart = {
                         suppressScrollX: true,
                     });
 
-                    // Depending on the screen width, we move download options elements
+                    // Depending on the screen width, we move download data elements
                     // to either original left pane or slide panel
                     o_cart.displayCartLeftPane();
 
@@ -513,43 +548,89 @@ var o_cart = {
         return  $("[data-id='"+opusId+"'].op-thumbnail-container").hasClass("op-in-cart");
     },
 
-    emptyCart: function(returnToSearch=false) {
+    // 3 actions:
+    // Empty Cart - empty the cart completely;
+    // Empty Recycle Bin - empty the recycle bin
+    // Restore Recycle Bin - restore all observations in the recycle bin to the cart
+    emptyCartOrRecycleBin: function(what) {
         // to disable clicks:
         o_utils.disableUserInteraction();
+        o_browse.hideGalleryViewModal();
+        o_cart.showCartCountSpinner();
+        o_cart.showDownloadSpinner();
+
+        // what == "cart" or "recycleBin"
+        let recycleBin = (what === "cart" ? 0 : 1);
+        o_cart.lastRequestNo++;
 
         // change indicator to zero and let the server know:
-        $.getJSON("/opus/__cart/reset.json", function(data) {
+        let url = `/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`;
+
+        $.getJSON(url, function(data) {
             o_cart.reloadObservationData = true;
+            o_browse.reloadObservationData = true;
             o_cart.observationData = {};
-            if (!returnToSearch) {
-                opus.changeTab("cart");
-            } else {
-                opus.changeTab("search");
-            }
+            o_cart.updateCartStatus(data);
+            opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
 
-        $("#op-cart-count").html("0");
+/*        let buttonInfo = o_browse.cartButtonInfo("remove");
+        $("#cart .op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
+        $("#cart .op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
+        $("#cart .op-data-table-view input").prop("checked", false); */
+    },
 
-        let buttonInfo = o_browse.cartButtonInfo("in");
-        $(".op-thumbnail-container.op-in-cart [data-icon=cart]").html(`<i class="${buttonInfo.icon} fa-xs"></i>`);
-        $(".op-thumbnail-container.op-in-cart").removeClass("op-in-cart");
-        $(".op-data-table-view input").prop("checked", false);
+    restoreRecycleBin: function() {
+        // to disable clicks:
+        o_utils.disableUserInteraction();
+        o_cart.showCartCountSpinner();
+        o_cart.showDownloadSpinner();
+
+        let tab = opus.getViewTab();
+        o_cart.lastRequestNo++;
+
+        let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
+
+        $.getJSON(url, function(statusData) {
+            o_cart.updateCartStatus(statusData);
+            o_utils.enableUserInteraction();
+        });
+
+        o_browse.reloadObservationData = true;
+        let buttonInfo = o_browse.cartButtonInfo("restore");
+        let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
+        $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
+        $(selector).prop("title", buttonInfo["#cart"].title);
+        $(`#cart .op-thumbnail-container`).addClass("op-in-cart");
+        $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
+        $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
+        $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");
+        $(`#galleryViewContents .op-cart-toggle`).attr("title", `${buttonInfo[tab].title} (spacebar)`);
+        $(`#galleryViewContents .op-cart-toggle`).html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
     // action = add/remove/addrange/removerange/addall
     getEditURL: function(opusId, action) {
         let tab = opus.getViewTab();
         let url = "/opus/__cart/" + action + ".json?";
+        // only add to recycle bin if the edit occurs on the #cart tab
+        let recycleBin = (tab === "#cart" ? 1 : 0);
         switch (action) {
             case "add":
+                url += `opusid=${opusId}`;
+                break;
+
             case "remove":
-                url += "opusid=" + opusId;
+                url += `opusid=${opusId}&recyclebin=${recycleBin}`;
+                break;
+
+            case "addrange":
+                url += `range=${opusId}&${o_hash.getHash()}`;
                 break;
 
             case "removerange":
-            case "addrange":
-                url += `range=${opusId}&${o_hash.getHash()}`;
+                url += `range=${opusId}&${o_hash.getHash()}&recyclebin=${recycleBin}`;
                 break;
 
             case "addall":
@@ -559,7 +640,7 @@ var o_cart = {
 
         // Minor performance check - if we don't need a total download size, don't bother
         // Only the cart tab is interested in updating that count at this time.
-        if (tab === "cart") {
+        if (tab === "#cart") {
             url += "&download=1&" + o_cart.getDownloadFiltersChecked();
         }
         return url;
@@ -573,11 +654,6 @@ var o_cart = {
 
     toggleInCart: function(fromOpusId, toOpusId) {
         let tab = opus.getViewTab();
-
-        // for now, disable the edit function on the #cart tab
-        if (tab === "#cart") {
-            return;
-        }
 
         let length = null;
         let fromIndex = null;
@@ -626,7 +702,7 @@ var o_cart = {
 
         // just so we don't have to continually check for both addrange and add...
         action = (action === "addrange" || action === "add" ? "add" : action);
-        let status = (action === "add" ?  "out" : "in");
+        let status = (action === "add" ?  "add" : "remove");
         let checked = (action === "add");
 
         $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
@@ -639,21 +715,31 @@ var o_cart = {
                     $("#op-cart-status-error-msg .modal-body").text(statusData.error);
                     $("#op-cart-status-error-msg").modal("show");
                 }
-                o_cart.updateCartStatus(statusData);
             } else {
                 $.each(elementArray.splice(fromIndex, length), function(index, elem) {
                     let opusId = $(elem).data("id");
-                    /// NOTE: we need to mark the elements on BOTH browse and cart page
+                    /// NOTE: we need to mark the elements on BOTH browse and cart page for delete but not recycle bin
                     if (action === "add") {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                        $(`#cart tr[data-id=${opusId}]`).removeClass("text-success op-recycled");
+                        $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).addClass("op-hide-element");
+                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").addClass("op-hide-element");
+                        }
                     } else {
                         $(`.op-thumbnail-container[data-id=${opusId}]`).removeClass("op-in-cart");
+                        $(`#cart tr[data-id=${opusId}]`).addClass("text-success op-recycled");
+                        $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).removeClass("op-hide-element");
+                        if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                            $("#galleryViewContents .op-metadata-details .op-recycle-modal").removeClass("op-hide-element");
+                        }
                     }
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
-                o_cart.updateCartStatus(statusData);
             }
+            o_cart.updateCartStatus(statusData);
+            o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
         o_browse.undoRangeSelect(tab);
@@ -663,12 +749,19 @@ var o_cart = {
     showCartCountSpinner: function() {
         if (o_cart.cartCountSpinnerTimer === null) {
             o_cart.cartCountSpinnerTimer = setTimeout(function() {
-                $("#op-cart-count").html(opus.spinner); }, opus.spinnerDelay);
+                $("#op-cart-count").html(opus.spinner);
+                if ($("#op-recycled-count").length) {
+                    $("#op-recycled-count").html(opus.spinner);
+                }
+            }, opus.spinnerDelay);
         }
     },
 
-    hideCartCountSpinner: function(cartCount) {
-        $("#op-cart-count").html(cartCount);
+    hideCartCountSpinner: function(cartCount, recycledCount) {
+        $("#op-cart-count").html(o_utils.addCommas(cartCount));
+        if ($("#op-recycled-count").length) {
+            $("#op-recycled-count").html(o_utils.addCommas(recycledCount));
+        }
         if (o_cart.cartCountSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.cartCountSpinnerTimer);
@@ -690,8 +783,13 @@ var o_cart = {
     hideDownloadSpinner: function(downloadSize, downloadCount) {
         $(".op-total-size .spinner").removeClass("op-show-spinner");
         $(".op-total-download .spinner").removeClass("op-show-spinner");
-        $("#op-total-download-size").html(downloadSize).fadeIn();
-        $("#op-total-download-count").html(downloadCount).fadeIn();
+
+        // for cart/download data panel only
+        if (downloadSize !== undefined && downloadCount !== undefined) {
+            $("#op-total-download-size").html(downloadSize).fadeIn();
+            $("#op-total-download-count").html(o_utils.addCommas(downloadCount)).fadeIn();
+        }
+
         if (o_cart.downloadSpinnerTimer !== null) {
             // This should always be true - we're just being careful
             clearTimeout(o_cart.downloadSpinnerTimer);

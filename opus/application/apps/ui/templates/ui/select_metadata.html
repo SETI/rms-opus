@@ -32,7 +32,7 @@
       	    <ul>
                 {% for slug, param_info in all_slugs_info.items %}
       		        <li id="cchoose__{{ slug }}">
-                        <span class="info">&nbsp;<i class="fas fa-info-circle" title = "
+                        <span class="op-selected-metadata-info">&nbsp;<i class="fas fa-info-circle" title = "
                             {% if param_info.get_tooltip_results %}
                                 {{ param_info.get_tooltip_results|striptags }}
                             {% else  %}
@@ -40,7 +40,7 @@
                             {% endif %}
                         "></i></span>
                         {{ param_info.body_qualified_label_results }}
-                        <span class="unselect"><i class="far fa-trash-alt"></i></span>
+                        <span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></i></span>
     	            </li>
                 {% endfor %}
             </ul>

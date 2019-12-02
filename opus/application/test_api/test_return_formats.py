@@ -94,7 +94,7 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_cart_reset(self):
         "[test_return_formats.py] return formats /__cart/reset.[fmt]"
-        self._test_return_formats('/__cart/reset.[fmt]', ('json',))
+        self._test_return_formats('/__cart/reset.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_cart_download(self):
         "[test_return_formats.py] return formats /__cart/download.[fmt]"

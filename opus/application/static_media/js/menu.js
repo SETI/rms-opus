@@ -39,7 +39,7 @@ var o_menu = {
                   o_widgets.getWidget(slug,'#op-search-widgets');
              }
 
-             o_hash.updateHash();
+             o_hash.updateURLFromCurrentHash();
              return false;
          });
 
@@ -71,7 +71,7 @@ var o_menu = {
             // open menu items that were open before
             $("#sidebar").toggleClass("op-redraw-menu");
             $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#sidebar #search-submenu-${category}`).length != 0) {
+                if ($(`#sidebar #search-submenu-${category}`).length !== 0) {
                     $(`#sidebar #search-submenu-${category}`).collapse("show");
                 } else {
                     // this is if the surface geometry target is no longer applicable so it's not
@@ -103,7 +103,7 @@ var o_menu = {
 
     markCurrentMenuItems: function() {
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_menu.markMenuItem(`li > [data-slug="${slug}"]`);
+            o_menu.markMenuItem(`.op-search-menu li > [data-slug="${slug}"]`);
         });
     },
 
