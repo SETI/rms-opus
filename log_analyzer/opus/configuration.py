@@ -4,7 +4,7 @@ import urllib.parse
 from enum import auto, Flag
 from typing import List, Dict, Optional, Match, Any, Iterable, Tuple, TextIO, cast
 
-from abstract_session_info import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
+from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
 from log_entry import LogEntry
 from log_parser import Session
 from opus import slug

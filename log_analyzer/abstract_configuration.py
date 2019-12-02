@@ -1,8 +1,7 @@
 import abc
-import functools
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, Union
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
 
 from markupsafe import Markup
 
