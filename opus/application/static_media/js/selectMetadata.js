@@ -96,7 +96,9 @@ var o_selectMetadata = {
 
     render: function() {
         if (!o_selectMetadata.rendered) {
-            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
+            // We use getFullHashStr instead of getHash because we want the updated
+            // version of widgets= even if the main URL hasn't been updated yet
+            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getFullHashStr();
             $(".modal-body.op-select-metadata-details").load( url, function(response, status, xhr)  {
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
@@ -131,6 +133,11 @@ var o_selectMetadata = {
                 o_selectMetadata.rendered = true;
             });
         }
+    },
+
+    reRender: function() {
+        o_selectMetadata.rendered = false;
+        o_selectMetadata.render();
     },
 
     addColumn: function(slug) {
