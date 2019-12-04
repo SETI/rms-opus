@@ -89,9 +89,7 @@ var o_cart = {
     addCartBehaviors: function() {
         // nav bar
         $("#cart").on("click", ".op-download-csv", function(e) {
-            let colStr = opus.prefs.cols.join(',');
-            let orderStr = opus.prefs.order.join(",");
-            $(this).attr("href", `/opus/__cart/data.csv?cols=${colStr}&order=${orderStr}`);
+            o_cart.downloadCSV(this);
         });
 
         $("#cart").on("click", ".downloadData", function(e) {
@@ -795,5 +793,11 @@ var o_cart = {
             clearTimeout(o_cart.downloadSpinnerTimer);
             o_cart.downloadSpinnerTimer = null;
         }
+    },
+
+    downloadCSV: function(obj) {
+        let colStr = opus.prefs.cols.join(',');
+        let orderStr = opus.prefs.order.join(",");
+        $(obj).attr("href", `/opus/__cart/data.csv?cols=${colStr}&order=${orderStr}`);
     },
 };

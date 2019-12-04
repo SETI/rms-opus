@@ -667,6 +667,11 @@ th.sticky-header {
     padding-right: 3%;
 }
 
+#op-select-metadata .op-download-csv {
+    float: right;
+    margin-top: .75em;
+}
+
 /* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column-header, .op-selected-metadata-column-header {
     padding-left: calc(1.5% + 4px);
