@@ -24,7 +24,6 @@ var o_selectMetadata = {
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
-                // if there was a galleryView/slide open when the selectMetadata diag was opened, remember so we can reopen
                 o_browse.clearObservationData(true); // Leave startobs alone
                 o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                 o_browse.loadData(opus.prefs.view);
