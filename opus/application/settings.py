@@ -281,13 +281,6 @@ DATABASES = {
 # From here on, the configuration is for the OPUS apps, not Django itself.
 ################################################################################
 
-import pdsfile
-
-# Note: PDS_DATA_DIR is from secrets.py
-
-pdsfile.preload(PDS_DATA_DIR)
-pdsfile.use_pickles()
-
 # Tables in which every observation in the database appears.
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
