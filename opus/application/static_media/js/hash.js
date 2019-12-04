@@ -175,6 +175,9 @@ var o_hash = {
         if (slug.startsWith("qtype-")) {
             slug = slug.slice(6) + "3";
         }
+        if (slug.startsWith("unit-")) {
+            slug = slug.slice(5) + "4";
+        }
         slug += trailingCounter;
         return slug;
     },
@@ -354,7 +357,7 @@ var o_hash = {
             return [undefined, undefined];
         }
 
-        hash = (hash.search('&') > -1 ? hash.split('&') : [hash]);
+        hash = (hash.search("&") > -1 ? hash.split("&") : [hash]);
         hash = o_hash.decodeHashArray(hash);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
         let extras = {}; // store qtype from url
@@ -373,7 +376,7 @@ var o_hash = {
                     return; // continue to next iteration
                 }
 
-                if (slug.startsWith("qtype-")) {
+                if (slug.startsWith("qtype-") || slug.startsWith("unit-")) {
                     if (slugCounter) {
                         slugCounter = parseInt(slugCounter);
                         extras[slug] = extras[slug] || [];
@@ -408,7 +411,7 @@ var o_hash = {
                 // Loop through widgets and check if there is any widget with RANGE or STRING input
                 // but without qtype, we will put those in selections as well.
                 $.each(value.split(","), function(idx, widgetSlug) {
-                    o_hash.SyncUpWithOPUSSelectionsForWidgetsWithNoQtype(selections,
+                    o_hash.syncUpWithOPUSSelectionsForWidgetsWithNoQtype(selections,
                                                                          extras, widgetSlug);
                 });
             }
@@ -419,7 +422,7 @@ var o_hash = {
         return [selections, extras];
     },
 
-    SyncUpWithOPUSSelectionsForWidgetsWithNoQtype: function(selections, extras, widgetSlug) {
+    syncUpWithOPUSSelectionsForWidgetsWithNoQtype: function(selections, extras, widgetSlug) {
         /**
          * Takes in a widgetSlug and check if the widget has STRING or RANGE input
          * without qtype, if so, sync up the opus.selections with selections.
@@ -513,7 +516,7 @@ var o_hash = {
             return;
         }
 
-        hash = hash.split('&');
+        hash = hash.split("&");
         hash = o_hash.decodeHashArray(hash);
 
         $.each(hash, function(index, pair) {
@@ -522,7 +525,7 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             if (value) {
-                if (slug.match(/qtype-.*/)) {
+                if (slug.match(/qtype-.*/) || slug.match(/unit-.*/)) {
                     let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
@@ -539,16 +542,14 @@ var o_hash = {
                         }
                         opus.extras[slug][slugCounter-1] = value;
                     } else {
-                        // range drop down, add the qtype to the global extras array
-                        let id = slug.match(/qtype-(.*)/)[1];
-                        opus.extras['qtype-' + id] = value.split(',');
+                        opus.extras[slug] = value.split(",");
                     }
                 }
                 // look for prefs
                 else if (slug in opus.prefs) {
                     switch (slug) {
                         case "widgets":
-                            opus.prefs[slug] = value.replace(/\s+/g, '').split(',');
+                            opus.prefs[slug] = value.replace(/\s+/g, "").split(",");
                             break;
                         case "page":
                             // page is no longer supported and should have been normalized out
@@ -557,10 +558,10 @@ var o_hash = {
                             // limit is no longer supported and is calculated based on screen size, so ignore this param
                             break;
                         case "cols":
-                            opus.prefs[slug] = value.split(',');
+                            opus.prefs[slug] = value.split(",");
                             break;
                         case "order":
-                            opus.prefs[slug] = value.split(',');
+                            opus.prefs[slug] = value.split(",");
                             break;
                         case "startobs":
                         case "cart_startobs":
@@ -619,17 +620,19 @@ var o_hash = {
         let rangeQtypeDefaultVal = "any";
         let strQtypeDefaultVal = "contains";
         for (const slug in selections) {
-            if (slug.match(/.*(1|2)$/)) {
+            if (slug.match(/.*(1|2)$/)) { // RANGE
                 let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
+                let unitSlug = `unit-${slugNoNum}`;
                 selections[`${slugNoNum}1`] = selections[`${slugNoNum}1`] || [];
                 selections[`${slugNoNum}2`] = selections[`${slugNoNum}2`] || [];
                 let longestLength = (Math.max(selections[`${slugNoNum}1`].length,
                                               selections[`${slugNoNum}2`].length));
                 if (qtypeSlug in extras) {
-                    longestLength = (Math.max(selections[`${slugNoNum}1`].length,
-                                              selections[`${slugNoNum}2`].length,
-                                              extras[qtypeSlug].length));
+                    longestLength = (Math.max(longestLength, extras[qtypeSlug].length));
+                }
+                if (unitSlug in extras) {
+                    longestLength = (Math.max(longestLength, extras[unitSlug].length));
                 }
 
                 while (selections[`${slugNoNum}1`].length < longestLength) {
@@ -638,23 +641,58 @@ var o_hash = {
                 while (selections[`${slugNoNum}2`].length < longestLength) {
                     selections[`${slugNoNum}2`].push(null);
                 }
+
                 if (qtypeSlug in extras) {
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                         extras[qtypeSlug].push(rangeQtypeDefaultVal);
                     }
                 }
-            } else {
-                let qtypeSlug = `qtype-${slug}`;
-                if (qtypeSlug in extras) {
-                    selections[slug] = selections[slug] || [];
-                    extras[qtypeSlug] = extras[qtypeSlug] || [];
-                    let longestLength = Math.max(selections[slug].length, extras[qtypeSlug].length);
-
-                    while (selections[slug].length < longestLength) {
-                        selections[slug].push(null);
+                if (unitSlug in extras) {
+                    // Get the default unit value from extras[unitSlug]
+                    let rangeUnitDefaultVal = null;
+                    for (const unitVal of extras[unitSlug]) {
+                        if (unitVal) {
+                            rangeUnitDefaultVal = unitVal;
+                            break;
+                        }
                     }
+                    while (extras[unitSlug] && extras[unitSlug] < longestLength) {
+                        extras[unitSlug].push(rangeUnitDefaultVal);
+                    }
+                }
+            } else { // STRING
+                let qtypeSlug = `qtype-${slug}`;
+                let unitSlug = `unit-${slug}`;
+                selections[slug] = selections[slug] || [];
+                let longestLength = selections[slug].length;
+                if (qtypeSlug in extras) {
+                    // extras[qtypeSlug] = extras[qtypeSlug] || [];
+                    longestLength = Math.max(longestLength, extras[qtypeSlug].length);
+                }
+                if (unitSlug in extras) {
+                    longestLength = Math.max(longestLength, extras[unitSlug].length);
+                }
+
+                while (selections[slug].length < longestLength) {
+                    selections[slug].push(null);
+                }
+
+                if (qtypeSlug in extras) {
                     while (extras[qtypeSlug] && extras[qtypeSlug] < longestLength) {
                         extras[qtypeSlug].push(strQtypeDefaultVal);
+                    }
+                }
+                if (unitSlug in extras) {
+                    // Get the default unit value from extras[unitSlug]
+                    let strUnitDefaultVal = null;
+                    for (const unitVal of extras[unitSlug]) {
+                        if (unitVal) {
+                            strUnitDefaultVal = unitVal;
+                            break;
+                        }
+                    }
+                    while (extras[unitSlug] && extras[unitSlug] < longestLength) {
+                        extras[unitSlug].push(strUnitDefaultVal);
                     }
                 }
             }
@@ -662,14 +700,66 @@ var o_hash = {
 
         // When slug in selections is empty but qtype-slug in extras exists, we will also
         // make sure data in selections and extras are aligned.
-        for (const qtypeSlug in extras) {
-            if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
-                 `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
+        // for (const qtypeSlug in extras) {
+        //     if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
+        //          `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
+        //          `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
+        //         continue;
+        //     }
+        //     let slug = qtypeSlug.match(/qtype-(.*)$/)[1];
+        //     let longestLength = extras[qtypeSlug].length;
+        //
+        //     if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("RANGE")) {
+        //         selections[`${slug}1`] = selections[`${slug}1`] || [];
+        //         selections[`${slug}2`] = selections[`${slug}2`] || [];
+        //         while (selections[`${slug}1`].length < longestLength) {
+        //             selections[`${slug}1`].push(null);
+        //         }
+        //         while (selections[`${slug}2`].length < longestLength) {
+        //             selections[`${slug}2`].push(null);
+        //         }
+        //     } else if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("STRING")) {
+        //         selections[slug] = selections[slug] || [];
+        //         while (selections[slug].length < longestLength) {
+        //             selections[slug].push(null);
+        //         }
+        //     }
+        // }
+        console.log(`alignDataInSelectionsAndExtras`);
+        console.log(JSON.stringify(selections));
+        console.log(JSON.stringify(extras));
+        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "qtype");
+        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "unit");
+
+        return [selections, extras];
+    },
+
+    syncUpExtrasWithEmptySelections: function(selections, extras, slugType) {
+        /**
+         * When slug in selections is empty but qtype-slug or unit-slug in extras exists,
+         * we will also make sure data in selections and extras are aligned.
+         */
+
+        // slug.startsWith("qtype-")
+        let regexMatchPattern = null;
+        if (slugType === "qtype") {
+            regexMatchPattern = /qtype-(.*)$/;
+        } else if (slugType === "unit") {
+            regexMatchPattern = /unit-(.*)$/;
+        }
+        for (const slugInExtras in extras) {
+            if (!slugInExtras.match(regexMatchPattern)) {
                 continue;
             }
-            let slug = qtypeSlug.match(/qtype-(.*)$/)[1];
-            let longestLength = extras[qtypeSlug].length;
+            let regexMatchSlug = slugInExtras.match(regexMatchPattern)[1];
+            if ((regexMatchSlug in selections ||
+            `${regexMatchSlug}1` in selections ||
+            `${regexMatchSlug}2` in selections)) {
+                continue;
+            }
+            let slug = regexMatchSlug;
+
+            let longestLength = extras[slugInExtras].length;
 
             if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("RANGE")) {
                 selections[`${slug}1`] = selections[`${slug}1`] || [];
@@ -687,7 +777,5 @@ var o_hash = {
                 }
             }
         }
-
-        return [selections, extras];
     }
 };

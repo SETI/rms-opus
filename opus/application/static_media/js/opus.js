@@ -210,6 +210,30 @@ var opus = {
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
+            console.log(`opus load before reload`);
+            console.log(`selections`);
+            console.log(JSON.stringify(selections));
+            console.log(`opus.selections`);
+            console.log(JSON.stringify(opus.selections));
+            console.log(`opus.lastselections`);
+            console.log(JSON.stringify(opus.lastSelections));
+            console.log(`currentExtrasQ`);
+            console.log(JSON.stringify(currentExtrasQ));
+            console.log(`lastExtrasQ`);
+            console.log(JSON.stringify(lastExtrasQ));
+            console.log(`opusExtrasQ`);
+            console.log(JSON.stringify(opusExtrasQ));
+            console.log(`extras`);
+            console.log(JSON.stringify(extras));
+            console.log(`opus.extras`);
+            console.log(JSON.stringify(opus.extras));
+            console.log(`o_search.slugRangeInputValidValueFromLastSearch`);
+            console.log(o_search.slugRangeInputValidValueFromLastSearch);
+            console.log(`opus.isAnyNormalizeInputInProgress()`);
+            console.log(opus.isAnyNormalizeInputInProgress());
+            console.log(opus.normalizeInputForAllFieldsInProgress);
+            console.log(`Not same selection?: ${!o_utils.areObjectsEqual(selections, opus.selections)}`);
+            console.log(`Not same extras?: ${!o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)}`);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
 
