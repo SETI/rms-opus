@@ -668,8 +668,9 @@ th.sticky-header {
 }
 
 #op-select-metadata .op-download-csv {
-    float: right;
-    margin-top: .75em;
+    position: fixed;
+    bottom: 5.5em;
+    right: 1.25em;
 }
 
 /* Make white space (padding) in metadata selector modal responsive */
