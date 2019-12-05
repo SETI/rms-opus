@@ -833,10 +833,6 @@ var o_search = {
             return;
         }
 
-        // get any prefs from cookies
-        if (!opus.prefs.widgets.length && $.cookie("widgets")) {
-            opus.prefs.widgets = $.cookie("widgets").split(',');
-        }
         // get menu
         o_menu.getNewSearchMenu();
 
@@ -852,8 +848,6 @@ var o_search = {
                 o_widgets.placeWidgetContainers();
             }
         }
-
-        o_widgets.updateWidgetCookies();
 
         $.each(opus.prefs.widgets, function(key, slug) {
             if ($.inArray(slug, opus.widgetsDrawn) < 0) {  // only draw if not already drawn

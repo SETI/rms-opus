@@ -3,7 +3,7 @@
         {% for div in menu.divs %}
             <li class="list-group-item py-2 op-search-menu-category">
                 {#  Each div has a top-level catgory  #}
-                {% if div.table_name == 'obs_general' %}
+                {% if div.start_expanded %}
                     <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
                 {% else %}
                     <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ div.table_name }}">
@@ -11,7 +11,7 @@
                     <span class="title">{{ div.label }}</span>
                 </a>
 
-                {% if div.table_name == 'obs_general' %}
+                {% if div.start_expanded %}
                     <span class="op-menu-text spinner">&nbsp;</span>
                     <ul class="list-group list-group-flush submenu collapse show" id="{{ which }}-submenu-{{ div.table_name }}">
                 {% else %}
@@ -97,7 +97,11 @@
                                             {% if p.get_tooltip_results %}
                                                 <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
                                             {% endif %}
-                                            {{ p.label_results }}
+                                            {% if div.table_name == 'search_fields' %}
+                                                {{ p.body_qualified_label_results }}
+                                            {% else %}
+                                                {{ p.label_results }}
+                                            {% endif %}
                                         {% else %}
                                             {% if p.get_tooltip %}
                                                 <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>

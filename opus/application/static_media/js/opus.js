@@ -954,7 +954,6 @@ var opus = {
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];
-        o_widgets.updateWidgetCookies();
 
         // probably not needed, just added as a precaution.
         opus.force_load = true;

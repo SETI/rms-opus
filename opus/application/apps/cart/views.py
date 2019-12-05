@@ -24,8 +24,6 @@ import random
 import string
 import zipfile
 
-import pdsfile
-
 import settings
 
 from django.db import connection, DatabaseError
@@ -525,7 +523,7 @@ def api_create_download(request, opus_id=None):
             return ret
 
     # Fetch the full file info of the files we'll be zipping up
-    # We want the PdsFile objects so we can get the checksum as well as the
+    # We want the raw objects so we can get the checksum as well as the
     # abspath
     files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)

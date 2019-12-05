@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $ */
-/* globals o_browse, o_hash, o_menu, o_search, o_utils, opus */
+/* globals o_browse, o_hash, o_menu, o_search, o_selectMetadata, o_utils, opus */
 
 // font awesome icon class
 const trashIcon = "far fa-trash-alt";
@@ -570,6 +570,8 @@ var o_widgets = {
             opus.prefs.widgets.splice(opus.prefs.widgets.indexOf(slug), 1);
         }
 
+        o_selectMetadata.reRender();
+
         if ($.inArray(slug,opus.widgetsDrawn) > -1) {
             opus.widgetsDrawn.splice(opus.widgetsDrawn.indexOf(slug), 1);
         }
@@ -638,7 +640,6 @@ var o_widgets = {
                 o_hash.updateURLFromCurrentHash();
             }
 
-            o_widgets.updateWidgetCookies();
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
         });
     },
@@ -651,10 +652,8 @@ var o_widgets = {
                 widgets[index]=value.split('__')[1];
             });
             opus.prefs.widgets = widgets;
-
+            o_selectMetadata.reRender();
             o_hash.updateURLFromCurrentHash();
-
-            o_widgets.updateWidgetCookies();
     },
 
     // this is called after a widget is drawn
@@ -852,10 +851,6 @@ var o_widgets = {
          return simple;
      },
 
-     updateWidgetCookies: function() {
-         $.cookie("widgets", opus.prefs.widgets.join(','), { expires: 28});  // days
-      },
-
      placeWidgetContainers: function() {
          // this is for when you are first drawing the browse tab and there
          // multiple widgets being requested at once and we want to preserve their order
@@ -891,13 +886,13 @@ var o_widgets = {
         if ($.inArray(slug, opus.widgetElementsDrawn) < 0) {
             opus.prefs.widgets.unshift(slug);
 
-            o_widgets.updateWidgetCookies();
             // these sometimes get drawn on page load by placeWidgetContainers, but not this time:
             let html = '<li id="' + widget + '" class="widget"></li>';
             $(html).hide().prependTo(formscolumn).show("slow");
             opus.widgetElementsDrawn.unshift(slug);
-
         }
+
+        o_selectMetadata.reRender();
 
         $.ajax({
             url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
@@ -980,7 +975,6 @@ var o_widgets = {
                     return '<span class="hints" id="' + span_id + '"></span>';
                 });
             } catch(e) { } // these only apply to mult widgets
-
 
             if ($.inArray(slug,opus.widgetsFetching) > -1) {
                 opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);

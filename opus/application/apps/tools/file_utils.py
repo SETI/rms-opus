@@ -2,7 +2,7 @@
 #
 # tools/file_utils.py
 #
-# This file contains utilities that interact with PdsFile.
+# This file contains utilities that interact with the obs_files table.
 #
 ################################################################################
 
@@ -49,8 +49,8 @@ def get_pds_products(opus_id_list,
         'browse-medium'.
 
     loc_type is 'url' to return full URLs or 'path' to return paths available on
-        the local disk. It can also be 'raw' to return the actual PdsFile
-        object.
+        the local disk. It can also be 'raw' to return a dictionary containing
+        the URL, path, and checksum.
     """
     assert loc_type in ('path', 'url', 'raw'), loc_type
     if opus_id_list is None:
@@ -64,7 +64,7 @@ def get_pds_products(opus_id_list,
 
     if len(opus_id_list) == 0 or len(product_types) == 0:
         return {}
-        
+
     results = OrderedDict() # Dict of opus_ids
 
     cursor = connection.cursor()

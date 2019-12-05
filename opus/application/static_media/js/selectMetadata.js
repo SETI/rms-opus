@@ -147,6 +147,11 @@ var o_selectMetadata = {
         $("#op-select-metadata a.op-download-csv").text(buttonTitle);
     },
 
+    reRender: function() {
+        o_selectMetadata.rendered = false;
+        o_selectMetadata.render();
+    },
+
     addColumn: function(slug) {
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector);
