@@ -228,6 +228,7 @@ var o_selectMetadata = {
             modalFooterHeight = 68;
             selectMetadataHeadersHeight = 122;
             selectMetadataHeadersHRHeight = 1;
+            buttonHeight = 35;
         }
         let totalNonScrollableHeight = (footerHeight + mainNavHeight + modalHeaderHeight +
                                         modalFooterHeight + selectMetadataHeadersHeight +
@@ -242,8 +243,8 @@ var o_selectMetadata = {
             $(".op-select-metadata-headers-hr").hide();
             height += selectMetadataHeadersHeight + selectMetadataHeadersHRHeight;
         }
-        $(".op-all-metadata-column").css("max-height", height+buttonHeight);
-        $(".op-selected-metadata-column").css("max-height", height);
+        $(".op-all-metadata-column").css("height", height);
+        $(".op-selected-metadata-column").css("height", height - buttonHeight);
     },
 
     menuContainerHeight: function() {
