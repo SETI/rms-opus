@@ -258,6 +258,10 @@ var o_widgets = {
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
+                if (opus.extras[`unit-${slug}`]) {
+                    let defaultUnitVal = $(`#widget__${slug} .unit-${slug}`).val();
+                    opus.extras[`unit-${slug}`].push(defaultUnitVal);
+                }
             } else if (newlyAddedInput.hasClass("STRING")) {
                 opus.selections[slug] = opus.selections[slug] || [];
                 while (opus.selections[slug].length < numberOfInputSets) {
@@ -266,6 +270,10 @@ var o_widgets = {
 
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    let defaultUnitVal = $(`#widget__${slug} .unit-${slug}`).val();
+                    opus.extras[`unit-${slug}`].push(defaultUnitVal);
                 }
 
                 // Init autocomplete
@@ -323,9 +331,16 @@ var o_widgets = {
                 opus.selections[`${slug}2`] = (previousMaxSelections.slice(0, idx)
                                                .concat(previousMaxSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
-                    let previousExtras = opus.extras[`qtype-${slug}`];
-                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                                                   .concat(previousExtras.slice(idx+1)));
+                    opus.extras[`qtype-${slug}`].splice(idx, 1);
+                    // let previousExtras = opus.extras[`qtype-${slug}`];
+                    // opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
+                    //                                 .concat(previousExtras.slice(idx+1)));
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    opus.extras[`unit-${slug}`].splice(idx, 1);
+                    // let previousUnits = opus.extras[`unit-${slug}`];
+                    // opus.extras[`unit-${slug}`] = (previousUnits.slice(0, idx)
+                    //                                .concat(previousUnits.slice(idx+1)));
                 }
             } else if (inputElement.hasClass("STRING")) {
                 let previousSelections = opus.selections[`${slug}`];
@@ -334,11 +349,18 @@ var o_widgets = {
                 }
 
                 opus.selections[`${slug}`] = (previousSelections.slice(0, idx)
-                                               .concat(previousSelections.slice(idx+1)));
+                                              .concat(previousSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
-                    let previousExtras = opus.extras[`qtype-${slug}`];
-                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                                                  .concat(previousExtras.slice(idx+1)));
+                    opus.extras[`qtype-${slug}`].splice(idx, 1);
+                    // let previousExtras = opus.extras[`qtype-${slug}`];
+                    // opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
+                    //                                 .concat(previousExtras.slice(idx+1)));
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    opus.extras[`unit-${slug}`].splice(idx, 1);
+                    // let previousUnits = opus.extras[`unit-${slug}`];
+                    // opus.extras[`unit-${slug}`] = (previousUnits.slice(0, idx)
+                    //                                .concat(previousUnits.slice(idx+1)));
                 }
             }
 
@@ -912,12 +934,12 @@ var o_widgets = {
 
             // NOTE: inputs & qtypes are not renumbered yet at this stage.
             let qtype = "qtype-" + slug;
-            let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
+            let qtypeInputs = $(`#widget__${slug} .widget-main select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
 
             if (numberOfQtypeInputs !== 0) {
                 qtypeInputs.parent("li").addClass("op-qtype-input");
-                let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
+                let qtypeValue = $(`#widget__${slug} .widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
@@ -930,7 +952,7 @@ var o_widgets = {
                 if (numberOfQtypeInputs === 1 && !hash[qtype]) {
                     // When a widget with qtype is open, the value of the first option tag is the
                     // default value for qtype
-                    let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
+                    let defaultOption = $(`#widget__${slug} .widget-main select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
                     o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
@@ -1086,7 +1108,7 @@ var o_widgets = {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
             let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
-            let qtypes = $(`#widget__${slug} select`);
+            let qtypes = $(`#widget__${slug} .widget-main select`);
 
             let trailingCounter = 0;
             let trailingCounterString = "";
@@ -1152,7 +1174,7 @@ var o_widgets = {
         } else if (widgetInputs.hasClass("STRING")) {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let stringInputs = $(`#widget__${slug} input.STRING`);
-            let qtypes = $(`#widget__${slug} select`);
+            let qtypes = $(`#widget__${slug} .widget-main select`);
 
             let originalStringName = stringInputs.attr("name");
             originalStringName = o_utils.getSlugOrDataWithoutCounter(originalStringName);

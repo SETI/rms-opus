@@ -24,7 +24,7 @@ var o_hash = {
          */
         let hash = [];
         let visited = {};
-
+        console.log("getHashStrFromSelections");
         let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
         //  sort in alphabetical order with case insensitive
         let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
@@ -38,7 +38,8 @@ var o_hash = {
                 return 0;
             }
         });
-
+        console.log(`sortedSlugs`);
+        console.log(sortedSlugs);
         for (const slug of sortedSlugs) {
             if (visited[slug]) {
                 continue;
@@ -49,6 +50,7 @@ var o_hash = {
                 let numberOfInputSets = encodedSelectionValues.length;
                 let slugNoNum = slug.match(/.*(1|2)$/) ? slug.match(/(.*)[1|2]$/)[1] : slug;
                 let qtypeSlug = `qtype-${slugNoNum}`;
+                let unitSlug = `unit-${slugNoNum}`;
 
                 // If the slug has an array of more than 1 value, and it's either a STRING or RANGE input slug,
                 // we attach the trailing counter string to the slug and assign the corresponding selection value
@@ -102,6 +104,11 @@ var o_hash = {
                             o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                         trailingCounter);
                         }
+                        if (unitSlug in opus.extras) {
+                            visited[unitSlug] = true;
+                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
+                                                        trailingCounter);
+                        }
 
                     }
                 } else if (`${qtypeSlug}` in opus.extras) { // STRING inputs
@@ -126,38 +133,62 @@ var o_hash = {
                             o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
                                                         trailingCounter);
                         }
+                        if (unitSlug in opus.extras) {
+                            visited[unitSlug] = true;
+                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
+                                                        trailingCounter);
+                        }
                     }
                 } else { // Multi/single choice inputs
                     hash.push(slug + "=" + encodedSelectionValues.join(","));
                 }
-            } else { // qtypeSlug
+            } else { // qtypeSlug or unitSlug
                 // For slugs only exist in extras, make sure they are updated in the hash.
                 // This will make sure multiple empty input sets can show up after page reloads.
-                let qtypeSlug = slug;
-                if (visited[qtypeSlug]) {
+                let slugInExtras = slug;
+                let unitSlug = "";
+                // qtype will always come before unit in sortedSlugs
+                if (slugInExtras.startsWith("qtype-")) {
+                    unitSlug = `unit-${slugInExtras.slice(6)}`;
+                }
+                if (visited[slugInExtras]) {
                     continue;
                 }
-                let qtypeValue = opus.extras[qtypeSlug];
-                if (qtypeValue.length) {
-                    let encodedExtraValues = o_hash.encodeSlugValues(qtypeValue);
+                let slugInExtrasVal = opus.extras[slugInExtras];
+                if (slugInExtrasVal.length) {
+                    let encodedExtraValues = o_hash.encodeSlugValues(slugInExtrasVal);
 
-                    if (qtypeValue.length > 1) {
+                    if (slugInExtrasVal.length > 1) {
                         let numberOfQtypeInputs = encodedExtraValues.length;
 
                         for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
                             let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
-                            let newKey = `${qtypeSlug}_${trailingCounterString}`;
+                            let newKey = `${slugInExtras}_${trailingCounterString}`;
 
-                            if (qtypeValue[trailingCounter-1] !== null) {
+                            if (slugInExtrasVal[trailingCounter-1] !== null) {
                                 hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
+                            }
+                            if (unitSlug in opus.extras) {
+                                visited[unitSlug] = true;
+                                o_hash.updateHashFromExtras(hash, unitSlug, numberOfQtypeInputs,
+                                                            trailingCounter);
                             }
                         }
                     } else {
-                        hash.push(qtypeSlug + "=" + encodedExtraValues.join(","));
+                        hash.push(slugInExtras + "=" + encodedExtraValues.join(","));
+                        if (unitSlug in opus.extras) {
+                            visited[unitSlug] = true;
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            hash.push(unitSlug + "=" + encodedUnitValues.join(","));
+                        }
                     }
                 }
             }
         }
+        console.log(hash);
+        console.log(JSON.stringify(opus.selections));
+        console.log(JSON.stringify(opus.extras));
+        console.log(hash);
         return hash.join("&");
     },
 
@@ -211,18 +242,18 @@ var o_hash = {
         window.location.hash = '/' + fullHashStr;
     },
 
-    updateHashFromExtras: function(hash, qtypeInExtras, numberOfInputSets, counter) {
+    updateHashFromExtras: function(hash, slugInExtras, numberOfInputSets, counter) {
         /**
          * Update the hash with data from opus.extras. The function will take in
          * numberOfInputSets & counter to determine if trailingCounterString should
          * be added to the final slug in the hash.
          */
         let trailingCounterString = o_utils.convertToTrailingCounterStr(counter);
-        let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[qtypeInExtras]);
-        let qtypeInURL = ((numberOfInputSets === 1) ?
-                          qtypeInExtras : `${qtypeInExtras}_${trailingCounterString}`);
-        if (opus.extras[qtypeInExtras][counter-1] !== null) {
-            hash.push(qtypeInURL + "=" + encodedExtraValues[counter-1]);
+        let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[slugInExtras]);
+        let slugInExtrasInURL = ((numberOfInputSets === 1) ?
+                                 slugInExtras : `${slugInExtras}_${trailingCounterString}`);
+        if (opus.extras[slugInExtras][counter-1] !== null) {
+            hash.push(slugInExtrasInURL + "=" + encodedExtraValues[counter-1]);
         }
     },
 
@@ -725,11 +756,11 @@ var o_hash = {
         //         }
         //     }
         // }
+        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "qtype");
+        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "unit");
         console.log(`alignDataInSelectionsAndExtras`);
         console.log(JSON.stringify(selections));
         console.log(JSON.stringify(extras));
-        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "qtype");
-        o_hash.syncUpExtrasWithEmptySelections(selections, extras, "unit");
 
         return [selections, extras];
     },
@@ -739,8 +770,6 @@ var o_hash = {
          * When slug in selections is empty but qtype-slug or unit-slug in extras exists,
          * we will also make sure data in selections and extras are aligned.
          */
-
-        // slug.startsWith("qtype-")
         let regexMatchPattern = null;
         if (slugType === "qtype") {
             regexMatchPattern = /qtype-(.*)$/;

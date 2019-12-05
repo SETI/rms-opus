@@ -367,7 +367,7 @@ var o_search = {
                     let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
                                      $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
                                      $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slugNoNum} select`).each(function() {
+                    $(`#widget__${slugNoNum} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slugNoNum}`] = qtypes;
@@ -377,7 +377,7 @@ var o_search = {
                     let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
                                 $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
                                 $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slug} select`).each(function() {
+                    $(`#widget__${slug} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slug}`] = qtypes;
