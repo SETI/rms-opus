@@ -332,15 +332,9 @@ var o_widgets = {
                                                .concat(previousMaxSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
                     opus.extras[`qtype-${slug}`].splice(idx, 1);
-                    // let previousExtras = opus.extras[`qtype-${slug}`];
-                    // opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                    //                                 .concat(previousExtras.slice(idx+1)));
                 }
                 if (opus.extras[`unit-${slug}`]) {
                     opus.extras[`unit-${slug}`].splice(idx, 1);
-                    // let previousUnits = opus.extras[`unit-${slug}`];
-                    // opus.extras[`unit-${slug}`] = (previousUnits.slice(0, idx)
-                    //                                .concat(previousUnits.slice(idx+1)));
                 }
             } else if (inputElement.hasClass("STRING")) {
                 let previousSelections = opus.selections[`${slug}`];
@@ -352,15 +346,9 @@ var o_widgets = {
                                               .concat(previousSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
                     opus.extras[`qtype-${slug}`].splice(idx, 1);
-                    // let previousExtras = opus.extras[`qtype-${slug}`];
-                    // opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                    //                                 .concat(previousExtras.slice(idx+1)));
                 }
                 if (opus.extras[`unit-${slug}`]) {
                     opus.extras[`unit-${slug}`].splice(idx, 1);
-                    // let previousUnits = opus.extras[`unit-${slug}`];
-                    // opus.extras[`unit-${slug}`] = (previousUnits.slice(0, idx)
-                    //                                .concat(previousUnits.slice(idx+1)));
                 }
             }
 
