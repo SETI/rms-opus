@@ -932,7 +932,6 @@ var o_widgets = {
             // This will also put qtype in the url when a widget with qtype is open.
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
-            console.log(`getWidget done: ${slug}`);
             // NOTE: inputs & qtypes are not renumbered yet at this stage.
             let qtype = `qtype-${slug}`;
             let qtypeInputs = $(`#widget__${slug} .widget-main select[name="${qtype}"]`);
@@ -970,7 +969,6 @@ var o_widgets = {
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} .widget-main select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
-                    console.log(`one qtype`)
                     o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
                     // When there are multiple qtype inputs, update qtype options for each
@@ -980,7 +978,6 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
-                    console.log(`more than 1 qtypes`);
                     o_hash.updateURLFromCurrentHash();
                 }
             }

@@ -24,9 +24,6 @@ var o_hash = {
          */
         let hash = [];
         let visited = {};
-        console.log("getHashStrFromSelections");
-        console.log(JSON.stringify(opus.selections));
-        console.log(JSON.stringify(opus.extras));
         let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
         //  sort in alphabetical order with case insensitive
         let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
@@ -186,10 +183,7 @@ var o_hash = {
                 }
             }
         }
-        console.log(hash);
-        console.log(JSON.stringify(opus.selections));
-        console.log(JSON.stringify(opus.extras));
-        console.log(hash);
+
         return hash.join("&");
     },
 
@@ -733,38 +727,8 @@ var o_hash = {
             }
         }
 
-        // When slug in selections is empty but qtype-slug in extras exists, we will also
-        // make sure data in selections and extras are aligned.
-        // for (const qtypeSlug in extras) {
-        //     if ((qtypeSlug.match(/qtype-(.*)$/)[1] in selections ||
-        //          `${qtypeSlug.match(/qtype-(.*)$/)[1]}1` in selections ||
-        //          `${qtypeSlug.match(/qtype-(.*)$/)[1]}2` in selections)) {
-        //         continue;
-        //     }
-        //     let slug = qtypeSlug.match(/qtype-(.*)$/)[1];
-        //     let longestLength = extras[qtypeSlug].length;
-        //
-        //     if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("RANGE")) {
-        //         selections[`${slug}1`] = selections[`${slug}1`] || [];
-        //         selections[`${slug}2`] = selections[`${slug}2`] || [];
-        //         while (selections[`${slug}1`].length < longestLength) {
-        //             selections[`${slug}1`].push(null);
-        //         }
-        //         while (selections[`${slug}2`].length < longestLength) {
-        //             selections[`${slug}2`].push(null);
-        //         }
-        //     } else if ($(`#widget__${slug} .op-search-inputs-set input`).hasClass("STRING")) {
-        //         selections[slug] = selections[slug] || [];
-        //         while (selections[slug].length < longestLength) {
-        //             selections[slug].push(null);
-        //         }
-        //     }
-        // }
         o_hash.syncUpExtrasWithEmptySelections(selections, extras, "qtype");
         o_hash.syncUpExtrasWithEmptySelections(selections, extras, "unit");
-        // console.log(`alignDataInSelectionsAndExtras`);
-        // console.log(JSON.stringify(selections));
-        // console.log(JSON.stringify(extras));
 
         return [selections, extras];
     },

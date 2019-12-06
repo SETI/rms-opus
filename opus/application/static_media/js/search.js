@@ -362,7 +362,6 @@ var o_search = {
         $('#search').on("change", "select", function() {
             let isInputSetEmpty = true;
             if ($(this).attr("name").startsWith("qtype-")) {
-                console.log(`change event happend on qtype`);
                 let qtypes = [];
                 let counterStr = o_utils.getSlugOrDataTrailingCounterStr($(this).attr("name"));
                 let idx = counterStr ? counterStr - 1 : 0;
@@ -401,7 +400,6 @@ var o_search = {
                     break;
                 }
             } else if ($(this).attr("name").startsWith("unit-")) {
-                console.log(`change event happend on unit: ${$(this).val()}`);
                 let units = [];
                 let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
                 let numberOfInputSets = $(`#widget__${slugNoNum} .op-search-inputs-set`).length;
@@ -420,8 +418,6 @@ var o_search = {
                     isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
                                                                      isInputSetEmpty);
                 }
-
-                console.log(JSON.stringify(opus.extras));
             }
 
             // If there is an invalid value, and user still updates qtype input,
@@ -956,11 +952,10 @@ var o_search = {
         o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
         let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}${units}` +
                   `&reqno=${o_search.slugEndpointsReqno[slug]}`;
-        console.log(url);
+
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
-                console.log(`successfully update hints`);
                 $(`#widget__${slug} .spinner`).fadeOut();
 
                 if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
