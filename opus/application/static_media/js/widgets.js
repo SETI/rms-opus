@@ -613,6 +613,7 @@ var o_widgets = {
 
         delete opus.extras[`qtype-${slugNoNum}`];
         delete opus.extras[`z-${slugNoNum}`];
+        delete opus.extras[`unit-${slugNoNum}`];
 
         let selector = `.op-search-menu li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
@@ -931,11 +932,26 @@ var o_widgets = {
             // This will also put qtype in the url when a widget with qtype is open.
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
-
+            console.log(`getWidget done: ${slug}`);
             // NOTE: inputs & qtypes are not renumbered yet at this stage.
-            let qtype = "qtype-" + slug;
+            let qtype = `qtype-${slug}`;
             let qtypeInputs = $(`#widget__${slug} .widget-main select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
+
+            let unit = `unit-${slug}`;
+            let unitInput = $(`#widget__${slug} .${unit}`);
+
+            if (unitInput.length) {
+                if (!opus.extras[unit]) {
+                    opus.extras[unit] = [unitInput.val()];
+                } else {
+                    unitInput.val(opus.extras[unit][0]);
+                }
+                // For widgets with unit but without qtype:
+                if (numberOfQtypeInputs === 0) {
+                    o_hash.updateURLFromCurrentHash();
+                }
+            }
 
             if (numberOfQtypeInputs !== 0) {
                 qtypeInputs.parent("li").addClass("op-qtype-input");
@@ -954,6 +970,7 @@ var o_widgets = {
                     // default value for qtype
                     let defaultOption = $(`#widget__${slug} .widget-main select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
+                    console.log(`one qtype`)
                     o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
                     // When there are multiple qtype inputs, update qtype options for each
@@ -963,10 +980,10 @@ var o_widgets = {
                         $(eachQtype).val(opus.extras[qtype][qtypeDataIdx]);
                         qtypeDataIdx++;
                     }
+                    console.log(`more than 1 qtypes`);
                     o_hash.updateURLFromCurrentHash();
                 }
             }
-
             // Initialize popover, this for the (i) icon next to qtype
             $(".widget-main .op-range-qtype-helper a").popover({
                 html: true,

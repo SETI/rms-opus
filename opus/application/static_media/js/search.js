@@ -360,28 +360,40 @@ var o_search = {
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on("change", "select", function() {
-            let qtypes = [];
-
-            switch ($(this).attr("class")) {  // form type
-                case "RANGE":
+            if ($(this).attr("name").startsWith("qtype-")) {
+                console.log(`change event happend on qtype`);
+                let qtypes = [];
+                switch ($(this).attr("class")) {  // form type
+                    case "RANGE":
                     let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
-                                     $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
-                                     $(this).attr("name").match(/-(.*)$/)[1]);
+                    $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                    $(this).attr("name").match(/-(.*)$/)[1]);
                     $(`#widget__${slugNoNum} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slugNoNum}`] = qtypes;
                     break;
 
-                case "STRING":
+                    case "STRING":
                     let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
-                                $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
-                                $(this).attr("name").match(/-(.*)$/)[1]);
+                    $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                    $(this).attr("name").match(/-(.*)$/)[1]);
                     $(`#widget__${slug} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slug}`] = qtypes;
                     break;
+                }
+            } else if ($(this).attr("name").startsWith("unit-")) {
+                console.log(`change event happend on unit: ${$(this).val()}`);
+                let units = [];
+                let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
+                let numberOfInputSets = $(`#widget__${slugNoNum} .op-search-inputs-set`).length;
+                while(units.length < numberOfInputSets) {
+                    units.push($(this).val());
+                }
+                opus.extras[`unit-${slugNoNum}`] = units;
+                console.log(JSON.stringify(opus.extras));
             }
             // If there is an invalid value, and user still updates qtype input,
             // update the last selections to prevent allNormalizeInputApiCall.

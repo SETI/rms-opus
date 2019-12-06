@@ -25,6 +25,8 @@ var o_hash = {
         let hash = [];
         let visited = {};
         console.log("getHashStrFromSelections");
+        console.log(JSON.stringify(opus.selections));
+        console.log(JSON.stringify(opus.extras));
         let selectionsSlugArr = Object.keys(opus.selections).concat(Object.keys(opus.extras));
         //  sort in alphabetical order with case insensitive
         let sortedSlugs = selectionsSlugArr.sort(function(a, b) {
@@ -38,8 +40,7 @@ var o_hash = {
                 return 0;
             }
         });
-        console.log(`sortedSlugs`);
-        console.log(sortedSlugs);
+
         for (const slug of sortedSlugs) {
             if (visited[slug]) {
                 continue;
@@ -529,13 +530,16 @@ var o_hash = {
         // taken into account and trigger a new backend search.
         let newExtras = {};
         $.each(extras, function(slug, value) {
+            let slugInExtras = "";
             if (slug.startsWith("qtype-")) {
-                let qtypeSlug = slug.slice(6);
-                if (qtypeSlug in selections ||
-                    qtypeSlug+'1' in selections ||
-                    qtypeSlug+'2' in selections) {
+                slugInExtras = slug.slice(6);
+            } else if (slug.startsWith("unit-")) {
+                slugInExtras = slug.slice(5);
+            }
+            if (slugInExtras in selections ||
+                slugInExtras+'1' in selections ||
+                slugInExtras+'2' in selections) {
                     newExtras[slug] = value;
-                }
             }
         });
         return newExtras;
@@ -758,9 +762,9 @@ var o_hash = {
         // }
         o_hash.syncUpExtrasWithEmptySelections(selections, extras, "qtype");
         o_hash.syncUpExtrasWithEmptySelections(selections, extras, "unit");
-        console.log(`alignDataInSelectionsAndExtras`);
-        console.log(JSON.stringify(selections));
-        console.log(JSON.stringify(extras));
+        // console.log(`alignDataInSelectionsAndExtras`);
+        // console.log(JSON.stringify(selections));
+        // console.log(JSON.stringify(extras));
 
         return [selections, extras];
     },
