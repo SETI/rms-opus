@@ -894,12 +894,20 @@ var o_search = {
 
         $(`#widget__${slug} .spinner`).fadeIn();
 
+        let units = "";
+        if ($(`#widget__${slug} .unit-${slug}`).length) {
+            let unitsVal = $(`#widget__${slug} .unit-${slug}`).val();
+            units = `&units=${unitsVal}`;
+        }
         o_search.lastEndpointsRequestNo++;
         o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
-        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
+        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}${units}` +
+                  `&reqno=${o_search.slugEndpointsReqno[slug]}`;
+        console.log(url);
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
+                console.log(`successfully update hints`);
                 $(`#widget__${slug} .spinner`).fadeOut();
 
                 if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
