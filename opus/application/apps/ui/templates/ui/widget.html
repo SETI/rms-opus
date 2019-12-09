@@ -13,7 +13,7 @@
                 <i class="fas fa-info-circle" title="{{ tooltip|safe }}"></i>
                 {{ label }}&nbsp;
                 {% if valid_units %}
-                    <select class="unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
+                    <select class="op-unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
                         {% for unit in valid_units %}
                             <option value="{{ unit }}">{{ unit }}</option>
                         {% endfor %}
@@ -41,7 +41,7 @@
                                  mult-widget
                             {% endif %}
                         ">
-            <div class="widget-main">
+            <div class="op-widget-main">
                 <div id="hint__{{ slug }}" class="op-range-hints"></div>
                 <ul class="op-input">
                     {% if intro %}

@@ -144,6 +144,8 @@ var o_hash = {
                 // For slugs only exist in extras, make sure they are updated in the hash.
                 // This will make sure multiple empty input sets can show up after page reloads.
                 let slugInExtras = slug;
+                // If slugInExtras is a already a unit slug, unitSlug will be an empty string,
+                // and this will prevent an unit slug get updated twice in the hash.
                 let unitSlug = "";
                 // qtype will always come before unit in sortedSlugs
                 if (slugInExtras.startsWith("qtype-")) {
@@ -155,10 +157,9 @@ var o_hash = {
                 let slugInExtrasVal = opus.extras[slugInExtras];
                 if (slugInExtrasVal.length) {
                     let encodedExtraValues = o_hash.encodeSlugValues(slugInExtrasVal);
+                    let numberOfQtypeInputs = encodedExtraValues.length;
 
-                    if (slugInExtrasVal.length > 1) {
-                        let numberOfQtypeInputs = encodedExtraValues.length;
-
+                    if (numberOfQtypeInputs > 1) {
                         for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
                             let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                             let newKey = `${slugInExtras}_${trailingCounterString}`;
@@ -166,14 +167,19 @@ var o_hash = {
                             if (slugInExtrasVal[trailingCounter-1] !== null) {
                                 hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
                             }
+                            // unitSlug will be an empty string and won't get updated in the hash here again
+                            // if slugInExtras is a already an unit slug.
                             if (unitSlug in opus.extras) {
                                 visited[unitSlug] = true;
-                                o_hash.updateHashFromExtras(hash, unitSlug, numberOfQtypeInputs,
-                                                            trailingCounter);
+                                let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                                let newUnitKey = `${unitSlug}_${trailingCounterString}`;
+                                hash.push(newUnitKey + "=" + encodedUnitValues[trailingCounter-1]);
                             }
                         }
                     } else {
                         hash.push(slugInExtras + "=" + encodedExtraValues.join(","));
+                        // unitSlug will be an empty string and won't get updated in the hash here again
+                        // if slugInExtras is a already an unit slug.
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
                             let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
@@ -376,7 +382,7 @@ var o_hash = {
         return hash.substring(1);   // don't forget to strip off the first &, it is not needed
     },
 
-    // get both selections and extras (qtype) from hash.
+    // get both selections and extras (qtype or unit) from hash.
     getSelectionsExtrasFromHash: function() {
         let hash = o_hash.getHash();
         if (!hash) {
@@ -435,10 +441,10 @@ var o_hash = {
                 }
             } else if (slug === "widgets" && value) {
                 // Loop through widgets and check if there is any widget with RANGE or STRING input
-                // but without qtype, we will put those in selections as well.
+                // but without qtype and unit, we will put those in selections as well.
                 $.each(value.split(","), function(idx, widgetSlug) {
-                    o_hash.syncUpWithOPUSSelectionsForWidgetsWithNoQtype(selections,
-                                                                         extras, widgetSlug);
+                    o_hash.syncUpOPUSSelectionsForWidgetsWithNoQtypeAndUnit(selections,
+                                                                            extras, widgetSlug);
                 });
             }
         });
@@ -448,12 +454,15 @@ var o_hash = {
         return [selections, extras];
     },
 
-    syncUpWithOPUSSelectionsForWidgetsWithNoQtype: function(selections, extras, widgetSlug) {
+    syncUpOPUSSelectionsForWidgetsWithNoQtypeAndUnit: function(selections, extras, widgetSlug) {
         /**
-         * Takes in a widgetSlug and check if the widget has STRING or RANGE input
-         * without qtype, if so, sync up the opus.selections with selections.
+         * Takes in a widgetSlug and check if the widget in opus.prefs.widgets has STRING or RANGE
+         * input without qtype AND unit. If so, sync up the opus.selections with selections. For
+         * example, Voyager earth received time, we want to make sure VOYAGERert1/VOYAGERert2 exist
+         * in both opus.selections and selections, so the selections comparison in opus.load will be
+         * correct.
          */
-        if (`qtype-${widgetSlug}` in extras) {
+        if (`qtype-${widgetSlug}` in extras || `unit-${widgetSlug}` in extras) {
             return;
         }
 
@@ -554,7 +563,7 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             if (value) {
-                if (slug.match(/qtype-.*/) || slug.match(/unit-.*/)) {
+                if (slug.startsWith("qtype-") || slug.startsWith("unit-")) {
                     let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;

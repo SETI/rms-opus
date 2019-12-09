@@ -367,43 +367,43 @@ var o_search = {
                 let idx = counterStr ? counterStr - 1 : 0;
                 switch ($(this).attr("class")) {  // form type
                     case "RANGE":
-                    let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
-                                     $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
-                                     $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slugNoNum} .widget-main select`).each(function() {
-                        qtypes.push($(this).val());
-                    });
-                    opus.extras[`qtype-${slugNoNum}`] = qtypes;
+                        let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
+                                         $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                                         $(this).attr("name").match(/-(.*)$/)[1]);
+                        $(`#widget__${slugNoNum} .op-widget-main select`).each(function() {
+                            qtypes.push($(this).val());
+                        });
+                        opus.extras[`qtype-${slugNoNum}`] = qtypes;
 
-                    // Check if corresponding selections are empty to determine if we
-                    // should perform a search.
-                    if (opus.selections[`${slugNoNum}1`][idx] ||
-                        opus.selections[`${slugNoNum}2`][idx]) {
-                        isInputSetEmpty = false;
-                    }
-                    break;
+                        // Check if corresponding selections are empty to determine if we
+                        // should perform a search.
+                        if (opus.selections[`${slugNoNum}1`][idx] ||
+                            opus.selections[`${slugNoNum}2`][idx]) {
+                            isInputSetEmpty = false;
+                        }
+                        break;
 
                     case "STRING":
-                    let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
-                                $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
-                                $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slug} .widget-main select`).each(function() {
-                        qtypes.push($(this).val());
-                    });
-                    opus.extras[`qtype-${slug}`] = qtypes;
+                        let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
+                                    $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
+                                    $(this).attr("name").match(/-(.*)$/)[1]);
+                        $(`#widget__${slug} .op-widget-main select`).each(function() {
+                            qtypes.push($(this).val());
+                        });
+                        opus.extras[`qtype-${slug}`] = qtypes;
 
-                    // Check if corresponding selections are empty to determine if we
-                    // should perform a search.
-                    if (opus.selections[`${slugNoNum}`][idx]) {
-                        isInputSetEmpty = false;
-                    }
-                    break;
+                        // Check if corresponding selections are empty to determine if we
+                        // should perform a search.
+                        if (opus.selections[`${slugNoNum}`][idx]) {
+                            isInputSetEmpty = false;
+                        }
+                        break;
                 }
             } else if ($(this).attr("name").startsWith("unit-")) {
                 let units = [];
                 let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
                 let numberOfInputSets = $(`#widget__${slugNoNum} .op-search-inputs-set`).length;
-                while(units.length < numberOfInputSets) {
+                while (units.length < numberOfInputSets) {
                     units.push($(this).val());
                 }
                 opus.extras[`unit-${slugNoNum}`] = units;
@@ -944,8 +944,8 @@ var o_search = {
         $(`#widget__${slug} .spinner`).fadeIn();
 
         let units = "";
-        if ($(`#widget__${slug} .unit-${slug}`).length) {
-            let unitsVal = $(`#widget__${slug} .unit-${slug}`).val();
+        if ($(`#widget__${slug} .op-unit-${slug}`).length) {
+            let unitsVal = $(`#widget__${slug} .op-unit-${slug}`).val();
             units = `&units=${unitsVal}`;
         }
         o_search.lastEndpointsRequestNo++;

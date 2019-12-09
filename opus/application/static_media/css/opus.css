@@ -1532,14 +1532,14 @@ panel are properly separated */
     padding-right: 25px;
 }
 
-.widget-main .op-range-qtype-helper {
+.op-widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
     line-height: 1;
 }
 
 /* Make qtype (i) icon align vertically with inputs */
-.widget-main .op-range-qtype-helper a {
+.op-widget-main .op-range-qtype-helper a {
     vertical-align: middle;
 }
 
@@ -1548,26 +1548,26 @@ panel are properly separated */
     width: 500px;
 }
 
-.widget-main ul li ul li {  /* mult labels */
+.op-widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }
 
-.widget-main > ul {
+.op-widget-main > ul {
     margin-bottom: 5px;
     padding-bottom: 0;
 }
 
-.widget-main > ul > li ul {
+.op-widget-main > ul > li ul {
     padding-left: 0;
     padding-bottom: 0;
 }
 
-.widget-main ul li {
+.op-widget-main ul li {
     display: inline;
     list-style-type: none;
 }
 
-.widget-main label {
+.op-widget-main label {
     font-size: 95%;
 }
 
