@@ -86,6 +86,18 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         url = '/opus/__api/normalizeinput.json?fredethel=1234&reqno=123'
         self._run_status_equal(url, 404)
 
+    def test__api_normalizeinput_string_empty(self):
+        "[test_search_api.py] /api/normalizeinput: string empty"
+        url = '/opus/__api/normalizeinput.json?note=&reqno=123'
+        expected = {"note": "", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_string(self):
+        "[test_search_api.py] /api/normalizeinput: string"
+        url = '/opus/__api/normalizeinput.json?note=FRED&reqno=123'
+        expected = {"note": "FRED", "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_int_empty(self):
         "[test_search_api.py] /api/normalizeinput: integer empty"
         url = '/opus/__api/normalizeinput.json?levels1=&reqno=123'
@@ -179,43 +191,43 @@ class ApiSearchTests(TestCase, ApiTestHelper):
     def test__api_normalizeinput_float_zero(self):
         "[test_search_api.py] /api/normalizeinput: float zero"
         url = '/opus/__api/normalizeinput.json?rightasc1=0&reqno=123'
-        expected = {"rightasc1": "0.000000", "reqno": 123}
+        expected = {"rightasc1": "0", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_neg(self):
         "[test_search_api.py] /api/normalizeinput: float negative"
         url = '/opus/__api/normalizeinput.json?rightasc1=-123456&reqno=123'
-        expected = {"rightasc1": "-123456.000000", "reqno": 123}
+        expected = {"rightasc1": "-123456", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_pos(self):
         "[test_search_api.py] /api/normalizeinput: float positive"
         url = '/opus/__api/normalizeinput.json?rightasc1=567890&reqno=123'
-        expected = {"rightasc1": "567890.000000", "reqno": 123}
+        expected = {"rightasc1": "567890", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_spaces(self):
         "[test_search_api.py] /api/normalizeinput: float spaces"
         url = '/opus/__api/normalizeinput.json?rightasc1=+1234+&reqno=123'
-        expected = {"rightasc1": "1234.000000", "reqno": 123}
+        expected = {"rightasc1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_underscores(self):
         "[test_search_api.py] /api/normalizeinput: float underscores"
         url = '/opus/__api/normalizeinput.json?rightasc1=_12_34_&reqno=123'
-        expected = {"rightasc1": "1234.000000", "reqno": 123}
+        expected = {"rightasc1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_commas(self):
         "[test_search_api.py] /api/normalizeinput: float commas"
         url = '/opus/__api/normalizeinput.json?rightasc1=,1,2,3,4,&reqno=123'
-        expected = {"rightasc1": "1234.000000", "reqno": 123}
+        expected = {"rightasc1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_mixed_delim(self):
         "[test_search_api.py] /api/normalizeinput: float mixed delimiters"
         url = '/opus/__api/normalizeinput.json?rightasc1=+,1_23_,4+&reqno=123'
-        expected = {"rightasc1": "1234.000000", "reqno": 123}
+        expected = {"rightasc1": "1234", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_exponent1(self):

@@ -360,36 +360,97 @@ var o_search = {
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on("change", "select", function() {
-            let qtypes = [];
-
-            switch ($(this).attr("class")) {  // form type
-                case "RANGE":
+            let isInputSetEmpty = true;
+            if ($(this).attr("name").startsWith("qtype-")) {
+                let qtypes = [];
+                let counterStr = o_utils.getSlugOrDataTrailingCounterStr($(this).attr("name"));
+                let idx = counterStr ? counterStr - 1 : 0;
+                switch ($(this).attr("class")) {  // form type
+                    case "RANGE":
                     let slugNoNum = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
                                      $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
                                      $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slugNoNum} select`).each(function() {
+                    $(`#widget__${slugNoNum} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slugNoNum}`] = qtypes;
+
+                    // Check if corresponding selections are empty to determine if we
+                    // should perform a search.
+                    if (opus.selections[`${slugNoNum}1`][idx] ||
+                        opus.selections[`${slugNoNum}2`][idx]) {
+                        isInputSetEmpty = false;
+                    }
                     break;
 
-                case "STRING":
+                    case "STRING":
                     let slug = ($(this).attr("name").match(/-(.*)_[0-9]{2}$/) ?
                                 $(this).attr("name").match(/-(.*)_[0-9]{2}$/)[1] :
                                 $(this).attr("name").match(/-(.*)$/)[1]);
-                    $(`#widget__${slug} select`).each(function() {
+                    $(`#widget__${slug} .widget-main select`).each(function() {
                         qtypes.push($(this).val());
                     });
                     opus.extras[`qtype-${slug}`] = qtypes;
+
+                    // Check if corresponding selections are empty to determine if we
+                    // should perform a search.
+                    if (opus.selections[`${slugNoNum}`][idx]) {
+                        isInputSetEmpty = false;
+                    }
                     break;
+                }
+            } else if ($(this).attr("name").startsWith("unit-")) {
+                let units = [];
+                let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
+                let numberOfInputSets = $(`#widget__${slugNoNum} .op-search-inputs-set`).length;
+                while(units.length < numberOfInputSets) {
+                    units.push($(this).val());
+                }
+                opus.extras[`unit-${slugNoNum}`] = units;
+
+                // Check if all selections are empty to determine if we should perform a search.
+                if ($(`#widget__${slugNoNum} .op-search-inputs-set input`).hasClass("RANGE")) {
+                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}1`],
+                                                                     isInputSetEmpty);
+                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}2`],
+                                                                     isInputSetEmpty);
+                } else if ($(`#widget__${slugNoNum} .op-search-inputs-set input`).hasClass("STRING")) {
+                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
+                                                                     isInputSetEmpty);
+                }
             }
+
             // If there is an invalid value, and user still updates qtype input,
             // update the last selections to prevent allNormalizeInputApiCall.
-            if (!opus.areRangeInputsValid()) {
+            if (!opus.areRangeInputsValid() || isInputSetEmpty) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
             o_hash.updateURLFromCurrentHash();
+
+            // If no search is performed, we still update the hints for a unit change.
+            if (isInputSetEmpty) {
+                if ($(this).attr("name").startsWith("unit-")) {
+                    let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
+                    o_search.getHinting(slugNoNum);
+                }
+            }
         });
+    },
+
+    isSlugSelectionsEmpty: function(slugSelections, isInputSetEmpty) {
+        /**
+         * Check if slugSelections is an array of null to determine if all
+         * input sets are empty. Update & return isInputSetEmpty.
+         */
+        if (slugSelections && isInputSetEmpty) {
+            for (const val of slugSelections) {
+                if (val) {
+                    isInputSetEmpty = false;
+                    break;
+                }
+            }
+        }
+        return isInputSetEmpty;
     },
 
     addPreprogrammedRangesSearchBehaviors: function() {
@@ -876,9 +937,16 @@ var o_search = {
 
         $(`#widget__${slug} .spinner`).fadeIn();
 
+        let units = "";
+        if ($(`#widget__${slug} .unit-${slug}`).length) {
+            let unitsVal = $(`#widget__${slug} .unit-${slug}`).val();
+            units = `&units=${unitsVal}`;
+        }
         o_search.lastEndpointsRequestNo++;
         o_search.slugEndpointsReqno[slug] = o_search.lastEndpointsRequestNo;
-        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}&reqno=${o_search.slugEndpointsReqno[slug]}`;
+        let url = `/opus/__api/meta/range/endpoints/${slug}.json?${o_hash.getHash()}${units}` +
+                  `&reqno=${o_search.slugEndpointsReqno[slug]}`;
+
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {

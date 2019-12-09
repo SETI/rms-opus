@@ -1,2 +1,2 @@
-Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug
-time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1
+Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1,
