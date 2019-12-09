@@ -2227,6 +2227,9 @@ var o_browse = {
 
     downloadCSV: function(obj) {
         let selectionsHashStr = o_hash.getHashStrFromSelections();
+        if (selectionsHashStr !== "") {
+            selectionsHashStr += "&";
+        }
         let colStr = opus.prefs.cols.join(',');
         let resultCountStr = o_browse.totalObsCount.toString();
         let orderStr = opus.prefs.order.join(",");
