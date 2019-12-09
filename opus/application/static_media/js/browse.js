@@ -2226,18 +2226,8 @@ var o_browse = {
     },
 
     downloadCSV: function(obj) {
+        let selectionsHashStr = o_hash.getHashStrFromSelections();
         let colStr = opus.prefs.cols.join(',');
-        let selectionsHash = [];
-        for (let param in opus.selections) {
-            if (opus.selections[param].length) {
-                let valueStr = opus.selections[param].join(',').replace(/ /g,'+');
-                selectionsHash.push(`${param}=${valueStr}`);
-            }
-        }
-        let selectionsHashStr = selectionsHash.join('&');
-        if (selectionsHashStr !== "") {
-            selectionsHashStr += "&";
-        }
         let resultCountStr = o_browse.totalObsCount.toString();
         let orderStr = opus.prefs.order.join(",");
         let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
