@@ -134,22 +134,7 @@ var o_browse = {
 
         // browse nav menu - download csv
         $("#browse").on("click", ".op-download-csv", function() {
-            let colStr = opus.prefs.cols.join(',');
-            let selectionsHash = [];
-            for (let param in opus.selections) {
-                if (opus.selections[param].length) {
-                    let valueStr = opus.selections[param].join(',').replace(/ /g,'+');
-                    selectionsHash.push(`${param}=${valueStr}`);
-                }
-            }
-            let selectionsHashStr = selectionsHash.join('&');
-            if (selectionsHashStr !== "") {
-                selectionsHashStr += "&";
-            }
-            let resultCountStr = o_browse.totalObsCount.toString();
-            let orderStr = opus.prefs.order.join(",");
-            let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
-            $(this).attr("href", csvLink);
+            o_browse.downloadCSV(this);
         });
 
         // 1 - click on thumbnail opens modal window
@@ -2238,5 +2223,17 @@ var o_browse = {
         // user might occasionally see old data briefly while the new stuff loads.
         $("#browse .gallery").empty();
         $("#browse .op-data-table tbody").empty();
+    },
+
+    downloadCSV: function(obj) {
+        let selectionsHashStr = o_hash.getHashStrFromSelections();
+        if (selectionsHashStr !== "") {
+            selectionsHashStr += "&";
+        }
+        let colStr = opus.prefs.cols.join(',');
+        let resultCountStr = o_browse.totalObsCount.toString();
+        let orderStr = opus.prefs.order.join(",");
+        let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
+        $(obj).attr("href", csvLink);
     },
 };
