@@ -14,8 +14,8 @@
                 {{ label }}&nbsp;
                 {% if valid_units %}
                     <select class="op-unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
-                        {% for unit in valid_units %}
-                            <option value="{{ unit }}">{{ unit }}</option>
+                        {% for unit, display_name in valid_units.items %}
+                            <option value="{{ unit }}">{{ display_name }}</option>
                         {% endfor %}
                     <select>
                 {% endif %}

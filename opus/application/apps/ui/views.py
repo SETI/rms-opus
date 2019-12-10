@@ -318,7 +318,7 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    valid_units = opus_support.get_valid_units(param_info.units)
+    valid_units = opus_support.get_display_names(param_info.units)
     ranges = param_info.get_ranges_info()
 
     template = "ui/widget.html"
