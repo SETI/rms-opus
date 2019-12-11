@@ -229,7 +229,8 @@ var o_search = {
                         break;
                     }
                 }
-                let allItemsInMatchedCat = $(`${matchedCatId} .op-preprogrammed-ranges-data-item`);
+                let allItemsInMatchedCat = ($(`${matchedCatId} .op-preprogrammed-ranges-data-item`)
+                                            .not(".op-hide-different-units-info"));
                 for (const singleRangeData of allItemsInMatchedCat) {
                     if (!$(singleRangeData).hasClass("op-hide-element")) {
                         let minVal = $(singleRangeData).data("min");
@@ -581,7 +582,8 @@ var o_search = {
         o_search.rangesNameMatchedCounterByCategory = {};
         for (const category of preprogrammedRangesInfo) {
             let collapsibleContainerId = $(category).attr("data-category");
-            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
+            let rangesInfoInOneCategory = ($(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`)
+                                           .not(".op-hide-different-units-info"));
 
             o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] = 0;
 
@@ -603,6 +605,11 @@ var o_search = {
                     o_search.highlightMatchedRangesName(singleRangeData, currentInputValue);
                     o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] += 1;
                     if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
+                        // Normally inputsRangesNameMatchedInfo gets updated later in this function,
+                        // but since we are opening the collpasible item here, to make sure all behaviors
+                        // in addPreprogrammedRangesSearchBehaviors are correct, we have to update
+                        // inputsRangesNameMatchedInfo here.
+                        o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
                         $(`#${collapsibleContainerId}`).collapse("show");
                     }
                 } else {
@@ -613,6 +620,11 @@ var o_search = {
             }
 
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0) {
+                // Normally inputsRangesNameMatchedInfo gets updated later in this function,
+                // but since we are hiding the collpasible item here, to make sure all behaviors
+                // in addPreprogrammedRangesSearchBehaviors are correct, we have to update
+                // inputsRangesNameMatchedInfo here.
+                o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
                 $(`#${collapsibleContainerId}`).collapse("hide");
                 if (currentValue) {
                     $(`a.dropdown-item[href*="${collapsibleContainerId}"]`).addClass("op-hide-element");
