@@ -2,8 +2,8 @@
     "obs_ring_geometry": [
         {
             "cat_name": "Jupiter Rings",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Halo",
@@ -44,8 +44,8 @@
         },
         {
             "cat_name": "Jupiter Inner Satellites",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Metis",
@@ -107,8 +107,8 @@
         },
         {
             "cat_name": "Saturn Rings",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "D Ring",
@@ -380,8 +380,8 @@
         },
         {
             "cat_name": "Saturn Regular Satellites",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Pan",
@@ -555,8 +555,8 @@
         },
         {
             "cat_name": "Uranus Rings",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Zeta Cc",
@@ -709,8 +709,8 @@
         },
         {
             "cat_name": "Uranus Inner Satellites",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Cordelia",
@@ -842,8 +842,8 @@
         },
         {
             "cat_name": "Neptune Rings",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Galle",
@@ -905,8 +905,8 @@
         },
         {
             "cat_name": "Neptune Inner Satellites",
-            "heading1": "Min (km)",
-            "heading2": "Max (km)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Naiad",
@@ -970,8 +970,8 @@
     "obs_wavelength": [
         {
             "cat_name": "PDS4 Wavelength Ranges",
-            "heading1": "Min (&mu;m)",
-            "heading2": "Max (&mu;m)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Ultraviolet",
@@ -1012,8 +1012,8 @@
         },
         {
             "cat_name": "CRC Wavelength Ranges",
-            "heading1": "Min (&mu;m)",
-            "heading2": "Max (&mu;m)",
+            "heading1": "Min",
+            "heading2": "Max",
             "ranges": [
                 {
                     "name": "Violet",
