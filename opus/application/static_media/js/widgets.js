@@ -992,6 +992,14 @@ var o_widgets = {
             if (rangesInfoDropdown.length > 0) {
                 $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
                 $(`#${widget} .op-input`).addClass("dropdown");
+
+                // Hide items with values for different units
+                let currentUnitVal = unitInput.val();
+                ($(`#${widget} .op-preprogrammed-ranges-data-item`)
+                 .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
+                ($(`#${widget} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
+                 .removeClass("op-hide-different-units-info"));
+                // Update styling in preprogrammed ranges
                 o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
@@ -1264,7 +1272,9 @@ var o_widgets = {
             let maxNumOfDigitInMaxDataFraction = 0;
 
             for (const singleRangeData of rangesInfoInOneCategory) {
-
+                if ($(singleRangeData).hasClass("op-hide-different-units-info")) {
+                    continue;
+                }
                 // Special case: (maybe put this somewhere else if there are more and more long names)
                 // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
                 // We set it the word-break to break-all.

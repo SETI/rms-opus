@@ -318,8 +318,28 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    valid_units = opus_support.get_display_names(param_info.units)
+    units = opus_support.get_display_names(param_info.units)
+    valid_units = opus_support.get_valid_units(param_info.units)
     ranges = param_info.get_ranges_info()
+    test_ranges = param_info.get_ranges_info()
+
+    for cat in ranges:
+        for item in cat['ranges']:
+            default_unit = item['unit']
+            val1 = float(item['field1'])
+            val2 = float(item['field2'])
+            new_unit, new_val1, new_val2 = [], [], []
+            for unit in valid_units:
+                new_unit.append(unit)
+                v1 = opus_support.convert_from_default_unit(
+                                               val1, default_unit, unit)
+                new_val1.append(str(round(v1, 3)))
+                # new_val1.append(str('{:.3f}'.format(round(v1, 3))))
+                v2 = opus_support.convert_from_default_unit(
+                                               val2, default_unit, unit)
+                new_val2.append(str(round(v2, 3)))
+                # new_val2.append(str('{:.3f}'.format(round(v2, 3))))
+            item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
     template = "ui/widget.html"
     context = {
@@ -331,7 +351,7 @@ def api_get_widget(request, **kwargs):
         "form_type": form_type,
         "range_form_types": settings.RANGE_FORM_TYPES,
         "mult_form_types": settings.MULT_FORM_TYPES,
-        "valid_units": valid_units,
+        "units": units,
         "ranges": ranges
     }
     ret = render(request, template, context)

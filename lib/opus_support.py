@@ -537,6 +537,7 @@ def get_valid_units(default_unit):
         valid_units = [default_unit] + valid_units
     return valid_units
 
+# Get a dictionary with valid units as keys and display names as values.
 def get_display_names(default_unit):
     default_unit_info = UNIT_CONVERSION.get(default_unit, None)
     display_names = None

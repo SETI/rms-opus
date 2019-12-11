@@ -418,6 +418,16 @@ var o_search = {
                     isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
                                                                      isInputSetEmpty);
                 }
+
+                // Update values in preprogrammed ranges
+                let currentUnitVal = $(this).val();
+                ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item`)
+                 .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
+                ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
+                 .removeClass("op-hide-different-units-info"));
+                // Update styling in preprogrammed ranges
+                let widget = `widget__${slugNoNum}`;
+                o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
             // If there is an invalid value, and user still updates qtype input,
@@ -580,7 +590,6 @@ var o_search = {
                 let currentInputValue = currentValue.toLowerCase();
 
                 if (!currentValue) {
-                    // $(`.op-scrollable-menu a.dropdown-item`).removeClass("op-hide-element");
                     preprogrammedRangesDropdown.find("a.dropdown-item").removeClass("op-hide-element");
                     $(singleRangeData).removeClass("op-hide-element");
                     o_search.removeHighlightedRangesName(singleRangeData);

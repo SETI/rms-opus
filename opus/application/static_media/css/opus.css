@@ -2284,3 +2284,8 @@ at the right of -- OR -- label. */
         display: none !important;
     }
 }
+
+/* Hide values for different units in preprogrammed ranges */
+.op-hide-different-units-info {
+    display: none !important;
+}
