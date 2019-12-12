@@ -338,13 +338,9 @@ def api_get_widget(request, **kwargs):
                 v1 = opus_support.convert_from_default_unit(
                                                val1, default_unit, unit)
                 new_val1.append(new_format.format(v1))
-                # new_val1.append(str(round(v1, 3)))
-                # new_val1.append(str('{:.3f}'.format(round(v1, 3))))
                 v2 = opus_support.convert_from_default_unit(
                                                val2, default_unit, unit)
                 new_val2.append(new_format.format(v2))
-                # new_val2.append(str(round(v2, 3)))
-                # new_val2.append(str('{:.3f}'.format(round(v2, 3))))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
     template = "ui/widget.html"
