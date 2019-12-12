@@ -475,6 +475,8 @@ var o_widgets = {
         });
 
         $("#search").on("hide.bs.dropdown", function(e) {
+            // TODO: remove this return, for debugging only
+            return false;
             if (o_widgets.isKeepingRangesDropdownOpen) {
                 e.preventDefault();
                 o_widgets.isKeepingRangesDropdownOpen = false;
@@ -1000,7 +1002,7 @@ var o_widgets = {
                 ($(`#${widget} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
                  .removeClass("op-hide-different-units-info"));
                 // Update styling in preprogrammed ranges
-                o_widgets.alignRangesDataByDecimalPoint(widget);
+                // o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
             // add the spans that hold the hinting

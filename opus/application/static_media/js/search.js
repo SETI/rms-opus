@@ -428,7 +428,7 @@ var o_search = {
                  .removeClass("op-hide-different-units-info"));
                 // Update styling in preprogrammed ranges
                 let widget = `widget__${slugNoNum}`;
-                o_widgets.alignRangesDataByDecimalPoint(widget);
+                // o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
             // If there is an invalid value, and user still updates qtype input,

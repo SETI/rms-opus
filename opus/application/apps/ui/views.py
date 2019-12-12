@@ -324,20 +324,26 @@ def api_get_widget(request, **kwargs):
     test_ranges = param_info.get_ranges_info()
 
     for cat in ranges:
+        default_format = cat['format']
         for item in cat['ranges']:
             default_unit = item['unit']
             val1 = float(item['field1'])
             val2 = float(item['field2'])
             new_unit, new_val1, new_val2 = [], [], []
             for unit in valid_units:
+                new_format = opus_support.adjust_format_string_for_units(
+                        default_format, default_unit, unit)
+                new_format = '{:' + new_format + '}'
                 new_unit.append(unit)
                 v1 = opus_support.convert_from_default_unit(
                                                val1, default_unit, unit)
-                new_val1.append(str(round(v1, 3)))
+                new_val1.append(new_format.format(v1))
+                # new_val1.append(str(round(v1, 3)))
                 # new_val1.append(str('{:.3f}'.format(round(v1, 3))))
                 v2 = opus_support.convert_from_default_unit(
                                                val2, default_unit, unit)
-                new_val2.append(str(round(v2, 3)))
+                new_val2.append(new_format.format(v2))
+                # new_val2.append(str(round(v2, 3)))
                 # new_val2.append(str('{:.3f}'.format(round(v2, 3))))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
