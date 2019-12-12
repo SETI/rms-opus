@@ -475,8 +475,6 @@ var o_widgets = {
         });
 
         $("#search").on("hide.bs.dropdown", function(e) {
-            // TODO: remove this return, for debugging only
-            return false;
             if (o_widgets.isKeepingRangesDropdownOpen) {
                 e.preventDefault();
                 o_widgets.isKeepingRangesDropdownOpen = false;

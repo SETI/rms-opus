@@ -76,24 +76,32 @@ var o_hash = {
                         let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
                         let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
 
-                        if (useFieldUniqueIDs) {
-                            let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
-                                             .attr("data-uniqueid"));
-                            let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
-                                             .attr("data-uniqueid"));
+                        let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
+                        .attr("data-uniqueid"));
+                        let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
+                        .attr("data-uniqueid"));
 
-                            if (uniqueid1) {
-                                slug1WithCounter = `${slug1}_${uniqueid1}`;
-                            }
-                            if (uniqueid2) {
-                                slug2WithCounter = `${slug2}_${uniqueid2}`;
-                            }
+                        let slugWithId1 = uniqueid1 ? `${slug1}_${uniqueid1}` : slug1;
+                        let slugWithId2 = uniqueid2 ? `${slug2}_${uniqueid2}` : slug2;
+                        if (useFieldUniqueIDs) {
+                            slug1WithCounter = slugWithId1;
+                            slug2WithCounter = slugWithId2;
                         }
 
-                        if (opus.selections[slug1][trailingCounter-1] !== null) {
+                        console.log(opus.rangeInputFieldsValidation)
+                        console.log(`slugWithId1: ${slugWithId1}, slugWithId2: ${slugWithId2}`)
+                        console.log(opus.rangeInputFieldsValidation[slugWithId1])
+                        console.log(opus.rangeInputFieldsValidation[slugWithId2])
+                        // If the slug in opus.selections has a valid value (check
+                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        if (opus.selections[slug1][trailingCounter-1] !== null &&
+                            opus.rangeInputFieldsValidation[slugWithId1] !== false) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
-                        if (opus.selections[slug2][trailingCounter-1] !== null) {
+                        // If the slug in opus.selections has a valid value (check
+                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        if (opus.selections[slug2][trailingCounter-1] !== null &&
+                            opus.rangeInputFieldsValidation[slugWithId2] !== false) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
