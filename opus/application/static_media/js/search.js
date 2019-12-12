@@ -426,9 +426,6 @@ var o_search = {
                  .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
                 ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
                  .removeClass("op-hide-different-units-info"));
-                // Update styling in preprogrammed ranges
-                let widget = `widget__${slugNoNum}`;
-                // o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
             // If there is an invalid value, and user still updates qtype input,

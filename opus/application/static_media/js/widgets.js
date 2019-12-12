@@ -999,8 +999,6 @@ var o_widgets = {
                  .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
                 ($(`#${widget} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
                  .removeClass("op-hide-different-units-info"));
-                // Update styling in preprogrammed ranges
-                // o_widgets.alignRangesDataByDecimalPoint(widget);
             }
 
             // add the spans that hold the hinting
@@ -1257,93 +1255,6 @@ var o_widgets = {
         $('#search').animate({
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
-    },
-
-    alignRangesDataByDecimalPoint: function(widget) {
-        /**
-         * Align the data of ranges info by decimal point.
-         */
-        let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
-        for (const category of preprogrammedRangesInfo) {
-            let collapsibleContainerId = $(category).attr("data-category");
-            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-
-            let maxNumOfDigitInMinDataFraction = 0;
-            let maxNumOfDigitInMaxDataFraction = 0;
-
-            for (const singleRangeData of rangesInfoInOneCategory) {
-                if ($(singleRangeData).hasClass("op-hide-different-units-info")) {
-                    continue;
-                }
-                // Special case: (maybe put this somewhere else if there are more and more long names)
-                // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
-                // We set it the word-break to break-all.
-                let rangesName = $(singleRangeData).data("name").toString();
-                if (rangesName === "Janus/Epimetheus Ring") {
-                    $(singleRangeData).find(".op-preprogrammed-ranges-data-name").addClass("op-word-break-all");
-                }
-
-                let minStr = $(singleRangeData).data("min").toString();
-                let maxStr = $(singleRangeData).data("max").toString();
-                let minIntegerPart = minStr.split(".")[0];
-                let minFractionalPart = minStr.split(".")[1];
-                let maxIntegerPart = maxStr.split(".")[0];
-                let maxFractionalPart = maxStr.split(".")[1];
-
-                minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
-                maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
-                if (minFractionalPart) {
-                    maxNumOfDigitInMinDataFraction = (Math.max(maxNumOfDigitInMinDataFraction,
-                                                      minFractionalPart.length-1));
-                }
-                if (maxFractionalPart) {
-                    maxNumOfDigitInMaxDataFraction = (Math.max(maxNumOfDigitInMaxDataFraction,
-                                                      maxFractionalPart.length-1));
-                }
-
-                let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
-                                  `<span>${minFractionalPart}</span>`;
-                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
-                                  `<span>${maxFractionalPart}</span>`;
-
-                $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
-                $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
-            }
-
-            // The following steps are to make sure ranges data are aligned properly with headers
-            let minData = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-min-data`);
-            let rangesDataItem = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-            let minDataPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMinDataFraction);
-            let rangesDataItemPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMaxDataFraction);
-            if (minDataPaddingVal) {
-                minData.css("padding-right",`${minDataPaddingVal}em`);
-            }
-            if (rangesDataItemPaddingVal) {
-                rangesDataItem.css("padding-right",`${rangesDataItemPaddingVal}em`);
-            }
-        }
-    },
-
-    getPaddingValFromDigitsInFraction: function(numOfDigits) {
-        /**
-         * Get padding-right values for ranges dropdown data from number of digits
-         * in data fractions. Here is the mappings:
-         * Num of digits in fraction    padding-right
-         *          1                   1em
-         *          2                   1.5em
-         *          3                   2em
-         * Note: currently we have at most 3 digits in data fractions.
-         */
-        switch(numOfDigits) {
-            case 1:
-                return 1;
-            case 2:
-                return 1.5;
-            case 3:
-                return 2;
-            default:
-                return 0;
-        }
     },
 
     attachStringDropdownToInput: function() {
