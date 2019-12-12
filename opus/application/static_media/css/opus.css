@@ -2094,7 +2094,21 @@ ul.ui-autocomplete a.ui-state-active {
     max-width: 110%;
     word-break: keep-all;
     /* This will make sure dropdown is not covering the widget scrollbar */
-    left: -0.5em !important;
+    left: -2.5em !important;
+}
+
+@media (max-width: 680px) {
+    /* When browser is narrow, we increase the width to squeeze in the long numbers */
+    .op-preprogrammed-ranges .op-scrollable-menu {
+        max-width: 125% !important;
+    }
+}
+
+@media (max-width: 710px) {
+    /* When browser is narrow, we increase the width to squeeze in the long numbers */
+    .op-preprogrammed-ranges .op-scrollable-menu {
+        max-width: 122%;
+    }
 }
 
 @media (max-width: 750px) {
@@ -2102,6 +2116,18 @@ ul.ui-autocomplete a.ui-state-active {
     /* #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name { */
     .op-preprogrammed-ranges-data-name {
         word-break: keep-all;
+    }
+    /* When browser is narrow, we remove the padding for max value  */
+    .op-preprogrammed-ranges-max-data {
+        padding-left: 0 !important;
+    }
+}
+
+@media (max-width: 830px) {
+    /* When browser is narrow, don't fix the size of each digit, this will
+    save some spaces for long numbers */
+    .op-preprogrammed-ranges-data-item {
+        font-variant-numeric: proportional-nums !important;
     }
 }
 
@@ -2166,6 +2192,17 @@ ul.ui-autocomplete a.ui-state-active {
     /* white-space: nowrap; */
     width: 100%;
 }
+
+/* Hide values for different units in preprogrammed ranges */
+.op-hide-different-units-info {
+    display: none !important;
+}
+
+/* Make sure each digit has the same size in preprogrammed ranges */
+.op-preprogrammed-ranges-data-item {
+    font-variant-numeric: tabular-nums;
+}
+
 
 /* Styling required to make ranges data aligned by decimal point */
 .op-integer {
@@ -2293,14 +2330,4 @@ at the right of -- OR -- label. */
     .op-dummy-item1, .op-dummy-item2 {
         display: none !important;
     }
-}
-
-/* Hide values for different units in preprogrammed ranges */
-.op-hide-different-units-info {
-    display: none !important;
-}
-
-/* Make sure each digit has the same size in preprogrammed ranges */
-.op-preprogrammed-ranges-data-item {
-    font-variant-numeric: tabular-nums;
 }

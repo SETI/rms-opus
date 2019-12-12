@@ -88,10 +88,6 @@ var o_hash = {
                             slug2WithCounter = slugWithId2;
                         }
 
-                        console.log(opus.rangeInputFieldsValidation)
-                        console.log(`slugWithId1: ${slugWithId1}, slugWithId2: ${slugWithId2}`)
-                        console.log(opus.rangeInputFieldsValidation[slugWithId1])
-                        console.log(opus.rangeInputFieldsValidation[slugWithId2])
                         // If the slug in opus.selections has a valid value (check
                         // opus.rangeInputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug1][trailingCounter-1] !== null &&
