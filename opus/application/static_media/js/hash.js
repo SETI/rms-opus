@@ -113,8 +113,6 @@ var o_hash = {
                             if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
                                 hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
                             }
-                            // o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                            //                             trailingCounter);
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
@@ -122,8 +120,6 @@ var o_hash = {
                             if (opus.extras[unitSlug][trailingCounter-1] !== null) {
                                 hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
                             }
-                            // o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                            //                             trailingCounter);
                         }
 
                     }
@@ -154,8 +150,6 @@ var o_hash = {
                             if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
                                 hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
                             }
-                            // o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                            //                             trailingCounter);
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
@@ -163,8 +157,6 @@ var o_hash = {
                             if (opus.extras[unitSlug][trailingCounter-1] !== null) {
                                 hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
                             }
-                            // o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                            //                             trailingCounter);
                         }
                     }
                 } else { // Multi/single choice inputs
@@ -271,21 +263,6 @@ var o_hash = {
          */
         let fullHashStr = o_hash.getFullHashStr();
         window.location.hash = '/' + fullHashStr;
-    },
-
-    updateHashFromExtras: function(hash, slugInExtras, numberOfInputSets, counter) {
-        /**
-         * Update the hash with data from opus.extras. The function will take in
-         * numberOfInputSets & counter to determine if trailingCounterString should
-         * be added to the final slug in the hash.
-         */
-        let trailingCounterString = o_utils.convertToTrailingCounterStr(counter);
-        let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[slugInExtras]);
-        let slugInExtrasInURL = ((numberOfInputSets === 1) ?
-                                 slugInExtras : `${slugInExtras}_${trailingCounterString}`);
-        if (opus.extras[slugInExtras][counter-1] !== null) {
-            hash.push(slugInExtrasInURL + "=" + encodedExtraValues[counter-1]);
-        }
     },
 
     encodeSlugValues: function(slugValueArray) {
