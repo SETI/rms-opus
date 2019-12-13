@@ -463,8 +463,8 @@ UNIT_CONVERSION = {
             'display_name': 'km',
             'conversions': {
                 'm':            ('m', 1e-3),
-                'saturnradii':  ('Rs (60330)', 60330.),
                 'jupiterradii': ('Rj (71492)', 71492.),
+                'saturnradii':  ('Rs (60330)', 60330.),
                 'neptuneradii': ('Rn (25225)', 25225.),
                 'uranusradii':  ('Ru (25559)', 25559.),
             }

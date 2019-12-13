@@ -66,7 +66,7 @@ def api_normalize_input(request):
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
-
+    print(request.GET)
     (selections, extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
@@ -85,7 +85,8 @@ def api_normalize_input(request):
         exit_api_call(api_code, ret)
         raise ret
     selections['reqno'] = reqno
-
+    print('============================selections')
+    print(selections)
     ret = json_response(selections)
     exit_api_call(api_code, ret)
     return ret
@@ -624,6 +625,13 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             # we're currently looking at and start over for simplicity.
             new_param_qualified_names = []
             new_values = []
+
+            # Get the correct number of decimal places if there is a unit
+            # passed in for RANGE input.
+            if (is_unit or unit_val is not None) and pretty_results:
+                form_type_format = opus_support.adjust_format_string_for_units(
+                        form_type_format, param_info.units, unit_val)
+
             for suffix in ('1', '2'):
                 new_slug = slug_no_num+suffix+clause_num_str
                 new_param_qualified_name = param_qualified_name_no_num+suffix
@@ -673,6 +681,9 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                             selections[new_slug] = ''
                         else:
                             selections[new_slug] = new_value
+
+                    print('=====new_value')
+                    print(new_value)
                 new_param_qualified_names.append(new_param_qualified_name)
                 new_values.append(new_value)
             if return_slugs:

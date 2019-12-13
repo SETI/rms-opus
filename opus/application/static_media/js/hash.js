@@ -75,6 +75,8 @@ var o_hash = {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
                         let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
+                        let qtypeInURL = (numberOfInputSets === 1) ? qtypeSlug : `${qtypeSlug}_${trailingCounterString}`;
+                        let unitInURL = (numberOfInputSets === 1) ? unitSlug : `${unitSlug}_${trailingCounterString}`;
 
                         let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
                         .attr("data-uniqueid"));
@@ -83,9 +85,13 @@ var o_hash = {
 
                         let slugWithId1 = uniqueid1 ? `${slug1}_${uniqueid1}` : slug1;
                         let slugWithId2 = uniqueid2 ? `${slug2}_${uniqueid2}` : slug2;
+                        let qtypeWithId = uniqueid1 ? `${qtypeSlug}_${uniqueid1}` : qtypeSlug;
+                        let unitWithId = uniqueid1 ? `${unitSlug}_${uniqueid1}` : unitSlug;
                         if (useFieldUniqueIDs) {
                             slug1WithCounter = slugWithId1;
                             slug2WithCounter = slugWithId2;
+                            qtypeInURL = qtypeWithId;
+                            unitInURL = unitWithId;
                         }
 
                         // If the slug in opus.selections has a valid value (check
@@ -103,13 +109,21 @@ var o_hash = {
 
                         if (qtypeSlug in opus.extras) {
                             visited[qtypeSlug] = true;
-                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedQtypeValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
+                            }
+                            // o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                            //                             trailingCounter);
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
-                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            if (opus.extras[unitSlug][trailingCounter-1] !== null) {
+                                hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
+                            }
+                            // o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
+                            //                             trailingCounter);
                         }
 
                     }
@@ -118,12 +132,16 @@ var o_hash = {
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let slugWithCounter = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
+                        let qtypeInURL = (numberOfInputSets === 1) ? qtypeSlug : `${qtypeSlug}_${trailingCounterString}`;
+                        let unitInURL = (numberOfInputSets === 1) ? unitSlug : `${unitSlug}_${trailingCounterString}`;
 
                         if (useFieldUniqueIDs) {
                             let uniqueid = ($(`#widget__${slugNoNum} input[name="${slugWithCounter}"]`)
                                             .attr("data-uniqueid"));
                             if (uniqueid) {
                                 slugWithCounter = `${slug}_${uniqueid}`;
+                                qtypeInURL = `${qtypeSlug}_${uniqueid}`;
+                                unitInURL = `${unitSlug}_${uniqueid}`;
                             }
                         }
 
@@ -132,13 +150,21 @@ var o_hash = {
                         }
                         if (qtypeSlug in opus.extras) {
                             visited[qtypeSlug] = true;
-                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedQtypeValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
+                            }
+                            // o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
+                            //                             trailingCounter);
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
-                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            if (opus.extras[unitSlug][trailingCounter-1] !== null) {
+                                hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
+                            }
+                            // o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
+                            //                             trailingCounter);
                         }
                     }
                 } else { // Multi/single choice inputs

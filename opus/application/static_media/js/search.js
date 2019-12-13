@@ -144,9 +144,11 @@ var o_search = {
             }
 
             let inputName = $(this).attr("name");
+            let slugName = $(this).data("slugname");
             let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
-            let uniqueId = $(this).attr("data-uniqueid");
-            let slugWithId = `${slugWithoutCounter}_${uniqueId}`;
+            let uniqueid = $(this).attr("data-uniqueid");
+            let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
+            let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
 
             let currentValue = $(this).val().trim();
             // Check if there is any match between input values and ranges names
@@ -157,7 +159,12 @@ var o_search = {
 
             // Call normalized api with the current focused input slug
             let newHash = `${slugWithId}=${currentValue}`;
-
+            // If unit input exists, we passed in unit with id to normalize input api
+            // to get the pretty value based on current value and unit.
+            if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
+                let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
+                newHash += `&${unitSlugWithId}=${currentUnitVal}`;
+            }
             /*
             Do not perform normalized api call if:
             1) Input field is empty OR
@@ -216,6 +223,7 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
+            let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
 
             let currentValue = $(this).val().trim();
             o_search.rangesNameTotalMatchedCounter[slugWithId] = (o_search.rangesNameTotalMatchedCounter[slugWithId] ||
@@ -266,6 +274,12 @@ var o_search = {
 
             // Call normalize input api with only the slug and value from current input.
             let newHash = `${slugWithId}=${currentValue}`;
+            // If unit input exists, we passed in unit with id to normalize input api
+            // to get the pretty value based on current value and unit.
+            if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
+                let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
+                newHash += `&${unitSlugWithId}=${currentUnitVal}`;
+            }
 
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
@@ -603,7 +617,7 @@ var o_search = {
                     o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] += 1;
                     if (!$(`#${collapsibleContainerId}`).hasClass("show")) {
                         // Normally inputsRangesNameMatchedInfo gets updated later in this function,
-                        // but since we are opening the collpasible item here, to make sure all behaviors
+                        // but since we are opening the collapsible item here, to make sure all behaviors
                         // in addPreprogrammedRangesSearchBehaviors are correct, we have to update
                         // inputsRangesNameMatchedInfo here.
                         o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
@@ -618,7 +632,7 @@ var o_search = {
 
             if (o_search.rangesNameMatchedCounterByCategory[collapsibleContainerId] === 0) {
                 // Normally inputsRangesNameMatchedInfo gets updated later in this function,
-                // but since we are hiding the collpasible item here, to make sure all behaviors
+                // but since we are hiding the collapsible item here, to make sure all behaviors
                 // in addPreprogrammedRangesSearchBehaviors are correct, we have to update
                 // inputsRangesNameMatchedInfo here.
                 o_search.inputsRangesNameMatchedInfo[slugWithId] = o_utils.deepCloneObj(o_search.rangesNameMatchedCounterByCategory);
