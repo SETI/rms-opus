@@ -5,10 +5,13 @@
 ################################################################################
 
 import base64
+import datetime
 from io import BytesIO
 import logging
+import mistune
 import os
 import qrcode
+import re
 
 import oyaml as yaml # Cool package that preserves key order
 
@@ -262,23 +265,29 @@ def api_guide(request):
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
+    git_id = get_git_version(True, True)
+    current_date = datetime.datetime.today().strftime('%d-%B-%Y')
 
     path = os.path.dirname(os.path.abspath(__file__))
-    guide_content_file = 'examples.yaml'
+    guide_content_file = 'api_guide.md'
     with open(os.path.join(path, guide_content_file), 'r') as stream:
         text = stream.read()
-        text = text.replace('<HOST>', prefix)
-        try:
-            guide = yaml.load(text, Loader=yaml.FullLoader)
-
-        except yaml.YAMLError as exc: # pragma: no cover
-            log.error('api_guide error: %s', str(exc))
-            exit_api_call(api_code, None)
-            raise Http404
+        text = text.replace('%HOST%', prefix)
+        text = text.replace('%DATE%', current_date)
+        text = text.replace('%VERSION%', git_id)
+        text = re.sub(
+            r'%EXTLINK%(.*)%ENDEXTLINK%',
+            r'<a target="_blank" href="\1"><pre><code>\1</code></pre></a>',
+            text)
+        guide = mistune.Markdown().output(text)
+        guide = guide.replace('%ADDCLASS%', '<div class="')
+        guide = guide.replace('%ENDADDCLASS%', '">')
+        guide = guide.replace('%ENDCLASS%', '</div>')
 
     slugs = get_fields_info('raw', collapse=True)
 
     ret = render(request, 'help/guide.html',
                  {'guide': guide, 'slugs': slugs})
+    print(guide)
     exit_api_call(api_code, ret)
     return ret

@@ -365,13 +365,16 @@ def api_get_metadata(request, opus_id, fmt):
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
-                    This is a list of slugs separated by commas. Note that the
-                    return will be indexed by field name, but by slug name.
+                    This is a list of slugs separated by commas.
                     If cols is supplied, cats is ignored.
                cats=<cats>
                     Limit results to particular categories. Categories can be
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
+                    Note that the JSON return will be indexed by database field
+                    name, not by slug name. This is never what we actually want
+                    but is provided for backwards compatibility and is no longer
+                    documented.
 
     Can return JSON, HTML, or CSV.
 
@@ -392,8 +395,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
-                    This is a list of slugs separated by commas. Note that the
-                    return will be indexed by field name, but by slug name.
+                    This is a list of slugs separated by commas.
                     If cols is supplied, cats is ignored.
                cats=<cats>
                     Limit results to particular categories. Categories can be

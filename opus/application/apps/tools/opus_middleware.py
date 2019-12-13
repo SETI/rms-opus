@@ -31,12 +31,14 @@ class StripWhitespaceMiddleware(object):
         if "text" in response['Content-Type']:
         #Use next line instead to avoid failure on cached / HTTP 304 NOT MODIFIED responses without Content-Type
         #if response.status_code == 200 and "text" in response['Content-Type']:
-            if hasattr(self, 'whitespace_lead'): # pragma: no cover
-                response.content = self.whitespace_lead.sub('', response.content.decode()).encode()
-            if hasattr(self, 'whitespace_trail'): # pragma: no cover
-                response.content = self.whitespace_trail.sub('\n', response.content.decode()).encode()
-            if hasattr(self, 'whitespace'): # pragma: no cover
-                response.content = self.whitespace.sub('', response.content.decode()).encode()
-            return response
-        else:
-            return response
+            decoded = response.content.decode()
+            orig_decoded = decoded
+            if decoded.startswith('<!--NOSTRIP-->'):
+                decoded = decoded[14:]
+            else:
+                decoded = self.whitespace_lead.sub('', decoded)
+                decoded = self.whitespace_trail.sub('\n', decoded)
+                decoded = self.whitespace.sub('', decoded)
+            if decoded != orig_decoded:
+                response.content = decoded.encode()
+        return response

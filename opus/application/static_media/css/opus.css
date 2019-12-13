@@ -1873,6 +1873,52 @@ footer {
     border: 1px solid black;
 }
 
+.op-help-api-guide code {
+    white-space: pre-wrap !important;
+}
+
+.op-help-api-guide h1:first-of-type {
+    counter-reset: apih1counter;
+}
+
+.op-help-api-guide h1 {
+    counter-reset: apih2counter;
+}
+.op-help-api-guide h1::before {
+    counter-increment: apih1counter;
+    content: counter(apih1counter) ". ";
+}
+
+.op-help-api-guide h2 {
+    counter-reset: apih3counter;
+}
+.op-help-api-guide h2::before {
+    counter-increment: apih2counter;
+    content: counter(apih1counter) "." counter(apih2counter) ". ";
+}
+
+.op-help-api-guide h3::before {
+    counter-increment: apih3counter;
+    content: counter(apih1counter) "." counter(apih2counter) "." counter(apih3counter) ". ";
+}
+
+.op-help-api-guide h1.op-help-api-guide-no-count::before,
+.op-help-api-guide h2.op-help-api-guide-no-count::before,
+.op-help-api-guide h3.op-help-api-guide-no-count::before {
+    content: "";
+    counter-increment: none;
+}
+
+.op-help-api-guide .op-help-api-guide-toc ul {
+    counter-reset: apiulcounter;
+    list-style-type: none;
+}
+
+.op-help-api-guide .op-help-api-guide-toc li::before {
+    counter-increment: apiulcounter;
+    content: counters(apiulcounter, ".") ". ";
+}
+
 .op-header-text {
     display: inline-block;
 }
@@ -1922,11 +1968,11 @@ gap next to ps */
     display: inline;
 }
 
-.about li:after {
+.about li::after {
     content: ', ';
 }
 
-.about li:last-child:after {
+.about li:last-child::after {
     content: '';
 }
 
@@ -2065,7 +2111,7 @@ ul.ui-autocomplete a.ui-state-active {
     z-index: 20;
 }
 
-.hvr-ripple-in:before {
+.hvr-ripple-in::before {
     content: '';
     position: absolute;
     border: #20c997 solid 6px;
