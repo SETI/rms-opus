@@ -989,6 +989,11 @@ panel */
     position: relative;
 }
 
+#op-recycled-count img {
+    max-height: 1em;
+    margin-top: -0.2em;
+}
+
 /* Make Total Size and Total Files stay in one line in download data */
 .op-total-size, .op-total-download {
     display: inline;
