@@ -159,7 +159,7 @@ var o_search = {
 
             // Call normalized api with the current focused input slug
             let newHash = `${slugWithId}=${currentValue}`;
-            // If unit input exists, we passed in unit with id to normalize input api
+            // If unit input exists, we pass in unit with id to normalize input api
             // to get the pretty value based on current value and unit.
             if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
                 let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
@@ -274,7 +274,7 @@ var o_search = {
 
             // Call normalize input api with only the slug and value from current input.
             let newHash = `${slugWithId}=${currentValue}`;
-            // If unit input exists, we passed in unit with id to normalize input api
+            // If unit input exists, we pass in unit with id to normalize input api
             // to get the pretty value based on current value and unit.
             if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
                 let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();

@@ -80,11 +80,9 @@ var o_hash = {
 
                         let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
                         .attr("data-uniqueid"));
-                        let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
-                        .attr("data-uniqueid"));
 
                         let slugWithId1 = uniqueid1 ? `${slug1}_${uniqueid1}` : slug1;
-                        let slugWithId2 = uniqueid2 ? `${slug2}_${uniqueid2}` : slug2;
+                        let slugWithId2 = uniqueid1 ? `${slug2}_${uniqueid1}` : slug2;
                         let qtypeWithId = uniqueid1 ? `${qtypeSlug}_${uniqueid1}` : qtypeSlug;
                         let unitWithId = uniqueid1 ? `${unitSlug}_${uniqueid1}` : unitSlug;
                         if (useFieldUniqueIDs) {
