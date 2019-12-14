@@ -845,6 +845,40 @@ class searchTests(TestCase):
         self.assertEqual(extras['qtypes'], qtypes_expected)
         self.assertEqual(extras['units'], units_expected)
 
+    def test__url_to_search_params_range_return_pretty1(self):
+        "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and unit: cm"
+        q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=cm')
+        (selections, extras) = url_to_search_params(q, return_slugs=True, pretty_results=True)
+        sel_expected =  {'wavelength1_01': '0.000039',
+                         'wavelength2_01': '0.00007'}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_wavelength.wavelength': ['any']}
+        units_expected = {'obs_wavelength.wavelength': ['cm']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+        self.assertEqual(extras['units'], units_expected)
+
+    def test__url_to_search_params_range_return_pretty2(self):
+        "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and no unit (default unit)"
+        q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007')
+        (selections, extras) = url_to_search_params(q, return_slugs=True, pretty_results=True)
+        sel_expected =  {'wavelength1_01': '0',
+                         'wavelength2_01': '0.0001'}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_wavelength.wavelength': ['any']}
+        units_expected = {'obs_wavelength.wavelength': ['microns']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+        self.assertEqual(extras['units'], units_expected)
+
 
     #######################
     ### NUMERIC FORMATS ###

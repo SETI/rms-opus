@@ -356,6 +356,24 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"CASSINIspacecraftclockcount2": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_unit1(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & unit: cm"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=cm&reqno=123'
+        expected = {"wavelength1_01": "0.000039", "wavelength2_01": "0.00007", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit2(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & no unit (default unit)"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&reqno=123'
+        expected = {"wavelength1_01": "0", "wavelength2_01": "0.0001", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit3(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & unit: microns"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=microns&reqno=123'
+        expected = {"wavelength1_01": "0", "wavelength2_01": "0.0001", "reqno": 123}
+        self._run_json_equal(url, expected)
+
 
             ########################################################
             ######### /__api/stringsearchchoices API TESTS #########
