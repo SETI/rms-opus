@@ -444,8 +444,9 @@ var o_search = {
                  .removeClass("op-hide-different-units-info"));
 
                 // When input is not empty and there is a unit change, run normalize input api with
-                // sourceunit-slug (value: previous selected unit), this will make sure the return
-                // input values are properly converted based on current selected unit.
+                // sourceunit-slug (value: previous selected unit) on all inputs in the same widget.
+                // The api return values will be properly converted based on current selected unit,
+                // and we will update all inputs with converted return values.
                 let previousUnit = opus.unitFromLastSearchBySlug[slugNoNum];
                 opus.unitFromLastSearchBySlug[slugNoNum] = currentUnitVal;
                 if (!isInputSetEmpty) {
