@@ -78,13 +78,13 @@ var o_hash = {
                         let qtypeInURL = (numberOfInputSets === 1) ? qtypeSlug : `${qtypeSlug}_${trailingCounterString}`;
                         let unitInURL = (numberOfInputSets === 1) ? unitSlug : `${unitSlug}_${trailingCounterString}`;
 
-                        let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
+                        let uniqueid = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
                         .attr("data-uniqueid"));
 
-                        let slugWithId1 = uniqueid1 ? `${slug1}_${uniqueid1}` : slug1;
-                        let slugWithId2 = uniqueid1 ? `${slug2}_${uniqueid1}` : slug2;
-                        let qtypeWithId = uniqueid1 ? `${qtypeSlug}_${uniqueid1}` : qtypeSlug;
-                        let unitWithId = uniqueid1 ? `${unitSlug}_${uniqueid1}` : unitSlug;
+                        let slugWithId1 = uniqueid ? `${slug1}_${uniqueid}` : slug1;
+                        let slugWithId2 = uniqueid ? `${slug2}_${uniqueid}` : slug2;
+                        let qtypeWithId = uniqueid ? `${qtypeSlug}_${uniqueid}` : qtypeSlug;
+                        let unitWithId = uniqueid ? `${unitSlug}_${uniqueid}` : unitSlug;
                         if (useFieldUniqueIDs) {
                             slug1WithCounter = slugWithId1;
                             slug2WithCounter = slugWithId2;
@@ -586,6 +586,11 @@ var o_hash = {
                         opus.extras[slug][slugCounter-1] = value;
                     } else {
                         opus.extras[slug] = value.split(",");
+                    }
+
+                    if (slug.startsWith("unit-")) {
+                        let widgetSlug = slug.slice(5);
+                        opus.unitFromLastSearchBySlug[widgetSlug] = value;
                     }
                 }
                 // look for prefs

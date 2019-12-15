@@ -376,6 +376,8 @@ var o_search = {
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on("change", "select", function() {
             let isInputSetEmpty = true;
+            // Use this flag to determine if
+            let performNormalizeInput = false;
             if ($(this).attr("name").startsWith("qtype-")) {
                 let qtypes = [];
                 let counterStr = o_utils.getSlugOrDataTrailingCounterStr($(this).attr("name"));
@@ -440,14 +442,78 @@ var o_search = {
                  .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
                 ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
                  .removeClass("op-hide-different-units-info"));
+
+                // When input is not empty and there is a unit change, run normalize input api with
+                // sourceunit-slug (value: previous selected unit), this will make sure the return
+                // input values are properly converted based on current selected unit.
+                let previousUnit = opus.unitFromLastSearchBySlug[slugNoNum];
+                opus.unitFromLastSearchBySlug[slugNoNum] = currentUnitVal;
+                if (!isInputSetEmpty) {
+                    let slug1 = `${slugNoNum}1`;
+                    let slug2 = `${slugNoNum}2`;
+                    let qtypeSlug = `qtype-${slugNoNum}`;
+                    let unitSlug = `unit-${slugNoNum}`;
+                    let sourceunitSlug = `sourceunit-${slugNoNum}`;
+                    let inputSets = $(`#widget__${slugNoNum} .op-search-inputs-set`);
+                    let hash = [];
+
+                    $.each(inputSets, function(idx, eachInputSet) {
+                        let uniqueid = $(eachInputSet).find("input").attr("data-uniqueid");
+                        let slug1WithId = `${slug1}_${uniqueid}`;
+                        let slug2WithId = `${slug2}_${uniqueid}`;
+                        let qtypeWithId =`${qtypeSlug}_${uniqueid}`;
+                        let unitWithId = `${unitSlug}_${uniqueid}`;
+                        let sourceunitWithId = `${sourceunitSlug}_${uniqueid}`;
+                        if (opus.selections[slug1][idx] !== null &&
+                            opus.rangeInputFieldsValidation[slug1WithId] !== false) {
+                            let slug1EncodedSelections = o_hash.encodeSlugValues(opus.selections[slug1]);
+                            hash.push(slug1WithId + "=" + slug1EncodedSelections[idx]);
+                        }
+                        // If the slug in opus.selections has a valid value (check
+                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        if (opus.selections[slug2][idx] !== null &&
+                            opus.rangeInputFieldsValidation[slug2WithId] !== false) {
+                            let slug2EncodedSelections = o_hash.encodeSlugValues(opus.selections[slug2]);
+                            hash.push(slug2WithId + "=" + slug2EncodedSelections[idx]);
+                        }
+
+                        if (qtypeSlug in opus.extras) {
+                            let encodedQtypeValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            if (opus.extras[qtypeSlug][idx] !== null) {
+                                hash.push(qtypeWithId + "=" + encodedQtypeValues[idx]);
+                            }
+                        }
+                        if (unitSlug in opus.extras) {
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            if (opus.extras[unitSlug][idx] !== null) {
+                                hash.push(unitWithId + "=" + encodedUnitValues[idx]);
+                                hash.push(sourceunitWithId + "=" + previousUnit);
+                            }
+                        }
+                    });
+                    let newHash = hash.join("&");
+
+                    o_search.lastSlugNormalizeRequestNo++;
+                    o_search.slugNormalizeReqno[unitSlug] = o_search.lastSlugNormalizeRequestNo;
+
+                    opus.normalizeInputForAllFieldsInProgress[unitSlug] = true;
+                    let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+                    performNormalizeInput = true;
+                    o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url);
+                }
             }
 
-            // If there is an invalid value, and user still updates qtype input,
-            // update the last selections to prevent allNormalizeInputApiCall.
-            if (!opus.areRangeInputsValid() || isInputSetEmpty) {
-                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            // If there is an invalid value or all input sets are empty, and user still
+            // updates qtype/unit input, update the last selections to prevent allNormalizeInputApiCall.
+            // Note: this block will not be executed if performNormalizeInput is true, because all the
+            // steps in the block will be performed in parseFinalNormalizedInputDataAndUpdateURL when
+            // normalize input is run.
+            if (!performNormalizeInput) {
+                if (!opus.areRangeInputsValid() || isInputSetEmpty) {
+                    opus.updateOPUSLastSelectionsWithOPUSSelections();
+                }
+                o_hash.updateURLFromCurrentHash();
             }
-            o_hash.updateURLFromCurrentHash();
 
             // If no search is performed, we still update the hints for a unit change.
             if (isInputSetEmpty) {
@@ -790,7 +856,7 @@ var o_search = {
         });
 
         if (opus.rangeInputFieldsValidation[slug] ||
-            (slug === opus.allSlug && opus.areRangeInputsValid())) {
+            ((slug === opus.allSlug || slug.startsWith("unit-")) && opus.areRangeInputsValid())) {
 
             // If there is an invalid value, and user still updates range input,
             // update the last selections to prevent allNormalizeInputApiCall.
