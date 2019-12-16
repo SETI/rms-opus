@@ -590,7 +590,7 @@ var o_hash = {
 
                     if (slug.startsWith("unit-")) {
                         let widgetSlug = slug.slice(5);
-                        opus.unitFromLastSearchBySlug[widgetSlug] = value;
+                        opus.currentUnitBySlug[widgetSlug] = value;
                     }
                 }
                 // look for prefs

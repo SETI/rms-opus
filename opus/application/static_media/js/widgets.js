@@ -933,7 +933,7 @@ var o_widgets = {
                 } else {
                     unitInput.val(opus.extras[unit][0]);
                 }
-                opus.unitFromLastSearchBySlug[slug] = unitInput.val();
+                opus.currentUnitBySlug[slug] = unitInput.val();
                 // For widgets with unit but without qtype:
                 if (numberOfQtypeInputs === 0) {
                     o_hash.updateURLFromCurrentHash();

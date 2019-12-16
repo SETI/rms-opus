@@ -376,7 +376,8 @@ var o_search = {
         // range behaviors and string behaviors for search widgets - qtype select dropdown
         $('#search').on("change", "select", function() {
             let isInputSetEmpty = true;
-            // Use this flag to determine if
+            // Use this flag to determine if a normalize input api with sourceunit is called.
+            // If so, we don't need to perform an extra updateURLFromCurrentHash.
             let performNormalizeInput = false;
             if ($(this).attr("name").startsWith("qtype-")) {
                 let qtypes = [];
@@ -437,18 +438,18 @@ var o_search = {
                 }
 
                 // Update values in preprogrammed ranges
-                let currentUnitVal = $(this).val();
+                let newUnitVal = $(this).val();
                 ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item`)
-                 .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
-                ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
+                 .not(`[data-unit="${newUnitVal}"]`).addClass("op-hide-different-units-info"));
+                ($(`#widget__${slugNoNum} .op-preprogrammed-ranges-data-item[data-unit="${newUnitVal}"]`)
                  .removeClass("op-hide-different-units-info"));
 
                 // When input is not empty and there is a unit change, run normalize input api with
                 // sourceunit-slug (value: previous selected unit) on all inputs in the same widget.
-                // The api return values will be properly converted based on current selected unit,
+                // The api return values will be properly converted based on newly selected unit,
                 // and we will update all inputs with converted return values.
-                let previousUnit = opus.unitFromLastSearchBySlug[slugNoNum];
-                opus.unitFromLastSearchBySlug[slugNoNum] = currentUnitVal;
+                let previousUnit = opus.currentUnitBySlug[slugNoNum];
+
                 if (!isInputSetEmpty) {
                     let slug1 = `${slugNoNum}1`;
                     let slug2 = `${slugNoNum}2`;
@@ -500,7 +501,7 @@ var o_search = {
                     opus.normalizeInputForAllFieldsInProgress[unitSlug] = true;
                     let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
                     performNormalizeInput = true;
-                    o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url);
+                    o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url, newUnitVal);
                 }
             }
 
@@ -788,7 +789,7 @@ var o_search = {
         return $.getJSON(url);
     },
 
-    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=opus.allSlug) {
+    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=opus.allSlug, unit=null) {
         /**
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
@@ -856,6 +857,12 @@ var o_search = {
             }
         });
 
+        // Update newly selected unit to currentUnitBySlug
+        if (slug.startsWith("unit-") && unit) {
+            let slugNoNum = slug.match(/unit-(.*)$/)[1];
+            opus.currentUnitBySlug[slugNoNum] = unit;
+        }
+
         if (opus.rangeInputFieldsValidation[slug] ||
             ((slug === opus.allSlug || slug.startsWith("unit-")) && opus.areRangeInputsValid())) {
 
@@ -887,7 +894,7 @@ var o_search = {
         }
     },
 
-    parseFinalNormalizedInputDataAndUpdateURL: function(slug, url) {
+    parseFinalNormalizedInputDataAndUpdateURL: function(slug, url, unit=null) {
         /**
          * Parse the return data from a normalize input API call. validateRangeInput
          * is called here.
@@ -901,7 +908,7 @@ var o_search = {
             }
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
-            o_search.validateRangeInput(normalizedInputData, true, slug);
+            o_search.validateRangeInput(normalizedInputData, true, slug, unit);
 
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.areRangeInputsValid()) {
