@@ -463,8 +463,8 @@ UNIT_CONVERSION = {
             'display_name': 'km',
             'conversions': {
                 'm':            ('m', 1e-3),
-                'saturnradii':  ('Rj (60330)', 60330.),
-                'jupiterradii': ('Rs (71492)', 71492.),
+                'jupiterradii': ('Rj (71492)', 71492.),
+                'saturnradii':  ('Rs (60330)', 60330.),
                 'neptuneradii': ('Rn (25225)', 25225.),
                 'uranusradii':  ('Ru (25559)', 25559.),
             }
@@ -489,9 +489,9 @@ UNIT_CONVERSION = {
         {
             'display_name': 'microns/pixel',
             'conversions': {
-                'angstroms/pixel':    ('angstroms', 1e-4),
-                'nm/pixel':           ('nm', 1e-3),
-                'cm/pixel':           ('cm', 1e4),
+                'angstroms/pixel':    ('angstroms/pixel', 1e-4),
+                'nm/pixel':           ('nm/pixel', 1e-3),
+                'cm/pixel':           ('cm/pixel', 1e4),
             }
         },
     'seconds':
@@ -536,6 +536,18 @@ def get_valid_units(default_unit):
         valid_units = list(default_unit_info['conversions'].keys())
         valid_units = [default_unit] + valid_units
     return valid_units
+
+# Get a dictionary with valid units as keys and display names as values.
+def get_display_names(default_unit):
+    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+    display_names = None
+    if default_unit_info is not None:
+        display_names = {}
+        display_names[default_unit] = default_unit_info['display_name']
+        valid_units = default_unit_info['conversions']
+        for unit in valid_units:
+            display_names[unit] =  valid_units[unit][0]
+    return display_names
 
 def is_valid_unit(default_unit, unit):
     if default_unit == unit:

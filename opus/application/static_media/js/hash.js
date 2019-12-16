@@ -75,37 +75,49 @@ var o_hash = {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let slug1WithCounter = (numberOfInputSets === 1) ? slug1 : `${slug1}_${trailingCounterString}`;
                         let slug2WithCounter = (numberOfInputSets === 1) ? slug2 : `${slug2}_${trailingCounterString}`;
+                        let qtypeInURL = (numberOfInputSets === 1) ? qtypeSlug : `${qtypeSlug}_${trailingCounterString}`;
+                        let unitInURL = (numberOfInputSets === 1) ? unitSlug : `${unitSlug}_${trailingCounterString}`;
 
+                        let uniqueid = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
+                        .attr("data-uniqueid"));
+
+                        let slugWithId1 = uniqueid ? `${slug1}_${uniqueid}` : slug1;
+                        let slugWithId2 = uniqueid ? `${slug2}_${uniqueid}` : slug2;
+                        let qtypeWithId = uniqueid ? `${qtypeSlug}_${uniqueid}` : qtypeSlug;
+                        let unitWithId = uniqueid ? `${unitSlug}_${uniqueid}` : unitSlug;
                         if (useFieldUniqueIDs) {
-                            let uniqueid1 = ($(`#widget__${slugNoNum} input[name="${slug1WithCounter}"]`)
-                                             .attr("data-uniqueid"));
-                            let uniqueid2 = ($(`#widget__${slugNoNum} input[name="${slug2WithCounter}"]`)
-                                             .attr("data-uniqueid"));
-
-                            if (uniqueid1) {
-                                slug1WithCounter = `${slug1}_${uniqueid1}`;
-                            }
-                            if (uniqueid2) {
-                                slug2WithCounter = `${slug2}_${uniqueid2}`;
-                            }
+                            slug1WithCounter = slugWithId1;
+                            slug2WithCounter = slugWithId2;
+                            qtypeInURL = qtypeWithId;
+                            unitInURL = unitWithId;
                         }
 
-                        if (opus.selections[slug1][trailingCounter-1] !== null) {
+                        // If the slug in opus.selections has a valid value (check
+                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        if (opus.selections[slug1][trailingCounter-1] !== null &&
+                            opus.rangeInputFieldsValidation[slugWithId1] !== false) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
-                        if (opus.selections[slug2][trailingCounter-1] !== null) {
+                        // If the slug in opus.selections has a valid value (check
+                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        if (opus.selections[slug2][trailingCounter-1] !== null &&
+                            opus.rangeInputFieldsValidation[slugWithId2] !== false) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
                         if (qtypeSlug in opus.extras) {
                             visited[qtypeSlug] = true;
-                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedQtypeValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
+                            }
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
-                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            if (opus.extras[unitSlug][trailingCounter-1] !== null) {
+                                hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
+                            }
                         }
 
                     }
@@ -114,12 +126,16 @@ var o_hash = {
                     for (let trailingCounter = 1; trailingCounter <= numberOfInputSets; trailingCounter++) {
                         let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                         let slugWithCounter = (numberOfInputSets === 1) ? slug : `${slug}_${trailingCounterString}`;
+                        let qtypeInURL = (numberOfInputSets === 1) ? qtypeSlug : `${qtypeSlug}_${trailingCounterString}`;
+                        let unitInURL = (numberOfInputSets === 1) ? unitSlug : `${unitSlug}_${trailingCounterString}`;
 
                         if (useFieldUniqueIDs) {
                             let uniqueid = ($(`#widget__${slugNoNum} input[name="${slugWithCounter}"]`)
                                             .attr("data-uniqueid"));
                             if (uniqueid) {
                                 slugWithCounter = `${slug}_${uniqueid}`;
+                                qtypeInURL = `${qtypeSlug}_${uniqueid}`;
+                                unitInURL = `${unitSlug}_${uniqueid}`;
                             }
                         }
 
@@ -128,13 +144,17 @@ var o_hash = {
                         }
                         if (qtypeSlug in opus.extras) {
                             visited[qtypeSlug] = true;
-                            o_hash.updateHashFromExtras(hash, qtypeSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedQtypeValues = o_hash.encodeSlugValues(opus.extras[qtypeSlug]);
+                            if (opus.extras[qtypeSlug][trailingCounter-1] !== null) {
+                                hash.push(qtypeInURL + "=" + encodedQtypeValues[trailingCounter-1]);
+                            }
                         }
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
-                            o_hash.updateHashFromExtras(hash, unitSlug, numberOfInputSets,
-                                                        trailingCounter);
+                            let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                            if (opus.extras[unitSlug][trailingCounter-1] !== null) {
+                                hash.push(unitInURL + "=" + encodedUnitValues[trailingCounter-1]);
+                            }
                         }
                     }
                 } else { // Multi/single choice inputs
@@ -144,6 +164,8 @@ var o_hash = {
                 // For slugs only exist in extras, make sure they are updated in the hash.
                 // This will make sure multiple empty input sets can show up after page reloads.
                 let slugInExtras = slug;
+                // If slugInExtras is a already a unit slug, unitSlug will be an empty string,
+                // and this will prevent an unit slug get updated twice in the hash.
                 let unitSlug = "";
                 // qtype will always come before unit in sortedSlugs
                 if (slugInExtras.startsWith("qtype-")) {
@@ -155,10 +177,9 @@ var o_hash = {
                 let slugInExtrasVal = opus.extras[slugInExtras];
                 if (slugInExtrasVal.length) {
                     let encodedExtraValues = o_hash.encodeSlugValues(slugInExtrasVal);
+                    let numberOfQtypeInputs = encodedExtraValues.length;
 
-                    if (slugInExtrasVal.length > 1) {
-                        let numberOfQtypeInputs = encodedExtraValues.length;
-
+                    if (numberOfQtypeInputs > 1) {
                         for(let trailingCounter = 1; trailingCounter <= numberOfQtypeInputs; trailingCounter++) {
                             let trailingCounterString = o_utils.convertToTrailingCounterStr(trailingCounter);
                             let newKey = `${slugInExtras}_${trailingCounterString}`;
@@ -166,14 +187,19 @@ var o_hash = {
                             if (slugInExtrasVal[trailingCounter-1] !== null) {
                                 hash.push(newKey + "=" + encodedExtraValues[trailingCounter-1]);
                             }
+                            // unitSlug will be an empty string and won't get updated in the hash here again
+                            // if slugInExtras is a already an unit slug.
                             if (unitSlug in opus.extras) {
                                 visited[unitSlug] = true;
-                                o_hash.updateHashFromExtras(hash, unitSlug, numberOfQtypeInputs,
-                                                            trailingCounter);
+                                let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
+                                let newUnitKey = `${unitSlug}_${trailingCounterString}`;
+                                hash.push(newUnitKey + "=" + encodedUnitValues[trailingCounter-1]);
                             }
                         }
                     } else {
                         hash.push(slugInExtras + "=" + encodedExtraValues.join(","));
+                        // unitSlug will be an empty string and won't get updated in the hash here again
+                        // if slugInExtras is a already an unit slug.
                         if (unitSlug in opus.extras) {
                             visited[unitSlug] = true;
                             let encodedUnitValues = o_hash.encodeSlugValues(opus.extras[unitSlug]);
@@ -235,21 +261,6 @@ var o_hash = {
          */
         let fullHashStr = o_hash.getFullHashStr();
         window.location.hash = '/' + fullHashStr;
-    },
-
-    updateHashFromExtras: function(hash, slugInExtras, numberOfInputSets, counter) {
-        /**
-         * Update the hash with data from opus.extras. The function will take in
-         * numberOfInputSets & counter to determine if trailingCounterString should
-         * be added to the final slug in the hash.
-         */
-        let trailingCounterString = o_utils.convertToTrailingCounterStr(counter);
-        let encodedExtraValues = o_hash.encodeSlugValues(opus.extras[slugInExtras]);
-        let slugInExtrasInURL = ((numberOfInputSets === 1) ?
-                                 slugInExtras : `${slugInExtras}_${trailingCounterString}`);
-        if (opus.extras[slugInExtras][counter-1] !== null) {
-            hash.push(slugInExtrasInURL + "=" + encodedExtraValues[counter-1]);
-        }
     },
 
     encodeSlugValues: function(slugValueArray) {
@@ -376,7 +387,7 @@ var o_hash = {
         return hash.substring(1);   // don't forget to strip off the first &, it is not needed
     },
 
-    // get both selections and extras (qtype) from hash.
+    // get both selections and extras (qtype or unit) from hash.
     getSelectionsExtrasFromHash: function() {
         let hash = o_hash.getHash();
         if (!hash) {
@@ -435,10 +446,10 @@ var o_hash = {
                 }
             } else if (slug === "widgets" && value) {
                 // Loop through widgets and check if there is any widget with RANGE or STRING input
-                // but without qtype, we will put those in selections as well.
+                // but without qtype and unit, we will put those in selections as well.
                 $.each(value.split(","), function(idx, widgetSlug) {
-                    o_hash.syncUpWithOPUSSelectionsForWidgetsWithNoQtype(selections,
-                                                                         extras, widgetSlug);
+                    o_hash.syncUpOPUSSelectionsForWidgetsWithNoQtypeAndUnit(selections,
+                                                                            extras, widgetSlug);
                 });
             }
         });
@@ -448,12 +459,15 @@ var o_hash = {
         return [selections, extras];
     },
 
-    syncUpWithOPUSSelectionsForWidgetsWithNoQtype: function(selections, extras, widgetSlug) {
+    syncUpOPUSSelectionsForWidgetsWithNoQtypeAndUnit: function(selections, extras, widgetSlug) {
         /**
-         * Takes in a widgetSlug and check if the widget has STRING or RANGE input
-         * without qtype, if so, sync up the opus.selections with selections.
+         * Takes in a widgetSlug and check if the widget in opus.prefs.widgets has STRING or RANGE
+         * input without qtype AND unit. If so, sync up the opus.selections with selections. For
+         * example, Voyager earth received time, we want to make sure VOYAGERert1/VOYAGERert2 exist
+         * in both opus.selections and selections, so the selections comparison in opus.load will be
+         * correct.
          */
-        if (`qtype-${widgetSlug}` in extras) {
+        if (`qtype-${widgetSlug}` in extras || `unit-${widgetSlug}` in extras) {
             return;
         }
 
@@ -554,7 +568,7 @@ var o_hash = {
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
             if (value) {
-                if (slug.match(/qtype-.*/) || slug.match(/unit-.*/)) {
+                if (slug.startsWith("qtype-") || slug.startsWith("unit-")) {
                     let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
@@ -572,6 +586,11 @@ var o_hash = {
                         opus.extras[slug][slugCounter-1] = value;
                     } else {
                         opus.extras[slug] = value.split(",");
+                    }
+
+                    if (slug.startsWith("unit-")) {
+                        let widgetSlug = slug.slice(5);
+                        opus.unitFromLastSearchBySlug[widgetSlug] = value;
                     }
                 }
                 // look for prefs

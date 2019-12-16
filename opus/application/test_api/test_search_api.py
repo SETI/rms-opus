@@ -356,6 +356,47 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"CASSINIspacecraftclockcount2": None, "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_unit1(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & unit: cm"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=cm&reqno=123'
+        expected = {"wavelength1_01": "0.000039", "wavelength2_01": "0.00007", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit2(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & no unit (default unit)"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&reqno=123'
+        expected = {"wavelength1_01": "0", "wavelength2_01": "0.0001", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit3(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & unit: microns"
+        url = '/opus/__api/normalizeinput.json?wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=microns&reqno=123'
+        expected = {"wavelength1_01": "0", "wavelength2_01": "0.0001", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit4(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & unit: microns & sourceunit: cm"
+        url = '/opus/__api/normalizeinput.json?wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&unit-wavelength=microns&sourceunit-wavelength=cm&reqno=123'
+        expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit5(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with microns values & unit: cm & sourceunit: microns"
+        url = '/opus/__api/normalizeinput.json?wavelength1=0.75&wavelength2=300&qtype-wavelength=any&unit-wavelength=cm&sourceunit-wavelength=microns&reqno=123'
+        expected = {"wavelength1": "0.000075", "wavelength2": "0.03", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit6(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with microns values & unit: microns & sourceunit: microns"
+        url = '/opus/__api/normalizeinput.json?wavelength1=0.75&wavelength2=300&qtype-wavelength=any&unit-wavelength=microns&sourceunit-wavelength=microns&reqno=123'
+        expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit7(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength with cm values & no unit (default unit) & sourceunit: cm"
+        url = '/opus/__api/normalizeinput.json?wavelength1=0.000075&wavelength2=0.03&qtype-wavelength=any&sourceunit-wavelength=cm&reqno=123'
+        expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
+        self._run_json_equal(url, expected)
 
             ########################################################
             ######### /__api/stringsearchchoices API TESTS #########

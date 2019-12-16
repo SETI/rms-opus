@@ -66,7 +66,6 @@ def api_normalize_input(request):
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
-
     (selections, extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
@@ -468,6 +467,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         param_info = None
         is_qtype = None
         is_unit = None
+        is_sourceunit = None
         if slug.startswith('qtype-'): # like qtype-time=all
             is_qtype = True
             slug = slug[6:]
@@ -483,6 +483,15 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
                 log.error('url_to_search_params: unit slug has '+
+                          'numeric suffix "%s"', orig_slug)
+                return None, None
+            param_info = get_param_info_by_slug(slug, 'qtype')
+        elif slug.startswith('sourceunit-'):
+            is_sourceunit = True
+            slug = slug[11:]
+            slug_no_num = strip_numeric_suffix(slug)
+            if slug_no_num != slug:
+                log.error('url_to_search_params: sourceunit slug has '+
                           'numeric suffix "%s"', orig_slug)
                 return None, None
             param_info = get_param_info_by_slug(slug, 'qtype')
@@ -512,6 +521,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             used_slugs.append(pi_slug_no_num+'2'+clause_num_str)
             used_slugs.append('qtype-'+pi_slug_no_num+clause_num_str)
             used_slugs.append('unit-'+pi_slug_no_num+clause_num_str)
+            used_slugs.append('sourceunit-'+pi_slug_no_num+clause_num_str)
         if param_info.old_slug:
             # Kill off all the old slugs - this prevents cases where someone
             # uses the new slug and old slug names in the same query.
@@ -521,6 +531,7 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             used_slugs.append(pi_old_slug_no_num+'2'+clause_num_str)
             used_slugs.append('qtype-'+pi_old_slug_no_num+clause_num_str)
             used_slugs.append('unit-'+pi_old_slug_no_num+clause_num_str)
+            used_slugs.append('sourceunit-'+pi_old_slug_no_num+clause_num_str)
 
         # Look for an associated qtype.
         # Use the original slug name here since we hope if someone says
@@ -566,6 +577,28 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                     return None, None
         else:
             unit_val = param_info.units # Default if not specified
+
+        # Look for an associated sourceunit.
+        # Use the original slug name here since we hope if someone says
+        # XXX=5 then they also say sourceunit-XXX=msec
+        sourceunit_slug = 'sourceunit-'+slug_no_num+clause_num_str
+        valid_sourceunits = opus_support.get_valid_units(param_info.units)
+        # sourceunit_val will be None if sourceunit_slug doesn't exist
+        # in URL
+        sourceunit_val = None
+        if sourceunit_slug in request_get:
+            sourceunit_val = request_get[sourceunit_slug]
+            if (valid_sourceunits is None or
+                sourceunit_val not in valid_sourceunits):
+                if allow_errors: # pragma: no cover
+                    # We never actually hit this because normalizeurl catches
+                    # the bad unit first
+                    sourceunit_val = None
+                else:
+                    log.error('url_to_search_params: Bad sourceunit value'
+                              +' for "%s": %s', sourceunit_slug,
+                              str(sourceunit_val))
+                    return None, None
 
         if form_type in settings.MULT_FORM_TYPES:
             # MULT types have no qtype, units, or 1/2 split.
@@ -624,6 +657,13 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             # we're currently looking at and start over for simplicity.
             new_param_qualified_names = []
             new_values = []
+
+            # Get the correct number of decimal places if there is a unit
+            # passed in for RANGE input.
+            if is_unit or unit_val is not None:
+                form_type_format = opus_support.adjust_format_string_for_units(
+                        form_type_format, param_info.units, unit_val)
+
             for suffix in ('1', '2'):
                 new_slug = slug_no_num+suffix+clause_num_str
                 new_param_qualified_name = param_qualified_name_no_num+suffix
@@ -647,6 +687,13 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                                       +'function "%s"', form_type_func)
                             return None, None
                     if value_to_use:
+                        if is_sourceunit or sourceunit_val is not None:
+                            default_val = opus_support.convert_to_default_unit(
+                                    func(value_to_use), param_info.units,
+                                    sourceunit_val)
+                            value_to_use = opus_support.convert_from_default_unit(
+                                    default_val, param_info.units,
+                                    unit_val)
                         try:
                             new_value = func(value_to_use)
                             if func == float or func == int:

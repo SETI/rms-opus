@@ -259,7 +259,7 @@ var o_widgets = {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
                 if (opus.extras[`unit-${slug}`]) {
-                    let defaultUnitVal = $(`#widget__${slug} .unit-${slug}`).val();
+                    let defaultUnitVal = $(`#widget__${slug} .op-unit-${slug}`).val();
                     opus.extras[`unit-${slug}`].push(defaultUnitVal);
                 }
             } else if (newlyAddedInput.hasClass("STRING")) {
@@ -272,7 +272,7 @@ var o_widgets = {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
                 if (opus.extras[`unit-${slug}`]) {
-                    let defaultUnitVal = $(`#widget__${slug} .unit-${slug}`).val();
+                    let defaultUnitVal = $(`#widget__${slug} .op-unit-${slug}`).val();
                     opus.extras[`unit-${slug}`].push(defaultUnitVal);
                 }
 
@@ -602,7 +602,6 @@ var o_widgets = {
         }
 
         delete opus.extras[`qtype-${slugNoNum}`];
-        delete opus.extras[`z-${slugNoNum}`];
         delete opus.extras[`unit-${slugNoNum}`];
 
         let selector = `.op-search-menu li [data-slug='${slug}']`;
@@ -917,11 +916,11 @@ var o_widgets = {
             let hash = o_hash.getHashArray();
             // NOTE: inputs & qtypes are not renumbered yet at this stage.
             let qtype = `qtype-${slug}`;
-            let qtypeInputs = $(`#widget__${slug} .widget-main select[name="${qtype}"]`);
+            let qtypeInputs = $(`#widget__${slug} .op-widget-main select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
 
             let unit = `unit-${slug}`;
-            let unitInput = $(`#widget__${slug} .${unit}`);
+            let unitInput = $(`#widget__${slug} .op-${unit}`);
 
             if (unitInput.length) {
                 if (!opus.extras[unit]) {
@@ -929,6 +928,7 @@ var o_widgets = {
                 } else {
                     unitInput.val(opus.extras[unit][0]);
                 }
+                opus.unitFromLastSearchBySlug[slug] = unitInput.val();
                 // For widgets with unit but without qtype:
                 if (numberOfQtypeInputs === 0) {
                     o_hash.updateURLFromCurrentHash();
@@ -937,20 +937,20 @@ var o_widgets = {
 
             if (numberOfQtypeInputs !== 0) {
                 qtypeInputs.parent("li").addClass("op-qtype-input");
-                let qtypeValue = $(`#widget__${slug} .widget-main select[name="${qtype}"] option:selected`).val();
+                let qtypeValue = $(`#widget__${slug} .op-widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs
-                    $(`#widget__${slug} .widget-main .op-input ul`).append(helpIcon);
+                    $(`#widget__${slug} .op-widget-main .op-input ul`).append(helpIcon);
                 }
 
                 if (numberOfQtypeInputs === 1 && !hash[qtype]) {
                     // When a widget with qtype is open, the value of the first option tag is the
                     // default value for qtype
-                    let defaultOption = $(`#widget__${slug} .widget-main select[name="${qtype}"]`).first("option").val();
+                    let defaultOption = $(`#widget__${slug} .op-widget-main select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
                     o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
@@ -965,7 +965,7 @@ var o_widgets = {
                 }
             }
             // Initialize popover, this for the (i) icon next to qtype
-            $(".widget-main .op-range-qtype-helper a").popover({
+            $(".op-widget-main .op-range-qtype-helper a").popover({
                 html: true,
                 container: "body",
                 trigger: "hover",
@@ -988,7 +988,13 @@ var o_widgets = {
             if (rangesInfoDropdown.length > 0) {
                 $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
                 $(`#${widget} .op-input`).addClass("dropdown");
-                o_widgets.alignRangesDataByDecimalPoint(widget);
+
+                // Hide items with values for different units
+                let currentUnitVal = unitInput.val();
+                ($(`#${widget} .op-preprogrammed-ranges-data-item`)
+                 .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
+                ($(`#${widget} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
+                 .removeClass("op-hide-different-units-info"));
             }
 
             // add the spans that hold the hinting
@@ -1104,7 +1110,7 @@ var o_widgets = {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
             let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
-            let qtypes = $(`#widget__${slug} .widget-main select`);
+            let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let trailingCounter = 0;
             let trailingCounterString = "";
@@ -1170,7 +1176,7 @@ var o_widgets = {
         } else if (widgetInputs.hasClass("STRING")) {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let stringInputs = $(`#widget__${slug} input.STRING`);
-            let qtypes = $(`#widget__${slug} .widget-main select`);
+            let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let originalStringName = stringInputs.attr("name");
             originalStringName = o_utils.getSlugOrDataWithoutCounter(originalStringName);
@@ -1244,91 +1250,6 @@ var o_widgets = {
         $('#search').animate({
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
-    },
-
-    alignRangesDataByDecimalPoint: function(widget) {
-        /**
-         * Align the data of ranges info by decimal point.
-         */
-        let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
-        for (const category of preprogrammedRangesInfo) {
-            let collapsibleContainerId = $(category).attr("data-category");
-            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-
-            let maxNumOfDigitInMinDataFraction = 0;
-            let maxNumOfDigitInMaxDataFraction = 0;
-
-            for (const singleRangeData of rangesInfoInOneCategory) {
-
-                // Special case: (maybe put this somewhere else if there are more and more long names)
-                // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
-                // We set it the word-break to break-all.
-                let rangesName = $(singleRangeData).data("name").toString();
-                if (rangesName === "Janus/Epimetheus Ring") {
-                    $(singleRangeData).find(".op-preprogrammed-ranges-data-name").addClass("op-word-break-all");
-                }
-
-                let minStr = $(singleRangeData).data("min").toString();
-                let maxStr = $(singleRangeData).data("max").toString();
-                let minIntegerPart = minStr.split(".")[0];
-                let minFractionalPart = minStr.split(".")[1];
-                let maxIntegerPart = maxStr.split(".")[0];
-                let maxFractionalPart = maxStr.split(".")[1];
-
-                minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
-                maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
-                if (minFractionalPart) {
-                    maxNumOfDigitInMinDataFraction = (Math.max(maxNumOfDigitInMinDataFraction,
-                                                      minFractionalPart.length-1));
-                }
-                if (maxFractionalPart) {
-                    maxNumOfDigitInMaxDataFraction = (Math.max(maxNumOfDigitInMaxDataFraction,
-                                                      maxFractionalPart.length-1));
-                }
-
-                let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
-                                  `<span>${minFractionalPart}</span>`;
-                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
-                                  `<span>${maxFractionalPart}</span>`;
-
-                $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
-                $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
-            }
-
-            // The following steps are to make sure ranges data are aligned properly with headers
-            let minData = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-min-data`);
-            let rangesDataItem = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-            let minDataPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMinDataFraction);
-            let rangesDataItemPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMaxDataFraction);
-            if (minDataPaddingVal) {
-                minData.css("padding-right",`${minDataPaddingVal}em`);
-            }
-            if (rangesDataItemPaddingVal) {
-                rangesDataItem.css("padding-right",`${rangesDataItemPaddingVal}em`);
-            }
-        }
-    },
-
-    getPaddingValFromDigitsInFraction: function(numOfDigits) {
-        /**
-         * Get padding-right values for ranges dropdown data from number of digits
-         * in data fractions. Here is the mappings:
-         * Num of digits in fraction    padding-right
-         *          1                   1em
-         *          2                   1.5em
-         *          3                   2em
-         * Note: currently we have at most 3 digits in data fractions.
-         */
-        switch(numOfDigits) {
-            case 1:
-                return 1;
-            case 2:
-                return 1.5;
-            case 3:
-                return 2;
-            default:
-                return 0;
-        }
     },
 
     attachStringDropdownToInput: function() {
