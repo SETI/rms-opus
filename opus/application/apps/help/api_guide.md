@@ -20,6 +20,7 @@ Table of Contents:
     * [Return Formats](#returnformats)
     * [Getting Data](#gettingdata)
         * [api/data.[fmt]](#datafmt)
+        * [api/metadata_v2/[opusid].[fmt]](#metadatav2fmt)
 
 %ENDCLASS%
 
@@ -303,7 +304,7 @@ Example:
         </tr>
         </table>
 
-### api/metadata_v2/[opus_id].[fmt]
+<h3 id="metadatav2fmt">api/metadata_v2/[opus_id].[fmt]</h3>
 
 Get all available, or particular, metadata for a single observation.
 
@@ -380,6 +381,49 @@ Examples:
           }
         }
 
+#### CSV Return
+
+If `cols` is supplied, the return is a line containing the list of field names followed by a line containing the list of metadata for those fields. If `cols` is not supplied, the return contains, for each category, three lines: the name of the category, the list of field names in that category, and the metadata for those fields.
+
+* Retrieve all metadata for a single Cassini ISS Saturn observation in CSV format:
+
+    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv%ENDEXTLINK%
+
+    Returns:
+
+        General Constraints
+        Planet,Intended Target Name,Nominal Target Class,Mission, [...]
+        Saturn,Saturn,Planet,Cassini, [...]
+        PDS Constraints
+        Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+        COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+        Image Constraints
+        Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+        3.8000,1024,1024, [...]
+        [...]
+
+* Retrieve start and stop time only for a single Cassini ISS Saturn observation in CSV format:
+
+    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
+
+    Returns:
+
+        Observation Start Time,Observation Stop Time
+        2017-02-24T03:03:29.866,2017-02-24T03:03:33.666
+
+* Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
+
+    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+
+    Returns:
+
+        PDS Constraints
+        Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+        COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+        Image Constraints
+        Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+        3.8000,1024,1024, [...]
+
 #### HTML Return        
 
 If `cols` is supplied, the return is a description list containing name/value pairs where the name is the "pretty" name of the metadata field. If `cols` is not supplied, the return is a description list containing name/value pairs organized by category name.
@@ -419,7 +463,7 @@ Examples:
         <dt>Observation Stop Time</dt><dd>2017-02-24T03:03:33.666</dd>
         </dl>
 
-* Retrieve PDS and Images Constraints only for a single Cassini ISS Saturn Observation in HTML format:
+* Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
     %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
@@ -445,17 +489,6 @@ Examples:
         <dt>Image Type</dt><dd>Frame</dd>
         </dl>
         </dl>
-
-#### CSV Return
-
-Single Cassini ISS Saturn Observation (CSV, all metadata)
-url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv
--
-Single Cassini ISS Saturn Observation (CSV, start and stop time only)
-url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2
--
-Single Cassini ISS Saturn Observation (CSV, PDS and Images constraints only)
-url: <HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints
 
 ### api/images/[size].[fmt]
 
