@@ -139,6 +139,10 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/guide.[fmt]"
         self._test_return_formats('/__help/guide.[fmt]', ('html',))
 
+    def test__api_retfmt_help_citing(self):
+        "[test_return_formats.py] return formats /__help/citing.[fmt]"
+        self._test_return_formats('/__help/citing.[fmt]', ('html',))
+
     # metadata/urls.py
 
     def test__api_retfmt_metadata_result_count(self):
