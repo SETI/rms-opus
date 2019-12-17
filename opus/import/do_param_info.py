@@ -51,10 +51,10 @@ def create_import_param_info_table():
             # Log an error if value in pi_units is not in unit translation table
             unit = column.get('pi_units', None)
             field_name = column.get('field_name', None)
-            if unit and unit not in opus_support.UNIT_TRANSLATION:
+            if unit and unit not in opus_support.UNIT_CONVERSION:
                 logger.log('error',
                            f'"{unit}" in "{category_name}/{field_name}" is not '
-                           +'a valid unit in translation table')
+                           +'a valid unit')
                 return False
             form_type = column.get('pi_form_type', None)
             if (unit and

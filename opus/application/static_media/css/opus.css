@@ -1538,14 +1538,14 @@ panel are properly separated */
     padding-right: 25px;
 }
 
-.widget-main .op-range-qtype-helper {
+.op-widget-main .op-range-qtype-helper {
     font-size: 130%;
     color: gray;
     line-height: 1;
 }
 
 /* Make qtype (i) icon align vertically with inputs */
-.widget-main .op-range-qtype-helper a {
+.op-widget-main .op-range-qtype-helper a {
     vertical-align: middle;
 }
 
@@ -1554,26 +1554,26 @@ panel are properly separated */
     width: 500px;
 }
 
-.widget-main ul li ul li {  /* mult labels */
+.op-widget-main ul li ul li {  /* mult labels */
     white-space: nowrap;
 }
 
-.widget-main > ul {
+.op-widget-main > ul {
     margin-bottom: 5px;
     padding-bottom: 0;
 }
 
-.widget-main > ul > li ul {
+.op-widget-main > ul > li ul {
     padding-left: 0;
     padding-bottom: 0;
 }
 
-.widget-main ul li {
+.op-widget-main ul li {
     display: inline;
     list-style-type: none;
 }
 
-.widget-main label {
+.op-widget-main label {
     font-size: 95%;
 }
 
@@ -2146,32 +2146,53 @@ ul.ui-autocomplete a.ui-state-active {
     max-width: 110%;
     word-break: keep-all;
     /* This will make sure dropdown is not covering the widget scrollbar */
-    left: -0.5em !important;
+    left: -2.5em !important;
 }
 
 @media (max-width: 680px) {
-    /* Make sure ring radius dropdown never wraps names by letters */
-    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
-        word-break: keep-all;
+    /* When browser is narrow, we increase the width to squeeze in the long numbers */
+    .op-preprogrammed-ranges .op-scrollable-menu {
+        max-width: 125% !important;
     }
 }
 
-@media (min-width: 680px) {
+@media (max-width: 710px) {
+    /* When browser is narrow, we increase the width to squeeze in the long numbers */
+    .op-preprogrammed-ranges .op-scrollable-menu {
+        max-width: 122%;
+    }
+}
+
+@media (max-width: 750px) {
+    /* Make sure ring radius dropdown never wraps names by letters */
+    .op-preprogrammed-ranges-data-name {
+        word-break: keep-all;
+    }
+    /* When browser is narrow, we remove the padding for max value  */
+    .op-preprogrammed-ranges-max-data {
+        padding-left: 0 !important;
+    }
+}
+
+@media (max-width: 830px) {
+    /* When browser is narrow, don't fix the size of each digit, this will
+    save some spaces for long numbers */
+    .op-preprogrammed-ranges-data-item {
+        font-variant-numeric: proportional-nums !important;
+    }
+}
+
+@media (min-width: 750px) {
     /* When widget width is wide, don't wrap ranges names */
     .op-preprogrammed-ranges-data-header {
         white-space: nowrap;
     }
 
     /* Make sure ring radius dropdown starts to wrap the names when width is
-    less than 680px */
-    #widget__RINGGEOringradius .op-preprogrammed-ranges-data-name {
+    less than 750px */
+    .op-preprogrammed-ranges-data-name {
         white-space: nowrap;
     }
-}
-
-/* Make sure wavelength dropdown never wrap the names */
-#widget__wavelength .op-preprogrammed-ranges-data-name {
-    white-space: nowrap;
 }
 
 /* Make sure ranges names can be wrapped when dropdown width is narrow */
@@ -2193,13 +2214,15 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* This class will be assigned to ranges name with long first word */
-.op-word-break-all {
+.op-preprogrammed-ranges-data-item[data-name*="Epimetheus"]
+.op-preprogrammed-ranges-data-name {
     word-break: break-all !important;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 900px) {
     /* Make long word break earlier */
-    .op-word-break-all {
+    .op-preprogrammed-ranges-data-item[data-name*="Epimetheus"]
+    .op-preprogrammed-ranges-data-name {
         white-space: normal !important;
     }
 }
@@ -2208,6 +2231,17 @@ ul.ui-autocomplete a.ui-state-active {
     /* white-space: nowrap; */
     width: 100%;
 }
+
+/* Hide values for different units in preprogrammed ranges */
+.op-hide-different-units-info {
+    display: none !important;
+}
+
+/* Make sure each digit has the same size in preprogrammed ranges */
+.op-preprogrammed-ranges-data-item {
+    font-variant-numeric: tabular-nums;
+}
+
 
 /* Styling required to make ranges data aligned by decimal point */
 .op-integer {

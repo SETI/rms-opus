@@ -437,210 +437,300 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_cache(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: cache"
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": None}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": None}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": None}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": None}
         self._run_json_equal(url, expected)
 
     # General / Observation Time (string return)
     def test__api_meta_range_endpoints_times_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COISS"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059"}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COISS_internal(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COISS internal"
         url = '/opus/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COUVIS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COUVIS"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=COUVIS_0002'
-        expected = {"max": "2001-04-01T00:07:19.842", "nulls": 0, "min": "2001-01-01T02:12:02.721"}
+        expected = {"max": "2001-04-01T00:07:19.842", "nulls": 0, "min": "2001-01-01T02:12:02.721", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COVIMS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COVIMS"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=COVIMS_0006'
-        expected = {"max": "2005-04-01T00:06:46.867", "nulls": 0, "min": "2005-01-15T17:55:38.899"}
+        expected = {"max": "2005-04-01T00:06:46.867", "nulls": 0, "min": "2005-01-15T17:55:38.899", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times GOSSI"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=GO_0017'
-        expected = {"max": "1996-12-14T17:30:37.354", "nulls": 0, "min": "1996-06-03T17:05:38.002"}
+        expected = {"max": "1996-12-14T17:30:37.354", "nulls": 0, "min": "1996-06-03T17:05:38.002", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times VGISS"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=VGISS_6210'
-        expected = {"max": "1981-08-15T22:17:36.000", "nulls": 0, "min": "1981-08-12T14:55:10.080"}
+        expected = {"max": "1981-08-15T22:17:36.000", "nulls": 0, "min": "1981-08-12T14:55:10.080", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI"
         url = '/opus/api/meta/range/endpoints/timesec1.json?volumeid=HSTI1_2003'
-        expected = {"max": "2009-08-08T23:13:10.000", "nulls": 0, "min": "2009-07-23T18:12:25.000"}
+        expected = {"max": "2009-08-08T23:13:10.000", "nulls": 0, "min": "2009-07-23T18:12:25.000", "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_html(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI html"
         url = '/opus/api/meta/range/endpoints/timesec1.html?volumeid=HSTI1_2003'
-        expected = b'<dl>\n<dt>min</dt><dd>2009-07-23T18:12:25.000</dd>\n<dt>max</dt><dd>2009-08-08T23:13:10.000</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>2009-07-23T18:12:25.000</dd>\n<dt>max</dt><dd>2009-08-08T23:13:10.000</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_csv(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI csv"
         url = '/opus/api/meta/range/endpoints/timesec1.csv?volumeid=HSTI1_2003'
-        expected = b'min,max,nulls\n2009-07-23T18:12:25.000,2009-08-08T23:13:10.000,0\n'
+        expected = b'min,max,nulls,units\n2009-07-23T18:12:25.000,2009-08-08T23:13:10.000,0,\n'
         self._run_csv_equal(url, expected)
 
     # General / Observation Duration (floating point return)
     def test__api_meta_range_endpoints_observation_duration_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS"
         url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210'
-        expected = {'min': '0.2400', 'max': '15.3600', 'nulls': 0}
+        expected = {'min': '0.24', 'max': '15.36', 'nulls': 0, "units": "seconds"}
         self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_milliseconds(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS milliseconds"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=milliseconds'
+        expected = {'min': '240', 'max': '15360', 'nulls': 0, "units": "milliseconds"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_seconds(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS seconds"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=seconds'
+        expected = {'min': '0.24', 'max': '15.36', 'nulls': 0, "units": "seconds"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_minutes(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS minutes"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=minutes'
+        expected = {"min": "0.004", "max": "0.256", "nulls": 0, "units": "minutes"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_hours(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS hours"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=hours'
+        expected = {"min": "0.00006667", "max": "0.00426667", "nulls": 0, "units": "hours"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_days(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS days"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=days'
+        expected = {"min": "0.000002778", "max": "0.000177778", "nulls": 0, "units": "days"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_observation_duration_VGISS_degrees(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: observation duration VGISS degrees"
+        url = '/opus/api/meta/range/endpoints/observationduration.json?volumeid=VGISS_6210&units=degrees'
+        self._run_status_equal(url, 404)
 
     # General / Right Ascension (floating point return with nulls)
-    def test__api_meta_range_endpoints_right_ascension_hst(self):
+    def test__api_meta_range_endpoints_right_ascension_HST(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: right ascension HSTJ"
         url = '/opus/api/meta/range/endpoints/rightasc.json?volumeid=HSTJ0_9975'
-        expected = {"min": None, "max": None, "nulls": 75}
+        expected = {"min": None, "max": None, "nulls": 75, "units": "degrees"}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_right_ascension_hst_html(self):
+    def test__api_meta_range_endpoints_right_ascension_HST_html(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: right ascension HSTJ html"
         url = '/opus/api/meta/range/endpoints/rightasc.html?volumeid=HSTJ0_9975'
-        expected = b'<dl>\n<dt>min</dt><dd>None</dd>\n<dt>max</dt><dd>None</dd>\n<dt>nulls</dt><dd>75</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>None</dd>\n<dt>max</dt><dd>None</dd>\n<dt>nulls</dt><dd>75</dd>\n<dt>units</dt><dd>degrees</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_range_endpoints_right_ascension_hst_csv(self):
+    def test__api_meta_range_endpoints_right_ascension_HST_csv(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: right ascension HSTJ csv"
         url = '/opus/api/meta/range/endpoints/rightasc.csv?volumeid=HSTJ0_9975'
-        expected = b'min,max,nulls\n,,75\n'
+        expected = b'min,max,nulls,units\n,,75,degrees\n'
         self._run_csv_equal(url, expected)
 
+    def test__api_meta_range_endpoints_right_ascension_VGISS(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS"
+        url = '/opus/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210'
+        expected = {"min": "192.007002", "max": "242.282082", "nulls": 0, "units": "degrees"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_degrees(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS degrees"
+        url = '/opus/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=degrees'
+        expected = {"min": "192.007002", "max": "242.282082", "nulls": 0, "units": "degrees"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_hourangle(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hourangle"
+        url = '/opus/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hourangle'
+        expected = {"min": "12.8004668", "max": "16.1521388", "nulls": 0, "units": "hourangle"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_radians(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS radians"
+        url = '/opus/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=radians'
+        expected = {"min": "3.35115437", "max": "4.22862005", "nulls": 0, "units": "radians"}
+        self._run_json_equal(url, expected)
+
     # Image / Pixel Size (integer return)
-    def test__api_meta_range_endpoints_COISS_greaterpixelsize(self):
+    def test__api_meta_range_endpoints_greaterpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize COISS"
         url = '/opus/api/meta/range/endpoints/greaterpixelsize.json?instrument=Cassini+ISS'
-        expected = {'max': '1024', 'min': '256', 'nulls': 0}
+        expected = {'max': '1024', 'min': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_COISS_lesserpixelsize(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize COISS"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Cassini+ISS'
-        expected = {'min': '256', 'max': '1024', 'nulls': 0}
+        expected = {'min': '256', 'max': '1024', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_greaterpixelsize(self):
+    def test__api_meta_range_endpoints_greaterpixelsize_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI"
         url = '/opus/api/meta/range/endpoints/greaterpixelsize.json?instrument=Galileo+SSI'
-        expected = {'min': '800', 'max': '800', 'nulls': 0}
+        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI'
-        expected = {'min': '800', 'max': '800', 'nulls': 0}
+        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_html(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_html_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI html"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI'
-        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_csv(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_csv_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: lesserpixelsize GOSSI csv"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI'
-        expected = b'min,max,nulls\n800,800,0\n'
+        expected = b'min,max,nulls,units\n800,800,0,\n'
         self._run_csv_equal(url, expected)
 
     # We don't do greater/lesserpixelsize for VGISS because it can change in
     # different volumes.
 
     # Image / Intensity Levels (integer return)
-    def test__api_meta_range_endpoints_COISS_levels1(self):
+    def test__api_meta_range_endpoints_levels1_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 COISS"
         url = '/opus/api/meta/range/endpoints/levels.json?instrument=Cassini+ISS'
-        expected = {'min': '4096', 'max': '4096', 'nulls': 0}
+        expected = {'min': '4096', 'max': '4096', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_COVIMS_levels1(self):
+    def test__api_meta_range_endpoints_levels1_COVIMS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 COVIMS"
         url = '/opus/api/meta/range/endpoints/levels.json?instrument=Cassini+VIMS'
-        expected = {'min': '4096', 'max': '4096', 'nulls': 0}
+        expected = {'min': '4096', 'max': '4096', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_levels1(self):
+    def test__api_meta_range_endpoints_levels1_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 GOSSI"
         url = '/opus/api/meta/range/endpoints/levels.json?instrument=Galileo+SSI'
-        expected = {'min': '256', 'max': '256', 'nulls': 0}
+        expected = {'min': '256', 'max': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_VGISS_levels1(self):
+    def test__api_meta_range_endpoints_levels1_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 VGISS"
         url = '/opus/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS'
-        expected = {'min': '256', 'max': '256', 'nulls': 0}
+        expected = {'min': '256', 'max': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_VGISS_levels_constrained(self):
+    def test__api_meta_range_endpoints_levels_constrained_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 VGISS constrained"
         url = '/opus/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS&levels1=5&levels2=10'
-        expected = {'min': '256', 'max': '256', 'nulls': 0}
+        expected = {'min': '256', 'max': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     # reqno
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
-        expected = {'min': '800', 'max': '800', 'nulls': 0}
+        expected = {'min': '800', 'max': '800', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_internal(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_internal(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno internal"
         url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=12345'
-        expected = {'min': '800', 'max': '800', 'nulls': 0, 'reqno': 12345}
+        expected = {'min': '800', 'max': '800', 'nulls': 0, 'reqno': 12345, "units": None}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_bad_internal(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_bad_internal(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal"
         url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=NaN'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_reqno_bad_internal_2(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_reqno_bad_internal_2(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI reqno bad internal 2"
         url = '/opus/__api/meta/range/endpoints/lesserpixelsize.json?instrument=Galileo+SSI&reqno=-101010'
         self._run_status_equal(url, 404, settings.HTTP404_MISSING_REQNO)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_html_reqno(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_html_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI html reqno"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.html?instrument=Galileo+SSI&reqno=1e38'
-        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n</dl>\n'
+        expected = b'<dl>\n<dt>min</dt><dd>800</dd>\n<dt>max</dt><dd>800</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_range_endpoints_GOSSI_lesserpixelsize_csv_reqno(self):
+    def test__api_meta_range_endpoints_lesserpixelsize_GOSSI_csv_reqno(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: greaterpixelsize GOSSI csv reqno"
         url = '/opus/api/meta/range/endpoints/lesserpixelsize.csv?instrument=Galileo+SSI&reqno=12345'
-        expected = b'min,max,nulls\n800,800,0\n'
+        expected = b'min,max,nulls,units\n800,800,0,\n'
         self._run_csv_equal(url, expected)
+
+    # Ring Geo / Ring Radius (floating point return)
+    def test__api_meta_range_endpoints_ring_radius_VGISS_km(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS km"
+        url = '/opus/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=km'
+        expected = {"min": "60268.051", "max": "3047750.647", "nulls": 10, "units": "km"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_ring_radius_VGISS_rj(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS RJ"
+        url = '/opus/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=jupiterradii'
+        expected = {"min": "0.84300412634", "max": "42.6306530381", "nulls": 10, "units": "jupiterradii"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_ring_radius_VGISS_rs(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS RS"
+        url = '/opus/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=saturnradii'
+        expected = {"min": "0.99897316426", "max": "50.51799514338", "nulls": 10, "units": "saturnradii"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_ring_radius_VGISS_ru(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS RU"
+        url = '/opus/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=uranusradii'
+        expected = {"min": "2.35799722211", "max": "119.24373594429", "nulls": 10, "units": "uranusradii"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_ring_radius_VGISS_rs(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: ring radius VGISS RN"
+        url = '/opus/api/meta/range/endpoints/RINGGEOringradius.json?volumeid=VGISS_6210&units=neptuneradii'
+        expected = {"min": "2.38921906838", "max": "120.82262227948", "nulls": 10, "units": "neptuneradii"}
+        self._run_json_equal(url, expected)
 
     # Bad queries
     def test__api_meta_range_endpoints_bad_search(self):
@@ -662,28 +752,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_fields_time1_cache(self):
         "[test_metadata_api.py] /api/fields: time1 json cache"
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1"}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_csv(self):

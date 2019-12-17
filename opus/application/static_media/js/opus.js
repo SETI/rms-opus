@@ -60,6 +60,8 @@ var opus = {
     // object. It will store the info of the normalize input API call triggered from
     // o_search.allNormalizeInputApiCall() (not from any specific input).
     allSlug: "all",
+    // Record the current unit selections for widgets.
+    currentUnitBySlug: {},
 
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
