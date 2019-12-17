@@ -19,8 +19,11 @@ Table of Contents:
 * [API Calls](#apicalls)
     * [Return Formats](#returnformats)
     * [Getting Data](#gettingdata)
-        * [api/data.[fmt]](#datafmt)
-        * [api/metadata_v2/[opusid].[fmt]](#metadatav2fmt)
+        * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
+        * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUSID](#metadatav2fmt)
+        * [`api/images.[fmt]` - Return Images from a Search](#imagesfmt)
+        * [`api/images/[size].[fmt]` - Return Images of a Specific Size from a Search](#imagesfmt)
+        * [`api/image/[size]/[opus_id].[fmt]` - Return Images of a Specific Size for an OPUS ID](#imagesfmt)
 
 %ENDCLASS%
 
@@ -181,13 +184,15 @@ All API calls take a suffix `.fmt` specifying the format in which to return data
 
 Not all API calls provide results in all formats. The formats supported are listed with each call.
 
+---
+
 <h2 id="gettingdata">Getting Data</h2>
 
-<h3 id="datafmt">api/data.[fmt]</h3>
+<h3 id="datafmt"><code>api/data.[fmt]</code> - Return Metadata from a Search</h3>
 
 Get data for observations based on search criteria, sort order, and requested metadata fields. Data is returned in chunks (called "pages" in the returned JSON) to limit return size. The starting observation number and the number of observations desired can be specified.
 
-Supported return formats: json, html, csv
+Supported return formats: `json`, `html`, `csv`
 
 #### Parameters
 
@@ -198,14 +203,15 @@ Supported return formats: json, html, csv
 
 #### JSON Return
 
-        {'start_obs': requested starting observation,
-         'limit':     requested limit,
-         'count':     number of observations actually returned,
-         'order':     sort order,
-         'labels':    selected metadata field headers,
-         'page':      observation data}
+        {"start_obs": requested starting observation,
+         "limit":     requested limit,
+         "count":     number of observations actually returned,
+         "available": the total number of observations available from this search,
+         "order":     sort order,
+         "labels":    selected metadata field headers,
+         "page":      observation data}
 
-Data is a list with one entry per returned observation. Each entry is itself a list, with one entry per requested metadata field.
+`page` is a list with one entry per returned observation. Each entry is itself a list, with one entry per requested metadata field.
 
 Example:
 
@@ -219,6 +225,7 @@ Example:
           "start_obs": 5
           "limit": 3,
           "count": 3,
+          "available": 81,
           "order": "time1,opusid",
           "labels": [
             "OPUS ID",
@@ -304,11 +311,11 @@ Example:
         </tr>
         </table>
 
-<h3 id="metadatav2fmt">api/metadata_v2/[opus_id].[fmt]</h3>
+<h3 id="metadatav2fmt"><code>api/metadata_v2/[opus_id].[fmt]</code> - Return Metadata for an OPUSID</h3>
 
 Get all available, or particular, metadata for a single observation.
 
-Supported return formats: json, html, csv
+Supported return formats: `json`, `html`, `csv`
 
 Parameters:
 
@@ -323,7 +330,7 @@ Examples:
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in JSON format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json%ENDEXTLINK%
 
     Returns:
 
@@ -343,7 +350,7 @@ Examples:
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in JSON format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2%ENDEXTLINK%
 
     Returns:
 
@@ -358,7 +365,7 @@ Examples:
 
 * Retrieve PDS and Images Constraints only for a single Cassini ISS Saturn Observation in JSON format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Returns:
 
@@ -387,7 +394,7 @@ If `cols` is supplied, the return is a line containing the list of field names f
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in CSV format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv%ENDEXTLINK%
 
     Returns:
 
@@ -404,7 +411,7 @@ If `cols` is supplied, the return is a line containing the list of field names f
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in CSV format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
 
     Returns:
 
@@ -413,7 +420,7 @@ If `cols` is supplied, the return is a line containing the list of field names f
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Returns:
 
@@ -432,7 +439,7 @@ Examples:
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in HTML format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.html%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html%ENDEXTLINK%
 
     Returns:
 
@@ -454,7 +461,7 @@ Examples:
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in HTML format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.html?cols=time1,time2%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cols=time1,time2%ENDEXTLINK%
 
     Returns:
 
@@ -465,7 +472,7 @@ Examples:
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
-    %EXTLINK%<HOST>/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Returns:
 
@@ -490,59 +497,206 @@ Examples:
         </dl>
         </dl>
 
-### api/images/[size].[fmt]
+<h3 id="imagesfmt"><code>api/images.[fmt]</code> - Return Images from a Search</h3>
+<h3><code>api/images/[size].[fmt]</code> - Return Images from a Search</h3>
+<h3><code>api/image/[size]/[opus_id].[fmt]</code> - Return Images of a Specific Size for an OPUS ID</h3>
 
-Get image results of a given size for a search.
-size: thumb,small,med,full
+Get images of all sizes (or a given size) based on search criteria and sort order. Images are returned in chunks to limit return size. The starting observation number and the number of observations desired can be specified. An image of a specific size may also be returned for a single OPUS ID.
 
-Supported return formats: json,html,csv,zip
+If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
-Parameters:
-
-* search params (If not supplied, all results are returned)
-* order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
-* limit=N (The maximum number of observations to return; defaults to 100)
-* startobs=N (The observation number to start with; one-based) OR...
-* page=N (The 100-observation page number to start with; defaults to 1)
-examples:
--
-planet = Jupiter, medium images, in JSON
-url: <HOST>/opus/api/images/med.json?planet=Jupiter
-
-### api/images.[fmt]
-
-Get image results of all sizes for a search.
-
-Supported return formats: json,html,csv,zip
+Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
 
 Parameters:
 
-* search params (If not supplied, all results are returned)
-* order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
-* limit=N (The maximum number of observations to return; defaults to 100)
-* startobs=N (The observation number to start with; one-based) OR...
-* page=N (The 100-observation page number to start with; defaults to 1)
-JSON return:
+* Search parameters (including sort order)
+* `startobs=<N>`: The (1-based) observation number to start with; defaults to 1
+* `limit=<N>`: The maximum number of observations to return; defaults to 100
 
-    `"{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': List of: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels}"`
+#### JSON Return
 
-examples:
--
-planet = Saturn, sorted reverse by Saturn phase angle, in JSON
-url: <HOST>/opus/api/images.json?planet=Saturn&order=-SURFACEGEOsaturncenterphaseangle
+When a search was requested, the return includes:
 
-### api/image/[size]/[opus_id].[fmt]
+        {"start_obs": requested starting observation,
+         "limit":     requested limit,
+         "count":     number of observations actually returned,
+         "available": the total number of observations available from this search,
+         "order":     sort order,
+         "data":      images data}
 
-Get an image of the given size for a single observation.
-size: thumb,small,med,full
+`data` is a list with one entry per returned observation.
 
-Supported return formats: json,html,csv,zip
-opus_id: valid opus_id (or old ring_obs_id)
-JSON return: "{'path': root path of the preview directory (deprecated), 'data': ingle-element list: {'opus_id': opus_id, '<size>_url': full URL, '<size>_alt_text': alt text, '<size>_size_bytes': image size in bytes, '<size>_width': image width in pixels, '<size>_height': image height in pixels, 'path': oot path of preview directory (deprecated), 'img': path to image relative to root path (deprecated), 'url': full URL (deprecated)}"
-examples:
--
-Saturn observation, full size, in JSON
-url: <HOST>/opus/api/image/full/vg-iss-2-s-c4360022.json
+When all sizes are requested, each entry is an object containing:
+
+        {"opus_id":           the OPUS ID of the observation,
+         "<size>_alt_text ":   the alternate text (image filename),
+         "<size>_size_bytes": the size of the image file in bytes,
+         "<size>_width":      the width of the image in pixels,
+         "<size>_height":     the height of the image in pixels,
+         "<size>_url":        the relative path to the image} <!-- Stupid editor x_ -->
+
+When one size is requested, each entry is an object containing:
+
+        {"opus_id":    the OPUS ID of the observation,
+         "alt_text":   the alternate text (image filename),
+         "size_bytes": the size of the image file in bytes,
+         "width":      the width of the image in pixels,
+         "height":     the height of the image in pixels,
+         "url":        the relative path to the image}
+
+Example:
+
+* Retrieve all sizes of images in JSON format for observations 10-11 from Cassini ISS volume COISS_2002.
+
+    %EXTLINK%%HOST%/opus/api/images.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "start_obs": 10,
+          "limit": 2,
+          "count": 2,
+          "available": 3296,
+          "order": "time1,opusid"
+          "data": [
+            {
+              "opus_id": "co-iss-n1460962327",
+              "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
+              "thumb_alt_text": "N1460962327_1_thumb.jpg",
+              "thumb_size_bytes": 864,
+              "thumb_width": 100,
+              "thumb_height": 100,
+              "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
+              "small_alt_text": "N1460962327_1_small.jpg",
+              "small_size_bytes": 1729,
+              "small_width": 256,
+              "small_height": 256,
+              [...]
+            },
+            [...]
+          ]
+        }
+
+* Retrieve medium-size images in JSON format for observations 10-11 from Cassini ISS volume COISS_2002.
+
+    %EXTLINK%%HOST%/opus/api/images/med.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "start_obs": 10,
+          "limit": 2,
+          "count": 2,
+          "available": 3296,
+          "order": "time1,opusid",
+          "data": [
+            {
+              "opus_id": "co-iss-n1460962327",
+              "alt_text": "N1460962327_1_med.jpg",
+              "size_bytes": 4971,
+              "width": 512,
+              "height": 512,
+              "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
+            },
+            {
+              "opus_id": "co-iss-n1460962415",
+              "alt_text": "N1460962415_1_med.jpg",
+              "size_bytes": 4991,
+              "width": 512,
+              "height": 512,
+              "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
+            }
+          ]
+        }
+
+* Retrieve the medium-size image in JSON format for OPUS ID vg-iss-2-s-c4360022.
+
+    %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.json%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "data": [
+            {
+              "opus_id": "vg-iss-2-s-c4360022",
+              "alt_text": "C4360022_full.jpg",
+              "size_bytes": 24607,
+              "width": 800,
+              "height": 800,
+              "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
+            }
+          ]
+        }
+
+
+#### CSV Return
+
+The first returned line contains the column headers; after that is one row per observation containing the information about each image.
+
+Example:
+
+* Retrieve all sizes of images in CSV format for observations 10-11 from Cassini ISS volume COISS_2002.
+
+    %EXTLINK%%HOST%/opus/api/images.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+
+    Returns:
+
+        OPUS ID,Thumb URL,Small URL,Med URL,Full URL
+        co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
+        co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
+
+* Retrieve medium-size images in CSV format for observations 10-11 from Cassini ISS volume COISS_2002.
+
+    %EXTLINK%%HOST%/opus/api/images/med.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+
+    Returns:
+
+        OPUS ID,URL
+        co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
+        co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
+
+* Retrieve the medium-size image in CSV format for OPUS ID vg-iss-2-s-c4360022.
+
+    %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.csv%ENDEXTLINK%
+
+    Returns:
+
+        OPUS ID,URL
+        vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
+
+#### HTML Return
+
+The return is a list containing the requested images.
+
+Example:
+
+* Retrieve medium-size images in HTML format for observations 10-11 from Cassini ISS volume COISS_2002.
+
+    %EXTLINK%%HOST%/opus/api/images/med.html?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
+
+    Returns:
+
+        <ul>
+        <li>
+        <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
+        </li>
+        <li>
+        <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
+        </li>
+        </ul>
+
+* Retrieve the medium-size image in HTML format for OPUS ID vg-iss-2-s-c4360022.
+
+    %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.html%ENDEXTLINK%
+
+    Returns:
+
+        <ul>
+        <li>
+        <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
+        </li>
+        </ul>
+
 
 ### api/files/[opus_id].json
 

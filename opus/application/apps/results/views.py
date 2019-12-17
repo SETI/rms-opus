@@ -9,13 +9,12 @@
 #    Format: api/data.(json|html|csv)
 #    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#    Format: api/images/(?P<size>thumb|small|med|full).
-#                           (?P<fmt>json|zip|html|csv)
-#    Format: api/images.(json|zip|html|csv)
+#    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
+#    Format: api/images.(json|html|csv)
 #    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
-#                          .(?P<fmt>json|zip|html|csv)
-#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
-#        or: api/files.(?P<fmt>json|zip|html|csv)
+#                          .(?P<fmt>json|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#        or: api/files.(?P<fmt>json|html|csv)
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #
@@ -262,12 +261,13 @@ def api_get_data(request, fmt):
 
     Returned JSON:
         {
-            'page_no': page_no,   OR   'startobs': start_obs,
-            'limit':   limit,
-            'order':   order,
-            'count':   len(page),
-            'labels':  labels,
-            'page':    page         # tabular page data
+            'page_no':   page_no,   OR   'startobs': start_obs,
+            'limit':     limit,
+            'count':     len(page),
+            'available': result_count,
+            'order':     order,
+            'labels':    labels,
+            'page':      page         # tabular page data
         }
 
     Returned HTML:
@@ -322,18 +322,24 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         return ret
 
-    data = {'limit':    limit,
-            'page':     page,
-            'order':    order,
-            'count':    len(page),
-            'labels':   labels,
-            'columns':  labels # Backwards compatibility with external apps
-           }
+    result_count, _, err = get_result_count_helper(request, api_code)
+    if err is not None: # pragma: no cover
+        exit_api_call(api_code, err)
+        return err
 
+    data = {}
     if page_no is not None:
         data['page_no'] = page_no
     if start_obs is not None:
         data['start_obs'] = start_obs
+
+    data['limit'] = limit
+    data['count'] = len(page)
+    data['available'] = result_count
+    data['order'] = order
+    data['labels'] = labels
+    data['columns'] = labels # Backwards compatibility with external apps
+    data['page'] = page
 
     if fmt == 'csv':
         csv_data = []
@@ -361,7 +367,7 @@ def api_get_metadata(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -391,7 +397,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -416,7 +422,7 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
     This is a PRIVATE API.
 
-    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -623,23 +629,69 @@ def api_get_images_by_size(request, size, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/images/(?P<size>[thumb|small|med|full]+).
-            (?P<fmt>[json|zip|html|csv]+)
+    Format: [__]api/images/(?P<size>[thumb|small|med|full]).
+            (?P<fmt>[json|html|csv])
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
                Normal search arguments
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
     """
     api_code = enter_api_call('api_get_images_by_size', request)
 
+    ret = _api_get_images(request, fmt, api_code, size, True)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+@never_cache
+def api_get_images(request, fmt):
+    """Return all images of all sizes for a given search.
+
+    This is a PUBLIC API.
+
+    Format: [__]api/images.(json|csv)
+    Arguments: limit=<N>
+               page=<N>  OR  startobs=<N> (1-based)
+               order=<column>[,<column>...]
+               Normal search arguments
+
+    Can return JSON, HTML, or CSV.
+    """
+    api_code = enter_api_call('api_get_images', request)
+
+    ret = _api_get_images(request, fmt, api_code, None, True)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+@never_cache
+def api_get_image(request, opus_id, size, fmt):
+    """Return info about a preview image for the given opus_id and size.
+
+    This is a PUBLIC API.
+
+    Format: [__]api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
+            (?P<fmt>[json|html|csv])
+
+    Can return JSON, HTML, or CSV.
+    """
+    api_code = enter_api_call('api_get_image', request)
+
+    request.GET = request.GET.copy()
+    request.GET['opusid'] = opus_id
+    request.GET['qtype-opusid'] = 'matches'
+    ret = _api_get_images(request, fmt, api_code, size, False)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+def _api_get_images(request, fmt, api_code, size, include_search):
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
-
-    session_id = get_session_id(request)
 
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                        request,
@@ -654,11 +706,13 @@ def api_get_images_by_size(request, size, fmt):
 
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
-    image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
+    if size is None:
+        image_list = get_pds_preview_images(opus_ids, preview_jsons)
+    else:
+        image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
 
     if not image_list:
-        log.error('api_get_images_by_size: No image found for: %s',
-                  str(opus_ids[:50]))
+        log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
 
     # Backwards compatibility
     ring_obs_ids = aux['ring_obs_ids']
@@ -668,160 +722,71 @@ def api_get_images_by_size(request, size, fmt):
 
     for image in image_list:
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
-        if size+'_alt_text' in image:
-            del image[size+'_alt_text']
-        if size+'_size_bytes' in image:
-            del image[size+'_size_bytes']
-        if size+'_width' in image:
-            del image[size+'_width']
-        if size+'_height' in image:
-            del image[size+'_height']
-        if size+'_url' in image:
-            root_idx = image[size+'_url'].find('previews/')+9
-            path = image[size+'_url'][:root_idx]
-            url = image[size+'_url'][root_idx:]
-            image['img'] = url
-            image['path'] = path
-            image[size] = url
-            del image[size+'_url']
+        if size is not None:
+            if size+'_alt_text' in image:
+                image['alt_text'] = image[size+'_alt_text']
+                del image[size+'_alt_text']
+            if size+'_size_bytes' in image:
+                image['size_bytes'] = image[size+'_size_bytes']
+                del image[size+'_size_bytes']
+            if size+'_width' in image:
+                image['width'] = image[size+'_width']
+                del image[size+'_width']
+            if size+'_height' in image:
+                image['height'] = image[size+'_height']
+                del image[size+'_height']
+            if size+'_url' in image:
+                image['url'] = image[size+'_url']
+                del image[size+'_url']
+        if 'cart_state' in image:
+            del image['cart_state']
 
-    data = {'data':  image_list,
-            'limit': limit,
-            'count': len(image_list)
-           }
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
+    data = {}
+    if include_search:
+        result_count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
 
-    ret = response_formats(data, fmt,
-                          template='results/image_list.html', order=order)
-    exit_api_call(api_code, ret)
-    return ret
+        if page_no is not None:
+            data['page_no'] = page_no
+        if start_obs is not None:
+            data['start_obs'] = start_obs
+        data['limit'] = limit
+        data['count'] = len(image_list)
+        data['available'] = result_count
+        data['order'] = order
+    data['data'] = image_list
 
-
-@never_cache
-def api_get_images(request, fmt):
-    """Return all images of all sizes for a given search.
-
-    This is a PUBLIC API.
-
-    Format: [__]api/images.(json|zip|html|csv)
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search arguments
-
-    Can return JSON, ZIP, HTML, or CSV.
-    """
-    api_code = enter_api_call('api_get_images', request)
-
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+    if fmt == 'csv':
+        csv_data = []
+        columns = ['OPUS ID']
+        if size is None:
+            for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+                columns.append(img_size.title() + ' URL')
+        else:
+            columns.append('URL')
+        for image in image_list:
+            if size is None:
+                row = [image['opus_id']]
+                for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+                    row.append(image[img_size+'_url'])
+                csv_data.append(row)
+            else:
+                csv_data.append([image['opus_id'], image['url']])
+        ret = csv_response('data', csv_data, column_names=columns)
+    elif fmt == 'html':
+        context = {'data': image_list,
+                   'size': size}
+        ret = render(request, 'results/image_list.html', context)
+    elif fmt == 'json':
+        ret = HttpResponse(json.dumps(data), content_type='application/json')
+    else: # pragma: no cover
+        log.error('api_get_images_by_size: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
         raise ret
 
-    session_id = get_session_id(request)
-
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                       request,
-                                       cols='opusid,**previewimages',
-                                       return_opusids=True,
-                                       return_ringobsids=True,
-                                       return_cart_states=True,
-                                       api_code=api_code)
-    if page is None:
-        ret = Http404('Could not find page')
-        exit_api_call(api_code, ret)
-        raise ret
-
-    preview_jsons = [json.loads(x[1]) for x in page]
-    opus_ids = aux['opus_ids']
-    image_list = get_pds_preview_images(opus_ids, preview_jsons,
-                                        ['thumb', 'small', 'med', 'full'])
-
-    if not image_list:
-        log.error('api_get_images: No image found for: %s',
-                  str(opus_ids[:50]))
-
-    # Backwards compatibility
-    ring_obs_ids = aux['ring_obs_ids']
-    ring_obs_id_dict = {}
-    for i in range(len(opus_ids)):
-        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
-
-    cart_states = aux['cart_states']
-    for image, cart_state in zip(image_list, cart_states):
-        image['cart_state'] = cart_state
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
-
-    data = {'data':  image_list,
-            'limit': limit,
-            'count': len(image_list)
-           }
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
-    ret = response_formats(data, fmt,
-                          template='results/image_list.html', order=order)
-    exit_api_call(api_code, ret)
-    return ret
-
-
-@never_cache
-def api_get_image(request, opus_id, size='med', fmt='raw'):
-    """Return info about a preview image for the given opus_id and size.
-
-    This is a PUBLIC API.
-
-    Format: [__]api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
-            .(?P<fmt>[json|zip|html|csv]+)
-
-    Can return JSON, ZIP, HTML, or CSV.
-
-    The fields 'path' and 'img' are provided for backwards compatibility only.
-    """
-    api_code = enter_api_call('api_get_image', request)
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    if not opus_id: # pragma: no cover
-        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    # Backwards compatibility
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id:
-        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    image_list = get_pds_preview_images(opus_id, None, size)
-    if len(image_list) != 1:
-        log.error('api_get_image: Could not find preview for opus_id "%s" '
-                  +'size "%s"', str(opus_id), str(size))
-        ret = Http404('No preview image')
-        exit_api_call(api_code, ret)
-        raise ret
-
-    image = image_list[0]
-    path = None
-    if size+'_url' in image:
-        root_idx = image[size+'_url'].find('previews/')+9
-        path = image[size+'_url'][:root_idx]
-        url = image[size+'_url'][root_idx:]
-        image['img'] = url
-        image['path'] = path
-        image['img'] = url
-        image['url'] = image[size+'_url']
-    data = {'path': path, 'data': image_list}
-    ret = response_formats(data, fmt, size=size,
-                          template='results/image_list.html')
-    exit_api_call(api_code, ret)
     return ret
 
 

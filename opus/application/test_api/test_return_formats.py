@@ -205,11 +205,11 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_results_images(self):
         "[test_return_formats.py] return formats /api/images.[fmt]"
-        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json', 'html', 'zip'))
+        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json'))
 
     def test__api_retfmt_results_image(self):
         "[test_return_formats.py] return formats /api/image/small/opusid.[fmt]"
-        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html', 'zip'))
+        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
 
     def test__api_retfmt_results_files_opusid(self):
         "[test_return_formats.py] return formats /api/files/opusid.[fmt]"

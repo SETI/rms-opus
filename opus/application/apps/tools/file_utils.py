@@ -148,7 +148,7 @@ def get_pds_products(opus_id_list,
     return results
 
 
-def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
+def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
     """Given a list of opus_ids, return a list of image info for a size.
 
         opus_id_list can be a string or a list.
@@ -163,7 +163,9 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes):
     else:
         opus_id_list = []
 
-    if not isinstance(sizes, (list, tuple)):
+    if sizes is None:
+        sizes = settings.PREVIEW_SIZE_TO_PDS_TYPE.keys()
+    elif not isinstance(sizes, (list, tuple)):
         sizes = [sizes]
 
     if preview_jsons:
