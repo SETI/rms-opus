@@ -5,7 +5,7 @@ coverage==4.5.4
 # Use old version of Django here to avoid the issue about wrong version
 # of mysqlclient which is not used in mac. (Note: Upgrade mysqlclient to
 # the newer version will not solve the issue)
-Django==2.1.5
+Django==2.1.15
 django-annoying==0.10.5
 django-memcached==0.1.2
 django-nose==1.4.6
