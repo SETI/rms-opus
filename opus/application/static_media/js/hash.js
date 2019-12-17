@@ -278,6 +278,7 @@ var o_hash = {
             value = value.replace(/\%20/g, "+");
             // All ":" in the search string will be unencoded.
             value = value.replace(/\%3A/g, ":");
+            value = value.replace(/\%2C/g, ",");
 
             slugValue.push(value);
         }
