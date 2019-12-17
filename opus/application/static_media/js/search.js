@@ -877,7 +877,10 @@ var o_search = {
                         }
 
                         // No color border if the input value is valid
-                        o_search.clearInputBorder(currentInput);
+                        currentInput.addClass("search_input_original");
+                        currentInput.removeClass("search_input_invalid_no_focus");
+                        currentInput.removeClass("search_input_invalid");
+                        currentInput.removeClass("search_input_valid");
                     }
                     opus.rangeInputFieldsValidation[eachSlug] = true;
                 }
