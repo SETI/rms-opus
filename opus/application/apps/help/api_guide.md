@@ -24,6 +24,7 @@ Table of Contents:
         * [`api/images.[fmt]` - Return Images from a Search](#imagesfmt)
         * [`api/images/[size].[fmt]` - Return Images of a Specific Size from a Search](#imagesfmt)
         * [`api/image/[size]/[opus_id].[fmt]` - Return Images of a Specific Size for an OPUS ID](#imagesfmt)
+* [Available Metadata Fields](#availablefields)
 
 %ENDCLASS%
 
