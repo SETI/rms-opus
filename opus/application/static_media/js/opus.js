@@ -799,6 +799,9 @@ var opus = {
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
                             break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.saveChanges();
+                            break;
                         case "op-empty-cart":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;

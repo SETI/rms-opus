@@ -322,7 +322,7 @@
                 <div class="modal-content op-no-select">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close" data-dismiss="modal" data-target="op-close-metadata-modal"  aria-label="Close">
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
@@ -356,6 +356,17 @@
             confirm_title="Confirm Reset Search and Metadata"
             confirm_msg="This will delete any search constraints you have selected and reset the set of search fields and selected metadata back to the default. The contents of your cart will not be affected. Are you sure you want to reset your search and metadata?"
             target="op-reset-search-metadata-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-metadata-modal"
+            confirm_title="Confirm Save Changes to Select Metadata"
+            confirm_msg="Save Changes to Selected Metadata?"
+            target="op-close-metadata-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True

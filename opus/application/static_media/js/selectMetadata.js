@@ -24,9 +24,8 @@ var o_selectMetadata = {
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
-                o_browse.clearObservationData(true); // Leave startobs alone
-                o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                o_browse.loadData(opus.prefs.view);
+                let targetModal = $(this).data("target");
+                $(targetModal).modal("show");
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
                 o_browse.hidePageLoaderSpinner();
@@ -91,6 +90,17 @@ var o_selectMetadata = {
             }
         });
 
+        $("#op-select-metadata .close").on("click", function(e) {
+            // update the data table w/the new columns
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
+                let targetModal = $(this).data("target");
+                $(targetModal).modal("show");
+            } else {
+                // remove spinner if nothing is re-draw when we click save changes
+                o_browse.hidePageLoaderSpinner();
+            }
+        });
+
         $("#op-select-metadata").on("click", ".op-download-csv", function(e) {
             let namespace = opus.getViewNamespace();
             namespace.downloadCSV(this);
@@ -145,11 +155,6 @@ var o_selectMetadata = {
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
         $("#op-select-metadata a.op-download-csv").text(buttonTitle);
-    },
-
-    reRender: function() {
-        o_selectMetadata.rendered = false;
-        o_selectMetadata.render();
     },
 
     addColumn: function(slug) {
@@ -207,6 +212,12 @@ var o_selectMetadata = {
         $.each(cols, function(index, slug) {
             o_selectMetadata.addColumn(slug);
         });
+    },
+
+    saveChanges: function() {
+        o_browse.clearObservationData(true); // Leave startobs alone
+        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+        o_browse.loadData(opus.prefs.view);
     },
 
     adjustHeight: function() {
