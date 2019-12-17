@@ -1,5 +1,5 @@
 rm -f __tmp1 __tmp2
-grep -v SUMMARY $1 | grep -v -i deleting > __tmp1
+grep -v SUMMARY $1 | grep -v -i deleting | grep -v "new database" > __tmp1
 
 S="missing ring geometry files"
 echo $S
@@ -36,7 +36,12 @@ echo $S
 echo 1 `cat __tmp1 | grep "$S" | wc -l`
 cat __tmp1 | grep -v "$S" > __tmp2
 
-cp __tmp2 __tmp1
+S="Empty opus_product key"
+echo $S
+echo 1 `cat __tmp2 | grep "$S" | wc -l`
+cat __tmp2 | grep -v "$S" > __tmp1
+
+cp __tmp1 __tmp2
 
 cat __tmp2 | grep -v "$S" > __tmp1
 S="No description for item 2071"
@@ -90,3 +95,12 @@ S="Ignoring unknown COISS filter combination"
 echo $S
 echo 21 `cat __tmp1 | grep "$S" | wc -l`
 cat __tmp1 | grep -v "$S" > __tmp2
+
+S="has inconsistent value"
+echo $S
+echo 332 `cat __tmp2 | grep "$S" | wc -l`
+cat __tmp2 | grep -v "$S" > __tmp1
+
+cat __tmp1
+
+
