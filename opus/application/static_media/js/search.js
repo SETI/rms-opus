@@ -416,7 +416,7 @@ var o_search = {
 
                         // Check if corresponding selections are empty to determine if we
                         // should perform a search.
-                        if (opus.selections[`${slugNoNum}`][idx]) {
+                        if (opus.selections[`${slug}`][idx]) {
                             isInputSetEmpty = false;
                         }
                         break;
