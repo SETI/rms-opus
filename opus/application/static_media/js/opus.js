@@ -102,6 +102,11 @@ var opus = {
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
     menuState: {"cats": ["obs_general"]},
 
+    // opusID of the current slide show/gallery view observation.
+    // Note that both browse and cart use the same dialog for galleryView, so we
+    //      only need one variable to represent the last observation in that dialog
+    metadataDetailOpusId: "",
+
     // these are for the process that detects there was a change in the selection criteria and
     // updates things
     mainTimer: false,
@@ -120,6 +125,9 @@ var opus = {
 
     // current splash page version for storing in the visited cookie
     splashVersion: 1,
+
+    // Used by checkBrowserSize
+    browserSizeActionInProgress: false,
 
     currentBrowser: "",
 
@@ -947,7 +955,6 @@ var opus = {
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];
-        o_widgets.updateWidgetCookies();
 
         // probably not needed, just added as a precaution.
         opus.force_load = true;
@@ -1127,15 +1134,41 @@ var opus = {
          * than 275px. If so, display a modal to inform the user to
          * resize the browser size.
          */
-        let modalMsg = (`Please resize your browser. OPUS requires a browser
-                        size of at least ${opus.browserSupport.width} pixels by
-                        ${opus.browserSupport.height} pixels.`);
-        $("#op-browser-size-msg .modal-body").html(modalMsg);
+
+         if (opus.browserSizeActionInProgress) {
+             return;
+         }
+
+         let modal = $("#op-browser-size-msg");
+
+         // This is required to handle problems of rapid hide/show sequencing
+         // See: https://github.com/twbs/bootstrap/issues/3902
+         function showCompleted() {
+             opus.browserSizeActionInProgress = false;
+             modal.off("shown.bs.modal", showCompleted);
+         }
+         function hideCompleted() {
+             opus.browserSizeActionInProgress = false;
+             modal.off("hidden.bs.modal", hideCompleted);
+         }
+
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
-            $("#op-browser-size-msg").modal("show");
+            if (!$("#op-browser-size-msg").hasClass("show")) {
+                let modalMsg = (`Please resize your browser. OPUS requires a browser
+                                size of at least ${opus.browserSupport.width} pixels by
+                                ${opus.browserSupport.height} pixels.`);
+                $("#op-browser-size-msg .modal-body").html(modalMsg);
+                opus.browserSizeActionInProgress = true;
+                modal.on("shown.bs.modal", showCompleted);
+                modal.modal("show");
+            }
         } else {
-            $("#op-browser-size-msg").modal("hide");
+            if ($("#op-browser-size-msg").hasClass("show")) {
+                opus.browserSizeActionInProgress = true;
+                modal.on("hidden.bs.modal", hideCompleted);
+                modal.modal("hide");
+            }
         }
     },
 

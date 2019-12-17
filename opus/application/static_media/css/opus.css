@@ -667,6 +667,12 @@ th.sticky-header {
     padding-right: 3%;
 }
 
+#op-select-metadata .op-download-csv {
+    position: fixed;
+    bottom: 5.5em;
+    right: 1.25em;
+}
+
 /* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column-header, .op-selected-metadata-column-header {
     padding-left: calc(1.5% + 4px);
@@ -981,6 +987,11 @@ panel */
 
 #cart .gallery-contents {
     position: relative;
+}
+
+#op-recycled-count img {
+    max-height: 1em;
+    margin-top: -0.2em;
 }
 
 /* Make Total Size and Total Files stay in one line in download data */

@@ -24,10 +24,8 @@ var o_selectMetadata = {
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
-                let tab = opus.getViewTab();
                 o_browse.clearObservationData(true); // Leave startobs alone
                 o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                o_browse.initTable(tab, opus.colLabels, opus.colLabelsNoUnits);
                 o_browse.loadData(opus.prefs.view);
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
@@ -92,18 +90,29 @@ var o_selectMetadata = {
                     break;
             }
         });
+
+        $("#op-select-metadata").on("click", ".op-download-csv", function(e) {
+            let namespace = opus.getViewNamespace();
+            namespace.downloadCSV(this);
+        });
     },  // /addSelectMetadataBehaviors
 
     render: function() {
+        let tab = opus.getViewTab();
+        let downloadTitle = (tab === "#cart" ? "Download a CSV of selected metadata for all observations in the cart" : "Download CSV of selected metadata for ALL observations in current results");
+        let buttonTitle = (tab === "#cart" ? "Download CSV (in cart)" : "Download CSV (all results)");
+
         if (!o_selectMetadata.rendered) {
-            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getHash();
+            // We use getFullHashStr instead of getHash because we want the updated
+            // version of widgets= even if the main URL hasn't been updated yet
+            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getFullHashStr();
             $(".modal-body.op-select-metadata-details").load( url, function(response, status, xhr)  {
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
                 // we need to unhighlight the selected widgets
-                o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "op-selected-metadata-unselect");
+                o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
 
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
@@ -119,6 +128,9 @@ var o_selectMetadata = {
                     minScrollbarLength: opus.minimumPSLength
                 });
 
+                $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+                $("#op-select-metadata a.op-download-csv").text(buttonTitle);
+
                 $(".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
@@ -131,6 +143,13 @@ var o_selectMetadata = {
                 o_selectMetadata.rendered = true;
             });
         }
+        $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
+        $("#op-select-metadata a.op-download-csv").text(buttonTitle);
+    },
+
+    reRender: function() {
+        o_selectMetadata.rendered = false;
+        o_selectMetadata.render();
     },
 
     addColumn: function(slug) {
@@ -202,6 +221,7 @@ var o_selectMetadata = {
         let modalFooterHeight = $("#op-select-metadata .modal-footer").outerHeight();
         let selectMetadataHeadersHeight = $(".op-select-metadata-headers").outerHeight()+30;
         let selectMetadataHeadersHRHeight = $(".op-select-metadata-headers-hr").outerHeight();
+        let buttonHeight = $("#op-select-metadata .op-download-csv").outerHeight();
         /* If modalHeaderHeight is zero, the dialog is in the process of being rendered
            and we don't have valid data yet. If we set the height based on the zeros,
            we get an annoying "jump" in the dialog size after it's done rendering.
@@ -213,6 +233,7 @@ var o_selectMetadata = {
             modalFooterHeight = 68;
             selectMetadataHeadersHeight = 122;
             selectMetadataHeadersHRHeight = 1;
+            buttonHeight = 35;
         }
         let totalNonScrollableHeight = (footerHeight + mainNavHeight + modalHeaderHeight +
                                         modalFooterHeight + selectMetadataHeadersHeight +
@@ -228,7 +249,7 @@ var o_selectMetadata = {
             height += selectMetadataHeadersHeight + selectMetadataHeadersHRHeight;
         }
         $(".op-all-metadata-column").css("height", height);
-        $(".op-selected-metadata-column").css("height", height);
+        $(".op-selected-metadata-column").css("height", height - buttonHeight);
     },
 
     menuContainerHeight: function() {

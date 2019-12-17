@@ -431,7 +431,7 @@ def populate_obs_mission_cassini_ert1(**kwargs):
 
     # START_TIME isn't available for COUVIS
     start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time is None:
+    if start_time is None or start_time == 'UNK':
         return None
 
     try:
@@ -449,7 +449,7 @@ def populate_obs_mission_cassini_ert2(**kwargs):
 
     # STOP_TIME isn't available for COUVIS
     stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time is None:
+    if stop_time is None or stop_time == 'UNK':
         return None
 
     try:

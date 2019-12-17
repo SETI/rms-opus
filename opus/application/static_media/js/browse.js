@@ -47,8 +47,6 @@ var o_browse = {
     // unique to o_browse
     imageSize: 100,     // default
 
-    metadataDetailOpusId: "",
-
     tempHash: "",
     onRenderData: false,
     fading: false,  // used to prevent additional clicks until the fade animation complete
@@ -136,22 +134,7 @@ var o_browse = {
 
         // browse nav menu - download csv
         $("#browse").on("click", ".op-download-csv", function() {
-            let colStr = opus.prefs.cols.join(',');
-            let selectionsHash = [];
-            for (let param in opus.selections) {
-                if (opus.selections[param].length) {
-                    let valueStr = opus.selections[param].join(',').replace(/ /g,'+');
-                    selectionsHash.push(`${param}=${valueStr}`);
-                }
-            }
-            let selectionsHashStr = selectionsHash.join('&');
-            if (selectionsHashStr !== "") {
-                selectionsHashStr += "&";
-            }
-            let resultCountStr = o_browse.totalObsCount.toString();
-            let orderStr = opus.prefs.order.join(",");
-            let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
-            $(this).attr("href", csvLink);
+            o_browse.downloadCSV(this);
         });
 
         // 1 - click on thumbnail opens modal window
@@ -518,9 +501,9 @@ var o_browse = {
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 32:  // spacebar
-                        if (o_browse.metadataDetailOpusId !== "") {
+                        if (opus.metadataDetailOpusId !== "") {
                             o_browse.undoRangeSelect();
-                            o_cart.toggleInCart(o_browse.metadataDetailOpusId);
+                            o_cart.toggleInCart(opus.metadataDetailOpusId);
                         }
                         break;
                     case 39:  // next
@@ -607,7 +590,7 @@ var o_browse = {
         let tab = opus.getViewTab();
         let contentsView = o_browse.getScrollContainerClass();
         let viewNamespace = opus.getViewNamespace();
-        o_browse.metadataDetailOpusId = opusId;
+        opus.metadataDetailOpusId = opusId;
 
         let maxObs = viewNamespace.totalObsCount;
         let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
@@ -1127,7 +1110,7 @@ var o_browse = {
 
     hideGalleryViewModal: function() {
         $("#galleryView").modal("hide");
-        o_browse.metadataDetailOpusId = "";
+        opus.metadataDetailOpusId = "";
     },
 
     hideMenu: function() {
@@ -1861,6 +1844,10 @@ var o_browse = {
         }
 
         o_browse.showPageLoaderSpinner();
+        // if the selectedMetadata columns were updated while the galleryView slide was open,
+        // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
+        let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
+
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         viewNamespace.loadDataInProgress = true;
@@ -1880,11 +1867,14 @@ var o_browse = {
             // Because we redraw from the beginning on user inputted page, we need to remove previous drawn thumb-pages
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
-            o_browse.hideGalleryViewModal();
+
+            if (!updateMetadataBox) {
+                o_browse.hideGalleryViewModal();
+            }
             o_browse.renderGalleryAndTable(data, this.url, view);
 
-            if (o_browse.metadataDetailOpusId != "") {
-                o_browse.metadataboxHtml(o_browse.metadataDetailOpusId, view);
+            if (opus.metadataDetailOpusId !== "") {
+                o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);
             }
             o_browse.updateSortOrder(data);
 
@@ -1914,10 +1904,10 @@ var o_browse = {
 
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
-        if (o_browse.metadataDetailOpusId !== "" &&
+        if (opus.metadataDetailOpusId !== "" &&
             !$("#galleryViewContents .op-prev").data("id") &&
             $("#galleryViewContents .op-prev").hasClass("op-button-disabled")) {
-            let prev = $(`${tab} tr[data-id=${o_browse.metadataDetailOpusId}]`).prev("tr");
+            let prev = $(`${tab} tr[data-id=${opus.metadataDetailOpusId}]`).prev("tr");
             prev = (prev.data("id") ? prev.data("id") : "");
 
             $("#galleryViewContents .op-prev").data("id", prev);
@@ -1925,10 +1915,10 @@ var o_browse = {
         }
 
         // Update to make next button appear when prefetching next page is done
-        if (o_browse.metadataDetailOpusId !== "" &&
+        if (opus.metadataDetailOpusId !== "" &&
             !$("#galleryViewContents .op-next").data("id") &&
             $("#galleryViewContents .op-next").hasClass("op-button-disabled")) {
-            let next = $(`${tab} tr[data-id=${o_browse.metadataDetailOpusId}]`).next("tr");
+            let next = $(`${tab} tr[data-id=${opus.metadataDetailOpusId}]`).next("tr");
             next = (next.data("id") ? next.data("id") : "");
 
             $("#galleryViewContents .op-next").data("id", next);
@@ -2142,7 +2132,7 @@ var o_browse = {
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
-        o_browse.metadataDetailOpusId = opusId;
+        opus.metadataDetailOpusId = opusId;
 
         // list columns + values
         let html = "<dl>";
@@ -2233,5 +2223,17 @@ var o_browse = {
         // user might occasionally see old data briefly while the new stuff loads.
         $("#browse .gallery").empty();
         $("#browse .op-data-table tbody").empty();
+    },
+
+    downloadCSV: function(obj) {
+        let selectionsHashStr = o_hash.getHashStrFromSelections();
+        if (selectionsHashStr !== "") {
+            selectionsHashStr += "&";
+        }
+        let colStr = opus.prefs.cols.join(',');
+        let resultCountStr = o_browse.totalObsCount.toString();
+        let orderStr = opus.prefs.order.join(",");
+        let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
+        $(obj).attr("href", csvLink);
     },
 };
