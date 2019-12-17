@@ -687,18 +687,20 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                                       +'function "%s"', form_type_func)
                             return None, None
                     if value_to_use:
-                        if is_sourceunit or sourceunit_val is not None:
-                            default_val = opus_support.convert_to_default_unit(
-                                    func(value_to_use), param_info.units,
-                                    sourceunit_val)
-                            value_to_use = opus_support.convert_from_default_unit(
-                                    default_val, param_info.units,
-                                    unit_val)
                         try:
                             new_value = func(value_to_use)
                             if func == float or func == int:
                                 if not math.isfinite(new_value):
                                     raise ValueError
+
+                            if is_sourceunit or sourceunit_val is not None:
+                                default_val = opus_support.convert_to_default_unit(
+                                        new_value, param_info.units,
+                                        sourceunit_val)
+                                new_value = opus_support.convert_from_default_unit(
+                                        default_val, param_info.units,
+                                        unit_val)
+
                             if pretty_results:
                                 new_value = format_metadata_number_or_func(
                                                     new_value, form_type_func,
