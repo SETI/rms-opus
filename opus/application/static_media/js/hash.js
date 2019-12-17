@@ -301,7 +301,12 @@ var o_hash = {
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
-            let valueArray = value.split(",");
+            let valueArray = null;
+            if (slug in opus.prefs) {
+                valueArray = value.split(",");
+            } else {
+                valueArray = [value];
+            }
             valueArray = o_hash.encodeSlugValues(valueArray);
 
             value = valueArray.join(",");
@@ -346,7 +351,12 @@ var o_hash = {
             let slug = pair.slice(0, idxOfFirstEqualSign);
             let value = pair.slice(idxOfFirstEqualSign + 1);
 
-            let valueArray = value.split(",");
+            let valueArray = null;
+            if (slug in opus.prefs) {
+                valueArray = value.split(",");
+            } else {
+                valueArray = [value];
+            }
             valueArray = o_hash.decodeSlugValues(valueArray);
             value = valueArray.join(",");
 
@@ -440,7 +450,7 @@ var o_hash = {
                         }
                         selections[slug][slugCounter-1] = value;
                     } else {
-                        selections[slug] = value.split(",");
+                        selections[slug] = [value];
                     }
                     // }
                 }
@@ -642,7 +652,7 @@ var o_hash = {
                         }
                         opus.selections[slug][slugCounter-1] = value;
                     } else {
-                        opus.selections[slug] = value.split(",");
+                        opus.selections[slug] = [value];
                     }
                     // }
                 }
