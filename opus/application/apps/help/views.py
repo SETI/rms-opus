@@ -284,10 +284,14 @@ def api_guide(request):
         guide = guide.replace('%ENDADDCLASS%', '">')
         guide = guide.replace('%ENDCLASS%', '</div>')
 
-    slugs = get_fields_info('raw', collapse=True)
+    fields = get_fields_info('raw', collapse=True)
+    for field in fields.keys():
+        fields[field]['pretty_units'] = None
+        available_units = fields[field]['available_units']
+        if available_units:
+            fields[field]['pretty_units'] = ', '.join(available_units)
 
     ret = render(request, 'help/guide.html',
-                 {'guide': guide, 'slugs': slugs})
-    print(guide)
+                 {'guide': guide, 'fields': fields})
     exit_api_call(api_code, ret)
     return ret
