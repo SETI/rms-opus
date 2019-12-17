@@ -347,7 +347,7 @@ var o_search = {
                     // add the new value to the array of values
                     values.push(value);
                     // add the array of values to selections
-                    opus.selections[id] = values;
+                    opus.selections[id] = [values.join(",")];
                 }
 
                 // special menu behavior for surface geo, slide in a loading indicator..
@@ -357,10 +357,14 @@ var o_search = {
                 }
 
             } else {
-                let remove = opus.selections[id].indexOf(value); // find index of value to remove
-                opus.selections[id].splice(remove,1);        // remove value from array
+                let currentVals = opus.selections[id] ? opus.selections[id][0] : "";
+                currentVals = currentVals ? currentVals.split(",") : [];
 
-                if (opus.selections[id].length === 0) {
+                let remove = currentVals.indexOf(value); // find index of value to remove
+                currentVals.splice(remove,1);
+                opus.selections[id] = [currentVals.join(",")];
+
+                if (currentVals.length === 0) {
                     delete opus.selections[id];
                 }
             }
@@ -877,10 +881,7 @@ var o_search = {
                         }
 
                         // No color border if the input value is valid
-                        currentInput.addClass("search_input_original");
-                        currentInput.removeClass("search_input_invalid_no_focus");
-                        currentInput.removeClass("search_input_invalid");
-                        currentInput.removeClass("search_input_valid");
+                        o_search.clearInputBorder(currentInput);
                     }
                     opus.rangeInputFieldsValidation[eachSlug] = true;
                 }
@@ -1165,11 +1166,10 @@ var o_search = {
 
     },
 
-    clearInputBorder: function(inputSet) {
+    clearInputBorder: function(input) {
         /**
          * clear the border of an input, remove any invalid border of an input.
          */
-        let input = inputSet.find("input");
         input.addClass("search_input_original");
         input.removeClass("search_input_invalid_no_focus");
         input.removeClass("search_input_invalid");

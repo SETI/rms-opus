@@ -163,7 +163,7 @@ var o_widgets = {
             // for multiple times and cause some weird behaviors.
             let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
-            o_search.clearInputBorder(cloneInputs);
+            o_search.clearInputBorder(cloneInputs.find("input"));
             // Clear .op-hide-element in dropdown
             cloneInputs.find(".op-hide-element").removeClass("op-hide-element");
             let defaultQtypeVal = (cloneInputs.find("select") ?
