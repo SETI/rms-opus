@@ -513,6 +513,9 @@ var o_search = {
                     let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
                     performNormalizeInput = true;
                     o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url, newUnitVal);
+                } else {
+                    // if normailze input api is not run, we update the record here.
+                    opus.currentUnitBySlug[slugNoNum] = newUnitVal;
                 }
             }
 
