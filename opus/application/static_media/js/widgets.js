@@ -55,21 +55,10 @@ var o_widgets = {
                 o_widgets.widgetDrop(this);
             },
             start: function(event, ui) {
-                // When sorting starts:
-                // Get the max scrollable height in current container.
-                let scrollContainer = $(event.target).data("ui-sortable").scrollParent;
-                let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height() - ui.helper.outerHeight();
-                $(event.target).data("maxScrollTop", maxScrollTop);
+                o_widgets.getMaxScrollTopVal(event.target);
             },
             sort: function(event, ui) {
-                // When sorting is happening:
-                // Use the max scrollable height to prevent continuous down scrolling when user
-                // keeps dragging the item down after scrollbar reaches to the bottom-end.
-                let scrollContainer = $(event.target).data("ui-sortable").scrollParent;
-                let maxScrollTop = $(event.target).data("maxScrollTop");
-                if (scrollContainer.scrollTop() >= maxScrollTop) {
-                    scrollContainer.scrollTop(maxScrollTop);
-                }
+                o_widgets.preventContinuousDownScrolling(event.target);
             }
         });
 
@@ -144,6 +133,31 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
         o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    getMaxScrollTopVal: function(target) {
+        /**
+         * Callback function for jquery ui sortable start event.
+         * When sorting starts:
+         * Get the max scrollable height in current container.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
+        $(target).data("maxScrollTop", maxScrollTop);
+    },
+
+    preventContinuousDownScrolling: function(target) {
+        /**
+         * Callback function for jquery ui sortable sort event.
+         * When sorting is happening:
+         * Use the max scrollable height to prevent continuous down scrolling when user
+         * keeps dragging the item down after scrollbar reaches to the bottom-end.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = $(target).data("maxScrollTop");
+        if (scrollContainer.scrollTop() >= maxScrollTop) {
+            scrollContainer.scrollTop(maxScrollTop);
+        }
     },
 
     attachAddInputIcon: function(slug, addInputIcon) {

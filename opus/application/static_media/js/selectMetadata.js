@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_browse, o_hash, o_menu, o_utils, opus */
+/* globals o_browse, o_hash, o_menu, o_utils, o_widgets, opus */
 
 /******************************************/
 /********* SELECT METADATA DIALOG *********/
@@ -13,7 +13,10 @@
 var o_selectMetadata = {
 /* jshint varstmt: true */
     selectMetadataDrawn: false,
-
+    // A flag to determine if the sortable item sorting is happening. This
+    // will be used in mutation observer to determine if scrollbar location should 
+    // be set.
+    isSortingHappening: false,
     // metadata selector behaviors
     addBehaviors: function() {
         // Global within this function so behaviors can communicate
@@ -134,7 +137,19 @@ var o_selectMetadata = {
                 $(".op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
-                    stop: function(event, ui) { o_selectMetadata.metadataDragged(this); }
+                    containment: "parent",
+                    tolerance: "pointer",
+                    stop: function(event, ui) {
+                        o_selectMetadata.metadataDragged(this);
+                        o_selectMetadata.isSortingHappening = false;
+                    },
+                    start: function(event, ui) {
+                        o_widgets.getMaxScrollTopVal(event.target);
+                        o_selectMetadata.isSortingHappening = true;
+                    },
+                    sort: function(event, ui) {
+                        o_widgets.preventContinuousDownScrolling(event.target);
+                    }
                 });
                 if (opus.prefs.cols.length <= 1) {
                     $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
