@@ -47,13 +47,19 @@ var o_widgets = {
             cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             helper: "clone",
-            scrollSensitivity: 100,
+            containment: "parent",
             axis: "y",
             opacity: 0.8,
-            cursorAt: {top: 10, left: 10},
+            tolerance: "pointer",
             stop: function(event, ui) {
                 o_widgets.widgetDrop(this);
             },
+            start: function(event, ui) {
+                o_widgets.getMaxScrollTopVal(event.target);
+            },
+            sort: function(event, ui) {
+                o_widgets.preventContinuousDownScrolling(event.target);
+            }
         });
 
         $("#op-search-widgets").on( "sortchange", function(event, ui) {
@@ -127,6 +133,31 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
         o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    getMaxScrollTopVal: function(target) {
+        /**
+         * Callback function for jquery ui sortable start event.
+         * When sorting starts:
+         * Get the max scrollable height in current container.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
+        $(target).data("maxScrollTop", maxScrollTop);
+    },
+
+    preventContinuousDownScrolling: function(target) {
+        /**
+         * Callback function for jquery ui sortable sort event.
+         * When sorting is happening:
+         * Use the max scrollable height to prevent continuous down scrolling when user
+         * keeps dragging the item down after scrollbar reaches to the bottom-end.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = $(target).data("maxScrollTop");
+        if (scrollContainer.scrollTop() >= maxScrollTop) {
+            scrollContainer.scrollTop(maxScrollTop);
+        }
     },
 
     attachAddInputIcon: function(slug, addInputIcon) {

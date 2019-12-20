@@ -187,6 +187,12 @@ var o_mutationObserver = {
         });
 
         let selectedMetadataObserver = new MutationObserver(function(mutationsList) {
+            // If sortable metadata selections is sorting, we don't want to set 
+            // the scrollbar position.
+            if (o_selectMetadata.isSortingHappening) {
+                return;
+            }
+
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
