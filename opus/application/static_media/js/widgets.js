@@ -47,13 +47,30 @@ var o_widgets = {
             cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             helper: "clone",
-            scrollSensitivity: 100,
+            containment: "parent",
             axis: "y",
             opacity: 0.8,
-            cursorAt: {top: 10, left: 10},
+            tolerance: "pointer",
             stop: function(event, ui) {
                 o_widgets.widgetDrop(this);
             },
+            start: function(event, ui) {
+                // When sorting starts:
+                // Get the max scrollable height in current container.
+                let scrollContainer = $(event.target).data("ui-sortable").scrollParent;
+                let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height() - ui.helper.outerHeight();
+                $(event.target).data("maxScrollTop", maxScrollTop);
+            },
+            sort: function(event, ui) {
+                // When sorting is happening:
+                // Use the max scrollable height to prevent continuous down scrolling when user
+                // keeps dragging the item down after scrollbar reaches to the bottom-end.
+                let scrollContainer = $(event.target).data("ui-sortable").scrollParent;
+                let maxScrollTop = $(event.target).data("maxScrollTop");
+                if (scrollContainer.scrollTop() >= maxScrollTop) {
+                    scrollContainer.scrollTop(maxScrollTop);
+                }
+            }
         });
 
         $("#op-search-widgets").on( "sortchange", function(event, ui) {

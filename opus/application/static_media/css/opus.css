@@ -1584,6 +1584,7 @@ panel are properly separated */
 
 /* This is to make sortable scrolling (when sorting happened) works with ps */
 #widget-container {
+    overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
 }
