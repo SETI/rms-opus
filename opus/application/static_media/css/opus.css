@@ -1877,6 +1877,18 @@ footer {
     white-space: pre-wrap !important;
 }
 
+.op-table-nonfluid {
+   width: auto !important;
+}
+
+.op-table-indent {
+    margin-left: 2em;
+}
+
+.op-table-padding {
+    padding-right: 20px !important;
+}
+
 .op-help-api-guide h1:first-of-type {
     counter-reset: apih1counter;
 }

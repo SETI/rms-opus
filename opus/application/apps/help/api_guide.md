@@ -34,11 +34,11 @@ Table of Contents:
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API consists of requests encoded in a single URL passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&` and `=` are required to be encoded if used as a parameter's value.
+The OPUS API consists of requests encoded in a single URL passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&` and `=` are required to be encoded if used as a parameter's value.
 
 Examples:
 
-* Basic API call with no parameters:
+* API call with no parameters:
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.json%ENDEXTLINK%
 
@@ -52,9 +52,9 @@ Examples:
 
 <h2 id="opusdatabase">The OPUS Database</h2>
 
-The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number. The exact format of the OPUS ID varies by mission and instrument (examples: Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a _slug_, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [[XXXhere]] or through an API call described [[XXXhere]].
+The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number; the exact format of the OPUS ID varies by mission and instrument (examples: Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a _slug_, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [here](#availablefields) or through an API call described [[XXXhere]].
 
-There are 3 basic types of fields: _multiple-choice_, _string_, and _range_.
+There are 3 basic types of fields stored in the database: _multiple-choice_, _string_, and _range_.
 
 * **Multiple-choice** fields contain a single value chosen from a set of valid values. For example, the `Mission` field may contain values such as `Cassini`, `Voyager`, or `Hubble`.
 * **String** fields contain a single string of arbitrary characters. The formatting is specific to the individual field (e.g. a PDS3 volume ID might look like "COISS_2001" while a Dataset ID might look like "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0").
@@ -68,13 +68,13 @@ Many API calls allow you to choose which metadata fields are returned by specify
 
 When a `cols` parameter is supported but none is provided, the default columns are used: `opusid,instrument,planet,target,time1,observationduration`.
 
-If a metadata field is a _single-value range_, then that slug must be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicates the minimum and a `2` suffix indicates the maximum. For example:
+If a metadata field is a _single-value range_, then that slug **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicates the minimum and a `2` suffix indicates the maximum. For example:
 
         cols=observationduration,rightasc1,rightasc2
 
 However, it would be illegal to say `cols=observationduration1` or `cols=rightasc`.
 
-See the section on [[XXX Field Types]] Field Types below for more information.
+See the section on [Available Metadata Fields](#availablefields) below for more information.
 
 <h2 id="performingsearches">Performing Searches</h2>
 
@@ -88,7 +88,7 @@ When searching on a multiple-choice field, multiple search values can be specifi
 
 Multiple-choice values are case-insensitive.
 
-Multiple search constraints are specified by joining them with a `&`. When search constraints are specified for different metadata fields, they are "AND"ed together:
+Multiple search constraints are specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
 
         volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
 
@@ -100,13 +100,13 @@ All numeric ranges may be searched by specifying a minimum value (`1` suffix), m
 
 <h3 id="querytypes">Query Types</h3>
 
-When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<slug>=value` as a search parameter. Note that the slug is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales. The details of the qtypes associated with each field type are given below.
+When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<slug>=value` as a search parameter. Note that the slug is always specified without a (`1` or `2`) suffix, even if the search requires suffixes for minimum and maximum vales. This is because the qtype applies to the entire search field, not to the minimum or maximum values separately. The details of the qtypes associated with each field type are given below.
 
 #### String Fields
 
 Strings can be searched using the following query types:
 
-* **contains**: the search string occurs anywhere within the metadata string. This is the default if not qtype is given.
+* **contains**: the search string occurs anywhere within the metadata string. This is the default if no qtype is given.
 * **begins**: the search string occurs at the beginning of the metadata string.
 * **ends**: the search string occurs at the end of the metadata string.
 * **matches**: the search string is exactly equal to the metadata string.
@@ -122,7 +122,7 @@ Range fields can be searched using the following query types:
 
 <h3 id="units">Units</h3>
 
-When performing a search, some range fields may have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<slug>=value` as a search parameter. Note that the slug is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
+When performing a search, some range fields have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<slug>=value` as a search parameter. Note that the slug is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
 
 <h3 id="clauses">Multiple Clauses</h3>
 
@@ -130,9 +130,13 @@ Multiple string and range constraints can be specified for the same field. In th
 
         observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
 
+would search for Observation Duration between 10 and 20 seconds (inclusive) *or* between 30 and 40 seconds (inclusive).
+
 <h3 id="sorting">Sorting</h3>
 
-By default, the results of a search are sorted first by Observation Start Time and then by OPUS ID. This order can be changed by specifying `order=<fields>`, where `<fields>` is one or more slugs (as would be used when retrieving metadata) separated by commas. If multiple slugs are given, the sorting proceeds by the first slug, and then if the values are identical by the second slug, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the metadata field slug with a `-`.
+By default, the results of a search are sorted first by Observation Start Time (`time1`) and then by OPUS ID (`opusid`). This order can be changed by specifying `order=<fields>`, where `<fields>` contains one or more slugs (as would be used when retrieving metadata) separated by commas. If multiple slugs are given, the sorting proceeds by the first slug, and then if the values are identical by the second slug, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the metadata field slug with a minus sign (`-`).
+
+Note that if `opusid` does not appear in the sort order list, it will automatically be added at the end. Since all OPUS IDs are unique, this guarantees the resulting order is deterministic.
 
 <h3 id="basicconceptexamples">Examples</h3>
 
@@ -166,21 +170,17 @@ By default, the results of a search are sorted first by Observation Start Time a
 
         instrument=Cassini+ISS&order=COISSfilter,-observationduration,opusid
 
-Note that if `opusid` does not appear in the sort order list, it will automatically be added at the end. Since all OPUS IDs are unique, this guarantees the resulting order is deterministic.
-
 --------------------------------------------------------------------------------
 
 <h1 id="apicalls">API Calls</h1>
 
-Note that some JSON returns may contain data that is not detailed in this document. This data is usually provided for backwards compatibility with legacy applications and should **not** be relied on for new development.
-
 <h2 id="returnformats">Return Formats</h2>
 
-All API calls take a suffix `.fmt` specifying the format in which to return data. Possible values are:
+All API calls take a suffix `.[fmt]` specifying the format in which to return data. Possible values are:
 
-* **json**: Return all data in a JSON structure. This is most useful for programs wanting to process the returned data directly.
+* **json**: Return all data in a JSON structure. This is most useful for programs wanting to process the returned data directly. Note that some JSON returns may contain data that is not detailed in this document. This data is usually provided for backwards compatibility with legacy applications and should **not** be relied on for new development.
 * **csv**: Return all data in a comma-separated value (CSV) file, suitable for import into a spreadsheet program.
-* **html**: Return all data as an HTML document. This is most useful when viewing directly in a browser. Note that the returned HTML has minimal formatting.
+* **html**: Return all data as an HTML document. This is most useful when viewing directly in a browser. Note that the returned HTML has minimal formatting and does not include any header or `body` tags.
 * **zip**: Return all data as a ZIP file.
 
 Not all API calls provide results in all formats. The formats supported are listed with each call.
@@ -197,22 +197,26 @@ Supported return formats: `json`, `html`, `csv`
 
 #### Parameters
 
-* Search parameters (including sort order)
-* `cols=<field list>`: Metadata fields to return
-* `startobs=<N>`: The (1-based) observation number to start with; defaults to 1
-* `limit=<N>`: The maximum number of observations to return; defaults to 100
+| Parameter | Description |
+|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) |
+| `cols=<field list>` | Metadata fields to return |
+| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
+| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
 
 #### JSON Return
 
-        {"start_obs": requested starting observation,
-         "limit":     requested limit,
-         "count":     number of observations actually returned,
-         "available": the total number of observations available from this search,
-         "order":     sort order,
-         "labels":    selected metadata field headers,
-         "page":      observation data}
+| Field Name | Description |
+|---|---|
+| `start_obs` | Requested starting observation |
+| `limit` | Requested limit |
+| `count` | Number of observations actually returned |
+| `available` | Total number of observations available from this search |
+| `order` | Sort order |
+| `labels` | Requested metadata field names (fully qualified) in the order requested with `cols` |
+| `page` | The observation data |
 
-`page` is a list with one entry per returned observation. Each entry is itself a list, with one entry per requested metadata field.
+`page` is a list with one entry per returned observation. Each entry is itself a list, with one entry per requested metadata field, in the same order as was requested with `cols`.
 
 Example:
 
@@ -318,10 +322,12 @@ Get all available, or particular, metadata for a single observation.
 
 Supported return formats: `json`, `html`, `csv`
 
-Parameters:
+#### Parameters:
 
-* `cols=<field list>`: Metadata fields to return
-* `cats=<category names>`: If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored
+| Parameter | Description |
+|---|---|
+| `cols=<field list>` | Metadata fields to return |
+| `cats=<category names>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored |
 
 #### JSON Return
 
@@ -508,42 +514,51 @@ If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
 Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
 
-Parameters:
+#### Parameters:
 
-* Search parameters (including sort order)
-* `startobs=<N>`: The (1-based) observation number to start with; defaults to 1
-* `limit=<N>`: The maximum number of observations to return; defaults to 100
+| Parameter | Description |
+|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) |
+| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
+| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
 
 #### JSON Return
 
 When a search was requested, the return includes:
 
-        {"start_obs": requested starting observation,
-         "limit":     requested limit,
-         "count":     number of observations actually returned,
-         "available": the total number of observations available from this search,
-         "order":     sort order,
-         "data":      images data}
+| Field Name | Description |
+|---|---|
+| `start_obs` | Requested starting observation |
+| `limit` | Requested limit |
+| `count` | Number of observations actually returned |
+| `available` | Total number of observations available from this search |
+| `order` | Sort order |
+| `labels` | Requested metadata field names (fully qualified) |
+| `data` | The images data |
 
 `data` is a list with one entry per returned observation.
 
 When all sizes are requested, each entry is an object containing:
 
-        {"opus_id":           the OPUS ID of the observation,
-         "<size>_alt_text ":   the alternate text (image filename),
-         "<size>_size_bytes": the size of the image file in bytes,
-         "<size>_width":      the width of the image in pixels,
-         "<size>_height":     the height of the image in pixels,
-         "<size>_url":        the relative path to the image} <!-- Stupid editor x_ -->
+| Field Name | Description |
+|---|---|
+| `opus_id` | OPUS ID of the observation |
+| `<size>_alt_text` | Alternate text (image filename) |
+| `<size>_size_bytes` | Size of the image file in bytes |
+| `<size>_width` | Width of the image in pixels |
+| `<size>_height` | Height of the image in pixels |
+| `<size>_url` | Relative path to the image |
 
 When one size is requested, each entry is an object containing:
 
-        {"opus_id":    the OPUS ID of the observation,
-         "alt_text":   the alternate text (image filename),
-         "size_bytes": the size of the image file in bytes,
-         "width":      the width of the image in pixels,
-         "height":     the height of the image in pixels,
-         "url":        the relative path to the image}
+| Field Name | Description |
+|---|---|
+| `opus_id` | OPUS ID of the observation |
+| `alt_text` | Alternate text (image filename) |
+| `size_bytes` | Size of the image file in bytes |
+| `width` | Width of the image in pixels |
+| `height` | Height of the image in pixels |
+| `url` | Relative path to the image |
 
 Example:
 

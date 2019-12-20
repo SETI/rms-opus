@@ -283,6 +283,11 @@ def api_guide(request):
         guide = guide.replace('%ADDCLASS%', '<div class="')
         guide = guide.replace('%ENDADDCLASS%', '">')
         guide = guide.replace('%ENDCLASS%', '</div>')
+        guide = guide.replace('<table>',
+                 '<table class="table table-sm table-striped table-hover '
+                +'op-table-indent op-table-nonfluid">')
+        guide = guide.replace('<thead>', '<thead class="thead-dark">')
+        guide = guide.replace('<td>', '<td class="op-table-padding">')
 
     fields = get_fields_info('raw', collapse=True)
     for field in fields.keys():

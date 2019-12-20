@@ -738,6 +738,22 @@ def _api_get_images(request, fmt, api_code, size, include_search):
             if size+'_url' in image:
                 image['url'] = image[size+'_url']
                 del image[size+'_url']
+
+            # Backwards compatibility
+            url = image['url']
+            if 'previews/' in url:
+                path, img = url.split('previews/')
+                path += 'previews/'
+            elif 'browse/' in url:
+                path, img = url.split('browse/')
+                path += 'browse/'
+            else:
+                path = None
+                img = None
+            image['path'] = path
+            image['img'] = img
+            image[size] = img
+
         if 'cart_state' in image:
             del image['cart_state']
 
