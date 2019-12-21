@@ -23,7 +23,9 @@ Table of Contents:
         * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUSID](#metadatav2fmt)
         * [`api/images.[fmt]` - Return Images from a Search](#imagesfmt)
         * [`api/images/[size].[fmt]` - Return Images of a Specific Size from a Search](#imagesfmt)
-        * [`api/image/[size]/[opus_id].[fmt]` - Return Images of a Specific Size for an OPUS ID](#imagesfmt)
+        * [`api/image/[size]/[opusid].[fmt]` - Return Images of a Specific Size for an OPUS ID](#imagesfmt)
+        * [`api/files.json` - Return Files from a Search](#filesjson)
+        * [`api/files/[opusid].json` - Return Files for an OPUS ID](#filesopusidjson)
 * [Available Metadata Fields](#availablefields)
 
 %ENDCLASS%
@@ -189,6 +191,10 @@ Not all API calls provide results in all formats. The formats supported are list
 
 <h2 id="gettingdata">Getting Data</h2>
 
+
+
+
+
 <h3 id="datafmt"><code>api/data.[fmt]</code> - Return Metadata from a Search</h3>
 
 Get data for observations based on search criteria, sort order, and requested metadata fields. Data is returned in chunks (called "pages" in the returned JSON) to limit return size. The starting observation number and the number of observations desired can be specified.
@@ -316,7 +322,11 @@ Example:
         </tr>
         </table>
 
-<h3 id="metadatav2fmt"><code>api/metadata_v2/[opus_id].[fmt]</code> - Return Metadata for an OPUSID</h3>
+
+
+
+
+<h3 id="metadatav2fmt"><code>api/metadata_v2/[opusid].[fmt]</code> - Return Metadata for an OPUSID</h3>
 
 Get all available, or particular, metadata for a single observation.
 
@@ -504,11 +514,15 @@ Examples:
         </dl>
         </dl>
 
+
+
+
+
 <h3 id="imagesfmt"><code>api/images.[fmt]</code> - Return Images from a Search</h3>
 <h3><code>api/images/[size].[fmt]</code> - Return Images from a Search</h3>
-<h3><code>api/image/[size]/[opus_id].[fmt]</code> - Return Images of a Specific Size for an OPUS ID</h3>
+<h3><code>api/image/[size]/[opusid].[fmt]</code> - Return Images of a Specific Size for an OPUS ID</h3>
 
-Get images of all sizes (or a given size) based on search criteria and sort order. Images are returned in chunks to limit return size. The starting observation number and the number of observations desired can be specified. An image of a specific size may also be returned for a single OPUS ID.
+Get the URLs of images of all sizes (or a given size) based on search criteria and sort order. Image URLs are returned in chunks to limit return size. The starting observation number and the number of observations desired can be specified. An image of a specific size may also be returned for a single OPUS ID.
 
 If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
@@ -534,9 +548,7 @@ When a search was requested, the return includes:
 | `available` | Total number of observations available from this search |
 | `order` | Sort order |
 | `labels` | Requested metadata field names (fully qualified) |
-| `data` | The images data |
-
-`data` is a list with one entry per returned observation.
+| `data` | The images data with one entry per returned observation |
 
 When all sizes are requested, each entry is an object containing:
 
@@ -714,47 +726,248 @@ Example:
         </ul>
 
 
-### api/files/[opus_id].json
 
-Get a list of all files for a single observation.
-opus_id: valid opus_id (if you provide an old ring_obs_id, you will get the appropriate opus_id back)
+
+
+<h3 id="filesjson"><code>api/files.json</code> - Return Files from a Search</h3>
+
+Get a list of all (or some) files for the search results.
+
+Supported return formats: `json`.
+
+#### Parameters
+
+| Parameter | Description |
+|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) |
+| `cols=<field list>` | Metadata fields to return |
+| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
+| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
+| `types=<types>` | List of product types; if not supplied, all are returned |
+
+#### JSON Return
+
+| Field Name | Description |
+|---|---|
+| `start_obs` | Requested starting observation |
+| `limit` | Requested limit |
+| `count` | Number of observations actually returned |
+| `available` | Total number of observations available from this search |
+| `order` | Sort order |
+| `data` | The file information for the current version |
+| `versions` | The file information for all versions (including the current one) |
+
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+
+Examples:
+
+* Retrieve all files associated with images of Pan in volume COISS_2111.
+
+    %EXTLINK%%HOST%/opus/api/files.json?volumeid=COISS_2111&target=pan%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "start_obs": 1,
+          "limit": 100,
+          "count": 56,
+          "available": 56,
+          "order": "time1,opusid",
+          "data": {
+            "co-iss-n1867599811": {
+              "coiss-raw": [
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+              ],
+              "coiss-calib": [
+                "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
+                "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
+              ],
+              "coiss-thumb": [
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
+              ],
+              [...]
+            },
+            "co-iss-n1867600166": {
+              "coiss-raw": [
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+              ],
+              [...]
+          },
+          [...]
+        }
+
+
+
+
+<h3 id="filesopusidjson"><code>api/files/[opusid].json</code> - Return Files for an OPUS ID</h3>
+
+Get the URLs of all (or some) files available for a single observation.
+
+Supported return formats: `json`.
 
 Parameters:
 
-* types=<types> (List of product types; if not supplied, all are returned)
-* loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
-JSON return: "{'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
-examples:
--
-A Voyager ISS observation
-url: <HOST>/opus/api/files/vg-iss-2-s-c4360022.json
--
-A Galileo SSI observation, Raw data only
-url: <HOST>/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
--
-An HST WFC3 observation with multiple versions
-url: <HOST>/opus/api/files/hst-11559-wfc3-ib4v19rp.json
+| Parameter | Description |
+|---|---|
+| `types=<types>` | List of product types; if not supplied, all are returned |
 
-### api/files.json
+#### JSON Return
 
-Get a list of all files for the search results.
+| Field Name | Description |
+|---|---|
+| `data` | The file information for the current version |
+| `versions` | The file information for all versions (including the current one) |
 
-Parameters:
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
 
-* search params (If not supplied, all results are returned)
-* order=column_slug,... (Column(s) to sort on; if not supplied, default sort order is used)
-* limit=N (The maximum number of observations to return; defaults to 100)
-* startobs=N (The observation number to start with; one-based) OR...
-* page=N (The 100-observation page number to start with; defaults to 1)
-* types=<types> (List of product types; if not supplied, all are returned)
-* loc_type=<loc> (Format of returned path, 'url' or 'path'; defaults to 'url')
-JSON return: "{'page_no': given page number OR 'start_obs': given starting observation, 'limit': given limit, 'count': number of observations returned, 'order': sort order, 'data': dictionary of opus_id, then indexed by product type for current version, 'versions': dictionary of version, then opus_id, then product_type}"
-examples:
--
-Target Pan
-url: <HOST>/opus/api/files.json?&target=pan
+Examples:
 
-### api/download/[opus_id].zip
+* Retrieve all files associated with a Voyager ISS observation
+
+    %EXTLINK%%HOST%/opus/api/files/vg-iss-2-s-c4360022.json%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "data": {
+            "vg-iss-2-s-c4360022": {
+              "vgiss-raw": [
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+              ],
+              "vgiss-cleaned": [
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+              ],
+              "vgiss-calib": [
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+              ],
+              [...]
+            }
+          },
+          "versions": {
+            "vg-iss-2-s-c4360022": {
+              "Current": {
+                "vgiss-raw": [
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+                ],
+                "vgiss-cleaned": [
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+                ],
+                "vgiss-calib": [
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+                ],
+                [...]
+              }
+            }
+          }
+        }    
+
+* Retrieve raw images only for a Galileo SSI observation.
+
+    %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
+
+    Returns:
+
+        {
+          "data": {
+            "go-ssi-c0349632000": {
+              "gossi-raw": [
+                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+              ]
+            }
+          },
+          "versions": {
+            "go-ssi-c0349632000": {
+              "1": {
+                "gossi-raw": [
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+                ]
+              },
+              "Current": {
+                "gossi-raw": [
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+                ]
+              }
+            }
+          }
+        }
+
+* Retrieve drizzle images from an HST WFC3 observation with multiple versions.
+
+    %EXTLINK%%HOST%/opus/api/files/hst-11559-wfc3-ib4v19rp.json%ENDEXTLINK%
+
+    Returns:
+
+        {
+          "data": {
+            "hst-11559-wfc3-ib4v19rp": {
+              "hst-calib": [
+                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+              ],
+              "hst-drizzled": [
+                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+              ]
+            }
+          },
+          "versions": {
+            "hst-11559-wfc3-ib4v19rp": {
+              "Current": {
+                "hst-calib": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ],
+                "hst-drizzled": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ]
+              },
+              "1.1": {
+                "hst-calib": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ],
+                "hst-drizzled": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ]
+              },
+              "1.0": {
+                "hst-calib": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ],
+                "hst-drizzled": [
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+                ]
+              }
+            }
+          }
+        }
+
+### api/download/[opusid].zip
 
 Download a ZIP file containing all the products related to opus_id
 
@@ -834,7 +1047,7 @@ url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.html?target=Saturn
 Get ring radius endpoints for target Saturn in CSV
 url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn
 
-### api/categories/[opus_id].json
+### api/categories/[opusid].json
 
 Return a list of all table names this opus_id exists in.
 opus_id: valid opus_id

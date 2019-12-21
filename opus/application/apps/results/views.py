@@ -13,8 +13,8 @@
 #    Format: api/images.(json|html|csv)
 #    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
 #                          .(?P<fmt>json|html|csv)
-#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#        or: api/files.(?P<fmt>json|html|csv)
+#    Format: api/files/(?P<opus_id>[-\w]+).json
+#        or: api/files.json
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #
@@ -679,9 +679,10 @@ def api_get_image(request, opus_id, size, fmt):
     """
     api_code = enter_api_call('api_get_image', request)
 
-    request.GET = request.GET.copy()
-    request.GET['opusid'] = opus_id
-    request.GET['qtype-opusid'] = 'matches'
+    if request is not None and request.GET is not None:
+        request.GET = request.GET.copy()
+        request.GET['opusid'] = opus_id
+        request.GET['qtype-opusid'] = 'matches'
     ret = _api_get_images(request, fmt, api_code, size, False)
 
     exit_api_call(api_code, ret)
@@ -816,7 +817,6 @@ def api_get_files(request, opus_id=None):
         or: [__]api/files.json
     Arguments: types=<types>
                     Product types
-               loc_type=['url', 'path']
                limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -832,10 +832,8 @@ def api_get_files(request, opus_id=None):
         raise ret
 
     product_types = request.GET.get('types', 'all')
-    loc_type = request.GET.get('loc_type', 'url')
 
     opus_ids = []
-    data = {}
     if opus_id:
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
@@ -856,23 +854,38 @@ def api_get_files(request, opus_id=None):
         opus_ids = aux['opus_ids']
 
     ret = get_pds_products(opus_ids,
-                           loc_type=loc_type,
+                           loc_type='url',
                            product_types=product_types)
 
     versioned_ret = OrderedDict()
     current_ret = OrderedDict()
-    for opus_id in ret:
-        versioned_ret[opus_id] = OrderedDict() # Versions
-        current_ret[opus_id] = OrderedDict()
-        for version in ret[opus_id]:
-            versioned_ret[opus_id][version] = OrderedDict()
-            for product_type in ret[opus_id][version]:
-                versioned_ret[opus_id][version][product_type[2]] = \
-                    ret[opus_id][version][product_type]
+    for ret_opus_id in ret:
+        versioned_ret[ret_opus_id] = OrderedDict() # Versions
+        current_ret[ret_opus_id] = OrderedDict()
+        for version in ret[ret_opus_id]:
+            versioned_ret[ret_opus_id][version] = OrderedDict()
+            for product_type in ret[ret_opus_id][version]:
+                versioned_ret[ret_opus_id][version][product_type[2]] = \
+                    ret[ret_opus_id][version][product_type]
                 if version == 'Current':
-                    current_ret[opus_id][product_type[2]] = \
-                        ret[opus_id][version][product_type]
+                    current_ret[ret_opus_id][product_type[2]] = \
+                        ret[ret_opus_id][version][product_type]
 
+    data = {}
+    if opus_id is None:
+        result_count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
+
+        if page_no is not None:
+            data['page_no'] = page_no
+        if start_obs is not None:
+            data['start_obs'] = start_obs
+        data['limit'] = limit
+        data['count'] = len(opus_ids)
+        data['available'] = result_count
+        data['order'] = order
     data['data'] = current_ret
     data['versions'] = versioned_ret
 
