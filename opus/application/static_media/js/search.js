@@ -347,7 +347,7 @@ var o_search = {
                     // add the new value to the array of values
                     values.push(value);
                     // add the array of values to selections
-                    opus.selections[id] = values;
+                    opus.selections[id] = [values.join(",")];
                 }
 
                 // special menu behavior for surface geo, slide in a loading indicator..
@@ -357,10 +357,14 @@ var o_search = {
                 }
 
             } else {
-                let remove = opus.selections[id].indexOf(value); // find index of value to remove
-                opus.selections[id].splice(remove,1);        // remove value from array
+                let currentVals = opus.selections[id] ? opus.selections[id][0] : "";
+                currentVals = currentVals ? currentVals.split(",") : [];
 
-                if (opus.selections[id].length === 0) {
+                let remove = currentVals.indexOf(value); // find index of value to remove
+                currentVals.splice(remove,1);
+                opus.selections[id] = [currentVals.join(",")];
+
+                if (currentVals.length === 0) {
                     delete opus.selections[id];
                 }
             }
@@ -412,7 +416,7 @@ var o_search = {
 
                         // Check if corresponding selections are empty to determine if we
                         // should perform a search.
-                        if (opus.selections[`${slugNoNum}`][idx]) {
+                        if (opus.selections[`${slug}`][idx]) {
                             isInputSetEmpty = false;
                         }
                         break;
@@ -426,15 +430,19 @@ var o_search = {
                 }
                 opus.extras[`unit-${slugNoNum}`] = units;
 
-                // Check if all selections are empty to determine if we should perform a search.
-                if ($(`#widget__${slugNoNum} .op-search-inputs-set input`).hasClass("RANGE")) {
+                let inputs = $(`#widget__${slugNoNum} .op-search-inputs-set input`);
+                // Check if all selections and actual input values are empty to determine
+                // if we should perform a search.
+                if (inputs.hasClass("RANGE")) {
                     isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}1`],
                                                                      isInputSetEmpty);
                     isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}2`],
                                                                      isInputSetEmpty);
-                } else if ($(`#widget__${slugNoNum} .op-search-inputs-set input`).hasClass("STRING")) {
+                    isInputSetEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, isInputSetEmpty);
+                } else if (inputs.hasClass("STRING")) {
                     isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
                                                                      isInputSetEmpty);
+                    isInputSetEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, isInputSetEmpty);
                 }
 
                 // Update values in preprogrammed ranges
@@ -466,17 +474,20 @@ var o_search = {
                         let qtypeWithId =`${qtypeSlug}_${uniqueid}`;
                         let unitWithId = `${unitSlug}_${uniqueid}`;
                         let sourceunitWithId = `${sourceunitSlug}_${uniqueid}`;
-                        if (opus.selections[slug1][idx] !== null &&
-                            opus.rangeInputFieldsValidation[slug1WithId] !== false) {
-                            let slug1EncodedSelections = o_hash.encodeSlugValues(opus.selections[slug1]);
-                            hash.push(slug1WithId + "=" + slug1EncodedSelections[idx]);
+                        if (opus.rangeInputFieldsValidation[slug1WithId] !== false) {
+                            let minInputVal = $(eachInputSet).find(".op-range-input-min").val();
+                            if (minInputVal) {
+                                let slug1EncodedSelections = o_hash.encodeSlugValues([minInputVal]);
+                                hash.push(slug1WithId + "=" + slug1EncodedSelections[0]);
+                            }
                         }
-                        // If the slug in opus.selections has a valid value (check
-                        // opus.rangeInputFieldsValidation), we push it to the hash.
-                        if (opus.selections[slug2][idx] !== null &&
-                            opus.rangeInputFieldsValidation[slug2WithId] !== false) {
-                            let slug2EncodedSelections = o_hash.encodeSlugValues(opus.selections[slug2]);
-                            hash.push(slug2WithId + "=" + slug2EncodedSelections[idx]);
+                        if (opus.rangeInputFieldsValidation[slug2WithId] !== false) {
+                            let maxInputVal = $(eachInputSet).find(".op-range-input-max").val();
+                            if (maxInputVal) {
+                                let slug2EncodedSelections = o_hash.encodeSlugValues([maxInputVal]);
+                                hash.push(slug2WithId + "=" + slug2EncodedSelections[0]);
+                            }
+
                         }
 
                         if (qtypeSlug in opus.extras) {
@@ -502,6 +513,9 @@ var o_search = {
                     let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
                     performNormalizeInput = true;
                     o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url, newUnitVal);
+                } else {
+                    // if normailze input api is not run, we update the record here.
+                    opus.currentUnitBySlug[slugNoNum] = newUnitVal;
                 }
             }
 
@@ -535,6 +549,26 @@ var o_search = {
         if (slugSelections && isInputSetEmpty) {
             for (const val of slugSelections) {
                 if (val) {
+                    isInputSetEmpty = false;
+                    break;
+                }
+            }
+        }
+        return isInputSetEmpty;
+    },
+
+    areAllInputsValInAWidgetEmpty: function(inputs, isInputSetEmpty) {
+        /**
+         * Check if all inputs value are empty. Iterate through all inputs
+         * in a widget and check value of each input. Update & return
+         * isInputSetEmpty.
+         */
+        if (inputs.length === 0) {
+            return isInputSetEmpty;
+        }
+        if (isInputSetEmpty) {
+            for (const eachInput of inputs) {
+                if ($(eachInput).val()) {
                     isInputSetEmpty = false;
                     break;
                 }
@@ -864,8 +898,7 @@ var o_search = {
         }
 
         if (opus.rangeInputFieldsValidation[slug] ||
-            ((slug === opus.allSlug || slug.startsWith("unit-")) && opus.areRangeInputsValid())) {
-
+            (slug === opus.allSlug && opus.areRangeInputsValid()) || slug.startsWith("unit-")) {
             // If there is an invalid value, and user still updates range input,
             // update the last selections to prevent allNormalizeInputApiCall.
             if (!opus.areRangeInputsValid()) {
@@ -1130,11 +1163,10 @@ var o_search = {
 
     },
 
-    clearInputBorder: function(inputSet) {
+    clearInputBorder: function(input) {
         /**
          * clear the border of an input, remove any invalid border of an input.
          */
-        let input = inputSet.find("input");
         input.addClass("search_input_original");
         input.removeClass("search_input_invalid_no_focus");
         input.removeClass("search_input_invalid");
