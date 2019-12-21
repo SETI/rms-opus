@@ -78,8 +78,16 @@ data OPUS has to offer.</p>
         in the search field.</li>
     <li><b>Numeric Fields</b> (such as <b>Observation Duration</b> or
         <b>Observed Ring Radius</b>) allow you to search on a range of numbers
-        by specifying either a minimum or a maximum value, or both. An
-        explanation of the Any/All/Only dropdown menu is provided in the FAQ.
+        by specifying either a minimum or a maximum value, or both. The
+        <b>Observed Ring Radius</b> and <b>Wavelength</b> fields also allow you
+        to type a ring or satellite name, or a color, respectively, into the
+        minimum field. A dropdown box will give you a list of preprogrammed
+        ranges for your convenience. Many numeric fields support selection of
+        units. The default unit will be displayed in the search box title, but
+        other units may be selected. Any values that have already been entered
+        will automatically be converted to the newly select units. The
+        <b>Any/All/Only</b> dropdown allows selection of how overlapping ranges
+        are handled; a full explanation is available in the FAQ.
         </li>
     <li><b>Date/Time Fields</b> (such as <b>Observation Time</b>) allow you
         to search on a range of dates and times by specifying a minimum or
@@ -101,7 +109,7 @@ data OPUS has to offer.</p>
     are "OR"ed together. For example, if you search on emission angles between
     10 and 80 and also between 100 and 170, your results will contain
     observations that match either set of criteria. You can have up to 10 such
-    ranges for each search field.</p>
+    ranges for each search field. All values must have the same units.</p>
 
 <p>As you enter search values, the number of results that are selected will
     constantly update in the <b>Browse Results</b> tab. In addition,
@@ -178,7 +186,10 @@ data OPUS has to offer.</p>
     by dragging. The fields selected here also affect what is included in a
     CSV file when using <b>Download CSV (all results)</b> at the top or
     the <b>Download CSV of selected metadata</b> menu option, as well as what
-    is included in downloaded data and URL archive zip files.</p>
+    is included in downloaded CSV, data, and URL archive zip files available
+    on the <b>Cart</b> tab. An button is available to conveniently create a CSV
+    file directly from the <b>Select Metadata</b> dialog without having to
+    save the selected fields first.</p>
 
 <h3>The Cart</h3>
 
@@ -295,6 +306,9 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
     <li><b>API Guide</b> gives the details of our publicly-available RESTful
         API that allows third-party software to use OPUS to search for
         and retrieve data.</li>
+    <li><b>Citing OPUS</b> gives information about how to cite OPUS
+        in your papers, posters, or presentations and also provides QR codes
+        for your current search.</li>
 </ul>
 
 <p>Thank you for your interest in OPUS! We hope you enjoy your experience and
