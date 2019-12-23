@@ -2334,3 +2334,10 @@ at the right of -- OR -- label. */
         display: none !important;
     }
 }
+
+/* set the vertical spacing between each dropdown item in the hamburger */
+#op-obs-menu .dropdown-item {
+    /* default is 10px at top and bottom, and total menu height 368px */
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
