@@ -1,8 +1,14 @@
-<h1 class="op-help-api-guide-no-count">OPUS API Guide</h1>
+* Consistent .py file headers w/urls.py
+* Consistent function headers
+* Consistent return formats
+* Mark backwards compatible things
+* Add API calls for returning product types
+* Verify all links
+* Error Returns
 
 This guide describes the public API for the Outer Planets Unified Search (OPUS) tool of the PDS Ring-Moon Systems Node. It was produced on %DATE% and covers OPUS version %VERSION%.
 
-Table of Contents:
+<h1 class="op-help-api-guide-no-count">Table of Contents</h1>
 
 %ADDCLASS%op-help-api-guide-toc%ENDADDCLASS%
 
@@ -11,22 +17,33 @@ Table of Contents:
     * [The OPUS Database](#opusdatabase)
     * [Retrieving Metadata](#retrievingmetadata)
     * [Performing Searches](#performingsearches)
-        * [Query Types](#querytypes)
-        * [Units](#units)
-        * [Multiple Clauses](#clauses)
-        * [Sorting](#sorting)
-        * [Examples](#basicconceptexamples)
+      * [Query Types](#querytypes)
+      * [Units](#units)
+      * [Multiple Clauses](#clauses)
+      * [Sorting](#sorting)
+      * [Examples](#basicconceptexamples)
 * [API Calls](#apicalls)
     * [Return Formats](#returnformats)
+    * [Getting Metadata](#gettingmetadata)
+      * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
+      * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUSID](#metadatav2fmt)
     * [Getting Data](#gettingdata)
-        * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
-        * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUSID](#metadatav2fmt)
-        * [`api/images.[fmt]` - Return Images from a Search](#imagesfmt)
-        * [`api/images/[size].[fmt]` - Return Images of a Specific Size from a Search](#imagesfmt)
-        * [`api/image/[size]/[opusid].[fmt]` - Return Images of a Specific Size for an OPUS ID](#imagesfmt)
-        * [`api/files.json` - Return Files from a Search](#filesjson)
-        * [`api/files/[opusid].json` - Return Files for an OPUS ID](#filesopusidjson)
+      * [`api/download/[opusid].zip` - Download Files for an OPUS ID](#downloadopusidzip)
+      * [`api/files.json` - Return URLs of Files from a Search](#filesjson)
+      * [`api/files/[opusid].json` - Return URLs of Files for an OPUS ID](#filesopusidjson)
+      * [`api/images.[fmt]` - Return URLs of All Images from a Search](#imagesfmt)
+      * [`api/images/[size].[fmt]` - Return URLs of Images of a Specific Size from a Search](#imagesfmt)
+      * [`api/image/[size]/[opusid].[fmt]` - Return URLs of Images of a Specific Size for an OPUS ID](#imagesfmt)
+    * [Getting Information About Search Results](#infosearchresults)
+      * [`api/meta/result_count.[fmt]` - Result Count for a Search](#resultcountfmt)
+      * [`api/meta/mults/[field].[fmt]` - Return Possible Values for a Multiple-Choice Field](#multsfmt)
+      * [`api/meta/range/endpoints/[field].[fmt]` - Return Range Endpoints for a Numeric Field](#endpointsfmt)
+      * [`api/categories.json` - Return Categories from a Search](#categoriesfmt)
+      * [`api/categories/[opusid].json` - Return Categories for an OPUS ID](#categoriesopusidfmt)
+      * [`api/fields.[fmt]` - Return Information About All Metadata Fields](#fieldsfmt)
+      * [`api/fields/[field].[fmt]` - Return Information About a Metadata Field](#fieldsfmt)
 * [Available Metadata Fields](#availablefields)
+
 
 %ENDCLASS%
 
@@ -66,13 +83,13 @@ There are 3 basic types of fields stored in the database: _multiple-choice_, _st
 
 Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fields>`, where `<fields>` is a comma-separated list of slugs. For example:
 
-        cols=opusid,instrument,planet,target,time1,time2
+      cols=opusid,instrument,planet,target,time1,time2
 
 When a `cols` parameter is supported but none is provided, the default columns are used: `opusid,instrument,planet,target,time1,observationduration`.
 
 If a metadata field is a _single-value range_, then that slug **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicates the minimum and a `2` suffix indicates the maximum. For example:
 
-        cols=observationduration,rightasc1,rightasc2
+      cols=observationduration,rightasc1,rightasc2
 
 However, it would be illegal to say `cols=observationduration1` or `cols=rightasc`.
 
@@ -82,23 +99,23 @@ See the section on [Available Metadata Fields](#availablefields) below for more 
 
 Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a slug and a desired value. For example:
 
-        volumeid=COISS_2001
+      volumeid=COISS_2001
 
 When searching on a multiple-choice field, multiple search values can be specified separated by commas. In this case, fields matching any of the values are returned:
 
-        planet=Saturn,Uranus,Neptune
+      planet=Saturn,Uranus,Neptune
 
 Multiple-choice values are case-insensitive.
 
 Multiple search constraints are specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
 
-        volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
+      volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
 
 will return any observation with Volume ID `COISS_2001` **and** a Planet value of `Saturn`, `Uranus`, or `Neptune`.
 
 All numeric ranges may be searched by specifying a minimum value (`1` suffix), maximum value (`2` suffix), or both. These suffixes should not be confused with the suffixes used to return metadata. In the case of searches, any range field, whether single-value or not, can have a minimum and maximum search value:
 
-        observationduration1=10&observationduration2=20
+      observationduration1=10&observationduration2=20
 
 <h3 id="querytypes">Query Types</h3>
 
@@ -130,7 +147,7 @@ When performing a search, some range fields have an additional _unit_ that descr
 
 Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the slugs are suffixed with `_N` where `N` is any positive integer. For example:
 
-        observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
+      observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
 
 would search for Observation Duration between 10 and 20 seconds (inclusive) *or* between 30 and 40 seconds (inclusive).
 
@@ -144,33 +161,33 @@ Note that if `opusid` does not appear in the sort order list, it will automatica
 
 * To search for Data Set IDs that contain "ISS" anywhere (the qtype is optional):
 
-        datasetid=ISS&qtype=contains  
+      datasetid=ISS&qtype=contains  
 
 * To search for Data Set IDs that start with "CO-E":
 
-        datasetid=CO-E&qtype=begins
+      datasetid=CO-E&qtype=begins
 
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
-        volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+      volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):
 
-        RINGGEOringradius1=110000&RINGGEOringradius2=130000
+      RINGGEOringradius1=110000&RINGGEOringradius2=130000
 
-        RINGGEOringradius1=110000&RINGGEOringradius2=130000&qtype-RINGGEOringradius=any
+      RINGGEOringradius1=110000&RINGGEOringradius2=130000&qtype-RINGGEOringradius=any
 
 * To search for ring radii between 1.3 and 1.7 Saturn radii using the "only" qtype:
 
-        RINGGEOringradius1=1.3&RINGGEOringradius2=1.7&unit-RINGGEOringradius=saturnradii&qtype-RINGGEOringradius=only
+      RINGGEOringradius1=1.3&RINGGEOringradius2=1.7&unit-RINGGEOringradius=saturnradii&qtype-RINGGEOringradius=only
 
 * To search for all Hubble images taken of Jupiter or Saturn in 1994 or 2001 with a spectral bandpass limited to 400-700 nm:
 
-        mission=Hubble&observationtype=Image&planet=Jupiter,Saturn&time1_1=1994-01-01T00:00:00.000&time2_1=1994-12-31T23:59:59.999&qtype-time_1=any&time1_2=2001-01-01T00:00:00.000&time2_2=2002-12-31T23:59:59.999&qtype-time_2=any&wavelength1=400&wavelength2=700&qtype-wavelength=only&unit-wavelength=nm
+      mission=Hubble&observationtype=Image&planet=Jupiter,Saturn&time1_1=1994-01-01T00:00:00.000&time2_1=1994-12-31T23:59:59.999&qtype-time_1=any&time1_2=2001-01-01T00:00:00.000&time2_2=2002-12-31T23:59:59.999&qtype-time_2=any&wavelength1=400&wavelength2=700&qtype-wavelength=only&unit-wavelength=nm
 
 * To search for all Cassini ISS images sorted by filter name then in reverse order by observation duration, and finally by OPUS ID:
 
-        instrument=Cassini+ISS&order=COISSfilter,-observationduration,opusid
+      instrument=Cassini+ISS&order=COISSfilter,-observationduration,opusid
 
 --------------------------------------------------------------------------------
 
@@ -189,7 +206,7 @@ Not all API calls provide results in all formats. The formats supported are list
 
 ---
 
-<h2 id="gettingdata">Getting Data</h2>
+<h2 id="gettingmetadata">Getting Metadata</h2>
 
 
 
@@ -203,14 +220,16 @@ Supported return formats: `json`, `html`, `csv`
 
 #### Parameters
 
-| Parameter | Description |
-|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) |
-| `cols=<field list>` | Metadata fields to return |
-| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
-| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `startobs=<N>` | The (1-based) observation number to start with | 1 |
+| `limit=<N>` | The maximum number of observations to return | 100 |
 
-#### JSON Return
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
 
 | Field Name | Description |
 |---|---|
@@ -232,43 +251,43 @@ Example:
 
     Returns:
 
-        {
-          "start_obs": 5
-          "limit": 3,
-          "count": 3,
-          "available": 81,
-          "order": "time1,opusid",
-          "labels": [
-            "OPUS ID",
-            "Intended Target Name",
-            "Observation Start Time",
-            "Phase Angle at Body Center [Enceladus] (degrees)"
+      {
+        "start_obs": 5
+        "limit": 3,
+        "count": 3,
+        "available": 81,
+        "order": "time1,opusid",
+        "labels": [
+          "OPUS ID",
+          "Intended Target Name",
+          "Observation Start Time",
+          "Phase Angle at Body Center [Enceladus] (degrees)"
+        ],
+        "page": [
+          [
+            "co-iss-n1635813867",
+            "Enceladus",
+            "2009-11-02T00:01:22.626",
+            "161.414"
           ],
-          "page": [
-            [
-              "co-iss-n1635813867",
-              "Enceladus",
-              "2009-11-02T00:01:22.626",
-              "161.414"
-            ],
-            [
-              "co-iss-n1635814065",
-              "Enceladus",
-              "2009-11-02T00:03:38.237",
-              "161.519"
-            ],
-            [
-              "co-iss-n1635814245",
-              "Enceladus",
-              "2009-11-02T00:07:43.051",
-              "161.657"
-            ]
+          [
+            "co-iss-n1635814065",
+            "Enceladus",
+            "2009-11-02T00:03:38.237",
+            "161.519"
+          ],
+          [
+            "co-iss-n1635814245",
+            "Enceladus",
+            "2009-11-02T00:07:43.051",
+            "161.657"
           ]
-        }
+        ]
+      }
 
-#### CSV Return
+#### CSV Return Format
 
-The first returned line contains the names of the requested metadata fields; after that is one row per observation containing the requested metadata.
+The return value is a series of text lines. The first line contains the names of the requested metadata fields. After that is one line per observation containing the requested metadata.
 
 Example:
 
@@ -278,14 +297,14 @@ Example:
 
     Returns:
 
-        OPUS ID,Intended Target Name,Observation Start Time,Phase Angle at Body Center [Enceladus] (degrees)
-        co-iss-n1635813867,Enceladus,2009-11-02T00:01:22.626,161.414
-        co-iss-n1635814065,Enceladus,2009-11-02T00:03:38.237,161.519
-        co-iss-n1635814245,Enceladus,2009-11-02T00:07:43.051,161.657
+      OPUS ID,Intended Target Name,Observation Start Time,Phase Angle at Body Center [Enceladus] (degrees)
+      co-iss-n1635813867,Enceladus,2009-11-02T00:01:22.626,161.414
+      co-iss-n1635814065,Enceladus,2009-11-02T00:03:38.237,161.519
+      co-iss-n1635814245,Enceladus,2009-11-02T00:07:43.051,161.657
 
-#### HTML Return
+#### HTML Return Format
 
-The return is a table. The table header contains the names of the requested metadata fields. The table rows contain the requested metadata.
+The return value is an HTML table. The table header contains the names of the requested metadata fields. The table rows contain the requested metadata.
 
 Example:
 
@@ -295,32 +314,32 @@ Example:
 
     Returns:
 
-        <table>
-        <tr>
-        <th>OPUS ID</th>
-        <th>Intended Target Name</th>
-        <th>Observation Start Time</th>
-        <th>Phase Angle at Body Center [Enceladus] (degrees)</th>
-        </tr>
-        <tr>
-        <td>co-iss-n1635813867</td>
-        <td>Enceladus</td>
-        <td>2009-11-02T00:01:22.626</td>
-        <td>161.414</td>
-        </tr>
-        <tr>
-        <td>co-iss-n1635814065</td>
-        <td>Enceladus</td>
-        <td>2009-11-02T00:03:38.237</td>
-        <td>161.519</td>
-        </tr>
-        <tr>
-        <td>co-iss-n1635814245</td>
-        <td>Enceladus</td>
-        <td>2009-11-02T00:07:43.051</td>
-        <td>161.657</td>
-        </tr>
-        </table>
+      <table>
+      <tr>
+      <th>OPUS ID</th>
+      <th>Intended Target Name</th>
+      <th>Observation Start Time</th>
+      <th>Phase Angle at Body Center [Enceladus] (degrees)</th>
+      </tr>
+      <tr>
+      <td>co-iss-n1635813867</td>
+      <td>Enceladus</td>
+      <td>2009-11-02T00:01:22.626</td>
+      <td>161.414</td>
+      </tr>
+      <tr>
+      <td>co-iss-n1635814065</td>
+      <td>Enceladus</td>
+      <td>2009-11-02T00:03:38.237</td>
+      <td>161.519</td>
+      </tr>
+      <tr>
+      <td>co-iss-n1635814245</td>
+      <td>Enceladus</td>
+      <td>2009-11-02T00:07:43.051</td>
+      <td>161.657</td>
+      </tr>
+      </table>
 
 
 
@@ -332,16 +351,16 @@ Get all available, or particular, metadata for a single observation.
 
 Supported return formats: `json`, `html`, `csv`
 
-#### Parameters:
+#### Parameters
 
-| Parameter | Description |
-|---|---|
-| `cols=<field list>` | Metadata fields to return |
-| `cats=<category names>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored |
+| Parameter | Description | Default |
+|---|---|---|
+| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `cats=<category names>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored | All categories |
 
-#### JSON Return
+#### JSON Return Format
 
-If `cols` is supplied, the return is a list of objects each with a single name/value pair `{slug: value}`. If `cols` is not supplied, the return is an object containing name/value pairs `{category: data}` where `data` is a list of objects each with a single name/value pair `{slug: value}`.
+If the `cols` parameter is supplied, the return value is a JSON object containing a list of objects each with a single name/value pair `{slug: value}`. If the `cols` parameter is not supplied, the return value is a JSON object containing name/value pairs `{category: data}` where `data` is a list of objects each with a single name/value pair `{slug: value}`.
 
 Examples:
 
@@ -351,19 +370,19 @@ Examples:
 
     Returns:
 
-        {
-          "General Constraints": {
-            "planet": "Saturn",
-            "target": "Saturn",
-            [...]
-          },
-          "PDS Constraints": {
-            "volumeid": "COISS_2111",
-            "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
-            [...]
-          },
+      {
+        "General Constraints": {
+          "planet": "Saturn",
+          "target": "Saturn",
           [...]
-        }
+        },
+        "PDS Constraints": {
+          "volumeid": "COISS_2111",
+          "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
+          [...]
+        },
+        [...]
+      }
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in JSON format:
 
@@ -371,14 +390,14 @@ Examples:
 
     Returns:
 
-        [
-          {
-            "time1": "2017-02-24T03:03:29.866"
-          },
-          {
-            "time2": "2017-02-24T03:03:33.666"
-          }
-        ]
+      [
+        {
+          "time1": "2017-02-24T03:03:29.866"
+        },
+        {
+          "time2": "2017-02-24T03:03:33.666"
+        }
+      ]
 
 * Retrieve PDS and Images Constraints only for a single Cassini ISS Saturn Observation in JSON format:
 
@@ -386,28 +405,28 @@ Examples:
 
     Returns:
 
-        {
-          "PDS Constraints": {
-            "volumeid": "COISS_2111",
-            "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
-            "productid": "1_W1866600688.122",
-            "productcreationtime": "2017-02-25T09:50:35.000",
-            "primaryfilespec": "COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG",
-            "opusid": "co-iss-w1866600688",
-            "note": "N/A"
-          },
-          "Image Constraints": {
-            "duration": "3.8000",
-            "greaterpixelsize": "1024",
-            "lesserpixelsize": "1024",
-            "levels": "4096",
-            "imagetype": "Frame"
-          }
+      {
+        "PDS Constraints": {
+          "volumeid": "COISS_2111",
+          "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
+          "productid": "1_W1866600688.122",
+          "productcreationtime": "2017-02-25T09:50:35.000",
+          "primaryfilespec": "COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG",
+          "opusid": "co-iss-w1866600688",
+          "note": "N/A"
+        },
+        "Image Constraints": {
+          "duration": "3.8000",
+          "greaterpixelsize": "1024",
+          "lesserpixelsize": "1024",
+          "levels": "4096",
+          "imagetype": "Frame"
         }
+      }
 
-#### CSV Return
+#### CSV Return Format
 
-If `cols` is supplied, the return is a line containing the list of field names followed by a line containing the list of metadata for those fields. If `cols` is not supplied, the return contains, for each category, three lines: the name of the category, the list of field names in that category, and the metadata for those fields.
+The return value is a series of text lines. If `cols` is supplied, the return value is a line containing the list of field names followed by a line containing the list of metadata for those fields. If `cols` is not supplied, the return contains, for each category, three lines: the name of the category, the list of field names in that category, and the metadata for those fields.
 
 * Retrieve all metadata for a single Cassini ISS Saturn observation in CSV format:
 
@@ -415,16 +434,16 @@ If `cols` is supplied, the return is a line containing the list of field names f
 
     Returns:
 
-        General Constraints
-        Planet,Intended Target Name,Nominal Target Class,Mission, [...]
-        Saturn,Saturn,Planet,Cassini, [...]
-        PDS Constraints
-        Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
-        COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
-        Image Constraints
-        Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
-        3.8000,1024,1024, [...]
-        [...]
+      General Constraints
+      Planet,Intended Target Name,Nominal Target Class,Mission, [...]
+      Saturn,Saturn,Planet,Cassini, [...]
+      PDS Constraints
+      Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+      COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+      Image Constraints
+      Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+      3.8000,1024,1024, [...]
+      [...]
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in CSV format:
 
@@ -432,25 +451,25 @@ If `cols` is supplied, the return is a line containing the list of field names f
 
     Returns:
 
-        Observation Start Time,Observation Stop Time
-        2017-02-24T03:03:29.866,2017-02-24T03:03:33.666
+      Observation Start Time,Observation Stop Time
+      2017-02-24T03:03:29.866,2017-02-24T03:03:33.666
 
-* Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
+* Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in CSV format:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
     Returns:
 
-        PDS Constraints
-        Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
-        COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
-        Image Constraints
-        Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
-        3.8000,1024,1024, [...]
+      PDS Constraints
+      Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+      COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+      Image Constraints
+      Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+      3.8000,1024,1024, [...]
 
-#### HTML Return        
+#### HTML Return Format
 
-If `cols` is supplied, the return is a description list containing name/value pairs where the name is the "pretty" name of the metadata field. If `cols` is not supplied, the return is a description list containing name/value pairs organized by category name.
+If the `cols` parameter is supplied, the return value is an HTML description list containing name/value pairs where the name is the "pretty" name of the metadata field. If the `cols` parameter is not supplied, the return value is an HTML description list containing name/value pairs organized by category name.
 
 Examples:
 
@@ -460,21 +479,21 @@ Examples:
 
     Returns:
 
-        <dl>
-        <dt>General Constraints</dt>
-        <dl>
-        <dt>Planet</dt><dd>Saturn</dd>
-        <dt>Intended Target Name</dt><dd>Saturn</dd>
-        [...]
-        </dl>
-        <dt>PDS Constraints</dt>
-        <dl>
-        <dt>Volume ID</dt><dd>COISS_2111</dd>
-        <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
-        [...]
-        </dl>
-        [...]
-        </dl>
+      <dl>
+      <dt>General Constraints</dt>
+      <dl>
+      <dt>Planet</dt><dd>Saturn</dd>
+      <dt>Intended Target Name</dt><dd>Saturn</dd>
+      [...]
+      </dl>
+      <dt>PDS Constraints</dt>
+      <dl>
+      <dt>Volume ID</dt><dd>COISS_2111</dd>
+      <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
+      [...]
+      </dl>
+      [...]
+      </dl>
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in HTML format:
 
@@ -482,10 +501,10 @@ Examples:
 
     Returns:
 
-        <dl>
-        <dt>Observation Start Time</dt><dd>2017-02-24T03:03:29.866</dd>
-        <dt>Observation Stop Time</dt><dd>2017-02-24T03:03:33.666</dd>
-        </dl>
+      <dl>
+      <dt>Observation Start Time</dt><dd>2017-02-24T03:03:29.866</dd>
+      <dt>Observation Stop Time</dt><dd>2017-02-24T03:03:33.666</dd>
+      </dl>
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
@@ -493,34 +512,315 @@ Examples:
 
     Returns:
 
-        <dl>
-        <dt>PDS Constraints</dt>
-        <dl>
-        <dt>Volume ID</dt><dd>COISS_2111</dd>
-        <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
-        <dt>Product ID</dt><dd>1_W1866600688.122</dd>
-        <dt>Product Creation Time</dt><dd>2017-02-25T09:50:35.000</dd>
-        <dt>Primary File Spec</dt><dd>COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG</dd>
-        <dt>OPUS ID</dt><dd>co-iss-w1866600688</dd>
-        <dt>Note</dt><dd>N/A</dd>
-        </dl>
-        <dt>Image Constraints</dt>
-        <dl>
-        <dt>Exposure Duration (secs)</dt><dd>3.8000</dd>
-        <dt>Greater Size in Pixels</dt><dd>1024</dd>
-        <dt>Lesser Size in Pixels</dt><dd>1024</dd>
-        <dt>Intensity Levels</dt><dd>4096</dd>
-        <dt>Image Type</dt><dd>Frame</dd>
-        </dl>
-        </dl>
+      <dl>
+      <dt>PDS Constraints</dt>
+      <dl>
+      <dt>Volume ID</dt><dd>COISS_2111</dd>
+      <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
+      <dt>Product ID</dt><dd>1_W1866600688.122</dd>
+      <dt>Product Creation Time</dt><dd>2017-02-25T09:50:35.000</dd>
+      <dt>Primary File Spec</dt><dd>COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG</dd>
+      <dt>OPUS ID</dt><dd>co-iss-w1866600688</dd>
+      <dt>Note</dt><dd>N/A</dd>
+      </dl>
+      <dt>Image Constraints</dt>
+      <dl>
+      <dt>Exposure Duration (secs)</dt><dd>3.8000</dd>
+      <dt>Greater Size in Pixels</dt><dd>1024</dd>
+      <dt>Lesser Size in Pixels</dt><dd>1024</dd>
+      <dt>Intensity Levels</dt><dd>4096</dd>
+      <dt>Image Type</dt><dd>Frame</dd>
+      </dl>
+      </dl>
 
 
 
 
 
-<h3 id="imagesfmt"><code>api/images.[fmt]</code> - Return Images from a Search</h3>
-<h3><code>api/images/[size].[fmt]</code> - Return Images from a Search</h3>
-<h3><code>api/image/[size]/[opusid].[fmt]</code> - Return Images of a Specific Size for an OPUS ID</h3>
+<h2 id="gettingdata">Getting Data</h2>
+
+<h3 id="downloadopusidzip"><code>api/download/[opusid].zip</code> - Download Files for an OPUS ID</h3>
+
+Download a ZIP file containing all (or some) of the products related to opusid.
+
+Supported return formats: `zip`.
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `urlonly=<N>` | If `urlonly=1` is specified, only include the `urls.txt` file and omit all data files | Include all data files |
+| `types=<types>` | List of product types to return | All product types  |
+
+#### Examples
+
+* Download all product types (including all data files) for a Voyager ISS observation:
+
+    %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip%ENDEXTLINK%
+
+* Download all product types (with no data files) for a Voyager ISS observation:
+
+    %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1%ENDEXTLINK%
+
+* Download only raw image files for a Galileo SSI observation.
+
+    %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi-raw
+
+
+
+
+
+
+<h3 id="filesjson"><code>api/files.json</code> - Return URLs of Files from a Search</h3>
+
+Get a list of all (or some) files for the search results.
+
+Supported return formats: `json`.
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `startobs=<N>` | The (1-based) observation number to start with | 1 |
+| `limit=<N>` | The maximum number of observations to return | 100 |
+| `types=<types>` | List of product types to return | All product types |
+
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
+
+| Field Name | Description |
+|---|---|
+| `start_obs` | Requested starting observation |
+| `limit` | Requested limit |
+| `count` | Number of observations actually returned |
+| `available` | Total number of observations available from this search |
+| `order` | Sort order |
+| `data` | The file information for the current version |
+| `versions` | The file information for all versions (including the current one) |
+
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+
+Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
+
+* Retrieve all files associated with images of Pan in volume COISS_2111 in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/files.json?volumeid=COISS_2111&target=pan%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "start_obs": 1,
+        "limit": 100,
+        "count": 56,
+        "available": 56,
+        "order": "time1,opusid",
+        "data": {
+          "co-iss-n1867599811": {
+            "coiss-raw": [
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+            ],
+            "coiss-calib": [
+            "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
+            "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
+            ],
+            "coiss-thumb": [
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
+            ],
+            [...]
+          },
+          "co-iss-n1867600166": {
+            "coiss-raw": [
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+            ],
+            [...]
+        },
+        [...]
+      }
+
+
+
+
+
+<h3 id="filesopusidjson"><code>api/files/[opusid].json</code> - Return URLs of Files for an OPUS ID</h3>
+
+Get the URLs of all (or some) files available for a single observation.
+
+Supported return formats: `json`.
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `types=<types>` | List of product types to return | All product types |
+
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
+
+| Field Name | Description |
+|---|---|
+| `data` | The file information for the current version |
+| `versions` | The file information for all versions (including the current one) |
+
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+
+Examples:
+
+* Retrieve all files associated with a Voyager ISS observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/files/vg-iss-2-s-c4360022.json%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "data": {
+          "vg-iss-2-s-c4360022": {
+            "vgiss-raw": [
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+            ],
+            "vgiss-cleaned": [
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+            ],
+            "vgiss-calib": [
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+            ],
+            [...]
+          }
+        },
+        "versions": {
+          "vg-iss-2-s-c4360022": {
+            "Current": {
+            "vgiss-raw": [
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+            ],
+            "vgiss-cleaned": [
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+            ],
+            "vgiss-calib": [
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+            ],
+            [...]
+            }
+          }
+        }
+      }    
+
+* Retrieve raw images only for a Galileo SSI observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "data": {
+          "go-ssi-c0349632000": {
+            "gossi-raw": [
+            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+            ]
+          }
+        },
+        "versions": {
+          "go-ssi-c0349632000": {
+            "1": {
+            "gossi-raw": [
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+            ]
+            },
+            "Current": {
+            "gossi-raw": [
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+            ]
+            }
+          }
+        }
+      }
+
+* Retrieve drizzle images from an HST WFC3 observation with multiple versions in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/files/hst-11559-wfc3-ib4v19rp.json%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "data": {
+          "hst-11559-wfc3-ib4v19rp": {
+            "hst-calib": [
+            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ],
+            "hst-drizzled": [
+            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ]
+          }
+        },
+        "versions": {
+          "hst-11559-wfc3-ib4v19rp": {
+            "Current": {
+            "hst-calib": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ],
+            "hst-drizzled": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ]
+            },
+            "1.1": {
+            "hst-calib": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ],
+            "hst-drizzled": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ]
+            },
+            "1.0": {
+            "hst-calib": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ],
+            "hst-drizzled": [
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+            ]
+            }
+          }
+        }
+      }
+
+
+
+
+
+<h3 id="imagesfmt"><code>api/images.[fmt]</code> - Return URLs of All Images from a Search</h3>
+<h3><code>api/images/[size].[fmt]</code> - Return URLs of Images of a Specific Size from a Search</h3>
+<h3><code>api/image/[size]/[opusid].[fmt]</code> - Return URLs of Images of a Specific Size for an OPUS ID</h3>
 
 Get the URLs of images of all sizes (or a given size) based on search criteria and sort order. Image URLs are returned in chunks to limit return size. The starting observation number and the number of observations desired can be specified. An image of a specific size may also be returned for a single OPUS ID.
 
@@ -528,17 +828,23 @@ If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
 Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
 
-#### Parameters:
+#### Parameters
 
-| Parameter | Description |
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `startobs=<N>` | The (1-based) observation number to start with | 1 |
+| `limit=<N>` | The maximum number of observations to return | 100 |
+
+#### JSON Return Format
+
+The return value is a JSON object containing this field:
+
+| Field Name | Description |
 |---|---|
-| `<slug>=<value>` | Search parameters (including sort order) |
-| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
-| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
+| `data` | The images data with one entry per returned observation |
 
-#### JSON Return
-
-When a search was requested, the return includes:
+When a search was requested, the JSON object also includes these fields:
 
 | Field Name | Description |
 |---|---|
@@ -548,9 +854,8 @@ When a search was requested, the return includes:
 | `available` | Total number of observations available from this search |
 | `order` | Sort order |
 | `labels` | Requested metadata field names (fully qualified) |
-| `data` | The images data with one entry per returned observation |
 
-When all sizes are requested, each entry is an object containing:
+When all sizes are requested, `data` is an object containing a series of entries, each with these fields:
 
 | Field Name | Description |
 |---|---|
@@ -561,7 +866,7 @@ When all sizes are requested, each entry is an object containing:
 | `<size>_height` | Height of the image in pixels |
 | `<size>_url` | Relative path to the image |
 
-When one size is requested, each entry is an object containing:
+When one size is requested, `data` an object containing a single entry with these fields:
 
 | Field Name | Description |
 |---|---|
@@ -572,535 +877,837 @@ When one size is requested, each entry is an object containing:
 | `height` | Height of the image in pixels |
 | `url` | Relative path to the image |
 
-Example:
+Examples:
 
-* Retrieve all sizes of images in JSON format for observations 10-11 from Cassini ISS volume COISS_2002.
+* Retrieve information in JSON format about all sizes of images for observations 10-11 from Cassini ISS volume COISS_2002.
 
     %EXTLINK%%HOST%/opus/api/images.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Returns:
 
-        {
-          "start_obs": 10,
-          "limit": 2,
-          "count": 2,
-          "available": 3296,
-          "order": "time1,opusid"
-          "data": [
-            {
-              "opus_id": "co-iss-n1460962327",
-              "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
-              "thumb_alt_text": "N1460962327_1_thumb.jpg",
-              "thumb_size_bytes": 864,
-              "thumb_width": 100,
-              "thumb_height": 100,
-              "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
-              "small_alt_text": "N1460962327_1_small.jpg",
-              "small_size_bytes": 1729,
-              "small_width": 256,
-              "small_height": 256,
-              [...]
-            },
+      {
+        "start_obs": 10,
+        "limit": 2,
+        "count": 2,
+        "available": 3296,
+        "order": "time1,opusid"
+        "data": [
+          {
+            "opus_id": "co-iss-n1460962327",
+            "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
+            "thumb_alt_text": "N1460962327_1_thumb.jpg",
+            "thumb_size_bytes": 864,
+            "thumb_width": 100,
+            "thumb_height": 100,
+            "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
+            "small_alt_text": "N1460962327_1_small.jpg",
+            "small_size_bytes": 1729,
+            "small_width": 256,
+            "small_height": 256,
             [...]
-          ]
-        }
+          },
+          [...]
+        ]
+      }
 
-* Retrieve medium-size images in JSON format for observations 10-11 from Cassini ISS volume COISS_2002.
+* Retrieve information in JSON format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
     %EXTLINK%%HOST%/opus/api/images/med.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Returns:
 
-        {
-          "start_obs": 10,
-          "limit": 2,
-          "count": 2,
-          "available": 3296,
-          "order": "time1,opusid",
-          "data": [
-            {
-              "opus_id": "co-iss-n1460962327",
-              "alt_text": "N1460962327_1_med.jpg",
-              "size_bytes": 4971,
-              "width": 512,
-              "height": 512,
-              "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
-            },
-            {
-              "opus_id": "co-iss-n1460962415",
-              "alt_text": "N1460962415_1_med.jpg",
-              "size_bytes": 4991,
-              "width": 512,
-              "height": 512,
-              "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
-            }
-          ]
-        }
+      {
+        "start_obs": 10,
+        "limit": 2,
+        "count": 2,
+        "available": 3296,
+        "order": "time1,opusid",
+        "data": [
+          {
+            "opus_id": "co-iss-n1460962327",
+            "alt_text": "N1460962327_1_med.jpg",
+            "size_bytes": 4971,
+            "width": 512,
+            "height": 512,
+            "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
+          },
+          {
+            "opus_id": "co-iss-n1460962415",
+            "alt_text": "N1460962415_1_med.jpg",
+            "size_bytes": 4991,
+            "width": 512,
+            "height": 512,
+            "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
+          }
+        ]
+      }
 
-* Retrieve the medium-size image in JSON format for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in JSON format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.json%ENDEXTLINK%
 
     Returns:
 
-        {
-          "data": [
-            {
-              "opus_id": "vg-iss-2-s-c4360022",
-              "alt_text": "C4360022_full.jpg",
-              "size_bytes": 24607,
-              "width": 800,
-              "height": 800,
-              "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
-            }
-          ]
-        }
+      {
+        "data": [
+          {
+            "opus_id": "vg-iss-2-s-c4360022",
+            "alt_text": "C4360022_full.jpg",
+            "size_bytes": 24607,
+            "width": 800,
+            "height": 800,
+            "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
+          }
+        ]
+      }
 
 
-#### CSV Return
+#### CSV Return Format
 
-The first returned line contains the column headers; after that is one row per observation containing the information about each image.
+The return value is a series of text lines. The first returned line contains the column headers. After that is one line per observation containing the information about each image.
 
 Example:
 
-* Retrieve all sizes of images in CSV format for observations 10-11 from Cassini ISS volume COISS_2002.
+* Retrieve information in CSV format about all sizes of images for observations 10-11 from Cassini ISS volume COISS_2002.
 
     %EXTLINK%%HOST%/opus/api/images.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Returns:
 
-        OPUS ID,Thumb URL,Small URL,Med URL,Full URL
-        co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
-        co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
+      OPUS ID,Thumb URL,Small URL,Med URL,Full URL
+      co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
+      co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
 
-* Retrieve medium-size images in CSV format for observations 10-11 from Cassini ISS volume COISS_2002.
+* Retrieve information in CSV format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
     %EXTLINK%%HOST%/opus/api/images/med.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Returns:
 
-        OPUS ID,URL
-        co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
-        co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
+      OPUS ID,URL
+      co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
+      co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
 
-* Retrieve the medium-size image in CSV format for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.csv%ENDEXTLINK%
 
     Returns:
 
-        OPUS ID,URL
-        vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
+      OPUS ID,URL
+      vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
 
-#### HTML Return
+#### HTML Return Format
 
-The return is a list containing the requested images.
+The return is an HTML list containing the URLs of the requested images.
 
 Example:
 
-* Retrieve medium-size images in HTML format for observations 10-11 from Cassini ISS volume COISS_2002.
+* Retrieve information in HTML format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
     %EXTLINK%%HOST%/opus/api/images/med.html?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
     Returns:
 
-        <ul>
-        <li>
-        <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
-        </li>
-        <li>
-        <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
-        </li>
-        </ul>
+      <ul>
+      <li>
+      <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
+      </li>
+      <li>
+      <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
+      </li>
+      </ul>
 
-* Retrieve the medium-size image in HTML format for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.html%ENDEXTLINK%
 
     Returns:
 
-        <ul>
-        <li>
-        <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
-        </li>
-        </ul>
+      <ul>
+      <li>
+      <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
+      </li>
+      </ul>
 
 
 
 
 
-<h3 id="filesjson"><code>api/files.json</code> - Return Files from a Search</h3>
+<h2 id="infosearchresults">Getting Information About Search Results</h2>
 
-Get a list of all (or some) files for the search results.
+<h3 id="resultcountfmt"><code>api/meta/result_count.[fmt]</code> - Result Count for a Search</h3>
 
-Supported return formats: `json`.
+Get the result count for a search.
+
+Supported return formats: `json`, `html`, `csv`
 
 #### Parameters
 
-| Parameter | Description |
-|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) |
-| `cols=<field list>` | Metadata fields to return |
-| `startobs=<N>` | The (1-based) observation number to start with; defaults to 1 |
-| `limit=<N>` | The maximum number of observations to return; defaults to 100 |
-| `types=<types>` | List of product types; if not supplied, all are returned |
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
 
-#### JSON Return
+Specifying a sort order will not change the number of results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `result_count.[fmt]` as well.
+
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
 
 | Field Name | Description |
 |---|---|
-| `start_obs` | Requested starting observation |
-| `limit` | Requested limit |
-| `count` | Number of observations actually returned |
-| `available` | Total number of observations available from this search |
-| `order` | Sort order |
-| `data` | The file information for the current version |
-| `versions` | The file information for all versions (including the current one) |
+| `data` | An object containing a single `result_count` field |
 
-`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+Example:
 
-Examples:
+* Retrieve the number of observations with Pan as the target in JSON format.
 
-* Retrieve all files associated with images of Pan in volume COISS_2111.
-
-    %EXTLINK%%HOST%/opus/api/files.json?volumeid=COISS_2111&target=pan%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/meta/result_count.json?target=Pan%ENDEXTLINK%
 
     Returns:
 
+      {
+        "data": [
+          {
+            "result_count": 1636
+          }
+        ]
+      }
+
+#### CSV Return Format
+
+The return value is a single text line with the label "result count" followed by the number of results.
+
+* Retrieve the number of observations with Pan as the target in CSV format.
+
+    %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
+
+Returns:
+
+      result count,1636
+
+#### HTML Return Format
+
+The return value is an HTML description list containing a single item specifying the label `result_count` and the number of results.
+
+* Retrieve the number of observations with Pan as the target in HTML format.
+
+    %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
+
+Returns:
+
+      <dl>
+      <dt>result_count</dt><dd>1636</dd>
+      </dl>
+
+
+
+
+
+<h3 id="multsfmt"><code>api/meta/mults/[field].[fmt]</code> - Return Possible Values for a Multiple-Choice Field</h3>
+
+Returns all possible values for a multiple-choice field, given a search, and the result count for each value if that value were added to the search constraints.
+
+Supported return formats: `json`, `html`, `csv`
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
+
+| Field Name | Description |
+|---|---|
+| `data` | An object containing a single `result_count` field |
+
+Example:
+
+* Retrieve the number of results broken down by `planet` for Hubble observations in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/meta/mults/planet.json?mission=Hubble%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "field": "planet",
+        "mults": {
+          "Earth": 10,
+          "Mars": 354,
+          "Jupiter": 7956,
+          "Saturn": 4885,
+          "Uranus": 3395,
+          "Neptune": 1800,
+          "Pluto": 2051,
+          "Other": 892
+        }
+      }
+
+#### CSV Return Format
+
+The return value is two text lines. The first is a list of choices. The second is a list of result counts broken down by choice.
+
+* Retrieve the number of results broken down by `planet` for Hubble observations in CSV format.
+
+    %EXTLINK%%HOST%/opus/api/meta/mults/planet.csv?mission=Hubble%ENDEXTLINK%
+
+    Returns:
+
+      Earth,Mars,Jupiter,Saturn,Uranus,Neptune,Pluto,Other
+      10,354,7956,4885,3395,1800,2051,892
+
+#### HTML Return Format
+
+The return value is an HTML description list containing the choices and the result counts broken down by choice.
+
+Example:
+
+* Retrieve the number of results in HTML format broken down by `planet` for Hubble observations.
+
+    %EXTLINK%%HOST%/opus/api/meta/mults/planet.csv?mission=Hubble%ENDEXTLINK%
+
+    Returns:
+
+      <dl>
+      <dt>Earth</dt><dd>10</dd>
+      <dt>Mars</dt><dd>354</dd>
+      <dt>Jupiter</dt><dd>7956</dd>
+      <dt>Saturn</dt><dd>4885</dd>
+      <dt>Uranus</dt><dd>3395</dd>
+      <dt>Neptune</dt><dd>1800</dd>
+      <dt>Pluto</dt><dd>2051</dd>
+      <dt>Other</dt><dd>892</dd>
+      </dl>
+
+
+
+
+
+<h3 id="endpointsfmt"><code>api/meta/range/endpoints/[field].[fmt]</code> - Return Range Endpoints for a Numeric Field</h3>
+
+Return range endpoints for a numeric field, given a search.
+
+Supported return formats: `json`, `html`, `csv`
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `units=<unit>` | The units to use for the returned values | The default unit for the field |
+
+#### JSON Return Format
+
+The return value is a JSON object containing these fields:
+
+| Field Name | Description |
+|---|---|
+| `min` | The minimum value for the field |
+| `max` | The maximum value for the field |
+| `nulls` | The number of null values for the field |
+| `units` | The units of the returned `min` and `max` fields |
+
+Examples:
+
+* Retrieve the range endpoints in the default units (km) for Observed Ring Radius for all Saturn observations in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "min": "334.161",
+        "max": "12873823.895",
+        "nulls": 125566,
+        "units": "km"
+      }
+
+* Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "min": "0.00553888613",
+        "max": "213.39008610973",
+        "nulls": 125566,
+        "units": "saturnradii"
+      }
+
+#### CSV Return Format
+
+The return value is a series of text lines. The first line contains the column labels `min,max,nulls,units`. The second line contains the associated values.
+
+Examples:
+
+* Retrieve the range endpoints in the default units (km) for Observed Ring Radius for all Saturn observations in CSV format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn%ENDEXTLINK%
+
+    Returns:
+
+      min,max,nulls,units
+      334.161,12873823.895,125566,km
+
+* Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in CSV format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
+
+    Returns:
+
+      min,max,nulls,units
+      0.00553888613,213.39008610973,125566,saturnradii
+
+#### HTML Return Format
+
+The return value is an HTML description list containing name/value pairs where the name is the label and the value is the associated value.
+
+Examples:
+
+* Retrieve the range endpoints in the default units (km) for Observed Ring Radius for all Saturn observations in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn%ENDEXTLINK%
+
+    Returns:
+
+      <dl>
+      <dt>min</dt><dd>334.161</dd>
+      <dt>max</dt><dd>12873823.895</dd>
+      <dt>nulls</dt><dd>125566</dd>
+      <dt>units</dt><dd>km</dd>
+      </dl>
+
+* Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
+
+    Returns:
+
+      <dl>
+      <dt>min</dt><dd>0.00553888613</dd>
+      <dt>max</dt><dd>213.39008610973</dd>
+      <dt>nulls</dt><dd>125566</dd>
+      <dt>units</dt><dd>saturnradii</dd>
+      </dl>
+
+
+
+
+
+
+<h3 id="categoriesfmt"><code>api/categories.json</code> - Return Categories from a Search</h3>
+
+Return all category names common to the results of a particular search.
+
+Supported return formats: `json`
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+
+#### JSON Return Format
+
+The return value is a JSON list of objects each containing information about one category that contains data for the given OPUS ID. Each category is described by:
+
+| Field Name | Description |
+|---|---|
+| `table_name` | The internal database table table (e.g. `obs_general`) |
+| `label` | The pretty label as displayed to the user (e.g. `General Constraints`) |
+
+Example:
+
+* Retrieve the categories for a Cassini ISS observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/categories.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
+
+    Returns:
+
+      [
         {
-          "start_obs": 1,
-          "limit": 100,
-          "count": 56,
-          "available": 56,
-          "order": "time1,opusid",
-          "data": {
-            "co-iss-n1867599811": {
-              "coiss-raw": [
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
-              ],
-              "coiss-calib": [
-                "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
-                "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
-              ],
-              "coiss-thumb": [
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
-              ],
-              [...]
-            },
-            "co-iss-n1867600166": {
-              "coiss-raw": [
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-                "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
-              ],
-              [...]
+          "table_name": "obs_general",
+          "label": "General Constraints"
+        },
+        {
+          "table_name": "obs_pds",
+          "label": "PDS Constraints"
+        },
+        {
+          "table_name": "obs_type_image",
+          "label": "Image Constraints"
+        },
+        {
+          "table_name": "obs_wavelength",
+          "label": "Wavelength Constraints"
+        },
+        {
+          "table_name": "obs_surface_geometry__methone",
+          "label": "Methone Surface Geometry Constraints"
+        },
+        {
+          "table_name": "obs_ring_geometry",
+          "label": "Ring Geometry Constraints"
+        }
+      ]
+
+
+
+
+
+<h3 id="categoriesopusidfmt"><code>api/categories/[opusid].json</code> - Return Categories for an OPUS ID</h3>
+
+Return a list of all categories an OPUS ID exists in.
+
+Supported return formats: `json`
+
+#### Parameters
+
+There are no parameters.
+
+#### JSON Return Format
+
+The return value is a JSON list of objects each containing information about one category that contains data for the given OPUS ID. Each category is described by:
+
+| Field Name | Description |
+|---|---|
+| `table_name` | The internal database table table (e.g. `obs_general`) |
+| `label` | The pretty label as displayed to the user (e.g. `General Constraints`) |
+
+Example:
+
+* Retrieve the categories for a Cassini ISS observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/categories/co-iss-w1866600688.json%ENDEXTLINK%
+
+    Returns:
+
+      [
+        {
+          "table_name": "obs_general",
+          "label": "General Constraints"
+        },
+        {
+          "table_name": "obs_pds",
+          "label": "PDS Constraints"
+        },
+        {
+          "table_name": "obs_type_image",
+          "label": "Image Constraints"
+        },
+        {
+          "table_name": "obs_wavelength",
+          "label": "Wavelength Constraints"
+        },
+        {
+          "table_name": "obs_surface_geometry__daphnis",
+          "label": "Daphnis Surface Geometry Constraints"
+        },
+        {
+          "table_name": "obs_surface_geometry__epimetheus",
+          "label": "Epimetheus Surface Geometry Constraints"
+        },
+        {
+          "table_name": "obs_surface_geometry__saturn",
+          "label": "Saturn Surface Geometry Constraints"
+        },
+        {
+          "table_name": "obs_ring_geometry",
+          "label": "Ring Geometry Constraints"
+        },
+        {
+          "table_name": "obs_mission_cassini",
+          "label": "Cassini Mission Constraints"
+        },
+        {
+          "table_name": "obs_instrument_coiss",
+          "label": "Cassini ISS Constraints"
+        }
+      ]
+
+
+
+
+
+<h3 id="fieldsfmt"><code>api/fields.[fmt]</code> - Return Information About All Metadata Fields</h3>
+
+Return information about all metadata fields.
+
+Supported return formats: `json`, `csv`
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `collapse=<N>` | If `collapse=1` is given, collapse all surface geometry entries into single generic-target entries |
+
+#### JSON Return Format
+
+The return value is a JSON object containing this field:
+
+| Field Name | Description |
+|---|---|
+| `data` | An object containing information about all fields |
+
+`data` is an object indexed by field slug containing:
+
+| Field Name | Description |
+|---|---|
+| `slug` | The field slug name |
+| `category` | The full name of the category to which the field belongs |
+| `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
+| `full_search_label` | The field name without Min/Max qualifiers but with the category name |
+| `label` | The field name as shown when displaying results (with Min/Max qualifiers as appropriate) |
+| `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
+| `available_units` | The units that can be used for searching with this field |
+| `default_units` | The default units when none is specified |
+
+Examples:
+
+* Retrieve information about all fields in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "data": {
+          "planet": {
+            "label": "Planet",
+            "search_label": "Planet",
+            "full_label": "Planet",
+            "full_search_label": "Planet [General]",
+            "default_units": null,
+            "available_units": null,
+            "category": "General Constraints",
+            "slug": "planet"
+          },
+          [...]
+          "rightasc1": {
+            "label": "Right Ascension (Min)",
+            "search_label": "Right Ascension",
+            "full_label": "Right Ascension (Min)",
+            "full_search_label": "Right Ascension [General]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "General Constraints",
+            "slug": "rightasc1"
+          },
+          "rightasc2": {
+            "label": "Right Ascension (Max)",
+            "search_label": "Right Ascension",
+            "full_label": "Right Ascension (Max)",
+            "full_search_label": "Right Ascension [General]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "General Constraints",
+            "slug": "rightasc2"
+          },
+          [...]
+          "SURFACEGEOumbrielplanetographiclatitude1": {
+            "label": "Observed Planetographic Latitude (Min)",
+            "search_label": "Observed Planetographic Latitude",
+            "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
+            "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "Umbriel Surface Geometry Constraints",
+            "slug": "SURFACEGEOumbrielplanetographiclatitude1"
+          },
+          "SURFACEGEOumbrielplanetographiclatitude2": {
+            "label": "Observed Planetographic Latitude (Max)",
+            "search_label": "Observed Planetographic Latitude",
+            "full_label": "Observed Planetographic Latitude (Max) [Umbriel]",
+            "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "Umbriel Surface Geometry Constraints",
+            "slug": "SURFACEGEOumbrielplanetographiclatitude2"
           },
           [...]
         }
+      }
+
+* Retrieve information about all fields in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/fields.json?collapse=1%ENDEXTLINK%
+
+    Returns:
+
+      {
+        "data": {
+          [...]
+          "SURFACEGEO<TARGET>planetographiclatitude1": {
+            "label": "Observed Planetographic Latitude (Min)",
+            "search_label": "Observed Planetographic Latitude",
+            "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
+            "full_search_label": "Observed Planetographic Latitude [Saturn]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "<TARGET> Surface Geometry Constraints",
+            "slug": "SURFACEGEO<TARGET>planetographiclatitude1"
+          },
+          "SURFACEGEO<TARGET>planetographiclatitude2": {
+            "label": "Observed Planetographic Latitude (Max)",
+            "search_label": "Observed Planetographic Latitude",
+            "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
+            "full_search_label": "Observed Planetographic Latitude [Saturn]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "<TARGET> Surface Geometry Constraints",
+            "slug": "SURFACEGEO<TARGET>planetographiclatitude2"
+          },
+        [...]
+        }
+      }
+
+#### CSV Return Format
+
+The return value is a series of text lines. The first line contains the column headers. After that is one line per metadata field containing the field information.
+
+Example:
+
+* Retrieve information about all fields in CSV format.
+
+    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+
+    Returns:
+
+      Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+      planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+      target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
+      [...]
+      rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
+      rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
+      declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
+      declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
+      [...]
 
 
 
 
-<h3 id="filesopusidjson"><code>api/files/[opusid].json</code> - Return Files for an OPUS ID</h3>
 
-Get the URLs of all (or some) files available for a single observation.
+<h3 id="fieldsfieldfmt"><code>api/fields/[field].[fmt]</code> - Return Information About a Metadata Field</h3>
 
-Supported return formats: `json`.
+Return information about a particular metadata field.
 
-Parameters:
+Supported return formats: `json`, `csv`
 
-| Parameter | Description |
-|---|---|
-| `types=<types>` | List of product types; if not supplied, all are returned |
+#### Parameters
 
-#### JSON Return
+There are no parameters.
+
+#### JSON Return Format
+
+The return value is a JSON object containing this field:
 
 | Field Name | Description |
 |---|---|
-| `data` | The file information for the current version |
-| `versions` | The file information for all versions (including the current one) |
+| `data` | An object containing information about the requested field |
 
-`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+`data` is an object indexed by field slug containing:
+
+| Field Name | Description |
+|---|---|
+| `slug` | The field slug name |
+| `category` | The full name of the category to which the field belongs |
+| `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
+| `full_search_label` | The field name without Min/Max qualifiers but with the category name |
+| `label` | The field name as shown when displaying results (with Min/Max qualifiers as appropriate) |
+| `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
+| `available_units` | The units that can be used for searching with this field |
+| `default_units` | The default units when none is specified |
 
 Examples:
 
-* Retrieve all files associated with a Voyager ISS observation
+* Retrieve information about the `planet` field in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/files/vg-iss-2-s-c4360022.json%ENDEXTLINK%
-
-    Returns:
-
-        {
-          "data": {
-            "vg-iss-2-s-c4360022": {
-              "vgiss-raw": [
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
-              ],
-              "vgiss-cleaned": [
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
-              ],
-              "vgiss-calib": [
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
-              ],
-              [...]
-            }
-          },
-          "versions": {
-            "vg-iss-2-s-c4360022": {
-              "Current": {
-                "vgiss-raw": [
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
-                ],
-                "vgiss-cleaned": [
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
-                ],
-                "vgiss-calib": [
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-                  "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
-                ],
-                [...]
-              }
-            }
-          }
-        }    
-
-* Retrieve raw images only for a Galileo SSI observation.
-
-    %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw
+    %EXTLINK%%HOST%/opus/api/fields/planet.json%ENDEXTLINK%
 
     Returns:
 
-        {
-          "data": {
-            "go-ssi-c0349632000": {
-              "gossi-raw": [
-                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-                "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
-              ]
-            }
-          },
-          "versions": {
-            "go-ssi-c0349632000": {
-              "1": {
-                "gossi-raw": [
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
-                ]
-              },
-              "Current": {
-                "gossi-raw": [
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-                  "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
-                ]
-              }
-            }
+      {
+        "data": {
+          "planet": {
+            "label": "Planet",
+            "search_label": "Planet",
+            "full_label": "Planet",
+            "full_search_label": "Planet [General]",
+            "default_units": null,
+            "available_units": null,
+            "category": "General Constraints",
+            "slug": "planet"
           }
         }
+      }
 
-* Retrieve drizzle images from an HST WFC3 observation with multiple versions.
+* Retrieve information about the `SURFACEGEOrheacenterphaseangle` field in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/files/hst-11559-wfc3-ib4v19rp.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrheacenterphaseangle.json%ENDEXTLINK%
 
     Returns:
 
-        {
-          "data": {
-            "hst-11559-wfc3-ib4v19rp": {
-              "hst-calib": [
-                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-              ],
-              "hst-drizzled": [
-                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-                "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-              ]
-            }
-          },
-          "versions": {
-            "hst-11559-wfc3-ib4v19rp": {
-              "Current": {
-                "hst-calib": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ],
-                "hst-drizzled": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ]
-              },
-              "1.1": {
-                "hst-calib": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ],
-                "hst-drizzled": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ]
-              },
-              "1.0": {
-                "hst-calib": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ],
-                "hst-drizzled": [
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-                  "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-                ]
-              }
-            }
+      {
+        "data": {
+          "SURFACEGEOrheacenterphaseangle": {
+            "label": "Phase Angle at Body Center",
+            "search_label": "Phase Angle at Body Center",
+            "full_label": "Phase Angle at Body Center [Rhea]",
+            "full_search_label": "Phase Angle at Body Center [Rhea]",
+            "default_units": "degrees",
+            "available_units": [
+            "degrees",
+            "hourangle",
+            "radians"
+            ],
+            "category": "Rhea Surface Geometry Constraints",
+            "slug": "SURFACEGEOrheacenterphaseangle",
+            "old_slug": "surfacegeometryrheacenterphaseangle"
           }
         }
+      }
 
-### api/download/[opusid].zip
+#### CSV Return Format
 
-Download a ZIP file containing all the products related to opus_id
+The return value is a series of text lines. The first line contains the column headers. After that is one line per metadata field containing the field information.
 
-Parameters:
+Example:
 
-* urlonly=N (Optional; if urlonly=1, only include the urls.txt file and omit all data files from the resulting zip)
-* types=<types> (List of product types; if not supplied, all are returned)
-examples:
--
-A Voyager ISS observation
-url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip
--
-A Voyager ISS observation, URLs only
-url: <HOST>/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1
+* Retrieve information about the `planet` field in CSV format.
 
-### Getting Information about Data
-endpoints:
+    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
 
-### api/meta/result_count.[fmt]
+    Returns:
 
-Get the result count for a search
-
-Supported return formats: json,html,csv
-
-Parameters:
-
-* search params (If not supplied, all results are returned)
-examples:
--
-Target Pan in JSON
-url: <HOST>/opus/api/meta/result_count.json?target=Pan
--
-Target Pan in HTML
-url: <HOST>/opus/api/meta/result_count.html?target=Pan
--
-Target Pan in CSV
-url: <HOST>/opus/api/meta/result_count.csv?target=Pan
-
-### api/meta/mults/[param].[fmt]
-
-Returns all possible values for a given multiple choice field, given a search, and the result count for each value.
-param: param name
-fmt : json,html,csv
-
-Parameters:
-
-* search params (If not supplied, the result is not constrained)
-examples:
--
-Get all possible targets and counts for each when planet=Saturn in JSON
-url: <HOST>/opus/api/meta/mults/target.json?planet=Saturn
--
-Get all possible targets and counts for each when planet=Saturn in HTML
-url: <HOST>/opus/api/meta/mults/target.html?planet=Saturn
--
-Get all possible targets and counts for each when planet=Saturn in CSV
-url: <HOST>/opus/api/meta/mults/target.csv?planet=Saturn
-
-### api/meta/range/endpoints/[param].[fmt]
-
-Get range endpoints for a field, given a search
-param: param name
-
-Supported return formats: json,html,csv
-
-Parameters:
-
-* search params (If not supplied, the result is not constrained)
-examples:
--
-Get ring radius endpoints for target Saturn in JSON
-url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn
--
-Get ring radius endpoints for target Saturn in HTML
-url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.html?target=Saturn
--
-Get ring radius endpoints for target Saturn in CSV
-url: <HOST>/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn
-
-### api/categories/[opusid].json
-
-Return a list of all table names this opus_id exists in.
-opus_id: valid opus_id
-JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
-examples:
--
-Category names for a Cassini ISS observation
-url: <HOST>/opus/api/categories/co-iss-w1866600688.json
-
-### api/categories.json
-
-List all category names triggered by a particular search.
-
-Parameters:
-
-* search params (If not supplied, the result is not constrained)
-JSON return: "List of {'table_name': internal name, 'label': user-visible name}"
-examples:
--
-Category names in JSON for a search for Methone
-url: <HOST>/opus/api/categories.json?surfacegeometrytargetname=Methone
-
-### api/fields/[field].[fmt]
-
-Get information about a particular field
-field: field slug
-
-Supported return formats: json,csv
-JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
-examples:
--
-Get information about the "planet" field
-url: <HOST>/opus/api/fields/planet.json
--
-Get information about the "Rhea body center phase angle" field
-url: <HOST>/opus/api/fields/SURFACEGEOrheacenterphaseangle.json
-
-### api/fields.[fmt]
-
-Get information about all fields
-
-Supported return formats: json,csv
-
-Parameters:
-
-* collapse=1 (collapse all surface geo entries into single generic-target entries)
-JSON response: "{'data': {slug: {'category': Pretty category name, 'label': Pretty field name, 'slug': slug, 'old_slug': previous slug (deprecated)}}}"
-examples:
--
-Get information about all fields
-url: <HOST>/opus/api/fields.json
--
-Get information about all fields but collapse surface geo fields
-url: <HOST>/opus/api/fields.json?collapse=1
+      Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+      planet,General Constraints,Planet,Planet,Planet [General],Planet,,
 
 --------------------------------------------------------------------------------

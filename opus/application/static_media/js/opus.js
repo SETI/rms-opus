@@ -845,7 +845,7 @@ var opus = {
                 break;
             case "faq":
                 url += "faq.html";
-                header = "Frequently Asked Questions (FAQ)";
+                header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
             case "guide":
                 url += "guide.html";
@@ -859,7 +859,7 @@ var opus = {
                 break;
             case "gettingStarted":
                 url += "gettingstarted.html";
-                header = "Getting Started";
+                header = "Getting Started with OPUS";
                 break;
             case "contact":
                 FeedbackMethods.open();
@@ -911,9 +911,12 @@ var opus = {
                 $(".op-open-help .btn").on("click", function(e) {
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
+                    contentsHtml = `<div class="op-help-contents-printable"><h1>${header}</h1>${contentsHtml}</div>`
                     $(contents).html(contentsHtml);
                     let newTabWindow = window.open("", "_blank");
                     $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, o_utils.getWindowURLPrefix()+"/static_media"));
+                    newTabWindow.document.getElementsByTagName("title")[0].innerHTML = header;
+                    console.log(newTabWindow.document.getElementsByTagName("title")[0]);
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
