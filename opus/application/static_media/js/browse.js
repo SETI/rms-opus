@@ -168,7 +168,9 @@ var o_browse = {
 
         // data_table - clicking a table row adds to cart
         $(".op-data-table").on("click", ":checkbox", function(e) {
+            // TODO: visit this one later
             if ($(this).val() == "all") {
+                console.log("Click checkbox in the 1st column of table header");
                 // checkbox not currently implemented
                 // pop up a warning if selection total is > 100 items,
                 // with the total number to be selected...
@@ -1486,9 +1488,18 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
+        let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
+                       " data-action='addall' title='Add All Results to Cart'>";
+        // let tool = "<a href='#' class='' title='Tools'>" +
+        //            "<i class='fas fa-toolbox'></i></a>";
+        let toolsIcon = "<i class='fas fa-toolbox' title='Tools'></i>";
+        let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-browse-table-first-col'>" +
+                                  "<div>" + checkbox + toolsIcon + "</div></th>";
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
-        $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
+        $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
+
+        // $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
+        // console.log(columns)
         $.each(columns, function(index, header) {
             let slug = slugs[index];
 
@@ -1507,7 +1518,7 @@ var o_browse = {
     },
 
     initResizableColumn: function(tab) {
-        $(`${tab} .op-data-table th div`).resizable({
+        $(`${tab} .op-data-table th div:not(:first)`).resizable({
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
