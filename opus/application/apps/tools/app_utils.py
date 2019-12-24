@@ -7,14 +7,12 @@
 from collections import OrderedDict
 import csv
 import datetime
-from io import StringIO
 import json
 import os
 import random
 import string
 import subprocess
 import time
-from zipfile import ZipFile
 
 from django.core import serializers
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -116,7 +114,7 @@ def response_formats(data, fmt, **kwargs):
 
 
     elif fmt == 'zip':
-        return zipped(json.dumps(data))
+        assert False
 
     elif fmt == 'raw':
         return data
@@ -143,32 +141,6 @@ def response_formats(data, fmt, **kwargs):
 
     raise Http404
 
-
-def zipped(data):
-    "Create a zip file from the given data"
-    # XXX NOTE: Zip file creation is completely broken and all of this needs
-    # to be rewritten. This is just a placeholder for now so that the API calls
-    # don't crash. Downloading of archive zip files does not use this routine
-    # and still works fine.
-    filename = download_file_name()
-
-    # in_memory = StringIO()
-    # zip = ZipFile(in_memory, "a")
-    # zip.writestr(filename + '.txt', str(data))
-    #
-    # # fix for Linux zip files read in Windows
-    # for file in zip.filelist:
-    #     file.create_system = 0
-    #
-    # zip.close()
-
-    response = HttpResponse(content_type="application/zip")
-    response["Content-Disposition"] = "attachment; filename=" + filename + ".zip"
-
-    # in_memory.seek(0)
-    # response.write(in_memory.read())
-
-    return response
 
 def download_file_name():
     "Create a unique download filename based on the current time"
@@ -268,7 +240,10 @@ def exit_api_call(api_code, ret):
         ret_str = ' '.join(ret_str.split()) # Compress whitespace
         s += ': ' + ret_str[:240]
         if isinstance(ret, HttpResponse):
-            s += '\n' + ret.content.decode()[:240]
+            try:
+                s += '\n' + ret.content.decode()[:240]
+            except:
+                s += '\n(Unable to display)'
         if delay_amount:
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
