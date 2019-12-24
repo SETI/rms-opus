@@ -916,7 +916,6 @@ var opus = {
                     let newTabWindow = window.open("", "_blank");
                     $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, o_utils.getWindowURLPrefix()+"/static_media"));
                     newTabWindow.document.getElementsByTagName("title")[0].innerHTML = header;
-                    console.log(newTabWindow.document.getElementsByTagName("title")[0]);
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
