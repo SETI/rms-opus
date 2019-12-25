@@ -809,6 +809,9 @@ var opus = {
                         case "op-restore-recycle-bin":
                             o_cart.restoreRecycleBin();
                             break;
+                        case "op-addall-to-cart":
+                            o_browse.addAllToCart();
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;

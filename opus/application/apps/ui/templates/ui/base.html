@@ -364,6 +364,17 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-addall-to-cart"
+            confirm_title="Confirm Add All Observations To Cart"
+            confirm_msg="Are you sure you want to add all observations to the cart?"
+            target="op-addall-to-cart"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from the cart?"

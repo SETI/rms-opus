@@ -168,16 +168,7 @@ var o_browse = {
 
         // data_table - clicking a table row adds to cart
         $(".op-data-table").on("click", ":checkbox", function(e) {
-            // TODO: visit this one later
-            if ($(this).val() == "all") {
-                console.log("Click checkbox in the 1st column of table header");
-                // checkbox not currently implemented
-                // pop up a warning if selection total is > 100 items,
-                // with the total number to be selected...
-                // if OK, use 'addall' api and loop tru all checkboxes to set them as selected
-                //o_cart.editCart("all",action);
-                return false;
-            }
+            // Click the checkbox of each individual observation
             let tab = opus.getViewTab();
             let opusId = $(this).val();
 
@@ -446,6 +437,10 @@ var o_browse = {
 
                 case "info":  // detail page
                     o_browse.showDetail(e, opusId);
+                    break;
+
+                case "addall":
+                    o_browse.addAllToCart();
                     break;
 
                 case "downloadCSV":
@@ -1488,18 +1483,21 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
-                       " data-action='addall' title='Add All Results to Cart'>";
+        let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart' " +
+                         "class='op-browse-table-header-addall btn btn-link'>" +
+                         "<i class='fas fa-cart-plus data-action='addall'" +
+                         " title='Add All Results to Cart'></i></button>";
+        // let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
+        //                " data-action='addall' title='Add All Results to Cart'>";
         // let tool = "<a href='#' class='' title='Tools'>" +
         //            "<i class='fas fa-toolbox'></i></a>";
         let toolsIcon = "<i class='fas fa-toolbox' title='Tools'></i>";
         let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-browse-table-first-col'>" +
-                                  "<div>" + checkbox + toolsIcon + "</div></th>";
+                                  "<div>" + addallIcon + toolsIcon + "</div></th>";
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
-
         // $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
-        // console.log(columns)
+
         $.each(columns, function(index, header) {
             let slug = slugs[index];
 
@@ -2247,4 +2245,51 @@ var o_browse = {
         let csvLink = `/opus/__api/data.csv?${selectionsHashStr}cols=${colStr}&limit=${resultCountStr}&order=${orderStr}`;
         $(obj).attr("href", csvLink);
     },
+
+    addAllToCart: function() {
+        /**
+         * Add all observations to the cart. Also highlight all observations
+         * in browse tab.
+         */
+        // Set reloadObservationData to true to load the latest data in cart tab later
+        // (call "/opus/__cart/view.html" in activateCartTab).
+        o_cart.reloadObservationData = true;
+
+        o_cart.showCartCountSpinner();
+        o_cart.showDownloadSpinner();
+        o_browse.showPageLoaderSpinner();
+        let tab = opus.getViewTab();
+        let url = o_cart.getEditURL(null, "addall");
+        let elementArray = $(`${tab} .op-thumbnail-container`);
+        let checked = true;
+        $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
+            o_utils.enableUserInteraction();
+
+            if (statusData.error) {
+                // if previous error modal is currently open, we store the error message for later displaying
+                if ($("#op-cart-status-error-msg").hasClass("show")) {
+                    o_cart.statusDataErrorCollector.push(statusData.error);
+                } else {
+                    $("#op-cart-status-error-msg .modal-body").text(statusData.error);
+                    $("#op-cart-status-error-msg").modal("show");
+                }
+            } else {
+                $.each(elementArray, function(index, elem) {
+                    let opusId = $(elem).data("id");
+                    $(`.op-thumbnail-container[data-id=${opusId}]`).addClass("op-in-cart");
+                    $(`#cart tr[data-id=${opusId}]`).removeClass("text-success op-recycled");
+                    $(`#cart .op-thumbnail-container[data-id=${opusId}] .op-recycle-overlay`).addClass("op-hide-element");
+                    if ($(`#galleryViewContents .op-cart-toggle[data-id="${opusId}"]`).length > 0) {
+                        $("#galleryViewContents .op-metadata-details .op-recycle-modal").addClass("op-hide-element");
+                    }
+
+                    $("input[name="+opusId+"]").prop("checked", checked);
+                    o_browse.updateCartIcon(opusId, status);
+                });
+            }
+            o_cart.updateCartStatus(statusData);
+            o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
+            o_browse.hidePageLoaderSpinner();
+        });
+    }
 };

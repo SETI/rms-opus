@@ -2343,10 +2343,12 @@ at the right of -- OR -- label. */
 }
 
 /* Styling for the first column of table header in browse tab */
-/* .op-browse-table-first-col a { */
-.op-browse-table-first-col i {
-    display: inline-block !important;
-    /* color: #FFFFFF; */
-    /* color: #20A8D8; */
-    padding-left: 3px !important;
+.op-browse-table-first-col div {
+    padding-right: 4px;
+}
+
+.op-browse-table-header-addall {
+    padding: 0px;
+    color: #FFFFFF;
+    padding-right: 3px;
 }
