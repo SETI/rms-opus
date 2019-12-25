@@ -440,7 +440,7 @@ var o_browse = {
                     break;
 
                 case "addall":
-                    o_browse.addAllToCart();
+                    $("#op-addall-to-cart").modal("show");
                     break;
 
                 case "downloadCSV":
