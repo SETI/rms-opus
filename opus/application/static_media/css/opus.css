@@ -1883,7 +1883,19 @@ footer {
     border: 1px solid black;
 }
 
-.op-help-api-guide code {
+.op-help-api-guide .op-api-guide-code-block {
+    margin-left: 3em;
+    padding-left: 1em;
+    margin-right: 3em;
+    border-left-style: solid;
+}
+
+.op-help-api-guide .op-api-guide-code-block code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+}
+
+.op-help-api-guide .op-api-guide-code code {
     white-space: pre-wrap !important;
     word-break: break-all !important;
 }

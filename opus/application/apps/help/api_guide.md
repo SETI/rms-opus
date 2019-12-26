@@ -53,7 +53,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API consists of requests encoded in a single URL passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&` and `=` are required to be encoded if used as a parameter's value.
+The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&` and `=` are required to be encoded if used as a parameter's value.
 
 Examples:
 
@@ -71,25 +71,29 @@ Examples:
 
 <h2 id="opusdatabase">The OPUS Database</h2>
 
-The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number; the exact format of the OPUS ID varies by mission and instrument (examples: Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a _slug_, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [here](#availablefields) or through an API call described [[XXXhere]].
+The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number; the exact format of the OPUS ID varies by mission and instrument (e.g. Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a _fieldid_, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [here](#availablefields) or through the API calls [`api/categories.json`](#categoriesfmt), [`api/categories/[opusid].json`](#categoriesopusidfmt), [`api/fields.[fmt]`](#fieldsfmt), and [`api/fields/[field].[fmt]`](#fieldsfmt).
 
-There are 3 basic types of fields stored in the database: _multiple-choice_, _string_, and _range_.
+There are three basic types of fields stored in the database: _multiple-choice_, _string_, and _range_.
 
 * **Multiple-choice** fields contain a single value chosen from a set of valid values. For example, the `Mission` field may contain values such as `Cassini`, `Voyager`, or `Hubble`.
-* **String** fields contain a single string of arbitrary characters. The formatting is specific to the individual field (e.g. a PDS3 volume ID might look like "COISS_2001" while a Dataset ID might look like "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0").
+* **String** fields contain a single string of arbitrary characters. The formatting is specific to the individual field (e.g. PDS3 volume ID: "COISS_2001", Dataset ID: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0").
 * **Range** fields contain either a single value or a pair of values (minimum and maximum). Depending on the field, values may be integers, floating point values, date/time strings, or specially-formatted values such as spacecraft clock count. A single-value field is used for cases where there is only a single value for each observation, such as observation duration (there is only a single duration of time for each observation). Fields with both a minimum and maximum are used when a range of values is appropriate. Examples include observation time (where minimum is the starting time and maximum is the ending time) or right ascension (where minimum and maximum represent the range of right ascension values covered by an observation).
 
 <h2 id="retrievingmetadata">Retrieving Metadata</h2>
 
-Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fields>`, where `<fields>` is a comma-separated list of slugs. For example:
+Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fieldids>`, where `<fieldids>` is a comma-separated list of `fieldid`. For example:
 
-      cols=opusid,instrument,planet,target,time1,time2
+%CODE%
+cols=opusid,instrument,planet,target,time1,time2
+%ENDCODE%
 
 When a `cols` parameter is supported but none is provided, the default columns are used: `opusid,instrument,planet,target,time1,observationduration`.
 
-If a metadata field is a _single-value range_, then that slug **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicates the minimum and a `2` suffix indicates the maximum. For example:
+If a metadata field is a _single-value range_, then that `fieldid` **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicating the minimum a `2` suffix indicating the maximum must be provided. For example:
 
-      cols=observationduration,rightasc1,rightasc2
+%CODE%
+cols=observationduration,rightasc1,rightasc2
+%ENDCODE%
 
 However, it would be illegal to say `cols=observationduration1` or `cols=rightasc`.
 
@@ -99,23 +103,31 @@ See the section on [Available Metadata Fields](#availablefields) below for more 
 
 Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a slug and a desired value. For example:
 
-      volumeid=COISS_2001
+%CODE%
+volumeid=COISS_2001
+%ENDCODE%
 
 When searching on a multiple-choice field, multiple search values can be specified separated by commas. In this case, fields matching any of the values are returned:
 
-      planet=Saturn,Uranus,Neptune
+%CODE%
+planet=Saturn,Uranus,Neptune
+%ENDCODE%
 
 Multiple-choice values are case-insensitive.
 
 Multiple search constraints are specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
 
-      volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
+%CODE%
+volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
+%ENDCODE%
 
 will return any observation with Volume ID `COISS_2001` **and** a Planet value of `Saturn`, `Uranus`, or `Neptune`.
 
 All numeric ranges may be searched by specifying a minimum value (`1` suffix), maximum value (`2` suffix), or both. These suffixes should not be confused with the suffixes used to return metadata. In the case of searches, any range field, whether single-value or not, can have a minimum and maximum search value:
 
-      observationduration1=10&observationduration2=20
+%CODE%
+observationduration1=10&observationduration2=20
+%ENDCODE%
 
 <h3 id="querytypes">Query Types</h3>
 
@@ -147,7 +159,9 @@ When performing a search, some range fields have an additional _unit_ that descr
 
 Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the slugs are suffixed with `_N` where `N` is any positive integer. For example:
 
-      observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
+%CODE%
+observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
+%ENDCODE%
 
 would search for Observation Duration between 10 and 20 seconds (inclusive) *or* between 30 and 40 seconds (inclusive).
 
@@ -161,33 +175,47 @@ Note that if `opusid` does not appear in the sort order list, it will automatica
 
 * To search for Data Set IDs that contain "ISS" anywhere (the qtype is optional):
 
-      datasetid=ISS&qtype=contains  
+%CODE%
+datasetid=ISS&qtype=contains  
+%ENDCODE%
 
 * To search for Data Set IDs that start with "CO-E":
 
-      datasetid=CO-E&qtype=begins
+%CODE%
+datasetid=CO-E&qtype=begins
+%ENDCODE%
 
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
-      volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+%CODE%
+volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+%ENDCODE%
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):
 
-      RINGGEOringradius1=110000&RINGGEOringradius2=130000
+%CODE%
+RINGGEOringradius1=110000&RINGGEOringradius2=130000
 
-      RINGGEOringradius1=110000&RINGGEOringradius2=130000&qtype-RINGGEOringradius=any
+RINGGEOringradius1=110000&RINGGEOringradius2=130000&qtype-RINGGEOringradius=any
+%ENDCODE%
 
 * To search for ring radii between 1.3 and 1.7 Saturn radii using the "only" qtype:
 
-      RINGGEOringradius1=1.3&RINGGEOringradius2=1.7&unit-RINGGEOringradius=saturnradii&qtype-RINGGEOringradius=only
+%CODE%
+RINGGEOringradius1=1.3&RINGGEOringradius2=1.7&unit-RINGGEOringradius=saturnradii&qtype-RINGGEOringradius=only
+%ENDCODE%
 
 * To search for all Hubble images taken of Jupiter or Saturn in 1994 or 2001 with a spectral bandpass limited to 400-700 nm:
 
-      mission=Hubble&observationtype=Image&planet=Jupiter,Saturn&time1_1=1994-01-01T00:00:00.000&time2_1=1994-12-31T23:59:59.999&qtype-time_1=any&time1_2=2001-01-01T00:00:00.000&time2_2=2002-12-31T23:59:59.999&qtype-time_2=any&wavelength1=400&wavelength2=700&qtype-wavelength=only&unit-wavelength=nm
+%CODE%
+mission=Hubble&observationtype=Image&planet=Jupiter,Saturn&time1_1=1994-01-01T00:00:00.000&time2_1=1994-12-31T23:59:59.999&qtype-time_1=any&time1_2=2001-01-01T00:00:00.000&time2_2=2002-12-31T23:59:59.999&qtype-time_2=any&wavelength1=400&wavelength2=700&qtype-wavelength=only&unit-wavelength=nm
+%ENDCODE%
 
 * To search for all Cassini ISS images sorted by filter name then in reverse order by observation duration, and finally by OPUS ID:
 
-      instrument=Cassini+ISS&order=COISSfilter,-observationduration,opusid
+%CODE%
+instrument=Cassini+ISS&order=COISSfilter,-observationduration,opusid
+%ENDCODE%
 
 --------------------------------------------------------------------------------
 
@@ -251,39 +279,41 @@ Example:
 
     Returns:
 
-      {
-        "start_obs": 5
-        "limit": 3,
-        "count": 3,
-        "available": 81,
-        "order": "time1,opusid",
-        "labels": [
-          "OPUS ID",
-          "Intended Target Name",
-          "Observation Start Time",
-          "Phase Angle at Body Center [Enceladus] (degrees)"
-        ],
-        "page": [
-          [
-            "co-iss-n1635813867",
-            "Enceladus",
-            "2009-11-02T00:01:22.626",
-            "161.414"
-          ],
-          [
-            "co-iss-n1635814065",
-            "Enceladus",
-            "2009-11-02T00:03:38.237",
-            "161.519"
-          ],
-          [
-            "co-iss-n1635814245",
-            "Enceladus",
-            "2009-11-02T00:07:43.051",
-            "161.657"
-          ]
-        ]
-      }
+%CODE%
+{
+  "start_obs": 5
+  "limit": 3,
+  "count": 3,
+  "available": 81,
+  "order": "time1,opusid",
+  "labels": [
+    "OPUS ID",
+    "Intended Target Name",
+    "Observation Start Time",
+    "Phase Angle at Body Center [Enceladus] (degrees)"
+  ],
+  "page": [
+    [
+      "co-iss-n1635813867",
+      "Enceladus",
+      "2009-11-02T00:01:22.626",
+      "161.414"
+    ],
+    [
+      "co-iss-n1635814065",
+      "Enceladus",
+      "2009-11-02T00:03:38.237",
+      "161.519"
+    ],
+    [
+      "co-iss-n1635814245",
+      "Enceladus",
+      "2009-11-02T00:07:43.051",
+      "161.657"
+    ]
+  ]
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -297,10 +327,12 @@ Example:
 
     Returns:
 
-      OPUS ID,Intended Target Name,Observation Start Time,Phase Angle at Body Center [Enceladus] (degrees)
-      co-iss-n1635813867,Enceladus,2009-11-02T00:01:22.626,161.414
-      co-iss-n1635814065,Enceladus,2009-11-02T00:03:38.237,161.519
-      co-iss-n1635814245,Enceladus,2009-11-02T00:07:43.051,161.657
+%CODE%
+OPUS ID,Intended Target Name,Observation Start Time,Phase Angle at Body Center [Enceladus] (degrees)
+co-iss-n1635813867,Enceladus,2009-11-02T00:01:22.626,161.414
+co-iss-n1635814065,Enceladus,2009-11-02T00:03:38.237,161.519
+co-iss-n1635814245,Enceladus,2009-11-02T00:07:43.051,161.657
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -314,33 +346,35 @@ Example:
 
     Returns:
 
-      <table>
-      <tr>
-      <th>OPUS ID</th>
-      <th>Intended Target Name</th>
-      <th>Observation Start Time</th>
-      <th>Phase Angle at Body Center [Enceladus] (degrees)</th>
-      </tr>
-      <tr>
-      <td>co-iss-n1635813867</td>
-      <td>Enceladus</td>
-      <td>2009-11-02T00:01:22.626</td>
-      <td>161.414</td>
-      </tr>
-      <tr>
-      <td>co-iss-n1635814065</td>
-      <td>Enceladus</td>
-      <td>2009-11-02T00:03:38.237</td>
-      <td>161.519</td>
-      </tr>
-      <tr>
-      <td>co-iss-n1635814245</td>
-      <td>Enceladus</td>
-      <td>2009-11-02T00:07:43.051</td>
-      <td>161.657</td>
-      </tr>
-      </table>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
+    <table>
+    <tr>
+    <th>OPUS ID</th>
+    <th>Intended Target Name</th>
+    <th>Observation Start Time</th>
+    <th>Phase Angle at Body Center [Enceladus] (degrees)</th>
+    </tr>
+    <tr>
+    <td>co-iss-n1635813867</td>
+    <td>Enceladus</td>
+    <td>2009-11-02T00:01:22.626</td>
+    <td>161.414</td>
+    </tr>
+    <tr>
+    <td>co-iss-n1635814065</td>
+    <td>Enceladus</td>
+    <td>2009-11-02T00:03:38.237</td>
+    <td>161.519</td>
+    </tr>
+    <tr>
+    <td>co-iss-n1635814245</td>
+    <td>Enceladus</td>
+    <td>2009-11-02T00:07:43.051</td>
+    <td>161.657</td>
+    </tr>
+    </table>
+%ENDCLASS%
 
 
 
@@ -370,19 +404,21 @@ Examples:
 
     Returns:
 
-      {
-        "General Constraints": {
-          "planet": "Saturn",
-          "target": "Saturn",
-          [...]
-        },
-        "PDS Constraints": {
-          "volumeid": "COISS_2111",
-          "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
-          [...]
-        },
-        [...]
-      }
+%CODE%
+{
+  "General Constraints": {
+    "planet": "Saturn",
+    "target": "Saturn",
+    [...]
+  },
+  "PDS Constraints": {
+    "volumeid": "COISS_2111",
+    "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
+    [...]
+  },
+  [...]
+}
+%ENDCODE%
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in JSON format:
 
@@ -390,14 +426,16 @@ Examples:
 
     Returns:
 
-      [
-        {
-          "time1": "2017-02-24T03:03:29.866"
-        },
-        {
-          "time2": "2017-02-24T03:03:33.666"
-        }
-      ]
+%CODE%
+[
+  {
+    "time1": "2017-02-24T03:03:29.866"
+  },
+  {
+    "time2": "2017-02-24T03:03:33.666"
+  }
+]
+%ENDCODE%
 
 * Retrieve PDS and Images Constraints only for a single Cassini ISS Saturn Observation in JSON format:
 
@@ -405,24 +443,26 @@ Examples:
 
     Returns:
 
-      {
-        "PDS Constraints": {
-          "volumeid": "COISS_2111",
-          "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
-          "productid": "1_W1866600688.122",
-          "productcreationtime": "2017-02-25T09:50:35.000",
-          "primaryfilespec": "COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG",
-          "opusid": "co-iss-w1866600688",
-          "note": "N/A"
-        },
-        "Image Constraints": {
-          "duration": "3.8000",
-          "greaterpixelsize": "1024",
-          "lesserpixelsize": "1024",
-          "levels": "4096",
-          "imagetype": "Frame"
-        }
-      }
+%CODE%
+{
+  "PDS Constraints": {
+    "volumeid": "COISS_2111",
+    "datasetid": "CO-S-ISSNA/ISSWA-2-EDR-V1.0",
+    "productid": "1_W1866600688.122",
+    "productcreationtime": "2017-02-25T09:50:35.000",
+    "primaryfilespec": "COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG",
+    "opusid": "co-iss-w1866600688",
+    "note": "N/A"
+  },
+  "Image Constraints": {
+    "duration": "3.8000",
+    "greaterpixelsize": "1024",
+    "lesserpixelsize": "1024",
+    "levels": "4096",
+    "imagetype": "Frame"
+  }
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -434,16 +474,18 @@ The return value is a series of text lines. If `cols` is supplied, the return va
 
     Returns:
 
-      General Constraints
-      Planet,Intended Target Name,Nominal Target Class,Mission, [...]
-      Saturn,Saturn,Planet,Cassini, [...]
-      PDS Constraints
-      Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
-      COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
-      Image Constraints
-      Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
-      3.8000,1024,1024, [...]
-      [...]
+%CODE%
+General Constraints
+Planet,Intended Target Name,Nominal Target Class,Mission, [...]
+Saturn,Saturn,Planet,Cassini, [...]
+PDS Constraints
+Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+Image Constraints
+Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+3.8000,1024,1024, [...]
+[...]
+%ENDCODE%
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in CSV format:
 
@@ -451,8 +493,10 @@ The return value is a series of text lines. If `cols` is supplied, the return va
 
     Returns:
 
-      Observation Start Time,Observation Stop Time
-      2017-02-24T03:03:29.866,2017-02-24T03:03:33.666
+%CODE%
+Observation Start Time,Observation Stop Time
+2017-02-24T03:03:29.866,2017-02-24T03:03:33.666
+%ENDCODE%
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in CSV format:
 
@@ -460,12 +504,14 @@ The return value is a series of text lines. If `cols` is supplied, the return va
 
     Returns:
 
-      PDS Constraints
-      Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
-      COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
-      Image Constraints
-      Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
-      3.8000,1024,1024, [...]
+%CODE%
+PDS Constraints
+Volume ID,Data Set ID,Product ID,Product Creation Time, [...]
+COISS_2111,CO-S-ISSNA/ISSWA-2-EDR-V1.0,1_W1866600688.122,2017-02-25T09:50:35.000, [...]
+Image Constraints
+Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
+3.8000,1024,1024, [...]
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -479,21 +525,24 @@ Examples:
 
     Returns:
 
-      <dl>
-      <dt>General Constraints</dt>
-      <dl>
-      <dt>Planet</dt><dd>Saturn</dd>
-      <dt>Intended Target Name</dt><dd>Saturn</dd>
-      [...]
-      </dl>
-      <dt>PDS Constraints</dt>
-      <dl>
-      <dt>Volume ID</dt><dd>COISS_2111</dd>
-      <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
-      [...]
-      </dl>
-      [...]
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>General Constraints</dt>
+    <dl>
+    <dt>Planet</dt><dd>Saturn</dd>
+    <dt>Intended Target Name</dt><dd>Saturn</dd>
+    [...]
+    </dl>
+    <dt>PDS Constraints</dt>
+    <dl>
+    <dt>Volume ID</dt><dd>COISS_2111</dd>
+    <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
+    [...]
+    </dl>
+    [...]
+    </dl>
+%ENDCLASS%
 
 * Retrieve start and stop time only for a single Cassini ISS Saturn observation in HTML format:
 
@@ -501,10 +550,13 @@ Examples:
 
     Returns:
 
-      <dl>
-      <dt>Observation Start Time</dt><dd>2017-02-24T03:03:29.866</dd>
-      <dt>Observation Stop Time</dt><dd>2017-02-24T03:03:33.666</dd>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>Observation Start Time</dt><dd>2017-02-24T03:03:29.866</dd>
+    <dt>Observation Stop Time</dt><dd>2017-02-24T03:03:33.666</dd>
+    </dl>
+%ENDCLASS%
 
 * Retrieve PDS and Image Constraints only for a single Cassini ISS Saturn Observation in HTML format:
 
@@ -512,26 +564,29 @@ Examples:
 
     Returns:
 
-      <dl>
-      <dt>PDS Constraints</dt>
-      <dl>
-      <dt>Volume ID</dt><dd>COISS_2111</dd>
-      <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
-      <dt>Product ID</dt><dd>1_W1866600688.122</dd>
-      <dt>Product Creation Time</dt><dd>2017-02-25T09:50:35.000</dd>
-      <dt>Primary File Spec</dt><dd>COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG</dd>
-      <dt>OPUS ID</dt><dd>co-iss-w1866600688</dd>
-      <dt>Note</dt><dd>N/A</dd>
-      </dl>
-      <dt>Image Constraints</dt>
-      <dl>
-      <dt>Exposure Duration (secs)</dt><dd>3.8000</dd>
-      <dt>Greater Size in Pixels</dt><dd>1024</dd>
-      <dt>Lesser Size in Pixels</dt><dd>1024</dd>
-      <dt>Intensity Levels</dt><dd>4096</dd>
-      <dt>Image Type</dt><dd>Frame</dd>
-      </dl>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>PDS Constraints</dt>
+    <dl>
+    <dt>Volume ID</dt><dd>COISS_2111</dd>
+    <dt>Data Set ID</dt><dd>CO-S-ISSNA/ISSWA-2-EDR-V1.0</dd>
+    <dt>Product ID</dt><dd>1_W1866600688.122</dd>
+    <dt>Product Creation Time</dt><dd>2017-02-25T09:50:35.000</dd>
+    <dt>Primary File Spec</dt><dd>COISS_2111/data/1866491385_1866605022/W1866600688_1.IMG</dd>
+    <dt>OPUS ID</dt><dd>co-iss-w1866600688</dd>
+    <dt>Note</dt><dd>N/A</dd>
+    </dl>
+    <dt>Image Constraints</dt>
+    <dl>
+    <dt>Exposure Duration (secs)</dt><dd>3.8000</dd>
+    <dt>Greater Size in Pixels</dt><dd>1024</dd>
+    <dt>Lesser Size in Pixels</dt><dd>1024</dd>
+    <dt>Intensity Levels</dt><dd>4096</dd>
+    <dt>Image Type</dt><dd>Frame</dd>
+    </dl>
+    </dl>
+%ENDCLASS%
 
 
 
@@ -611,40 +666,42 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
 
     Returns:
 
-      {
-        "start_obs": 1,
-        "limit": 100,
-        "count": 56,
-        "available": 56,
-        "order": "time1,opusid",
-        "data": {
-          "co-iss-n1867599811": {
-            "coiss-raw": [
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
-            ],
-            "coiss-calib": [
-            "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
-            "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
-            ],
-            "coiss-thumb": [
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
-            ],
-            [...]
-          },
-          "co-iss-n1867600166": {
-            "coiss-raw": [
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-            "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
-            ],
-            [...]
-        },
-        [...]
-      }
+%CODE%
+{
+  "start_obs": 1,
+  "limit": 100,
+  "count": 56,
+  "available": 56,
+  "order": "time1,opusid",
+  "data": {
+    "co-iss-n1867599811": {
+      "coiss-raw": [
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+      ],
+      "coiss-calib": [
+      "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
+      "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
+      ],
+      "coiss-thumb": [
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
+      ],
+      [...]
+    },
+    "co-iss-n1867600166": {
+      "coiss-raw": [
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+      ],
+      [...]
+  },
+  [...]
+}
+%ENDCODE%
 
 
 
@@ -681,44 +738,46 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "vg-iss-2-s-c4360022": {
-            "vgiss-raw": [
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
-            ],
-            "vgiss-cleaned": [
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
-            ],
-            "vgiss-calib": [
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
-            ],
-            [...]
-          }
-        },
-        "versions": {
-          "vg-iss-2-s-c4360022": {
-            "Current": {
-            "vgiss-raw": [
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
-            ],
-            "vgiss-cleaned": [
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
-            ],
-            "vgiss-calib": [
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-              "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
-            ],
-            [...]
-            }
-          }
-        }
-      }    
+%CODE%
+{
+  "data": {
+    "vg-iss-2-s-c4360022": {
+      "vgiss-raw": [
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+      ],
+      "vgiss-cleaned": [
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+      ],
+      "vgiss-calib": [
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+      ],
+      [...]
+    }
+  },
+  "versions": {
+    "vg-iss-2-s-c4360022": {
+      "Current": {
+      "vgiss-raw": [
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+      ],
+      "vgiss-cleaned": [
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+      ],
+      "vgiss-calib": [
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+      ],
+      [...]
+      }
+    }
+  }
+}    
+%ENDCODE%
 
 * Retrieve raw images only for a Galileo SSI observation in JSON format.
 
@@ -726,38 +785,40 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "go-ssi-c0349632000": {
-            "gossi-raw": [
-            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-            "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
-            ]
-          }
-        },
-        "versions": {
-          "go-ssi-c0349632000": {
-            "1": {
-            "gossi-raw": [
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
-            ]
-            },
-            "Current": {
-            "gossi-raw": [
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-              "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
-            ]
-            }
-          }
-        }
+%CODE%
+{
+  "data": {
+    "go-ssi-c0349632000": {
+      "gossi-raw": [
+      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+      ]
+    }
+  },
+  "versions": {
+    "go-ssi-c0349632000": {
+      "1": {
+      "gossi-raw": [
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+      ]
+      },
+      "Current": {
+      "gossi-raw": [
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+      ]
       }
+    }
+  }
+}
+%ENDCODE%
 
 * Retrieve drizzle images from an HST WFC3 observation with multiple versions in JSON format.
 
@@ -765,54 +826,56 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "hst-11559-wfc3-ib4v19rp": {
-            "hst-calib": [
-            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ],
-            "hst-drizzled": [
-            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-            "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ]
-          }
-        },
-        "versions": {
-          "hst-11559-wfc3-ib4v19rp": {
-            "Current": {
-            "hst-calib": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ],
-            "hst-drizzled": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ]
-            },
-            "1.1": {
-            "hst-calib": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ],
-            "hst-drizzled": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ]
-            },
-            "1.0": {
-            "hst-calib": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ],
-            "hst-drizzled": [
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-              "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-            ]
-            }
-          }
-        }
+%CODE%
+{
+  "data": {
+    "hst-11559-wfc3-ib4v19rp": {
+      "hst-calib": [
+      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ],
+      "hst-drizzled": [
+      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ]
+    }
+  },
+  "versions": {
+    "hst-11559-wfc3-ib4v19rp": {
+      "Current": {
+      "hst-calib": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ],
+      "hst-drizzled": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ]
+      },
+      "1.1": {
+      "hst-calib": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ],
+      "hst-drizzled": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ]
+      },
+      "1.0": {
+      "hst-calib": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ],
+      "hst-drizzled": [
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+      ]
       }
+    }
+  }
+}
+%ENDCODE%
 
 
 
@@ -885,30 +948,32 @@ Examples:
 
     Returns:
 
-      {
-        "start_obs": 10,
-        "limit": 2,
-        "count": 2,
-        "available": 3296,
-        "order": "time1,opusid"
-        "data": [
-          {
-            "opus_id": "co-iss-n1460962327",
-            "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
-            "thumb_alt_text": "N1460962327_1_thumb.jpg",
-            "thumb_size_bytes": 864,
-            "thumb_width": 100,
-            "thumb_height": 100,
-            "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
-            "small_alt_text": "N1460962327_1_small.jpg",
-            "small_size_bytes": 1729,
-            "small_width": 256,
-            "small_height": 256,
-            [...]
-          },
-          [...]
-        ]
-      }
+%CODE%
+{
+  "start_obs": 10,
+  "limit": 2,
+  "count": 2,
+  "available": 3296,
+  "order": "time1,opusid"
+  "data": [
+    {
+      "opus_id": "co-iss-n1460962327",
+      "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
+      "thumb_alt_text": "N1460962327_1_thumb.jpg",
+      "thumb_size_bytes": 864,
+      "thumb_width": 100,
+      "thumb_height": 100,
+      "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
+      "small_alt_text": "N1460962327_1_small.jpg",
+      "small_size_bytes": 1729,
+      "small_width": 256,
+      "small_height": 256,
+      [...]
+    },
+    [...]
+  ]
+}
+%ENDCODE%
 
 * Retrieve information in JSON format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
@@ -916,31 +981,33 @@ Examples:
 
     Returns:
 
-      {
-        "start_obs": 10,
-        "limit": 2,
-        "count": 2,
-        "available": 3296,
-        "order": "time1,opusid",
-        "data": [
-          {
-            "opus_id": "co-iss-n1460962327",
-            "alt_text": "N1460962327_1_med.jpg",
-            "size_bytes": 4971,
-            "width": 512,
-            "height": 512,
-            "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
-          },
-          {
-            "opus_id": "co-iss-n1460962415",
-            "alt_text": "N1460962415_1_med.jpg",
-            "size_bytes": 4991,
-            "width": 512,
-            "height": 512,
-            "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
-          }
-        ]
-      }
+%CODE%
+{
+  "start_obs": 10,
+  "limit": 2,
+  "count": 2,
+  "available": 3296,
+  "order": "time1,opusid",
+  "data": [
+    {
+      "opus_id": "co-iss-n1460962327",
+      "alt_text": "N1460962327_1_med.jpg",
+      "size_bytes": 4971,
+      "width": 512,
+      "height": 512,
+      "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
+    },
+    {
+      "opus_id": "co-iss-n1460962415",
+      "alt_text": "N1460962415_1_med.jpg",
+      "size_bytes": 4991,
+      "width": 512,
+      "height": 512,
+      "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
+    }
+  ]
+}
+%ENDCODE%
 
 * Retrieve information in JSON format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
@@ -948,19 +1015,20 @@ Examples:
 
     Returns:
 
-      {
-        "data": [
-          {
-            "opus_id": "vg-iss-2-s-c4360022",
-            "alt_text": "C4360022_full.jpg",
-            "size_bytes": 24607,
-            "width": 800,
-            "height": 800,
-            "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
-          }
-        ]
-      }
-
+%CODE%
+{
+  "data": [
+    {
+      "opus_id": "vg-iss-2-s-c4360022",
+      "alt_text": "C4360022_full.jpg",
+      "size_bytes": 24607,
+      "width": 800,
+      "height": 800,
+      "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
+    }
+  ]
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -974,9 +1042,11 @@ Example:
 
     Returns:
 
-      OPUS ID,Thumb URL,Small URL,Med URL,Full URL
-      co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
-      co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
+%CODE%
+OPUS ID,Thumb URL,Small URL,Med URL,Full URL
+co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
+co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
+%ENDCODE%
 
 * Retrieve information in CSV format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
 
@@ -984,9 +1054,11 @@ Example:
 
     Returns:
 
-      OPUS ID,URL
-      co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
-      co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
+%CODE%
+OPUS ID,URL
+co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
+co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
+%ENDCODE%
 
 * Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
@@ -994,8 +1066,10 @@ Example:
 
     Returns:
 
-      OPUS ID,URL
-      vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
+%CODE%
+OPUS ID,URL
+vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -1009,14 +1083,17 @@ Example:
 
     Returns:
 
-      <ul>
-      <li>
-      <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
-      </li>
-      <li>
-      <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
-      </li>
-      </ul>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <ul>
+    <li>
+    <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
+    </li>
+    <li>
+    <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
+    </li>
+    </ul>
+%ENDCLASS%
 
 * Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
 
@@ -1024,11 +1101,14 @@ Example:
 
     Returns:
 
-      <ul>
-      <li>
-      <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
-      </li>
-      </ul>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <ul>
+    <li>
+    <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
+    </li>
+    </ul>
+%ENDCLASS%
 
 
 
@@ -1066,13 +1146,15 @@ Example:
 
     Returns:
 
-      {
-        "data": [
-          {
-            "result_count": 1636
-          }
-        ]
-      }
+%CODE%
+{
+  "data": [
+    {
+      "result_count": 1636
+    }
+  ]
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -1082,9 +1164,11 @@ The return value is a single text line with the label "result count" followed by
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
 
-Returns:
+    Returns:
 
-      result count,1636
+%CODE%
+result count,1636
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -1094,11 +1178,14 @@ The return value is an HTML description list containing a single item specifying
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
 
-Returns:
+    Returns:
 
-      <dl>
-      <dt>result_count</dt><dd>1636</dd>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>result_count</dt><dd>1636</dd>
+    </dl>
+%ENDCLASS%
 
 
 
@@ -1132,19 +1219,21 @@ Example:
 
     Returns:
 
-      {
-        "field": "planet",
-        "mults": {
-          "Earth": 10,
-          "Mars": 354,
-          "Jupiter": 7956,
-          "Saturn": 4885,
-          "Uranus": 3395,
-          "Neptune": 1800,
-          "Pluto": 2051,
-          "Other": 892
-        }
-      }
+%CODE%
+{
+  "field": "planet",
+  "mults": {
+    "Earth": 10,
+    "Mars": 354,
+    "Jupiter": 7956,
+    "Saturn": 4885,
+    "Uranus": 3395,
+    "Neptune": 1800,
+    "Pluto": 2051,
+    "Other": 892
+  }
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -1156,8 +1245,10 @@ The return value is two text lines. The first is a list of choices. The second i
 
     Returns:
 
-      Earth,Mars,Jupiter,Saturn,Uranus,Neptune,Pluto,Other
-      10,354,7956,4885,3395,1800,2051,892
+%CODE%
+Earth,Mars,Jupiter,Saturn,Uranus,Neptune,Pluto,Other
+10,354,7956,4885,3395,1800,2051,892
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -1171,16 +1262,19 @@ Example:
 
     Returns:
 
-      <dl>
-      <dt>Earth</dt><dd>10</dd>
-      <dt>Mars</dt><dd>354</dd>
-      <dt>Jupiter</dt><dd>7956</dd>
-      <dt>Saturn</dt><dd>4885</dd>
-      <dt>Uranus</dt><dd>3395</dd>
-      <dt>Neptune</dt><dd>1800</dd>
-      <dt>Pluto</dt><dd>2051</dd>
-      <dt>Other</dt><dd>892</dd>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>Earth</dt><dd>10</dd>
+    <dt>Mars</dt><dd>354</dd>
+    <dt>Jupiter</dt><dd>7956</dd>
+    <dt>Saturn</dt><dd>4885</dd>
+    <dt>Uranus</dt><dd>3395</dd>
+    <dt>Neptune</dt><dd>1800</dd>
+    <dt>Pluto</dt><dd>2051</dd>
+    <dt>Other</dt><dd>892</dd>
+    </dl>
+%ENDCLASS%
 
 
 
@@ -1218,12 +1312,14 @@ Examples:
 
     Returns:
 
-      {
-        "min": "334.161",
-        "max": "12873823.895",
-        "nulls": 125566,
-        "units": "km"
-      }
+%CODE%
+{
+  "min": "334.161",
+  "max": "12873823.895",
+  "nulls": 125566,
+  "units": "km"
+}
+%ENDCODE%
 
 * Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in JSON format.
 
@@ -1231,12 +1327,14 @@ Examples:
 
     Returns:
 
-      {
-        "min": "0.00553888613",
-        "max": "213.39008610973",
-        "nulls": 125566,
-        "units": "saturnradii"
-      }
+%CODE%
+{
+  "min": "0.00553888613",
+  "max": "213.39008610973",
+  "nulls": 125566,
+  "units": "saturnradii"
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -1250,8 +1348,10 @@ Examples:
 
     Returns:
 
-      min,max,nulls,units
-      334.161,12873823.895,125566,km
+%CODE%
+min,max,nulls,units
+334.161,12873823.895,125566,km
+%ENDCODE%
 
 * Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in CSV format.
 
@@ -1259,8 +1359,10 @@ Examples:
 
     Returns:
 
-      min,max,nulls,units
-      0.00553888613,213.39008610973,125566,saturnradii
+%CODE%
+min,max,nulls,units
+0.00553888613,213.39008610973,125566,saturnradii
+%ENDCODE%
 
 #### HTML Return Format
 
@@ -1274,12 +1376,15 @@ Examples:
 
     Returns:
 
-      <dl>
-      <dt>min</dt><dd>334.161</dd>
-      <dt>max</dt><dd>12873823.895</dd>
-      <dt>nulls</dt><dd>125566</dd>
-      <dt>units</dt><dd>km</dd>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
+
+    <dl>
+    <dt>min</dt><dd>334.161</dd>
+    <dt>max</dt><dd>12873823.895</dd>
+    <dt>nulls</dt><dd>125566</dd>
+    <dt>units</dt><dd>km</dd>
+    </dl>
+%ENDCLASS%
 
 * Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in JSON format.
 
@@ -1287,13 +1392,15 @@ Examples:
 
     Returns:
 
-      <dl>
-      <dt>min</dt><dd>0.00553888613</dd>
-      <dt>max</dt><dd>213.39008610973</dd>
-      <dt>nulls</dt><dd>125566</dd>
-      <dt>units</dt><dd>saturnradii</dd>
-      </dl>
+%ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
+    <dl>
+    <dt>min</dt><dd>0.00553888613</dd>
+    <dt>max</dt><dd>213.39008610973</dd>
+    <dt>nulls</dt><dd>125566</dd>
+    <dt>units</dt><dd>saturnradii</dd>
+    </dl>
+%ENDCLASS%
 
 
 
@@ -1328,32 +1435,34 @@ Example:
 
     Returns:
 
-      [
-        {
-          "table_name": "obs_general",
-          "label": "General Constraints"
-        },
-        {
-          "table_name": "obs_pds",
-          "label": "PDS Constraints"
-        },
-        {
-          "table_name": "obs_type_image",
-          "label": "Image Constraints"
-        },
-        {
-          "table_name": "obs_wavelength",
-          "label": "Wavelength Constraints"
-        },
-        {
-          "table_name": "obs_surface_geometry__methone",
-          "label": "Methone Surface Geometry Constraints"
-        },
-        {
-          "table_name": "obs_ring_geometry",
-          "label": "Ring Geometry Constraints"
-        }
-      ]
+%CODE%
+[
+  {
+    "table_name": "obs_general",
+    "label": "General Constraints"
+  },
+  {
+    "table_name": "obs_pds",
+    "label": "PDS Constraints"
+  },
+  {
+    "table_name": "obs_type_image",
+    "label": "Image Constraints"
+  },
+  {
+    "table_name": "obs_wavelength",
+    "label": "Wavelength Constraints"
+  },
+  {
+    "table_name": "obs_surface_geometry__methone",
+    "label": "Methone Surface Geometry Constraints"
+  },
+  {
+    "table_name": "obs_ring_geometry",
+    "label": "Ring Geometry Constraints"
+  }
+]
+%ENDCODE%
 
 
 
@@ -1386,48 +1495,50 @@ Example:
 
     Returns:
 
-      [
-        {
-          "table_name": "obs_general",
-          "label": "General Constraints"
-        },
-        {
-          "table_name": "obs_pds",
-          "label": "PDS Constraints"
-        },
-        {
-          "table_name": "obs_type_image",
-          "label": "Image Constraints"
-        },
-        {
-          "table_name": "obs_wavelength",
-          "label": "Wavelength Constraints"
-        },
-        {
-          "table_name": "obs_surface_geometry__daphnis",
-          "label": "Daphnis Surface Geometry Constraints"
-        },
-        {
-          "table_name": "obs_surface_geometry__epimetheus",
-          "label": "Epimetheus Surface Geometry Constraints"
-        },
-        {
-          "table_name": "obs_surface_geometry__saturn",
-          "label": "Saturn Surface Geometry Constraints"
-        },
-        {
-          "table_name": "obs_ring_geometry",
-          "label": "Ring Geometry Constraints"
-        },
-        {
-          "table_name": "obs_mission_cassini",
-          "label": "Cassini Mission Constraints"
-        },
-        {
-          "table_name": "obs_instrument_coiss",
-          "label": "Cassini ISS Constraints"
-        }
-      ]
+%CODE%
+[
+  {
+    "table_name": "obs_general",
+    "label": "General Constraints"
+  },
+  {
+    "table_name": "obs_pds",
+    "label": "PDS Constraints"
+  },
+  {
+    "table_name": "obs_type_image",
+    "label": "Image Constraints"
+  },
+  {
+    "table_name": "obs_wavelength",
+    "label": "Wavelength Constraints"
+  },
+  {
+    "table_name": "obs_surface_geometry__daphnis",
+    "label": "Daphnis Surface Geometry Constraints"
+  },
+  {
+    "table_name": "obs_surface_geometry__epimetheus",
+    "label": "Epimetheus Surface Geometry Constraints"
+  },
+  {
+    "table_name": "obs_surface_geometry__saturn",
+    "label": "Saturn Surface Geometry Constraints"
+  },
+  {
+    "table_name": "obs_ring_geometry",
+    "label": "Ring Geometry Constraints"
+  },
+  {
+    "table_name": "obs_mission_cassini",
+    "label": "Cassini Mission Constraints"
+  },
+  {
+    "table_name": "obs_instrument_coiss",
+    "label": "Cassini ISS Constraints"
+  }
+]
+%ENDCODE%
 
 
 
@@ -1474,79 +1585,81 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "planet": {
-            "label": "Planet",
-            "search_label": "Planet",
-            "full_label": "Planet",
-            "full_search_label": "Planet [General]",
-            "default_units": null,
-            "available_units": null,
-            "category": "General Constraints",
-            "slug": "planet"
-          },
-          [...]
-          "rightasc1": {
-            "label": "Right Ascension (Min)",
-            "search_label": "Right Ascension",
-            "full_label": "Right Ascension (Min)",
-            "full_search_label": "Right Ascension [General]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "General Constraints",
-            "slug": "rightasc1"
-          },
-          "rightasc2": {
-            "label": "Right Ascension (Max)",
-            "search_label": "Right Ascension",
-            "full_label": "Right Ascension (Max)",
-            "full_search_label": "Right Ascension [General]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "General Constraints",
-            "slug": "rightasc2"
-          },
-          [...]
-          "SURFACEGEOumbrielplanetographiclatitude1": {
-            "label": "Observed Planetographic Latitude (Min)",
-            "search_label": "Observed Planetographic Latitude",
-            "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
-            "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "Umbriel Surface Geometry Constraints",
-            "slug": "SURFACEGEOumbrielplanetographiclatitude1"
-          },
-          "SURFACEGEOumbrielplanetographiclatitude2": {
-            "label": "Observed Planetographic Latitude (Max)",
-            "search_label": "Observed Planetographic Latitude",
-            "full_label": "Observed Planetographic Latitude (Max) [Umbriel]",
-            "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "Umbriel Surface Geometry Constraints",
-            "slug": "SURFACEGEOumbrielplanetographiclatitude2"
-          },
-          [...]
-        }
-      }
+%CODE%
+{
+  "data": {
+    "planet": {
+      "label": "Planet",
+      "search_label": "Planet",
+      "full_label": "Planet",
+      "full_search_label": "Planet [General]",
+      "default_units": null,
+      "available_units": null,
+      "category": "General Constraints",
+      "slug": "planet"
+    },
+    [...]
+    "rightasc1": {
+      "label": "Right Ascension (Min)",
+      "search_label": "Right Ascension",
+      "full_label": "Right Ascension (Min)",
+      "full_search_label": "Right Ascension [General]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "General Constraints",
+      "slug": "rightasc1"
+    },
+    "rightasc2": {
+      "label": "Right Ascension (Max)",
+      "search_label": "Right Ascension",
+      "full_label": "Right Ascension (Max)",
+      "full_search_label": "Right Ascension [General]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "General Constraints",
+      "slug": "rightasc2"
+    },
+    [...]
+    "SURFACEGEOumbrielplanetographiclatitude1": {
+      "label": "Observed Planetographic Latitude (Min)",
+      "search_label": "Observed Planetographic Latitude",
+      "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
+      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "Umbriel Surface Geometry Constraints",
+      "slug": "SURFACEGEOumbrielplanetographiclatitude1"
+    },
+    "SURFACEGEOumbrielplanetographiclatitude2": {
+      "label": "Observed Planetographic Latitude (Max)",
+      "search_label": "Observed Planetographic Latitude",
+      "full_label": "Observed Planetographic Latitude (Max) [Umbriel]",
+      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "Umbriel Surface Geometry Constraints",
+      "slug": "SURFACEGEOumbrielplanetographiclatitude2"
+    },
+    [...]
+  }
+}
+%ENDCODE%
 
 * Retrieve information about all fields in JSON format.
 
@@ -1554,40 +1667,42 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          [...]
-          "SURFACEGEO<TARGET>planetographiclatitude1": {
-            "label": "Observed Planetographic Latitude (Min)",
-            "search_label": "Observed Planetographic Latitude",
-            "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
-            "full_search_label": "Observed Planetographic Latitude [Saturn]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "<TARGET> Surface Geometry Constraints",
-            "slug": "SURFACEGEO<TARGET>planetographiclatitude1"
-          },
-          "SURFACEGEO<TARGET>planetographiclatitude2": {
-            "label": "Observed Planetographic Latitude (Max)",
-            "search_label": "Observed Planetographic Latitude",
-            "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
-            "full_search_label": "Observed Planetographic Latitude [Saturn]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "<TARGET> Surface Geometry Constraints",
-            "slug": "SURFACEGEO<TARGET>planetographiclatitude2"
-          },
-        [...]
-        }
-      }
+%CODE%
+{
+  "data": {
+    [...]
+    "SURFACEGEO<TARGET>planetographiclatitude1": {
+      "label": "Observed Planetographic Latitude (Min)",
+      "search_label": "Observed Planetographic Latitude",
+      "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
+      "full_search_label": "Observed Planetographic Latitude [Saturn]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "<TARGET> Surface Geometry Constraints",
+      "slug": "SURFACEGEO<TARGET>planetographiclatitude1"
+    },
+    "SURFACEGEO<TARGET>planetographiclatitude2": {
+      "label": "Observed Planetographic Latitude (Max)",
+      "search_label": "Observed Planetographic Latitude",
+      "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
+      "full_search_label": "Observed Planetographic Latitude [Saturn]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "<TARGET> Surface Geometry Constraints",
+      "slug": "SURFACEGEO<TARGET>planetographiclatitude2"
+    },
+  [...]
+  }
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -1601,15 +1716,17 @@ Example:
 
     Returns:
 
-      Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
-      planet,General Constraints,Planet,Planet,Planet [General],Planet,,
-      target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
-      [...]
-      rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
-      rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
-      declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
-      declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
-      [...]
+%CODE%
+Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
+[...]
+rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
+rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
+declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
+declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
+[...]
+%ENDCODE%
 
 
 
@@ -1654,20 +1771,22 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "planet": {
-            "label": "Planet",
-            "search_label": "Planet",
-            "full_label": "Planet",
-            "full_search_label": "Planet [General]",
-            "default_units": null,
-            "available_units": null,
-            "category": "General Constraints",
-            "slug": "planet"
-          }
-        }
-      }
+%CODE%
+{
+  "data": {
+    "planet": {
+      "label": "Planet",
+      "search_label": "Planet",
+      "full_label": "Planet",
+      "full_search_label": "Planet [General]",
+      "default_units": null,
+      "available_units": null,
+      "category": "General Constraints",
+      "slug": "planet"
+    }
+  }
+}
+%ENDCODE%
 
 * Retrieve information about the `SURFACEGEOrheacenterphaseangle` field in JSON format.
 
@@ -1675,25 +1794,27 @@ Examples:
 
     Returns:
 
-      {
-        "data": {
-          "SURFACEGEOrheacenterphaseangle": {
-            "label": "Phase Angle at Body Center",
-            "search_label": "Phase Angle at Body Center",
-            "full_label": "Phase Angle at Body Center [Rhea]",
-            "full_search_label": "Phase Angle at Body Center [Rhea]",
-            "default_units": "degrees",
-            "available_units": [
-            "degrees",
-            "hourangle",
-            "radians"
-            ],
-            "category": "Rhea Surface Geometry Constraints",
-            "slug": "SURFACEGEOrheacenterphaseangle",
-            "old_slug": "surfacegeometryrheacenterphaseangle"
-          }
-        }
-      }
+%CODE%
+{
+  "data": {
+    "SURFACEGEOrheacenterphaseangle": {
+      "label": "Phase Angle at Body Center",
+      "search_label": "Phase Angle at Body Center",
+      "full_label": "Phase Angle at Body Center [Rhea]",
+      "full_search_label": "Phase Angle at Body Center [Rhea]",
+      "default_units": "degrees",
+      "available_units": [
+      "degrees",
+      "hourangle",
+      "radians"
+      ],
+      "category": "Rhea Surface Geometry Constraints",
+      "slug": "SURFACEGEOrheacenterphaseangle",
+      "old_slug": "surfacegeometryrheacenterphaseangle"
+    }
+  }
+}
+%ENDCODE%
 
 #### CSV Return Format
 
@@ -1707,7 +1828,9 @@ Example:
 
     Returns:
 
-      Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
-      planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+%CODE%
+Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+%ENDCODE%
 
 --------------------------------------------------------------------------------

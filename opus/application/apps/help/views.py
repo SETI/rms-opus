@@ -248,6 +248,7 @@ def api_citing_opus(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
 def api_guide(request):
     """Renders the API guide at opus/api.
 
@@ -277,8 +278,13 @@ def api_guide(request):
         text = text.replace('%VERSION%', git_id)
         text = re.sub(
             r'%EXTLINK%(.*)%ENDEXTLINK%',
-            r'<a target="_blank" href="\1"><pre><code>\1</code></pre></a>',
+            r'<a target="_blank" href="\1"><span class="op-api-guide-code">'
+            +r'<code>\1</code></span></a>',
             text)
+        text = re.sub(r'%CODE%\n', r'<div class="op-api-guide-code-block '
+                      +r'op-api-guide-code"><pre><code>',
+                      text)
+        text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
         guide = mistune.Markdown().output(text)
         guide = guide.replace('%ADDCLASS%', '<div class="')
         guide = guide.replace('%ENDADDCLASS%', '">')
