@@ -7,10 +7,13 @@
 #
 #    Format: api/meta/result_count.(?P<fmt>json|html|csv)
 #            __api/meta/result_count.json
+#
 #    Format: api/meta/mults/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
 #            __api/meta/mults/(?P<slug>[-\w]+).json
+#
 #    Format: api/meta/range/endpoints/(?P<slug>[-\w]+).(?P<fmt>json|html|csv)
 #            __api/meta/range/endpoints/(?P<slug>[-\w]+).json
+#
 #    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
 #        or: api/fields.(?P<fmt>json|csv)
 #
@@ -529,7 +532,7 @@ def api_get_range_endpoints_internal(request, slug):
 
 
 @never_cache
-def api_get_fields(request, fmt='json', slug=None):
+def api_get_fields(request, fmt, slug=None):
     """Return information about fields in the database (slugs).
 
     This is a PUBLIC API.
@@ -538,8 +541,8 @@ def api_get_fields(request, fmt='json', slug=None):
     It's provides a list of all slugs in the database and helpful info
     about each one like label, dict/more_info links, etc.
 
-    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|html|csv)
-        or: api/fields.(?P<fmt>json|html|csv)
+    Format: api/fields/(?P<slug>\w+).(?P<fmt>json|csv)
+        or: api/fields.(?P<fmt>json|csv)
     Arguments: [collapse=1]  Collapse surface geo slugs into one
 
     Can return JSON or CSV.
@@ -551,12 +554,12 @@ def api_get_fields(request, fmt='json', slug=None):
              "full_label": "Observation Start Time",
              "full_search_label": "Observation Time [General]",
              "category": "General Constraints",
-             "slug": "time1",
-             "old_slug": "timesec1"}
+             "field_id": "time1",
+             "old_field_id": "timesec1"}
         }
 
     Returned CSV:
-        Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug
+        Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID
         time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1
 
     If collapse=1, then all surface geometry is collapsed into a single
@@ -641,7 +644,7 @@ def get_cart_count(session_id, recycled=False):
              .filter(recycled=1)
              .count())
     return count, recycled_count
-        
+
 # This routine is public because it's called by the API guide in guide/views.py
 def get_fields_info(fmt, slug=None, collapse=False):
     "Helper routine for api_get_fields."
@@ -683,15 +686,16 @@ def get_fields_info(fmt, slug=None, collapse=False):
             if collapse:
                 entry['category'] = table_name.label.replace('Saturn',
                                                              '<TARGET>')
-                collapsed_slug = entry['slug'] = f.slug.replace('saturn',
-                                                                '<TARGET>')
+                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
+                                                                    '<TARGET>')
             else:
                 entry['category'] = table_name.label
-                entry['slug'] = f.slug
-            if f.old_slug and collapse:
+                entry['field_id'] = f.slug
+            if f.old_slug and collapse: # Backwards compatibility
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:
                 entry['old_slug'] = f.old_slug
+            entry['slug'] = entry['field_id'] # Backwards compatibility
             return_obj[collapsed_slug] = entry
 
         return_obj = OrderedDict(sorted(return_obj.items(),
@@ -709,12 +713,12 @@ def get_fields_info(fmt, slug=None, collapse=False):
     elif fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
-        labels = ['Slug', 'Category',
+        labels = ['Field ID', 'Category',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Old Slug', 'Units'
+                  'Old Field ID', 'Units'
                  ]
-        rows = [(v['slug'], v['category'],
+        rows = [(v['field_id'], v['category'],
                  v['search_label'], v['label'],
                  v['full_search_label'],
                  v['full_label'],

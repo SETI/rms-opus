@@ -26,7 +26,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
     * [Return Formats](#returnformats)
     * [Getting Metadata](#gettingmetadata)
       * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
-      * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUSID](#metadatav2fmt)
+      * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUS ID](#metadatav2fmt)
     * [Getting Data](#gettingdata)
       * [`api/download/[opusid].zip` - Download Files for an OPUS ID](#downloadopusidzip)
       * [`api/files.json` - Return URLs of Files from a Search](#filesjson)
@@ -53,7 +53,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&` and `=` are required to be encoded if used as a parameter's value.
+The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
 
 Examples:
 
@@ -81,7 +81,7 @@ There are three basic types of fields stored in the database: _multiple-choice_,
 
 <h2 id="retrievingmetadata">Retrieving Metadata</h2>
 
-Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fieldids>`, where `<fieldids>` is a comma-separated list of `fieldid`. For example:
+Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<field_id_list>`, where `<field_id_list>` is a comma-separated list of `field_id`. For example:
 
 %CODE%
 cols=opusid,instrument,planet,target,time1,time2
@@ -89,7 +89,7 @@ cols=opusid,instrument,planet,target,time1,time2
 
 When a `cols` parameter is supported but none is provided, the default columns are used: `opusid,instrument,planet,target,time1,observationduration`.
 
-If a metadata field is a _single-value range_, then that `fieldid` **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicating the minimum a `2` suffix indicating the maximum must be provided. For example:
+If a metadata field is a _single-value range_, then that `field_id` **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicating the minimum a `2` suffix indicating the maximum must be provided. For example:
 
 %CODE%
 cols=observationduration,rightasc1,rightasc2
@@ -101,13 +101,13 @@ See the section on [Available Metadata Fields](#availablefields) below for more 
 
 <h2 id="performingsearches">Performing Searches</h2>
 
-Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a slug and a desired value. For example:
+Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a `search_id` and a desired value. For example:
 
 %CODE%
 volumeid=COISS_2001
 %ENDCODE%
 
-When searching on a multiple-choice field, multiple search values can be specified separated by commas. In this case, fields matching any of the values are returned:
+When searching on a multiple-choice field, additional search values can be specified separated by commas. In this case, observations matching any of the values are returned:
 
 %CODE%
 planet=Saturn,Uranus,Neptune
@@ -115,7 +115,7 @@ planet=Saturn,Uranus,Neptune
 
 Multiple-choice values are case-insensitive.
 
-Multiple search constraints are specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
+More than one search constraint can be specified by joining them with `&`. When search constraints are specified for different metadata fields, they are "AND"ed together. For example:
 
 %CODE%
 volumeid=COISS_2001&planet=Saturn,Uranus,Neptune
@@ -131,7 +131,7 @@ observationduration1=10&observationduration2=20
 
 <h3 id="querytypes">Query Types</h3>
 
-When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<slug>=value` as a search parameter. Note that the slug is always specified without a (`1` or `2`) suffix, even if the search requires suffixes for minimum and maximum vales. This is because the qtype applies to the entire search field, not to the minimum or maximum values separately. The details of the qtypes associated with each field type are given below.
+When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<searchid>=value` as a search parameter. Note that the `search_id` is always specified without a (`1` or `2`) suffix, even if the search requires suffixes for minimum and maximum vales. This is because the qtype applies to the entire search field, not to the minimum or maximum values separately. The details of the qtypes associated with each field type are given below.
 
 #### String Fields
 
@@ -153,21 +153,21 @@ Range fields can be searched using the following query types:
 
 <h3 id="units">Units</h3>
 
-When performing a search, some range fields have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<slug>=value` as a search parameter. Note that the slug is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
+When performing a search, some range fields have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<searchid>=value` as a search parameter. Note that the `search_id` is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
 
 <h3 id="clauses">Multiple Clauses</h3>
 
-Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the slugs are suffixed with `_N` where `N` is any positive integer. For example:
+Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the `search_id`s are suffixed with `_N` where `N` is any positive integer. For example:
 
 %CODE%
 observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
 %ENDCODE%
 
-would search for Observation Duration between 10 and 20 seconds (inclusive) *or* between 30 and 40 seconds (inclusive).
+would search for Observation Duration between 10 and 20 seconds (inclusive) *or* between 30 and 40 seconds (inclusive). Each clause can have its own `qtype` and `unit`, if applicable.
 
 <h3 id="sorting">Sorting</h3>
 
-By default, the results of a search are sorted first by Observation Start Time (`time1`) and then by OPUS ID (`opusid`). This order can be changed by specifying `order=<fields>`, where `<fields>` contains one or more slugs (as would be used when retrieving metadata) separated by commas. If multiple slugs are given, the sorting proceeds by the first slug, and then if the values are identical by the second slug, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the metadata field slug with a minus sign (`-`).
+By default, the results of a search are sorted first by Observation Start Time (`time1`) and then by OPUS ID (`opusid`). This order can be changed by specifying `order=<field_id_list>`, where `<field_id_list>` contains one or more `field_id`s (as would be used when retrieving metadata) separated by commas. If multiple `field_id`s are given, the sorting proceeds by the first `field_id`, and then if the values are identical by the second `field_id`, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the `field_id` with a minus sign (`-`).
 
 Note that if `opusid` does not appear in the sort order list, it will automatically be added at the end. Since all OPUS IDs are unique, this guarantees the resulting order is deterministic.
 
@@ -176,13 +176,13 @@ Note that if `opusid` does not appear in the sort order list, it will automatica
 * To search for Data Set IDs that contain "ISS" anywhere (the qtype is optional):
 
 %CODE%
-datasetid=ISS&qtype=contains  
+datasetid=ISS&qtype-datasetid=contains
 %ENDCODE%
 
 * To search for Data Set IDs that start with "CO-E":
 
 %CODE%
-datasetid=CO-E&qtype=begins
+datasetid=CO-E&qtype-datasetid=begins
 %ENDCODE%
 
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
@@ -250,8 +250,8 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
+| `cols=<field_id_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 
@@ -265,7 +265,7 @@ The return value is a JSON object containing these fields:
 | `limit` | Requested limit |
 | `count` | Number of observations actually returned |
 | `available` | Total number of observations available from this search |
-| `order` | Sort order |
+| `order` | Sort order used |
 | `labels` | Requested metadata field names (fully qualified) in the order requested with `cols` |
 | `page` | The observation data |
 
@@ -273,11 +273,11 @@ The return value is a JSON object containing these fields:
 
 Example:
 
-* Retrieve data in JSON format for the first 3 Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
+* Retrieve data in JSON format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
     %EXTLINK%%HOST%/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -321,11 +321,11 @@ The return value is a series of text lines. The first line contains the names of
 
 Example:
 
-* Retrieve data in CSV format for the first 3 Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
+* Retrieve data in CSV format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
     %EXTLINK%%HOST%/opus/api/data.csv?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 OPUS ID,Intended Target Name,Observation Start Time,Phase Angle at Body Center [Enceladus] (degrees)
@@ -340,11 +340,11 @@ The return value is an HTML table. The table header contains the names of the re
 
 Example:
 
-* Retrieve data in HTML format for the first 3 Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
+* Retrieve data in HTML format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
     %EXTLINK%%HOST%/opus/api/data.html?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -390,11 +390,13 @@ Supported return formats: `json`, `html`, `csv`
 | Parameter | Description | Default |
 |---|---|---|
 | `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
-| `cats=<category names>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored | All categories |
+| `cats=<categories>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored | All categories |
+
+`categories` is a list of category names separated by commas. Category names can either be full names ending in "Constraints" (e.g. `PDS Constraints` or `Cassini ISS Constraints`) or abbreviated names representing internal database tables (`obs_pds`, `obs_mission_cassini`, or `obs_instrument_coiss`). Full category names must replace spaces with `+` or another appropriate encoding. The list of categories available for an `opusid` can be retrieved with [`api/categories/[opusid].json`](#categoriesopusidfmt).
 
 #### JSON Return Format
 
-If the `cols` parameter is supplied, the return value is a JSON object containing a list of objects each with a single name/value pair `{slug: value}`. If the `cols` parameter is not supplied, the return value is a JSON object containing name/value pairs `{category: data}` where `data` is a list of objects each with a single name/value pair `{slug: value}`.
+If the `cols` parameter is supplied, the return value is a JSON object containing a list of objects each with a single name/value pair `{<fieldid>: <value>}`. If the `cols` parameter is not supplied, the return value is a JSON object containing name/value pairs `{<category>: <data>}` where `data` is a list of objects each with a single name/value pair `{<fieldid>: <value>}`.
 
 Examples:
 
@@ -402,7 +404,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -424,7 +426,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cols=time1,time2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 [
@@ -441,7 +443,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.json?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -472,7 +474,7 @@ The return value is a series of text lines. If `cols` is supplied, the return va
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 General Constraints
@@ -491,7 +493,7 @@ Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cols=time1,time2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 Observation Start Time,Observation Stop Time
@@ -502,7 +504,7 @@ Observation Start Time,Observation Stop Time
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.csv?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 PDS Constraints
@@ -515,7 +517,7 @@ Exposure Duration (secs),Greater Size in Pixels,Lesser Size in Pixels, [...]
 
 #### HTML Return Format
 
-If the `cols` parameter is supplied, the return value is an HTML description list containing name/value pairs where the name is the "pretty" name of the metadata field. If the `cols` parameter is not supplied, the return value is an HTML description list containing name/value pairs organized by category name.
+If the `cols` parameter is supplied, the return value is an HTML description list containing name/value pairs where the name is the fully-qualified name of the metadata field. If the `cols` parameter is not supplied, the return value is an HTML description list containing name/value pairs organized by category name.
 
 Examples:
 
@@ -523,7 +525,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -548,7 +550,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cols=time1,time2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -562,7 +564,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/metadata_v2/co-iss-w1866600688.html?cats=PDS+Constraints,Image+Constraints%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -607,20 +609,78 @@ Supported return formats: `zip`.
 | `urlonly=<N>` | If `urlonly=1` is specified, only include the `urls.txt` file and omit all data files | Include all data files |
 | `types=<types>` | List of product types to return | All product types  |
 
+XXX TYPES
+
 #### Examples
 
 * Download all product types (including all data files) for a Voyager ISS observation:
 
     %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip%ENDEXTLINK%
 
+    Return value:
+
+%CODE%
+C4360022_CALIB.IMG
+C4360022_CALIB.LBL
+C4360022_CLEANED.IMG
+C4360022_CLEANED.LBL
+C4360022_full.jpg
+C4360022_GEOMA.DAT
+C4360022_GEOMA.LBL
+C4360022_GEOMA.TAB
+C4360022_GEOMED.IMG
+C4360022_GEOMED.LBL
+C4360022_med.jpg
+C4360022_RAW.IMG
+C4360022_RAW.LBL
+C4360022_RESLOC.DAT
+C4360022_RESLOC.LBL
+C4360022_RESLOC.TAB
+C4360022_small.jpg
+C4360022_thumb.jpg
+checksum.txt
+data.csv
+manifest.txt
+urls.txt
+VGISS_6210_inventory.lbl
+VGISS_6210_inventory.tab
+VGISS_6210_moon_summary.lbl
+VGISS_6210_moon_summary.tab
+VGISS_6210_ring_summary.lbl
+VGISS_6210_ring_summary.tab
+VGISS_6210_saturn_summary.lbl
+VGISS_6210_saturn_summary.tab
+%ENDCODE%
+
 * Download all product types (with no data files) for a Voyager ISS observation:
 
     %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1%ENDEXTLINK%
 
+    Return value:
+
+%CODE%
+checksum.txt
+data.csv
+manifest.txt
+urls.txt
+%ENDCODE%
+
 * Download only raw image files for a Galileo SSI observation.
 
-    %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi-raw
+    %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi-raw%ENDEXTLINK%
 
+    Return value:
+
+%CODE%
+C0349632000R.IMG
+C0349632000R.LBL
+checksum.txt
+data.csv
+manifest.txt
+RLINEPRX.FMT
+RTLMTAB.FMT
+urls.txt
+%ENDCODE%
 
 
 
@@ -636,11 +696,13 @@ Supported return formats: `json`.
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
+| `cols=<field_id_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 | `types=<types>` | List of product types to return | All product types |
+
+XXX TYPES
 
 #### JSON Return Format
 
@@ -656,7 +718,7 @@ The return value is a JSON object containing these fields:
 | `data` | The file information for the current version |
 | `versions` | The file information for all versions (including the current one) |
 
-`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs of associated files.
 
 Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
 
@@ -664,7 +726,7 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
 
     %EXTLINK%%HOST%/opus/api/files.json?volumeid=COISS_2111&target=pan%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -676,26 +738,26 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
   "data": {
     "co-iss-n1867599811": {
       "coiss-raw": [
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
       ],
       "coiss-calib": [
-      "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
-      "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
+        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
+        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
       ],
       "coiss-thumb": [
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
       ],
       [...]
     },
     "co-iss-n1867600166": {
       "coiss-raw": [
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-      "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
       ],
       [...]
   },
@@ -719,6 +781,8 @@ Supported return formats: `json`.
 |---|---|---|
 | `types=<types>` | List of product types to return | All product types |
 
+XXX TYPES
+
 #### JSON Return Format
 
 The return value is a JSON object containing these fields:
@@ -728,7 +792,7 @@ The return value is a JSON object containing these fields:
 | `data` | The file information for the current version |
 | `versions` | The file information for all versions (including the current one) |
 
-`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs to associated files.
+`data` and `versions` are both objects indexed by opusid. `versions` is further indexed by version number. Both are then indexed by product type, which gives a list of URLs of associated files.
 
 Examples:
 
@@ -736,30 +800,12 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/files/vg-iss-2-s-c4360022.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
   "data": {
     "vg-iss-2-s-c4360022": {
-      "vgiss-raw": [
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
-      ],
-      "vgiss-cleaned": [
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
-      ],
-      "vgiss-calib": [
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
-      ],
-      [...]
-    }
-  },
-  "versions": {
-    "vg-iss-2-s-c4360022": {
-      "Current": {
       "vgiss-raw": [
         "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
         "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
@@ -773,6 +819,24 @@ Examples:
         "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
       ],
       [...]
+    }
+  },
+  "versions": {
+    "vg-iss-2-s-c4360022": {
+      "Current": {
+        "vgiss-raw": [
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+        ],
+        "vgiss-cleaned": [
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+        ],
+        "vgiss-calib": [
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+        ],
+        [...]
       }
     }
   }
@@ -783,37 +847,37 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
   "data": {
     "go-ssi-c0349632000": {
       "gossi-raw": [
-      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-      "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
       ]
     }
   },
   "versions": {
     "go-ssi-c0349632000": {
       "1": {
-      "gossi-raw": [
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
-      ]
+        "gossi-raw": [
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+        ]
       },
       "Current": {
-      "gossi-raw": [
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
-      ]
+        "gossi-raw": [
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+        ]
       }
     }
   }
@@ -824,25 +888,12 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/files/hst-11559-wfc3-ib4v19rp.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
   "data": {
     "hst-11559-wfc3-ib4v19rp": {
-      "hst-calib": [
-      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ],
-      "hst-drizzled": [
-      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-      "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ]
-    }
-  },
-  "versions": {
-    "hst-11559-wfc3-ib4v19rp": {
-      "Current": {
       "hst-calib": [
         "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
         "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
@@ -851,26 +902,39 @@ Examples:
         "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
         "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
       ]
+    }
+  },
+  "versions": {
+    "hst-11559-wfc3-ib4v19rp": {
+      "Current": {
+        "hst-calib": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ],
+        "hst-drizzled": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ]
       },
       "1.1": {
-      "hst-calib": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ],
-      "hst-drizzled": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ]
+        "hst-calib": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ],
+        "hst-drizzled": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ]
       },
       "1.0": {
-      "hst-calib": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ],
-      "hst-drizzled": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
-      ]
+        "hst-calib": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ],
+        "hst-drizzled": [
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        ]
       }
     }
   }
@@ -895,7 +959,7 @@ Supported return formats: `json`, `csv`. `html` is also supported when a specifi
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 
@@ -922,7 +986,7 @@ When all sizes are requested, `data` is an object containing a series of entries
 
 | Field Name | Description |
 |---|---|
-| `opus_id` | OPUS ID of the observation |
+| `opusid` | OPUS ID of the observation |
 | `<size>_alt_text` | Alternate text (image filename) |
 | `<size>_size_bytes` | Size of the image file in bytes |
 | `<size>_width` | Width of the image in pixels |
@@ -933,7 +997,7 @@ When one size is requested, `data` an object containing a single entry with thes
 
 | Field Name | Description |
 |---|---|
-| `opus_id` | OPUS ID of the observation |
+| `opusid` | OPUS ID of the observation |
 | `alt_text` | Alternate text (image filename) |
 | `size_bytes` | Size of the image file in bytes |
 | `width` | Width of the image in pixels |
@@ -946,7 +1010,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/images.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -957,7 +1021,7 @@ Examples:
   "order": "time1,opusid"
   "data": [
     {
-      "opus_id": "co-iss-n1460962327",
+      "opusid": "co-iss-n1460962327",
       "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
       "thumb_alt_text": "N1460962327_1_thumb.jpg",
       "thumb_size_bytes": 864,
@@ -979,7 +1043,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/images/med.json?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -990,7 +1054,7 @@ Examples:
   "order": "time1,opusid",
   "data": [
     {
-      "opus_id": "co-iss-n1460962327",
+      "opusid": "co-iss-n1460962327",
       "alt_text": "N1460962327_1_med.jpg",
       "size_bytes": 4971,
       "width": 512,
@@ -998,7 +1062,7 @@ Examples:
       "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
     },
     {
-      "opus_id": "co-iss-n1460962415",
+      "opusid": "co-iss-n1460962415",
       "alt_text": "N1460962415_1_med.jpg",
       "size_bytes": 4991,
       "width": 512,
@@ -1013,13 +1077,13 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
   "data": [
     {
-      "opus_id": "vg-iss-2-s-c4360022",
+      "opusid": "vg-iss-2-s-c4360022",
       "alt_text": "C4360022_full.jpg",
       "size_bytes": 24607,
       "width": 800,
@@ -1040,7 +1104,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/images.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 OPUS ID,Thumb URL,Small URL,Med URL,Full URL
@@ -1052,7 +1116,7 @@ co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS
 
     %EXTLINK%%HOST%/opus/api/images/med.csv?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 OPUS ID,URL
@@ -1064,7 +1128,7 @@ co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.csv%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 OPUS ID,URL
@@ -1081,7 +1145,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/images/med.html?volumeid=COISS_2002&startobs=10&limit=2%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1099,7 +1163,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.html%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1126,7 +1190,7 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 
 Specifying a sort order will not change the number of results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `result_count.[fmt]` as well.
 
@@ -1144,7 +1208,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.json?target=Pan%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1164,7 +1228,7 @@ The return value is a single text line with the label "result count" followed by
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 result count,1636
@@ -1178,7 +1242,7 @@ The return value is an HTML description list containing a single item specifying
 
     %EXTLINK%%HOST%/opus/api/meta/result_count.csv?target=Pan%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1201,7 +1265,7 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 
 #### JSON Return Format
 
@@ -1217,7 +1281,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/meta/mults/planet.json?mission=Hubble%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1243,7 +1307,7 @@ The return value is two text lines. The first is a list of choices. The second i
 
     %EXTLINK%%HOST%/opus/api/meta/mults/planet.csv?mission=Hubble%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 Earth,Mars,Jupiter,Saturn,Uranus,Neptune,Pluto,Other
@@ -1260,7 +1324,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/meta/mults/planet.csv?mission=Hubble%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1290,7 +1354,7 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 | `units=<unit>` | The units to use for the returned values | The default unit for the field |
 
 #### JSON Return Format
@@ -1310,7 +1374,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1325,7 +1389,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1346,7 +1410,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.csv?target=Saturn%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 min,max,nulls,units
@@ -1357,7 +1421,7 @@ min,max,nulls,units
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 min,max,nulls,units
@@ -1374,7 +1438,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1390,7 +1454,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %ADDCLASS%op-api-guide-code-block%ENDADDCLASS%
 
@@ -1416,7 +1480,7 @@ Supported return formats: `json`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `<slug>=<value>` | Search parameters (including sort order) | All observations in database |
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 
 #### JSON Return Format
 
@@ -1433,7 +1497,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/categories.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 [
@@ -1493,7 +1557,7 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/categories/co-iss-w1866600688.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 [
@@ -1564,11 +1628,11 @@ The return value is a JSON object containing this field:
 |---|---|
 | `data` | An object containing information about all fields |
 
-`data` is an object indexed by field slug containing:
+`data` is an object indexed by `field_id` containing:
 
 | Field Name | Description |
 |---|---|
-| `slug` | The field slug name |
+| `field_id` | The `field_id` |
 | `category` | The full name of the category to which the field belongs |
 | `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
 | `full_search_label` | The field name without Min/Max qualifiers but with the category name |
@@ -1583,7 +1647,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1596,7 +1660,7 @@ Examples:
       "default_units": null,
       "available_units": null,
       "category": "General Constraints",
-      "slug": "planet"
+      "field_id": "planet"
     },
     [...]
     "rightasc1": {
@@ -1606,12 +1670,12 @@ Examples:
       "full_search_label": "Right Ascension [General]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "General Constraints",
-      "slug": "rightasc1"
+      "field_id": "rightasc1"
     },
     "rightasc2": {
       "label": "Right Ascension (Max)",
@@ -1620,12 +1684,12 @@ Examples:
       "full_search_label": "Right Ascension [General]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "General Constraints",
-      "slug": "rightasc2"
+      "field_id": "rightasc2"
     },
     [...]
     "SURFACEGEOumbrielplanetographiclatitude1": {
@@ -1635,12 +1699,12 @@ Examples:
       "full_search_label": "Observed Planetographic Latitude [Umbriel]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "Umbriel Surface Geometry Constraints",
-      "slug": "SURFACEGEOumbrielplanetographiclatitude1"
+      "field_id": "SURFACEGEOumbrielplanetographiclatitude1"
     },
     "SURFACEGEOumbrielplanetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
@@ -1649,12 +1713,12 @@ Examples:
       "full_search_label": "Observed Planetographic Latitude [Umbriel]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "Umbriel Surface Geometry Constraints",
-      "slug": "SURFACEGEOumbrielplanetographiclatitude2"
+      "field_id": "SURFACEGEOumbrielplanetographiclatitude2"
     },
     [...]
   }
@@ -1665,7 +1729,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/fields.json?collapse=1%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1678,12 +1742,12 @@ Examples:
       "full_search_label": "Observed Planetographic Latitude [Saturn]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "<TARGET> Surface Geometry Constraints",
-      "slug": "SURFACEGEO<TARGET>planetographiclatitude1"
+      "field_id": "SURFACEGEO<TARGET>planetographiclatitude1"
     },
     "SURFACEGEO<TARGET>planetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
@@ -1692,12 +1756,12 @@ Examples:
       "full_search_label": "Observed Planetographic Latitude [Saturn]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "<TARGET> Surface Geometry Constraints",
-      "slug": "SURFACEGEO<TARGET>planetographiclatitude2"
+      "field_id": "SURFACEGEO<TARGET>planetographiclatitude2"
     },
   [...]
   }
@@ -1714,10 +1778,10 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
-Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
 planet,General Constraints,Planet,Planet,Planet [General],Planet,,
 target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
 [...]
@@ -1750,11 +1814,11 @@ The return value is a JSON object containing this field:
 |---|---|
 | `data` | An object containing information about the requested field |
 
-`data` is an object indexed by field slug containing:
+`data` is an object indexed by `field_id` containing:
 
 | Field Name | Description |
 |---|---|
-| `slug` | The field slug name |
+| `field_id` | The `field_id` |
 | `category` | The full name of the category to which the field belongs |
 | `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
 | `full_search_label` | The field name without Min/Max qualifiers but with the category name |
@@ -1769,7 +1833,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/fields/planet.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1782,7 +1846,7 @@ Examples:
       "default_units": null,
       "available_units": null,
       "category": "General Constraints",
-      "slug": "planet"
+      "field_id": "planet"
     }
   }
 }
@@ -1792,7 +1856,7 @@ Examples:
 
     %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrheacenterphaseangle.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
 {
@@ -1804,13 +1868,12 @@ Examples:
       "full_search_label": "Phase Angle at Body Center [Rhea]",
       "default_units": "degrees",
       "available_units": [
-      "degrees",
-      "hourangle",
-      "radians"
+        "degrees",
+        "hourangle",
+        "radians"
       ],
       "category": "Rhea Surface Geometry Constraints",
-      "slug": "SURFACEGEOrheacenterphaseangle",
-      "old_slug": "surfacegeometryrheacenterphaseangle"
+      "field_id": "SURFACEGEOrheacenterphaseangle"
     }
   }
 }
@@ -1826,10 +1889,10 @@ Example:
 
     %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
 
-    Returns:
+    Return value:
 
 %CODE%
-Slug,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Slug,Units
+Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
 planet,General Constraints,Planet,Planet,Planet [General],Planet,,
 %ENDCODE%
 

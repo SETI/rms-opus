@@ -18,7 +18,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def setUp(self):
         self.maxDiff = None
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-        logging.disable(logging.ERROR)
+        # logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:
@@ -752,28 +752,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_fields_time1_cache(self):
         "[test_metadata_api.py] /api/fields: time1 json cache"
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
         url = '/opus/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
+        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_csv(self):

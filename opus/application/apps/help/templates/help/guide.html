@@ -2,9 +2,7 @@
 <div class="op-help-api-guide">
     {{ guide |safe }}
 
-    <h1 id="availablefields">Available Metadata Fields</h2>
-    <p>Old slugs are deprecated but are still functional for backwards compatibility.
-    Please remove the use of old slugs from your code ASAP.</p>
+    <h1 id="availablefields">Available Metadata Fields</h1>
     <a name="availablefields"></a>
     <div id="field_data" class="table-responsive">
         <table class="table table-sm table-striped table-hover">
@@ -12,7 +10,7 @@
                 <tr>
                     <th>Category<br/>&nbsp;</th>
                     <th>Label<br/>Units</th>
-                    <th>Slug<br/>(<span class="text-danger">Old Slug</span>)</th>
+                    <th>Slug<br/>&nbsp;)</th>
                 </tr>
     		</thead>
     		<tbody>
@@ -24,11 +22,7 @@
                             <br/>{{ v.pretty_units }}
                         {% endif %}
                     </td>
-                    <td>{{ v.slug }}
-                        {% if v.old_slug %}
-                            <br/><span class="text-danger">{{ v.old_slug }}</span>
-                        {% endif %}
-                    </td>
+                    <td>{{ v.slug }}</td>
                 </tr>
     	    {% endfor %}
     		</tbody>

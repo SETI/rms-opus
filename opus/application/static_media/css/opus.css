@@ -1883,6 +1883,15 @@ footer {
     border: 1px solid black;
 }
 
+.op-help-contents-printable {
+    font-size: 12pt;
+    font-family: Georgia, serif;
+}
+
+.op-help-contents-printable h1,h2,h3,h4,h5,h6 {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
 .op-help-api-guide .op-api-guide-code-block {
     margin-left: 3em;
     padding-left: 1em;

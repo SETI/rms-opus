@@ -17,18 +17,29 @@ from results.views import (
 from ui.views import api_dummy
 
 urlpatterns = [
+    # The internal version of api/data and api/images that we don't advertise
+    # so we don't have to maintain backwards compatibility.
     url(r'^__api/dataimages.json$', api_get_data_and_images),
+    # Called when we don't actually need data but want a user action recorded
+    # in the web log file.
     url(r'^__fake/__api/dataimages.json$', api_dummy),
+
     url(r'^api/data.(?P<fmt>json|html|csv)$', api_get_data),
     url(r'^__api/data.(?P<fmt>csv)$', api_get_data),
+
+    # Backwards compatibility
     url(r'^api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata),
+
     url(r'^api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata_v2),
     url(r'^__api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_metadata_v2_internal),
+
     url(r'^api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)$', api_get_images_by_size),
     url(r'^api/images.(?P<fmt>json|csv)$', api_get_images),
     url(r'^api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_image),
+
     url(r'^api/files/(?P<opus_id>[-\w]+).json$', api_get_files),
     url(r'^api/files.json$', api_get_files),
+
     url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
     url(r'^__api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
     url(r'^api/categories.json$', api_get_categories_for_search),

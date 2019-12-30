@@ -6,15 +6,21 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: api/data.(json|html|csv)
+#
+#    Format: api/data.(?P<fmt>json|html|csv)
+#    Format: __api/data.(?P<fmt>csv)
+#
 #    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
+#
 #    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
 #    Format: api/images.(json|html|csv)
 #    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
 #                          .(?P<fmt>json|html|csv)
+#
 #    Format: api/files/(?P<opus_id>[-\w]+).json
-#        or: api/files.json
+#    Format: api/files.json
+#
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #
@@ -83,7 +89,7 @@ def api_get_data_and_images(request):
 
         {'page': [
             {'opus_id': OPUS_ID,
-             'obs_num': <obsnum>,    (only if start_obs=N was used)
+             'obs_num': <obsnum>,    (only if start_obs=<N> was given)
              'metadata': ['<col1>', '<col2>', '<col3>'],
              'images': {
                 'full':
@@ -93,7 +99,8 @@ def api_get_data_and_images(request):
             },
             ...
          ],
-         'page_no':             page_no,   OR   'start_obs': start_obs,
+         'page_no':             page_no, # If page=<N> given
+         'start_obs':           start_obs, # If start_obs=<N> given
          'limit':               limit,
          'order':               comma-separate list of slugs,
          'order_list':          [entry, entry...]
@@ -231,7 +238,7 @@ def api_get_data_and_images(request):
            }
 
     if page_no is not None:
-        data['page_no'] = page_no
+        data['page_no'] = page_no # Bakwards compatibility
     if start_obs is not None:
         data['start_obs'] = start_obs
 
@@ -250,8 +257,10 @@ def api_get_data(request, fmt):
     Data is returned in chunks given a starting observation and a limit of how
     many to return. We also support "pages" for specifying the starting
     observation for backwards compatibility. A "page" is 100 observations long.
+    "page" is not documented in the API Guide.
 
-    Format: [__]api/data.(json|html|csv)
+    Format: api/data.(?P<fmt>json|html|csv)
+            __data/data.(?P<fmt>csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -261,14 +270,19 @@ def api_get_data(request, fmt):
 
     Returned JSON:
         {
-            'page_no':   page_no,   OR   'startobs': start_obs,
-            'limit':     limit,
-            'count':     len(page),
-            'available': result_count,
-            'order':     order,
-            'labels':    labels,
-            'page':      page         # tabular page data
+            'page_no':             page_no, # If page=<N> given
+            'start_obs':           start_obs, # If start_obs=<N> given
+            'limit':               limit,
+            'count':               len(page),
+            'available':           result_count,
+            'order':               sort order,
+            'labels':              fully-qualified labels,
+            'page':                tabular page data
         }
+
+    Returned CSV:
+        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
+        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
 
     Returned HTML:
         <table>
@@ -289,10 +303,6 @@ def api_get_data(request, fmt):
                 <td>1.9200</td>
             </tr>
         </table>
-
-    Returned CSV:
-        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
-        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
     """
     api_code = enter_api_call('api_get_data', request)
 
@@ -329,7 +339,7 @@ def api_get_data(request, fmt):
 
     data = {}
     if page_no is not None:
-        data['page_no'] = page_no
+        data['page_no'] = page_no # Backwards compatibility
     if start_obs is not None:
         data['start_obs'] = start_obs
 
@@ -338,7 +348,7 @@ def api_get_data(request, fmt):
     data['available'] = result_count
     data['order'] = order
     data['labels'] = labels
-    data['columns'] = labels # Backwards compatibility with external apps
+    data['columns'] = labels # Backwards compatibility
     data['page'] = page
 
     if fmt == 'csv':
@@ -367,7 +377,7 @@ def api_get_metadata(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
+    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -397,7 +407,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
+    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -410,7 +420,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by field pretty name.
+    JSON is indexed by pretty category name, then by column slug.
 
     HTML and CSV return fully qualified labels.
     """
@@ -422,7 +432,7 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
     This is a PRIVATE API.
 
-    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv])
+    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -436,17 +446,18 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
                url_cols=<cols>
                     If given, include these column names in the URLs for each
                     search icon for mults/strings in the internal HTML output.
+                    This is used on the Detail tab.
 
     Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by field pretty name.
+    JSON is indexed by pretty category name, then by column slug.
 
     HTML and CSV return fully qualified labels.
 
     The only difference between __api/metadata_v2 and api_metadata_v2 is in the
     returned HTML. The __api version returns an internally-formatted HTML needed
     by the Details tab including things like tooltips. The api version returns
-    an external-formatted HTML that is acceptable to outside users without
+    an externally-formatted HTML that is acceptable to outside users without
     exposing internal details.
     """
     return get_metadata(request, opus_id, fmt,
@@ -629,8 +640,7 @@ def api_get_images_by_size(request, size, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/images/(?P<size>[thumb|small|med|full]).
-            (?P<fmt>[json|html|csv])
+    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -651,13 +661,13 @@ def api_get_images(request, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/images.(json|csv)
+    Format: api/images.(?P<fmt>json|csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
                Normal search arguments
 
-    Can return JSON, HTML, or CSV.
+    Can return JSON or CSV.
     """
     api_code = enter_api_call('api_get_images', request)
 
@@ -672,8 +682,8 @@ def api_get_image(request, opus_id, size, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
-            (?P<fmt>[json|html|csv])
+    Format: api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
+            (?P<fmt>json|html|csv)
 
     Can return JSON, HTML, or CSV.
     """
@@ -766,7 +776,7 @@ def _api_get_images(request, fmt, api_code, size, include_search):
             return err
 
         if page_no is not None:
-            data['page_no'] = page_no
+            data['page_no'] = page_no # Backwards compatibility
         if start_obs is not None:
             data['start_obs'] = start_obs
         data['limit'] = limit
@@ -813,10 +823,9 @@ def api_get_files(request, opus_id=None):
 
     This is a PUBLIC API.
 
-    Format: [__]api/files/(?P<opus_id>[-\w]+).json
-        or: [__]api/files.json
-    Arguments: types=<types>
-                    Product types
+    Format: api/files/(?P<opus_id>[-\w]+).json
+            api/files.json
+    Arguments: types=<types>   Product types
                limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -879,7 +888,7 @@ def api_get_files(request, opus_id=None):
             return err
 
         if page_no is not None:
-            data['page_no'] = page_no
+            data['page_no'] = page_no # Backwards compatibility
         if start_obs is not None:
             data['start_obs'] = start_obs
         data['limit'] = limit
