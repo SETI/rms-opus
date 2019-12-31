@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^__help/tutorial.html$', api_tutorial),
     url(r'^__help/gettingstarted.html$', api_gettingstarted),
     url(r'^__help/splash.html$', api_splash),
-    url(r'^__help/guide.html$', api_guide),  # api help pages
+    # We can eventually add pdf to api_guide once it's working properly
+    url(r'^__help/guide.(?P<fmt>html)$', api_guide),
     url(r'^__help/citing.html$', api_citing_opus),
 ]

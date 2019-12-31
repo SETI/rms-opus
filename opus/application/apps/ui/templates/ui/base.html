@@ -199,7 +199,7 @@
                                 <li class="list-inline-item">
                                     <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
                                         &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
-                                </li>                           
+                                </li>
                             </div>
                             <div class="op-cart-toggle-download-panel">
                                 <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
@@ -524,24 +524,24 @@
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
     <!-- NASA feedback widget -->
-    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/config.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/feedback.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
 
     {% block scripts %}
 
-    <script src="{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/cart.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/widgets.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/selectMetadata.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/hash.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/dictionary.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/mutationObserver.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/opus.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/menu.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/utils.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/cart.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/browse.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/detail.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     {% endblock    %}
 
 </body>

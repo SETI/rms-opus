@@ -14,9 +14,11 @@ import qrcode
 import re
 
 import oyaml as yaml # Cool package that preserves key order
+import weasyprint
 
 from django.http import Http404, HttpResponse, HttpRequest
 from django.shortcuts import render
+from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
 from metadata.views import get_fields_info
@@ -248,14 +250,17 @@ def api_citing_opus(request):
     exit_api_call(api_code, ret)
     return ret
 
+
 @never_cache
-def api_guide(request):
-    """Renders the API guide at opus/api.
+def api_guide(request, fmt):
+    """Renders the API guide.
 
     Format: api/
-        or: api/guide.html
+        or: api/guide.(html|pdf)
 
-    To edit guide content edit the examples.yaml
+    To edit guide content edit api_guide.md
+
+    Note that PDF format is not supported yet and is disabled in urls.py.
     """
     api_code = enter_api_call('api_guide', request)
 
@@ -302,7 +307,26 @@ def api_guide(request):
         if available_units:
             fields[field]['pretty_units'] = ', '.join(available_units)
 
-    ret = render(request, 'help/guide.html',
-                 {'guide': guide, 'fields': fields})
+    if fmt == 'html':
+        context = {'guide': guide, 'fields': fields}
+        ret = render(request, 'help/guide.html', context)
+    else:
+        header_template = get_template('ui/header.html')
+        header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
+                          'allow_fallback': False}
+        header = header_template.render(header_context)
+        body_template = get_template('help/guide.html')
+        body_context = {'guide': guide,
+                        'fields': fields,
+                        'pagesize': 'A4'}
+        body = body_template.render(body_context)
+        html = header + '<body>' + body + '</body>'
+        print(html[:6000])
+        weasy_html = weasyprint.HTML(string=html)
+        result = weasy_html.write_pdf()
+        ret = HttpResponse(content_type='application/pdf')
+        ret['Content-Disposition'] = 'attachment; filename="opus_api_guide.pdf"'
+        ret['Content-Transfer-Encoding'] = 'binary'
+        ret.write(result)
     exit_api_call(api_code, ret)
     return ret
