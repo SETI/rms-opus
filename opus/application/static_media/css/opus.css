@@ -2335,16 +2335,21 @@ at the right of -- OR -- label. */
     }
 }
 
-/* set the vertical spacing between each dropdown item in the hamburger */
+/* Set the vertical spacing between each dropdown item in the hamburger */
 #op-obs-menu .dropdown-item {
     /* default is 10px at top and bottom, and total menu height 368px */
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 /* Styling for the first column of table header in browse tab */
-.op-browse-table-first-col div {
+.op-table-first-col div {
     padding-right: 4px;
+}
+
+/* Hide the first column of table header in cart tab */
+#cart .op-table-first-col div {
+    display: none;
 }
 
 .op-browse-table-header-addall {

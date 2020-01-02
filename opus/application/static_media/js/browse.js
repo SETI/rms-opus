@@ -1492,7 +1492,7 @@ var o_browse = {
         // let tool = "<a href='#' class='' title='Tools'>" +
         //            "<i class='fas fa-toolbox'></i></a>";
         let toolsIcon = "<i class='fas fa-toolbox' title='Tools'></i>";
-        let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-browse-table-first-col'>" +
+        let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-table-first-col'>" +
                                   "<div>" + addallIcon + toolsIcon + "</div></th>";
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
@@ -1821,6 +1821,13 @@ var o_browse = {
         startObs = (o_browse.isGalleryView() ? (o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
                     galleryBoundingRect.x + 1) : startObs);
 
+        // Only show "Add all results to cart" in browse tab.
+        if (tab === "#cart") {
+            $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
+        } else {
+            $("#op-obs-menu .dropdown-item[data-action='addall']").removeClass("op-hide-element");
+        }
+
         if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
             let elem = $(`${tab} [data-obs="${startObs}"]`);
@@ -1881,6 +1888,12 @@ var o_browse = {
                 o_browse.hideGalleryViewModal();
             }
             o_browse.renderGalleryAndTable(data, this.url, view);
+
+            // if (tab === "#cart") {
+            //     $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
+            // } else {
+            //     $("#op-obs-menu .dropdown-item[data-action='addall']").removeClass("op-hide-element");
+            // }
 
             if (opus.metadataDetailOpusId !== "") {
                 o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);

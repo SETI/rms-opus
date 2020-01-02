@@ -539,6 +539,9 @@ var o_cart = {
                     }
                 }
             });
+        } else {
+            // Make sure "Add all results to cart" is hidden in cart tab.
+            $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
 
