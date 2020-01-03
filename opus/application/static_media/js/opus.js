@@ -824,7 +824,7 @@ var opus = {
                             o_cart.restoreRecycleBin();
                             break;
                         case "op-addall-to-cart":
-                            o_browse.addAllToCart();
+                            o_cart.addAllToCart();
                             break;
                     }
                     $(`#${target}`).modal("hide");
