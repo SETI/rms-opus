@@ -5,6 +5,7 @@
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
 /* globals o_cart, o_hash, o_utils, o_selectMetadata, opus */
+/* globals MAX_SELECTIONS_ALLOWED */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -343,6 +344,11 @@ var o_browse = {
             return false;
         });
 
+        // Click add all to cart icon in the first column of the browse table header
+        $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
+            o_browse.confirmationBeforeAddAll();
+        });
+
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
             o_browse.showPageLoaderSpinner();
@@ -440,7 +446,7 @@ var o_browse = {
                     break;
 
                 case "addall":
-                    $("#op-addall-to-cart").modal("show");
+                    o_browse.confirmationBeforeAddAll();
                     break;
 
                 case "downloadCSV":
@@ -519,6 +525,26 @@ var o_browse = {
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    confirmationBeforeAddAll: function() {
+        /**
+         * Display a modal before add all action. If the result count is more
+         * than MAX_SELECTIONS_ALLOWED, display a warning modal to ask user
+         * to reduce the number of obs before add all aciton. If the result
+         * count is less than MAX_SELECTIONS_ALLOWED, display a confirmation
+         * modal.
+         */
+        if (o_browse.totalObsCount <= MAX_SELECTIONS_ALLOWED) {
+            $("#op-addall-to-cart").modal("show");
+        } else {
+            let warningMsg = "There are too many results to add all to the cart. " +
+                             "Please reduce the number of results to " +
+                             ` ${o_utils.addCommas(MAX_SELECTIONS_ALLOWED)} ` +
+                             "or fewer and try again.";
+            $("#op-addall-warning-msg .modal-body").text(warningMsg);
+            $("#op-addall-warning-msg").modal("show");
+        }
+    },
 
     cartShiftKeyHandler: function(e, opusId) {
         let tab = opus.getViewTab();
@@ -1483,9 +1509,10 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart' " +
-                         "class='op-browse-table-header-addall btn btn-link'>" +
-                         "<i class='fas fa-cart-plus data-action='addall'" +
+        // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart' " +
+        let addallIcon = "<button type='button'" +
+                         "class='op-table-header-addall btn btn-link'>" +
+                         "<i class='fas fa-cart-plus' data-action='addall'" +
                          " title='Add All Results to Cart'></i></button>";
         // let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
         //                " data-action='addall' title='Add All Results to Cart'>";
@@ -1888,12 +1915,6 @@ var o_browse = {
                 o_browse.hideGalleryViewModal();
             }
             o_browse.renderGalleryAndTable(data, this.url, view);
-
-            // if (tab === "#cart") {
-            //     $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
-            // } else {
-            //     $("#op-obs-menu .dropdown-item[data-action='addall']").removeClass("op-hide-element");
-            // }
 
             if (opus.metadataDetailOpusId !== "") {
                 o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);

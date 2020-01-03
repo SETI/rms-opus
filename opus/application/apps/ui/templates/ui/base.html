@@ -375,6 +375,16 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-addall-warning-msg"
+            confirm_title="Message About Add All Action"
+            confirm_msg=""
+            target="op-addall-warning-msg"
+            yes_text="OK"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-empty-cart"
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from the cart?"

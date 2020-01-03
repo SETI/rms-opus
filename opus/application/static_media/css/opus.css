@@ -2352,7 +2352,7 @@ at the right of -- OR -- label. */
     display: none;
 }
 
-.op-browse-table-header-addall {
+.op-table-header-addall {
     padding: 0px;
     color: #FFFFFF;
     padding-right: 3px;

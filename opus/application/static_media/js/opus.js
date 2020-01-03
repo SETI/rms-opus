@@ -783,8 +783,8 @@ var opus = {
                 case "op-empty-cart":
                     let emptyCartModalMsg = "";
                     if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
-                        emptyCartModalMsg = "Are you sure you want to remove all observations from the cart"
-                                            + "and the recycle bin?";
+                        emptyCartModalMsg = "Are you sure you want to remove all observations from the cart" +
+                                            "and the recycle bin?";
                     } else {
                         emptyCartModalMsg = "Are you sure you want to remove all observations from the cart?";
                     }
@@ -794,9 +794,9 @@ var opus = {
                     // Note: If we use `` for string concatenation in html text, text will split into
                     // multiple lines in html, but stay in one line in UI. Use "+" here can make
                     // sure text stays in one line in both html and UI, just looks cleaner (in html).
-                    let addAllmodalMsg = "Are you sure you want to add all"
-                                         + ` ${o_utils.addCommas(o_browse.totalObsCount)} `
-                                         + "observations to the cart?";
+                    let addAllmodalMsg = "Are you sure you want to add all" +
+                                         ` ${o_utils.addCommas(o_browse.totalObsCount)} ` +
+                                         "observations to the cart?";
                     $("#op-addall-to-cart .modal-body").text(addAllmodalMsg);
                     break;
             }
