@@ -5,44 +5,44 @@
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.lbl"
       ],
-      "planet-geometry": [
+      "planet_geometry": [
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.tab",
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.lbl"
       ],
-      "moon-geometry": [
+      "moon_geometry": [
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.tab",
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.lbl"
       ],
-      "ring-geometry": [
+      "ring_geometry": [
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.tab",
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.lbl"
       ],
-      "browse-thumb": [
+      "browse_thumb": [
         "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_thumb.png"
       ],
-      "browse-small": [
+      "browse_small": [
         "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_small.png"
       ],
-      "browse-medium": [
+      "browse_medium": [
         "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_med.png"
       ],
-      "browse-full": [
+      "browse_full": [
         "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_full.png"
       ],
-      "covims-raw": [
+      "covims_raw": [
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1.qub",
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1.lbl",
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/band_bin_center.fmt",
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/core_description.fmt",
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/suffix_description.fmt"
       ],
-      "covims-thumb": [
+      "covims_thumb": [
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/thumbnail/2005050T195627_2005051T095112/v1487539692_1.qub.jpeg_small"
       ],
-      "covims-medium": [
+      "covims_medium": [
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/browse/2005050T195627_2005051T095112/v1487539692_1.qub.jpeg"
       ],
-      "covims-full": [
+      "covims_full": [
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
       ]
     }
@@ -54,44 +54,44 @@
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.lbl"
         ],
-        "planet-geometry": [
+        "planet_geometry": [
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.tab",
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.lbl"
         ],
-        "moon-geometry": [
+        "moon_geometry": [
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.tab",
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.lbl"
         ],
-        "ring-geometry": [
+        "ring_geometry": [
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.tab",
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.lbl"
         ],
-        "browse-thumb": [
+        "browse_thumb": [
           "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_thumb.png"
         ],
-        "browse-small": [
+        "browse_small": [
           "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_small.png"
         ],
-        "browse-medium": [
+        "browse_medium": [
           "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_med.png"
         ],
-        "browse-full": [
+        "browse_full": [
           "https://pds-rings.seti.org/holdings/previews/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1_full.png"
         ],
-        "covims-raw": [
+        "covims_raw": [
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1.qub",
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/data/2005050T195627_2005051T095112/v1487539692_1.lbl",
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/band_bin_center.fmt",
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/core_description.fmt",
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/label/suffix_description.fmt"
         ],
-        "covims-thumb": [
+        "covims_thumb": [
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/thumbnail/2005050T195627_2005051T095112/v1487539692_1.qub.jpeg_small"
         ],
-        "covims-medium": [
+        "covims_medium": [
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/browse/2005050T195627_2005051T095112/v1487539692_1.qub.jpeg"
         ],
-        "covims-full": [
+        "covims_full": [
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
         ]
       }

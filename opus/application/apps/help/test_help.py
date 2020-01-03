@@ -84,7 +84,7 @@ class helpTests(TestCase):
     def test__api_guide_no_request(self):
         "[test_help.py] api_guide: no request"
         with self.assertRaises(Http404):
-            api_guide(None)
+            api_guide(None, 'html')
 
     def test__api_guide_no_get(self):
         "[test_help.py] api_guide: no GET"
@@ -92,7 +92,7 @@ class helpTests(TestCase):
         request = self.factory.get('__help/guide.html')
         request.GET = None
         with self.assertRaises(Http404):
-            api_guide(request)
+            api_guide(request, 'html')
 
 
             ###########################################
