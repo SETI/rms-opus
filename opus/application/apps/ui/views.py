@@ -49,7 +49,8 @@ class main_site(TemplateView):
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
-        context['OPUS_FILE_VERSION'] = settings.OPUS_FILE_VERSION
+        context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
+        context['allow_fallback'] = True
         return context
 
 @never_cache

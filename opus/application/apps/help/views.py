@@ -12,11 +12,18 @@ import mistune
 import os
 import qrcode
 import re
+import warnings
 
 import oyaml as yaml # Cool package that preserves key order
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    # weasyprint causes a silly warning about the version of cairo, but
+    # it's the most current version
+    import weasyprint
 
 from django.http import Http404, HttpResponse, HttpRequest
 from django.shortcuts import render
+from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
 from metadata.views import get_fields_info
@@ -35,12 +42,12 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
-def api_about(request):
+def api_about(request, fmt):
     """Renders the about page.
 
     This is a PRIVATE API.
 
-    Format: __help/about.html
+    Format: __help/about.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_about', request)
 
@@ -58,17 +65,17 @@ def api_about(request):
         'database_host': database_host
     }
 
-    ret = render(request, 'help/about.html', context)
+    ret = _render_html_or_pdf(request, 'help/about.html', fmt, context)
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_volumes(request):
+def api_volumes(request, fmt):
     """Renders the volumes page.
 
     This is a PRIVATE API.
 
-    Format: __help/volumes.html
+    Format: __help/volumes.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_volumes', request)
 
@@ -87,19 +94,19 @@ def api_volumes(request):
                                []).append(d['volume_id'])
     for k,v in all_volumes.items():
         all_volumes[k] = ', '.join(all_volumes[k])
-    data = {'all_volumes': all_volumes}
 
-    ret = render(request, 'help/volumes.html', data)
+    context = {'all_volumes': all_volumes}
+    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt, context)
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_faq(request):
+def api_faq(request, fmt):
     """Renders the faq page.
 
     This is a PRIVATE API.
 
-    Format: __help/faq.html
+    Format: __help/faq.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_faq', request)
 
@@ -120,19 +127,19 @@ def api_faq(request):
             exit_api_call(api_code, None)
             raise Http404
 
-    ret = render(request, 'help/faq.html',
-                 {'faq': faq})
+    context = {'faq': faq}
+    ret = _render_html_or_pdf(request, 'help/faq.html', fmt, context)
 
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_gettingstarted(request):
+def api_gettingstarted(request, fmt):
     """Renders the getting started page.
 
     This is a PRIVATE API.
 
-    Format: __help/gettingstarted.html
+    Format: __help/gettingstarted.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_gettingstarted', request)
 
@@ -141,7 +148,8 @@ def api_gettingstarted(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = render(request, 'help/gettingstarted.html')
+    ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt)
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -165,12 +173,12 @@ def api_splash(request):
     return ret
 
 @never_cache
-def api_citing_opus(request):
+def api_citing_opus(request, fmt):
     """Renders the citing opus page.
 
     This is a PRIVATE API.
 
-    Format: __help/citing.html
+    Format: __help/citing.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_citing_opus', request)
 
@@ -225,15 +233,16 @@ def api_citing_opus(request):
                'opus_search_qr': opus_search_qr_str,
                'opus_state_url': opus_state_url,
                'opus_state_qr': opus_state_qr_str}
-    ret = render(request, 'help/citing.html', context)
+    ret = _render_html_or_pdf(request, 'help/citing.html', fmt, context)
+
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_guide(request):
+def api_guide(request, fmt):
     """Renders the API guide.
 
-    Format: __help/guide.html
+    Format: __help/guide.(?P<fmt>html|pdf)
 
     To edit guide content edit api_guide.md
     """
@@ -283,7 +292,30 @@ def api_guide(request):
             fields[field]['pretty_units'] = ', '.join(available_units)
 
     context = {'guide': guide, 'fields': fields}
-    ret = render(request, 'help/guide.html', context)
+    ret = _render_html_or_pdf(request, 'help/guide.html', fmt, context)
 
     exit_api_call(api_code, ret)
+    return ret
+
+
+def _render_html_or_pdf(request, template, fmt, context=None):
+    """Render a template as HTML or PDF."""
+    if fmt == 'html':
+        ret = render(request, template, context)
+    else:
+        header_template = get_template('ui/header.html')
+        header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
+                          'allow_fallback': False}
+        header = header_template.render(header_context)
+        body_template = get_template(template)
+        body = body_template.render(context)
+        html = header + '<body>' + body + '</body>'
+        weasy_html = weasyprint.HTML(string=html)
+        result = weasy_html.write_pdf()
+        ret = HttpResponse(content_type='application/pdf')
+        filename = 'opus_'
+        filename += template.replace('help/', '').replace('.html', '.pdf')
+        ret['Content-Disposition'] = f'attachment; filename="{filename}"'
+        ret['Content-Transfer-Encoding'] = 'binary'
+        ret.write(result)
     return ret

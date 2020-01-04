@@ -12,11 +12,11 @@ from help.views import (
 )
 
 urlpatterns = [
-    url(r'^__help/about.html$', api_about),
-    url(r'^__help/volumes.html$', api_volumes),
-    url(r'^__help/faq.html$', api_faq),
-    url(r'^__help/gettingstarted.html$', api_gettingstarted),
+    url(r'^__help/about.(?P<fmt>html|pdf)$', api_about),
+    url(r'^__help/volumes.(?P<fmt>html|pdf)$', api_volumes),
+    url(r'^__help/faq.(?P<fmt>html|pdf)$', api_faq),
+    url(r'^__help/gettingstarted.(?P<fmt>html|pdf)$', api_gettingstarted),
     url(r'^__help/splash.html$', api_splash),
-    url(r'^__help/guide.html$', api_guide),  # api help pages
-    url(r'^__help/citing.html$', api_citing_opus),
+    url(r'^__help/guide.(?P<fmt>html|pdf)$', api_guide),
+    url(r'^__help/citing.(?P<fmt>html|pdf)$', api_citing_opus),
 ]
