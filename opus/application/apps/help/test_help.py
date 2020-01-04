@@ -95,24 +95,6 @@ class helpTests(TestCase):
             api_guide(request, 'html')
 
 
-            ###########################################
-            ######### api_tutorial UNIT TESTS #########
-            ###########################################
-
-    def test__api_tutorial_no_request(self):
-        "[test_help.py] api_tutorial: no request"
-        with self.assertRaises(Http404):
-            api_tutorial(None)
-
-    def test__api_tutorial_no_get(self):
-        "[test_help.py] api_tutorial: no GET"
-        c = Client()
-        request = self.factory.get('__help/tutorial.html')
-        request.GET = None
-        with self.assertRaises(Http404):
-            api_tutorial(request)
-
-
             #################################################
             ######### api_gettingstarted UNIT TESTS #########
             #################################################
