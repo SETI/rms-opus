@@ -18,7 +18,7 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def setUp(self):
         self.maxDiff = None
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
-        # logging.disable(logging.ERROR)
+        logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
             self.client = requests.Session()
         else:

@@ -90,14 +90,14 @@ class ApiVimsDownlinksTests(TestCase):
            return an image_count object to store the numbers
            ex:
            {'co-vims-v1490874598_001_ir': {
-                'browse-thumb': 2,
-                'browse-small': 2,
-                'browse-medium': 2,
-                'browse-full': 2,
-                'covims-raw': 7,
-                'covims-thumb': 2,
-                'covims-medium': 2,
-                'covims-full': 2}
+                'browse_thumb': 2,
+                'browse_small': 2,
+                'browse_medium': 2,
+                'browse_full': 2,
+                'covims_raw': 7,
+                'covims_thumb': 2,
+                'covims_medium': 2,
+                'covims_full': 2}
            }
         """
 
@@ -115,14 +115,14 @@ class ApiVimsDownlinksTests(TestCase):
         test_url = response.url
         image_count = {}
         response_images = [
-                            "browse-thumb",
-                            "browse-small",
-                            "browse-medium",
-                            "browse-full",
-                            "covims-raw",
-                            "covims-thumb",
-                            "covims-medium",
-                            "covims-full",
+                            "browse_thumb",
+                            "browse_small",
+                            "browse_medium",
+                            "browse_full",
+                            "covims_raw",
+                            "covims_thumb",
+                            "covims_medium",
+                            "covims_full",
                           ]
         # print(test_url)
         if response.status_code == 200: # pragma: no cover
@@ -139,14 +139,14 @@ class ApiVimsDownlinksTests(TestCase):
                         raise Exception("VIMS image data is not fully available in test db")
 
                 image_count[image_id] = {
-                    "browse-thumb": len(data_object[image_id]["browse-thumb"]),
-                    "browse-small": len(data_object[image_id]["browse-small"]),
-                    "browse-medium": len(data_object[image_id]["browse-medium"]),
-                    "browse-full": len(data_object[image_id]["browse-full"]),
-                    "covims-raw": len(data_object[image_id]["covims-raw"]),
-                    "covims-thumb": len(data_object[image_id]["covims-thumb"]),
-                    "covims-medium": len(data_object[image_id]["covims-medium"]),
-                    "covims-full": len(data_object[image_id]["covims-full"]),
+                    "browse_thumb": len(data_object[image_id]["browse_thumb"]),
+                    "browse_small": len(data_object[image_id]["browse_small"]),
+                    "browse_medium": len(data_object[image_id]["browse_medium"]),
+                    "browse_full": len(data_object[image_id]["browse_full"]),
+                    "covims_raw": len(data_object[image_id]["covims_raw"]),
+                    "covims_thumb": len(data_object[image_id]["covims_thumb"]),
+                    "covims_medium": len(data_object[image_id]["covims_medium"]),
+                    "covims_full": len(data_object[image_id]["covims_full"]),
                 }
             return image_count
         else: # pragma: no cover

@@ -12,9 +12,14 @@ import mistune
 import os
 import qrcode
 import re
+import warnings
 
 import oyaml as yaml # Cool package that preserves key order
-import weasyprint
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    # weasyprint causes a silly warning about the version of cairo, but
+    # it's the most current version
+    import weasyprint
 
 from django.http import Http404, HttpResponse, HttpRequest
 from django.shortcuts import render
