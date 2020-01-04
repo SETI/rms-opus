@@ -12,14 +12,9 @@ import mistune
 import os
 import qrcode
 import re
-import warnings
 
 import oyaml as yaml # Cool package that preserves key order
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    # weasyprint causes a silly warning about the version of cairo, but
-    # it's the most current version
-    import weasyprint
+import pdfkit
 
 from django.http import Http404, HttpResponse, HttpRequest
 from django.shortcuts import render
@@ -65,7 +60,8 @@ def api_about(request, fmt):
         'database_host': database_host
     }
 
-    ret = _render_html_or_pdf(request, 'help/about.html', fmt, context)
+    ret = _render_html_or_pdf(request, 'help/about.html', fmt,
+                              'About OPUS', context)
     exit_api_call(api_code, ret)
     return ret
 
@@ -96,7 +92,9 @@ def api_volumes(request, fmt):
         all_volumes[k] = ', '.join(all_volumes[k])
 
     context = {'all_volumes': all_volumes}
-    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt, context)
+    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt,
+                              'Volumes Available for Searching with OPUS',
+                              context)
     exit_api_call(api_code, ret)
     return ret
 
@@ -128,7 +126,9 @@ def api_faq(request, fmt):
             raise Http404
 
     context = {'faq': faq}
-    ret = _render_html_or_pdf(request, 'help/faq.html', fmt, context)
+    ret = _render_html_or_pdf(request, 'help/faq.html', fmt,
+                              'Frequently Asked Questions (FAQ) About OPUS',
+                              context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -148,7 +148,8 @@ def api_gettingstarted(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt)
+    ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
+                              'Getting Started with OPUS')
 
     exit_api_call(api_code, ret)
     return ret
@@ -233,7 +234,9 @@ def api_citing_opus(request, fmt):
                'opus_search_qr': opus_search_qr_str,
                'opus_state_url': opus_state_url,
                'opus_state_qr': opus_state_qr_str}
-    ret = _render_html_or_pdf(request, 'help/citing.html', fmt, context)
+    ret = _render_html_or_pdf(request, 'help/citing.html', fmt,
+                              'How to Cite OPUS',
+                              context)
 
     exit_api_call(api_code, ret)
     return ret
@@ -292,30 +295,46 @@ def api_guide(request, fmt):
             fields[field]['pretty_units'] = ', '.join(available_units)
 
     context = {'guide': guide, 'fields': fields}
-    ret = _render_html_or_pdf(request, 'help/guide.html', fmt, context)
+    ret = _render_html_or_pdf(request, 'help/guide.html', fmt, None, context)
 
     exit_api_call(api_code, ret)
     return ret
 
 
-def _render_html_or_pdf(request, template, fmt, context=None):
+def _render_html_or_pdf(request, template, fmt, title, context=None):
     """Render a template as HTML or PDF."""
     if fmt == 'html':
         ret = render(request, template, context)
     else:
         header_template = get_template('ui/header.html')
         header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
-                          'allow_fallback': False}
+                          'allow_fallback': False,
+                          'include_print_style': True}
         header = header_template.render(header_context)
         body_template = get_template(template)
         body = body_template.render(context)
-        html = header + '<body>' + body + '</body>'
-        weasy_html = weasyprint.HTML(string=html)
-        result = weasy_html.write_pdf()
-        ret = HttpResponse(content_type='application/pdf')
+        html = header + '<body>'
+        if title is not None:
+            html += '<h1>' + title + '</h1>'
+        html += body + '</body>'
+        options = {
+            'page-size':      'Letter',
+            'encoding':       'UTF-8',
+            'margin-top':     '.5in',
+            'margin-bottom':  '.8in',
+            'margin-left':    '.5in',
+            'margin-right':   '.5in',
+            'footer-center':  'Page [page] of [topage]',
+            'footer-spacing': '5', # in mm
+            'outline':        None, # Turn on PDF bookmarks
+            'print-media-type': None,
+        }
+        pdf = pdfkit.from_string(html, False, options)
+        # pdf = re.sub(b'file:///tmp/wktemp.*#', b'/#', pdf)
+
+        ret = HttpResponse(pdf, content_type='application/pdf')
         filename = 'opus_'
         filename += template.replace('help/', '').replace('.html', '.pdf')
         ret['Content-Disposition'] = f'attachment; filename="{filename}"'
         ret['Content-Transfer-Encoding'] = 'binary'
-        ret.write(result)
     return ret
