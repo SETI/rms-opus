@@ -52,11 +52,6 @@ class ApiHelpTests(TestCase, ApiTestHelper):
         url = '/opus/__help/guide.html'
         self._run_status_equal(url, 200)
 
-    def test__api_help_tutorial(self):
-        "[test_help_api.py] /__help: tutorial"
-        url = '/opus/__help/tutorial.html'
-        self._run_status_equal(url, 200)
-
     def test__api_help_bad(self):
         "[test_help_api.py] /__help: bad"
         url = '/opus/__help/bad.html'

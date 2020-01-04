@@ -105,7 +105,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_data_no_results_empty_cols_json(self):
         "[test_results_api.py] /api/data: no results empty cols json"
         url = '/opus/api/data.json?opusid=notgoodid&cols='
-        expected = {"limit": 100, "page": [], "order": "time1,opusid", "count": 0, "labels": [], "columns": [], "start_obs": 1}
+        expected = {"limit": 100, "available": 0, "page": [], "order": "time1,opusid", "count": 0, "labels": [], "columns": [], "start_obs": 1}
         self._run_json_equal(url, expected)
 
     def test__api_data_no_results_empty_cols_csv(self):

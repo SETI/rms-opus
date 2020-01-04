@@ -5,10 +5,13 @@
 ################################################################################
 
 import base64
+import datetime
 from io import BytesIO
 import logging
+import mistune
 import os
 import qrcode
+import re
 
 import oyaml as yaml # Cool package that preserves key order
 
@@ -124,25 +127,6 @@ def api_faq(request):
     return ret
 
 @never_cache
-def api_tutorial(request):
-    """Renders the tutorial page.
-
-    This is a PRIVATE API.
-
-    Format: __help/tutorial.html
-    """
-    api_code = enter_api_call('api_tutorial', request)
-
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    ret = render(request, 'help/tutorial.html')
-    exit_api_call(api_code, ret)
-    return ret
-
-@never_cache
 def api_gettingstarted(request):
     """Renders the getting started page.
 
@@ -245,13 +229,13 @@ def api_citing_opus(request):
     exit_api_call(api_code, ret)
     return ret
 
+@never_cache
 def api_guide(request):
-    """Renders the API guide at opus/api.
+    """Renders the API guide.
 
-    Format: api/
-        or: api/guide.html
+    Format: __help/guide.html
 
-    To edit guide content edit the examples.yaml
+    To edit guide content edit api_guide.md
     """
     api_code = enter_api_call('api_guide', request)
 
@@ -262,23 +246,44 @@ def api_guide(request):
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
+    git_id = get_git_version(True, True)
+    current_date = datetime.datetime.today().strftime('%d-%B-%Y')
 
     path = os.path.dirname(os.path.abspath(__file__))
-    guide_content_file = 'examples.yaml'
+    guide_content_file = 'api_guide.md'
     with open(os.path.join(path, guide_content_file), 'r') as stream:
         text = stream.read()
-        text = text.replace('<HOST>', prefix)
-        try:
-            guide = yaml.load(text, Loader=yaml.FullLoader)
+        text = text.replace('%HOST%', prefix)
+        text = text.replace('%DATE%', current_date)
+        text = text.replace('%VERSION%', git_id)
+        text = re.sub(
+            r'%EXTLINK%(.*)%ENDEXTLINK%',
+            r'<a target="_blank" href="\1"><span class="op-api-guide-code">'
+            +r'<code>\1</code></span></a>',
+            text)
+        text = re.sub(r'%CODE%\n', r'<div class="op-api-guide-code-block '
+                      +r'op-api-guide-code"><pre><code>',
+                      text)
+        text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
+        guide = mistune.Markdown().output(text)
+        guide = guide.replace('%ADDCLASS%', '<div class="')
+        guide = guide.replace('%ENDADDCLASS%', '">')
+        guide = guide.replace('%ENDCLASS%', '</div>')
+        guide = guide.replace('<table>',
+                 '<table class="table table-sm table-striped table-hover '
+                +'op-table-indent op-table-nonfluid">')
+        guide = guide.replace('<thead>', '<thead class="thead-dark">')
+        guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-        except yaml.YAMLError as exc: # pragma: no cover
-            log.error('api_guide error: %s', str(exc))
-            exit_api_call(api_code, None)
-            raise Http404
+    fields = get_fields_info('raw', collapse=True)
+    for field in fields.keys():
+        fields[field]['pretty_units'] = None
+        available_units = fields[field]['available_units']
+        if available_units:
+            fields[field]['pretty_units'] = ', '.join(available_units)
 
-    slugs = get_fields_info('raw', collapse=True)
+    context = {'guide': guide, 'fields': fields}
+    ret = render(request, 'help/guide.html', context)
 
-    ret = render(request, 'help/guide.html',
-                 {'guide': guide, 'slugs': slugs})
     exit_api_call(api_code, ret)
     return ret

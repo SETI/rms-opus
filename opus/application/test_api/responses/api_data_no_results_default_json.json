@@ -3,6 +3,7 @@
   "page": [],
   "order": "time1,opusid",
   "count": 0,
+  "available": 0,
   "labels": [
     "OPUS ID",
     "Instrument Name",

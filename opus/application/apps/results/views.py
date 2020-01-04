@@ -6,16 +6,21 @@
 # lists of images or files):
 #
 #    Format: __api/dataimages.json
-#    Format: api/data.(json|html|csv)
+#
+#    Format: api/data.(?P<fmt>json|html|csv)
+#    Format: __api/data.(?P<fmt>csv)
+#
 #    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #    Format: [__]api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#    Format: api/images/(?P<size>thumb|small|med|full).
-#                           (?P<fmt>json|zip|html|csv)
-#    Format: api/images.(json|zip|html|csv)
+#
+#    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
+#    Format: api/images.(json|html|csv)
 #    Format: api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+)
-#                          .(?P<fmt>json|zip|html|csv)
-#    Format: api/files/(?P<opus_id>[-\w]+).(?P<fmt>json|zip|html|csv)
-#        or: api/files.(?P<fmt>json|zip|html|csv)
+#                          .(?P<fmt>json|html|csv)
+#
+#    Format: api/files/(?P<opus_id>[-\w]+).json
+#    Format: api/files.json
+#
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #
@@ -84,7 +89,7 @@ def api_get_data_and_images(request):
 
         {'page': [
             {'opus_id': OPUS_ID,
-             'obs_num': <obsnum>,    (only if start_obs=N was used)
+             'obs_num': <obsnum>,    (only if start_obs=<N> was given)
              'metadata': ['<col1>', '<col2>', '<col3>'],
              'images': {
                 'full':
@@ -94,7 +99,8 @@ def api_get_data_and_images(request):
             },
             ...
          ],
-         'page_no':             page_no,   OR   'start_obs': start_obs,
+         'page_no':             page_no, # If page=<N> given
+         'start_obs':           start_obs, # If start_obs=<N> given
          'limit':               limit,
          'order':               comma-separate list of slugs,
          'order_list':          [entry, entry...]
@@ -232,7 +238,7 @@ def api_get_data_and_images(request):
            }
 
     if page_no is not None:
-        data['page_no'] = page_no
+        data['page_no'] = page_no # Bakwards compatibility
     if start_obs is not None:
         data['start_obs'] = start_obs
 
@@ -251,8 +257,10 @@ def api_get_data(request, fmt):
     Data is returned in chunks given a starting observation and a limit of how
     many to return. We also support "pages" for specifying the starting
     observation for backwards compatibility. A "page" is 100 observations long.
+    "page" is not documented in the API Guide.
 
-    Format: [__]api/data.(json|html|csv)
+    Format: api/data.(?P<fmt>json|html|csv)
+            __data/data.(?P<fmt>csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -262,13 +270,19 @@ def api_get_data(request, fmt):
 
     Returned JSON:
         {
-            'page_no': page_no,   OR   'startobs': start_obs,
-            'limit':   limit,
-            'order':   order,
-            'count':   len(page),
-            'labels':  labels,
-            'page':    page         # tabular page data
+            'page_no':             page_no, # If page=<N> given
+            'start_obs':           start_obs, # If start_obs=<N> given
+            'limit':               limit,
+            'count':               len(page),
+            'available':           result_count,
+            'order':               sort order,
+            'labels':              fully-qualified labels,
+            'page':                tabular page data
         }
+
+    Returned CSV:
+        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
+        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
 
     Returned HTML:
         <table>
@@ -289,10 +303,6 @@ def api_get_data(request, fmt):
                 <td>1.9200</td>
             </tr>
         </table>
-
-    Returned CSV:
-        OPUS ID,Instrument Name,Planet,Intended Target Name,Observation Start Time,Observation Duration (secs)
-        vg-iss-2-s-c4360001,Voyager ISS,Saturn,Titan,1981-08-12T14:55:10.080,1.9200
     """
     api_code = enter_api_call('api_get_data', request)
 
@@ -322,18 +332,24 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         return ret
 
-    data = {'limit':    limit,
-            'page':     page,
-            'order':    order,
-            'count':    len(page),
-            'labels':   labels,
-            'columns':  labels # Backwards compatibility with external apps
-           }
+    result_count, _, err = get_result_count_helper(request, api_code)
+    if err is not None: # pragma: no cover
+        exit_api_call(api_code, err)
+        return err
 
+    data = {}
     if page_no is not None:
-        data['page_no'] = page_no
+        data['page_no'] = page_no # Backwards compatibility
     if start_obs is not None:
         data['start_obs'] = start_obs
+
+    data['limit'] = limit
+    data['count'] = len(page)
+    data['available'] = result_count
+    data['order'] = order
+    data['labels'] = labels
+    data['columns'] = labels # Backwards compatibility
+    data['page'] = page
 
     if fmt == 'csv':
         csv_data = []
@@ -361,17 +377,20 @@ def api_get_metadata(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
-                    This is a list of slugs separated by commas. Note that the
-                    return will be indexed by field name, but by slug name.
+                    This is a list of slugs separated by commas.
                     If cols is supplied, cats is ignored.
                cats=<cats>
                     Limit results to particular categories. Categories can be
                     given as "pretty names" as displayed on the Details page,
                     or can be given as table names.
+                    Note that the JSON return will be indexed by database field
+                    name, not by slug name. This is never what we actually want
+                    but is provided for backwards compatibility and is no longer
+                    documented.
 
     Can return JSON, HTML, or CSV.
 
@@ -388,12 +407,11 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     This is a PUBLIC API.
 
-    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
-                    This is a list of slugs separated by commas. Note that the
-                    return will be indexed by field name, but by slug name.
+                    This is a list of slugs separated by commas.
                     If cols is supplied, cats is ignored.
                cats=<cats>
                     Limit results to particular categories. Categories can be
@@ -402,7 +420,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
 
     Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by field pretty name.
+    JSON is indexed by pretty category name, then by column slug.
 
     HTML and CSV return fully qualified labels.
     """
@@ -414,7 +432,7 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
     This is a PRIVATE API.
 
-    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>[json|html|csv]+
+    Format: __api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 
     Arguments: cols=<columns>
                     Limit results to particular columns.
@@ -428,17 +446,18 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
                url_cols=<cols>
                     If given, include these column names in the URLs for each
                     search icon for mults/strings in the internal HTML output.
+                    This is used on the Detail tab.
 
     Can return JSON, HTML, or CSV.
 
-    JSON is indexed by pretty category name, then by field pretty name.
+    JSON is indexed by pretty category name, then by column slug.
 
     HTML and CSV return fully qualified labels.
 
     The only difference between __api/metadata_v2 and api_metadata_v2 is in the
     returned HTML. The __api version returns an internally-formatted HTML needed
     by the Details tab including things like tooltips. The api version returns
-    an external-formatted HTML that is acceptable to outside users without
+    an externally-formatted HTML that is acceptable to outside users without
     exposing internal details.
     """
     return get_metadata(request, opus_id, fmt,
@@ -621,23 +640,69 @@ def api_get_images_by_size(request, size, fmt):
 
     This is a PUBLIC API.
 
-    Format: [__]api/images/(?P<size>[thumb|small|med|full]+).
-            (?P<fmt>[json|zip|html|csv]+)
+    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
                Normal search arguments
 
-    Can return JSON, ZIP, HTML, or CSV.
+    Can return JSON, HTML, or CSV.
     """
     api_code = enter_api_call('api_get_images_by_size', request)
 
+    ret = _api_get_images(request, fmt, api_code, size, True)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+@never_cache
+def api_get_images(request, fmt):
+    """Return all images of all sizes for a given search.
+
+    This is a PUBLIC API.
+
+    Format: api/images.(?P<fmt>json|csv)
+    Arguments: limit=<N>
+               page=<N>  OR  startobs=<N> (1-based)
+               order=<column>[,<column>...]
+               Normal search arguments
+
+    Can return JSON or CSV.
+    """
+    api_code = enter_api_call('api_get_images', request)
+
+    ret = _api_get_images(request, fmt, api_code, None, True)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+@never_cache
+def api_get_image(request, opus_id, size, fmt):
+    """Return info about a preview image for the given opus_id and size.
+
+    This is a PUBLIC API.
+
+    Format: api/image/(?P<size>[thumb|small|med|full])/(?P<opus_id>[-\w]+).
+            (?P<fmt>json|html|csv)
+
+    Can return JSON, HTML, or CSV.
+    """
+    api_code = enter_api_call('api_get_image', request)
+
+    if request is not None and request.GET is not None:
+        request.GET = request.GET.copy()
+        request.GET['opusid'] = opus_id
+        request.GET['qtype-opusid'] = 'matches'
+    ret = _api_get_images(request, fmt, api_code, size, False)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+def _api_get_images(request, fmt, api_code, size, include_search):
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
-
-    session_id = get_session_id(request)
 
     (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
                                        request,
@@ -652,11 +717,13 @@ def api_get_images_by_size(request, size, fmt):
 
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
-    image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
+    if size is None:
+        image_list = get_pds_preview_images(opus_ids, preview_jsons)
+    else:
+        image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
 
     if not image_list:
-        log.error('api_get_images_by_size: No image found for: %s',
-                  str(opus_ids[:50]))
+        log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
 
     # Backwards compatibility
     ring_obs_ids = aux['ring_obs_ids']
@@ -666,160 +733,87 @@ def api_get_images_by_size(request, size, fmt):
 
     for image in image_list:
         image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
-        if size+'_alt_text' in image:
-            del image[size+'_alt_text']
-        if size+'_size_bytes' in image:
-            del image[size+'_size_bytes']
-        if size+'_width' in image:
-            del image[size+'_width']
-        if size+'_height' in image:
-            del image[size+'_height']
-        if size+'_url' in image:
-            root_idx = image[size+'_url'].find('previews/')+9
-            path = image[size+'_url'][:root_idx]
-            url = image[size+'_url'][root_idx:]
-            image['img'] = url
+        if size is not None:
+            if size+'_alt_text' in image:
+                image['alt_text'] = image[size+'_alt_text']
+                del image[size+'_alt_text']
+            if size+'_size_bytes' in image:
+                image['size_bytes'] = image[size+'_size_bytes']
+                del image[size+'_size_bytes']
+            if size+'_width' in image:
+                image['width'] = image[size+'_width']
+                del image[size+'_width']
+            if size+'_height' in image:
+                image['height'] = image[size+'_height']
+                del image[size+'_height']
+            if size+'_url' in image:
+                image['url'] = image[size+'_url']
+                del image[size+'_url']
+
+            # Backwards compatibility
+            url = image['url']
+            if 'previews/' in url:
+                path, img = url.split('previews/')
+                path += 'previews/'
+            elif 'browse/' in url:
+                path, img = url.split('browse/')
+                path += 'browse/'
+            else:
+                path = None
+                img = None
             image['path'] = path
-            image[size] = url
-            del image[size+'_url']
+            image['img'] = img
+            image[size] = img
 
-    data = {'data':  image_list,
-            'limit': limit,
-            'count': len(image_list)
-           }
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
+        if 'cart_state' in image:
+            del image['cart_state']
 
-    ret = response_formats(data, fmt,
-                          template='results/image_list.html', order=order)
-    exit_api_call(api_code, ret)
-    return ret
+    data = {}
+    if include_search:
+        result_count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
 
+        if page_no is not None:
+            data['page_no'] = page_no # Backwards compatibility
+        if start_obs is not None:
+            data['start_obs'] = start_obs
+        data['limit'] = limit
+        data['count'] = len(image_list)
+        data['available'] = result_count
+        data['order'] = order
+    data['data'] = image_list
 
-@never_cache
-def api_get_images(request, fmt):
-    """Return all images of all sizes for a given search.
-
-    This is a PUBLIC API.
-
-    Format: [__]api/images.(json|zip|html|csv)
-    Arguments: limit=<N>
-               page=<N>  OR  startobs=<N> (1-based)
-               order=<column>[,<column>...]
-               Normal search arguments
-
-    Can return JSON, ZIP, HTML, or CSV.
-    """
-    api_code = enter_api_call('api_get_images', request)
-
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+    if fmt == 'csv':
+        csv_data = []
+        columns = ['OPUS ID']
+        if size is None:
+            for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+                columns.append(img_size.title() + ' URL')
+        else:
+            columns.append('URL')
+        for image in image_list:
+            if size is None:
+                row = [image['opus_id']]
+                for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
+                    row.append(image[img_size+'_url'])
+                csv_data.append(row)
+            else:
+                csv_data.append([image['opus_id'], image['url']])
+        ret = csv_response('data', csv_data, column_names=columns)
+    elif fmt == 'html':
+        context = {'data': image_list,
+                   'size': size}
+        ret = render(request, 'results/image_list.html', context)
+    elif fmt == 'json':
+        ret = HttpResponse(json.dumps(data), content_type='application/json')
+    else: # pragma: no cover
+        log.error('api_get_images_by_size: Unknown format "%s"', fmt)
+        ret = Http404(settings.HTTP404_UNKNOWN_FORMAT)
         exit_api_call(api_code, ret)
         raise ret
 
-    session_id = get_session_id(request)
-
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
-                                       request,
-                                       cols='opusid,**previewimages',
-                                       return_opusids=True,
-                                       return_ringobsids=True,
-                                       return_cart_states=True,
-                                       api_code=api_code)
-    if page is None:
-        ret = Http404('Could not find page')
-        exit_api_call(api_code, ret)
-        raise ret
-
-    preview_jsons = [json.loads(x[1]) for x in page]
-    opus_ids = aux['opus_ids']
-    image_list = get_pds_preview_images(opus_ids, preview_jsons,
-                                        ['thumb', 'small', 'med', 'full'])
-
-    if not image_list:
-        log.error('api_get_images: No image found for: %s',
-                  str(opus_ids[:50]))
-
-    # Backwards compatibility
-    ring_obs_ids = aux['ring_obs_ids']
-    ring_obs_id_dict = {}
-    for i in range(len(opus_ids)):
-        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
-
-    cart_states = aux['cart_states']
-    for image, cart_state in zip(image_list, cart_states):
-        image['cart_state'] = cart_state
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
-
-    data = {'data':  image_list,
-            'limit': limit,
-            'count': len(image_list)
-           }
-    if page_no is not None:
-        data['page_no'] = page_no
-    if start_obs is not None:
-        data['start_obs'] = start_obs
-    ret = response_formats(data, fmt,
-                          template='results/image_list.html', order=order)
-    exit_api_call(api_code, ret)
-    return ret
-
-
-@never_cache
-def api_get_image(request, opus_id, size='med', fmt='raw'):
-    """Return info about a preview image for the given opus_id and size.
-
-    This is a PUBLIC API.
-
-    Format: [__]api/image/(?P<size>[thumb|small|med|full]+)/(?P<opus_id>[-\w]+)
-            .(?P<fmt>[json|zip|html|csv]+)
-
-    Can return JSON, ZIP, HTML, or CSV.
-
-    The fields 'path' and 'img' are provided for backwards compatibility only.
-    """
-    api_code = enter_api_call('api_get_image', request)
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    if not opus_id: # pragma: no cover
-        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    # Backwards compatibility
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id:
-        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    image_list = get_pds_preview_images(opus_id, None, size)
-    if len(image_list) != 1:
-        log.error('api_get_image: Could not find preview for opus_id "%s" '
-                  +'size "%s"', str(opus_id), str(size))
-        ret = Http404('No preview image')
-        exit_api_call(api_code, ret)
-        raise ret
-
-    image = image_list[0]
-    path = None
-    if size+'_url' in image:
-        root_idx = image[size+'_url'].find('previews/')+9
-        path = image[size+'_url'][:root_idx]
-        url = image[size+'_url'][root_idx:]
-        image['img'] = url
-        image['path'] = path
-        image['img'] = url
-        image['url'] = image[size+'_url']
-    data = {'path': path, 'data': image_list}
-    ret = response_formats(data, fmt, size=size,
-                          template='results/image_list.html')
-    exit_api_call(api_code, ret)
     return ret
 
 
@@ -829,11 +823,9 @@ def api_get_files(request, opus_id=None):
 
     This is a PUBLIC API.
 
-    Format: [__]api/files/(?P<opus_id>[-\w]+).json
-        or: [__]api/files.json
-    Arguments: types=<types>
-                    Product types
-               loc_type=['url', 'path']
+    Format: api/files/(?P<opus_id>[-\w]+).json
+            api/files.json
+    Arguments: types=<types>   Product types
                limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -849,10 +841,8 @@ def api_get_files(request, opus_id=None):
         raise ret
 
     product_types = request.GET.get('types', 'all')
-    loc_type = request.GET.get('loc_type', 'url')
 
     opus_ids = []
-    data = {}
     if opus_id:
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
@@ -873,23 +863,38 @@ def api_get_files(request, opus_id=None):
         opus_ids = aux['opus_ids']
 
     ret = get_pds_products(opus_ids,
-                           loc_type=loc_type,
+                           loc_type='url',
                            product_types=product_types)
 
     versioned_ret = OrderedDict()
     current_ret = OrderedDict()
-    for opus_id in ret:
-        versioned_ret[opus_id] = OrderedDict() # Versions
-        current_ret[opus_id] = OrderedDict()
-        for version in ret[opus_id]:
-            versioned_ret[opus_id][version] = OrderedDict()
-            for product_type in ret[opus_id][version]:
-                versioned_ret[opus_id][version][product_type[2]] = \
-                    ret[opus_id][version][product_type]
+    for ret_opus_id in ret:
+        versioned_ret[ret_opus_id] = OrderedDict() # Versions
+        current_ret[ret_opus_id] = OrderedDict()
+        for version in ret[ret_opus_id]:
+            versioned_ret[ret_opus_id][version] = OrderedDict()
+            for product_type in ret[ret_opus_id][version]:
+                versioned_ret[ret_opus_id][version][product_type[2]] = \
+                    ret[ret_opus_id][version][product_type]
                 if version == 'Current':
-                    current_ret[opus_id][product_type[2]] = \
-                        ret[opus_id][version][product_type]
+                    current_ret[ret_opus_id][product_type[2]] = \
+                        ret[ret_opus_id][version][product_type]
 
+    data = {}
+    if opus_id is None:
+        result_count, _, err = get_result_count_helper(request, api_code)
+        if err is not None: # pragma: no cover
+            exit_api_call(api_code, err)
+            return err
+
+        if page_no is not None:
+            data['page_no'] = page_no # Backwards compatibility
+        if start_obs is not None:
+            data['start_obs'] = start_obs
+        data['limit'] = limit
+        data['count'] = len(opus_ids)
+        data['available'] = result_count
+        data['order'] = order
     data['data'] = current_ret
     data['versions'] = versioned_ret
 

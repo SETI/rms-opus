@@ -144,7 +144,7 @@ class MetadataTests(TestCase):
     def test__api_get_fields_no_request(self):
         "[test_metadata.py] api_get_fields: no request"
         with self.assertRaises(Http404):
-            api_get_fields(None)
+            api_get_fields(None, 'json')
 
     def test__api_get_fields_no_get(self):
         "[test_metadata.py] api_get_fields: no GET"
@@ -152,4 +152,4 @@ class MetadataTests(TestCase):
         request = self.factory.get('/api/fields/rightasc1.json')
         request.GET = None
         with self.assertRaises(Http404):
-            api_get_fields(request)
+            api_get_fields(request, 'json')
