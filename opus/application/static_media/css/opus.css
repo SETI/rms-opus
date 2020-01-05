@@ -2429,4 +2429,11 @@ at the right of -- OR -- label. */
     table {
         page-break-inside: avoid;
     }
+
+    /* This is not actually implemented in WebKit right now, so there's
+       no way to avoid these ugly page breaks. But maybe some day it will be,
+       and this will magically start working. */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
 }

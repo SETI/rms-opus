@@ -125,7 +125,8 @@ def api_faq(request, fmt):
             exit_api_call(api_code, None)
             raise Http404
 
-    context = {'faq': faq}
+    context = {'faq': faq,
+               'allow_collapse': fmt == 'html'}
     ret = _render_html_or_pdf(request, 'help/faq.html', fmt,
                               'Frequently Asked Questions (FAQ) About OPUS',
                               context)
@@ -318,16 +319,17 @@ def _render_html_or_pdf(request, template, fmt, title, context=None):
             html += '<h1>' + title + '</h1>'
         html += body + '</body>'
         options = {
-            'page-size':      'Letter',
-            'encoding':       'UTF-8',
-            'margin-top':     '.5in',
-            'margin-bottom':  '.8in',
-            'margin-left':    '.5in',
-            'margin-right':   '.5in',
-            'footer-center':  'Page [page] of [topage]',
-            'footer-spacing': '5', # in mm
-            'outline':        None, # Turn on PDF bookmarks
-            'print-media-type': None,
+            'page-size':        'Letter',
+            'encoding':         'UTF-8',
+            'margin-top':       '.5in',
+            'margin-bottom':    '.8in', # Leaves room for footer
+            'margin-left':      '.5in',
+            'margin-right':     '.5in',
+            'footer-center':    'Page [page] of [topage]',
+            'footer-spacing':   '5', # in mm
+            'outline':          None, # Turn on PDF bookmarks
+            'print-media-type': None, # Turn on @media print
+            'quiet':            None, # Turn off console messages
         }
         pdf = pdfkit.from_string(html, False, options)
         # pdf = re.sub(b'file:///tmp/wktemp.*#', b'/#', pdf)
