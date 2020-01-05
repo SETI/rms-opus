@@ -243,14 +243,14 @@ def api_citing_opus(request, fmt):
     return ret
 
 @never_cache
-def api_guide(request, fmt):
+def api_api_guide(request, fmt):
     """Renders the API guide.
 
-    Format: __help/guide.(?P<fmt>html|pdf)
+    Format: __help/apiguide.(?P<fmt>html|pdf)
 
     To edit guide content edit api_guide.md
     """
-    api_code = enter_api_call('api_guide', request)
+    api_code = enter_api_call('api_api_guide', request)
 
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
@@ -296,7 +296,7 @@ def api_guide(request, fmt):
             fields[field]['pretty_units'] = ', '.join(available_units)
 
     context = {'guide': guide, 'fields': fields}
-    ret = _render_html_or_pdf(request, 'help/guide.html', fmt, None, context)
+    ret = _render_html_or_pdf(request, 'help/apiguide.html', fmt, None, context)
 
     exit_api_call(api_code, ret)
     return ret

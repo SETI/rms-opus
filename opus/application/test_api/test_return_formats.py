@@ -131,9 +131,9 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/splash.[fmt]"
         self._test_return_formats('/__help/splash.[fmt]', ('html',))
 
-    def test__api_retfmt_help_guide(self):
-        "[test_return_formats.py] return formats /__help/guide.[fmt]"
-        self._test_return_formats('/__help/guide.[fmt]', ('html',))
+    def test__api_retfmt_help_apiguide(self):
+        "[test_return_formats.py] return formats /__help/apiguide.[fmt]"
+        self._test_return_formats('/__help/apiguide.[fmt]', ('html',))
 
     def test__api_retfmt_help_citing(self):
         "[test_return_formats.py] return formats /__help/citing.[fmt]"
@@ -230,6 +230,14 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def test__api_retfmt_results_categories(self):
         "[test_return_formats.py] return formats /api/categories.[fmt]"
         self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
+
+    def test__api_retfmt_results_product_types_opusid(self):
+        "[test_return_formats.py] return formats /api/product_types/opusid.[fmt]"
+        self._test_return_formats('/api/product_types/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_results_product_types(self):
+        "[test_return_formats.py] return formats /api/product_types.[fmt]"
+        self._test_return_formats('/api/product_types.[fmt]?target=Jupiter', ('json',))
 
     # search/urls.py
 

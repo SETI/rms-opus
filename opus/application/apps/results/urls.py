@@ -13,6 +13,8 @@ from results.views import (
     api_get_image,
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
+    api_get_product_types_for_opus_id,
+    api_get_product_types_for_search,
 )
 from ui.views import api_dummy
 
@@ -43,4 +45,7 @@ urlpatterns = [
     url(r'^api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
     url(r'^__api/categories/(?P<opus_id>[-\w]+).json$', api_get_categories_for_opus_id),
     url(r'^api/categories.json$', api_get_categories_for_search),
+
+    url(r'^api/product_types/(?P<opus_id>[-\w]+).json$', api_get_product_types_for_opus_id),
+    url(r'^api/product_types.json$', api_get_product_types_for_search),
 ]

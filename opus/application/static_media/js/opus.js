@@ -852,9 +852,9 @@ var opus = {
                 pdf_url = base_url + "faq.pdf";
                 header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
-            case "guide":
-                url = base_url + "guide.html";
-                pdf_url = base_url + "guide.pdf";
+            case "apiguide":
+                url = base_url + "apiguide.html";
+                pdf_url = base_url + "apiguide.pdf";
                 header = "OPUS API Guide";
                 break;
             case "citing":

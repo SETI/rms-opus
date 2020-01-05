@@ -24,6 +24,9 @@
 #    Format: [__]api/categories/(?P<opus_id>[-\w]+).json
 #    Format: api/categories.json
 #
+#    Format: api/product_types/(?P<opus_id>[-\w]+).json
+#    Format: api/product_types.json
+#
 ################################################################################
 
 from collections import OrderedDict
@@ -905,7 +908,7 @@ def api_get_files(request, opus_id=None):
 
 @never_cache
 def api_get_categories_for_opus_id(request, opus_id):
-    """Return a JSON list of all cateories (tables) this opus_id appears in.
+    """Return a JSON list of all categories (tables) this opus_id appears in.
 
     This is a PUBLIC API.
 
@@ -959,11 +962,11 @@ def api_get_categories_for_opus_id(request, opus_id):
 
 @never_cache
 def api_get_categories_for_search(request):
-    """Return a JSON list of all cateories (tables) triggered by this search.
+    """Return a JSON list of all categories (tables) triggered by this search.
 
     This is a PUBLIC API.
 
-    Format: [__]api/categories.json
+    Format: api/categories.json
 
     Arguments: Normal search arguments
     """
@@ -999,6 +1002,122 @@ def api_get_categories_for_search(request):
               .values('table_name','label').order_by('disp_order'))
 
     ret = json_response([ob for ob in labels])
+    exit_api_call(api_code, ret)
+    return ret
+
+
+@never_cache
+def api_get_product_types_for_opus_id(request, opus_id):
+    """Return a JSON list of all product types available for this opus_id.
+
+    This is a PUBLIC API.
+
+    Format: api/product_types/(?P<opus_id>[-\w]+).json
+    """
+    api_code = enter_api_call('api_get_product_types_for_opus_id', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    if not opus_id: # pragma: no cover
+        ret = Http404(settings.HTTP404_MISSING_OPUS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    # Backwards compatibility
+    opus_id = convert_ring_obs_id_to_opus_id(opus_id)
+    if not opus_id:
+        ret = Http404(settings.HTTP404_UNKNOWN_RING_OBS_ID)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    cursor = connection.cursor()
+    q = connection.ops.quote_name
+
+    values = []
+    sql = 'SELECT DISTINCT '
+    sql += q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('sort_order')
+    sql += ' FROM '+q('obs_files')
+    sql += ' WHERE '
+    sql += q('obs_files')+'.'+q('opus_id')+' = %s'
+    values.append(opus_id)
+    sql += ' ORDER BY '
+    sql += q('obs_files')+'.'+q('sort_order')
+
+    log.debug('get_product_types_for_opus_id SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    results = cursor.fetchall()
+    product_types = [{'product_type': x[0],
+                      'description': x[1]} for x in results]
+    ret = json_response(product_types)
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
+@never_cache
+def api_get_product_types_for_search(request):
+    """Return a JSON list of all product types available for this search.
+
+    This is a PUBLIC API.
+
+    Format: api/product_types.json
+
+    Arguments: Normal search arguments
+    """
+    api_code = enter_api_call('api_get_product_types_for_search', request)
+
+    if not request or request.GET is None:
+        ret = Http404(settings.HTTP404_NO_REQUEST)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    (selections, extras) = url_to_search_params(request.GET)
+    if selections is None:
+        log.error('api_get_product_types_for_search: Could not find selections '
+                  +'for request %s', str(request.GET))
+        ret = Http404('Parsing of selections failed')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    query_table = get_user_query_table(selections, extras, api_code)
+    if not query_table: # pragma: no cover
+        log.error('api_get_product_types_for_search: get_user_query_table '
+                  +'failed *** Selections %s *** Extras %s',
+                  str(selections), str(extras))
+        ret = Http404('Bad search')
+        exit_api_call(api_code, ret)
+        raise ret
+
+    cursor = connection.cursor()
+    q = connection.ops.quote_name
+
+    values = []
+    sql = 'SELECT DISTINCT '
+    sql += q('obs_files')+'.'+q('short_name')+', '
+    sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('sort_order')
+    sql += ' FROM '+q('obs_files')
+    if selections:
+        sql += ' INNER JOIN '+q(query_table)
+        sql += ' ON '+q('obs_files')+'.'+q('obs_general_id')+'='
+        sql += q(query_table)+'.'+q('id')
+    sql += ' ORDER BY '
+    sql += q('obs_files')+'.'+q('sort_order')
+
+    log.debug('get_product_types_for_search SQL: %s %s', sql, values)
+    cursor.execute(sql, values)
+
+    results = cursor.fetchall()
+    product_types = [{'product_type': x[0],
+                      'description': x[1]} for x in results]
+    ret = json_response(product_types)
+
     exit_api_call(api_code, ret)
     return ret
 

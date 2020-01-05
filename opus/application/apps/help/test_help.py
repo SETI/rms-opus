@@ -81,18 +81,18 @@ class helpTests(TestCase):
             ######### api_guide UNIT TESTS #########
             ########################################
 
-    def test__api_guide_no_request(self):
-        "[test_help.py] api_guide: no request"
+    def test__api_api_guide_no_request(self):
+        "[test_help.py] api_api_guide: no request"
         with self.assertRaises(Http404):
-            api_guide(None, 'html')
+            api_api_guide(None, 'html')
 
-    def test__api_guide_no_get(self):
-        "[test_help.py] api_guide: no GET"
+    def test__api_api_guide_no_get(self):
+        "[test_help.py] api_api_guide: no GET"
         c = Client()
-        request = self.factory.get('__help/guide.html')
+        request = self.factory.get('__help/apiguide.html')
         request.GET = None
         with self.assertRaises(Http404):
-            api_guide(request, 'html')
+            api_api_guide(request, 'html')
 
 
             #################################################

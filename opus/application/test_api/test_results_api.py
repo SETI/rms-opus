@@ -667,6 +667,48 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = '/opus/api/files/hst-11559-wfc3-ib4v12n6q.json'
         self._run_json_equal_file(url, 'api_files_HSTWFC3_versions_ib4v12n6q.json')
 
-    ##################################
-    ### General / OBSERVATION TIME ###
-    ##################################
+
+            #############################################
+            ######### /api/categories API TESTS #########
+            #############################################
+
+    def test__api_categories_bad_opusid(self):
+        "[test_results_api.py] /api/categories: Bad OPUSID"
+        url = '/opus/api/categories/co-iss-w1866145657x.json'
+        expected = []
+        self._run_json_equal(url, expected)
+
+    def test__api_categories_vg_iss_2_s_c4360004(self):
+        "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
+        url = '/opus/api/categories/vg-iss-2-s-c4360004.json'
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_surface_geometry__saturn", "label": "Saturn Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__titan", "label": "Titan Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_voyager", "label": "Voyager Mission Constraints"}, {"table_name": "obs_instrument_vgiss", "label": "Voyager ISS Constraints"}]
+        self._run_json_equal(url, expected)
+
+    def test__api_categories_COISS_2002(self):
+        "[test_results_api.py] /api/categories: COISS_2002"
+        url = '/opus/api/categories.json?volumeid=COISS_2002'
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_cassini", "label": "Cassini Mission Constraints"}, {"table_name": "obs_instrument_coiss", "label": "Cassini ISS Constraints"}]
+        self._run_json_equal(url, expected)
+
+
+            ################################################
+            ######### /api/product_types API TESTS #########
+            ################################################
+
+    def test__api_product_types_bad_opusid(self):
+        "[test_results_api.py] /api/product_types: Bad OPUSID"
+        url = '/opus/api/product_types/co-iss-w1866145657x.json'
+        expected = []
+        self._run_json_equal(url, expected)
+
+    def test__api_product_types_vg_iss_2_s_c4360004(self):
+        "[test_results_api.py] /api/product_types: vg-iss-2-s-c4360004"
+        url = '/opus/api/product_types/vg-iss-2-s-c4360004.json'
+        expected = [{"product_type": "vgiss_raw", "description": "Raw Image"}, {"product_type": "vgiss_cleaned", "description": "Cleaned Image"}, {"product_type": "vgiss_calib", "description": "Calibrated Image"}, {"product_type": "vgiss_geomed", "description": "Geometrically Corrected Image"}, {"product_type": "vgiss_resloc", "description": "Reseau Table"}, {"product_type": "vgiss_geoma", "description": "Geometric Tiepoint Table"}, {"product_type": "inventory", "description": "Target Body Inventory"}, {"product_type": "planet_geometry", "description": "Planet Geometry Index"}, {"product_type": "moon_geometry", "description": "Moon Geometry Index"}, {"product_type": "ring_geometry", "description": "Ring Geometry Index"}, {"product_type": "browse_thumb", "description": "Browse Image (thumbnail)"}, {"product_type": "browse_small", "description": "Browse Image (small)"}, {"product_type": "browse_medium", "description": "Browse Image (medium)"}, {"product_type": "browse_full", "description": "Browse Image (full)"}]
+        self._run_json_equal(url, expected)
+
+    def test__api_product_types_COISS_2002(self):
+        "[test_results_api.py] /api/product_types: COISS_2002"
+        url = '/opus/api/product_types.json?volumeid=COISS_2002'
+        expected = [{"product_type": "coiss_raw", "description": "Raw image"}, {"product_type": "coiss_calib", "description": "Calibrated image"}, {"product_type": "coiss_thumb", "description": "Extra preview (thumbnail)"}, {"product_type": "coiss_medium", "description": "Extra preview (medium)"}, {"product_type": "coiss_full", "description": "Extra preview (full)"}, {"product_type": "inventory", "description": "Target Body Inventory"}, {"product_type": "planet_geometry", "description": "Planet Geometry Index"}, {"product_type": "moon_geometry", "description": "Moon Geometry Index"}, {"product_type": "ring_geometry", "description": "Ring Geometry Index"}, {"product_type": "browse_thumb", "description": "Browse Image (thumbnail)"}, {"product_type": "browse_small", "description": "Browse Image (small)"}, {"product_type": "browse_medium", "description": "Browse Image (medium)"}, {"product_type": "browse_full", "description": "Browse Image (full)"}]
+        self._run_json_equal(url, expected)

@@ -32,6 +32,8 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
       * [`api/meta/range/endpoints/[field].[fmt]` - Return Range Endpoints for a Numeric Field](#endpointsfmt)
       * [`api/categories.json` - Return Categories from a Search](#categoriesfmt)
       * [`api/categories/[opusid].json` - Return Categories for an OPUS ID](#categoriesopusidfmt)
+      * [`api/product_types.json` - Return Product Types from a Search](#producttypesfmt)
+      * [`api/product_types/[opusid].json` - Return Product Types for an OPUS ID](#producttypesopusidfmt)
       * [`api/fields.[fmt]` - Return Information About All Metadata Fields](#fieldsfmt)
       * [`api/fields/[field].[fmt]` - Return Information About a Metadata Field](#fieldsfmt)
 * [Available Metadata Fields](#availablefields)
@@ -601,7 +603,7 @@ Supported return formats: `zip`.
 | `urlonly=<N>` | If `urlonly=1` is specified, only include the `urls.txt` file and omit all data files | Include all data files |
 | `types=<types>` | List of product types to return | All product types  |
 
-XXX TYPES
+The `types` parameter is a list of download product types. Available types can be retrieved with the [`api/product_types.json`](#producttypesfmt) or [`api/product_types/[opusid].json`](#producttypesopusidfmt) API calls.
 
 #### Examples
 
@@ -659,7 +661,7 @@ urls.txt
 
 * Download only raw image files for a Galileo SSI observation.
 
-    %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi-raw%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi_raw%ENDEXTLINK%
 
     Return value:
 
@@ -694,7 +696,7 @@ Supported return formats: `json`.
 | `limit=<N>` | The maximum number of observations to return | 100 |
 | `types=<types>` | List of product types to return | All product types |
 
-XXX TYPES
+The `types` parameter is a list of download product types. Available types can be retrieved with the [`api/product_types.json`](#producttypesfmt) or [`api/product_types/[opusid].json`](#producttypesopusidfmt) API calls.
 
 #### JSON Return Format
 
@@ -773,7 +775,7 @@ Supported return formats: `json`.
 |---|---|---|
 | `types=<types>` | List of product types to return | All product types |
 
-XXX TYPES
+The `types` parameter is a list of download product types. Available types can be retrieved with the [`api/product_types.json`](#producttypesfmt) or [`api/product_types/[opusid].json`](#producttypesopusidfmt) API calls.
 
 #### JSON Return Format
 
@@ -837,7 +839,7 @@ Examples:
 
 * Retrieve raw images only for a Galileo SSI observation in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi-raw%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/files/go-ssi-c0349632000.json?types=gossi_raw%ENDEXTLINK%
 
     Return value:
 
@@ -1184,7 +1186,7 @@ Supported return formats: `json`, `html`, `csv`
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 
-Specifying a sort order will not change the number of results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `result_count.[fmt]` as well.
+Specifying a sort order will not change the number of results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `api/meta/result_count.[fmt]` as well.
 
 #### JSON Return Format
 
@@ -1258,6 +1260,8 @@ Supported return formats: `json`, `html`, `csv`
 | Parameter | Description | Default |
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
+
+Specifying a sort order will not change the results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `api/meta/mults/[field].[fmt]` as well.
 
 #### JSON Return Format
 
@@ -1348,6 +1352,8 @@ Supported return formats: `json`, `html`, `csv`
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 | `units=<unit>` | The units to use for the returned values | The default unit for the field |
+
+Specifying a sort order will not change the results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `api/meta/range/endpoints/[field].[fmt]` as well.
 
 #### JSON Return Format
 
@@ -1474,9 +1480,11 @@ Supported return formats: `json`
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
 
+Specifying a sort order will not change the results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `api/categories.json` as well.
+
 #### JSON Return Format
 
-The return value is a JSON list of objects each containing information about one category that contains data for the given OPUS ID. Each category is described by:
+The return value is a JSON list of objects each containing information about one category that contains data for all of the observations resulting from the given search. Each category is described by:
 
 | Field Name | Description |
 |---|---|
@@ -1485,7 +1493,7 @@ The return value is a JSON list of objects each containing information about one
 
 Example:
 
-* Retrieve the categories for a Cassini ISS observation in JSON format.
+* Retrieve the categories for all observations that have surface geometry information about Methone in JSON format.
 
     %EXTLINK%%HOST%/opus/api/categories.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
 
@@ -1592,6 +1600,151 @@ Example:
   {
     "table_name": "obs_instrument_coiss",
     "label": "Cassini ISS Constraints"
+  }
+]
+%ENDCODE%
+
+
+
+
+
+<h3 id="producttypesfmt"><code>api/product_types.json</code> - Return Product Types from a Search</h3>
+
+Return all download product types available from the results of a particular search.
+
+Supported return formats: `json`
+
+#### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
+
+Specifying a sort order will not change the results, but will be used to cache the actual results in order so that future attempts to perform the search will be faster. Thus if you are planning to perform the search again to retrieve metadata, it is recommended to specify a sort order (if not using the default order) when calling `api/product_types.json` as well.
+
+#### JSON Return Format
+
+The return value is a JSON list of objects each containing information about one product type that is available for at least one observation returned by the given search. Each product type is described by:
+
+| Field Name | Description |
+|---|---|
+| `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
+| `description` | A brief description of the product type (e.g. `Raw Image`)|
+
+Example:
+
+* Retrieve the product types for all observations that have surface geometry information about Methone in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/product_types.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
+
+    Return value:
+
+%CODE%
+[
+  {
+    "product_type": "coiss_raw",
+    "description": "Raw image"
+  },
+  {
+    "product_type": "coiss_calib",
+    "description": "Calibrated image"
+  },
+  {
+    "product_type": "coiss_thumb",
+    "description": "Extra preview (thumbnail)"
+  },
+  {
+    "product_type": "coiss_medium",
+    "description": "Extra preview (medium)"
+  },
+  [...]
+]
+%ENDCODE%
+
+
+
+
+
+<h3 id="categoriesopusidfmt"><code>api/categories/[opusid].json</code> - Return Categories for an OPUS ID</h3>
+
+Return a list of all download product types available for an OPUS ID.
+
+Supported return formats: `json`
+
+#### Parameters
+
+There are no parameters.
+
+#### JSON Return Format
+
+The return value is a JSON list of objects each containing information about one product type that is available for the given OPUS ID. Each product type is described by:
+
+| Field Name | Description |
+|---|---|
+| `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
+| `description` | A brief description of the product type (e.g. `Raw Image`)|
+
+Example:
+
+* Retrieve the categories for a Cassini ISS observation in JSON format.
+
+    %EXTLINK%%HOST%/opus/api/product_types/co-iss-w1866600688.json%ENDEXTLINK%
+
+    Return value:
+
+%CODE%
+[
+  {
+    "product_type": "coiss_raw",
+    "description": "Raw image"
+  },
+  {
+    "product_type": "coiss_calib",
+    "description": "Calibrated image"
+  },
+  {
+    "product_type": "coiss_thumb",
+    "description": "Extra preview (thumbnail)"
+  },
+  {
+    "product_type": "coiss_medium",
+    "description": "Extra preview (medium)"
+  },
+  {
+    "product_type": "coiss_full",
+    "description": "Extra preview (full)"
+  },
+  {
+    "product_type": "inventory",
+    "description": "Target Body Inventory"
+  },
+  {
+    "product_type": "planet_geometry",
+    "description": "Planet Geometry Index"
+  },
+  {
+    "product_type": "moon_geometry",
+    "description": "Moon Geometry Index"
+  },
+  {
+    "product_type": "ring_geometry",
+    "description": "Ring Geometry Index"
+  },
+  {
+    "product_type": "browse_thumb",
+    "description": "Browse Image (thumbnail)"
+  },
+  {
+    "product_type": "browse_small",
+    "description": "Browse Image (small)"
+  },
+  {
+    "product_type": "browse_medium",
+    "description": "Browse Image (medium)"
+  },
+  {
+    "product_type": "browse_full",
+    "description": "Browse Image (full)"
   }
 ]
 %ENDCODE%
