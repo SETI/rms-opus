@@ -35,7 +35,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
       * [`api/product_types.json` - Return Product Types from a Search](#producttypesfmt)
       * [`api/product_types/[opusid].json` - Return Product Types for an OPUS ID](#producttypesopusidfmt)
       * [`api/fields.[fmt]` - Return Information About All Metadata Fields](#fieldsfmt)
-      * [`api/fields/[field].[fmt]` - Return Information About a Metadata Field](#fieldsfmt)
+      * [`api/fields/[field].[fmt]` - Return Information About a Metadata Field](#fieldsfieldfmt)
 * [Available Metadata Fields](#availablefields)
 
 

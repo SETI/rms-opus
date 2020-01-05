@@ -295,7 +295,9 @@ def api_api_guide(request, fmt):
         if available_units:
             fields[field]['pretty_units'] = ', '.join(available_units)
 
-    context = {'guide': guide, 'fields': fields}
+    context = {'guide': guide,
+               'fields': fields,
+               'printing': fmt == 'pdf'}
     ret = _render_html_or_pdf(request, 'help/apiguide.html', fmt, None, context)
 
     exit_api_call(api_code, ret)

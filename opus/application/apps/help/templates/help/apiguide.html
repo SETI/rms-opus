@@ -3,16 +3,23 @@
     {{ guide |safe }}
 
     <h1 id="availablefields">Available Metadata Fields</h1>
-    <a name="availablefields"></a>
     <div id="field_data" class="table-responsive">
         <table class="table table-sm table-striped table-hover">
-    		<thead class="thead-dark">
+            {% if printing %}
                 <tr>
-                    <th>Category<br/>&nbsp;</th>
-                    <th>Label<br/>Units</th>
-                    <th>Slug<br/>&nbsp;</th>
+                    <td><b>Category</b><br/>&nbsp;</td>
+                    <td><b>Label<br/>Units</b></td>
+                    <td><b>Slug<br/>&nbsp;</b></td>
                 </tr>
-    		</thead>
+            {% else %}
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Category<br/>&nbsp;</th>
+                        <th>Label<br/>Units</th>
+                        <th>Slug<br/>&nbsp;</th>
+                    </tr>
+                </thead>
+            {% endif %}
     		<tbody>
     	    {% for k,v in fields.items %}
                 <tr>

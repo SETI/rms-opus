@@ -2417,6 +2417,7 @@ at the right of -- OR -- label. */
         font-size: 12pt;
         color: #000;
         background-color: #fff;
+        overflow: visible;
     }
 
     /* This gets rid of boxes around "pre" that show up with the Qt WebKit
@@ -2425,8 +2426,11 @@ at the right of -- OR -- label. */
         border: 0;
     }
 
-    /* Avoid breaking tables across pages if possible */
+    /* Avoid breaking tables and rows across pages if possible */
     table {
+        page-break-inside: avoid;
+    }
+    tr {
         page-break-inside: avoid;
     }
 
