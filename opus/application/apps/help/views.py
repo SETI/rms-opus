@@ -288,17 +288,22 @@ def api_api_guide(request, fmt):
         guide = guide.replace('<thead>', '<thead class="thead-dark">')
         guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-    fields = get_fields_info('raw', collapse=True)
-    for field in fields.keys():
-        fields[field]['pretty_units'] = None
-        available_units = fields[field]['available_units']
+    fields_dict = get_fields_info('raw', collapse=True)
+    fields = []
+    for field_name, field in fields_dict.items():
+        field['pretty_units'] = None
+        available_units = field['available_units']
         if available_units:
-            fields[field]['pretty_units'] = ', '.join(available_units)
+            field['pretty_units'] = ', '.join(available_units)
+        fields.append(field)
+
+    template_name = 'help/apiguide.html'
+    if fmt == 'pdf':
+        template_name = 'help/apiguide_print.html'
 
     context = {'guide': guide,
-               'fields': fields,
-               'printing': fmt == 'pdf'}
-    ret = _render_html_or_pdf(request, 'help/apiguide.html', fmt, None, context)
+               'fields': fields}
+    ret = _render_html_or_pdf(request, template_name, fmt, None, context)
 
     exit_api_call(api_code, ret)
     return ret

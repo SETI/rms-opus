@@ -2426,12 +2426,9 @@ at the right of -- OR -- label. */
         border: 0;
     }
 
-    /* Avoid breaking tables and rows across pages if possible */
-    table {
-        page-break-inside: avoid;
-    }
-    tr {
-        page-break-inside: avoid;
+    /* Avoid breaking tables and rows across pages if possible. */
+    table, tr, td, th, tbody, thead, tfoot {
+        page-break-inside: avoid !important;
     }
 
     /* This is not actually implemented in WebKit right now, so there's
@@ -2439,5 +2436,9 @@ at the right of -- OR -- label. */
        and this will magically start working. */
     h1, h2, h3, h4, h5, h6 {
         page-break-after: avoid;
+    }
+
+    .op-new-page {
+        page-break-before: always;
     }
 }

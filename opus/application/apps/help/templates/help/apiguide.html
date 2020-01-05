@@ -5,33 +5,25 @@
     <h1 id="availablefields">Available Metadata Fields</h1>
     <div id="field_data" class="table-responsive">
         <table class="table table-sm table-striped table-hover">
-            {% if printing %}
+            <thead class="thead-dark">
                 <tr>
-                    <td><b>Category</b><br/>&nbsp;</td>
-                    <td><b>Label<br/>Units</b></td>
-                    <td><b>Slug<br/>&nbsp;</b></td>
+                    <th>Category<br/>&nbsp;</th>
+                    <th>Label<br/>Units</th>
+                    <th>Slug<br/>&nbsp;</th>
                 </tr>
-            {% else %}
-                <thead class="thead-dark">
-                    <tr>
-                        <th>Category<br/>&nbsp;</th>
-                        <th>Label<br/>Units</th>
-                        <th>Slug<br/>&nbsp;</th>
-                    </tr>
-                </thead>
-            {% endif %}
+            </thead>
     		<tbody>
-    	    {% for k,v in fields.items %}
-                <tr>
-                    <td>{{ v.category }}</td>
-                    <td>{{ v.label }}
-                        {% if v.pretty_units %}
-                            <br/>{{ v.pretty_units }}
-                        {% endif %}
-                    </td>
-                    <td>{{ v.slug }}</td>
-                </tr>
-    	    {% endfor %}
+        	    {% for v in fields %}
+                    <tr>
+                        <td>{{ v.category }}</td>
+                        <td>{{ v.label }}
+                            {% if v.pretty_units %}
+                                <br/>{{ v.pretty_units }}
+                            {% endif %}
+                        </td>
+                        <td>{{ v.slug }}</td>
+                    </tr>
+        	    {% endfor %}
     		</tbody>
         </table>
     </div>
