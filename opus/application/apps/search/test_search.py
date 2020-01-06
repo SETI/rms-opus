@@ -2040,6 +2040,16 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__range_query_any_left_side_unit_overflow(self):
+        "[test_search.py] range_query: multi column range with qtype=any, min only, unit overflow"
+        selections = {'obs_ring_geometry.ring_radius1': [1e307],
+                      'obs_ring_geometry.ring_radius2': [None]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii'])
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
+
     def test__range_query_any_right_side_units_m(self):
         "[test_search.py] range_query: multi column range with qtype=any, max only, units default"
         selections = {'obs_ring_geometry.ring_radius1': [None],
@@ -2054,6 +2064,16 @@ class searchTests(TestCase):
         print(expected_params)
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
+
+    def test__range_query_any_right_side_unit_overflow(self):
+        "[test_search.py] range_query: multi column range with qtype=any, max only, unit overflow"
+        selections = {'obs_ring_geometry.ring_radius1': [None],
+                      'obs_ring_geometry.ring_radius2': [1e307]}
+        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_radius1', ['any'], ['saturnradii'])
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
 
     def test__range_query_any_both_side_units_m(self):
         "[test_search.py] range_query: multi column range with qtype=any, both min and max, units default"
@@ -2984,6 +3004,17 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__construct_query_string_nojoin_unit_overflow(self):
+        "[test_search.py] construct_query_string: just obs_general, unit overflow"
+        selections = {'obs_general.observation_duration1': [1e307],
+                      'obs_general.observation_duration2': [None]}
+        extras = {'units': {'obs_general.observation_duration': 'days'}}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
+
     def test__construct_query_string_string(self):
         "[test_search.py] construct_query_string: a string"
         selections = {'obs_pds.primary_file_spec': ['C11399XX']}
@@ -3013,6 +3044,17 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__construct_query_string_single_column_range_unit_overflow(self):
+        "[test_search.py] construct_query_string: a single column range, unit overflow"
+        selections = {'obs_ring_geometry.ring_center_phase1': [20.0],
+                      'obs_ring_geometry.ring_center_phase2': [1e307]}
+        extras = {'units': {'obs_ring_geometry.ring_center_phase': 'radians'}}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
+
     def test__construct_query_string_longitude_range(self):
         "[test_search.py] construct_query_string: a single column range"
         selections = {'obs_ring_geometry.J2000_longitude1': [240.],
@@ -3034,6 +3076,17 @@ class searchTests(TestCase):
         selections = {'obs_ring_geometry.J2000_longitude1': [240.],
                       'obs_ring_geometry.J2000_longitude2': [310.5]}
         extras = {'qtypes': {'obs_ring_geometry.J2000_longitude': ['fred']}}
+        sql, params = construct_query_string(selections, extras)
+        print(sql)
+        print(params)
+        self.assertIsNone(sql)
+        self.assertIsNone(params)
+
+    def test__construct_query_string_longitude_range_unit_overflow(self):
+        "[test_search.py] construct_query_string: a single column range, unit overflow"
+        selections = {'obs_ring_geometry.J2000_longitude1': [1e307],
+                      'obs_ring_geometry.J2000_longitude2': [310.5]}
+        extras = {'units': {'obs_ring_geometry.J2000_longitude': ['radians']}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
