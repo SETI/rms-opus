@@ -1127,7 +1127,7 @@ var o_search = {
                     return;
                 }
 
-                let dataSlug = multdata.field;
+                let dataSlug = multdata.field_id;
                 $("#widget__" + dataSlug + " .spinner").fadeOut('');
 
                 let widget = "widget__" + dataSlug;

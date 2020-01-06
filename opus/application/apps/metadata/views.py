@@ -140,9 +140,9 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
     Can return JSON, HTML, or CSV (external) or JSON (internal)
 
     Returned JSON:
-        {'field': slug, 'mults': mults}
+        {'field_id': slug, 'mults': mults}
       or:
-        {'field': slug, 'mults': mults, 'reqno': reqno}
+        {'field_id': slug, 'mults': mults, 'reqno': reqno}
 
         mult is a list of entries pairing mult name and result count.
 
@@ -280,7 +280,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
 
         cache.set(cache_key, mults)
 
-    data = {'field': slug,
+    data = {'field_id': slug,
             'mults': mults}
     if internal:
         reqno = get_reqno(request)

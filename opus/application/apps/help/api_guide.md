@@ -4,7 +4,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 %ADDCLASS%op-help-api-guide-toc%ENDADDCLASS%
 
-* [Basic Concepts](#basicconcepts)
+* [Basic Concepts: Metadata Fields, Retrieving, and Searching](#basicconcepts)
     * [API Format](#apiformat)
     * [The OPUS Database](#opusdatabase)
     * [Retrieving Metadata](#retrievingmetadata)
@@ -20,7 +20,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
       * [`api/data.[fmt]` - Return Metadata from a Search](#datafmt)
       * [`api/metadata_v2/[opusid].[fmt]` - Return Metadata for an OPUS ID](#metadatav2fmt)
     * [Getting Data](#gettingdata)
-      * [`api/download/[opusid].zip` - Download Files for an OPUS ID](#downloadopusidzip)
+      * [`api/download/[opusid].zip` - Download Files for an O  PUS ID](#downloadopusidzip)
       * [`api/files.json` - Return URLs of Files from a Search](#filesjson)
       * [`api/files/[opusid].json` - Return URLs of Files for an OPUS ID](#filesopusidjson)
       * [`api/images.[fmt]` - Return URLs of All Images from a Search](#imagesfmt)
@@ -47,7 +47,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
+The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally  `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
 
 Examples:
 
@@ -65,7 +65,7 @@ Examples:
 
 <h2 id="opusdatabase">The OPUS Database</h2>
 
-The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number; the exact format of the OPUS ID varies by mission and instrument (e.g. Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a _fieldid_, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [here](#availablefields) or through the API calls [`api/categories.json`](#categoriesfmt), [`api/categories/[opusid].json`](#categoriesopusidfmt), [`api/fields.[fmt]`](#fieldsfmt), and [`api/fields/[field].[fmt]`](#fieldsfmt).
+The OPUS database contains a set of _observations_. Each observation is identified by a unique _OPUS ID_, which is a short series of characters identifying the mission, instrument, and observation number; the exact format of the OPUS ID varies by mission and instrument (e.g. Cassini ISS: `co-iss-w1294561143`, HST WFPC2: `hst-05392-wfpc2-u2930301t`). OPUS IDs can also be used to represent derived or composite products. Each observation is associated with metadata in one or more categories (e.g. "General" or "Ring Geometry"), each of which contains a series of metadata fields. Each metadata field is identified by a *fieldid*, which is a human-readable abbreviation. The list of available categories, metadata fields, and associated information is available [here](#availablefields) or through the API calls [`api/categories.json`](#categoriesfmt), [`api/categories/[opusid].json`](#categoriesopusidfmt), [`api/fields.[fmt]`](#fieldsfmt), and [`api/fields/[field].[fmt]`](#fieldsfmt).
 
 There are three basic types of fields stored in the database: _multiple-choice_, _string_, and _range_.
 
@@ -75,7 +75,7 @@ There are three basic types of fields stored in the database: _multiple-choice_,
 
 <h2 id="retrievingmetadata">Retrieving Metadata</h2>
 
-Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<field_id_list>`, where `<field_id_list>` is a comma-separated list of `field_id`. For example:
+Many API calls allow you to choose which metadata fields are returned by specifying the parameter `cols=<fieldid_list>`, where `<fieldid_list>` is a comma-separated list of `fieldid`. For example:
 
 %CODE%
 cols=opusid,instrument,planet,target,time1,time2
@@ -83,7 +83,7 @@ cols=opusid,instrument,planet,target,time1,time2
 
 When a `cols` parameter is supported but none is provided, the default columns are used: `opusid,instrument,planet,target,time1,observationduration`.
 
-If a metadata field is a _single-value range_, then that `field_id` **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicating the minimum a `2` suffix indicating the maximum must be provided. For example:
+If a metadata field is a _single-value range_, then that `fieldid` **must** be provided without a numeric suffix (e.g. `observationduration`). However, if a metadata field contains both a minimum and maximum value in the database (e.g. `rightasc` for Right Ascension), then a `1` suffix indicating the minimum a `2` suffix indicating the maximum must be provided. For example:
 
 %CODE%
 cols=observationduration,rightasc1,rightasc2
@@ -95,7 +95,7 @@ See the section on [Available Metadata Fields](#availablefields) below for more 
 
 <h2 id="performingsearches">Performing Searches</h2>
 
-Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a `search_id` and a desired value. For example:
+Many API calls allow you to select which observations you want to return by specifying a set of search constraints. If no constraints are specified, all observations in the database are returned. A search constraint consists of a `searchid` and a desired value. For example:
 
 %CODE%
 volumeid=COISS_2001
@@ -123,9 +123,11 @@ All numeric ranges may be searched by specifying a minimum value (`1` suffix), m
 observationduration1=10&observationduration2=20
 %ENDCODE%
 
+Fields containing longitudes are treated specially and the minimum search value may be greater than the maximum, in which case the search "wraps around" 360 degrees. For example, it is reasonable to search on a longitude range of 350 to 10 degrees. This will give the opposite results of searching on 10 to 350 degrees.
+
 <h3 id="querytypes">Query Types</h3>
 
-When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<searchid>=value` as a search parameter. Note that the `search_id` is always specified without a (`1` or `2`) suffix, even if the search requires suffixes for minimum and maximum vales. This is because the qtype applies to the entire search field, not to the minimum or maximum values separately. The details of the qtypes associated with each field type are given below.
+When performing a search, all string and some range fields may have an additional "query type" (_qtype_) that describes how the search should be performed. The query type is specified by including `qtype-<searchid>=value` as a search parameter. Note that the `searchid` is always specified without a (`1` or `2`) suffix, even if the search requires suffixes for minimum and maximum vales. This is because the qtype applies to the entire search field, not to the minimum or maximum values separately. The details of the qtypes associated with each field type are given below.
 
 #### String Fields
 
@@ -147,11 +149,11 @@ Range fields can be searched using the following query types:
 
 <h3 id="units">Units</h3>
 
-When performing a search, some range fields have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<searchid>=value` as a search parameter. Note that the `search_id` is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
+When performing a search, some range fields have an additional _unit_ that describes what units the search values are in. If no unit is specified, the default for that field is used. The unit is specified by including `unit-<searchid>=value` as a search parameter. Note that the `searchid` is always specified without a suffix, even if the search requires suffixes for minimum and maximum vales.
 
 <h3 id="clauses">Multiple Clauses</h3>
 
-Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the `search_id`s are suffixed with `_N` where `N` is any positive integer. For example:
+Multiple string and range constraints can be specified for the same field. In this case, the multiple constraints are "OR"ed together. To distinguish between the constraints, the `searchid`s are suffixed with `_N` where `N` is any positive integer. For example:
 
 %CODE%
 observationduration1_1=10&observationduration2_1=20&observationduration1_2=30&observationduration2_2=40
@@ -161,7 +163,7 @@ would search for Observation Duration between 10 and 20 seconds (inclusive) *or*
 
 <h3 id="sorting">Sorting</h3>
 
-By default, the results of a search are sorted first by Observation Start Time (`time1`) and then by OPUS ID (`opusid`). This order can be changed by specifying `order=<field_id_list>`, where `<field_id_list>` contains one or more `field_id`s (as would be used when retrieving metadata) separated by commas. If multiple `field_id`s are given, the sorting proceeds by the first `field_id`, and then if the values are identical by the second `field_id`, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the `field_id` with a minus sign (`-`).
+By default, the results of a search are sorted first by Observation Start Time (`time1`) and then by OPUS ID (`opusid`). This order can be changed by specifying `order=<fieldid_list>`, where `<fieldid_list>` contains one or more `fieldid`s (as would be used when retrieving metadata) separated by commas. If multiple `fieldid`s are given, the sorting proceeds by the first `fieldid`, and then if the values are identical by the second `fieldid`, etc. Sorting is normally done in ascending order, but may be changed to descending for a particular field by prepending the `fieldid` with a minus sign (`-`).
 
 Note that if `opusid` does not appear in the sort order list, it will automatically be added at the end. Since all OPUS IDs are unique, this guarantees the resulting order is deterministic.
 
@@ -245,7 +247,7 @@ Supported return formats: `json`, `html`, `csv`
 | Parameter | Description | Default |
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<field_id_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `cols=<fieldid_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 
@@ -611,7 +613,7 @@ The `types` parameter is a list of download product types. Available types can b
 
     %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip%ENDEXTLINK%
 
-    Return value:
+    Return value is a zip archive containing the files:
 
 %CODE%
 C4360022_CALIB.IMG
@@ -650,7 +652,7 @@ VGISS_6210_saturn_summary.tab
 
     %EXTLINK%%HOST%/opus/api/download/vg-iss-2-s-c4360022.zip?urlonly=1%ENDEXTLINK%
 
-    Return value:
+    Return value is a zip archive containing the files:
 
 %CODE%
 checksum.txt
@@ -663,7 +665,7 @@ urls.txt
 
     %EXTLINK%%HOST%/opus/api/download/go-ssi-c0349632000.zip?types=gossi_raw%ENDEXTLINK%
 
-    Return value:
+    Return value is a zip archive containing the files:
 
 %CODE%
 C0349632000R.IMG
@@ -682,7 +684,7 @@ urls.txt
 
 <h3 id="filesjson"><code>api/files.json</code> - Return URLs of Files from a Search</h3>
 
-Get a list of all (or some) files for the search results.
+Get a list of all (or some) product files for the search results.
 
 Supported return formats: `json`.
 
@@ -691,7 +693,7 @@ Supported return formats: `json`.
 | Parameter | Description | Default |
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<field_id_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `cols=<fieldid_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 | `types=<types>` | List of product types to return | All product types |
@@ -765,7 +767,7 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
 
 <h3 id="filesopusidjson"><code>api/files/[opusid].json</code> - Return URLs of Files for an OPUS ID</h3>
 
-Get the URLs of all (or some) files available for a single observation.
+Get the URLs of all (or some) product files available for a single observation.
 
 Supported return formats: `json`.
 
@@ -947,7 +949,7 @@ Get the URLs of images of all sizes (or a given size) based on search criteria a
 
 If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
-Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
+Supported return formats: `json`, `csv`, `html` is also supported when a specified size is requested.
 
 #### Parameters
 
@@ -1067,7 +1069,7 @@ Examples:
 }
 %ENDCODE%
 
-* Retrieve information in JSON format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in JSON format about the full-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.json%ENDEXTLINK%
 
@@ -1118,7 +1120,7 @@ co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS
 co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
 %ENDCODE%
 
-* Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in CSV format about the full-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.csv%ENDEXTLINK%
 
@@ -1153,7 +1155,7 @@ Example:
     </ul>
 %ENDCLASS%
 
-* Retrieve information in CSV format about the medium-size image for OPUS ID vg-iss-2-s-c4360022.
+* Retrieve information in HTML format about the full-size image for OPUS ID vg-iss-2-s-c4360022.
 
     %EXTLINK%%HOST%/opus/api/image/full/vg-iss-2-s-c4360022.html%ENDEXTLINK%
 
@@ -1251,7 +1253,7 @@ The return value is an HTML description list containing a single item specifying
 
 <h3 id="multsfmt"><code>api/meta/mults/[field].[fmt]</code> - Return Possible Values for a Multiple-Choice Field</h3>
 
-Returns all possible values for a multiple-choice field, given a search, and the result count for each value if that value were added to the search constraints.
+Returns all possible values for a multiple-choice field and the result count for each value if that value were added to the search constraints.
 
 Supported return formats: `json`, `html`, `csv`
 
@@ -1269,7 +1271,8 @@ The return value is a JSON object containing these fields:
 
 | Field Name | Description |
 |---|---|
-| `data` | An object containing a single `result_count` field |
+| `field_id` | The `fieldid` requested |
+| `mults` | A JSON object containing the result counts for each choice |
 
 Example:
 
@@ -1281,7 +1284,7 @@ Example:
 
 %CODE%
 {
-  "field": "planet",
+  "field_id": "planet",
   "mults": {
     "Earth": 10,
     "Mars": 354,
@@ -1432,9 +1435,9 @@ The return value is an HTML description list containing name/value pairs where t
 
 Examples:
 
-* Retrieve the range endpoints in the default units (km) for Observed Ring Radius for all Saturn observations in JSON format.
+* Retrieve the range endpoints in the default units (km) for Observed Ring Radius for all Saturn observations in HTML format.
 
-    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.html?target=Saturn%ENDEXTLINK%
 
     Return value:
 
@@ -1448,9 +1451,9 @@ Examples:
     </dl>
 %ENDCLASS%
 
-* Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in JSON format.
+* Retrieve the range endpoints in units of Saturn radii for Observed Ring Radius for all Saturn observations in HTML format.
 
-    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.json?target=Saturn&units=saturnradii%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/meta/range/endpoints/RINGGEOringradius1.html?target=Saturn&units=saturnradii%ENDEXTLINK%
 
     Return value:
 
@@ -1665,7 +1668,7 @@ Example:
 
 
 
-<h3 id="categoriesopusidfmt"><code>api/categories/[opusid].json</code> - Return Categories for an OPUS ID</h3>
+<h3 id="producttypesopusidfmt"><code>api/product_types/[opusid].json</code> - Return Product Types for an OPUS ID</h3>
 
 Return a list of all download product types available for an OPUS ID.
 
@@ -1773,11 +1776,11 @@ The return value is a JSON object containing this field:
 |---|---|
 | `data` | An object containing information about all fields |
 
-`data` is an object indexed by `field_id` containing:
+`data` is an object indexed by `fieldid` containing:
 
 | Field Name | Description |
 |---|---|
-| `field_id` | The `field_id` |
+| `field_id` | The `fieldid` |
 | `category` | The full name of the category to which the field belongs |
 | `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
 | `full_search_label` | The field name without Min/Max qualifiers but with the category name |
@@ -1825,16 +1828,7 @@ Examples:
     "rightasc2": {
       "label": "Right Ascension (Max)",
       "search_label": "Right Ascension",
-      "full_label": "Right Ascension (Max)",
-      "full_search_label": "Right Ascension [General]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "General Constraints",
-      "field_id": "rightasc2"
+      [...]
     },
     [...]
     "SURFACEGEOumbrielplanetographiclatitude1": {
@@ -1853,17 +1847,7 @@ Examples:
     },
     "SURFACEGEOumbrielplanetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Max) [Umbriel]",
-      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Umbriel Surface Geometry Constraints",
-      "field_id": "SURFACEGEOumbrielplanetographiclatitude2"
+      [...]
     },
     [...]
   }
@@ -1880,7 +1864,7 @@ Examples:
 {
   "data": {
     [...]
-    "SURFACEGEO<TARGET>planetographiclatitude1": {
+    "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1": {
       "label": "Observed Planetographic Latitude (Min)",
       "search_label": "Observed Planetographic Latitude",
       "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
@@ -1891,10 +1875,10 @@ Examples:
         "hourangle",
         "radians"
       ],
-      "category": "<TARGET> Surface Geometry Constraints",
-      "field_id": "SURFACEGEO<TARGET>planetographiclatitude1"
+      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+      "field_id": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1"
     },
-    "SURFACEGEO<TARGET>planetographiclatitude2": {
+    "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
       "search_label": "Observed Planetographic Latitude",
       "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
@@ -1905,8 +1889,8 @@ Examples:
         "hourangle",
         "radians"
       ],
-      "category": "<TARGET> Surface Geometry Constraints",
-      "field_id": "SURFACEGEO<TARGET>planetographiclatitude2"
+      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+      "field_id": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2"
     },
   [...]
   }
@@ -1959,11 +1943,11 @@ The return value is a JSON object containing this field:
 |---|---|
 | `data` | An object containing information about the requested field |
 
-`data` is an object indexed by `field_id` containing:
+`data` is an object indexed by `fieldid` containing:
 
 | Field Name | Description |
 |---|---|
-| `field_id` | The `field_id` |
+| `field_id` | The `fieldid` |
 | `category` | The full name of the category to which the field belongs |
 | `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
 | `full_search_label` | The field name without Min/Max qualifiers but with the category name |

@@ -60,7 +60,7 @@ def api_about(request, fmt):
         'database_host': database_host
     }
 
-    ret = _render_html_or_pdf(request, 'help/about.html', fmt,
+    ret = _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
                               'About OPUS', context)
     exit_api_call(api_code, ret)
     return ret
@@ -92,7 +92,7 @@ def api_volumes(request, fmt):
         all_volumes[k] = ', '.join(all_volumes[k])
 
     context = {'all_volumes': all_volumes}
-    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt,
+    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt, 'volumes',
                               'Volumes Available for Searching with OPUS',
                               context)
     exit_api_call(api_code, ret)
@@ -127,7 +127,7 @@ def api_faq(request, fmt):
 
     context = {'faq': faq,
                'allow_collapse': fmt == 'html'}
-    ret = _render_html_or_pdf(request, 'help/faq.html', fmt,
+    ret = _render_html_or_pdf(request, 'help/faq.html', fmt, 'faq',
                               'Frequently Asked Questions (FAQ) About OPUS',
                               context)
 
@@ -150,6 +150,7 @@ def api_gettingstarted(request, fmt):
         raise ret
 
     ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
+                              'getting_started',
                               'Getting Started with OPUS')
 
     exit_api_call(api_code, ret)
@@ -235,7 +236,7 @@ def api_citing_opus(request, fmt):
                'opus_search_qr': opus_search_qr_str,
                'opus_state_url': opus_state_url,
                'opus_state_qr': opus_state_qr_str}
-    ret = _render_html_or_pdf(request, 'help/citing.html', fmt,
+    ret = _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
                               'How to Cite OPUS',
                               context)
 
@@ -303,13 +304,14 @@ def api_api_guide(request, fmt):
 
     context = {'guide': guide,
                'fields': fields}
-    ret = _render_html_or_pdf(request, template_name, fmt, None, context)
+    ret = _render_html_or_pdf(request, template_name, fmt, 'api_guide',
+                              None, context)
 
     exit_api_call(api_code, ret)
     return ret
 
 
-def _render_html_or_pdf(request, template, fmt, title, context=None):
+def _render_html_or_pdf(request, template, fmt, filename, title, context=None):
     """Render a template as HTML or PDF."""
     if fmt == 'html':
         ret = render(request, template, context)
@@ -328,10 +330,10 @@ def _render_html_or_pdf(request, template, fmt, title, context=None):
         options = {
             'page-size':        'Letter',
             'encoding':         'UTF-8',
-            'margin-top':       '.5in',
-            'margin-bottom':    '.8in', # Leaves room for footer
-            'margin-left':      '.5in',
-            'margin-right':     '.5in',
+            'margin-top':       '1in',
+            'margin-bottom':    '1in', # Footer eats into this
+            'margin-left':      '1in',
+            'margin-right':     '1in',
             'footer-center':    'Page [page] of [topage]',
             'footer-spacing':   '5', # in mm
             'outline':          None, # Turn on PDF bookmarks
@@ -342,8 +344,7 @@ def _render_html_or_pdf(request, template, fmt, title, context=None):
         # pdf = re.sub(b'file:///tmp/wktemp.*#', b'/#', pdf)
 
         ret = HttpResponse(pdf, content_type='application/pdf')
-        filename = 'opus_'
-        filename += template.replace('help/', '').replace('.html', '.pdf')
+        filename = 'opus_'+filename+'.pdf'
         ret['Content-Disposition'] = f'attachment; filename="{filename}"'
         ret['Content-Transfer-Encoding'] = 'binary'
     return ret

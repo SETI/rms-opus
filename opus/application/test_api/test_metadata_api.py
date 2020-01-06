@@ -265,27 +265,27 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_mults_cache(self):
         "[test_metadata_api.py] /api/meta/meta/mults: cache"
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=2'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 2}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=3'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 3}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=2'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 2}
         self._run_json_equal(url, expected)
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=3'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 3}
         self._run_json_equal(url, expected)
 
@@ -293,68 +293,68 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_mults_COISS_2111(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_internal(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 internal"
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&reqno=1'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 1}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_saturn(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Saturn"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_jupiter(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Jupiter"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Jupiter'
-        expected = {"field": "target", "mults": {}}
+        expected = {"field_id": "target", "mults": {}}
         self._run_json_equal(url, expected)
 
     # Related constraint
     def test__api_meta_mults_COISS_2111_pan(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Pan"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&target=Pan'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_dione(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Dione targetclass"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Dione'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56, "Polydeuces": 2, "Prometheus": 4, "Telesto": 2, "Tethys": 11, "Titan": 384}}
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56, "Polydeuces": 2, "Prometheus": 4, "Telesto": 2, "Tethys": 11, "Titan": 384}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_dione_2(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Dione targetclass 2"
         url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Dione'
-        expected = {"field": "targetclass", "mults": {}}
+        expected = {"field_id": "targetclass", "mults": {}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_daphnis(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 target Daphnis targetclass"
         url = '/opus/api/meta/mults/targetclass.json?volumeid=COISS_2111&targetclass=Regular+Satellite&target=Daphnis'
-        expected = {"field": "targetclass", "mults": {"Regular Satellite": 4}}
+        expected = {"field_id": "targetclass", "mults": {"Regular Satellite": 4}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_imagetype(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 imagetype"
         # This joins in a non-obs_general table
         url = '/opus/api/meta/mults/imagetype.json?volumeid=COISS_2111'
-        expected = {"field": "imagetype", "mults": {"Frame": 3667}}
+        expected = {"field_id": "imagetype", "mults": {"Frame": 3667}}
         self._run_json_equal(url, expected)
 
     # Other return formats
     def test__api_meta_mults_NHPELO_2001_json(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target"
         url = '/opus/api/meta/mults/target.json?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
-        expected = {"field": "target", "mults": {"2002 MS4": 60, "2010 JJ124": 90, "Arawn": 290, "Calibration": 6, "Charon": 490, "Chiron": 90, "HD 205905": 10, "HD 37962": 10, "Hydra": 143, "Ixion": 60,
+        expected = {"field_id": "target", "mults": {"2002 MS4": 60, "2010 JJ124": 90, "Arawn": 290, "Calibration": 6, "Charon": 490, "Chiron": 90, "HD 205905": 10, "HD 37962": 10, "Hydra": 143, "Ixion": 60,
                     "Kerberos": 10, "NGC 3532": 45, "Nix": 102, "Pluto": 5265, "Quaoar": 96, "Styx": 6}}
         self._run_json_equal(url, expected)
 
@@ -384,14 +384,14 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_mults_COISS_2111_saturn_reqno(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Saturn reqno"
         url = '/opus/api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=98765'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}}
         self._run_json_equal(url, expected)
 
     def test__api_meta_mults_COISS_2111_saturn_reqno_internal(self):
         "[test_metadata_api.py] /api/meta/meta/mults: for COISS_2111 planet Saturn reqno internal"
         url = '/opus/__api/meta/mults/target.json?volumeid=COISS_2111&planet=Saturn&reqno=98765'
-        expected = {"field": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
+        expected = {"field_id": "target", "mults": {"Atlas": 2, "Daphnis": 4, "Enceladus": 271, "Epimetheus": 27, "Hyrrokkin": 140, "Iapetus": 127, "Janus": 4, "Methone": 2, "Pallene": 2, "Pan": 56,
                     "Polydeuces": 2, "Prometheus": 4, "Saturn": 1483, "Saturn Rings": 1040, "Sky": 90, "Telesto": 2, "Tethys": 11, "Titan": 384, "Unknown": 16}, "reqno": 98765}
         self._run_json_equal(url, expected)
 
