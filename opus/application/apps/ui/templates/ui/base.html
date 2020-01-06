@@ -271,6 +271,7 @@
             <h2 class="dropdown-header"></h2>
             <a class="dropdown-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
             <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
+            <a class="dropdown-item" data-action="addall" href="#"><i class="fas fas fa-cart-plus"></i>Add all results to cart</a>
             <a class="dropdown-item" data-action="info" href="#"><i class="fas fa-info-circle"></i>Show detail</a>
             <a class="dropdown-item" data-action="downloadCSV" href="#" download><i class="fas fa-file-csv"></i>Download CSV of selected metadata&nbsp;</a>
             <a class="dropdown-item" data-action="downloadCSVAll" href="#" download><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
@@ -358,6 +359,27 @@
             target="op-reset-search-metadata-modal"
             yes_text="Yes"
             no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-addall-to-cart"
+            confirm_title="Confirm Add All Observations To Cart"
+            confirm_msg="Are you sure you want to add all observations to the cart?"
+            target="op-addall-to-cart"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-addall-warning-msg"
+            confirm_title="Message About Add All Action"
+            confirm_msg=""
+            target="op-addall-warning-msg"
+            yes_text="OK"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"

@@ -5,6 +5,7 @@
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
 /* globals o_cart, o_hash, o_utils, o_selectMetadata, opus */
+/* globals MAX_SELECTIONS_ALLOWED */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -168,14 +169,7 @@ var o_browse = {
 
         // data_table - clicking a table row adds to cart
         $(".op-data-table").on("click", ":checkbox", function(e) {
-            if ($(this).val() == "all") {
-                // checkbox not currently implemented
-                // pop up a warning if selection total is > 100 items,
-                // with the total number to be selected...
-                // if OK, use 'addall' api and loop tru all checkboxes to set them as selected
-                //o_cart.editCart("all",action);
-                return false;
-            }
+            // Click the checkbox of each individual observation
             let tab = opus.getViewTab();
             let opusId = $(this).val();
 
@@ -350,6 +344,11 @@ var o_browse = {
             return false;
         });
 
+        // Click add all to cart icon in the first column of the browse table header
+        $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
+            o_browse.confirmationBeforeAddAll();
+        });
+
         // browse sort order - remove sort slug
         $(".sort-contents").on("click", "li .remove-sort", function() {
             o_browse.showPageLoaderSpinner();
@@ -446,6 +445,10 @@ var o_browse = {
                     o_browse.showDetail(e, opusId);
                     break;
 
+                case "addall":
+                    o_browse.confirmationBeforeAddAll();
+                    break;
+
                 case "downloadCSV":
                 case "downloadCSVAll":
                 case "downloadData":
@@ -522,6 +525,26 @@ var o_browse = {
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    confirmationBeforeAddAll: function() {
+        /**
+         * Display a modal before add all action. If the result count is more
+         * than MAX_SELECTIONS_ALLOWED, display a warning modal to ask user
+         * to reduce the number of obs before add all aciton. If the result
+         * count is less than MAX_SELECTIONS_ALLOWED, display a confirmation
+         * modal.
+         */
+        if (o_browse.totalObsCount <= MAX_SELECTIONS_ALLOWED) {
+            $("#op-addall-to-cart").modal("show");
+        } else {
+            let warningMsg = "There are too many results to add all to the cart. " +
+                             "Please reduce the number of results to " +
+                             ` ${o_utils.addCommas(MAX_SELECTIONS_ALLOWED)} ` +
+                             "or fewer and try again.";
+            $("#op-addall-warning-msg .modal-body").text(warningMsg);
+            $("#op-addall-warning-msg").modal("show");
+        }
+    },
 
     cartShiftKeyHandler: function(e, opusId) {
         let tab = opus.getViewTab();
@@ -1486,9 +1509,22 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        //let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'>";
+        // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart' " +
+        let addallIcon = "<button type='button'" +
+                         "class='op-table-header-addall btn btn-link'>" +
+                         "<i class='fas fa-cart-plus' data-action='addall'" +
+                         " title='Add All Results to Cart'></i></button>";
+        // let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
+        //                " data-action='addall' title='Add All Results to Cart'>";
+        // let tool = "<a href='#' class='' title='Tools'>" +
+        //            "<i class='fas fa-toolbox'></i></a>";
+        let toolsIcon = "<i class='fas fa-toolbox' title='Tools'></i>";
+        let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-table-first-col'>" +
+                                  "<div>" + addallIcon + toolsIcon + "</div></th>";
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
-        $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
+        $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
+        // $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
+
         $.each(columns, function(index, header) {
             let slug = slugs[index];
 
@@ -1507,7 +1543,7 @@ var o_browse = {
     },
 
     initResizableColumn: function(tab) {
-        $(`${tab} .op-data-table th div`).resizable({
+        $(`${tab} .op-data-table th div:not(:first)`).resizable({
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
@@ -1811,6 +1847,13 @@ var o_browse = {
         // with the browser size.
         startObs = (o_browse.isGalleryView() ? (o_utils.floor((startObs - 1)/galleryBoundingRect.x) *
                     galleryBoundingRect.x + 1) : startObs);
+
+        // Only show "Add all results to cart" in browse tab.
+        if (tab === "#cart") {
+            $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
+        } else {
+            $("#op-obs-menu .dropdown-item[data-action='addall']").removeClass("op-hide-element");
+        }
 
         if (!viewNamespace.reloadObservationData) {
             // if the request is a block far away from current page cache, flush the cache and start over
