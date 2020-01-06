@@ -720,6 +720,7 @@ var o_cart = {
 
         let elementArray = $(`${tab} .op-thumbnail-container`);
         o_cart.editAndHighlightObs(elementArray, null, "addall");
+        o_browse.undoRangeSelect(tab);
     },
 
     editAndHighlightObs: function(elementArray, opusIdRange, action) {

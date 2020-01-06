@@ -534,7 +534,10 @@ var o_browse = {
          * count is less than MAX_SELECTIONS_ALLOWED, display a confirmation
          * modal.
          */
-        if (o_browse.totalObsCount <= MAX_SELECTIONS_ALLOWED) {
+        // If the total obs count in cart + obs (in browse) about to be added is
+        // larger than the MAX_SELECTIONS_ALLOWED, we don't perform the add all action.
+        let totalResultCount = o_browse.totalObsCount + o_cart.totalObsCount;
+        if (totalResultCount <= MAX_SELECTIONS_ALLOWED) {
             $("#op-addall-to-cart").modal("show");
         } else {
             let warningMsg = "There are too many results to add them all to the cart. " +
