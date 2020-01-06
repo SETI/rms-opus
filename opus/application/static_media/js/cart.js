@@ -540,7 +540,8 @@ var o_cart = {
                 }
             });
         } else {
-            // Make sure "Add all results to cart" is hidden in cart tab.
+            // Make sure "Add all results to cart" is still hidden in cart tab when user switches
+            // back to cart tab without reloading obs data in cart tab. 
             $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
