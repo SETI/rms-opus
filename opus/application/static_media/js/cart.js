@@ -737,7 +737,7 @@ var o_cart = {
             o_utils.enableUserInteraction();
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
-                if ($("#op-cart-status-error-msg").hassClass("show")) {
+                if ($("#op-cart-status-error-msg").hasClass("show")) {
                     o_cart.statusDataErrorCollector.push(statusData.error);
                 } else {
                     $("#op-cart-status-error-msg .modal-body").text(statusData.error);
