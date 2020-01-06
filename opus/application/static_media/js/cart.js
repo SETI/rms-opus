@@ -62,7 +62,7 @@ var o_cart = {
     recycledCount : undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
-    galleryBoundingRect: {'x': 0, 'y': 0, 'tr': 0},
+    galleryBoundingRect: {'x': 0, 'yCell': 0, 'yFloor': 0, 'yPartial': 0, 'trFloor': 0},
     gallerySliderStep: 10,
 
     // unique to o_cart
@@ -568,6 +568,7 @@ var o_cart = {
             o_cart.reloadObservationData = true;
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
+            opus.prefs.cart_startobs = 0;
             o_cart.updateCartStatus(data);
             opus.changeTab("cart");
             o_utils.enableUserInteraction();

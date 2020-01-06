@@ -318,8 +318,30 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    units = param_info.get_units()
+    units = opus_support.get_display_names(param_info.units)
+    valid_units = opus_support.get_valid_units(param_info.units)
     ranges = param_info.get_ranges_info()
+    test_ranges = param_info.get_ranges_info()
+
+    for cat in ranges:
+        default_format = cat['format']
+        for item in cat['ranges']:
+            default_unit = item['unit']
+            val1 = float(item['field1'])
+            val2 = float(item['field2'])
+            new_unit, new_val1, new_val2 = [], [], []
+            for unit in valid_units:
+                new_format = opus_support.adjust_format_string_for_units(
+                        default_format, default_unit, unit)
+                new_format = '{:' + new_format + '}'
+                new_unit.append(unit)
+                v1 = opus_support.convert_from_default_unit(
+                                               val1, default_unit, unit)
+                new_val1.append(new_format.format(v1))
+                v2 = opus_support.convert_from_default_unit(
+                                               val2, default_unit, unit)
+                new_val2.append(new_format.format(v2))
+            item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
     template = "ui/widget.html"
     context = {
@@ -506,9 +528,12 @@ def api_normalize_url(request):
         return escape(old_slug)
 
     def _escape_or_label(old_slug, pi):
-        if pi.display_results:
+        if pi.display_results: # pragma: no cover
+            # We don't currently support any display terms that aren't
+            # also search terms
             return pi.body_qualified_label()
-        return escape(old_slug)
+        else:
+            return escape(old_slug)
 
     api_code = enter_api_call('api_normalize_url', request)
 
@@ -531,15 +556,17 @@ def api_normalize_url(request):
     old_ui_slug_flag = False
 
     #
-    # Handle search slugs including qtypes
+    # Handle search slugs including qtypes and units
     #
 
     required_widgets_list = []
 
     handled_slugs = []
     search_slugs_by_clause = {}
+    units_by_slug = {} # To enforce a single unit for all clauses of a slug
 
-    # Sort to make tests deterministic and to group qtype with search slugs
+    # Sort to make tests deterministic and to group qtype and unit
+    # with search slugs
     def _sort_func(key):
         clause_num_str = ''
         if '_' in key:
@@ -547,6 +574,8 @@ def api_normalize_url(request):
             key = key[:key.index('_')]
         if key.startswith('qtype-'):
             key = key[6:]+'0' # Add 0 to sort before 1/2 suffixes
+        elif key.startswith('unit-'):
+            key = key[5:]+'0'
         key += clause_num_str
         return key
 
@@ -574,13 +603,20 @@ def api_normalize_url(request):
                 continue
 
         is_qtype = False
+        is_unit = False
         if slug.startswith('qtype-'):
             is_qtype = True
             slug = slug[6:]
             # This will return the '1' version
             pi = get_param_info_by_slug(slug, 'qtype')
+        elif slug.startswith('unit-'):
+            is_unit = True
+            slug = slug[5:]
+            # This will return the '1' version
+            pi = get_param_info_by_slug(slug, 'qtype')
         else:
             pi = get_param_info_by_slug(slug, 'search')
+
         # Note 'slug' could be old or new version, but pi.slug is always new
         if not pi:
             msg = ('Search term "' + escape(orig_slug) + '" is unknown; '
@@ -589,7 +625,7 @@ def api_normalize_url(request):
             continue
         # Search slugs might have numeric suffixes but single column ranges
         # don't so just ignore all the numbers.
-        if (not is_qtype and
+        if (not is_qtype and not is_unit and
             strip_numeric_suffix(slug) != strip_numeric_suffix(pi.slug)):
             old_ui_slug_flag = True
         pi_searchable = pi
@@ -631,17 +667,19 @@ def api_normalize_url(request):
         search2_val = None
         qtype_slug = None
         qtype_val = None
+        unit_slug = None
+        unit_val = None
         pi1 = None
         pi2 = None
-        if (is_qtype and is_range) or slug[-1] == '1':
-            # We found a '1', look for a '2' OR we found a qtype, so look for
-            # a '2' even if the '1' isn't there.
+        if ((is_qtype or is_unit) and is_range) or slug[-1] == '1':
+            # We found a '1', look for a '2' OR we found a qtype or unit,
+            # so look for a '2' even if the '1' isn't there.
             # Do some trickery to allow an old1/new2 or old2/new1 combination
             # If a user was being really obnoxious they could mix old1/new1
             # as well, so handle that case too by throwing away one of them.
             # This is so unusual we don't bother to make a message for it.
             pi1 = pi
-            if not is_qtype: # We found a real '1' slug
+            if not is_qtype and not is_unit: # We found a real '1' slug
                 search1 = strip_numeric_suffix(pi.slug)+'1'
                 search1_val = original_slugs[slug+clause_num_str]
             slug2 = strip_numeric_suffix(pi.slug)+'2'
@@ -665,15 +703,15 @@ def api_normalize_url(request):
                     search2_val = original_slugs[slug2+clause_num_str]
             else:
                 search2 = strip_numeric_suffix(pi.slug)+'2'
-        if (is_qtype and is_range) or slug[-1] == '2':
-            # We found a '2', look for a '1' OR we found a qtype, so look for
-            # a '1' even if the '2' isn't there.
+        if ((is_qtype or is_unit) and is_range) or slug[-1] == '2':
+            # We found a '2', look for a '1' OR we found a qtype or unit,
+            # so look for a '1' even if the '2' isn't there.
             # Do some trickery to allow an old1/new2 or old2/new1 combination
             # If a user was being really obnoxious they could mix old1/new1
             # as well, so handle that case too by throwing away one of them.
             # This is so unusual we don't bother to make a message for it.
             pi2 = pi
-            if not is_qtype:
+            if not is_qtype and not is_unit:
                 search2 = strip_numeric_suffix(pi.slug)+'2'
                 search2_val = original_slugs[slug+clause_num_str]
             slug1 = strip_numeric_suffix(pi.slug)+'1'
@@ -700,15 +738,14 @@ def api_normalize_url(request):
                     search1_val = original_slugs[slug1+clause_num_str]
             else:
                 search1 = strip_numeric_suffix(pi.slug)+'1'
-        if ((is_qtype and not is_range) or
-            (not is_qtype and slug[-1] != '1' and slug[-1] != '2')):
+        if (((is_qtype or is_unit) and not is_range) or
+            (not is_qtype and not is_unit and
+             slug[-1] != '1' and slug[-1] != '2')):
             # Not numeric
             pi1 = pi
             search1 = pi.slug
             if slug+clause_num_str in original_slugs:
                 search1_val = original_slugs[slug+clause_num_str]
-                if is_string and search1_val is None:
-                    search1_val = ''
                 # If we're searching for ringobsid, convert it to opusid and
                 # also convert the parameter to the new opusid format
                 if pi.slug == 'ringobsid':
@@ -723,6 +760,8 @@ def api_normalize_url(request):
                         msg_list.append(msg)
                         continue
                     search1_val = new_search1_val
+
+        ### Handle qtypes ###
 
         valid_qtypes = None
         qtype_default = None
@@ -780,6 +819,74 @@ def api_normalize_url(request):
         if qtype_slug == 'qtype-ringobsid':
             qtype_slug = 'qtype-opusid'
 
+        ### Handle units ###
+
+        unit_default = pi.units
+        valid_units = opus_support.get_valid_units(pi.units)
+
+        # It really only makes sense to look for a unit field if there's a
+        # reason one would be present, but if the user gave us one anyway,
+        # we need to handle it so we can then ignore it and give an error.
+        # Same trick as above in case there is unit-old and unit-new.
+        # Note if we were already looking at the unit, this will just
+        # find it again.
+        unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
+        old_unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
+        found_unit = False
+        if unit_slug+clause_num_str in original_slugs:
+            found_unit = unit_slug+clause_num_str
+        elif pi.old_slug:
+            old_unit_slug = 'unit-' + strip_numeric_suffix(pi.old_slug)
+        if old_unit_slug+clause_num_str in original_slugs:
+            found_unit = old_unit_slug+clause_num_str
+            if pi.old_slug:
+                handled_slugs.append('unit-'
+                                     +strip_numeric_suffix(pi.old_slug)
+                                     +clause_num_str)
+            handled_slugs.append('unit-'
+                                 +strip_numeric_suffix(pi.slug)
+                                 +clause_num_str)
+            if (valid_units and
+                original_slugs[old_unit_slug+clause_num_str]
+                    not in valid_units):
+                msg = ('Unit "'+escape(found_unit)
+                       +'" has an illegal value; '
+                       +'it has been set to the default.')
+                msg_list.append(msg)
+                unit_val = unit_default
+            else:
+                unit_val = original_slugs[old_unit_slug+clause_num_str]
+        elif unit_default:
+            # Force a default unit
+            unit_val = unit_default
+
+        if not valid_units:
+            unit_slug = None
+
+        if found_unit and not valid_units:
+                # We have a unit for a field that doesn't allow units!
+                msg = ('Search term "'+escape(found_unit)+'" is a unit for '
+                       +'a field that does not allow units; '
+                       +'it has been ignored.')
+                msg_list.append(msg)
+
+        if unit_slug in units_by_slug:
+            if unit_val != units_by_slug[unit_slug]:
+                if found_unit:
+                    msg = ('Search term "'+escape(found_unit)+'" is a unit that'
+                           +' is inconsistent with the units for previous'
+                           +' instances of this search field; it has been'
+                           +' ignored.')
+                else:
+                    msg = ('No unit specified for "'+escape(orig_slug)
+                           +'" but units were specified for other instances '
+                           +'of this search field; the previous units have '
+                           +'been used.')
+                msg_list.append(msg)
+                unit_val = units_by_slug[unit_slug]
+        else:
+            units_by_slug[unit_slug] = unit_val
+
         # Now normalize all the values
         # Note that search1/2_val are strings
         temp_dict = {}
@@ -789,6 +896,8 @@ def api_normalize_url(request):
             temp_dict[search2] = search2_val
         if qtype_slug and qtype_val is not None:
             temp_dict[qtype_slug] = qtype_val
+        if unit_slug and unit_val is not None:
+            temp_dict[unit_slug] = unit_val
         (selections, extras) = url_to_search_params(temp_dict,
                                                     allow_errors=True,
                                                     return_slugs=True,
@@ -815,8 +924,6 @@ def api_normalize_url(request):
                 search1 = None
             else:
                 search1_val = selections[search1]
-                if isinstance(search1_val, (list, tuple)):
-                    search1_val = search1_val[0]
         if search2_val is not None:
             if selections[search2] is None:
                 msg = ('Search query for "'
@@ -840,7 +947,8 @@ def api_normalize_url(request):
         search_slugs_by_clause[slug_no_num].append((clause_num_str,
                                                     search1, search1_val,
                                                     search2, search2_val,
-                                                    qtype_slug, qtype_val))
+                                                    qtype_slug, qtype_val,
+                                                    unit_slug, unit_val))
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
@@ -862,7 +970,8 @@ def api_normalize_url(request):
             (clause_str,
              search1, search1_val,
              search2, search2_val,
-             qtype, qtype_val) = search_data
+             qtype, qtype_val,
+             unit, unit_val) = search_data
             clause_num_str = ''
             if len(search_slugs_by_clause[search_slug]) != 1:
                 clause_num_str = '_%02d' % (idx+1)
@@ -875,6 +984,9 @@ def api_normalize_url(request):
             if qtype: # Always include the qtype
                 new_url_search_list.append([qtype+clause_num_str,
                                             qtype_val])
+            if unit: # Always include the unit
+                new_url_search_list.append([unit+clause_num_str,
+                                            unit_val])
 
     #
     # Deal with all the slugs we know about that AREN'T search terms.

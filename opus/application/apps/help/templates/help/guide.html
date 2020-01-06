@@ -64,6 +64,7 @@ Please remove the use of old slugs from your code ASAP.</p>
                 <th>Category</th>
                 <th>Label</th>
                 <th>Slug (<span class="text-danger">Old Slug</span>)</th>
+                <th>Units</th>
             </tr>
 		</thead>
 		<tbody>
@@ -76,6 +77,7 @@ Please remove the use of old slugs from your code ASAP.</p>
                         <p class="text-danger">{{ v.old_slug }}</p>
                     {% endif %}
                 </td>
+                <td>{{ v.available_units|join:", " }}</td>
             </tr>
 	    {% endfor %}
 		</tbody>

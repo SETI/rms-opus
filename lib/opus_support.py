@@ -6,6 +6,8 @@
 # MRS 6/5/18
 ################################################################################
 
+import numpy as np
+
 import julian
 
 ################################################################################
@@ -433,16 +435,137 @@ RANGE_FUNCTIONS = {
 
 # Unit translation table
 # db name : displayed name
-UNIT_TRANSLATION = {
-    "cm^-1" : "cm^-1",
-    "cm^-1/pixel" : "cm^-1/pixel",
-    "degrees" : "degrees",
-    "degrees/pixel" : "degrees/pixel",
-    "km" : "km",
-    "km/pixel" : "km/pixel",
-    "micron" : "microns",
-    "micron/pixel" : "microns/pixel",
-    "milliseconds" : "ms",
-    "pixels" : "pixels",
-    "seconds" : "secs",
+UNIT_CONVERSION = {
+    '1/cm':
+        {
+            'display_name': 'cm^-1',
+            'conversions': {
+                '1/m':         ('m^-1', 1e-2),
+            }
+        },
+    '1/cm/pixel':
+        {
+            'display_name': 'cm^-1/pixel',
+            'conversions': {
+                '1/m/pixel':   ('m^-1/pixel', 1e-2),
+            }
+        },
+    'degrees':
+        {
+            'display_name': 'degrees',
+            'conversions': {
+                'hourangle':    ('hour angle', 360./24.),
+                'radians':      ('radians', 180./3.141592653589)
+            }
+        },
+    'km':
+        {
+            'display_name': 'km',
+            'conversions': {
+                'm':            ('m', 1e-3),
+                'jupiterradii': ('Rj (71492)', 71492.),
+                'saturnradii':  ('Rs (60330)', 60330.),
+                'neptuneradii': ('Rn (25225)', 25225.),
+                'uranusradii':  ('Ru (25559)', 25559.),
+            }
+        },
+    'km/pixel':
+        {
+            'display_name': 'km/pixel',
+            'conversions': {
+                'm/pixel':      ('m/pixel', 1e-3),
+            }
+        },
+    'microns':
+        {
+            'display_name': 'microns',
+            'conversions': {
+                'angstroms':    ('angstroms', 1e-4),
+                'nm':           ('nm', 1e-3),
+                'cm':           ('cm', 1e4),
+            }
+        },
+    'microns/pixel':
+        {
+            'display_name': 'microns/pixel',
+            'conversions': {
+                'angstroms/pixel':    ('angstroms/pixel', 1e-4),
+                'nm/pixel':           ('nm/pixel', 1e-3),
+                'cm/pixel':           ('cm/pixel', 1e4),
+            }
+        },
+    'seconds':
+        {
+            'display_name': 'secs',
+            'conversions': {
+                'milliseconds': ('msecs', 1e-3),
+                'minutes':      ('minutes', 60.),
+                'hours':        ('hours', 60.*60.),
+                'days':         ('days', 60.*60.*24.),
+            }
+        },
+    'milliseconds':
+        {
+            'display_name': 'msec',
+            'conversions': {
+                'seconds':      ('secs', 1e3),
+            }
+        },
 }
+
+def convert_to_default_unit(val, default_unit, unit):
+    if val is None:
+        return val
+    if default_unit == unit:
+        return val
+    assert default_unit in UNIT_CONVERSION
+    return val * UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+
+def convert_from_default_unit(val, default_unit, unit):
+    if val is None:
+        return val
+    if default_unit is None or default_unit == unit:
+        return val
+    assert default_unit in UNIT_CONVERSION
+    return val / UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+
+def get_valid_units(default_unit):
+    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+    valid_units = None
+    if default_unit_info is not None:
+        valid_units = list(default_unit_info['conversions'].keys())
+        valid_units = [default_unit] + valid_units
+    return valid_units
+
+# Get a dictionary with valid units as keys and display names as values.
+def get_display_names(default_unit):
+    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+    display_names = None
+    if default_unit_info is not None:
+        display_names = {}
+        display_names[default_unit] = default_unit_info['display_name']
+        valid_units = default_unit_info['conversions']
+        for unit in valid_units:
+            display_names[unit] =  valid_units[unit][0]
+    return display_names
+
+def is_valid_unit(default_unit, unit):
+    if default_unit == unit:
+        return True
+    return unit in UNIT_CONVERSION[default_unit]['conversions']
+
+def adjust_format_string_for_units(format, default_unit, unit):
+    if default_unit is None or default_unit == unit:
+        return format
+    if not format.startswith('.') or not format.endswith('f'):
+        return format
+    assert default_unit in UNIT_CONVERSION
+    # The behavior of ceil is to increase the number of positive numbers
+    # (which is adding decimal places), which is good. And it's to decrease
+    # the absolute value of negative numbers (which is removing decimal places),
+    # which is also good. In both cases we're being conservative - adding too
+    # many or removing too few.
+    factor = int(np.ceil(np.log10(
+                UNIT_CONVERSION[default_unit]['conversions'][unit][1])))
+    dec = max(int(format[1:-1]) + factor, 0)
+    return '.' + str(dec) + 'f'

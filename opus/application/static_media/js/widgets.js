@@ -47,13 +47,19 @@ var o_widgets = {
             cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             helper: "clone",
-            scrollSensitivity: 100,
+            containment: "parent",
             axis: "y",
             opacity: 0.8,
-            cursorAt: {top: 10, left: 10},
+            tolerance: "pointer",
             stop: function(event, ui) {
                 o_widgets.widgetDrop(this);
             },
+            start: function(event, ui) {
+                o_widgets.getMaxScrollTopVal(event.target);
+            },
+            sort: function(event, ui) {
+                o_widgets.preventContinuousDownScrolling(event.target);
+            }
         });
 
         $("#op-search-widgets").on( "sortchange", function(event, ui) {
@@ -129,6 +135,31 @@ var o_widgets = {
         o_widgets.addAttachOrRemoveInputsBehaviors();
     },
 
+    getMaxScrollTopVal: function(target) {
+        /**
+         * Callback function for jquery ui sortable start event.
+         * When sorting starts:
+         * Get the max scrollable height in current container.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
+        $(target).data("maxScrollTop", maxScrollTop);
+    },
+
+    preventContinuousDownScrolling: function(target) {
+        /**
+         * Callback function for jquery ui sortable sort event.
+         * When sorting is happening:
+         * Use the max scrollable height to prevent continuous down scrolling when user
+         * keeps dragging the item down after scrollbar reaches to the bottom-end.
+         */
+        let scrollContainer = $(target).data("ui-sortable").scrollParent;
+        let maxScrollTop = $(target).data("maxScrollTop");
+        if (scrollContainer.scrollTop() >= maxScrollTop) {
+            scrollContainer.scrollTop(maxScrollTop);
+        }
+    },
+
     attachAddInputIcon: function(slug, addInputIcon) {
         /**
          * Make sure "+ (OR)" is attached to the right of last input set.
@@ -163,7 +194,7 @@ var o_widgets = {
             // for multiple times and cause some weird behaviors.
             let cloneInputs = firstExistingSetOfInputs.clone();
             cloneInputs.addClass("op-extra-search-inputs");
-            o_search.clearInputBorder(cloneInputs);
+            o_search.clearInputBorder(cloneInputs.find("input"));
             // Clear .op-hide-element in dropdown
             cloneInputs.find(".op-hide-element").removeClass("op-hide-element");
             let defaultQtypeVal = (cloneInputs.find("select") ?
@@ -258,6 +289,10 @@ var o_widgets = {
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
                 }
+                if (opus.extras[`unit-${slug}`]) {
+                    let defaultUnitVal = $(`#widget__${slug} .op-unit-${slug}`).val();
+                    opus.extras[`unit-${slug}`].push(defaultUnitVal);
+                }
             } else if (newlyAddedInput.hasClass("STRING")) {
                 opus.selections[slug] = opus.selections[slug] || [];
                 while (opus.selections[slug].length < numberOfInputSets) {
@@ -266,6 +301,10 @@ var o_widgets = {
 
                 if (newlyAddedQtype.length > 0) {
                     opus.extras[`qtype-${slug}`].push(defaultQtypeVal);
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    let defaultUnitVal = $(`#widget__${slug} .op-unit-${slug}`).val();
+                    opus.extras[`unit-${slug}`].push(defaultUnitVal);
                 }
 
                 // Init autocomplete
@@ -323,9 +362,10 @@ var o_widgets = {
                 opus.selections[`${slug}2`] = (previousMaxSelections.slice(0, idx)
                                                .concat(previousMaxSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
-                    let previousExtras = opus.extras[`qtype-${slug}`];
-                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                                                   .concat(previousExtras.slice(idx+1)));
+                    opus.extras[`qtype-${slug}`].splice(idx, 1);
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    opus.extras[`unit-${slug}`].splice(idx, 1);
                 }
             } else if (inputElement.hasClass("STRING")) {
                 let previousSelections = opus.selections[`${slug}`];
@@ -334,11 +374,12 @@ var o_widgets = {
                 }
 
                 opus.selections[`${slug}`] = (previousSelections.slice(0, idx)
-                                               .concat(previousSelections.slice(idx+1)));
+                                              .concat(previousSelections.slice(idx+1)));
                 if (qtypeElement.length > 0) {
-                    let previousExtras = opus.extras[`qtype-${slug}`];
-                    opus.extras[`qtype-${slug}`] = (previousExtras.slice(0, idx)
-                                                  .concat(previousExtras.slice(idx+1)));
+                    opus.extras[`qtype-${slug}`].splice(idx, 1);
+                }
+                if (opus.extras[`unit-${slug}`]) {
+                    opus.extras[`unit-${slug}`].splice(idx, 1);
                 }
             }
 
@@ -592,7 +633,7 @@ var o_widgets = {
         }
 
         delete opus.extras[`qtype-${slugNoNum}`];
-        delete opus.extras[`z-${slugNoNum}`];
+        delete opus.extras[`unit-${slugNoNum}`];
 
         let selector = `.op-search-menu li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
@@ -904,28 +945,43 @@ var o_widgets = {
             // This will also put qtype in the url when a widget with qtype is open.
             // Need to wait until api return to determine if the widget has qtype selections
             let hash = o_hash.getHashArray();
-
             // NOTE: inputs & qtypes are not renumbered yet at this stage.
-            let qtype = "qtype-" + slug;
-            let qtypeInputs = $(`#widget__${slug} select[name="${qtype}"]`);
+            let qtype = `qtype-${slug}`;
+            let qtypeInputs = $(`#widget__${slug} .op-widget-main select[name="${qtype}"]`);
             let numberOfQtypeInputs = qtypeInputs.length;
+
+            let unit = `unit-${slug}`;
+            let unitInput = $(`#widget__${slug} .op-${unit}`);
+
+            if (unitInput.length) {
+                if (!opus.extras[unit]) {
+                    opus.extras[unit] = [unitInput.val()];
+                } else {
+                    unitInput.val(opus.extras[unit][0]);
+                }
+                opus.currentUnitBySlug[slug] = unitInput.val();
+                // For widgets with unit but without qtype:
+                if (numberOfQtypeInputs === 0) {
+                    o_hash.updateURLFromCurrentHash();
+                }
+            }
 
             if (numberOfQtypeInputs !== 0) {
                 qtypeInputs.parent("li").addClass("op-qtype-input");
-                let qtypeValue = $(`#widget__${slug} select[name="${qtype}"] option:selected`).val();
+                let qtypeValue = $(`#widget__${slug} .op-widget-main select[name="${qtype}"] option:selected`).val();
                 if (qtypeValue === "any" || qtypeValue === "all" || qtypeValue === "only") {
                     let helpIcon = '<li class="op-range-qtype-helper">\
                                     <a class="text-dark" tabindex="0" data-toggle="popover" data-placement="left">\
                                     <i class="fas fa-info-circle"></i></a></li>';
 
                     // Make sure help icon is attached to the end of each set of inputs
-                    $(`#widget__${slug} .widget-main .op-input ul`).append(helpIcon);
+                    $(`#widget__${slug} .op-widget-main .op-input ul`).append(helpIcon);
                 }
 
                 if (numberOfQtypeInputs === 1 && !hash[qtype]) {
                     // When a widget with qtype is open, the value of the first option tag is the
                     // default value for qtype
-                    let defaultOption = $(`#widget__${slug} select[name="${qtype}"]`).first("option").val();
+                    let defaultOption = $(`#widget__${slug} .op-widget-main select[name="${qtype}"]`).first("option").val();
                     opus.extras[qtype] = [defaultOption];
                     o_hash.updateURLFromCurrentHash();
                 } else if (numberOfQtypeInputs > 1) {
@@ -939,9 +995,8 @@ var o_widgets = {
                     o_hash.updateURLFromCurrentHash();
                 }
             }
-
             // Initialize popover, this for the (i) icon next to qtype
-            $(".widget-main .op-range-qtype-helper a").popover({
+            $(".op-widget-main .op-range-qtype-helper a").popover({
                 html: true,
                 container: "body",
                 trigger: "hover",
@@ -964,7 +1019,13 @@ var o_widgets = {
             if (rangesInfoDropdown.length > 0) {
                 $(`#${widget} input.op-range-input-min`).after(rangesInfoDropdown);
                 $(`#${widget} .op-input`).addClass("dropdown");
-                o_widgets.alignRangesDataByDecimalPoint(widget);
+
+                // Hide items with values for different units
+                let currentUnitVal = unitInput.val();
+                ($(`#${widget} .op-preprogrammed-ranges-data-item`)
+                 .not(`[data-unit="${currentUnitVal}"]`).addClass("op-hide-different-units-info"));
+                ($(`#${widget} .op-preprogrammed-ranges-data-item[data-unit="${currentUnitVal}"]`)
+                 .removeClass("op-hide-different-units-info"));
             }
 
             // add the spans that hold the hinting
@@ -1080,7 +1141,7 @@ var o_widgets = {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
             let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
-            let qtypes = $(`#widget__${slug} select`);
+            let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let trailingCounter = 0;
             let trailingCounterString = "";
@@ -1146,7 +1207,7 @@ var o_widgets = {
         } else if (widgetInputs.hasClass("STRING")) {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
             let stringInputs = $(`#widget__${slug} input.STRING`);
-            let qtypes = $(`#widget__${slug} select`);
+            let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let originalStringName = stringInputs.attr("name");
             originalStringName = o_utils.getSlugOrDataWithoutCounter(originalStringName);
@@ -1220,91 +1281,6 @@ var o_widgets = {
         $('#search').animate({
             scrollTop: $("#"+ widget).offset().top
         }, 1000);
-    },
-
-    alignRangesDataByDecimalPoint: function(widget) {
-        /**
-         * Align the data of ranges info by decimal point.
-         */
-        let preprogrammedRangesInfo = $(`#${widget} .op-scrollable-menu li`);
-        for (const category of preprogrammedRangesInfo) {
-            let collapsibleContainerId = $(category).attr("data-category");
-            let rangesInfoInOneCategory = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-
-            let maxNumOfDigitInMinDataFraction = 0;
-            let maxNumOfDigitInMaxDataFraction = 0;
-
-            for (const singleRangeData of rangesInfoInOneCategory) {
-
-                // Special case: (maybe put this somewhere else if there are more and more long names)
-                // Deal with long name, in our case, it's "Janus/Epimetheus Ring".
-                // We set it the word-break to break-all.
-                let rangesName = $(singleRangeData).data("name").toString();
-                if (rangesName === "Janus/Epimetheus Ring") {
-                    $(singleRangeData).find(".op-preprogrammed-ranges-data-name").addClass("op-word-break-all");
-                }
-
-                let minStr = $(singleRangeData).data("min").toString();
-                let maxStr = $(singleRangeData).data("max").toString();
-                let minIntegerPart = minStr.split(".")[0];
-                let minFractionalPart = minStr.split(".")[1];
-                let maxIntegerPart = maxStr.split(".")[0];
-                let maxFractionalPart = maxStr.split(".")[1];
-
-                minFractionalPart = minFractionalPart ? `.${minFractionalPart}` : "";
-                maxFractionalPart = maxFractionalPart ? `.${maxFractionalPart}` : "";
-                if (minFractionalPart) {
-                    maxNumOfDigitInMinDataFraction = (Math.max(maxNumOfDigitInMinDataFraction,
-                                                      minFractionalPart.length-1));
-                }
-                if (maxFractionalPart) {
-                    maxNumOfDigitInMaxDataFraction = (Math.max(maxNumOfDigitInMaxDataFraction,
-                                                      maxFractionalPart.length-1));
-                }
-
-                let minValReorg = `<span class="op-integer">${minIntegerPart}</span>` +
-                                  `<span>${minFractionalPart}</span>`;
-                let maxValReorg = `<span class="op-integer">${maxIntegerPart}</span>` +
-                                  `<span>${maxFractionalPart}</span>`;
-
-                $(singleRangeData).find(".op-preprogrammed-ranges-min-data").html(minValReorg);
-                $(singleRangeData).find(".op-preprogrammed-ranges-max-data").html(maxValReorg);
-            }
-
-            // The following steps are to make sure ranges data are aligned properly with headers
-            let minData = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-min-data`);
-            let rangesDataItem = $(`#${collapsibleContainerId} .op-preprogrammed-ranges-data-item`);
-            let minDataPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMinDataFraction);
-            let rangesDataItemPaddingVal = o_widgets.getPaddingValFromDigitsInFraction(maxNumOfDigitInMaxDataFraction);
-            if (minDataPaddingVal) {
-                minData.css("padding-right",`${minDataPaddingVal}em`);
-            }
-            if (rangesDataItemPaddingVal) {
-                rangesDataItem.css("padding-right",`${rangesDataItemPaddingVal}em`);
-            }
-        }
-    },
-
-    getPaddingValFromDigitsInFraction: function(numOfDigits) {
-        /**
-         * Get padding-right values for ranges dropdown data from number of digits
-         * in data fractions. Here is the mappings:
-         * Num of digits in fraction    padding-right
-         *          1                   1em
-         *          2                   1.5em
-         *          3                   2em
-         * Note: currently we have at most 3 digits in data fractions.
-         */
-        switch(numOfDigits) {
-            case 1:
-                return 1;
-            case 2:
-                return 1.5;
-            case 3:
-                return 2;
-            default:
-                return 0;
-        }
     },
 
     attachStringDropdownToInput: function() {

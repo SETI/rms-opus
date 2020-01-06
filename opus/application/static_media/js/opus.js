@@ -60,6 +60,8 @@ var opus = {
     // object. It will store the info of the normalize input API call triggered from
     // o_search.allNormalizeInputApiCall() (not from any specific input).
     allSlug: "all",
+    // Record the current unit selections for widgets.
+    currentUnitBySlug: {},
 
     lastLoadDataRequestNo: { "cart": 0, "browse": 0 },
 
@@ -220,7 +222,6 @@ var opus = {
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
-
                 // Make sure page will not reload in these cases:
                 // 1) When it's in the middle of an input removal process. After normalize input API
                 // call returns at the end of an input removal, URL and opus.selections will get updated

@@ -11,7 +11,14 @@
         <h6 class="card-title mt-0">
             <div>
                 <i class="fas fa-info-circle" title="{{ tooltip|safe }}"></i>
-                {{ label }} {{ units }}
+                {{ label }}&nbsp;
+                {% if units %}
+                    <select class="op-unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
+                        {% for unit, display_name in units.items %}
+                            <option value="{{ unit }}">{{ display_name }}</option>
+                        {% endfor %}
+                    <select>
+                {% endif %}
                 <span class="spinner">&nbsp;</span>
             </div>
             <span class="float-right border-left border-dark">
@@ -34,13 +41,12 @@
                                  mult-widget
                             {% endif %}
                         ">
-            <div class="widget-main">
+            <div class="op-widget-main">
                 <div id="hint__{{ slug }}" class="op-range-hints"></div>
                 <ul class="op-input">
                     {% if intro %}
                         <div class="text-info">
                             {{ intro }}
-
                         </div>
                     {% endif %}
 
@@ -64,21 +70,23 @@
                                             </div>
                                         </div>
                                         {% for range_info in range_data_entry.ranges %}
-                                            <div class="op-preprogrammed-ranges-data-item row" data-min="{{ range_info.field1|intcomma }}" data-max="{{ range_info.field2|intcomma }}" data-widget="widget__{{ slug }}" data-name="{{range_info.name}}">
-                                                <div class="col-4 op-preprogrammed-ranges-data-name">
-                                                    {{ range_info.name }}
+                                            {% for unit, val1, val2 in range_info.valid_units_info %}
+                                                <div class="op-preprogrammed-ranges-data-item row" data-min="{{ val1|intcomma }}" data-max="{{ val2|intcomma }}" data-widget="widget__{{ slug }}" data-unit="{{ unit }}" data-name="{{ range_info.name }}">
+                                                    <div class="col-4 op-preprogrammed-ranges-data-name">
+                                                        {{ range_info.name }}
+                                                    </div>
+                                                    <div class="col-4 op-preprogrammed-ranges-min-data text-right">
+                                                        {% if range_info.field1 %}
+                                                            {{ val1|intcomma }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-4 op-preprogrammed-ranges-max-data text-right">
+                                                        {% if range_info.field2 %}
+                                                            {{ val2|intcomma }}
+                                                        {% endif %}
+                                                    </div>
                                                 </div>
-                                                <div class="col-4 op-preprogrammed-ranges-min-data">
-                                                    {% if range_info.field1 %}
-                                                        {{ range_info.field1|intcomma }}
-                                                    {% endif %}
-                                                </div>
-                                                <div class="col-4 op-preprogrammed-ranges-max-data">
-                                                    {% if range_info.field2 %}
-                                                        {{ range_info.field2|intcomma }}
-                                                    {% endif %}
-                                                </div>
-                                            </div>
+                                            {% endfor %}
                                         {% endfor %}
                                     </div>
                                 </li>
