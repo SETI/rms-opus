@@ -411,7 +411,7 @@ def populate_obs_mission_cassini_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
     cassini_row = metadata['obs_mission_cassini_row']
 
-    target_name = cassini_row['TARGET_NAME'].title()
+    target_name = cassini_row['target_name'].title()
 
     return (target_name, target_name)
 
