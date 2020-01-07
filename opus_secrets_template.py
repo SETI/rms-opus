@@ -72,7 +72,7 @@ ALLOWED_HOSTS = ('127.0.0.1',
 SECRET_KEY = '<SECRET_KEY>'
 
 # Where static files are served from in a production environment
-STATIC_ROOT = '<STATIC_DIR>'
+OPUS_STATIC_ROOT = '<STATIC_DIR>'
 
 # The prefix to add to all cache keys indicating a unique string for this
 # installation on a server. This allows multiple OPUS installations on the
