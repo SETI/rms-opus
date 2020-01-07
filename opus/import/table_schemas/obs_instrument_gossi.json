@@ -218,7 +218,7 @@
         "pi_slug": "GOSSIframeduration",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "seconds",
+        "pi_units": null,
         "comments": "Definition is from GOSSI label."
     },
     {
