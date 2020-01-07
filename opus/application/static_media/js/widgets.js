@@ -738,10 +738,29 @@ var o_widgets = {
                        $(mult_id).next().slideDown("fast");
                    }
                });
+
+               // Put each surfacegeo target slug into the data-slug attribute of the
+               // corresponding radio input.
+               $.each($("input[type='radio']"), function(idx, eachChoice) {
+                   let surfacegeoTarget = $(eachChoice).attr("value");
+                   let surfacegeoTargetSlug = o_widgets.getSurfacegeoTargetSlug(surfacegeoTarget);
+                   $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
+               });
                break;
            //
 
         }
+    },
+
+    getSurfacegeoTargetSlug: function(target) {
+        /**
+         * Take in a surface geo target pretty name and return a slug name
+         * for the target.
+         */
+        let slugName = target.toLowerCase();
+        // remove all "_", "/", and " "
+        slugName = slugName.replace(/_/g, "").replace(/\//g, "").replace(/ /g, "");
+        return slugName;
     },
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
