@@ -352,6 +352,32 @@
         "comments": ""
     },
     {
+        "field_name": "cassini_target_name",
+        "field_type": "char50",
+        "field_default": null,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_cassini_cassini_target_name"
+        ],
+        "pi_category_name": "obs_mission_cassini",
+        "pi_dict_context": "CASSINI",
+        "pi_dict_name": "CASSINI_TARGET_NAME",
+        "definition": "The original TARGET name as specified by the appropriate Cassini instrument team. The target name does not always indicate which body is in the field of view. For that purpose, it is generally better to use the Intended Target Name field.",
+        "pi_disp_order": 45,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "Cassini Target Name",
+        "pi_label_results": "Cassini Target Name",
+        "pi_slug": "CASSINItargetname",
+        "pi_sub_heading": null,
+        "pi_tooltip": "",
+        "pi_units": null,
+        "comments": ""
+    },
+    {
         "field_name": "activity_name",
         "field_type": "char9",
         "field_key": true,
