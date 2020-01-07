@@ -539,6 +539,10 @@ var o_cart = {
                     }
                 }
             });
+        } else {
+            // Make sure "Add all results to cart" is still hidden in cart tab when user switches
+            // back to cart tab without reloading obs data in cart tab. 
+            $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
 
@@ -697,10 +701,38 @@ var o_cart = {
             action = (fromElem.hasClass("op-in-cart") ? "remove" : "add");
         }
 
+        o_cart.editAndHighlightObs(elementArray.splice(fromIndex, length), opusIdRange, action);
+        o_browse.undoRangeSelect(tab);
+        return action;
+    },
+
+    addAllToCart: function() {
+        /**
+         * Add all observations to the cart. Also highlight all observations
+         * in browse tab.
+         */
+        let tab = opus.getViewTab();
+        // Set reloadObservationData to true to load the latest data in cart tab later
+        // (call "/opus/__cart/view.html" in activateCartTab).
+        o_cart.reloadObservationData = true;
+
+        o_cart.showCartCountSpinner();
+        o_cart.showDownloadSpinner();
+        o_browse.showPageLoaderSpinner();
+
+        let elementArray = $(`${tab} .op-thumbnail-container`);
+        o_cart.editAndHighlightObs(elementArray, null, "addall");
+        o_browse.undoRangeSelect(tab);
+    },
+
+    editAndHighlightObs: function(elementArray, opusIdRange, action) {
+        /**
+         * Perform add/remove/addrange/removerange/addall and highlight/de-highlight observations.
+         */
         let url = o_cart.getEditURL(opusIdRange, action);
 
         // just so we don't have to continually check for both addrange and add...
-        action = (action === "addrange" || action === "add" ? "add" : action);
+        action = (action === "addrange" || action === "add" || action === "addall" ? "add" : action);
         let status = (action === "add" ?  "add" : "remove");
         let checked = (action === "add");
 
@@ -715,7 +747,7 @@ var o_cart = {
                     $("#op-cart-status-error-msg").modal("show");
                 }
             } else {
-                $.each(elementArray.splice(fromIndex, length), function(index, elem) {
+                $.each(elementArray, function(index, elem) {
                     let opusId = $(elem).data("id");
                     /// NOTE: we need to mark the elements on BOTH browse and cart page for delete but not recycle bin
                     if (action === "add") {
@@ -741,8 +773,6 @@ var o_cart = {
             o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
-        o_browse.undoRangeSelect(tab);
-        return action;
     },
 
     showCartCountSpinner: function() {
