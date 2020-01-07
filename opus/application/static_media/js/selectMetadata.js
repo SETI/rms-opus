@@ -14,7 +14,7 @@ var o_selectMetadata = {
 /* jshint varstmt: true */
     selectMetadataDrawn: false,
     // A flag to determine if the sortable item sorting is happening. This
-    // will be used in mutation observer to determine if scrollbar location should 
+    // will be used in mutation observer to determine if scrollbar location should
     // be set.
     isSortingHappening: false,
     // metadata selector behaviors
@@ -170,6 +170,11 @@ var o_selectMetadata = {
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
         $("#op-select-metadata a.op-download-csv").text(buttonTitle);
+    },
+
+    reRender: function() {
+        o_selectMetadata.rendered = false;
+        o_selectMetadata.render();
     },
 
     addColumn: function(slug) {
