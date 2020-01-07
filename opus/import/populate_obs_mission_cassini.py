@@ -409,9 +409,9 @@ def populate_obs_mission_cassini_cassini_target_code(**kwargs):
 
 def populate_obs_mission_cassini_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
-    cassini_row = metadata['obs_mission_cassini_row']
+    index_row = metadata['index_row']
 
-    target_name = cassini_row['target_name'].title()
+    target_name = index_row['TARGET_NAME'].title()
 
     return (target_name, target_name)
 
