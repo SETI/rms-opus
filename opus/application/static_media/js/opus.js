@@ -779,12 +779,26 @@ var opus = {
 
         $(".op-confirm-modal").on("show.bs.modal", function (e) {
             let modal = $(this).attr("id");
-            if (modal === "op-empty-cart") {
-                if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
-                    $("#op-empty-cart .modal-body").html("Are you sure you want to remove all observations from the cart and the recycle bin?");
-                } else {
-                    $("#op-empty-cart .modal-body").html("Are you sure you want to remove all observations from the cart?");
-                }
+            switch (modal) {
+                case "op-empty-cart":
+                    let emptyCartModalMsg = "";
+                    if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
+                        emptyCartModalMsg = "Are you sure you want to remove all observations from the cart" +
+                                            "and the recycle bin?";
+                    } else {
+                        emptyCartModalMsg = "Are you sure you want to remove all observations from the cart?";
+                    }
+                     $("#op-empty-cart .modal-body").text(emptyCartModalMsg);
+                    break;
+                case "op-addall-to-cart":
+                    // Note: If we use `` for string concatenation in html text, text will split into
+                    // multiple lines in html, but stay in one line in UI. Use "+" here can make
+                    // sure text stays in one line in both html and UI, just looks cleaner (in html).
+                    let addAllmodalMsg = "Are you sure you want to add all" +
+                                         ` ${o_utils.addCommas(o_browse.totalObsCount)} ` +
+                                         "observations to the cart?";
+                    $("#op-addall-to-cart .modal-body").text(addAllmodalMsg);
+                    break;
             }
         });
 
@@ -808,6 +822,9 @@ var opus = {
                             break;
                         case "op-restore-recycle-bin":
                             o_cart.restoreRecycleBin();
+                            break;
+                        case "op-addall-to-cart":
+                            o_cart.addAllToCart();
                             break;
                     }
                     $(`#${target}`).modal("hide");
