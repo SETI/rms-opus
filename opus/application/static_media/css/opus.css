@@ -2344,7 +2344,8 @@ at the right of -- OR -- label. */
 
 /* Styling for the first column of table header in browse tab */
 .op-table-first-col div {
-    padding-right: 4px;
+    /* hamburger width 13px + 2px gap to align with checkboxes in other rows */
+    padding-right: 15px;
 }
 
 /* Hide the first column of table header in cart tab */

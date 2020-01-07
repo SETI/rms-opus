@@ -537,7 +537,7 @@ var o_browse = {
         if (o_browse.totalObsCount <= MAX_SELECTIONS_ALLOWED) {
             $("#op-addall-to-cart").modal("show");
         } else {
-            let warningMsg = "There are too many results to add all to the cart. " +
+            let warningMsg = "There are too many results to add them all to the cart. " +
                              "Please reduce the number of results to " +
                              ` ${o_utils.addCommas(MAX_SELECTIONS_ALLOWED)} ` +
                              "or fewer and try again.";
@@ -1514,13 +1514,8 @@ var o_browse = {
                          "class='op-table-header-addall btn btn-link'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'" +
                          " title='Add All Results to Cart'></i></button>";
-        // let checkbox = "<input type='checkbox' name='all' value='all' class='multichoice'" +
-        //                " data-action='addall' title='Add All Results to Cart'>";
-        // let tool = "<a href='#' class='' title='Tools'>" +
-        //            "<i class='fas fa-toolbox'></i></a>";
-        let toolsIcon = "<i class='fas fa-toolbox' title='Tools'></i>";
         let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-table-first-col'>" +
-                                  "<div>" + addallIcon + toolsIcon + "</div></th>";
+                                  "<div>" + addallIcon + "</div></th>";
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
         // $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");

@@ -540,7 +540,8 @@ var o_cart = {
                 }
             });
         } else {
-            // Make sure "Add all results to cart" is hidden in cart tab.
+            // Make sure "Add all results to cart" is still hidden in cart tab when user switches
+            // back to cart tab without reloading obs data in cart tab. 
             $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
@@ -721,6 +722,7 @@ var o_cart = {
 
         let elementArray = $(`${tab} .op-thumbnail-container`);
         o_cart.editAndHighlightObs(elementArray, null, "addall");
+        o_browse.undoRangeSelect(tab);
     },
 
     editAndHighlightObs: function(elementArray, opusIdRange, action) {
@@ -738,7 +740,7 @@ var o_cart = {
             o_utils.enableUserInteraction();
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
-                if ($("#op-cart-status-error-msg").hassClass("show")) {
+                if ($("#op-cart-status-error-msg").hasClass("show")) {
                     o_cart.statusDataErrorCollector.push(statusData.error);
                 } else {
                     $("#op-cart-status-error-msg .modal-body").text(statusData.error);
