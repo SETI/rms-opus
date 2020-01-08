@@ -610,6 +610,36 @@ th.sticky-header {
     bottom: 1px;
 }
 
+.op-mini-thumbnail {
+    width: 3em;
+    min-width: auto !important;
+}
+
+.op-mini-thumbnail div {
+    /*text-align: center;*/
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.op-mini-thumbnail:not(.op-mini-thumbnail-shrink) img {
+    transition: transform .1s;
+    width: 68%;
+}
+
+/* zoom the mini-thumbnail on hover */
+.op-mini-thumbnail:not(.op-mini-thumbnail-shrink) img:hover {
+  -ms-transform: scale(4.5); /* IE 9 */
+  -webkit-transform: scale(4.5); /* Safari 3-8 */
+  transform: scale(4.5);
+}
+
+button.op-mini-thumbnail-zoom, button.op-mini-thumbnail-shrink {
+    padding: 0px;
+    color: #FFFFFF;
+    padding-right: 3px;
+}
+
 .fadey {
     color: #b0b0b0;
 }
