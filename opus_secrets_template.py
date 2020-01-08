@@ -72,7 +72,13 @@ ALLOWED_HOSTS = ('127.0.0.1',
 SECRET_KEY = '<SECRET_KEY>'
 
 # Where static files are served from in a production environment
-OPUS_STATIC_ROOT = '<STATIC_DIR>'
+# This is ignored in a non-production environment
+STATIC_ROOT = '<STATIC_ROOT>'
+
+# Where static files are served from if this is a non-production environment,
+# usually .../pds-opus/opus/application/static_media
+# If this is a production environment, this should be the same as STATIC_ROOT
+OPUS_STATIC_ROOT = '<STATIC_ROOT>'
 
 # The prefix to add to all cache keys indicating a unique string for this
 # installation on a server. This allows multiple OPUS installations on the
