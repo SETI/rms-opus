@@ -622,19 +622,19 @@ th.sticky-header {
     align-items: center;
 }
 
-.op-mini-thumbnail:not(.op-mini-thumbnail-shrink) img {
+.op-mini-thumbnail img {
     transition: transform .1s;
     width: 68%;
 }
 
 /* zoom the mini-thumbnail on hover */
-.op-mini-thumbnail:not(.op-mini-thumbnail-shrink) img:hover {
+.op-mini-thumbnail img:hover {
   -ms-transform: scale(4.5); /* IE 9 */
   -webkit-transform: scale(4.5); /* Safari 3-8 */
   transform: scale(4.5);
 }
 
-button.op-mini-thumbnail-zoom, button.op-mini-thumbnail-shrink {
+button.op-mini-thumbnail-zoom {
     padding: 0px;
     color: #FFFFFF;
     padding-right: 3px;
