@@ -1518,9 +1518,9 @@ var o_browse = {
                          "class='op-table-header-addall btn btn-link'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'" +
                          " title='Add All Results to Cart'></i></button>";
-        let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col op-noresize'><div>${addallIcon}</div></th>`;
+        let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col'><div>${addallIcon}</div></th>`;
         // note: this column header will be empty
-        let tableHeaderThumbnailCol = `<th scope='col' class='sticky-header op-table-first-col op-noresize'></th>`;
+        let tableHeaderThumbnailCol = `<th scope='col' class='sticky-header op-table-first-col'></th>`;
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderThumbnailCol);
