@@ -143,6 +143,7 @@ var opus = {
         }
     },
 
+    oldSurfacegeoTarget: null,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search

@@ -333,6 +333,8 @@ var o_search = {
             // mult widget gets changed
             let id = $(this).attr("id").split("_")[0];
             let value = $(this).attr("value");
+            let newTargetSlug = $(this).attr("data-slug");
+            opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
 
             if ($(this).is(":checked")) {
                 let values = [];
@@ -374,7 +376,12 @@ var o_search = {
             if (!opus.areRangeInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
+            console.log(`Change event in choice change`);
+            console.log(JSON.stringify(opus.selections));
             o_hash.updateURLFromCurrentHash();
+
+            // opus.oldSurfacegeoTarget = newTargetSlug;
+            console.log(`opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown

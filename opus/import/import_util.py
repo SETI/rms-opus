@@ -263,7 +263,7 @@ def table_name_for_sfc_target(target_name):
     return encode_target_name(target_name)
 
 # NOTE: whenever we change this function, we will have to change
-# getSurfacegeoTargetSlug in widgets.js as well.
+# getSurfacegeoTargetSlug in JS codes as well.
 def slug_name_for_sfc_target(target_name):
     if target_name.upper() in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name.upper()]

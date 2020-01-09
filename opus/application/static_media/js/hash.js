@@ -641,6 +641,13 @@ var o_hash = {
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
 
+                    // For surfacegeometrytargetname, we have to assign the init value
+                    // to opus.oldSurfacegeoTarget here if the page reloads with URL
+                    // that has surfacegeometrytargetname.
+                    if (slug === "surfacegeometrytargetname") {
+                        opus.oldSurfacegeoTarget = o_utils.getSurfacegeoTargetSlug(value);
+                    }
+
                     if (slugCounter > opus.maxAllowedInputSets) {
                         return; // continue to next iteration
                     }

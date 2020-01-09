@@ -95,16 +95,28 @@ var o_widgets = {
 
         // close opened surfacegeo widget if user select another surfacegeo target
         $('#search').on('change', 'input.singlechoice', function() {
-            $('a[data-slug^="SURFACEGEO"]').each( function(index) {
-                let slug = $(this).data('slug');
-                o_widgets.closeWidget(slug);
-                let id = "#widget__"+slug;
-                try {
-                    $(id).remove();
-                } catch (e) {
-                    console.log("error on close widget, id="+id);
-                }
+            // $('a[data-slug^="SURFACEGEO"]').each( function(index) {
+            //     let slug = $(this).data('slug');
+            //     o_widgets.closeWidget(slug);
+            //     let id = "#widget__"+slug;
+            //     try {
+            //         $(id).remove();
+            //     } catch (e) {
+            //         console.log("error on close widget, id="+id);
+            //     }
+            // });
+            console.log(`==========Change event in singlechoice in widgets.js`);
+            console.log(JSON.stringify(opus.selections));
+            console.log(JSON.stringify(opus.extras));
+            let newTargetSlug = $(this).attr("data-slug");
+            opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
+            console.log(`before opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
+            $.each($(".widget[id^='widget__SURFACEGEO']"), function(idx, eachSurfacegeoWidget) {
+                console.log($(eachSurfacegeoWidget).attr("id"));
             });
+
+            opus.oldSurfacegeoTarget = newTargetSlug;
+            console.log(`after all opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
@@ -743,24 +755,13 @@ var o_widgets = {
                // corresponding radio input.
                $.each($("input[type='radio']"), function(idx, eachChoice) {
                    let surfacegeoTarget = $(eachChoice).attr("value");
-                   let surfacegeoTargetSlug = o_widgets.getSurfacegeoTargetSlug(surfacegeoTarget);
+                   let surfacegeoTargetSlug = o_utils.getSurfacegeoTargetSlug(surfacegeoTarget);
                    $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
                });
                break;
            //
 
         }
-    },
-
-    getSurfacegeoTargetSlug: function(target) {
-        /**
-         * Take in a surface geo target pretty name and return a slug name
-         * for the target.
-         */
-        let slugName = target.toLowerCase();
-        // remove all "_", "/", and " "
-        slugName = slugName.replace(/_/g, "").replace(/\//g, "").replace(/ /g, "");
-        return slugName;
     },
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
