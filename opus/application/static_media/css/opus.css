@@ -616,7 +616,6 @@ th.sticky-header {
 }
 
 .op-mini-thumbnail div {
-    /*text-align: center;*/
     display: flex;
     justify-content: center;
     align-items: center;
@@ -629,9 +628,10 @@ th.sticky-header {
 
 /* zoom the mini-thumbnail on hover */
 .op-mini-thumbnail img:hover {
-  -ms-transform: scale(4.5); /* IE 9 */
-  -webkit-transform: scale(4.5); /* Safari 3-8 */
-  transform: scale(4.5);
+    -ms-transform: scale(4.5); /* IE 9 */
+    -webkit-transform: scale(4.5); /* Safari 3-8 */
+    transform: scale(4.5);
+    z-index: 9999;
 }
 
 button.op-mini-thumbnail-zoom {
