@@ -108,12 +108,90 @@ var o_widgets = {
             console.log(`==========Change event in singlechoice in widgets.js`);
             console.log(JSON.stringify(opus.selections));
             console.log(JSON.stringify(opus.extras));
+            let newTargetPrettyName = $(this).attr("value");
             let newTargetSlug = $(this).attr("data-slug");
             opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
+            let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
+            let newTargetStr = `SURFACEGEO${newTargetSlug}`;
             console.log(`before opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
-            $.each($(".widget[id^='widget__SURFACEGEO']"), function(idx, eachSurfacegeoWidget) {
-                console.log($(eachSurfacegeoWidget).attr("id"));
+            // 1. Update surfacegeo attributes/text in DOMs of all related surfacegeo widgets.
+            // 2. Update selections (opus.selection, opus.extras) & widgets
+            for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
+                // Update attributes card header
+                let currentWidget = $(eachSurfacegeoWidget);
+                // let currenSlug = currentWidget.attr("id").match(/^widget__(.*)/)[1];
+                // let newSlug = currenSlug.replace(oldTargetStr, newTargetStr);
+                // console.log(`newSlug: ${newSlug}`);
+                // console.log(`currenSlug: ${currenSlug}`);
+
+                let oldWidgetTitle = currentWidget.find(".op-widget-title").text();
+                let newWidgetTitle = oldWidgetTitle.replace(/\[.*\]/, `[${newTargetPrettyName}]`);
+                let unitInput = currentWidget.find("select[class^='op-unit']");
+                let collapseIcon = currentWidget.find(`a[href^="#card__${oldTargetStr}"]`);
+                let closeIcon = currentWidget.find(`a[data-slug^="${oldTargetStr}"]`);
+                currentWidget.find(".op-widget-title").text(newWidgetTitle);
+                o_widgets.updateSURFACEGEOattrInPlace(currentWidget, newTargetSlug, "id");
+                o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
+                o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
+                o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
+                o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
+                o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
+
+                // Update attributes in card body
+                let hint = currentWidget.find(`div[id^="hint__${oldTargetStr}"]`);
+                o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".collapse"), newTargetSlug, "id");
+                o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".card-body"), newTargetSlug, "class");
+                o_widgets.updateSURFACEGEOattrInPlace(hint, newTargetSlug, "id");
+
+                // Update attributes in each input set
+                for (const eachInputSet of currentWidget.find(".op-search-inputs-set")) {
+                    let inputs = $(eachInputSet).find("input");
+                    let removeBtns = $(eachInputSet).find(".op-remove-inputs > button");
+                    let addBtns = $(eachInputSet).find(".op-add-inputs > button");
+                    for (const input of inputs) {
+                        o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "name");
+                        o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "data-slugname");
+                    }
+                    o_widgets.updateSURFACEGEOattrInPlace($(eachInputSet).find("select"), newTargetSlug, "name");
+                    o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-widget");
+                    o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-slug");
+                    o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-widget");
+                    o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-slug");
+                }
+                // Update the hint for new target
+                // o_search.getHinting(newSlug);
+
+            }
+            console.log(JSON.stringify(opus.selections));
+            console.log(JSON.stringify(opus.extras));
+
+            // Update selections & extras
+            for (const slug in opus.selections) {
+                if (slug.match(oldTargetStr)) {
+                    let newSlug = slug.replace(oldTargetStr, newTargetStr);
+                    opus.selections[newSlug] = opus.selections[slug];
+                    delete opus.selections[slug];
+                }
+            }
+            for (const extras in opus.extras) {
+                if (extras.match(oldTargetStr)) {
+                    let newSlug = extras.replace(oldTargetStr, newTargetStr);
+                    opus.extras[newSlug] = opus.extras[extras];
+                    delete opus.extras[extras];
+                }
+            }
+            // Update widgets column in opus.prefs
+            $.each(opus.prefs.widgets, function(widgetIdx, widget) {
+                if (widget.match(oldTargetStr)) {
+                    let newWidget = widget.replace(oldTargetStr, newTargetStr);
+                    opus.prefs.widgets[widgetIdx] = newWidget;
+                }
             });
+
+            console.log(`after update @@@@@`);
+            console.log(JSON.stringify(opus.selections));
+            console.log(JSON.stringify(opus.extras));
+            console.log("break=========");
 
             opus.oldSurfacegeoTarget = newTargetSlug;
             console.log(`after all opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
@@ -145,6 +223,19 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
         o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    updateSURFACEGEOattrInPlace: function(targetElement, newSurfacegeoTargetSlug, attribute) {
+        /**
+         * Update surfacegeo attributes in place with newly select target
+         */
+        if (targetElement.length === 0) {
+            return;
+        }
+        let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
+        let newTargetStr = `SURFACEGEO${newSurfacegeoTargetSlug}`;
+        let newTargetAttr = targetElement.attr(attribute).replace(oldTargetStr, newTargetStr);
+        targetElement.attr(attribute, newTargetAttr);
     },
 
     getMaxScrollTopVal: function(target) {
