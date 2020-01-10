@@ -17,15 +17,15 @@ var o_menu = {
      *
      **/
 
-     addMenuBehaviors: function() {
-         // click param in menu get new widget
-         $("#sidebar").on("click", ".submenu li a", function() {
+    addMenuBehaviors: function() {
+        // click param in menu get new widget
+        $("#sidebar").on("click", ".submenu li a", function() {
 
-             let slug = $(this).data("slug");
-             if (!slug) { return; }
-             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
-                 // widget is already showing do not fetch another
-                 try {
+            let slug = $(this).data("slug");
+            if (!slug) { return; }
+            if ($.inArray(slug, opus.widgetsDrawn) > -1) {
+                // widget is already showing do not fetch another
+                try {
                     // scroll to widget and highlight it
                     o_widgets.scrollToWidget(`widget__#{slug}`);
 
@@ -34,15 +34,14 @@ var o_menu = {
                 }
                 return false;
 
-             } else {
-                  o_menu.markMenuItem(this);
-                  o_widgets.getWidget(slug,'#op-search-widgets');
-             }
+            } else {
+                o_menu.markMenuItem(this);
+                o_widgets.getWidget(slug,'#op-search-widgets');
+            }
 
-             o_hash.updateURLFromCurrentHash();
-             return false;
-         });
-
+            o_hash.updateURLFromCurrentHash();
+            return false;
+        });
 
         // menu state - keep track of what menu items are open
         $("#sidebar").on("click", ".dropdown-toggle", function(e) {
@@ -60,11 +59,11 @@ var o_menu = {
                 }
             }
         });
-     },
+    },
 
-     getNewSearchMenu: function() {
+    getNewSearchMenu: function() {
         let spinnerTimer = setTimeout(function() {
-             $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+            $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
         $("#sidebar").load("/opus/__menu.html?" + hash, function() {
@@ -87,9 +86,9 @@ var o_menu = {
             $('.op-menu-text.spinner').removeClass("op-show-spinner");
             clearTimeout(spinnerTimer);
         });
-     },
+    },
 
-     markMenuItem: function(selector, selected) {
+    markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
             $(selector).css({"background": "gainsboro"});
             // We use find() here instead of just adding to the selector because
@@ -99,7 +98,7 @@ var o_menu = {
             $(selector).css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
         }
-     },
+    },
 
     markCurrentMenuItems: function() {
         $.each(opus.prefs.widgets, function(index, slug) {
@@ -107,17 +106,17 @@ var o_menu = {
         });
     },
 
-     // type = cat/group
-     getCatGroupFromSlug: function(slug) {
-         let cat = "";
-         let group = "";
-         $("ul.menu_list>li a", "#search").each(function() {
-             if (slug == $(this).data("slug")) {
-                 cat = $(this).data("cat");
-                 group = $(this).data("group");
-                 return false; // this is how you break in an each!
-             }
-         });
-         return {"cat":cat, "group":group};
-     },
+    // type = cat/group
+    getCatGroupFromSlug: function(slug) {
+        let cat = "";
+        let group = "";
+        $("ul.menu_list>li a", "#search").each(function() {
+            if (slug == $(this).data("slug")) {
+                cat = $(this).data("cat");
+                group = $(this).data("group");
+                return false; // this is how you break in an each!
+            }
+        });
+        return {"cat":cat, "group":group};
+    },
 };
