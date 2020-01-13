@@ -143,20 +143,9 @@ var o_widgets = {
             }
 
             // Update selections & extras
-            for (const slug in opus.selections) {
-                if (slug.match(oldTargetStr)) {
-                    let newSlug = slug.replace(oldTargetStr, newTargetStr);
-                    opus.selections[newSlug] = opus.selections[slug];
-                    delete opus.selections[slug];
-                }
-            }
-            for (const extras in opus.extras) {
-                if (extras.match(oldTargetStr)) {
-                    let newSlug = extras.replace(oldTargetStr, newTargetStr);
-                    opus.extras[newSlug] = opus.extras[extras];
-                    delete opus.extras[extras];
-                }
-            }
+            o_widgets.updateSURFACEGEODataObj(opus.selections, oldTargetStr, newTargetStr);
+            o_widgets.updateSURFACEGEODataObj(opus.extras, oldTargetStr, newTargetStr);
+
             // Update widgets column in opus.prefs
             $.each(opus.prefs.widgets, function(widgetIdx, widget) {
                 if (widget.match(oldTargetStr)) {
@@ -164,6 +153,9 @@ var o_widgets = {
                     opus.prefs.widgets[widgetIdx] = newWidget;
                 }
             });
+            
+            // Update unit record in opus.currentUnitBySlug
+            o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
 
             opus.oldSurfacegeoTarget = newTargetSlug;
         });
@@ -207,6 +199,21 @@ var o_widgets = {
         let newTargetStr = `SURFACEGEO${newSurfacegeoTargetSlug}`;
         let newTargetAttr = targetElement.attr(attribute).replace(oldTargetStr, newTargetStr);
         targetElement.attr(attribute, newTargetAttr);
+    },
+
+    updateSURFACEGEODataObj: function(dataObj, oldTargetStr, newTargetStr) {
+        /**
+         * Update data object (opus.selections, opus.extras, and opus.currentUnitBySlug)
+         * in place with newly select target.
+         * NOTE: the passed in dataObj will be modified.
+         */
+        for (const oldTargetSlug in dataObj) {
+            if (oldTargetSlug.match(oldTargetStr)) {
+                let newSlug = oldTargetSlug.replace(oldTargetStr, newTargetStr);
+                dataObj[newSlug] = dataObj[oldTargetSlug];
+                delete dataObj[oldTargetSlug];
+            }
+        }
     },
 
     getMaxScrollTopVal: function(target) {
@@ -708,6 +715,8 @@ var o_widgets = {
 
         delete opus.extras[`qtype-${slugNoNum}`];
         delete opus.extras[`unit-${slugNoNum}`];
+        // Remove unit record
+        delete opus.currentUnitBySlug[slugNoNum];
 
         let selector = `.op-search-menu li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
