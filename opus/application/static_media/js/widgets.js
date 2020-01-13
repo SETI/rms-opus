@@ -93,37 +93,19 @@ var o_widgets = {
             }
         });
 
-        // close opened surfacegeo widget if user select another surfacegeo target
+        // Update surfacegeo widgets in place if user selects another surfacegeo target.
+        // 1. Update surfacegeo attributes/text in DOMs of all related surfacegeo widgets.
+        // 2. Update selections (opus.selection, opus.extras) & widgets.
         $('#search').on('change', 'input.singlechoice', function() {
-            // $('a[data-slug^="SURFACEGEO"]').each( function(index) {
-            //     let slug = $(this).data('slug');
-            //     o_widgets.closeWidget(slug);
-            //     let id = "#widget__"+slug;
-            //     try {
-            //         $(id).remove();
-            //     } catch (e) {
-            //         console.log("error on close widget, id="+id);
-            //     }
-            // });
-            console.log(`==========Change event in singlechoice in widgets.js`);
-            console.log(JSON.stringify(opus.selections));
-            console.log(JSON.stringify(opus.extras));
             let newTargetPrettyName = $(this).attr("value");
             let newTargetSlug = $(this).attr("data-slug");
             opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
             let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
             let newTargetStr = `SURFACEGEO${newTargetSlug}`;
-            console.log(`before opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
-            // 1. Update surfacegeo attributes/text in DOMs of all related surfacegeo widgets.
-            // 2. Update selections (opus.selection, opus.extras) & widgets
-            for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
-                // Update attributes card header
-                let currentWidget = $(eachSurfacegeoWidget);
-                // let currenSlug = currentWidget.attr("id").match(/^widget__(.*)/)[1];
-                // let newSlug = currenSlug.replace(oldTargetStr, newTargetStr);
-                // console.log(`newSlug: ${newSlug}`);
-                // console.log(`currenSlug: ${currenSlug}`);
 
+            for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
+                let currentWidget = $(eachSurfacegeoWidget);
+                // Update attributes in widget and card header.
                 let oldWidgetTitle = currentWidget.find(".op-widget-title").text();
                 let newWidgetTitle = oldWidgetTitle.replace(/\[.*\]/, `[${newTargetPrettyName}]`);
                 let unitInput = currentWidget.find("select[class^='op-unit']");
@@ -158,12 +140,7 @@ var o_widgets = {
                     o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-widget");
                     o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-slug");
                 }
-                // Update the hint for new target
-                // o_search.getHinting(newSlug);
-
             }
-            console.log(JSON.stringify(opus.selections));
-            console.log(JSON.stringify(opus.extras));
 
             // Update selections & extras
             for (const slug in opus.selections) {
@@ -188,13 +165,7 @@ var o_widgets = {
                 }
             });
 
-            console.log(`after update @@@@@`);
-            console.log(JSON.stringify(opus.selections));
-            console.log(JSON.stringify(opus.extras));
-            console.log("break=========");
-
             opus.oldSurfacegeoTarget = newTargetSlug;
-            console.log(`after all opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
         });
 
         // When user selects a ranges info item, update input fields and opus.selections

@@ -376,12 +376,8 @@ var o_search = {
             if (!opus.areRangeInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
-            console.log(`Change event in choice change`);
-            console.log(JSON.stringify(opus.selections));
-            o_hash.updateURLFromCurrentHash();
 
-            // opus.oldSurfacegeoTarget = newTargetSlug;
-            console.log(`opus.oldSurfacegeoTarget: ${opus.oldSurfacegeoTarget}`);
+            o_hash.updateURLFromCurrentHash();
         });
 
         // range behaviors and string behaviors for search widgets - qtype select dropdown
