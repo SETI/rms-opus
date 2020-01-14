@@ -134,7 +134,7 @@ def populate_obs_general_COVIMS_time2(**kwargs):
     return stop_time_sec
 
 def populate_obs_general_COVIMS_target_name(**kwargs):
-    return helper_cassini_target_name(**kwargs)
+    return helper_cassini_intended_target_name(**kwargs)
 
 def populate_obs_general_COVIMS_observation_duration(**kwargs):
     metadata = kwargs['metadata']
