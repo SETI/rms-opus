@@ -111,6 +111,7 @@ var o_utils = {
         return JSON.parse(JSON.stringify(obj));
     },
 
+    // This function is patterned after slug_name_for_sfc_target in import_util.py.
     getSurfacegeoTargetSlug: function(target) {
         /**
          * Take in a surface geo target pretty name and return a slug name

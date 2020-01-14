@@ -41,6 +41,12 @@ var o_widgets = {
     // want to perform a search when a widget has just opened.
     isGetWidgetDone: false,
 
+    // This flag is used to determined if we are closing any widget with empty input.
+    // In a series of closing widget actions, if there is one input in a widget with a
+    // value, we will make sure a search is performed after updating URL. If none of
+    // inputs has value, we don't need to perform a search.
+    isRemovingEmptyWidget: true,
+
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
@@ -91,73 +97,80 @@ var o_widgets = {
             } catch (error) {
                 console.log("error on close widget, id="+id);
             }
+
+            if (slug === "surfacegeometrytargetname") {
+                o_widgets.closeAllSURFACEGEOWidgets();
+            }
         });
 
         // Update surfacegeo widgets in place if user selects another surfacegeo target.
         // 1. Update surfacegeo attributes/text in DOMs of all related surfacegeo widgets.
-        // 2. Update selections (opus.selection, opus.extras) & widgets.
+        // 2. Update selections (opus.selections, opus.extras) & widgets.
         $('#search').on('change', 'input.singlechoice', function() {
-            let newTargetPrettyName = $(this).attr("value");
-            let newTargetSlug = $(this).attr("data-slug");
-            opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
-            let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
-            let newTargetStr = `SURFACEGEO${newTargetSlug}`;
+            let singlechoiceName = $(this).attr("name");
+            if (singlechoiceName === "surfacegeometrytargetname") {
+                let newTargetPrettyName = $(this).attr("value");
+                let newTargetSlug = $(this).attr("data-slug");
+                opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
+                let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
+                let newTargetStr = `SURFACEGEO${newTargetSlug}`;
 
-            for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
-                let currentWidget = $(eachSurfacegeoWidget);
-                // Update attributes in widget and card header.
-                let oldWidgetTitle = currentWidget.find(".op-widget-title").text();
-                let newWidgetTitle = oldWidgetTitle.replace(/\[.*\]/, `[${newTargetPrettyName}]`);
-                let unitInput = currentWidget.find("select[class^='op-unit']");
-                let collapseIcon = currentWidget.find(`a[href^="#card__${oldTargetStr}"]`);
-                let closeIcon = currentWidget.find(`a[data-slug^="${oldTargetStr}"]`);
-                currentWidget.find(".op-widget-title").text(newWidgetTitle);
-                o_widgets.updateSURFACEGEOattrInPlace(currentWidget, newTargetSlug, "id");
-                o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
-                o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
-                o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
-                o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
-                o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
+                for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
+                    let currentWidget = $(eachSurfacegeoWidget);
+                    // Update attributes in widget and card header.
+                    let oldWidgetTitle = currentWidget.find(".op-widget-title").text();
+                    let newWidgetTitle = oldWidgetTitle.replace(/\[.*\]/, `[${newTargetPrettyName}]`);
+                    let unitInput = currentWidget.find("select[class^='op-unit']");
+                    let collapseIcon = currentWidget.find(`a[href^="#card__${oldTargetStr}"]`);
+                    let closeIcon = currentWidget.find(`a[data-slug^="${oldTargetStr}"]`);
+                    currentWidget.find(".op-widget-title").text(newWidgetTitle);
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget, newTargetSlug, "id");
+                    o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
+                    o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
+                    o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
 
-                // Update attributes in card body
-                let hint = currentWidget.find(`div[id^="hint__${oldTargetStr}"]`);
-                o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".collapse"), newTargetSlug, "id");
-                o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".card-body"), newTargetSlug, "class");
-                o_widgets.updateSURFACEGEOattrInPlace(hint, newTargetSlug, "id");
+                    // Update attributes in card body
+                    let hint = currentWidget.find(`div[id^="hint__${oldTargetStr}"]`);
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".collapse"), newTargetSlug, "id");
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".card-body"), newTargetSlug, "class");
+                    o_widgets.updateSURFACEGEOattrInPlace(hint, newTargetSlug, "id");
 
-                // Update attributes in each input set
-                for (const eachInputSet of currentWidget.find(".op-search-inputs-set")) {
-                    let inputs = $(eachInputSet).find("input");
-                    let removeBtns = $(eachInputSet).find(".op-remove-inputs > button");
-                    let addBtns = $(eachInputSet).find(".op-add-inputs > button");
-                    for (const input of inputs) {
-                        o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "name");
-                        o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "data-slugname");
+                    // Update attributes in each input set
+                    for (const eachInputSet of currentWidget.find(".op-search-inputs-set")) {
+                        let inputs = $(eachInputSet).find("input");
+                        let removeBtns = $(eachInputSet).find(".op-remove-inputs > button");
+                        let addBtns = $(eachInputSet).find(".op-add-inputs > button");
+                        for (const input of inputs) {
+                            o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "name");
+                            o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "data-slugname");
+                        }
+                        o_widgets.updateSURFACEGEOattrInPlace($(eachInputSet).find("select"), newTargetSlug, "name");
+                        o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-widget");
+                        o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-slug");
+                        o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-widget");
+                        o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-slug");
                     }
-                    o_widgets.updateSURFACEGEOattrInPlace($(eachInputSet).find("select"), newTargetSlug, "name");
-                    o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-widget");
-                    o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-slug");
-                    o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-widget");
-                    o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-slug");
                 }
+
+                // Update selections & extras
+                o_widgets.updateSURFACEGEODataObj(opus.selections, oldTargetStr, newTargetStr);
+                o_widgets.updateSURFACEGEODataObj(opus.extras, oldTargetStr, newTargetStr);
+
+                // Update widgets array in opus.prefs
+                $.each(opus.prefs.widgets, function(widgetIdx, widget) {
+                    if (widget.match(oldTargetStr)) {
+                        let newWidget = widget.replace(oldTargetStr, newTargetStr);
+                        opus.prefs.widgets[widgetIdx] = newWidget;
+                    }
+                });
+
+                // Update unit record in opus.currentUnitBySlug
+                o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
+
+                opus.oldSurfacegeoTarget = newTargetSlug;
             }
-
-            // Update selections & extras
-            o_widgets.updateSURFACEGEODataObj(opus.selections, oldTargetStr, newTargetStr);
-            o_widgets.updateSURFACEGEODataObj(opus.extras, oldTargetStr, newTargetStr);
-
-            // Update widgets column in opus.prefs
-            $.each(opus.prefs.widgets, function(widgetIdx, widget) {
-                if (widget.match(oldTargetStr)) {
-                    let newWidget = widget.replace(oldTargetStr, newTargetStr);
-                    opus.prefs.widgets[widgetIdx] = newWidget;
-                }
-            });
-            
-            // Update unit record in opus.currentUnitBySlug
-            o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
-
-            opus.oldSurfacegeoTarget = newTargetSlug;
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
@@ -204,7 +217,7 @@ var o_widgets = {
     updateSURFACEGEODataObj: function(dataObj, oldTargetStr, newTargetStr) {
         /**
          * Update data object (opus.selections, opus.extras, and opus.currentUnitBySlug)
-         * in place with newly select target.
+         * in place with newly selected target.
          * NOTE: the passed in dataObj will be modified.
          */
         for (const oldTargetSlug in dataObj) {
@@ -212,6 +225,23 @@ var o_widgets = {
                 let newSlug = oldTargetSlug.replace(oldTargetStr, newTargetStr);
                 dataObj[newSlug] = dataObj[oldTargetSlug];
                 delete dataObj[oldTargetSlug];
+            }
+        }
+    },
+
+    closeAllSURFACEGEOWidgets: function() {
+        /**
+         * Close all SURFACEGEO related widgets. This is called when surfacegeo
+         * target name widget is closed.
+         */
+        for (const closeWidgetIcon of $(".close_card[data-slug^='SURFACEGEO']")) {
+            let slug = $(closeWidgetIcon).attr("data-slug");
+            o_widgets.closeWidget(slug);
+            let id = "#widget__"+slug;
+            try {
+                $(id).remove();
+            } catch (e) {
+                console.log("error on close widget, id="+id);
             }
         }
     },
@@ -520,7 +550,6 @@ var o_widgets = {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
                     if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-                        delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                         o_widgets.isRemovingInput = false;
                         return;
                     }
@@ -680,7 +709,6 @@ var o_widgets = {
     },
 
     closeWidget: function(slug) {
-        let isRemovingEmptyWidget = true;
         let slugNoNum;
         try {
             slugNoNum = slug.match(/(.*)[1|2]$/)[1];
@@ -722,10 +750,11 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
+
         // Check if the widget to be removed has empty values on all inputs.
         for (const input of inputs) {
             if ($(input).val() && $(input).val().trim()) {
-                isRemovingEmptyWidget = false;
+                o_widgets.isRemovingEmptyWidget = false;
             }
         }
 
@@ -733,7 +762,6 @@ var o_widgets = {
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-                delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 return;
             }
             o_search.validateRangeInput(normalizedData, false);
@@ -756,7 +784,7 @@ var o_widgets = {
             }
 
             // If the closing widget has empty values, don't perform a search.
-            if (isRemovingEmptyWidget) {
+            if (o_widgets.isRemovingEmptyWidget) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 

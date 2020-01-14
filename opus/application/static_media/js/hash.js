@@ -404,7 +404,6 @@ var o_hash = {
         if (!hash) {
             return [undefined, undefined];
         }
-
         hash = (hash.search("&") > -1 ? hash.split("&") : [hash]);
         hash = o_hash.decodeHashArray(hash);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
@@ -641,9 +640,9 @@ var o_hash = {
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
 
-                    // For surfacegeometrytargetname, we have to assign the init value
-                    // to opus.oldSurfacegeoTarget here if the page reloads with URL
-                    // that has surfacegeometrytargetname.
+                    // If there is a value specified for surfacegeometrytargetname in the URL,
+                    // we have to initialize opus.oldSurfacegeoTarget with it so that we can
+                    // properly handle changes to surfacegeometrytargetname in the future.
                     if (slug === "surfacegeometrytargetname") {
                         opus.oldSurfacegeoTarget = o_utils.getSurfacegeoTargetSlug(value);
                     }

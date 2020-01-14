@@ -301,7 +301,6 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         }
 
