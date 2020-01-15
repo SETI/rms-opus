@@ -811,44 +811,18 @@ var o_widgets = {
     // this is called after a widget is drawn
     customWidgetBehaviors: function(slug) {
         switch(slug) {
-
-            // planet checkboxes open target groupings:
-            case 'planet':
-                // user checks a planet box - open the corresponding target group
-                // adding a behavior: checking a planet box opens the corresponding targets
-                $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
-                    // a planet is .chosen_columns, and its corresponding target is not already open
-                    let mult_id = '.mult_group_' + $(this).attr('value');
-                    $(mult_id).find('.indicator').addClass('fa-minus');
-                    $(mult_id).find('.indicator').removeClass('fa-plus');
-                    $(mult_id).next().slideDown("fast");
-                });
+            case "target":
+                // When target widget is drawn, look for any checked intended target
+                // and expand the group with the selected target.
+                let intendedTargetInputs = $(`#widget__${slug} input[type="checkbox"]:checked`);
+                o_widgets.expandInputGroup(intendedTargetInputs, slug);
                 break;
 
-            case 'target':
-                // when target widget is drawn, look for any checked planets:
-                // usually for when a planet checkbox is checked on page load
-                $('#widget__planet input:checkbox:checked', '#search').each(function() {
-                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                        let mult_id = '.mult_group_' + $(this).attr('value');
-                        $(mult_id).find('.indicator').addClass('fa-minus');
-                        $(mult_id).find('.indicator').removeClass('fa-plus');
-                        $(mult_id).next().slideDown("fast");
-                    }
-                });
-                break;
-
-            case 'surfacegeometrytargetname':
-               // when target widget is drawn, look for any checked planets:
-               // usually for when a planet checkbox is checked on page load
-               $('#widget__planet input:checkbox:checked', '#search').each(function() {
-                   if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                       let mult_id = '.mult_group_' + $(this).attr('value');
-                       $(mult_id).find('.indicator').addClass('fa-minus');
-                       $(mult_id).find('.indicator').removeClass('fa-plus');
-                       $(mult_id).next().slideDown("fast");
-                   }
-               });
+            case "surfacegeometrytargetname":
+               // When surfacegeometrytargetname widget is drawn, look for any checked singlechoice input
+               // and expand the group with the selected target.
+               let surfacegeoTargetInputs = $(`#widget__${slug} input[type="radio"]:checked`);
+               o_widgets.expandInputGroup(surfacegeoTargetInputs, slug);
 
                // Put each surfacegeo target slug into the data-slug attribute of the
                // corresponding radio input.
@@ -858,8 +832,22 @@ var o_widgets = {
                    $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
                });
                break;
-           //
+        }
+    },
 
+    expandInputGroup: function(targetInputs, slug) {
+        /**
+         * Loop through targetInputs and expand the group with selected inputs. 
+         */
+        for (const input of targetInputs) {
+            if ($(input).attr("id") && $(input).attr("id").split("_")[0] === slug) {
+                let multGroup = $(input).parents(".mult_group");
+                let groupName = $(input).parents(".mult_group").attr("data-group");
+                let multGroupLabel = $(`.mult_group_${groupName}`);
+                multGroupLabel.find('.indicator').addClass('fa-minus');
+                multGroupLabel.find('.indicator').removeClass('fa-plus');
+                multGroup.slideDown("fast");
+            }
         }
     },
 

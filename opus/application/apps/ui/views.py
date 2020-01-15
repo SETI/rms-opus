@@ -289,7 +289,8 @@ def api_get_widget(request, **kwargs):
                               +'</span>'
                               +'<span class="mult_group_label">'
                               +str(glabel) + '</span></div>'
-                              +'<ul class="mult_group">'
+                              +'<ul class="mult_group"'
+                              +' data-group=' + str(glabel) + '>'
                               +SearchForm(form_vals,
                                           auto_id = '%s_' + str(gvalue),
                                           grouping=gvalue).as_ul()
