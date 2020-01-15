@@ -380,7 +380,8 @@ var o_search = {
             o_hash.updateURLFromCurrentHash();
         });
 
-        // range behaviors and string behaviors for search widgets - qtype select dropdown
+        // range behaviors and string behaviors for search widgets - qtype and unit
+        // select dropdowns
         $('#search').on("change", "select", function() {
             let isInputSetEmpty = true;
             // Use this flag to determine if a normalize input api with sourceunit is called.
@@ -477,20 +478,18 @@ var o_search = {
                         let qtypeWithId =`${qtypeSlug}_${uniqueid}`;
                         let unitWithId = `${unitSlug}_${uniqueid}`;
                         let sourceunitWithId = `${sourceunitSlug}_${uniqueid}`;
-                        if (opus.rangeInputFieldsValidation[slug1WithId] !== false) {
-                            let minInputVal = $(eachInputSet).find(".op-range-input-min").val();
-                            if (minInputVal) {
-                                let slug1EncodedSelections = o_hash.encodeSlugValues([minInputVal]);
-                                hash.push(slug1WithId + "=" + slug1EncodedSelections[0]);
-                            }
-                        }
-                        if (opus.rangeInputFieldsValidation[slug2WithId] !== false) {
-                            let maxInputVal = $(eachInputSet).find(".op-range-input-max").val();
-                            if (maxInputVal) {
-                                let slug2EncodedSelections = o_hash.encodeSlugValues([maxInputVal]);
-                                hash.push(slug2WithId + "=" + slug2EncodedSelections[0]);
-                            }
 
+                        // Always reevaluate these values even if they're currently marked as
+                        // invalid. It's possible with the new units they will no longer be invalid.
+                        let minInputVal = $(eachInputSet).find(".op-range-input-min").val();
+                        if (minInputVal) {
+                            let slug1EncodedSelections = o_hash.encodeSlugValues([minInputVal]);
+                            hash.push(slug1WithId + "=" + slug1EncodedSelections[0]);
+                        }
+                        let maxInputVal = $(eachInputSet).find(".op-range-input-max").val();
+                        if (maxInputVal) {
+                            let slug2EncodedSelections = o_hash.encodeSlugValues([maxInputVal]);
+                            hash.push(slug2WithId + "=" + slug2EncodedSelections[0]);
                         }
 
                         if (qtypeSlug in opus.extras) {
