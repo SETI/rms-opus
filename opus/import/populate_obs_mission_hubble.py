@@ -985,6 +985,21 @@ def populate_obs_mission_hubble_HSTWFPC2_targeted_detector_id(**kwargs):
         return 'NONE'
     return targeted_detector_id
 
+def populate_obs_mission_hubble_HSTx_optical_element(**kwargs):
+    return None
+
+populate_obs_mission_hubble_HSTACS_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTNICMOS_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTWFC3_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+populate_obs_mission_hubble_HSTWFPC2_optical_element = populate_obs_mission_hubble_HSTx_optical_element
+
+def populate_obs_mission_hubble_HSTSTIS_optical_element(**kwargs):
+    metadata = kwargs['metadata']
+    instrument = kwargs['instrument_name']
+    index_row = metadata['index_row']
+    element = index_row['OPTICAL_ELEMENT_NAME'].upper()
+    return (element, element)
+
 def populate_obs_mission_hubble_HSTACS_pc1_flag(**kwargs):
     return None
 

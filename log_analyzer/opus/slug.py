@@ -26,6 +26,7 @@ class FamilyType(Enum):
     QTYPE = auto()
     SINGLETON = auto()
     COLUMN = auto()
+    UNIT = auto()
 
 
 class Flags(Flag):
@@ -46,14 +47,15 @@ class Flags(Flag):
 
 class Info(NamedTuple):
     """
-    Information about a slug.  Note that we can't let the Info for an obsolete slug and its replacement must be
+    Information about a slug.  Note that we can't let the Info for an obsolete slug and its replacement be
     identical, since they are used as keys in a dictionary.
     """
-    canonical_name: str  # The slug name, but with any obsolete root replaced with its newer version
+    canonical_name: str  # The slug name.  Included so obsolete slugs will be different than their updated version
     label: str  # The verbose label for this slug
     flags: Flags
     family_type: FamilyType
     family: Family
+    subgroup: int = 0
 
 
 class ToInfoMap:
@@ -64,6 +66,7 @@ class ToInfoMap:
     _column_map: Dict[str, Optional[Info]] = {}
 
     QTYPE_SUFFIX = ' (QT)'
+    UNIT_SUFFIX = ' (UNIT)'
     UNKNOWN_SLUG_INFO = 'unknown slug'
     OBSOLETE_SLUG_INFO = 'obsolete slug'
 
@@ -114,20 +117,19 @@ class ToInfoMap:
         return self._get_info_for_search_slug(slug, True, value)
 
 
-    def _get_info_for_search_slug(self, slug: str, create: bool = True, value: str = '') -> Optional[Info]:
-        """
-        Returns information about a slug that appears as part of a search term in a query
-        """
-
+    def _get_info_for_search_slug(self, original_slug: str, create: bool = True, value: str = '') -> Optional[Info]:
         base_result: Optional[Info]
-
-        original_slug = slug
-        slug = slug.lower()
+        slug = original_slug.lower()
         search_map = self._search_map
 
         if slug in search_map:
             # value may be None, so we can't just check the value of search_map.get(slug)
-            result = search_map[slug]
+            return search_map[slug]
+
+        match = re.fullmatch(r'(.*)_(\d{2,})', slug)
+        if match:
+            base_result = self._get_info_for_search_slug(match.group(1), create, value)
+            result = search_map[slug] = base_result._replace(subgroup=int(match.group(2))) if base_result else None
             return result
 
         label = self._slug_to_search_label.get(slug)
@@ -135,10 +137,10 @@ class ToInfoMap:
             result = search_map[slug] = self._known_label(slug, label, Flags.NONE)
             return result
 
-        new_slug = self._old_slug_to_new_slug.get(slug)
-        if new_slug:
-            label = self._slug_to_search_label[new_slug]
-            result = search_map[slug] = self._known_label(new_slug, label, Flags.OBSOLETE_SLUG)
+        current_slug = self._old_slug_to_new_slug.get(slug)
+        if current_slug:
+            label = self._slug_to_search_label[current_slug]
+            result = search_map[slug] = self._known_label(current_slug, label, Flags.OBSOLETE_SLUG)
             return result
 
         if slug[-1] in '12':
@@ -180,6 +182,19 @@ class ToInfoMap:
                 flags=base_result.flags,
                 family=family, family_type=FamilyType.QTYPE)
             return result
+
+        if slug.startswith('unit-'):
+            for suffix in ('1', '2', ''):
+                base_result = self._get_info_for_search_slug(slug[5:] + suffix, False, value)
+                if base_result:
+                    stripped_name = base_result.canonical_name[:-len(suffix)] if suffix else base_result.canonical_name
+                    result = search_map[slug] = Info(
+                        canonical_name='qtype-' + stripped_name,
+                        label=base_result.family.label + self.UNIT_SUFFIX,
+                        flags=base_result.flags,
+                        family=base_result.family, family_type=FamilyType.UNIT)
+                    return result
+            return None
 
         if create:
             result = search_map[slug] = self._known_label(slug, original_slug, Flags.UNKNOWN_SLUG)
