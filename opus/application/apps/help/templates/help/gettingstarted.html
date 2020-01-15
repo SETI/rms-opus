@@ -93,7 +93,8 @@ data OPUS has to offer.</p>
         to search on a range of dates and times by specifying a minimum or
         maximum date/time, or both. You can enter dates and times in a wide
         variety of formats, although the standard is YYYY-MM-DD[Thh:mm:ss.sss].
-        </li>
+        Once you finish entering a date/time, it will be reformatted into the
+        standard format for you.</li>
 </ol>
 
 <p>For the latter two types of fields, as you type your search value you will
@@ -113,9 +114,9 @@ data OPUS has to offer.</p>
 
 <p>As you enter search values, the number of results that are selected will
     constantly update in the <b>Browse Results</b> tab. In addition,
-    you will be provided with the minimum/maximum values or date/times,
-    or the number of results for each multiple-choice item, based on your
-    current search criteria.</p>
+    you will be provided (in green) in each search field with the
+    minimum/maximum values or date/times, or the number of results for each
+    multiple-choice item, based on your current search criteria.</p>
 
 <p>Once you have entered some search constraints, it's time to browse the
     results.</p>
@@ -132,7 +133,8 @@ data OPUS has to offer.</p>
         wavelength range (for imaging cameras or spectrographs) or footprint
         (for non-imaging spectrographic instruments).</li>
     <li>The <b>Table View</b> shows a series of rows, one per observation,
-        containing the currently selected metadata fields.</li>
+        containing the currently selected metadata fields. The small thumbnail
+        in each row can be expanded by hovering the mouse over it.</li>
 </ol>
 
 <p>You can switch between the two views by clicking on <b>View Table</b> or
@@ -150,7 +152,8 @@ data OPUS has to offer.</p>
 <p>Each observation has a menu (<i class="fas fa-bars fa-xs"></i>) that allows
     you to perform a variety of operations, including adding or removing the
     observation from the cart, starting or ending a range of observations
-    to be added or removed from the cart, showing the details of the
+    to be added or removed from the cart, adding all of the observations in the
+    current search result set to the cart, showing the details of the
     observation, or downloading observation data. A single observation may also
     be added to or removed from the cart by using Ctrl+Click, clicking on the
     <i class="fas fa-cart-plus fa-xs"></i> or
@@ -160,8 +163,10 @@ data OPUS has to offer.</p>
     end the range. If the starting observation is not currently in the cart,
     all observations in the range will be added; if the starting observation is
     already in the cart, all observations in the range will be removed.
-    See the section on the <b>Cart</b> tab below for more information on
-    downloading.</p>
+    In the table view, the <i class="fas fa-cart-plus fa-xs"></i> icon in the
+    table header can also be used to add all observations in the current result
+    set to the cart. See the section on the <b>Cart</b> tab below for more
+    information on downloading the contents of the cart.</p>
 
 <p>The sort order for all results may be modified by clicking on a column header
     in the table view; this is the only way to choose a different metadata field
@@ -172,8 +177,8 @@ data OPUS has to offer.</p>
     that field from the sort order. The same sort order applies to the
     <b>Browse</b> tab and the <b>Cart</b> tab.</p>
 
-<p>Clicking on a thumbnail or table row will display a larger version of the
-    thumbnail along with the metadata for the currently selected metadata
+<p>Clicking on a gallery thumbnail or table row will display a larger version
+    of the thumbnail along with the metadata for the currently selected metadata
     fields; this is called the slideshow view. You may navigate by clicking on
     the <i class="far fa-arrow-alt-circle-left"></i> or
     <i class="far fa-arrow-alt-circle-right"></i> icons or using the right/left arrow
@@ -187,7 +192,7 @@ data OPUS has to offer.</p>
     CSV file when using <b>Download CSV (all results)</b> at the top or
     the <b>Download CSV of selected metadata</b> menu option, as well as what
     is included in downloaded CSV, data, and URL archive zip files available
-    on the <b>Cart</b> tab. An button is available to conveniently create a CSV
+    on the <b>Cart</b> tab. A button is available to conveniently create a CSV
     file directly from the <b>Select Metadata</b> dialog without having to
     save the selected fields first.</p>
 
@@ -203,11 +208,14 @@ data OPUS has to offer.</p>
     total result set. In addition, the <b>Download Data</b> pane on the left
     shows the estimated total download size of the cart as well as which data
     products will be included in a download. The individual products can be
-    selected or removed to reduce the file size.</p>
+    selected or removed to reduce the file size. If your browser is too narrow,
+    the <b>Download Data</b> pane will not be visible until you press the
+    <i class="fas fa-arrow-left"></i> <b>Download Data</b> button.
+</p>
 
-<p>While on the <b>Cart</b> tab, you can move observations to the recycle bin
+<p>While on the <b>Cart</b> tab, you move observations to the recycle bin
     rather than removing them from the cart entirely. These observations will
-    be marked with <i class="fas fa-recycle text-success"></i>. You can also
+    be marked with <i class="fas fa-recycle text-success"></i>. You can then
     restore observations from the recycle bin to the cart. Observations may
     be moved to the recycle bin or restored to the cart as individual
     observations or as ranges of observations. In addition, all observations in
@@ -215,10 +223,11 @@ data OPUS has to offer.</p>
     Recycle Bin to Cart</b>. All observations can be removed from the recycle
     bin by clicking on <b>Empty Recycle Bin</b>.</p>
 
-<p>Observations in the recycle bin are not counted as part of the total result
-    count, nor will they be included in the downloaded data. The total number of
-    observations currently in the recycle bin will be displayed next to the
-    <b>Restore Recycle Bin to Cart option</b>.</p>
+<p>Observations in the recycle bin are not counted as part of the number
+    displayed next to the <b>Cart</b> tab, nor will they be included in the
+    downloaded data. The total number of observations currently in the recycle
+    bin will be displayed next to the <b>Restore Recycle Bin to Cart</b>
+    option.</p>
 
 <p>Three basic methods of download are provided:</p>
 
@@ -226,10 +235,10 @@ data OPUS has to offer.</p>
     <li>A <b>Metadata CSV</b> is a comma-separated value (CSV) text file
         containing one row per observation. The rows contain all of the
         metadata fields selected using the <b>Select Metadata</b> option. On
-        the <b>Cart</b> tab, the <i class="fas fa-file-csv"></i><b>Metadata
+        the <b>Cart</b> tab, the <i class="fas fa-file-csv"></i> <b>Metadata
         CSV</b> button will include all of the observations in the cart.
         On the <b>Browse</b> tab, the
-        <i class="fas fa-download"></i><b>Download CSV (all results)</b>
+        <i class="fas fa-download"></i> <b>Download CSV (all results)</b>
         option will include <em>all</em> of the observations in the result set
         (which may be a lot!).
         The <i class="fas fa-bars fa-xs"></i> menu may also be used to create
@@ -238,15 +247,15 @@ data OPUS has to offer.</p>
         a single zip file. Also included are a metadata CSV file, a file of
         product checksums, a manifest showing which files are included, and
         a file containing the URLs for each data product. On the <b>Cart</b>
-        tab, the <i class="fas fa-download"></i><b>Data Archive</b> button will
-        include all observations in the cart in the zip file. You may also
-        download a data archive for all data relevant data products for a
-        single observation using the
-        <i class="fas fa-bars fa-xs"></i> menu.</li>
+        tab, the <i class="fas fa-download"></i> <b>Data Archive</b> button will
+        produce a zip file containing all observations in the cart. You may also
+        download a data archive of all relevant products for a single
+        observation using the <i class="fas fa-bars fa-xs"></i> menu.</li>
     <li>A <b>URL Archive</b> is similar to a data archive, but includes only
         the non-product files (metadata CSV, checksum, manifest, and URL) in a
         single zip file. This results in a very small download. The actual data
-        products can then be retrieved using a command line utility such as <b>wget</b>:
+        products can then be retrieved using a command-line utility such as
+        <b>wget</b>:
         <pre>    wget -i urls.txt</pre></li>
 </ol>
 
@@ -259,8 +268,8 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
     <i class="fas fa-info-circle fa-xs"></i> icon or select <b>Show detail</b>
     in the <i class="fas fa-bars fa-xs"></i> menu.</p>
 
-<p>The <b>Detail</b> tab includes larger version of the thumbnail on the right.
-    On the left is:</p>
+<p>The <b>Detail</b> tab includes a larger version of the thumbnail on the
+    right. On the left is:</p>
 
 <ol>
     <li>The OPUS ID you are viewing.</li>
@@ -283,14 +292,7 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
         at.</li>
 </ol>
 
-<h3>Other Features</h3>
-
-<p>Selecting <b>Recent Announcements</b> will take you to the OPUS blog, where
-    we announce changes to OPUS.</p>
-
-<p>Selecting <b>Questions/Feedback</b> will take you to our feedback page,
-    where you can ask questions, make comments or suggestions, and report
-    bugs.</p>
+<h3>Getting Help</h3>
 
 <p>Selecting <b>Help</b> will provide you with various options to get additional
     assistance:</p>
@@ -301,14 +303,25 @@ the available metadata for an observation by using the <b>Detail</b> tab.</p>
     <li><b>FAQ</b> gives detailed answers to various frequently asked
         questions. It is a good place to look after completing this
         <b>Getting Started</b> page.</li>
-    <li><b>Data Volumes</b> gives a list of all PDS volumes supported by
+    <li><b>Recent Announcements</b> (or selecting <b>Recent Announcements</b> at
+        the top) will take you to the OPUS blog, where we announce changes to
+        OPUS. You may also subscribe to our Twitter feed at
+        <a href="https://www.twitter.com/pdsopus" target="_blank">@pdsopus</a>.
+        </li>
+    <li><b>Data Volumes</b> gives a list of all PDS volumes available in
         OPUS.</li>
     <li><b>API Guide</b> gives the details of our publicly-available RESTful
         API that allows third-party software to use OPUS to search for
         and retrieve data.</li>
+    <li><b>Welcome Guide</b> redisplays the initial welcome message shown to
+        new users.</li>
     <li><b>Citing OPUS</b> gives information about how to cite OPUS
         in your papers, posters, or presentations and also provides QR codes
         for your current search.</li>
+    <li><b>Contact Us</b> (or clicking the <b>Questions/Feedback</b> tab on the
+        right of the <b>Search</b> or <b>Detail</b> tabs) will take you to
+        our feedback page, where you can ask questions, make comments or
+        suggestions, and report bugs.</li>
 </ul>
 
 <p>Thank you for your interest in OPUS! We hope you enjoy your experience and
