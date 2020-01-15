@@ -1613,7 +1613,9 @@ var o_browse = {
 
     getDataURL: function(view, startObs, customizedLimitNum=undefined) {
         let base_url = "/opus/__api/dataimages.json?";
-        let hashString = o_hash.getHash();
+        // We use getFullHashStr instead of getHash because we want the updated
+        // version of cols= even if the main URL hasn't been updated yet
+        let hashString = o_hash.getFullHashStr();
 
         //TODO: we should be able to combine these url tweaker functions into a single function, perhaps in hash.js
         let url = hashString + '&reqno=' + opus.lastLoadDataRequestNo[view];
@@ -1891,6 +1893,9 @@ var o_browse = {
         // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
         let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
 
+        // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also use getDataURL,
+        // and we don't want to increment the reqno for infiniteScroll path.
+        opus.lastLoadDataRequestNo[view] += 1;
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
         viewNamespace.loadDataInProgress = true;

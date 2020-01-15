@@ -167,8 +167,10 @@ var o_widgets = {
                 for (const col of currentMetadataSelections) {
                     if (col.match(oldTargetStr)) {
                         let newCol = col.replace(oldTargetStr, newTargetStr);
-                        let idxToInsert = opus.prefs.cols.indexOf(col);
-                        opus.prefs.cols.splice(idxToInsert, 0, newCol);
+                        if (!opus.prefs.cols.includes(newCol)) {
+                            let idxToInsert = opus.prefs.cols.indexOf(col);
+                            opus.prefs.cols.splice(idxToInsert, 0, newCol);
+                        }
                     }
                 }
 
