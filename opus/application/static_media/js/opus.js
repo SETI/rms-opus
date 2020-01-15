@@ -834,6 +834,9 @@ var opus = {
                         case "op-addall-to-cart":
                             o_cart.addAllToCart();
                             break;
+                        case "op-close-surfacegeo-widgets":
+                            o_widgets.closeAllSURFACEGEOWidgets();
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;

@@ -90,16 +90,12 @@ var o_widgets = {
             e.preventDefault();
 
             let slug = $(this).data('slug');
-            o_widgets.closeWidget(slug);
-            let id = "#widget__"+slug;
-            try {
-                $(id).remove();
-            } catch (error) {
-                console.log("error on close widget, id="+id);
-            }
 
-            if (slug === "surfacegeometrytargetname") {
-                o_widgets.closeAllSURFACEGEOWidgets();
+            if (slug === "surfacegeometrytargetname" &&
+                $(".widget[id^='widget__SURFACEGEO']").length !== 0) {
+                $("#op-close-surfacegeo-widgets").modal("show");
+            } else {
+                o_widgets.closeAndRemoveWidgetFromDOM(slug);
             }
         });
 
@@ -166,6 +162,16 @@ var o_widgets = {
                     }
                 });
 
+                // Update metadata selections
+                let currentMetadataSelections = opus.prefs.cols.slice();
+                for (const col of currentMetadataSelections) {
+                    if (col.match(oldTargetStr)) {
+                        let newCol = col.replace(oldTargetStr, newTargetStr);
+                        let idxToInsert = opus.prefs.cols.indexOf(col);
+                        opus.prefs.cols.splice(idxToInsert, 0, newCol);
+                    }
+                }
+
                 // Update unit record in opus.currentUnitBySlug
                 o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
 
@@ -231,18 +237,25 @@ var o_widgets = {
 
     closeAllSURFACEGEOWidgets: function() {
         /**
-         * Close all SURFACEGEO related widgets. This is called when surfacegeo
-         * target name widget is closed.
+         * Close surfacegeometrytargetname and all SURFACEGEO related widgets.
          */
+        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname");
         for (const closeWidgetIcon of $(".close_card[data-slug^='SURFACEGEO']")) {
             let slug = $(closeWidgetIcon).attr("data-slug");
-            o_widgets.closeWidget(slug);
-            let id = "#widget__"+slug;
-            try {
-                $(id).remove();
-            } catch (e) {
-                console.log("error on close widget, id="+id);
-            }
+            o_widgets.closeAndRemoveWidgetFromDOM(slug);
+        }
+    },
+
+    closeAndRemoveWidgetFromDOM: function(slug) {
+        /**
+         * Close #widget__slug and remove elements from DOM.
+         */
+        o_widgets.closeWidget(slug);
+        let id = "#widget__"+slug;
+        try {
+            $(id).remove();
+        } catch (e) {
+            opus.logError(`error on close widget, id = ${id}`);
         }
     },
 
@@ -811,9 +824,9 @@ var o_widgets = {
     // this is called after a widget is drawn
     customWidgetBehaviors: function(slug) {
         switch(slug) {
-            // planet checkboxes open target groupings:
+            // Planet checkboxes open target groupings:
             case "planet":
-                // user checks a planet box - open the corresponding target group
+                // User checks a planet box - open the corresponding target group
                 // adding a behavior: checking a planet box opens the corresponding targets
                 $("#search").on("change", '#widget__planet input:checkbox:checked', function(e) {
                     o_widgets.expandInputGroupBySelectedPlanet($(this));
@@ -821,7 +834,7 @@ var o_widgets = {
 
                 break;
             case "target":
-                // when target widget is drawn, look for any checked planets:
+                // When target widget is drawn, look for any checked planets:
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     // confine to param/vals - not other input controls
@@ -837,7 +850,7 @@ var o_widgets = {
 
                 break;
             case "surfacegeometrytargetname":
-                // when target widget is drawn, look for any checked planets:
+                // When target widget is drawn, look for any checked planets:
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
                     // confine to param/vals - not other input controls

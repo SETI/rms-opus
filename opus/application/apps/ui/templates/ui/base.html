@@ -485,6 +485,17 @@
             draggable=False
             close_by_keyboard="esc"
         %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-surfacegeo-widgets"
+            confirm_title="Confirm Close All Surfacegeometry Widgets"
+            confirm_msg="Are you sure you want to close all surfacegeometry widgets?"
+            target="op-close-surfacegeo-widgets"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
 
         {% endblock %}
 
