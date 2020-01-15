@@ -41,10 +41,10 @@ var o_widgets = {
     // want to perform a search when a widget has just opened.
     isGetWidgetDone: false,
 
-    // This flag is used to determined if we are closing any widget with empty input.
+    // This flag is used to determine if we are closing any widget with empty input.
     // In a series of closing widget actions, if there is one input in a widget with a
     // value, we will make sure a search is performed after updating URL. If none of
-    // inputs has value, we don't need to perform a search.
+    // inputs have values, we don't need to perform a search.
     isRemovingEmptyWidget: true,
 
     addWidgetBehaviors: function() {
@@ -203,7 +203,7 @@ var o_widgets = {
 
     updateSURFACEGEOattrInPlace: function(targetElement, newSurfacegeoTargetSlug, attribute) {
         /**
-         * Update surfacegeo attributes in place with newly select target
+         * Update surfacegeo attributes in place with newly selected target
          */
         if (targetElement.length === 0) {
             return;
@@ -811,33 +811,61 @@ var o_widgets = {
     // this is called after a widget is drawn
     customWidgetBehaviors: function(slug) {
         switch(slug) {
+            // planet checkboxes open target groupings:
+            case "planet":
+                // user checks a planet box - open the corresponding target group
+                // adding a behavior: checking a planet box opens the corresponding targets
+                $("#search").on("change", '#widget__planet input:checkbox:checked', function(e) {
+                    o_widgets.expandInputGroupBySelectedPlanet($(this));
+                });
+
+                break;
             case "target":
+                // when target widget is drawn, look for any checked planets:
+                // usually for when a planet checkbox is checked on page load
+                $('#widget__planet input:checkbox:checked', '#search').each(function() {
+                    // confine to param/vals - not other input controls
+                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') {
+                       o_widgets.expandInputGroupBySelectedPlanet($(this));
+                    }
+                });
+
                 // When target widget is drawn, look for any checked intended target
                 // and expand the group with the selected target.
                 let intendedTargetInputs = $(`#widget__${slug} input[type="checkbox"]:checked`);
-                o_widgets.expandInputGroup(intendedTargetInputs, slug);
+                o_widgets.expandInputGroupBySelectedTarget(intendedTargetInputs, slug);
+
                 break;
-
             case "surfacegeometrytargetname":
-               // When surfacegeometrytargetname widget is drawn, look for any checked singlechoice input
-               // and expand the group with the selected target.
-               let surfacegeoTargetInputs = $(`#widget__${slug} input[type="radio"]:checked`);
-               o_widgets.expandInputGroup(surfacegeoTargetInputs, slug);
+                // when target widget is drawn, look for any checked planets:
+                // usually for when a planet checkbox is checked on page load
+                $('#widget__planet input:checkbox:checked', '#search').each(function() {
+                    // confine to param/vals - not other input controls
+                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') {
+                        o_widgets.expandInputGroupBySelectedPlanet($(this));
+                    }
+                });
 
-               // Put each surfacegeo target slug into the data-slug attribute of the
-               // corresponding radio input.
-               $.each($("input[type='radio']"), function(idx, eachChoice) {
-                   let surfacegeoTarget = $(eachChoice).attr("value");
-                   let surfacegeoTargetSlug = o_utils.getSurfacegeoTargetSlug(surfacegeoTarget);
-                   $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
-               });
-               break;
+                // When surfacegeometrytargetname widget is drawn, look for any checked singlechoice input
+                // and expand the group with the selected target.
+                let surfacegeoTargetInputs = $(`#widget__${slug} input[type="radio"]:checked`);
+                o_widgets.expandInputGroupBySelectedTarget(surfacegeoTargetInputs, slug);
+
+                // Put each surfacegeo target slug into the data-slug attribute of the
+                // corresponding radio input.
+                $.each($("input[type='radio']"), function(idx, eachChoice) {
+                    let surfacegeoTarget = $(eachChoice).attr("value");
+                    let surfacegeoTargetSlug = o_utils.getSurfacegeoTargetSlug(surfacegeoTarget);
+                    $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
+                });
+
+                break;
         }
     },
 
-    expandInputGroup: function(targetInputs, slug) {
+    expandInputGroupBySelectedTarget: function(targetInputs, slug) {
         /**
-         * Loop through targetInputs and expand the group with selected inputs. 
+         * Loop through targetInputs and expand the group with selected inputs.
          */
         for (const input of targetInputs) {
             if ($(input).attr("id") && $(input).attr("id").split("_")[0] === slug) {
@@ -849,6 +877,16 @@ var o_widgets = {
                 multGroup.slideDown("fast");
             }
         }
+    },
+
+    expandInputGroupBySelectedPlanet: function(selectedPlanet) {
+        /**
+         * Expand the corresponding input groups based on the selected planet.
+         */
+        let mult_id = ".mult_group_" + selectedPlanet.attr("value");
+        $(mult_id).find(".indicator").addClass("fa-minus");
+        $(mult_id).find(".indicator").removeClass("fa-plus");
+        $(mult_id).next().slideDown("fast");
     },
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
