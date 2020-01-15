@@ -225,7 +225,7 @@ def helper_cassini_planet_id(**kwargs):
         return 'JUP'
     return 'SAT'
 
-def helper_cassini_target_name(**kwargs):
+def helper_cassini_intended_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
@@ -406,6 +406,14 @@ def populate_obs_mission_cassini_cassini_target_code(**kwargs):
         return (target_code, _CASSINI_TARGET_CODE_MAPPING[target_code])
 
     return None
+
+def populate_obs_mission_cassini_cassini_target_name(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    target_name = index_row['TARGET_NAME'].title()
+
+    return (target_name, target_name)
 
 def populate_obs_mission_cassini_activity_name(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
