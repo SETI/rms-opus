@@ -50,7 +50,7 @@ class Info(NamedTuple):
     Information about a slug.  Note that we can't let the Info for an obsolete slug and its replacement be
     identical, since they are used as keys in a dictionary.
     """
-    canonical_name: str  # The slug name, but with any obsolete root replaced with its newer version
+    canonical_name: str  # The slug name.  Included so obsolete slugs will be different than their updated version
     label: str  # The verbose label for this slug
     flags: Flags
     family_type: FamilyType
@@ -126,7 +126,7 @@ class ToInfoMap:
             # value may be None, so we can't just check the value of search_map.get(slug)
             return search_map[slug]
 
-        match = re.search(r'(.*)_(\d{2,})', slug)
+        match = re.fullmatch(r'(.*)_(\d{2,})', slug)
         if match:
             base_result = self._get_info_for_search_slug(match.group(1), create, value)
             result = search_map[slug] = base_result._replace(subgroup=int(match.group(2))) if base_result else None
