@@ -259,7 +259,7 @@ var o_widgets = {
         try {
             $(id).remove();
         } catch (e) {
-            opus.logError(`error on close widget, id = ${id}`);
+            opus.logError(`Error on close widget (closeAndRemoveWidgetFromDOM), id = ${id}`);
         }
     },
 
