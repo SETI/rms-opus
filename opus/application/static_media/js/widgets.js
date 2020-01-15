@@ -164,15 +164,17 @@ var o_widgets = {
 
                 // Update metadata selections
                 let currentMetadataSelections = opus.prefs.cols.slice();
+                let newSurfacegeoMetadataSelections = [];
                 for (const col of currentMetadataSelections) {
                     if (col.match(oldTargetStr)) {
                         let newCol = col.replace(oldTargetStr, newTargetStr);
                         if (!opus.prefs.cols.includes(newCol)) {
-                            let idxToInsert = opus.prefs.cols.indexOf(col);
-                            opus.prefs.cols.splice(idxToInsert, 0, newCol);
+                            newSurfacegeoMetadataSelections.push(newCol);
                         }
                     }
                 }
+                // New metadata selections will be added to the end of the list.
+                opus.prefs.cols.push(...newSurfacegeoMetadataSelections);
 
                 // Update unit record in opus.currentUnitBySlug
                 o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
