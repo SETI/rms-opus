@@ -12,6 +12,7 @@
     "HSTdetector": "ACS-HRC",
     "HSTfilter": "ACS-F435W",
     "HSTfiltertype": "Broadband",
+    "HSTopticalelement": "NULL",
     "HSTaperturetype": "ACS-HRC",
     "HSTproposalid": "9975",
     "HSTpiname": "James, Philip B.",
