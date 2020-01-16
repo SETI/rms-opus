@@ -849,8 +849,7 @@ var opus = {
                             $(".op-user-msg").removeClass("op-show-msg");
                             break;
                         case "op-close-metadata-modal":
-                            opus.prefs.cols = [];
-                            o_selectMetadata.resetMetadata(opus.defaultColumns);
+                            o_selectMetadata.discardChages();
                             break;
                     }
                     $(`#${target}`).modal("hide");
