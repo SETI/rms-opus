@@ -1288,7 +1288,11 @@ var o_widgets = {
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
-            o_search.getHinting(slug);
+            if (slug === "surfacegeometrytargetname" && !o_search.isAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
             o_widgets.isGetWidgetDone = true;
         }); // end callback for .done()
     }, // end getWidget function
