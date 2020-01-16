@@ -370,9 +370,13 @@ var opus = {
         // so retrieve a new one.
         o_menu.getNewSearchMenu();
 
-        // Finally, update all the hints
+        // Finally, update all the
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_search.getHinting(slug);
+            if (slug === "surfacegeometrytargetname" && !o_search.isAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
         });
     },
 

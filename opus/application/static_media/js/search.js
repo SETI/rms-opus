@@ -559,6 +559,20 @@ var o_search = {
         return isInputSetEmpty;
     },
 
+    isAllSURFACEGEOSelectionsEmpty: function() {
+        let isInputSetEmpty = true;
+        for (const slug in opus.selections) {
+            if (slug.match(/^SURFACEGEO/)) {
+                isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[slug], isInputSetEmpty);
+                if (!isInputSetEmpty) {
+                    break;
+                }
+            }
+        }
+
+        return isInputSetEmpty;
+    },
+
     areAllInputsValInAWidgetEmpty: function(inputs, isInputSetEmpty) {
         /**
          * Check if all inputs value are empty. Iterate through all inputs
@@ -1115,7 +1129,7 @@ var o_search = {
         }); // end mults ajax
     },
 
-    getValidMults: function(slug) {
+    getValidMults: function(slug, hideHintsForSurfacegeoTarget=false) {
         // turn on spinner
         $(`#widget__${slug} .spinner`).fadeIn();
 
@@ -1138,14 +1152,33 @@ var o_search = {
                     let value = $(this).attr("value");
                     let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
 
-                    if (mults[value]) {
-                          $(id).html('<span>' + mults[value] + '</span>');
-                          if ($(id).parent().hasClass("fadey")) {
-                            $(id).parent().removeClass("fadey");
-                          }
+                    if (!hideHintsForSurfacegeoTarget) {
+                        if (mults[value]) {
+                            $(id).html('<span>' + mults[value] + '</span>');
+                            if ($(id).parent().hasClass("fadey")) {
+                                $(id).parent().removeClass("fadey");
+                            }
+                        } else {
+                            $(id).html('<span>0</span>');
+                            $(id).parent().addClass("fadey");
+                        }
                     } else {
-                        $(id).html('<span>0</span>');
-                        $(id).parent().addClass("fadey");
+                        // Display "--" next to surfacegeometrytargetname inputs if the input is not selected.
+                        $(id).parent().removeClass("fadey");
+                        if (mults[value]) {
+                            if ($(this).is(":checked")) {
+                                $(id).html('<span>' + mults[value] + '</span>');
+                            } else {
+                                $(id).html('<span>--</span>');
+                            }
+                        } else {
+                            if ($(this).is(":checked")) {
+                                $(id).html('<span>0</span>');
+
+                            } else {
+                                $(id).html('<span>--</span>');
+                            }
+                        }
                     }
                 });
             },
