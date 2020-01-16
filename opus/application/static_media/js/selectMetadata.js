@@ -22,7 +22,9 @@ var o_selectMetadata = {
     // metadata selector behaviors
     addBehaviors: function() {
         // global to allow the modal event handlers to communicate
+        /* jshint varstmt: false */
         var clickedX = false;
+        /* jshint varstmt: true */
 
         o_selectMetadata.currentSelectedMetadata = opus.prefs.cols.slice();
 
