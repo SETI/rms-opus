@@ -27,8 +27,8 @@ var o_selectMetadata = {
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
-                let targetModal = $(this).data("target");
-                $(targetModal).modal("show");
+                let targetModal = $(this).find("[data-target]").data("target");
+                $(`#${targetModal}`).modal("show");
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
                 o_browse.hidePageLoaderSpinner();

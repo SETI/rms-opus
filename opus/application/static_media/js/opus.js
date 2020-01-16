@@ -848,6 +848,10 @@ var opus = {
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
                             break;
+                        case "op-close-metadata-modal":
+                            opus.prefs.cols = [];
+                            o_selectMetadata.resetMetadata(opus.defaultColumns);
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
