@@ -52,12 +52,21 @@ var o_widgets = {
             items: "> li",
             cursor: "move",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
+            // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
+            // We have to restore radio button checked status in stop event handler.
             helper: "clone",
             containment: "parent",
             axis: "y",
             opacity: 0.8,
             tolerance: "pointer",
             stop: function(event, ui) {
+                // Restore radio button checked status.
+                for (const input of $(ui.item).find("input[type='radio']")) {
+                    if ($(input).attr("data-checked") === "true") {
+                        $(input).prop("checked", true);
+                        break;
+                    }
+                }
                 o_widgets.widgetDrop(this);
             },
             start: function(event, ui) {
@@ -181,6 +190,7 @@ var o_widgets = {
 
                 opus.oldSurfacegeoTarget = newTargetSlug;
             }
+            o_widgets.recordRadioButtonStatus(singlechoiceName);
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
@@ -209,6 +219,20 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
         o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    recordRadioButtonStatus: function(slug) {
+        /**
+         * Loop through all radio inputs in a widget and set data-checked to true
+         * if the input is selected, and false if the input is not selected.
+         */
+        $.each($(`#widget__${slug} input[type="radio"]`), function(idx, eachChoice) {
+            if ($(eachChoice).is(":checked")) {
+                $(eachChoice).attr("data-checked", "true");
+            } else {
+                $(eachChoice).attr("data-checked", "false");
+            }
+        });
     },
 
     updateSURFACEGEOattrInPlace: function(targetElement, newSurfacegeoTargetSlug, attribute) {
@@ -816,9 +840,9 @@ var o_widgets = {
     widgetDrop: function(obj) {
             // if widget is moved to a different formscolumn,
             // redefine the opus.prefs.widgets (preserves order)
-            let widgets = $('#op-search-widgets').sortable('toArray');
-            $.each(widgets, function(index,value) {
-                widgets[index]=value.split('__')[1];
+            let widgets = $("#op-search-widgets").sortable("toArray");
+            $.each(widgets, function(index, value) {
+                widgets[index] = value.split("__")[1];
             });
             opus.prefs.widgets = widgets;
             o_selectMetadata.reRender();
@@ -870,10 +894,15 @@ var o_widgets = {
 
                 // Put each surfacegeo target slug into the data-slug attribute of the
                 // corresponding radio input.
-                $.each($("input[type='radio']"), function(idx, eachChoice) {
+                $.each($(`#widget__${slug} input[type="radio"]`), function(idx, eachChoice) {
                     let surfacegeoTarget = $(eachChoice).attr("value");
                     let surfacegeoTargetSlug = o_utils.getSurfacegeoTargetSlug(surfacegeoTarget);
                     $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
+                    if ($(eachChoice).is(":checked")) {
+                        $(eachChoice).attr("data-checked", "true");
+                    } else {
+                        $(eachChoice).attr("data-checked", "false");
+                    }
                 });
 
                 break;
