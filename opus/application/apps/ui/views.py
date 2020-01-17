@@ -1482,6 +1482,10 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
+            # "Surface Geometry Target Name" will never show up in "Current 
+            # Search Terms" of select metadata menu.
+            if p.slug == 'surfacegeometrytargetname':
+                continue
             menu_data['search_fields'].setdefault('data', []).append(p)
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both
