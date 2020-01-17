@@ -592,17 +592,31 @@ def api_normalize_url(request):
         clause_num_str = ''
         orig_slug = slug
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
-            try:
-                clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
-                    raise ValueError
-            except ValueError:
-                msg = ('Search term "' + escape(orig_slug)
-                       + '" has a bad clause number; it has been ignored.')
-                msg_list.append(msg)
-                continue
+            parse_clause_num = True
+            if (slug.startswith('qtype-SURFACEGEO')
+                    or slug.startswith('unit-SURFACEGEO')
+                    or slug.startswith('SURFACEGEO')):
+                # Because in SURFACEGEO slugs, we might have multiple "_", to
+                # get the clause_num_str, we will use rindex instead of index.
+                if (slug.index('_') != slug.rindex('_')):
+                    clause_num_str = slug[slug.rindex('_'):]
+                    slug = slug[:slug.rindex('_')]
+                else:
+                    parse_clause_num = False
+            else:
+                clause_num_str = slug[slug.index('_'):]
+                slug = slug[:slug.index('_')]
+
+            if parse_clause_num:
+                try:
+                    clause_num = int(clause_num_str[1:])
+                    if clause_num < 1:
+                        raise ValueError
+                except ValueError:
+                    msg = ('Search term "' + escape(orig_slug)
+                           + '" has a bad clause number; it has been ignored.')
+                    msg_list.append(msg)
+                    continue
 
         is_qtype = False
         is_unit = False

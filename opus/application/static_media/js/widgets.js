@@ -108,8 +108,8 @@ var o_widgets = {
                 let newTargetPrettyName = $(this).attr("value");
                 let newTargetSlug = $(this).attr("data-slug");
                 opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
-                let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
-                let newTargetStr = `SURFACEGEO${newTargetSlug}`;
+                let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}_`;
+                let newTargetStr = `SURFACEGEO${newTargetSlug}_`;
 
                 for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
                     let currentWidget = $(eachSurfacegeoWidget);

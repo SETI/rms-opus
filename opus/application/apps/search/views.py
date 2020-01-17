@@ -452,16 +452,30 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         clause_num = 1
         clause_num_str = ''
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
-            try:
-                clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
-                    raise ValueError
-            except ValueError:
-                log.error('url_to_search_params: Slug has illegal clause '+
-                          'number "%s"', orig_slug)
-                return None, None
+            parse_clause_num = True
+            if (slug.startswith('qtype-SURFACEGEO')
+                    or slug.startswith('unit-SURFACEGEO')
+                    or slug.startswith('SURFACEGEO')):
+                # Because in SURFACEGEO slugs, we might have multiple "_", to
+                # get the clause_num_str, we will use rindex instead of index.
+                if (slug.index('_') != slug.rindex('_')):
+                    clause_num_str = slug[slug.rindex('_'):]
+                    slug = slug[:slug.rindex('_')]
+                else:
+                    parse_clause_num = False
+            else:
+                clause_num_str = slug[slug.index('_'):]
+                slug = slug[:slug.index('_')]
+
+            if parse_clause_num:
+                try:
+                    clause_num = int(clause_num_str[1:])
+                    if clause_num < 1:
+                        raise ValueError
+                except ValueError:
+                    log.error('url_to_search_params: Slug has illegal clause '+
+                              'number "%s"', orig_slug)
+                    return None, None
 
         # Find the master param_info
         param_info = None
