@@ -337,8 +337,8 @@ var o_widgets = {
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
-            let widgetId = $(this).data("widget");
-            let slug = $(this).data("slug");
+            let widgetId = $(this).attr("data-widget");
+            let slug = $(this).attr("data-slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let firstExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
             let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).last();
