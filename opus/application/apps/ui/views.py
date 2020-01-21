@@ -592,31 +592,18 @@ def api_normalize_url(request):
         clause_num_str = ''
         orig_slug = slug
         if '_' in slug:
-            parse_clause_num = True
-            if (slug.startswith('qtype-SURFACEGEO')
-                    or slug.startswith('unit-SURFACEGEO')
-                    or slug.startswith('SURFACEGEO')):
-                # Because in SURFACEGEO slugs, we might have multiple "_", to
-                # get the clause_num_str, we will use rindex instead of index.
-                if (slug.index('_') != slug.rindex('_')):
-                    clause_num_str = slug[slug.rindex('_'):]
+            clause_num_str = slug[slug.rindex('_'):]
+            try:
+                clause_num = int(clause_num_str[1:])
+                if clause_num > 0:
                     slug = slug[:slug.rindex('_')]
                 else:
-                    parse_clause_num = False
-            else:
-                clause_num_str = slug[slug.index('_'):]
-                slug = slug[:slug.index('_')]
-
-            if parse_clause_num:
-                try:
-                    clause_num = int(clause_num_str[1:])
-                    if clause_num < 1:
-                        raise ValueError
-                except ValueError:
-                    msg = ('Search term "' + escape(orig_slug)
-                           + '" has a bad clause number; it has been ignored.')
-                    msg_list.append(msg)
-                    continue
+                    raise ValueError
+            except ValueError:
+                # If clause_num is not a positive integer, leave the slug as is.
+                # If the slug is unknown, it will be catched later as the
+                # unknown slug.
+                clause_num_str = ''
 
         is_qtype = False
         is_unit = False
@@ -1482,7 +1469,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
-            # "Surface Geometry Target Name" will never show up in "Current 
+            # "Surface Geometry Target Name" will never show up in "Current
             # Search Terms" of select metadata menu.
             if p.slug == 'surfacegeometrytargetname':
                 continue

@@ -220,9 +220,9 @@ var o_hash = {
         slug = slug.toLowerCase();
         let trailingCounter = "";
         if (slug.includes("_")) {
-            let idx = slug.indexOf("_");
-            trailingCounter = slug.slice(idx);
-            slug = slug.slice(0, idx);
+            let idx = slug.lastIndexOf("_");
+            trailingCounter = parseInt(slug.slice(idx+1)) ? slug.slice(idx) : "";
+            slug = trailingCounter ? slug.slice(0, idx) : slug;
         }
         if (slug.startsWith("qtype-")) {
             slug = slug.slice(6) + "3";

@@ -242,8 +242,8 @@ var o_widgets = {
         if (targetElement.length === 0) {
             return;
         }
-        let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}`;
-        let newTargetStr = `SURFACEGEO${newSurfacegeoTargetSlug}`;
+        let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}_`;
+        let newTargetStr = `SURFACEGEO${newSurfacegeoTargetSlug}_`;
         let newTargetAttr = targetElement.attr(attribute).replace(oldTargetStr, newTargetStr);
         targetElement.attr(attribute, newTargetAttr);
     },
