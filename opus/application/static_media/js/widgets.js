@@ -165,7 +165,7 @@ var o_widgets = {
 
                 // Update widgets array in opus.prefs
                 $.each(opus.prefs.widgets, function(widgetIdx, widget) {
-                    if (widget.match(oldTargetStr)) {
+                    if (widget.startsWith(oldTargetStr)) {
                         let newWidget = widget.replace(oldTargetStr, newTargetStr);
                         opus.prefs.widgets[widgetIdx] = newWidget;
                     }
@@ -175,10 +175,11 @@ var o_widgets = {
                 let currentMetadataSelections = opus.prefs.cols.slice();
                 let newSurfacegeoMetadataSelections = [];
                 for (const col of currentMetadataSelections) {
-                    if (col.match(oldTargetStr)) {
+                    if (col.startsWith(oldTargetStr)) {
                         let newCol = col.replace(oldTargetStr, newTargetStr);
                         if (!opus.prefs.cols.includes(newCol)) {
                             newSurfacegeoMetadataSelections.push(newCol);
+                            o_selectMetadata.rendered = false;
                         }
                     }
                 }
@@ -1317,7 +1318,7 @@ var o_widgets = {
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
-            if (slug === "surfacegeometrytargetname" && !o_search.isAllSURFACEGEOSelectionsEmpty()) {
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
                 o_search.getValidMults(slug, true);
             } else {
                 o_search.getHinting(slug);

@@ -601,8 +601,8 @@ def api_normalize_url(request):
                     raise ValueError
             except ValueError:
                 # If clause_num is not a positive integer, leave the slug as is.
-                # If the slug is unknown, it will be catched later as the
-                # unknown slug.
+                # If the slug is unknown, it will be caught later as an unknown
+                # slug.
                 clause_num_str = ''
 
         is_qtype = False

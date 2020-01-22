@@ -372,7 +372,7 @@ var opus = {
 
         // Finally, update all the hints
         $.each(opus.prefs.widgets, function(index, slug) {
-            if (slug === "surfacegeometrytargetname" && !o_search.isAllSURFACEGEOSelectionsEmpty()) {
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
                 o_search.getValidMults(slug, true);
             } else {
                 o_search.getHinting(slug);

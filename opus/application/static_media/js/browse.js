@@ -1893,8 +1893,8 @@ var o_browse = {
         // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
         let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
 
-        // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also use getDataURL,
-        // and we don't want to increment the reqno for infiniteScroll path.
+        // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also uses
+        // getDataURL, and we don't want to increment the reqno for the infiniteScroll URL.
         opus.lastLoadDataRequestNo[view] += 1;
         // Note: when browse page is refreshed, startObs passed in (from activateBrowseTab) will start from 1
         let url = o_browse.getDataURL(view, startObs, customizedLimitNum);
