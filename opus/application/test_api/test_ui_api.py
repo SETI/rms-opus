@@ -1537,6 +1537,86 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['widgets'] = 'rightasc'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" is unknown; it has been ignored.')
 
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_0(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _0"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_0=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['widgets'] = 'surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_0" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_XXX=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['widgets'] = 'surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_01_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 bad _01_XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude2_XXX=18'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1'] = '8'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude2_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_10(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _10"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_10=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1'] = '8'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_01_1(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _01_1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude1_1=18'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'any'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&qtype-SURFACEGEOpan_planetographiclatitude_1=only&qtype-SURFACEGEOpan_planetographiclatitude_XXX=only'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude2_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'only'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-SURFACEGEOpan_planetographiclatitude_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_units(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX unit"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&unit-SURFACEGEOpan_planetographiclatitude_1=degrees&unit-SURFACEGEOpan_planetographiclatitude_XXX=degrees'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude2_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'any'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-SURFACEGEOpan_planetographiclatitude_XXX" is unknown; it has been ignored.')
+
     def test__api_normalizeurl_search_multi_complicated_clause(self):
         "[test_ui_api.py] /__normalizeurl: search multi good complicated clause"
         new_slugs = dict(self.default_url_slugs)
