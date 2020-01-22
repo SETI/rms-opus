@@ -439,13 +439,13 @@ var o_search = {
                 // if we should perform a search.
                 if (inputs.hasClass("RANGE")) {
                     areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}1`],
-                                                                     areInputSetsEmpty);
+                                                                        areInputSetsEmpty);
                     areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}2`],
-                                                                     areInputSetsEmpty);
+                                                                        areInputSetsEmpty);
                     areInputSetsEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, areInputSetsEmpty);
                 } else if (inputs.hasClass("STRING")) {
                     areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
-                                                                     areInputSetsEmpty);
+                                                                        areInputSetsEmpty);
                     areInputSetsEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, areInputSetsEmpty);
                 }
 
@@ -1140,7 +1140,7 @@ var o_search = {
             dataType:"json",
             success: function(multdata) {
                 $(`#widget__${slug} .spinner`).fadeOut();
-                
+
                 if (multdata.reqno < o_search.slugMultsReqno[slug]) {
                     return;
                 }
