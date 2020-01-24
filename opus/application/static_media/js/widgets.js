@@ -846,7 +846,7 @@ var o_widgets = {
                 widgets[index] = value.split("__")[1];
             });
             opus.prefs.widgets = widgets;
-            o_selectMetadata.reRender();
+            o_selectMetadata.rendered = false;
             o_hash.updateURLFromCurrentHash();
     },
 
