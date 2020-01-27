@@ -856,7 +856,7 @@ var opus = {
                             $(".op-user-msg").removeClass("op-show-msg");
                             break;
                         case "op-close-metadata-modal":
-                            o_selectMetadata.discardChages();
+                            o_selectMetadata.discardChanges();
                             break;
                     }
                     $(`#${target}`).modal("hide");

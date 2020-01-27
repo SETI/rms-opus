@@ -101,7 +101,7 @@ var o_selectMetadata = {
                     o_browse.showPageLoaderSpinner();
                     break;
                 case "cancel":
-                    o_selectMetadata.discardChages();
+                    o_selectMetadata.discardChanges();
                     break;
             }
         });
@@ -243,7 +243,7 @@ var o_selectMetadata = {
         opus.prefs.cols = cols;
     },
 
-    discardChages: function() {
+    discardChanges: function() {
         opus.prefs.cols = [];
         o_selectMetadata.resetMetadata(o_selectMetadata.currentSelectedMetadata, true);
     },
