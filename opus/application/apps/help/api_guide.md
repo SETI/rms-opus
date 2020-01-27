@@ -271,7 +271,7 @@ Example:
 
 * Retrieve data in JSON format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
-    %EXTLINK%%HOST%/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/data.json?instrument=Cassini+ISS&SURFACEGEOenceladus_planetographiclatitude1=70&SURFACEGEOenceladus_centerphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladus_centerphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
     Return value:
 
@@ -319,7 +319,7 @@ Example:
 
 * Retrieve data in CSV format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
-    %EXTLINK%%HOST%/opus/api/data.csv?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/data.csv?instrument=Cassini+ISS&SURFACEGEOenceladus_planetographiclatitude1=70&SURFACEGEOenceladus_centerphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladus_centerphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
     Return value:
 
@@ -338,7 +338,7 @@ Example:
 
 * Retrieve data in HTML format for the first three Cassini ISS images that contain Enceladus' south pole (latitude 70 degrees or greater) and have a phase angle at Enceladus of 160 degrees or greater.
 
-    %EXTLINK%%HOST%/opus/api/data.html?instrument=Cassini+ISS&SURFACEGEOenceladusplanetographiclatitude1=70&SURFACEGEOenceladuscenterphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladuscenterphaseangle&startobs=5&limit=3%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/data.html?instrument=Cassini+ISS&SURFACEGEOenceladus_planetographiclatitude1=70&SURFACEGEOenceladus_centerphaseangle1=160&order=time1&cols=opusid,target,time1,SURFACEGEOenceladus_centerphaseangle&startobs=5&limit=3%ENDEXTLINK%
 
     Return value:
 
@@ -1831,7 +1831,7 @@ Examples:
       [...]
     },
     [...]
-    "SURFACEGEOumbrielplanetographiclatitude1": {
+    "SURFACEGEOumbriel_planetographiclatitude1": {
       "label": "Observed Planetographic Latitude (Min)",
       "search_label": "Observed Planetographic Latitude",
       "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
@@ -1843,9 +1843,9 @@ Examples:
         "radians"
       ],
       "category": "Umbriel Surface Geometry Constraints",
-      "field_id": "SURFACEGEOumbrielplanetographiclatitude1"
+      "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
     },
-    "SURFACEGEOumbrielplanetographiclatitude2": {
+    "SURFACEGEOumbriel_planetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
       [...]
     },
@@ -1864,7 +1864,7 @@ Examples:
 {
   "data": {
     [...]
-    "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1": {
+    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
       "label": "Observed Planetographic Latitude (Min)",
       "search_label": "Observed Planetographic Latitude",
       "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
@@ -1876,9 +1876,9 @@ Examples:
         "radians"
       ],
       "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1"
+      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
     },
-    "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2": {
+    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
       "label": "Observed Planetographic Latitude (Max)",
       "search_label": "Observed Planetographic Latitude",
       "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
@@ -1890,7 +1890,7 @@ Examples:
         "radians"
       ],
       "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2"
+      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
     },
   [...]
   }
@@ -1981,16 +1981,16 @@ Examples:
 }
 %ENDCODE%
 
-* Retrieve information about the `SURFACEGEOrheacenterphaseangle` field in JSON format.
+* Retrieve information about the `SURFACEGEOrhea_centerphaseangle` field in JSON format.
 
-    %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrheacenterphaseangle.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/SURFACEGEOrhea_centerphaseangle.json%ENDEXTLINK%
 
     Return value:
 
 %CODE%
 {
   "data": {
-    "SURFACEGEOrheacenterphaseangle": {
+    "SURFACEGEOrhea_centerphaseangle": {
       "label": "Phase Angle at Body Center",
       "search_label": "Phase Angle at Body Center",
       "full_label": "Phase Angle at Body Center [Rhea]",
@@ -2002,7 +2002,7 @@ Examples:
         "radians"
       ],
       "category": "Rhea Surface Geometry Constraints",
-      "field_id": "SURFACEGEOrheacenterphaseangle"
+      "field_id": "SURFACEGEOrhea_centerphaseangle"
     }
   }
 }
