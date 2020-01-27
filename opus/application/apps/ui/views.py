@@ -289,7 +289,8 @@ def api_get_widget(request, **kwargs):
                               +'</span>'
                               +'<span class="mult_group_label">'
                               +str(glabel) + '</span></div>'
-                              +'<ul class="mult_group">'
+                              +'<ul class="mult_group"'
+                              +' data-group=' + str(glabel) + '>'
                               +SearchForm(form_vals,
                                           auto_id = '%s_' + str(gvalue),
                                           grouping=gvalue).as_ul()
@@ -591,17 +592,18 @@ def api_normalize_url(request):
         clause_num_str = ''
         orig_slug = slug
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
+            clause_num_str = slug[slug.rindex('_'):]
             try:
                 clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
+                if clause_num > 0:
+                    slug = slug[:slug.rindex('_')]
+                else:
                     raise ValueError
             except ValueError:
-                msg = ('Search term "' + escape(orig_slug)
-                       + '" has a bad clause number; it has been ignored.')
-                msg_list.append(msg)
-                continue
+                # If clause_num is not a positive integer, leave the slug as is.
+                # If the slug is unknown, it will be caught later as an unknown
+                # slug.
+                clause_num_str = ''
 
         is_qtype = False
         is_unit = False
@@ -1467,6 +1469,10 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
+            # "Surface Geometry Target Name" will never show up in "Current
+            # Search Terms" of select metadata menu.
+            if p.slug == 'surfacegeometrytargetname':
+                continue
             menu_data['search_fields'].setdefault('data', []).append(p)
             if p.slug[-1] == '1':
                 # This is a numeric range field, so we want to add both

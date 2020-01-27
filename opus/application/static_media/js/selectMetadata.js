@@ -14,7 +14,7 @@ var o_selectMetadata = {
 /* jshint varstmt: true */
     selectMetadataDrawn: false,
     // A flag to determine if the sortable item sorting is happening. This
-    // will be used in mutation observer to determine if scrollbar location should 
+    // will be used in mutation observer to determine if scrollbar location should
     // be set.
     isSortingHappening: false,
     // metadata selector behaviors
@@ -109,7 +109,13 @@ var o_selectMetadata = {
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
             let url = "/opus/__forms/metadata_selector.html?" + o_hash.getFullHashStr();
-            $(".modal-body.op-select-metadata-details").load( url, function(response, status, xhr)  {
+
+            // When select metadata contents are outdated, we empty the old contents and display a
+            // small spinner before the new contents are fully loaded.
+            $(".modal-body.op-select-metadata-details").empty();
+            $(".modal-body.op-select-metadata-details").html(opus.spinner);
+
+            $(".modal-body.op-select-metadata-details").load(url, function(response, status, xhr)  {
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -121,6 +127,13 @@ var o_selectMetadata = {
                 $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                 });
+
+                // Prevent the same event handlers from being attached to #op-select-metadata
+                // for multiple times. This will avoid o_selectMetadata.render() and
+                // /opus/__fake/__selectmetadatamodal.json being called for multiple times when
+                // the user clicks "Select Metadata" in browse tab.
+                $("#op-select-metadata").off("hide.bs.modal");
+                $("#op-select-metadata").off("show.bs.modal");
 
                 o_selectMetadata.addBehaviors();
 
@@ -156,6 +169,8 @@ var o_selectMetadata = {
                 }
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
+                o_selectMetadata.hideOrShowPS();
+                o_selectMetadata.hideOrShowMenuPS();
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
