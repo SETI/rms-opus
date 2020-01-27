@@ -322,7 +322,7 @@
                 <div class="modal-content op-no-select">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close" data-dismiss="modal" data-target="op-close-metadata-modal"  aria-label="Close">
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
@@ -390,6 +390,17 @@
             confirm_msg=""
             target="op-addall-warning-msg"
             yes_text="OK"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-metadata-modal"
+            confirm_title="Confirm Save Changes to Selected Metadata"
+            confirm_msg="You have made changes to the selected metadata. Do you wish to keep these changes?"
+            target="op-close-metadata-modal"
+            yes_text="Yes"
+            no_text="No"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
@@ -483,6 +494,17 @@
             yes_text="OK"
             allow_close=True
             draggable=False
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-surfacegeo-widgets"
+            confirm_title="Confirm Close All Surface Geometry Search Fields"
+            confirm_msg="Closing the Surface Geometry Target Name search field will also close all target-specific search fields. Are you sure you wish to proceed?"
+            target="op-close-surfacegeo-widgets"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
 

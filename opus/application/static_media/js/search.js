@@ -333,6 +333,8 @@ var o_search = {
             // mult widget gets changed
             let id = $(this).attr("id").split("_")[0];
             let value = $(this).attr("value");
+            let newTargetSlug = $(this).attr("data-slug");
+            opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
 
             if ($(this).is(":checked")) {
                 let values = [];
@@ -374,13 +376,14 @@ var o_search = {
             if (!opus.areRangeInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
+
             o_hash.updateURLFromCurrentHash();
         });
 
         // range behaviors and string behaviors for search widgets - qtype and unit
         // select dropdowns
         $('#search').on("change", "select", function() {
-            let isInputSetEmpty = true;
+            let areInputSetsEmpty = true;
             // Use this flag to determine if a normalize input api with sourceunit is called.
             // If so, we don't need to perform an extra updateURLFromCurrentHash.
             let performNormalizeInput = false;
@@ -402,7 +405,7 @@ var o_search = {
                         // should perform a search.
                         if (opus.selections[`${slugNoNum}1`][idx] ||
                             opus.selections[`${slugNoNum}2`][idx]) {
-                            isInputSetEmpty = false;
+                            areInputSetsEmpty = false;
                         }
                         break;
 
@@ -418,7 +421,7 @@ var o_search = {
                         // Check if corresponding selections are empty to determine if we
                         // should perform a search.
                         if (opus.selections[`${slug}`][idx]) {
-                            isInputSetEmpty = false;
+                            areInputSetsEmpty = false;
                         }
                         break;
                 }
@@ -435,15 +438,15 @@ var o_search = {
                 // Check if all selections and actual input values are empty to determine
                 // if we should perform a search.
                 if (inputs.hasClass("RANGE")) {
-                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}1`],
-                                                                     isInputSetEmpty);
-                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}2`],
-                                                                     isInputSetEmpty);
-                    isInputSetEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, isInputSetEmpty);
+                    areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}1`],
+                                                                        areInputSetsEmpty);
+                    areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}2`],
+                                                                        areInputSetsEmpty);
+                    areInputSetsEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, areInputSetsEmpty);
                 } else if (inputs.hasClass("STRING")) {
-                    isInputSetEmpty = o_search.isSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
-                                                                     isInputSetEmpty);
-                    isInputSetEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, isInputSetEmpty);
+                    areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[`${slugNoNum}`],
+                                                                        areInputSetsEmpty);
+                    areInputSetsEmpty = o_search.areAllInputsValInAWidgetEmpty(inputs, areInputSetsEmpty);
                 }
 
                 // Update values in preprogrammed ranges
@@ -459,7 +462,7 @@ var o_search = {
                 // and we will update all inputs with converted return values.
                 let previousUnit = opus.currentUnitBySlug[slugNoNum];
 
-                if (!isInputSetEmpty) {
+                if (!areInputSetsEmpty) {
                     let slug1 = `${slugNoNum}1`;
                     let slug2 = `${slugNoNum}2`;
                     let qtypeSlug = `qtype-${slugNoNum}`;
@@ -524,14 +527,14 @@ var o_search = {
             // steps in the block will be performed in parseFinalNormalizedInputDataAndUpdateURL when
             // normalize input is run.
             if (!performNormalizeInput) {
-                if (!opus.areRangeInputsValid() || isInputSetEmpty) {
+                if (!opus.areRangeInputsValid() || areInputSetsEmpty) {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
                 o_hash.updateURLFromCurrentHash();
             }
 
             // If no search is performed, we still update the hints for a unit change.
-            if (isInputSetEmpty) {
+            if (areInputSetsEmpty) {
                 if ($(this).attr("name").startsWith("unit-")) {
                     let slugNoNum = $(this).attr("name").match(/unit-(.*)$/)[1];
                     o_search.getHinting(slugNoNum);
@@ -540,40 +543,54 @@ var o_search = {
         });
     },
 
-    isSlugSelectionsEmpty: function(slugSelections, isInputSetEmpty) {
+    areSlugSelectionsEmpty: function(slugSelections, areInputSetsEmpty) {
         /**
          * Check if slugSelections is an array of null to determine if all
-         * input sets are empty. Update & return isInputSetEmpty.
+         * input sets are empty. Update & return areInputSetsEmpty.
          */
-        if (slugSelections && isInputSetEmpty) {
+        if (slugSelections && areInputSetsEmpty) {
             for (const val of slugSelections) {
                 if (val) {
-                    isInputSetEmpty = false;
+                    areInputSetsEmpty = false;
                     break;
                 }
             }
         }
-        return isInputSetEmpty;
+        return areInputSetsEmpty;
     },
 
-    areAllInputsValInAWidgetEmpty: function(inputs, isInputSetEmpty) {
+    areAllSURFACEGEOSelectionsEmpty: function() {
+        let areInputSetsEmpty = true;
+        for (const slug in opus.selections) {
+            if (slug.startsWith("SURFACEGEO")) {
+                areInputSetsEmpty = o_search.areSlugSelectionsEmpty(opus.selections[slug], areInputSetsEmpty);
+                if (!areInputSetsEmpty) {
+                    break;
+                }
+            }
+        }
+
+        return areInputSetsEmpty;
+    },
+
+    areAllInputsValInAWidgetEmpty: function(inputs, areInputSetsEmpty) {
         /**
          * Check if all inputs value are empty. Iterate through all inputs
          * in a widget and check value of each input. Update & return
-         * isInputSetEmpty.
+         * areInputSetsEmpty.
          */
         if (inputs.length === 0) {
-            return isInputSetEmpty;
+            return areInputSetsEmpty;
         }
-        if (isInputSetEmpty) {
+        if (areInputSetsEmpty) {
             for (const eachInput of inputs) {
                 if ($(eachInput).val()) {
-                    isInputSetEmpty = false;
+                    areInputSetsEmpty = false;
                     break;
                 }
             }
         }
-        return isInputSetEmpty;
+        return areInputSetsEmpty;
     },
 
     addPreprogrammedRangesSearchBehaviors: function() {
@@ -1112,7 +1129,7 @@ var o_search = {
         }); // end mults ajax
     },
 
-    getValidMults: function(slug) {
+    getValidMults: function(slug, hideHintsForNonSelectedRadioButtons=false) {
         // turn on spinner
         $(`#widget__${slug} .spinner`).fadeIn();
 
@@ -1122,6 +1139,8 @@ var o_search = {
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
+                $(`#widget__${slug} .spinner`).fadeOut();
+
                 if (multdata.reqno < o_search.slugMultsReqno[slug]) {
                     return;
                 }
@@ -1135,14 +1154,33 @@ var o_search = {
                     let value = $(this).attr("value");
                     let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
 
-                    if (mults[value]) {
-                          $(id).html('<span>' + mults[value] + '</span>');
-                          if ($(id).parent().hasClass("fadey")) {
-                            $(id).parent().removeClass("fadey");
-                          }
+                    if (!hideHintsForNonSelectedRadioButtons) {
+                        if (mults[value]) {
+                            $(id).html('<span>' + mults[value] + '</span>');
+                            if ($(id).parent().hasClass("fadey")) {
+                                $(id).parent().removeClass("fadey");
+                            }
+                        } else {
+                            $(id).html('<span>0</span>');
+                            $(id).parent().addClass("fadey");
+                        }
                     } else {
-                        $(id).html('<span>0</span>');
-                        $(id).parent().addClass("fadey");
+                        // Display "--" next to surfacegeometrytargetname inputs if the input is not selected.
+                        $(id).parent().removeClass("fadey");
+                        if (mults[value]) {
+                            if ($(this).is(":checked")) {
+                                $(id).html('<span>' + mults[value] + '</span>');
+                            } else {
+                                $(id).html('<span>--</span>');
+                            }
+                        } else {
+                            if ($(this).is(":checked")) {
+                                $(id).html('<span>0</span>');
+
+                            } else {
+                                $(id).html('<span>--</span>');
+                            }
+                        }
                     }
                 });
             },

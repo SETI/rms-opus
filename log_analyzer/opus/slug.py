@@ -126,7 +126,7 @@ class ToInfoMap:
             # value may be None, so we can't just check the value of search_map.get(slug)
             return search_map[slug]
 
-        match = re.fullmatch(r'(.*)_(\d{2,})', slug)
+        match = re.fullmatch(r'(.*)_(\d{2,})$', slug)
         if match:
             base_result = self._get_info_for_search_slug(match.group(1), create, value)
             result = search_map[slug] = base_result._replace(subgroup=int(match.group(2))) if base_result else None

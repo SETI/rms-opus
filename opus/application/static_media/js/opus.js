@@ -143,6 +143,7 @@ var opus = {
         }
     },
 
+    oldSurfacegeoTarget: null,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
@@ -300,7 +301,6 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         }
 
@@ -372,7 +372,11 @@ var opus = {
 
         // Finally, update all the hints
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_search.getHinting(slug);
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
         });
     },
 
@@ -819,6 +823,9 @@ var opus = {
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
                             break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.saveChanges();
+                            break;
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
@@ -834,6 +841,9 @@ var opus = {
                         case "op-addall-to-cart":
                             o_cart.addAllToCart();
                             break;
+                        case "op-close-surfacegeo-widgets":
+                            o_widgets.closeAllSURFACEGEOWidgets();
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
@@ -844,6 +854,9 @@ var opus = {
                             // if user clicks "Dismiss Message" ("No" button), we hide the
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
+                            break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.discardChanges();
                             break;
                     }
                     $(`#${target}`).modal("hide");

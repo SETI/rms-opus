@@ -220,9 +220,9 @@ var o_hash = {
         slug = slug.toLowerCase();
         let trailingCounter = "";
         if (slug.includes("_")) {
-            let idx = slug.indexOf("_");
-            trailingCounter = slug.slice(idx);
-            slug = slug.slice(0, idx);
+            let idx = slug.lastIndexOf("_");
+            trailingCounter = parseInt(slug.slice(idx+1)) ? slug.slice(idx) : "";
+            slug = trailingCounter ? slug.slice(0, idx) : slug;
         }
         if (slug.startsWith("qtype-")) {
             slug = slug.slice(6) + "3";
@@ -404,7 +404,6 @@ var o_hash = {
         if (!hash) {
             return [undefined, undefined];
         }
-
         hash = (hash.search("&") > -1 ? hash.split("&") : [hash]);
         hash = o_hash.decodeHashArray(hash);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
@@ -640,6 +639,13 @@ var o_hash = {
                     let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
+
+                    // If there is a value specified for surfacegeometrytargetname in the URL,
+                    // we have to initialize opus.oldSurfacegeoTarget with it so that we can
+                    // properly handle changes to surfacegeometrytargetname in the future.
+                    if (slug === "surfacegeometrytargetname") {
+                        opus.oldSurfacegeoTarget = o_utils.getSurfacegeoTargetSlug(value);
+                    }
 
                     if (slugCounter > opus.maxAllowedInputSets) {
                         return; // continue to next iteration

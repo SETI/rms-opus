@@ -452,16 +452,19 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         clause_num = 1
         clause_num_str = ''
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
+            clause_num_str = slug[slug.rindex('_'):]
             try:
                 clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
+                if clause_num > 0:
+                    slug = slug[:slug.rindex('_')]
+                else:
                     raise ValueError
             except ValueError:
-                log.error('url_to_search_params: Slug has illegal clause '+
-                          'number "%s"', orig_slug)
-                return None, None
+                # If clause_num is not a positive integer, leave the slug as is.
+                # If the slug is unknown, it will be caught later as an unknown
+                # slug.
+                clause_num = 1
+                clause_num_str = ''
 
         # Find the master param_info
         param_info = None

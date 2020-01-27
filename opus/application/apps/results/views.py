@@ -1701,9 +1701,9 @@ def get_triggered_tables(selections, extras, api_code=None):
             if (trigger_tab == 'obs_surface_geometry' and
                 trigger_val.upper() ==
                 selections['obs_surface_geometry.target_name'][0].upper()):
-                if (trigger_val.upper() in
-                    [r['target_name'].upper() for r in results]):
-                    triggered_tables.append(partable)
+                # If the selected surfacegeo target has no result, we
+                # still want to have the related menu item displayed.
+                triggered_tables.append(partable)
 
     # Now hack in the proper ordering of tables
     final_table_list = []
