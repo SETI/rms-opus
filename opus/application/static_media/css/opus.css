@@ -610,6 +610,36 @@ th.sticky-header {
     bottom: 1px;
 }
 
+.op-mini-thumbnail {
+    width: 3em;
+    min-width: auto !important;
+}
+
+.op-mini-thumbnail div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.op-mini-thumbnail img {
+    transition: transform .1s;
+    width: 68%;
+}
+
+/* zoom the mini-thumbnail on hover */
+.op-mini-thumbnail img:hover {
+    -ms-transform: scale(4.5); /* IE 9 */
+    -webkit-transform: scale(4.5); /* Safari 3-8 */
+    transform: scale(4.5);
+    z-index: 9999;
+}
+
+button.op-mini-thumbnail-zoom {
+    padding: 0px;
+    color: #FFFFFF;
+    padding-right: 3px;
+}
+
 .fadey {
     color: #b0b0b0;
 }
@@ -1903,7 +1933,7 @@ footer {
 }
 
 .op-help-api-guide .op-table-nonfluid {
-   width: auto !important;
+    width: auto !important;
 }
 
 .op-help-api-guide .op-table-indent {

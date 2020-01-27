@@ -143,6 +143,7 @@ var opus = {
         }
     },
 
+    oldSurfacegeoTarget: null,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
@@ -300,7 +301,6 @@ var opus = {
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
         if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         }
 
@@ -372,7 +372,11 @@ var opus = {
 
         // Finally, update all the hints
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_search.getHinting(slug);
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
         });
     },
 
@@ -763,6 +767,11 @@ var opus = {
             }
         });
 
+        // Clicking on the OPUS3 logo
+        $(".op-reset-opus").on("click", function() {
+            $("#op-reset-opus-modal").modal("show");
+        });
+
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
@@ -814,6 +823,12 @@ var opus = {
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
                             break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.saveChanges();
+                            break;
+                        case "op-reset-opus-modal":
+                            location.assign("/opus");
+                            break;
                         case "op-empty-cart":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;
@@ -826,6 +841,9 @@ var opus = {
                         case "op-addall-to-cart":
                             o_cart.addAllToCart();
                             break;
+                        case "op-close-surfacegeo-widgets":
+                            o_widgets.closeAllSURFACEGEOWidgets();
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
@@ -836,6 +854,9 @@ var opus = {
                             // if user clicks "Dismiss Message" ("No" button), we hide the
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
+                            break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.discardChanges();
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -849,41 +870,41 @@ var opus = {
          * Given the name of a help menu entry, open the help pane and load the
          * help contents.
          */
-        let base_url = "/opus/__help/";
-        let pdf_url = false;
+        let baseURL = "/opus/__help/";
+        let pdfURL = false;
         let url = "";
         let header = "";
         switch (action) {
             case "about":
-                url = base_url + "about.html";
-                pdf_url = base_url + "about.pdf";
+                url = baseURL + "about.html";
+                pdfURL = baseURL + "about.pdf";
                 header = "About OPUS";
                 break;
             case "volumes":
-                url = base_url + "volumes.html";
-                pdf_url = base_url + "volumes.pdf";
+                url = baseURL + "volumes.html";
+                pdfURL = baseURL + "volumes.pdf";
                 header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":
-                url = base_url + "faq.html";
-                pdf_url = base_url + "faq.pdf";
+                url = baseURL + "faq.html";
+                pdfURL = baseURL + "faq.pdf";
                 header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
             case "apiguide":
-                url = base_url + "apiguide.html";
-                pdf_url = base_url + "apiguide.pdf";
+                url = baseURL + "apiguide.html";
+                pdfURL = baseURL + "apiguide.pdf";
                 header = "OPUS API Guide";
                 break;
             case "citing":
                 let searchHash = o_hash.getHashStrFromSelections();
-                url = base_url + "citing.html?stateurl=" + encodeURIComponent(window.location);
+                url = baseURL + "citing.html?stateurl=" + encodeURIComponent(window.location);
                 url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";
                 // Can't allow pdf because wkhtmltopdf doesn't support inline image data
                 break;
             case "gettingStarted":
-                url = base_url + "gettingstarted.html";
-                pdf_url = base_url + "gettingstarted.pdf";
+                url = baseURL + "gettingstarted.html";
+                pdfURL = baseURL + "gettingstarted.pdf";
                 header = "Getting Started with OPUS";
                 break;
             case "contact":
@@ -899,8 +920,8 @@ var opus = {
 
         let buttons = '<div class="op-open-help">';
         buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
-        if (pdf_url) {
-            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdf_url}" title="Download PDF version of this panel">Download PDF</button>`;
+        if (pdfURL) {
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
         }
         buttons += "</div>";
 
@@ -954,8 +975,8 @@ var opus = {
                         });
                 });
                 $(".op-open-help-pdf").on("click", function(e) {
-                    let pdf_url = $(".op-open-help-pdf").data("action");
-                    window.open(pdf_url, "_blank");
+                    let pdfURL = $(".op-open-help-pdf").data("action");
+                    window.open(pdfURL, "_blank");
                 });
             }
         });

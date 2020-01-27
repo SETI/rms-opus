@@ -1475,21 +1475,21 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_0=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_0" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_0" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_1_clause_bad_n1(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 -1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_-1=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_-1" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_-1" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_1_clause_bad_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search multi bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=rightasc&rightasc1_XXX=10.'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_01_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _01_XXX"
@@ -1499,7 +1499,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc2_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc2_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_XXX_01(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _XXX_01"
@@ -1509,7 +1509,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['qtype-rightasc'] = 'any'
         new_slugs['unit-rightasc'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "rightasc1_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_1_01_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_01_XXX qtypes"
@@ -1522,7 +1522,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-rightasc_01'] = 'degrees'
         new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_good_12_clause_1_02_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search multi good 12 _1_02_XXX qtypes"
@@ -1535,7 +1535,87 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-rightasc_01'] = 'degrees'
         new_slugs['unit-rightasc_02'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-rightasc_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_0(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _0"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_0=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['widgets'] = 'surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_0" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_bad_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 bad _XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_XXX=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['widgets'] = 'surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude1_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_01_XXX(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 bad _01_XXX"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude2_XXX=18'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1'] = '8'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "SURFACEGEOpan_planetographiclatitude2_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_10(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _10"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_10=8'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1'] = '8'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_1_clause_01_1(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 1 _01_1"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_01=8&SURFACEGEOpan_planetographiclatitude1_1=18'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'any'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs)
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_qtypes(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX qtypes"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&qtype-SURFACEGEOpan_planetographiclatitude_1=only&qtype-SURFACEGEOpan_planetographiclatitude_XXX=only'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude2_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'only'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "qtype-SURFACEGEOpan_planetographiclatitude_XXX" is unknown; it has been ignored.')
+
+    def test__api_normalizeurl_search_SURFACEGEO_good_12_clause_1_02_XXX_units(self):
+        "[test_ui_api.py] /__normalizeurl: search SURFACEGEO good 12 _1_02_XXX unit"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Pan&SURFACEGEOpan_planetographiclatitude1_1=8&SURFACEGEOpan_planetographiclatitude2_02=18&unit-SURFACEGEOpan_planetographiclatitude_1=degrees&unit-SURFACEGEOpan_planetographiclatitude_XXX=degrees'
+        new_slugs['surfacegeometrytargetname'] = 'Pan'
+        new_slugs['SURFACEGEOpan_planetographiclatitude1_01'] = '8'
+        new_slugs['SURFACEGEOpan_planetographiclatitude2_02'] = '18'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_01'] = 'any'
+        new_slugs['qtype-SURFACEGEOpan_planetographiclatitude_02'] = 'any'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_01'] = 'degrees'
+        new_slugs['unit-SURFACEGEOpan_planetographiclatitude_02'] = 'degrees'
+        new_slugs['widgets'] = 'SURFACEGEOpan_planetographiclatitude,surfacegeometrytargetname'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-SURFACEGEOpan_planetographiclatitude_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_multi_complicated_clause(self):
         "[test_ui_api.py] /__normalizeurl: search multi good complicated clause"
@@ -1563,7 +1643,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-rightasc_04'] = 'degrees'
         new_slugs['unit-rightasc_05'] = 'degrees'
         new_slugs['widgets'] = 'rightasc'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "rightasc1_0" has a bad clause number; it has been ignored.</li><li>Search term "rightasc2_0" has a bad clause number; it has been ignored.</li>')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-rightasc_0" is unknown; it has been ignored.</li><li>Search term "rightasc1_0" is unknown; it has been ignored.</li><li>Search term "rightasc2_0" is unknown; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_multi_complicated_clause_2(self):
         "[test_ui_api.py] /__normalizeurl: search multi good complicated clause 2"
@@ -1802,21 +1882,21 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_0=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_0" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_0" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_clause_bad_n1(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 -1"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_-1=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_-1" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_-1" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_1_clause_bad_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search single bad 1 _XXX"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_XXX=10.'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_01_XXX(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _01_XXX"
@@ -1825,7 +1905,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration1'] = '10'
         new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration2_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration2_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_XXX_01(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _XXX_01"
@@ -1834,7 +1914,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['observationduration2'] = '20'
         new_slugs['unit-observationduration'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "observationduration1_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
@@ -1845,7 +1925,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-observationduration_01'] = 'seconds'
         new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" is unknown; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_qtypes(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX qtypes"
@@ -1856,10 +1936,10 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-observationduration_01'] = 'seconds'
         new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" has a bad clause number; it has been ignored.</li>')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='<li>Search term "qtype-observationduration_1" is a query type for a field that does not allow query types; it has been ignored.</li><li>Search term "qtype-observationduration_XXX" is unknown; it has been ignored.</li>')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_01_XXX_units(self):
-        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX qtypes"
+        "[test_ui_api.py] /__normalizeurl: search single good 12 _1_01_XXX units"
         new_slugs = dict(self.default_url_slugs)
         url = '/opus/__normalizeurl.json?widgets=observationduration&observationduration1_1=10.&observationduration2_01=20.&unit-observationduration_1=seconds&unit-observationduration_XXX=milliseconds'
         new_slugs['observationduration2_01'] = '20'
@@ -1867,7 +1947,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-observationduration_01'] = 'seconds'
         new_slugs['unit-observationduration_02'] = 'seconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" is unknown; it has been ignored.')
 
     def test__api_normalizeurl_search_single_good_12_clause_1_02_XXX_units(self):
         "[test_ui_api.py] /__normalizeurl: search single good 12 _1_02_XXX units"
@@ -1878,7 +1958,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['unit-observationduration_01'] = 'milliseconds'
         new_slugs['unit-observationduration_02'] = 'milliseconds'
         new_slugs['widgets'] = 'observationduration'
-        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" has a bad clause number; it has been ignored.')
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='Search term "unit-observationduration_XXX" is unknown; it has been ignored.')
 
     # Strings
 
@@ -2372,7 +2452,7 @@ class ApiUITests(TestCase, ApiTestHelper):
     def test__api_normalizeurl_real_6(self):
         "[test_ui_api.py] /__normalizeurl: real 6"
         url = '/opus/__normalizeurl.json?SURFACEGEOplutocenterresolution2=5&SURFACEGEOplutophase1=160&surfacegeometrytargetname=Pluto&qtype-SURFACEGEOplutophase=any&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
-        expected = {"new_url": "surfacegeometrytargetname=Pluto&SURFACEGEOplutocenterresolution2=5&unit-SURFACEGEOplutocenterresolution=km/pixel&SURFACEGEOplutophase1=160&qtype-SURFACEGEOplutophase=any&unit-SURFACEGEOplutophase=degrees&cols=opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2&widgets=SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"surfacegeometrytargetname": "Pluto"}, {"SURFACEGEOplutocenterresolution2": "5"}, {"unit-SURFACEGEOplutocenterresolution": "km/pixel"}, {"SURFACEGEOplutophase1": "160"}, {"qtype-SURFACEGEOplutophase": "any"}, {"unit-SURFACEGEOplutophase": "degrees"}, {"cols": "opusid,instrument,time1,SURFACEGEOplutoplanetographiclatitude1,SURFACEGEOplutoplanetographiclatitude2,SURFACEGEOplutoIAUwestlongitude1,SURFACEGEOplutoIAUwestlongitude2,SURFACEGEOplutocenterdistance,SURFACEGEOplutocenterresolution,SURFACEGEOplutophase1,SURFACEGEOplutophase2"}, {"widgets": "SURFACEGEOplutocenterresolution,SURFACEGEOplutophase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        expected = {"new_url": "surfacegeometrytargetname=Pluto&SURFACEGEOpluto_centerresolution2=5&unit-SURFACEGEOpluto_centerresolution=km/pixel&SURFACEGEOpluto_phase1=160&qtype-SURFACEGEOpluto_phase=any&unit-SURFACEGEOpluto_phase=degrees&cols=opusid,instrument,time1,SURFACEGEOpluto_planetographiclatitude1,SURFACEGEOpluto_planetographiclatitude2,SURFACEGEOpluto_IAUwestlongitude1,SURFACEGEOpluto_IAUwestlongitude2,SURFACEGEOpluto_centerdistance,SURFACEGEOpluto_centerresolution,SURFACEGEOpluto_phase1,SURFACEGEOpluto_phase2&widgets=SURFACEGEOpluto_centerresolution,SURFACEGEOpluto_phase,surfacegeometrytargetname&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"surfacegeometrytargetname": "Pluto"}, {"SURFACEGEOpluto_centerresolution2": "5"}, {"unit-SURFACEGEOpluto_centerresolution": "km/pixel"}, {"SURFACEGEOpluto_phase1": "160"}, {"qtype-SURFACEGEOpluto_phase": "any"}, {"unit-SURFACEGEOpluto_phase": "degrees"}, {"cols": "opusid,instrument,time1,SURFACEGEOpluto_planetographiclatitude1,SURFACEGEOpluto_planetographiclatitude2,SURFACEGEOpluto_IAUwestlongitude1,SURFACEGEOpluto_IAUwestlongitude2,SURFACEGEOpluto_centerdistance,SURFACEGEOpluto_centerresolution,SURFACEGEOpluto_phase1,SURFACEGEOpluto_phase2"}, {"widgets": "SURFACEGEOpluto_centerresolution,SURFACEGEOpluto_phase,surfacegeometrytargetname"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": "<p>Your bookmarked URL is from a previous version of OPUS. It has been adjusted to conform to the current version.</p><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.</p>"}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeurl_real_7(self):

@@ -398,6 +398,18 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"wavelength1": "0.75", "wavelength2": "300", "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_unit_overflow(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength overflow basic unit"
+        url = '/opus/__api/normalizeinput.json?wavelength1=1e307&unit-wavelength=cm&reqno=123'
+        expected = {"wavelength1": None, "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_unit_overflow_conversion(self):
+        "[test_search_api.py] /api/normalizeinput: wavelength overflow unit conversion"
+        url = '/opus/__api/normalizeinput.json?wavelength1=1e307&sourceunit-wavelength=cm&unit-wavelength=microns&reqno=123'
+        expected = {"wavelength1": None, "reqno": 123}
+        self._run_json_equal(url, expected)
+
             ########################################################
             ######### /__api/stringsearchchoices API TESTS #########
             ########################################################

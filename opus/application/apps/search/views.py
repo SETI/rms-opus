@@ -452,16 +452,19 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         clause_num = 1
         clause_num_str = ''
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
+            clause_num_str = slug[slug.rindex('_'):]
             try:
                 clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
+                if clause_num > 0:
+                    slug = slug[:slug.rindex('_')]
+                else:
                     raise ValueError
             except ValueError:
-                log.error('url_to_search_params: Slug has illegal clause '+
-                          'number "%s"', orig_slug)
-                return None, None
+                # If clause_num is not a positive integer, leave the slug as is.
+                # If the slug is unknown, it will be caught later as an unknown
+                # slug.
+                clause_num = 1
+                clause_num_str = ''
 
         # Find the master param_info
         param_info = None
@@ -590,14 +593,14 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             sourceunit_val = request_get[sourceunit_slug]
             if (valid_sourceunits is None or
                 sourceunit_val not in valid_sourceunits):
+                log.error('url_to_search_params: Bad sourceunit value'
+                          +' for "%s": %s', sourceunit_slug,
+                          str(sourceunit_val))
                 if allow_errors: # pragma: no cover
                     # We never actually hit this because normalizeurl catches
                     # the bad unit first
                     sourceunit_val = None
                 else:
-                    log.error('url_to_search_params: Bad sourceunit value'
-                              +' for "%s": %s', sourceunit_slug,
-                              str(sourceunit_val))
                     return None, None
 
         if form_type in settings.MULT_FORM_TYPES:
@@ -694,12 +697,28 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                                     raise ValueError
 
                             if is_sourceunit or sourceunit_val is not None:
-                                default_val = opus_support.convert_to_default_unit(
-                                        new_value, param_info.units,
-                                        sourceunit_val)
-                                new_value = opus_support.convert_from_default_unit(
-                                        default_val, param_info.units,
-                                        unit_val)
+                                default_val = (opus_support
+                                               .convert_to_default_unit(
+                                                    new_value,
+                                                    param_info.units,
+                                                    sourceunit_val))
+                                new_value = (opus_support
+                                             .convert_from_default_unit(
+                                                    default_val,
+                                                    param_info.units,
+                                                    unit_val))
+
+                            # Do a conversion of the given value to the default
+                            # units. We do this so that if the conversion throws
+                            # an error (like overflow), we mark this search
+                            # term as invalid, since it will fail later in
+                            # construct_query_string anyway. This allows
+                            # normalizeinput to report it as bad immediately.
+                            default_val = (opus_support
+                                           .convert_to_default_unit(
+                                                new_value,
+                                                param_info.units,
+                                                unit_val))
 
                             if pretty_results:
                                 new_value = format_metadata_number_or_func(
@@ -709,9 +728,10 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
                             new_value = None
                             if not allow_errors:
                                 log.error('url_to_search_params: Function "%s" '
-                                          +'slug "%s" '
-                                          +'threw ValueError(%s) for %s',
-                                          func, slug, e, value_to_use)
+                                          +'slug "%s" source unit "%s" unit '
+                                          +'"%s" threw ValueError(%s) for %s',
+                                          func, slug, sourceunit_val, unit_val,
+                                          e, value_to_use)
                                 return None, None
                     else:
                         new_value = None
@@ -1521,6 +1541,12 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
             return None, None
+        except ValueError:
+            log.error('get_range_query: Unit "%s" on "%s" conversion failed '
+                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      unit, param_qualified_name, str(selections), str(qtypes),
+                      str(units))
+            return None, None
 
         qtype = qtypes[idx]
 
@@ -1647,6 +1673,13 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                                                              unit)
         except KeyError:
             log.error('get_longitude_query: Unknown unit "%s" for "%s" '
+                      +'*** Selections %s *** Qtypes %s *** Units %s',
+                      unit, param_qualified_name, str(selections), str(qtypes),
+                      str(units))
+            return None, None
+        except ValueError:
+            log.error('get_longitude_query: Unit "%s" on "%s" conversion '
+                      +'failed '
                       +'*** Selections %s *** Qtypes %s *** Units %s',
                       unit, param_qualified_name, str(selections), str(qtypes),
                       str(units))
