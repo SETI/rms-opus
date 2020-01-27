@@ -17,19 +17,32 @@ var o_selectMetadata = {
     // will be used in mutation observer to determine if scrollbar location should
     // be set.
     isSortingHappening: false,
+    currentSelectedMetadata: opus.prefs.cols.slice(),
+
     // metadata selector behaviors
     addBehaviors: function() {
-        // Global within this function so behaviors can communicate
+        // global to allow the modal event handlers to communicate
         /* jshint varstmt: false */
-        var currentSelectedMetadata = opus.prefs.cols.slice();
+        var clickedX = false;
         /* jshint varstmt: true */
+
+        o_selectMetadata.currentSelectedMetadata = opus.prefs.cols.slice();
+
+        $("#op-select-metadata .close").on("click", function(e) {
+            clickedX = true;
+        });
 
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentSelectedMetadata)) {
-                o_browse.clearObservationData(true); // Leave startobs alone
-                o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                o_browse.loadData(opus.prefs.view);
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.currentSelectedMetadata)) {
+                // only pop up the confirm modal if the user clicked the 'X' in the corner
+                if (clickedX) {
+                    clickedX = false;
+                    let targetModal = $(this).find("[data-target]").data("target");
+                    $(`#${targetModal}`).modal("show");
+                } else {
+                    o_selectMetadata.saveChanges();
+                }
             } else {
                 // remove spinner if nothing is re-draw when we click save changes
                 o_browse.hidePageLoaderSpinner();
@@ -41,7 +54,7 @@ var o_selectMetadata = {
             $("#op-select-metadata .modal-dialog").css({top: 0, left: 0});
             o_selectMetadata.adjustHeight();
             // save current column state so we can look for changes
-            currentSelectedMetadata = opus.prefs.cols.slice();
+            o_selectMetadata.currentSelectedMetadata = opus.prefs.cols.slice();
 
             o_browse.hideMenu();
             o_selectMetadata.render();
@@ -88,9 +101,19 @@ var o_selectMetadata = {
                     o_browse.showPageLoaderSpinner();
                     break;
                 case "cancel":
-                    opus.prefs.cols = [];
-                    o_selectMetadata.resetMetadata(currentSelectedMetadata, true);
+                    o_selectMetadata.discardChanges();
                     break;
+            }
+        });
+
+        $("#op-select-metadata .close").on("click", function(e) {
+            // update the data table w/the new columns
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.currentSelectedMetadata)) {
+                let targetModal = $(this).data("target");
+                $(targetModal).modal("show");
+            } else {
+                // remove spinner if nothing is re-draw when we click save changes
+                o_browse.hidePageLoaderSpinner();
             }
         });
 
@@ -220,6 +243,11 @@ var o_selectMetadata = {
         opus.prefs.cols = cols;
     },
 
+    discardChanges: function() {
+        opus.prefs.cols = [];
+        o_selectMetadata.resetMetadata(o_selectMetadata.currentSelectedMetadata, true);
+    },
+
     resetMetadata: function(cols, closeModal) {
         opus.prefs.cols = cols.slice();
 
@@ -237,6 +265,12 @@ var o_selectMetadata = {
         $.each(cols, function(index, slug) {
             o_selectMetadata.addColumn(slug);
         });
+    },
+
+    saveChanges: function() {
+        o_browse.clearObservationData(true); // Leave startobs alone
+        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+        o_browse.loadData(opus.prefs.view);
     },
 
     adjustHeight: function() {
