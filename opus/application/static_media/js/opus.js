@@ -823,6 +823,9 @@ var opus = {
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
                             break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.saveChanges();
+                            break;
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
@@ -851,6 +854,9 @@ var opus = {
                             // if user clicks "Dismiss Message" ("No" button), we hide the
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
+                            break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.discardChages();
                             break;
                     }
                     $(`#${target}`).modal("hide");
