@@ -763,6 +763,11 @@ var opus = {
             }
         });
 
+        // Clicking on the OPUS3 logo
+        $(".op-reset-opus").on("click", function() {
+            $("#op-reset-opus-modal").modal("show");
+        });
+
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
@@ -813,6 +818,9 @@ var opus = {
                             break;
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
+                            break;
+                        case "op-reset-opus-modal":
+                            location.assign("/opus");
                             break;
                         case "op-empty-cart":
                             o_cart.emptyCartOrRecycleBin("cart");

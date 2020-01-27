@@ -31,10 +31,7 @@ echo $S
 echo 22 `cat __tmp2 | grep "$S" | wc -l`
 cat __tmp2 | grep -v "$S" > __tmp1
 
-S="obs_instrument_gossi/frame_duration"
-echo $S
-echo 1 `cat __tmp1 | grep "$S" | wc -l`
-cat __tmp1 | grep -v "$S" > __tmp2
+cp __tmp1 __tmp2
 
 S="Empty opus_product key"
 echo $S
@@ -102,5 +99,3 @@ echo 332 `cat __tmp2 | grep "$S" | wc -l`
 cat __tmp2 | grep -v "$S" > __tmp1
 
 cat __tmp1
-
-

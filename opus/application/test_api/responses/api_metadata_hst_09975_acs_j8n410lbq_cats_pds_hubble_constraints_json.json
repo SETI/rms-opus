@@ -12,6 +12,7 @@
     "detector_id": "ACS-HRC",
     "filter_name": "ACS-F435W",
     "filter_type": "W",
+    "optical_element": null,
     "aperture_type": "ACS-HRC",
     "hst_proposal_id": "9975",
     "hst_pi_name": "James, Philip B.",

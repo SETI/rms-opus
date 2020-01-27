@@ -1,4 +1,5 @@
 import collections
+import re
 import textwrap
 import urllib.parse
 from enum import auto, Flag
@@ -100,8 +101,8 @@ class SessionInfo(AbstractSessionInfo):
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
 
-    def add_search_slug(self, slug: str, slug_info: slug.Info) -> None:
-        self._session_search_slugs[slug] = slug_info
+    def add_search_slug(self, slug_name: str, slug_info: slug.Info) -> None:
+        self._session_search_slugs[slug_name] = slug_info
         if slug_info.flags.is_obsolete():
             self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
 
@@ -127,9 +128,18 @@ class SessionInfo(AbstractSessionInfo):
             return [(slug, info[slug].flags.is_obsolete())
                     for slug in sorted(info, key=str.lower)
                     # Rob doesn't want to see slugs that start with 'qtype-' in the list.
-                    if not slug.startswith('qtype-')]
+                    if not slug.startswith('qtype-')
+                    if not slug.startswith('unit-')]
 
-        search_slug_list = fixit(self._session_search_slugs)
+        # Make a copy of session_search_slugs, and change any subgroup slugs to the base value.  If we overwrite
+        # an existing value, that's fine.
+        session_search_slugs = self._session_search_slugs.copy()
+        for slug in self._session_search_slugs.keys():
+            match = re.fullmatch(r'(.*)_\d{2,}', slug)
+            if match:
+                session_search_slugs[match.group(1)] = session_search_slugs.pop(slug)
+
+        search_slug_list = fixit(session_search_slugs)
         column_slug_list = fixit(self._session_column_slugs)
         return ('search', search_slug_list), ('column', column_slug_list)
 

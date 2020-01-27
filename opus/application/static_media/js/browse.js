@@ -1451,6 +1451,10 @@ var o_browse = {
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
                 let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group" title="Click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+
+                let miniThumbnail = `<img src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
+                row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
+
                 let tr = `<tr data-id="${opusId}" ${recycled} data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
                     row += `<td>${cell}</td>`;
@@ -1514,11 +1518,12 @@ var o_browse = {
                          "class='op-table-header-addall btn btn-link'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'" +
                          " title='Add All Results to Cart'></i></button>";
-        let tableHeaderFirstCol = "<th scope='col' class='sticky-header op-table-first-col'>" +
-                                  "<div>" + addallIcon + "</div></th>";
+        let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col'><div>${addallIcon}</div></th>`;
+        // note: this column header will be empty
+        let tableHeaderThumbnailCol = `<th scope='col' class='sticky-header op-table-first-col'></th>`;
         $(`${tab} .op-data-table-view thead`).append("<tr></tr>");
         $(`${tab} .op-data-table-view thead tr`).append(tableHeaderFirstCol);
-        // $(`${tab} .op-data-table-view thead tr`).append("<th scope='col' class='sticky-header'></th>");
+        $(`${tab} .op-data-table-view thead tr`).append(tableHeaderThumbnailCol);
 
         $.each(columns, function(index, header) {
             let slug = slugs[index];
