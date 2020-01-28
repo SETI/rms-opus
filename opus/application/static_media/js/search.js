@@ -60,6 +60,15 @@ var o_search = {
     performInputValidation: {},
 
     addSearchBehaviors: function() {
+        // Manually focus in the input field if it's not focused after the 1st click.
+        // This is to fix the issue that the input field will not be focused after
+        // the 1st click in iOS.
+        $("#search").on("click", "input[type='text']", function(e) {
+            if (!$(this).is(":focus")) {
+                $(this).focus();
+            }
+        });
+
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
         $("#search").on("focus", "input.RANGE", function(e) {
             let inputName = $(this).attr("name");
