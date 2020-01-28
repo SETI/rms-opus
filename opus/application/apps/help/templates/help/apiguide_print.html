@@ -1,0 +1,28 @@
+<!--NOSTRIP-->
+<div class="op-help-api-guide">
+    {{ guide |safe }}
+
+    <h1 id="availablefields" class="op-new-page">Available Metadata Fields</h1>
+    <table class="table table-sm table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Category<br/>&nbsp;</th>
+                <th>Label<br/>Units</th>
+                <th>Slug<br/>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in fields %}
+                <tr>
+                    <td>{{ v.category }}</td>
+                    <td>{{ v.label }}
+                        {% if v.pretty_units %}
+                            <br/>{{ v.pretty_units }}
+                        {% endif %}
+                    </td>
+                    <td>{{ v.slug }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

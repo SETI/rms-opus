@@ -5,15 +5,20 @@
 ################################################################################
 
 import base64
+import datetime
 from io import BytesIO
 import logging
+import mistune
 import os
 import qrcode
+import re
 
 import oyaml as yaml # Cool package that preserves key order
+import pdfkit
 
 from django.http import Http404, HttpResponse, HttpRequest
 from django.shortcuts import render
+from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
 from metadata.views import get_fields_info
@@ -32,12 +37,12 @@ log = logging.getLogger(__name__)
 ################################################################################
 
 @never_cache
-def api_about(request):
+def api_about(request, fmt):
     """Renders the about page.
 
     This is a PRIVATE API.
 
-    Format: __help/about.html
+    Format: __help/about.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_about', request)
 
@@ -55,17 +60,18 @@ def api_about(request):
         'database_host': database_host
     }
 
-    ret = render(request, 'help/about.html', context)
+    ret = _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
+                              'About OPUS', context)
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_volumes(request):
+def api_volumes(request, fmt):
     """Renders the volumes page.
 
     This is a PRIVATE API.
 
-    Format: __help/volumes.html
+    Format: __help/volumes.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_volumes', request)
 
@@ -84,19 +90,21 @@ def api_volumes(request):
                                []).append(d['volume_id'])
     for k,v in all_volumes.items():
         all_volumes[k] = ', '.join(all_volumes[k])
-    data = {'all_volumes': all_volumes}
 
-    ret = render(request, 'help/volumes.html', data)
+    context = {'all_volumes': all_volumes}
+    ret = _render_html_or_pdf(request, 'help/volumes.html', fmt, 'volumes',
+                              'Volumes Available for Searching with OPUS',
+                              context)
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_faq(request):
+def api_faq(request, fmt):
     """Renders the faq page.
 
     This is a PRIVATE API.
 
-    Format: __help/faq.html
+    Format: __help/faq.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_faq', request)
 
@@ -117,38 +125,22 @@ def api_faq(request):
             exit_api_call(api_code, None)
             raise Http404
 
-    ret = render(request, 'help/faq.html',
-                 {'faq': faq})
+    context = {'faq': faq,
+               'allow_collapse': fmt == 'html'}
+    ret = _render_html_or_pdf(request, 'help/faq.html', fmt, 'faq',
+                              'Frequently Asked Questions (FAQ) About OPUS',
+                              context)
 
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
-def api_tutorial(request):
-    """Renders the tutorial page.
-
-    This is a PRIVATE API.
-
-    Format: __help/tutorial.html
-    """
-    api_code = enter_api_call('api_tutorial', request)
-
-    if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
-        exit_api_call(api_code, ret)
-        raise ret
-
-    ret = render(request, 'help/tutorial.html')
-    exit_api_call(api_code, ret)
-    return ret
-
-@never_cache
-def api_gettingstarted(request):
+def api_gettingstarted(request, fmt):
     """Renders the getting started page.
 
     This is a PRIVATE API.
 
-    Format: __help/gettingstarted.html
+    Format: __help/gettingstarted.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_gettingstarted', request)
 
@@ -157,7 +149,10 @@ def api_gettingstarted(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = render(request, 'help/gettingstarted.html')
+    ret = _render_html_or_pdf(request, 'help/gettingstarted.html', fmt,
+                              'getting_started',
+                              'Getting Started with OPUS')
+
     exit_api_call(api_code, ret)
     return ret
 
@@ -181,12 +176,12 @@ def api_splash(request):
     return ret
 
 @never_cache
-def api_citing_opus(request):
+def api_citing_opus(request, fmt):
     """Renders the citing opus page.
 
     This is a PRIVATE API.
 
-    Format: __help/citing.html
+    Format: __help/citing.(?P<fmt>html|pdf)
     """
     api_code = enter_api_call('api_citing_opus', request)
 
@@ -241,19 +236,22 @@ def api_citing_opus(request):
                'opus_search_qr': opus_search_qr_str,
                'opus_state_url': opus_state_url,
                'opus_state_qr': opus_state_qr_str}
-    ret = render(request, 'help/citing.html', context)
+    ret = _render_html_or_pdf(request, 'help/citing.html', fmt, 'citing',
+                              'How to Cite OPUS',
+                              context)
+
     exit_api_call(api_code, ret)
     return ret
 
-def api_guide(request):
-    """Renders the API guide at opus/api.
+@never_cache
+def api_api_guide(request, fmt):
+    """Renders the API guide.
 
-    Format: api/
-        or: api/guide.html
+    Format: __help/apiguide.(?P<fmt>html|pdf)
 
-    To edit guide content edit the examples.yaml
+    To edit guide content edit api_guide.md
     """
-    api_code = enter_api_call('api_guide', request)
+    api_code = enter_api_call('api_api_guide', request)
 
     if not request or request.GET is None:
         ret = Http404(settings.HTTP404_NO_REQUEST)
@@ -262,23 +260,91 @@ def api_guide(request):
 
     uri = HttpRequest.build_absolute_uri(request)
     prefix = '/'.join(uri.split('/')[:3])
+    git_id = get_git_version(True, True)
+    current_date = datetime.datetime.today().strftime('%d-%B-%Y')
 
     path = os.path.dirname(os.path.abspath(__file__))
-    guide_content_file = 'examples.yaml'
+    guide_content_file = 'api_guide.md'
     with open(os.path.join(path, guide_content_file), 'r') as stream:
         text = stream.read()
-        text = text.replace('<HOST>', prefix)
-        try:
-            guide = yaml.load(text, Loader=yaml.FullLoader)
+        text = text.replace('%HOST%', prefix)
+        text = text.replace('%DATE%', current_date)
+        text = text.replace('%VERSION%', git_id)
+        text = re.sub(
+            r'%EXTLINK%(.*)%ENDEXTLINK%',
+            r'<a target="_blank" href="\1"><span class="op-api-guide-code">'
+            +r'<code>\1</code></span></a>',
+            text)
+        text = re.sub(r'%CODE%\n', r'<div class="op-api-guide-code-block '
+                      +r'op-api-guide-code"><pre><code>',
+                      text)
+        text = re.sub(r'%ENDCODE%', r'</code></pre></div>', text)
+        guide = mistune.Markdown().output(text)
+        guide = guide.replace('%ADDCLASS%', '<div class="')
+        guide = guide.replace('%ENDADDCLASS%', '">')
+        guide = guide.replace('%ENDCLASS%', '</div>')
+        guide = guide.replace('<table>',
+                 '<table class="table table-sm table-striped table-hover '
+                +'op-table-indent op-table-nonfluid">')
+        guide = guide.replace('<thead>', '<thead class="thead-dark">')
+        guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-        except yaml.YAMLError as exc: # pragma: no cover
-            log.error('api_guide error: %s', str(exc))
-            exit_api_call(api_code, None)
-            raise Http404
+    fields_dict = get_fields_info('raw', collapse=True)
+    fields = []
+    for field_name, field in fields_dict.items():
+        field['pretty_units'] = None
+        available_units = field['available_units']
+        if available_units:
+            field['pretty_units'] = ', '.join(available_units)
+        fields.append(field)
 
-    slugs = get_fields_info('raw', collapse=True)
+    template_name = 'help/apiguide.html'
+    if fmt == 'pdf':
+        template_name = 'help/apiguide_print.html'
 
-    ret = render(request, 'help/guide.html',
-                 {'guide': guide, 'slugs': slugs})
+    context = {'guide': guide,
+               'fields': fields}
+    ret = _render_html_or_pdf(request, template_name, fmt, 'api_guide',
+                              None, context)
+
     exit_api_call(api_code, ret)
+    return ret
+
+
+def _render_html_or_pdf(request, template, fmt, filename, title, context=None):
+    """Render a template as HTML or PDF."""
+    if fmt == 'html':
+        ret = render(request, template, context)
+    else:
+        header_template = get_template('ui/header.html')
+        header_context = {'STATIC_URL': settings.OPUS_STATIC_ROOT+'/',
+                          'allow_fallback': False,
+                          'include_print_style': True}
+        header = header_template.render(header_context)
+        body_template = get_template(template)
+        body = body_template.render(context)
+        html = header + '<body>'
+        if title is not None:
+            html += '<h1>' + title + '</h1>'
+        html += body + '</body>'
+        options = {
+            'page-size':        'Letter',
+            'encoding':         'UTF-8',
+            'margin-top':       '1in',
+            'margin-bottom':    '1in', # Footer eats into this
+            'margin-left':      '1in',
+            'margin-right':     '1in',
+            'footer-center':    'Page [page] of [topage]',
+            'footer-spacing':   '5', # in mm
+            'outline':          None, # Turn on PDF bookmarks
+            'print-media-type': None, # Turn on @media print
+            'quiet':            None, # Turn off console messages
+        }
+        pdf = pdfkit.from_string(html, False, options)
+        # pdf = re.sub(b'file:///tmp/wktemp.*#', b'/#', pdf)
+
+        ret = HttpResponse(pdf, content_type='application/pdf')
+        filename = 'opus_'+filename+'.pdf'
+        ret['Content-Disposition'] = f'attachment; filename="{filename}"'
+        ret['Content-Transfer-Encoding'] = 'binary'
     return ret

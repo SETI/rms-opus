@@ -870,34 +870,42 @@ var opus = {
          * Given the name of a help menu entry, open the help pane and load the
          * help contents.
          */
-        let url = "/opus/__help/";
+        let baseURL = "/opus/__help/";
+        let pdfURL = false;
+        let url = "";
         let header = "";
         switch (action) {
             case "about":
-                url += "about.html";
+                url = baseURL + "about.html";
+                pdfURL = baseURL + "about.pdf";
                 header = "About OPUS";
                 break;
             case "volumes":
-                url += "volumes.html";
+                url = baseURL + "volumes.html";
+                pdfURL = baseURL + "volumes.pdf";
                 header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":
-                url += "faq.html";
-                header = "Frequently Asked Questions (FAQ)";
+                url = baseURL + "faq.html";
+                pdfURL = baseURL + "faq.pdf";
+                header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
-            case "guide":
-                url += "guide.html";
+            case "apiguide":
+                url = baseURL + "apiguide.html";
+                pdfURL = baseURL + "apiguide.pdf";
                 header = "OPUS API Guide";
                 break;
             case "citing":
                 let searchHash = o_hash.getHashStrFromSelections();
-                url += "citing.html?stateurl=" + encodeURIComponent(window.location);
+                url = baseURL + "citing.html?stateurl=" + encodeURIComponent(window.location);
                 url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";
+                // Can't allow pdf because wkhtmltopdf doesn't support inline image data
                 break;
             case "gettingStarted":
-                url += "gettingstarted.html";
-                header = "Getting Started";
+                url = baseURL + "gettingstarted.html";
+                pdfURL = baseURL + "gettingstarted.pdf";
+                header = "Getting Started with OPUS";
                 break;
             case "contact":
                 FeedbackMethods.open();
@@ -910,7 +918,12 @@ var opus = {
                 return;
         }
 
-        let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
+        let buttons = '<div class="op-open-help">';
+        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
+        if (pdfURL) {
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
+        }
+        buttons += "</div>";
 
         $("#op-help-panel").addClass("op-no-select");
         $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
@@ -944,20 +957,26 @@ var opus = {
                 document.getSelection().removeAllRanges();
                 $("#op-help-panel").removeClass("op-no-select");
 
-                let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
+                let contents = `${buttons}<div class="op-help-contents">${page}</div>`;
                 $("#op-help-panel .op-card-contents").html(contents);
-                $(".op-open-help .btn").on("click", function(e) {
+                $(".op-open-help-new-tab").on("click", function(e) {
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
+                    contentsHtml = `<div class="op-help-contents-printable"><h1>${header}</h1>${contentsHtml}</div>`;
                     $(contents).html(contentsHtml);
                     let newTabWindow = window.open("", "_blank");
                     $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, o_utils.getWindowURLPrefix()+"/static_media"));
+                    newTabWindow.document.getElementsByTagName("title")[0].innerHTML = header;
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
                             margin: "1.5em",
                             backgroundColor: "inherit"
                         });
+                });
+                $(".op-open-help-pdf").on("click", function(e) {
+                    let pdfURL = $(".op-open-help-pdf").data("action");
+                    window.open(pdfURL, "_blank");
                 });
             }
         });

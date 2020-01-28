@@ -54,7 +54,7 @@
                             <a class="dropdown-item op-help-item" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
                             <a class="dropdown-item op-help-item" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
                             <a class="dropdown-item op-help-item" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
-                            <a class="dropdown-item op-help-item" data-action="guide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
+                            <a class="dropdown-item op-help-item" data-action="apiguide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
                             <a class="dropdown-item op-help-item" data-action="splash" href="#" title="View the OPUS new-user splash screen">Welcome Message</a>
                             <a class="dropdown-item op-help-item" data-action="citing" href="#" title="How to cite OPUS in your papers or presentations">Citing OPUS</a>
                             <a class="dropdown-item op-help-item" data-action="contact" href="#" title="Send questions or feedback to the OPUS developers">Contact Us</a>
@@ -284,7 +284,7 @@
             <div class="card-header align-items-center h-auto pb-0 bg-secondary">
                 <h3 class='op-header-text'></h3>
                 <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-             </div>
+            </div>
             <div class="card-body bg-light">
                 <div class="op-card-contents">
                     Loading... please wait.
@@ -367,7 +367,7 @@
             confirm_title="Confirm Reset OPUS"
             confirm_msg="Are you sure you want to reset OPUS to its default state? This will erase any search parameters, open search fields, selected metadata, and other customization you may have done, but will leave items in your cart."
             target="op-reset-opus-modal"
-            yes_text="OK"
+            yes_text="Yes"
             no_text="No"
             allow_close=True
             draggable=True
@@ -564,24 +564,24 @@
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
     <!-- NASA feedback widget -->
-    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/config.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/feedback.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
 
     {% block scripts %}
 
-    <script src="{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/cart.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/widgets.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/selectMetadata.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/hash.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/dictionary.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/mutationObserver.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/opus.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/menu.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/utils.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/cart.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/browse.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/detail.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     {% endblock    %}
 
 </body>

@@ -183,9 +183,9 @@ class resultsTests(TestCase):
             api_get_files(request, 'vg-iss-2-s-c4360845')
 
 
-            #################################################################
+            #############################################################
             ######### api_get_categories_for_opus_id UNIT TESTS #########
-            #################################################################
+            #############################################################
 
     def test__api_get_categories_for_opus_id_no_request(self):
         "[test_results.py] api_get_categories_for_opus_id: no request"
@@ -202,9 +202,9 @@ class resultsTests(TestCase):
 
 
 
-            ################################################################
+            ############################################################
             ######### api_get_categories_for_search UNIT TESTS #########
-            ################################################################
+            ############################################################
 
     def test__api_get_categories_for_search_no_request(self):
         "[test_results.py] api_get_categories_for_search: no request"
@@ -218,6 +218,43 @@ class resultsTests(TestCase):
         request.GET = None
         with self.assertRaises(Http404):
             api_get_categories_for_search(request)
+
+
+            ################################################################
+            ######### api_get_product_types_for_opus_id UNIT TESTS #########
+            ################################################################
+
+    def test__api_get_product_types_for_opus_id_no_request(self):
+        "[test_results.py] api_get_product_types_for_opus_id: no request"
+        with self.assertRaises(Http404):
+            api_get_product_types_for_opus_id(None, 'vg-iss-2-s-c4360845')
+
+    def test__api_get_product_types_for_opus_id_no_get(self):
+        "[test_results.py] api_get_product_types_for_opus_id: no GET"
+        c = Client()
+        request = self.factory.get('/api/product_types/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
+
+
+
+            ###############################################################
+            ######### api_get_product_types_for_search UNIT TESTS #########
+            ###############################################################
+
+    def test__api_get_product_types_for_search_no_request(self):
+        "[test_results.py] api_get_product_types_for_search: no request"
+        with self.assertRaises(Http404):
+            api_get_product_types_for_search(None)
+
+    def test__api_get_product_types_for_search_no_get(self):
+        "[test_results.py] api_get_product_types_for_search: no GET"
+        c = Client()
+        request = self.factory.get('/api/product_types.json')
+        request.GET = None
+        with self.assertRaises(Http404):
+            api_get_product_types_for_search(request)
 
 
             ###################################################

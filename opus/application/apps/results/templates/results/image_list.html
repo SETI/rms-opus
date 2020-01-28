@@ -1,7 +1,7 @@
-<body>
-{% for i in data %}
-	<li>
-		<img id="{{ size }}__{{ i.opus_id }}" src="{{ i.url }}">
-  </li>
-{% endfor %}
-</body>
+<ul>
+    {% for i in data %}
+        <li>
+            <img id="{{ size }}__{{ i.opus_id }}" src="{{ i.url }}">
+        </li>
+    {% endfor %}
+</ul>
