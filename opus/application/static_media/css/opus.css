@@ -2166,7 +2166,7 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Allow users to mouse over and select text in widgets */
-.op-widget-main ul {
+.op-input ul li {
     -ms-user-select: text;
     user-select: text;
     -moz-user-select: text;
