@@ -51,6 +51,8 @@ var o_widgets = {
         $("#op-search-widgets").sortable({
             items: "> li",
             cursor: "move",
+            // Specify the elements that will not trigger sorting when being grabbed. This is to make
+            // input texts and hints copiable in widgets with checkboxes and radio buttons.
             cancel: ".multichoice span, .multichoice label, .singlechoice span, .singlechoice label",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
