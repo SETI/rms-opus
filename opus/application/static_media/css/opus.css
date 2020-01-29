@@ -1925,6 +1925,11 @@ footer {
     top: 2em;
 }
 
+/* Make sure "x" in help panel is vertically aligned with header text */
+#op-help-panel .close {
+    margin-bottom: 0.5rem;
+}
+
 .op-open-help {
     float: right;
 }
