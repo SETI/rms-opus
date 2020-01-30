@@ -1925,11 +1925,6 @@ footer {
     top: 2em;
 }
 
-/* Make sure "x" in help panel is vertically aligned with the header text */
-#op-help-panel .close {
-    margin-bottom: 0.5rem;
-}
-
 .op-open-help {
     float: right;
 }
@@ -2015,6 +2010,20 @@ footer {
 
 .op-header-text {
     display: inline-block;
+}
+
+/* Remove default h tag margin-bottom to center the title text in help panel */
+#op-help-panel .op-header-text {
+    margin-bottom: 0;
+}
+
+#op-help-panel .op-header-text h2 {
+    margin-bottom: 0;
+}
+
+/* Center the "x" icon in help panel */
+#op-help-panel .close {
+    display: flex;
 }
 
 #op-help-panel .card-body {
