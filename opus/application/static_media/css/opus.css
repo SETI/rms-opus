@@ -703,6 +703,16 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
+/* Make sure the a tags for categories take up full width in select metadata menu */
+.op-search-menu-category > a {
+    display: flex;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    flex: 0 0 100%;
+    /* Vertically align arrow icon with the category text */
+    align-items: center;
+}
+
 /* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column-header, .op-selected-metadata-column-header {
     padding-left: calc(1.5% + 4px);
