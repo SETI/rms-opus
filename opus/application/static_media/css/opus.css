@@ -703,14 +703,13 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
-/* Make sure the a tags for categories take up full width in select metadata menu */
-.op-search-menu-category > a {
-    display: flex;
+/* Make sure the a tags for categories take up full width in select metadata
+and search sidebar menu */
+a[href^="#selector-submenu-search"], a[href^="#selector-submenu-obs"], 
+a[href^="#search-submenu-obs"] {
+    display: block;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-    flex: 0 0 100%;
-    /* Vertically align arrow icon with the category text */
-    align-items: center;
 }
 
 /* Make white space (padding) in metadata selector modal responsive */
@@ -1543,10 +1542,13 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
-    margin-top: 5px;
-    margin-bottom: 12px;
+    /* margin-top: 5px;
+    margin-bottom: 12px; */
+    margin-top: 1px;
+    margin-bottom: 2px;
     font-weight: 70;
     color: initial;
+    display: block;
 }
 
 .op-search-menu a.op-search-param:hover {
@@ -1555,6 +1557,11 @@ panel are properly separated */
 
 .op-search-menu .list-group li:nth-child(1) {
     border-top: 0 none;
+}
+
+/* Make sure full width of white space in search sidebar is clickable */
+.op-search-menu .list-group-item {
+    padding-right: 0;
 }
 
 /* Reduce left space in each widget (from 50px to 10px) */
