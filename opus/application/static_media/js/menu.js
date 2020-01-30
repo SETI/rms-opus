@@ -90,15 +90,11 @@ var o_menu = {
 
     markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
-            // Use this line if we want to have the full width of menu options highlighted.
-            // $(selector).css({"background": "gainsboro"});
             $(selector).children().css({"background": "gainsboro"});
             // We use find() here instead of just adding to the selector because
             // selector might be a string or it might be an actual DOM object
             $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
         } else {
-            // Use this line if we want to remove the full width highlight of menu options.
-            // $(selector).css({"background": "initial"});
             $(selector).children().css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
         }

@@ -705,7 +705,7 @@ button.op-mini-thumbnail-zoom {
 
 /* Make sure the a tags for categories take up full width in select metadata
 and search sidebar menu */
-a[href^="#selector-submenu-search"], a[href^="#selector-submenu-obs"], 
+a[href^="#selector-submenu-search"], a[href^="#selector-submenu-obs"],
 a[href^="#search-submenu-obs"] {
     display: block;
     margin-top: 0 !important;
@@ -1542,12 +1542,11 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
-    /* margin-top: 5px;
-    margin-bottom: 12px; */
     margin-top: 1px;
     margin-bottom: 2px;
     font-weight: 70;
     color: initial;
+    /* Make sure each menu option takes up full width */
     display: block;
 }
 
