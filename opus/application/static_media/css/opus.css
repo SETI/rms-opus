@@ -705,8 +705,7 @@ button.op-mini-thumbnail-zoom {
 
 /* Make sure the a tags for categories take up full width in select metadata
 and search sidebar menu */
-a[href^="#selector-submenu-search"], a[href^="#selector-submenu-obs"],
-a[href^="#search-submenu-obs"] {
+.op-submenu-category {
     display: block;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
