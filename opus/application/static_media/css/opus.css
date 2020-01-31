@@ -711,6 +711,15 @@ and search sidebar menu */
     margin-bottom: 0 !important;
 }
 
+/* Shift the whole search term list up to reduce the spacing between the category
+name and search term in search sidebar and select metadata menu. Need to set both
+margin-top and margin-bottom to avoid the animation glitch when a category is
+collapsing. */
+.op-submenu-item-list {
+    margin-top: -0.35rem;
+    margin-bottom: 0.35rem;
+}
+
 /* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column-header, .op-selected-metadata-column-header {
     padding-left: calc(1.5% + 4px);
