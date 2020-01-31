@@ -18,6 +18,7 @@ from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
@@ -1370,9 +1371,15 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     else:
         filter = "display_results"
 
+    if search_slugs_info:
+        expanded_cats = ['search_fields']
+    else:
+        expanded_cats = ['obs_general']
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
+        if request.GET.get('expanded_cats'):
+            expanded_cats = request.GET.get('expanded_cats').split(',')
     else:
         selections = None
 
@@ -1410,8 +1417,12 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     menu_data['labels_view'] = labels_view
 
     for d in divs:
-        d.start_expanded = (d.table_name == 'obs_general' and
-                            not search_slugs_info)
+        if d.table_name in expanded_cats:
+            d.collapsed = ''
+            d.show = 'show'
+        else:
+            d.collapsed = 'collapsed'
+            d.show = ''
         menu_data.setdefault(d.table_name, OrderedDict())
 
         # XXX This really shouldn't be here!!
@@ -1431,6 +1442,11 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
 
             menu_data[d.table_name].setdefault('data', OrderedDict())
             for sub_head in sub_headings[d.table_name]:
+                if d.table_name+'-'+slugify(sub_head) in expanded_cats:
+                    sub_head_tuple = (sub_head, '', 'show')
+                else:
+                    sub_head_tuple = (sub_head, 'collapsed', '')
+
                 all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
                 for p in all_param_info:
                     if labels_view == 'search':
@@ -1441,7 +1457,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                         if p.slug[-1] == '1':
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
-                    menu_data[d.table_name]['data'].setdefault(sub_head, []).append(p)
+                    menu_data[d.table_name]['data'].setdefault(sub_head_tuple, []).append(p)
 
         else:
             # this div has no sub headings
@@ -1465,7 +1481,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # by using a standard dictionary.
         search_div = {'table_name': 'search_fields',
                       'label': 'Current Search Fields',
-                      'start_expanded': True}
+                      'collapsed': '',
+                      'show': 'show'}
         divs = [search_div] + list(divs)
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
@@ -1480,5 +1497,13 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # the min and max slugs to the list.
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
                 menu_data['search_fields'].setdefault('data', []).append(p2)
+
+    add_spinner = True
+    for div in divs:
+        if type(div) == dict:
+            div['add_spinner'] = add_spinner
+        else:
+            div.add_spinner = add_spinner
+        add_spinner = False
 
     return {'menu': {'data': menu_data, 'divs': divs}}

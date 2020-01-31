@@ -100,7 +100,6 @@ var opus = {
     widgetsDrawn: [], // keeps track of what widgets are actually drawn
     widgetsFetching: [], // this widget is currently being fetched
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
-    menuState: {"cats": ["obs_general"]},
 
     // opusID of the current slide show/gallery view observation.
     // Note that both browse and cart use the same dialog for galleryView, so we

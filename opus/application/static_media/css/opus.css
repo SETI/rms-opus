@@ -270,11 +270,6 @@ to 100%, this will make the shrinking look smoother */
     box-sizing: border-box;
 }
 
-.op-redraw-menu .collapsing {
-     -webkit-transition: none;
-     transition: none;
-}
-
 hr.shadow-divider {
     height: 10px;
     border: 0;

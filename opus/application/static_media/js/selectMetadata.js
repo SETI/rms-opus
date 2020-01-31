@@ -131,7 +131,20 @@ var o_selectMetadata = {
         if (!o_selectMetadata.rendered) {
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
-            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getFullHashStr();
+            let hash = o_hash.getFullHashStr();
+
+            // Figure out which categories are already expanded
+            let expandedCategoryLinks = $(".op-select-metadata-details .op-menu-category-link").not(".collapsed");
+            let expandedCategories = [];
+            $.each(expandedCategoryLinks, function(index, linkObj) {
+                expandedCategories.push($(linkObj).data("cat"));
+            });
+            let expandedCats = "";
+            if (hash !== "") {
+                expandedCats = "&";
+            }
+            expandedCats += "expanded_cats=" + expandedCategories.join();
+            let url = "/opus/__forms/metadata_selector.html?" + hash + expandedCats;
 
             // When select metadata contents are outdated, we empty the old contents and display a
             // small spinner before the new contents are fully loaded.
