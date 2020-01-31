@@ -1541,8 +1541,10 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
+    /* Note: margin top and bottom need to be the same so that each search term
+    is vertically centered. */
     margin-top: 1px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     font-weight: 70;
     color: initial;
     /* Make sure each menu option takes up full width */
