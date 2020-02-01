@@ -703,6 +703,25 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
+/* Make sure general constraints search title text is vertically aligned with
+.op-menu-text */
+.op-general-search-category {
+    display: flex;
+    align-items: center;
+}
+
+/* Make sure genreal constraints search category anchor tag takes the full width
+when spinner is not there. */
+.op-general-search-category .op-submenu-category {
+    flex: 1 0 auto;
+}
+
+/* Make sure .op-menu text spinner stays next to general constraints search title
+when it's spinning. */
+.op-general-search-category .op-menu-text {
+    flex: 100 0 auto;
+}
+
 /* Make sure the a tags for categories take up full width in select metadata
 and search sidebar menu */
 .op-submenu-category {

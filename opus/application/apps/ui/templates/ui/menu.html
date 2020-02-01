@@ -4,15 +4,19 @@
             <li class="list-group-item py-0 op-search-menu-category">
                 {#  Each div has a top-level catgory  #}
                 {% if div.start_expanded %}
-                    <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category" data-cat="{{ div.table_name }}">
+                    <span class="op-general-search-category">
+                        <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category" data-cat="{{ div.table_name }}">
+                            <span class="title">{{ div.label }}</span>
+                        </a>
+                        <span class="op-menu-text spinner">&nbsp;</span>
+                    </span>
                 {% else %}
                     <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed py-2 op-submenu-category" data-cat="{{ div.table_name }}">
+                        <span class="title">{{ div.label }}</span>
+                    </a>
                 {% endif %}
-                    <span class="title">{{ div.label }}</span>
-                </a>
 
                 {% if div.start_expanded %}
-                    <span class="op-menu-text spinner">&nbsp;</span>
                     <ul class="list-group list-group-flush submenu collapse show op-submenu-item-list" id="{{ which }}-submenu-{{ div.table_name }}">
                 {% else %}
                     <ul class="list-group list-group-flush submenu collapse op-submenu-item-list" id="{{ which }}-submenu-{{ div.table_name }}">
