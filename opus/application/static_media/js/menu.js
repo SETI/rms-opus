@@ -43,7 +43,7 @@ var o_menu = {
 
     getNewSearchMenu: function() {
         let spinnerTimer = setTimeout(function() {
-            $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+            $("#sidebar .op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
         // Figure out which categories are already expanded
@@ -60,7 +60,6 @@ var o_menu = {
 
         $("#sidebar").load("/opus/__menu.html?" + hash + expandedCats, function() {
             o_menu.markCurrentMenuItems();
-            $('.op-menu-text.spinner').removeClass("op-show-spinner");
             clearTimeout(spinnerTimer);
         });
     },

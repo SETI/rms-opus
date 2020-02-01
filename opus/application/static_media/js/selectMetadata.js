@@ -129,12 +129,15 @@ var o_selectMetadata = {
         let buttonTitle = (tab === "#cart" ? "Download CSV (in cart)" : "Download CSV (all results)");
 
         if (!o_selectMetadata.rendered) {
+            let spinnerTimer = setTimeout(function() {
+                $("#op-select-metadata .op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
             let hash = o_hash.getFullHashStr();
 
             // Figure out which categories are already expanded
-            let expandedCategoryLinks = $(".op-select-metadata-details .op-menu-category-link").not(".collapsed");
+            let expandedCategoryLinks = $("#op-select-metadata .op-menu-category-link").not(".collapsed");
             let expandedCategories = [];
             $.each(expandedCategoryLinks, function(index, linkObj) {
                 expandedCategories.push($(linkObj).data("cat"));
@@ -146,12 +149,7 @@ var o_selectMetadata = {
             expandedCats += "expanded_cats=" + expandedCategories.join();
             let url = "/opus/__forms/metadata_selector.html?" + hash + expandedCats;
 
-            // When select metadata contents are outdated, we empty the old contents and display a
-            // small spinner before the new contents are fully loaded.
-            $(".modal-body.op-select-metadata-details").empty();
-            $(".modal-body.op-select-metadata-details").html(opus.spinner);
-
-            $(".modal-body.op-select-metadata-details").load(url, function(response, status, xhr)  {
+            $(".op-select-metadata-details").load(url, function(response, status, xhr)  {
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -183,7 +181,7 @@ var o_selectMetadata = {
                 $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
                 $("#op-select-metadata a.op-download-csv").text(buttonTitle);
 
-                $(".op-selected-metadata-column > ul").sortable({
+                $("#op-select-metadata .op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     containment: "parent",
@@ -201,12 +199,13 @@ var o_selectMetadata = {
                     }
                 });
                 if (opus.prefs.cols.length <= 1) {
-                    $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
+                    $("#op-select-metadata .op-selected-metadata-column .op-selected-metadata-unselect").hide();
                 }
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
+                clearTimeout(spinnerTimer);
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);

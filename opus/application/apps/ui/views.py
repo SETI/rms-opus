@@ -1378,8 +1378,11 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
-        if request.GET.get('expanded_cats'):
-            expanded_cats = request.GET.get('expanded_cats').split(',')
+        get_expanded_cats = request.GET.get('expanded_cats')
+        if get_expanded_cats == '':
+            expanded_cats = []
+        elif get_expanded_cats is not None:
+            expanded_cats = get_expanded_cats.split(',')
     else:
         selections = None
 
@@ -1480,9 +1483,13 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # Thanks to the way templates work, we can fake up a TableNames object
         # by using a standard dictionary.
         search_div = {'table_name': 'search_fields',
-                      'label': 'Current Search Fields',
-                      'collapsed': '',
-                      'show': 'show'}
+                      'label': 'Current Search Fields'}
+        if 'search_fields' in expanded_cats:
+            search_div['collapsed'] = ''
+            search_div['show'] = 'show'
+        else:
+            search_div['collapsed'] = 'collapsed'
+            search_div['show'] = ''
         divs = [search_div] + list(divs)
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
