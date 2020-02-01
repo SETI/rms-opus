@@ -307,6 +307,10 @@ ul.op-search-menu {
     text-decoration: none;
 }
 
+.widget .card-header:hover {
+    cursor: move;
+}
+
 /* Rotate the chevron on a widget header to indicate its open/closed status */
 .widget .card-header .icon-action {
     transition: .3s;
