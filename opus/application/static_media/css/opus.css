@@ -623,7 +623,7 @@ th.sticky-header {
 
 .op-mini-thumbnail img {
     transition: transform .1s;
-    width: 68%;
+    height: 21px;
 }
 
 /* zoom the mini-thumbnail on hover */
