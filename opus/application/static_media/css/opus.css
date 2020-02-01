@@ -51,7 +51,6 @@ even when the browser size is narrow. */
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
-        display: block;
     }
 
     #op-main-nav.navbar .navbar-nav>.nav-item {
@@ -73,11 +72,6 @@ appears & disappears. */
 .op-tab a {
     padding-top: 0;
     padding-bottom: 0;
-}
-
-/* Make sure "OPUS" on the top left corner is not moving when browser gets narrow. */
-.op-reset-opus {
-    display: inline-block !important;
 }
 
 @media (max-width: 992px) {
