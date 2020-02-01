@@ -50,7 +50,7 @@ var o_widgets = {
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
-            cursor: "move",
+            cursor: "grab",
             handle: ".card-title",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
@@ -61,6 +61,9 @@ var o_widgets = {
             opacity: 0.8,
             tolerance: "pointer",
             stop: function(event, ui) {
+                // this is a workaround for safari - set it back to what it was beforehand
+                $(event.target).css("cursor", "default");
+                
                 // Restore radio button checked status.
                 for (const input of $(ui.item).find("input[type='radio']")) {
                     if ($(input).attr("data-checked") === "true") {
@@ -71,6 +74,9 @@ var o_widgets = {
                 o_widgets.widgetDrop(this);
             },
             start: function(event, ui) {
+                // this is a workaround for safari
+                $(event.target).css('cursor', 'grab');
+
                 o_widgets.getMaxScrollTopVal(event.target);
             },
             sort: function(event, ui) {
