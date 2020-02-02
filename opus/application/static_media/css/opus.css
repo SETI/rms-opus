@@ -682,6 +682,11 @@ button.op-mini-thumbnail-zoom {
     overflow-y: hidden;
 }
 
+/* Center the header text in select metadata modal */
+#op-select-metadata .modal-header {
+    align-items: center;
+}
+
 /* make modal width shrink smoothly with screen */
 #op-select-metadata .modal-dialog {
     /* max-width: 1100px; */
@@ -893,7 +898,7 @@ when window sized is narrow */
     z-index: 999;
 }
 
-#galleryView button.close, #op-select-metadata button.close {
+#galleryView button.close {
     position: absolute;
     float: right;
     top: .8em;
