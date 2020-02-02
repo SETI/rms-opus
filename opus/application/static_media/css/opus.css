@@ -69,7 +69,7 @@ even when the browser size is narrow. */
 
 /* Make sure the height of top navbar will not change when "Recent Announcement"
 appears & disappears. */
-.op-tab a {
+.op-tab .op-blog-link {
     padding-top: 0;
     padding-bottom: 0;
 }
