@@ -108,6 +108,9 @@ body.modal-open .navbar {
 
 #search .op-search-param {
     font-size: 90%;
+    margin-top: 1.5px;
+    margin-bottom: 1.5px;
+    display: flex;
 }
 
 #browse, #cart, #detail {
@@ -775,6 +778,11 @@ collapsing. */
 narrow */
 .op-all-metadata-column .list-group-item {
     padding-right: 0;
+}
+
+/* Make the first category name closer to the border line above it. */
+.op-all-metadata-column .op-general-search-category .op-submenu-category {
+    padding-top: 0 !important;
 }
 
 .op-selected-metadata-column ul {
@@ -1569,10 +1577,6 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
-    /* Note: margin top and bottom need to be the same so that each search term
-    is vertically centered. */
-    margin-top: 1px;
-    margin-bottom: 1px;
     font-weight: 70;
     color: initial;
     /* Make sure each menu option takes up full width */
