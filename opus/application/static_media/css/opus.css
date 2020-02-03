@@ -128,6 +128,9 @@ appears & disappears. */
 
 #search .op-search-param {
     font-size: 90%;
+    margin-top: 1.5px;
+    margin-bottom: 1.5px;
+    display: flex;
 }
 
 #browse, #cart, #detail {
@@ -732,6 +735,42 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
+/* Make sure general constraints search title text is vertically aligned with
+.op-menu-text */
+.op-general-search-category {
+    display: flex;
+    align-items: center;
+}
+
+/* Make sure genreal constraints search category anchor tag takes the full width
+when spinner is not there. */
+.op-general-search-category .op-submenu-category {
+    flex: 1 0 auto;
+}
+
+/* Make sure .op-menu text spinner stays next to general constraints search title
+when it's spinning. */
+.op-general-search-category .op-menu-text {
+    flex: 100 0 auto;
+}
+
+/* Make sure the a tags for categories take up full width in select metadata
+and search sidebar menu */
+.op-submenu-category {
+    display: block;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Shift the whole search term list up to reduce the spacing between the category
+name and search term in search sidebar and select metadata menu. Need to set both
+margin-top and margin-bottom to avoid the animation glitch when a category is
+collapsing. */
+.op-submenu-item-list {
+    margin-top: -0.35rem;
+    margin-bottom: 0.35rem;
+}
+
 /* Make white space (padding) in metadata selector modal responsive */
 .op-all-metadata-column-header, .op-selected-metadata-column-header {
     padding-left: calc(1.5% + 4px);
@@ -768,6 +807,11 @@ button.op-mini-thumbnail-zoom {
 narrow */
 .op-all-metadata-column .list-group-item {
     padding-right: 0;
+}
+
+/* Make the first category name closer to the border line above it. */
+.op-all-metadata-column .op-general-search-category .op-submenu-category {
+    padding-top: 0 !important;
 }
 
 .op-selected-metadata-column ul {
@@ -1562,10 +1606,10 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
-    margin-top: 5px;
-    margin-bottom: 12px;
     font-weight: 70;
     color: initial;
+    /* Make sure each menu option takes up full width */
+    display: block;
 }
 
 .op-search-menu a.op-search-param:hover {
@@ -1574,6 +1618,11 @@ panel are properly separated */
 
 .op-search-menu .list-group li:nth-child(1) {
     border-top: 0 none;
+}
+
+/* Make sure full width of white space in search sidebar is clickable */
+.op-search-menu .list-group-item {
+    padding-right: 0;
 }
 
 /* Reduce left space in each widget (from 50px to 10px) */

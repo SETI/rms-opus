@@ -1,21 +1,25 @@
 {% block menu %}
     <ul class="op-search-menu list-group list-group-flush">
         {% for div in menu.divs %}
-            <li class="list-group-item py-2 op-search-menu-category">
+            <li class="list-group-item py-0 op-search-menu-category">
                 {#  Each div has a top-level catgory  #}
                 {% if div.start_expanded %}
-                    <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" data-cat="{{ div.table_name }}">
+                    <span class="op-general-search-category">
+                        <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category" data-cat="{{ div.table_name }}">
+                            <span class="title">{{ div.label }}</span>
+                        </a>
+                        <span class="op-menu-text spinner">&nbsp;</span>
+                    </span>
                 {% else %}
-                    <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ div.table_name }}">
+                    <a href="#{{ which }}-submenu-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed py-2 op-submenu-category" data-cat="{{ div.table_name }}">
+                        <span class="title">{{ div.label }}</span>
+                    </a>
                 {% endif %}
-                    <span class="title">{{ div.label }}</span>
-                </a>
 
                 {% if div.start_expanded %}
-                    <span class="op-menu-text spinner">&nbsp;</span>
-                    <ul class="list-group list-group-flush submenu collapse show" id="{{ which }}-submenu-{{ div.table_name }}">
+                    <ul class="list-group list-group-flush submenu collapse show op-submenu-item-list" id="{{ which }}-submenu-{{ div.table_name }}">
                 {% else %}
-                    <ul class="list-group list-group-flush submenu collapse" id="{{ which }}-submenu-{{ div.table_name }}">
+                    <ul class="list-group list-group-flush submenu collapse op-submenu-item-list" id="{{ which }}-submenu-{{ div.table_name }}">
                 {% endif %}
 
                 <!-- all div labels have level 2 submenu to list params-->
@@ -30,7 +34,7 @@
                             {#  this div has sub_headings, level-3 menu sections... start sub_heading loop  #}
                             {% for sub_head,params in info.data.items %}
                                 <li class="list-group-item py-0 pl-0">
-                                    <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed" data-cat="{{ div.table_name|slugify }}-{{ sub_head|slugify }}">
+                                    <a href="#{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head|slugify }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed op-submenu-category" data-cat="{{ div.table_name|slugify }}-{{ sub_head|slugify }}">
                                         <span class="menu-text title">{{ sub_head }}</span>
                                     </a>
                                     <ul class="list-group list-group-flush submenu collapse" id="{{ which }}-submenu-{{ div.table_name|slugify }}-{{ sub_head|slugify }}">
@@ -50,20 +54,22 @@
                                                             {{ p.body_qualified_label }}
                                                         {% endif %}
                                                       " data-slug="{{ p.slug }}" class="op-search-param" href="#">
-                                                        <span class="op-search-param-checkmark">
-                                                            <i class="fa fa-check"></i>
+                                                        <span>
+                                                            <span class="op-search-param-checkmark">
+                                                                <i class="fa fa-check"></i>
+                                                            </span>
+                                                            {% if menu.data.labels_view == 'selector' %}
+                                                                {% if p.get_tooltip_results %}
+                                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
+                                                                {% endif %}
+                                                                {{ p.label_results }}
+                                                            {% else %}
+                                                                {% if p.get_tooltip %}
+                                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                                                                {% endif %}
+                                                                {{ p.label }}
+                                                            {% endif %}
                                                         </span>
-                                                        {% if menu.data.labels_view == 'selector' %}
-                                                            {% if p.get_tooltip_results %}
-                                                                <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
-                                                            {% endif %}
-                                                            {{ p.label_results }}
-                                                        {% else %}
-                                                            {% if p.get_tooltip %}
-                                                                <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
-                                                            {% endif %}
-                                                            {{ p.label }}
-                                                        {% endif %}
                                                     </a>
                                                 </li>
                                             {% endif %}
@@ -90,24 +96,26 @@
                                             {{ p.body_qualified_label }}
                                         {% endif %}
                                       " data-slug="{{ p.slug }}" class="op-search-param" href="#">
-                                        <span class="op-search-param-checkmark">
-                                            <i class="fa fa-check"></i>
-                                        </span>
-                                        {% if menu.data.labels_view == 'selector' %}
-                                            {% if p.get_tooltip_results %}
-                                                <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
-                                            {% endif %}
-                                            {% if div.table_name == 'search_fields' %}
-                                                {{ p.body_qualified_label_results }}
+                                        <span>
+                                            <span class="op-search-param-checkmark">
+                                                <i class="fa fa-check"></i>
+                                            </span>
+                                            {% if menu.data.labels_view == 'selector' %}
+                                                {% if p.get_tooltip_results %}
+                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
+                                                {% endif %}
+                                                {% if div.table_name == 'search_fields' %}
+                                                    {{ p.body_qualified_label_results }}
+                                                {% else %}
+                                                    {{ p.label_results }}
+                                                {% endif %}
                                             {% else %}
-                                                {{ p.label_results }}
+                                                {% if p.get_tooltip %}
+                                                    <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
+                                                {% endif %}
+                                                {{ p.label }}
                                             {% endif %}
-                                        {% else %}
-                                            {% if p.get_tooltip %}
-                                                <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
-                                            {% endif %}
-                                            {{ p.label }}
-                                        {% endif %}
+                                        </span>
                                     </a>
                                 </li>
                             {% endfor %}
