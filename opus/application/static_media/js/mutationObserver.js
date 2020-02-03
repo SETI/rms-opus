@@ -160,7 +160,7 @@ var o_mutationObserver = {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
                 if (idx === lastMutationIdx) {
-                    if (mutation.target.classList.value.match(/submenu.collapse/)) {
+                    if (mutation.target.classList.value.match(/submenu.*collapse/)) {
                         // If a collapse/expand happened (attribute changes),
                         // we only update ps at the last mutation when the animation
                         // finishes and class/style are finalized.
@@ -187,7 +187,7 @@ var o_mutationObserver = {
         });
 
         let selectedMetadataObserver = new MutationObserver(function(mutationsList) {
-            // If sortable metadata selections is sorting, we don't want to set 
+            // If sortable metadata selections is sorting, we don't want to set
             // the scrollbar position.
             if (o_selectMetadata.isSortingHappening) {
                 return;

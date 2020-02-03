@@ -1505,12 +1505,12 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
-    add_spinner = True
+    first_category = True
     for div in divs:
         if type(div) == dict:
-            div['add_spinner'] = add_spinner
+            div['first_category'] = first_category
         else:
-            div.add_spinner = add_spinner
-        add_spinner = False
+            div.first_category = first_category
+        first_category = False
 
     return {'menu': {'data': menu_data, 'divs': divs}}

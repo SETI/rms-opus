@@ -47,7 +47,7 @@ var o_menu = {
         let hash = o_hash.getHash();
 
         // Figure out which categories are already expanded
-        let expandedCategoryLinks = $("#sidebar .op-menu-category-link").not(".collapsed");
+        let expandedCategoryLinks = $("#sidebar .op-submenu-category").not(".collapsed");
         let expandedCategories = [];
         $.each(expandedCategoryLinks, function(index, linkObj) {
             expandedCategories.push($(linkObj).data("cat"));
@@ -66,12 +66,12 @@ var o_menu = {
 
     markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
-            $(selector).css({"background": "gainsboro"});
+            $(selector).children().css({"background": "gainsboro"});
             // We use find() here instead of just adding to the selector because
             // selector might be a string or it might be an actual DOM object
             $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
         } else {
-            $(selector).css({"background": "initial"});
+            $(selector).children().css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
         }
     },
