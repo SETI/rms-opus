@@ -41,15 +41,22 @@ body.modal-open .navbar {
     width: 3em !important;
 }
 
+/* Keep the horizontal spacing between Search/Browse Results/Cart/Detail the same
+even when the browser size is narrow. */
+#op-main-nav .nav-link {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
-        display: block;
     }
+
     #op-main-nav.navbar .navbar-nav>.nav-item {
         float: none;
-        margin-left: .1rem;
     }
+
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
     }
@@ -58,6 +65,13 @@ body.modal-open .navbar {
     #op-main-nav-collapse.show, #op-main-nav-collapse.collapsing {
         display: flex;
     }
+}
+
+/* Make sure the height of top navbar will not change when "Recent Announcement"
+appears & disappears. */
+.op-tab .op-blog-link {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 @media (max-width: 992px) {
@@ -672,6 +686,11 @@ button.op-mini-thumbnail-zoom {
     overflow-y: hidden;
 }
 
+/* Center the header text in select metadata modal */
+#op-select-metadata .modal-header {
+    align-items: center;
+}
+
 /* make modal width shrink smoothly with screen */
 #op-select-metadata .modal-dialog {
     /* max-width: 1100px; */
@@ -883,7 +902,7 @@ when window sized is narrow */
     z-index: 999;
 }
 
-#galleryView button.close, #op-select-metadata button.close {
+#galleryView button.close {
     position: absolute;
     float: right;
     top: .8em;
@@ -1996,6 +2015,20 @@ footer {
     display: inline-block;
 }
 
+/* Remove default h tag margin-bottom to center the title text in help panel */
+#op-help-panel .op-header-text {
+    margin-bottom: 0;
+}
+
+#op-help-panel .op-header-text h2 {
+    margin-bottom: 0;
+}
+
+/* Center the "x" icon in help panel */
+#op-help-panel .close {
+    display: flex;
+}
+
 #op-help-panel .card-body {
     overflow: auto;
     /* requirement for perfectScrollbar */
@@ -2147,6 +2180,15 @@ ul.ui-autocomplete a.ui-state-active {
     */
     -ms-user-select: none;
     user-select: none;
+}
+
+/* Allow users to mouse over and select texts & hints in widgets */
+.op-input ul label, .op-input ul span {
+    -ms-user-select: text;
+    user-select: text;
+    -moz-user-select: text;
+    -khtml-user-select: text;
+    -webkit-user-select: text;
 }
 
 /* prevents all click, state and cursor options on the specified HTML element */
