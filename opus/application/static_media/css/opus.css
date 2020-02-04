@@ -63,11 +63,11 @@ even when the browser size is narrow. */
 #op-main-nav .navbar-nav .nav-link.show,
 #op-main-nav .navbar-nav .show>.nav-link
 {
-    color: #2f353a;
+    color: var(--dark); /* From style.css */
 }
 #op-main-nav .navbar-nav .nav-link.active:hover,
 #op-main-nav .navbar-nav .nav-link.open:hover {
-    color: #fff;
+    color: var(--white); /* From style.css */
 }
 
 /* Remove annoying dotted border in Firefox */
