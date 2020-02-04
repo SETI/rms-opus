@@ -717,6 +717,7 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
+            opus.hideOrShowSplashText();
             o_widgets.attachStringDropdownToInput();
         });
 
@@ -997,9 +998,18 @@ var opus = {
                     $("#op-new-user-msg").modal("hide");
                     opus.displayHelpPane("faq");
                 });
+                opus.hideOrShowSplashText();
                 $("#op-new-user-msg").modal("show");
             }
         });
+    },
+
+    hideOrShowSplashText: function() {
+        if ($(window).height() < 540) {
+            $(".op-splash-text").hide();
+        } else {
+            $(".op-splash-text").show();
+        }
     },
 
     opusInitialization: function() {

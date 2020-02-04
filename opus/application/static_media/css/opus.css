@@ -125,8 +125,17 @@ appears & disappears. */
 
 /* Add padding to (?)help when main nav has the hamburger */
 #op-help-menu {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+@media (max-height: 490px) {
+    #op-help a {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
 }
 
 #op-tab img.newGIF {
@@ -2082,6 +2091,26 @@ footer {
 }
 
 /* End of API Guide */
+
+/* Styling for the Splash welcome message */
+
+#op-new-user-msg .modal-body {
+    padding: 10px;
+}
+
+#op-new-user-msg p:first-child {
+    margin-top: 10px;
+}
+
+#op-new-user-msg p {
+    margin-bottom: 12px;
+}
+
+#op-new-user-msg p:last-child {
+    margin-bottom: 0px;
+}
+
+/* End of Splash welcome message */
 
 .op-header-text {
     display: inline-block;
