@@ -54,6 +54,27 @@ even when the browser size is narrow. */
     padding-right: 0.5rem;
 }
 
+/* Override style.css so that the navbar buttons are always dark when the mouse
+   is away, and always light when the mouse is hovering. This makes them
+   consistent with the other nav items which go from dark grey to light grey. */
+#op-main-nav .navbar-nav .nav-link.active,
+#op-main-nav .navbar-nav .nav-link.open,
+#op-main-nav .navbar-nav .active>.nav-link,
+#op-main-nav .navbar-nav .nav-link.show,
+#op-main-nav .navbar-nav .show>.nav-link
+{
+    color: var(--dark); /* From style.css */
+}
+#op-main-nav .navbar-nav .nav-link.active:hover,
+#op-main-nav .navbar-nav .nav-link.open:hover {
+    color: var(--white); /* From style.css */
+}
+
+/* Remove annoying dotted border in Firefox */
+#op-main-nav .navbar-nav .nav-link {
+    outline: none; !important
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
