@@ -54,6 +54,16 @@ even when the browser size is narrow. */
     padding-right: 0.5rem;
 }
 
+/* Override style.css so that the navbar buttons are always dark when the mouse
+   is away, and always light when the mouse is hovering. This makes them
+   consistent with the other nav items which go from dark grey to light grey. */
+#op-main-nav .navbar-nav .nav-link.active {
+    color: #2f353a;
+}
+#op-main-nav .navbar-nav .nav-link.active:hover {
+    color: #fff;
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
