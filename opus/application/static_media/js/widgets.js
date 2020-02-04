@@ -63,7 +63,7 @@ var o_widgets = {
             stop: function(event, ui) {
                 // this is a workaround for safari - set it back to what it was beforehand
                 $(event.target).css("cursor", "default");
-                
+
                 // Restore radio button checked status.
                 for (const input of $(ui.item).find("input[type='radio']")) {
                     if ($(input).attr("data-checked") === "true") {
@@ -1135,7 +1135,7 @@ var o_widgets = {
         o_selectMetadata.reRender();
 
         $.ajax({
-            url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
+            url: "/opus/__widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
                 $("#widget__"+slug).html(widget_str);
             }

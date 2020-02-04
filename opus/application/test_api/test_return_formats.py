@@ -257,15 +257,15 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_ui_menu_pvt(self):
         "[test_return_formats.py] return formats /__menu.[fmt]"
-        self._test_return_formats('/__menu.[fmt]', ('html',))
-
-    def test__api_retfmt_ui_widget_pvt(self):
-        "[test_return_formats.py] return formats /__forms/widget/slug.[fmt]"
-        self._test_return_formats('/__forms/widget/planet.[fmt]', ('html',))
+        self._test_return_formats('/__menu.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_ui_metadataselector_pvt(self):
-        "[test_return_formats.py] return formats /__forms/metadata_selector.[fmt]"
-        self._test_return_formats('/__forms/metadata_selector.[fmt]', ('html',))
+        "[test_return_formats.py] return formats /__metadata_selector.[fmt]"
+        self._test_return_formats('/__metadata_selector.[fmt]?reqno=1', ('json',))
+
+    def test__api_retfmt_ui_widget_pvt(self):
+        "[test_return_formats.py] return formats /__widget/slug.[fmt]"
+        self._test_return_formats('/__widget/planet.[fmt]', ('html',))
 
     def test__api_retfmt_ui_initdetail_pvt(self):
         "[test_return_formats.py] return formats /__initdetail/opusid.[fmt]"

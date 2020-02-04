@@ -17,9 +17,9 @@ from ui.views import (
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^__lastblogupdate.json$', api_last_blog_update),
-    url(r'^__menu.html$', api_get_menu),
-    url(r'^__forms/widget/(?P<slug>[-\w]+).html$', api_get_widget),
-    url(r'^__forms/metadata_selector.html$', api_get_metadata_selector),
+    url(r'^__menu.json$', api_get_menu),
+    url(r'^__metadata_selector.json$', api_get_metadata_selector),
+    url(r'^__widget/(?P<slug>[-\w]+).html$', api_get_widget),
     url(r'^__initdetail/(?P<opus_id>[-\w]+).html$', api_init_detail_page),
     url(r'^__normalizeurl.json$', api_normalize_url),
     url(r'^__dummy.json$', api_dummy),

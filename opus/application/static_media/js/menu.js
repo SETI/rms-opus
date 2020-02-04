@@ -17,6 +17,8 @@ var o_menu = {
      *
      **/
 
+    lastSearchMenuRequestNo: 0,
+
     addMenuBehaviors: function() {
         // click param in menu get new widget
         $("#sidebar").on("click", ".submenu li a", function() {
@@ -43,7 +45,7 @@ var o_menu = {
 
     getNewSearchMenu: function() {
         let spinnerTimer = setTimeout(function() {
-            $("#sidebar .op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+            $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
         // Figure out which categories are already expanded
@@ -57,8 +59,14 @@ var o_menu = {
             expandedCats = "&";
         }
         expandedCats += "expanded_cats=" + expandedCategories.join();
+        o_menu.lastSearchMenuRequestNo++;
+        let url = `/opus/__menu.json?${hash}${expandedCats}&reqno=${o_menu.lastSearchMenuRequestNo}`;
 
-        $("#sidebar").load("/opus/__menu.html?" + hash + expandedCats, function() {
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                return;
+            }
+            $("#sidebar").html(data.html);
             o_menu.markCurrentMenuItems();
             clearTimeout(spinnerTimer);
         });

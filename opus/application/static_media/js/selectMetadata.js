@@ -19,6 +19,8 @@ var o_selectMetadata = {
     isSortingHappening: false,
     currentSelectedMetadata: opus.prefs.cols.slice(),
 
+    lastMetadataMenuRequestNo: 0,
+
     // metadata selector behaviors
     addBehaviors: function() {
         // global to allow the modal event handlers to communicate
@@ -130,26 +132,37 @@ var o_selectMetadata = {
 
         if (!o_selectMetadata.rendered) {
             let spinnerTimer = setTimeout(function() {
-                $("#op-select-metadata .op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+                $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
 
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
             let hash = o_hash.getFullHashStr();
 
             // Figure out which categories are already expanded
-            let expandedCategoryLinks = $("#op-select-metadata .op-menu-category-link").not(".collapsed");
+            let numberCategories = $("#op-select-metadata .op-submenu-category").length;
+            let expandedCategoryLinks = $("#op-select-metadata .op-submenu-category").not(".collapsed");
             let expandedCategories = [];
             $.each(expandedCategoryLinks, function(index, linkObj) {
                 expandedCategories.push($(linkObj).data("cat"));
             });
             let expandedCats = "";
-            if (hash !== "") {
-                expandedCats = "&";
+            if (numberCategories > 0) {
+                /* If there aren't any categories, it means this is the first time we're
+                   loading the select metadata menu so let the backend do its default
+                   behavior. Otherwise, specify the categories to expand. */
+                if (hash !== "") {
+                    expandedCats = "&";
+                }
+                expandedCats += "expanded_cats=" + expandedCategories.join();
             }
-            expandedCats += "expanded_cats=" + expandedCategories.join();
-            let url = "/opus/__forms/metadata_selector.html?" + hash + expandedCats;
+            o_selectMetadata.lastMetadataMenuRequestNo++;
+            let url = `/opus/__metadata_selector.json?${hash}${expandedCats}&reqno=${o_selectMetadata.lastMetadataMenuRequestNo}`;
 
-            $(".op-select-metadata-details").load(url, function(response, status, xhr)  {
+            $.getJSON(url, function(data) {
+                if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                    return;
+                }
+                $(".op-select-metadata-details").html(data.html);
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
