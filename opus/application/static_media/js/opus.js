@@ -94,6 +94,11 @@ var opus = {
     // An object that stores normalize input validation result for each range input.
     rangeInputFieldsValidation: {},
 
+    // Remember nav clicks during normalize input so we can actually process them
+    // later if the inputs are valid.
+    navLinksNormalizeInProgress: false,
+    navLinkRemembered: null,
+
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
@@ -313,11 +318,9 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
-            $(".op-browse-tab").addClass("op-disabled-nav-link");
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         } else {
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
         }
 
@@ -437,6 +440,17 @@ var opus = {
          * bar tabs (views).
          */
 
+        if (opus.navLinksNormalizeInProgress) {
+            opus.navLinkRemembered = tab;
+            return false;
+        }
+
+        opus.navLinkRemembered = null;
+
+        if (!opus.areRangeInputsValid()) {
+            return false;
+        }
+
         // First hide everything and stop any interval timers
         $("#search, #detail, #cart, #browse").hide();
         o_browse.hideMenu();
@@ -488,6 +502,7 @@ var opus = {
                 o_search.activateSearchTab();
         }
 
+        return true;
     },
 
     hideHelpPanel: function() {
@@ -735,12 +750,7 @@ var opus = {
 
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
-            opus.changeTab(tab);
-        });
-
-        // Make sure browse tab nav link does nothing when it's been disabled.
-        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
-            return false;
+            return opus.changeTab(tab);
         });
 
         $(".op-help-item").on("click", function(e) {

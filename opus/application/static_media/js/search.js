@@ -119,7 +119,7 @@ var o_search = {
             // result of input validation in parseFinalNormalizedInputDataAndUpdateURL.
             if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slugWithId]) ||
                 (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slugWithId])) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
+                opus.navLinksNormalizeInProgress = true;
             }
 
             $(this).removeClass("input_currently_focused");
@@ -957,6 +957,7 @@ var o_search = {
          * Parse the return data from a normalize input API call. validateRangeInput
          * is called here.
          */
+        opus.navLinksNormalizeInProgress = true;
         $.getJSON(url, function(normalizedInputData) {
             // Make sure data is from the final normalize input call before parsing
             // normalizedInputData
@@ -964,14 +965,16 @@ var o_search = {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 return;
             }
+            opus.navLinksNormalizeInProgress = false;
+
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateRangeInput(normalizedInputData, true, slug, unit);
 
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.areRangeInputsValid()) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
+                opus.navLinkRemembered = null;
                 return;
             }
 
@@ -991,9 +994,13 @@ var o_search = {
                 }
             });
 
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
+
+            if (opus.navLinkRemembered !== null) {
+                opus.prefs.view = opus.navLinkRemembered;
+                opus.triggerNavbarClick();
+            }
         });
     },
 

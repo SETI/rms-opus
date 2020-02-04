@@ -616,9 +616,6 @@ var o_widgets = {
                                 o_search.getHinting(eachSlug);
                             });
                         }
-                        $(".op-browse-tab").removeClass("op-disabled-nav-link");
-                    } else {
-                        $(".op-browse-tab").addClass("op-disabled-nav-link");
                     }
 
                     if (opus.areRangeInputsValid()) {
@@ -827,9 +824,6 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-                $(".op-browse-tab").removeClass("op-disabled-nav-link");
-            } else {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
 
             // If the closing widget has empty values, don't perform a search.
