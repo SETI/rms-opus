@@ -159,7 +159,7 @@ var o_selectMetadata = {
             let url = `/opus/__metadata_selector.json?${hash}${expandedCats}&reqno=${o_selectMetadata.lastMetadataMenuRequestNo}`;
 
             $.getJSON(url, function(data) {
-                if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
                     return;
                 }
                 $(".op-select-metadata-details").html(data.html);
