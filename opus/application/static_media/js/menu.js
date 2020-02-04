@@ -13,14 +13,15 @@ var o_menu = {
 
     /**
      *
-     *  the menu on the *search page*
+     *  The category/field list on the search tab or Select Metadata dialog
      *
      **/
+
+    lastSearchMenuRequestNo: 0,
 
     addMenuBehaviors: function() {
         // click param in menu get new widget
         $("#sidebar").on("click", ".submenu li a", function() {
-
             let slug = $(this).data("slug");
             if (!slug) { return; }
             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
@@ -28,12 +29,10 @@ var o_menu = {
                 try {
                     // scroll to widget and highlight it
                     o_widgets.scrollToWidget(`widget__#{slug}`);
-
                 } catch(e) {
                     return false;
                 }
                 return false;
-
             } else {
                 o_menu.markMenuItem(this);
                 o_widgets.getWidget(slug,'#op-search-widgets');
@@ -42,48 +41,33 @@ var o_menu = {
             o_hash.updateURLFromCurrentHash();
             return false;
         });
-
-        // menu state - keep track of what menu items are open
-        $("#sidebar").on("click", ".dropdown-toggle", function(e) {
-            // for opus: keeping track of menu state, since menu is constantly refreshed
-            // menu cats
-            let category = $(this).data( "cat" );
-            let groupElem = $(`#sidebar #search-submenu-${category}`);
-            if ($(groupElem).hasClass("show")) {
-                opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
-            } else {
-                if ($.inArray(category, opus.menuState.cats) >= 0 ) {
-                    console.log(`submenu ${category } state already in array`);
-                } else {
-                    opus.menuState.cats.push(category);
-                }
-            }
-        });
     },
 
     getNewSearchMenu: function() {
         let spinnerTimer = setTimeout(function() {
-            $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+            $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
-        $("#sidebar").load("/opus/__menu.html?" + hash, function() {
-            // open menu items that were open before
-            $("#sidebar").toggleClass("op-redraw-menu");
-            $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#sidebar #search-submenu-${category}`).length !== 0) {
-                    $(`#sidebar #search-submenu-${category}`).collapse("show");
-                } else {
-                    // this is if the surface geometry target is no longer applicable so it's not
-                    // on the menu, remove from the menuState
-                    opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
-                }
-            });
-            $("#sidebar").toggleClass("op-redraw-menu");
-            $(".menu_spinner").fadeOut("fast");
+        // Figure out which categories are already expanded
+        let expandedCategoryLinks = $("#sidebar .op-submenu-category").not(".collapsed");
+        let expandedCategories = [];
+        $.each(expandedCategoryLinks, function(index, linkObj) {
+            expandedCategories.push($(linkObj).data("cat"));
+        });
+        let expandedCats = "";
+        if (hash !== "") {
+            expandedCats = "&";
+        }
+        expandedCats += "expanded_cats=" + expandedCategories.join();
+        o_menu.lastSearchMenuRequestNo++;
+        let url = `/opus/__menu.json?${hash}${expandedCats}&reqno=${o_menu.lastSearchMenuRequestNo}`;
 
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                return;
+            }
+            $("#sidebar").html(data.html);
             o_menu.markCurrentMenuItems();
-
-            $('.op-menu-text.spinner').removeClass("op-show-spinner");
             clearTimeout(spinnerTimer);
         });
     },

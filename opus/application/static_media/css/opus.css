@@ -314,11 +314,6 @@ to 100%, this will make the shrinking look smoother */
     box-sizing: border-box;
 }
 
-.op-redraw-menu .collapsing {
-     -webkit-transition: none;
-     transition: none;
-}
-
 hr.shadow-divider {
     height: 10px;
     border: 0;
@@ -756,37 +751,42 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
-/* Make sure general constraints search title text is vertically aligned with
-.op-menu-text */
-.op-general-search-category {
+/* Make sure first category search title text is vertically aligned with
+   .op-menu-spinner */
+.op-menu-first-category {
     display: flex;
     align-items: center;
 }
 
-/* Make sure genreal constraints search category anchor tag takes the full width
-when spinner is not there. */
-.op-general-search-category .op-submenu-category {
+/* Make sure first category anchor tag takes the full width when spinner is not
+   there. */
+.op-menu-first-category .op-submenu-category {
     flex: 1 0 auto;
 }
 
-/* Make sure .op-menu text spinner stays next to general constraints search title
-when it's spinning. */
-.op-general-search-category .op-menu-text {
+/* Make sure .op-menu text spinner stays next to first category search title
+   when it's spinning. */
+.op-menu-first-category .op-menu-spinner {
     flex: 100 0 auto;
 }
 
+/* Make the first category name closer to the border line above it. */
+.op-menu-first-category .op-submenu-category {
+    padding-top: 0 !important;
+}
+
 /* Make sure the a tags for categories take up full width in select metadata
-and search sidebar menu */
+   and search sidebar menu */
 .op-submenu-category {
     display: block;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
 
-/* Shift the whole search term list up to reduce the spacing between the category
-name and search term in search sidebar and select metadata menu. Need to set both
-margin-top and margin-bottom to avoid the animation glitch when a category is
-collapsing. */
+/* Shift the whole search term list up to reduce the spacing between the
+   category name and search term in search sidebar and select metadata menu.
+   Need to set both margin-top and margin-bottom to avoid the animation glitch
+   when a category is collapsing. */
 .op-submenu-item-list {
     margin-top: -0.35rem;
     margin-bottom: 0.35rem;
@@ -828,11 +828,6 @@ collapsing. */
 narrow */
 .op-all-metadata-column .list-group-item {
     padding-right: 0;
-}
-
-/* Make the first category name closer to the border line above it. */
-.op-all-metadata-column .op-general-search-category .op-submenu-category {
-    padding-top: 0 !important;
 }
 
 .op-selected-metadata-column ul {
@@ -1793,9 +1788,10 @@ even when screen is narrow */
     margin: 0 10px;
 }
 
-/* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text.spinner {
+/* smaller spinner next to first category: shows up when menu is loading */
+.op-menu-spinner.spinner {
     display: none;
+    margin-top: -10px;
     margin-left: 5px;
     width: 18px;
     line-height: 16px;
