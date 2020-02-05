@@ -94,6 +94,10 @@ var opus = {
     // An object that stores normalize input validation result for each range input.
     rangeInputFieldsValidation: {},
 
+    // Remember nav clicks during normalize input so we can actually process them
+    // later if the inputs are valid.
+    navLinkRemembered: null,
+
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
@@ -313,11 +317,9 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
-            $(".op-browse-tab").addClass("op-disabled-nav-link");
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         } else {
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
         }
 
@@ -337,6 +339,9 @@ var opus = {
             }
         }
         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+
+        opus.changeTabToRemembered();
+
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -431,11 +436,32 @@ var opus = {
         });
     },
 
+    changeTabToRemembered: function() {
+        // If the user had clicked on a nav tab during the normalizeinput
+        // process, go ahead and execute that tab switch now
+        if (opus.navLinkRemembered !== null) {
+            opus.prefs.view = opus.navLinkRemembered;
+            opus.navLinkRemembered = null;
+            opus.triggerNavbarClick();
+        }
+    },
+
     changeTab: function(tab) {
         /**
          * This is the event handler for the user clicking on one of the main nav
          * bar tabs (views).
          */
+
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = tab;
+            return false;
+        }
+
+        opus.navLinkRemembered = null;
+
+        if (!opus.areRangeInputsValid()) {
+            return false;
+        }
 
         // First hide everything and stop any interval timers
         $("#search, #detail, #cart, #browse").hide();
@@ -488,6 +514,7 @@ var opus = {
                 o_search.activateSearchTab();
         }
 
+        return true;
     },
 
     hideHelpPanel: function() {
@@ -736,12 +763,7 @@ var opus = {
 
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
-            opus.changeTab(tab);
-        });
-
-        // Make sure browse tab nav link does nothing when it's been disabled.
-        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
-            return false;
+            return opus.changeTab(tab);
         });
 
         $(".op-help-item").on("click", function(e) {
@@ -1055,6 +1077,9 @@ var opus = {
             return elementBottom > viewportTop && elementTop < viewportBottom;
         };
 
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = opus.prefs.view;
+        }
         opus.triggerNavbarClick();
     },
 
