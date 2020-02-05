@@ -96,7 +96,6 @@ var opus = {
 
     // Remember nav clicks during normalize input so we can actually process them
     // later if the inputs are valid.
-    navLinksNormalizeInProgress: false,
     navLinkRemembered: null,
 
     force_load: true, // set this to true to force load() when selections haven't changed
@@ -440,7 +439,7 @@ var opus = {
          * bar tabs (views).
          */
 
-        if (opus.navLinksNormalizeInProgress) {
+        if (opus.isAnyNormalizeInputInProgress()) {
             opus.navLinkRemembered = tab;
             return false;
         }

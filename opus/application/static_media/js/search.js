@@ -114,13 +114,6 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
-            // Disable browse tab nav link when user focuses out and there is a change of value
-            // in range input. The button will be enabled or keep disabled based on the
-            // result of input validation in parseFinalNormalizedInputDataAndUpdateURL.
-            if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slugWithId]) ||
-                (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slugWithId])) {
-                opus.navLinksNormalizeInProgress = true;
-            }
 
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
@@ -957,7 +950,6 @@ var o_search = {
          * Parse the return data from a normalize input API call. validateRangeInput
          * is called here.
          */
-        opus.navLinksNormalizeInProgress = true;
         $.getJSON(url, function(normalizedInputData) {
             // Make sure data is from the final normalize input call before parsing
             // normalizedInputData
@@ -965,7 +957,6 @@ var o_search = {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 return;
             }
-            opus.navLinksNormalizeInProgress = false;
 
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
