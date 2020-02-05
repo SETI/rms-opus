@@ -721,6 +721,16 @@ var opus = {
             o_widgets.attachStringDropdownToInput();
         });
 
+        // Support for tooltips on touch screens
+        $(window).on("touchstart", function () {
+            // The DOM may have changed since the last touch, so remove
+            // the click handler on the remaining tooltip elements and then
+            // add it to all of them. This way we don't end up with duplicate
+            // handlers.
+            $("i[title]").off("click", opus.tooltipClickHandler);
+            $("i[title]").on("click", opus.tooltipClickHandler);
+        });
+
         // Add the navbar clicking behaviors, selecting which tab to view
         $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item", function() {
             if ($(this).hasClass("external-link") || $(this).children().hasClass("op-show-msg")) {
@@ -863,6 +873,19 @@ var opus = {
                     break;
             }
         });
+    },
+
+    tooltipClickHandler: function () {
+        opus.tooltipRemoveHandler();
+        let title = $(this).attr("title");
+        $(this).append(`<span class="op-tooltip-text">${title}</span>`);
+        $(window).on("touchstart", opus.tooltipRemoveHandler);
+        return false;
+    },
+
+    tooltipRemoveHandler: function() {
+        $(".op-tooltip-text").remove();
+        $(window).off("touchstart", opus.tooltipRemoveHandler);
     },
 
     displayHelpPane: function(action) {
