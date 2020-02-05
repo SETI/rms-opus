@@ -339,6 +339,9 @@ var opus = {
             }
         }
         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+
+        opus.changeTabToRemembered();
+
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -431,6 +434,16 @@ var opus = {
                 $("#op-last-blog-update-date").attr("title", "");
             }
         });
+    },
+
+    changeTabToRemembered: function() {
+        // If the user had clicked on a nav tab during the normalizeinput
+        // process, go ahead and execute that tab switch now
+        if (opus.navLinkRemembered !== null) {
+            opus.prefs.view = opus.navLinkRemembered;
+            opus.navLinkRemembered = null;
+            opus.triggerNavbarClick();
+        }
     },
 
     changeTab: function(tab) {
@@ -1054,6 +1067,9 @@ var opus = {
             return elementBottom > viewportTop && elementTop < viewportBottom;
         };
 
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = opus.prefs.view;
+        }
         opus.triggerNavbarClick();
     },
 

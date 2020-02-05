@@ -988,10 +988,7 @@ var o_search = {
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
 
-            if (opus.navLinkRemembered !== null) {
-                opus.prefs.view = opus.navLinkRemembered;
-                opus.triggerNavbarClick();
-            }
+            opus.changeTabToRemembered();
         });
     },
 
