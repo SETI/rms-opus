@@ -94,7 +94,7 @@ def api_view_cart(request):
         raise ret
 
     session_id = get_session_id(request)
-    get_not_selected_product_types_str = request.GET.get('not_selected')
+    get_not_selected_product_types_str = request.GET.get('unselected_types')
     get_not_selected_product_types = get_not_selected_product_types_str.split(',')
 
     product_types_str = request.GET.get('types', 'all')

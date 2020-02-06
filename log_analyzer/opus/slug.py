@@ -81,7 +81,7 @@ class ToInfoMap:
                        'range', 'recyclebin', 'reqno', 'request',
                        'types', 'url_cols', 'units', 'view', 'widgets', 'widgets2',
                        '__sessionid',
-                       'not_selected',
+                       'unselected_types',
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
                       }

@@ -522,7 +522,7 @@ var o_cart = {
             if (hash !== "") {
                 notSelected = "&";
             }
-            notSelected += "not_selected=" + notSelectedProductInfoSlugName.join();
+            notSelected += "unselected_types=" + notSelectedProductInfoSlugName.join();
             let selected = o_cart.getDownloadFiltersChecked();
 
             o_cart.lastRequestNo++;
