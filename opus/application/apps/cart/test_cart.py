@@ -32,7 +32,7 @@ class cartTests(TestCase):
     def test__api_view_cart_no_request(self):
         "[test_cart.py] api_view_cart: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/view.html\)'):
+            r'Internal error \(No request was provided\) for /__cart/view.html'):
             api_view_cart(None)
 
     def test__api_view_cart_no_get(self):
@@ -41,7 +41,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/view.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/view.html\)'):
+            r'Internal error \(No request was provided\) for /__cart/view.html'):
             api_view_cart(request)
 
 
@@ -52,7 +52,7 @@ class cartTests(TestCase):
     def test__api_cart_status_no_request(self):
         "[test_cart.py] api_cart_status: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/status.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/status.json'):
             api_cart_status(None)
 
     def test__api_cart_status_no_get(self):
@@ -61,7 +61,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/status.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/status.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/status.json'):
             api_cart_status(request)
 
 
@@ -72,7 +72,7 @@ class cartTests(TestCase):
     def test__api_get_cart_csv_no_request(self):
         "[test_cart.py] api_get_cart_csv: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/data.csv\)'):
+            r'Internal error \(No request was provided\) for /__cart/data.csv'):
             api_get_cart_csv(None)
 
     def test__api_get_cart_csv_no_get(self):
@@ -81,7 +81,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/data.csv')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/data.csv\)'):
+            r'Internal error \(No request was provided\) for /__cart/data.csv'):
             api_get_cart_csv(request)
 
 
@@ -92,7 +92,7 @@ class cartTests(TestCase):
     def test__api_edit_cart_no_request(self):
         "[test_cart.py] api_edit_cart: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/add.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/add.json'):
             api_edit_cart(None, 'add')
 
     def test__api_edit_cart_no_get(self):
@@ -101,7 +101,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/add.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/add.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/add.json'):
             api_edit_cart(request, 'add')
 
 
@@ -112,7 +112,7 @@ class cartTests(TestCase):
     def test__api_reset_session_no_request(self):
         "[test_cart.py] api_reset_session: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/reset.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/reset.json'):
             api_reset_session(None)
 
     def test__api_reset_session_no_get(self):
@@ -121,7 +121,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/reset.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/reset.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/reset.json'):
             api_reset_session(request)
 
 
@@ -132,7 +132,7 @@ class cartTests(TestCase):
     def test__api_create_download_no_request(self):
         "[test_cart.py] api_create_download: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/download.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/download.json'):
             api_create_download(None)
 
     def test__api_create_download_no_get(self):
@@ -141,7 +141,7 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/download.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__cart/download.json\)'):
+            r'Internal error \(No request was provided\) for /__cart/download.json'):
             api_create_download(request)
 
     def test__api_create_download_opusid_no_get(self):
@@ -150,5 +150,5 @@ class cartTests(TestCase):
         request = self.factory.get('/__cart/download.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/download/testopusid.json\)'):
+            r'Internal error \(No request was provided\) for /api/download/testopusid.json'):
             api_create_download(request, 'testopusid')

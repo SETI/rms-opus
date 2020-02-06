@@ -151,7 +151,7 @@ def api_cart_status(request):
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http_error():
+    if reqno is None or throw_random_http404_error():
         log.error('api_cart_status: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
@@ -162,7 +162,7 @@ def api_cart_status(request):
         download = int(download)
     except:
         pass
-    if (download != 0 and download != 1) or throw_random_http_error():
+    if (download != 0 and download != 1) or throw_random_http404_error():
         log.error('api_cart_status: Badly formatted download %s', download)
         ret = Http404(HTTP404_BAD_DOWNLOAD(download, request))
         exit_api_call(api_code, ret)
@@ -207,7 +207,7 @@ def api_get_cart_csv(request):
     if error is not None:
         return get_search_results_chunk_error_handler(error, api_code)
 
-    if column_labels is None or throw_random_http_error():
+    if column_labels is None or throw_random_http404_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -289,7 +289,7 @@ def api_edit_cart(request, action, **kwargs):
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http_error():
+    if reqno is None or throw_random_http404_error():
         log.error('api_edit_cart: Missing or badly formatted reqno: %s',
                   request.GET)
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
@@ -299,7 +299,8 @@ def api_edit_cart(request, action, **kwargs):
     opus_id = None
     if action in ('add', 'remove'):
         opus_id = request.GET.get('opusid', None)
-        if not opus_id or throw_random_http_error(): # Also catches empty string
+        if (not opus_id or
+            throw_random_http404_error()): # Also catches empty string
             log.error('api_edit_cart: Missing opusid: %s',
                       request.GET)
             ret = Http404(HTTP404_MISSING_OPUS_ID(request))
@@ -310,7 +311,7 @@ def api_edit_cart(request, action, **kwargs):
     recycle_bin = request.GET.get('recyclebin', 0)
     try:
         recycle_bin = int(recycle_bin)
-        if throw_random_http_error(): # pragma: no cover
+        if throw_random_http404_error(): # pragma: no cover
             raise ValueError
     except:
         log.error('api_edit_cart: Bad value for recyclebin %s: %s', recycle_bin,
@@ -414,7 +415,7 @@ def api_reset_session(request):
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
-    if reqno is None or throw_random_http_error():
+    if reqno is None or throw_random_http404_error():
         log.error('api_reset_session: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
@@ -984,14 +985,15 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
 def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
     "Add or remove a range of opus_ids based on the current sort order."
     id_range = request.GET.get('range', False)
-    if not id_range or throw_random_http_error():
+    if not id_range or throw_random_http404_error():
         log.error('_edit_cart_range: No range given: %s', request.GET)
         ret = Http404(HTTP404_BAD_OR_MISSING_RANGE(request))
         exit_api_call(api_code, ret)
         raise ret
 
     ids = id_range.split(',')
-    if len(ids) != 2 or not ids[0] or not ids[1] or throw_random_http_error():
+    if (len(ids) != 2 or not ids[0] or not ids[1] or
+        throw_random_http404_error()):
         log.error('_edit_cart_range: Bad range format: %s', request.GET)
         ret = Http404(HTTP404_BAD_OR_MISSING_RANGE(request))
         exit_api_call(api_code, ret)
@@ -1048,7 +1050,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         temp_sql += order_sql
         try:
             cursor.execute(temp_sql, params)
-            if throw_random_http_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover
                 raise DatabaseError('random')
         except DatabaseError as e:
             log.error('_edit_cart_range: "%s" "%s" returned %s',
@@ -1066,7 +1068,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         # Find the index in the cache table for the min and max opus_ids
 
         (selections, extras) = url_to_search_params(request.GET)
-        if selections is None or throw_random_http_error():
+        if selections is None or throw_random_http404_error():
             log.error('_edit_cart_range: Could not find selections for'
                       +' request %s', request.GET)
             ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
@@ -1075,7 +1077,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
-        if not user_query_table or throw_random_http_error():
+        if not user_query_table or throw_random_http500_error():
             log.error('_edit_cart_range: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -1151,7 +1153,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             try:
                 cursor.execute(sql, sql_from_params)
                 num_new = cursor.fetchone()[0]
-                if throw_random_http_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover
                     raise DatabaseError('random')
             except DatabaseError as e: # pragma: no cover
                 log.error('_edit_cart_range: SQL query failed for request %s: '
@@ -1164,7 +1166,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             try:
                 cursor.execute(sql, sql_from_params+sql_incart_params)
                 num_old = cursor.fetchone()[0]
-                if throw_random_http_error(): # pragma: no cover
+                if throw_random_http500_error(): # pragma: no cover
                     raise DatabaseError('random')
             except DatabaseError as e: # pragma: no cover
                 log.error('_edit_cart_range: SQL query failed for request %s: '
@@ -1226,7 +1228,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
         sql = 'DROP TABLE '+q(temp_table_name)
         try:
             cursor.execute(sql)
-            if throw_random_http_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover
                 raise DatabaseError('random')
         except DatabaseError as e:
             log.error('_edit_cart_range: "%s" returned %s',
@@ -1266,7 +1268,7 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
         try:
             cursor.execute(sql, values)
             num_dup = cursor.fetchone()[0]
-            if throw_random_http_error(): # pragma: no cover
+            if throw_random_http500_error(): # pragma: no cover
                 raise DatabaseError('random')
         except DatabaseError as e: # pragma: no cover
             log.error('_edit_cart_addall: SQL query failed for request %s: '

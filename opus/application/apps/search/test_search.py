@@ -48,7 +48,7 @@ class searchTests(TestCase):
     def test__api_normalize_input_no_request(self):
         "[test_search.py] api_normalize_input: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/normalizeinput.json\)'):
+            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
             api_normalize_input(None)
 
     def test__api_normalize_input_no_get(self):
@@ -57,7 +57,7 @@ class searchTests(TestCase):
         request = self.factory.get('/__api/normalizeinput.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/normalizeinput.json\)'):
+            r'Internal error \(No request was provided\) for /__api/normalizeinput.json'):
             api_normalize_input(request)
 
 
@@ -68,7 +68,7 @@ class searchTests(TestCase):
     def test__api_string_search_choices_no_request(self):
         "[test_search.py] api_string_search_choices: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/stringsearchchoices/slug.json\)'):
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
             api_string_search_choices(None, 'slug')
 
     def test__api_string_search_choices_no_get(self):
@@ -77,7 +77,7 @@ class searchTests(TestCase):
         request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/stringsearchchoices/slug.json\)'):
+            r'Internal error \(No request was provided\) for /__api/stringsearchchoices/slug.json'):
             api_string_search_choices(request, 'slug')
 
 

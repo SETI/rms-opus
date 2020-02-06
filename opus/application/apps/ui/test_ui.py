@@ -36,7 +36,7 @@ class uiTests(TestCase):
     def test__api_last_blog_update_no_request(self):
         "[test_ui.py] api_last_blog_update: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__lastblogupdate.json\)'):
+            r'Internal error \(No request was provided\) for /__lastblogupdate.json'):
             api_last_blog_update(None)
 
     def test__api_last_blog_update_no_get(self):
@@ -74,7 +74,7 @@ class uiTests(TestCase):
     def test__api_normalize_url_no_request(self):
         "[test_ui.py] api_normalize_url: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__normalizeurl.json\)'):
+            r'Internal error \(No request was provided\) for /__normalizeurl.json'):
             api_normalize_url(None)
 
     def test__api_normalize_url_no_get(self):
@@ -83,5 +83,5 @@ class uiTests(TestCase):
         request = self.factory.get('__normalizeurl.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__normalizeurl.json\)'):
+            r'Internal error \(No request was provided\) for /__normalizeurl.json'):
             api_normalize_url(request)

@@ -151,12 +151,6 @@ def exit_api_call(api_code, ret):
     if delay_amount:
         time.sleep(delay_amount)
 
-def throw_random_http_error():
-    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY
-    if ret:
-        getattr(log, settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP error')
-    return ret
-
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
 
@@ -270,28 +264,42 @@ def cols_to_slug_list(slugs):
     return slugs.split(',')
 
 
+def throw_random_http404_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP404 error')
+    return ret
+
+def throw_random_http500_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP500 error')
+    return ret
+
 def HTTP404_NO_REQUEST(s):
-    return f'Internal error (No request was provided for {s})'
+    return f'Internal error (No request was provided) for {s}'
 
 def HTTP404_BAD_OR_MISSING_REQNO(r):
     if type(r) != str:
         r = r.path
-    return f'Internal error (Bad or missing reqno for {r})'
+    return f'Internal error (Bad or missing reqno) for {r}'
 
 def HTTP404_MISSING_OPUS_ID(r):
     if type(r) != str:
         r = r.path
-    return f'Missing OPUSID for {r})'
+    return f'Missing OPUSID for {r}'
 
 def HTTP404_UNKNOWN_FORMAT(fmt, r):
     if type(r) != str:
         r = r.path
-    return f'Unknown return format "{fmt}" for {r}'
+    return f'Internal error (Unknown return format "{fmt}") for {r}'
 
 def HTTP404_BAD_OR_MISSING_RANGE(r):
     if type(r) != str:
         r = r.path
-    return f'Internal error (Bad or missing range for {r})'
+    return f'Internal error (Bad or missing range) for {r}'
 
 def HTTP404_BAD_DOWNLOAD(download, r):
     if type(r) != str:
@@ -301,7 +309,8 @@ def HTTP404_BAD_DOWNLOAD(download, r):
 def HTTP404_BAD_RECYCLEBIN(recyclebin, r):
     if type(r) != str:
         r = r.path
-    return f'Badly formatted recyclebin argument "{recyclebin}" for {r}'
+    return (f'Internal error (Badly formatted recyclebin argument '
+            f'"{recyclebin}") for {r}')
 
 def HTTP404_BAD_COLLAPSE(collapse, r):
     if type(r) != str:
@@ -360,13 +369,23 @@ def HTTP404_UNKNOWN_CATEGORY(r):
         r = r.path
     return f'Unknown category for {r}'
 
-def HTTP500_SEARCH_FAILED(r):
+def wrap_http500_string(s):
+    # This duplicates the format for the Django debug page
+    ret = f'<div id="info">{s}</div>'
+    return ret
+
+def HTTP500_SEARCH_CACHE_FAILED(r):
     if type(r) != str:
         r = r.path
-    return f'Internal server error (Search failed) for {r}'
+    return wrap_http500_string(f'Internal database error for {r}')
 
 def HTTP500_DATABASE_ERROR(r):
-    return f'Internal server error (Database error) for {r}'
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(
+                f'Internal database error for {r}')
 
 def HTTP500_INTERNAL_ERROR(r):
-    return f'Internal server error for {r}'
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(f'Unspecified internal server error for {r}')

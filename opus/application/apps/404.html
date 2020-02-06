@@ -1,4 +1,21 @@
-<h1>OOPS! There was a problem with your request</h1>
+<html>
+    <head>
+        <title>OPUS 404 Error</title>
+    </head>
+    <body>
+        <h1>OOPS! There was a problem with your request</h1>
 
-<p>Here is what you asked for: {{ request_path }}</p>
-<p>Here is what came back: {{ exception }}</p>
+        <p>Here is what you asked for:</p>
+        <blockquote>
+            <pre>
+                {{ request_path }}
+            </pre>
+        </blockquote>
+        <p>Here is what came back:</p>
+        <blockquote>
+            <div id="info">
+                <p>{{ exception }}</p>
+            </div>
+        </blockquote>
+    </body>
+</html>

@@ -47,7 +47,7 @@ class resultsTests(TestCase):
     def test__api_get_data_and_images_no_request(self):
         "[test_results.py] api_get_data_and_images: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/dataimages.json\)'):
+            r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(None)
 
     def test__api_get_data_and_images_no_get(self):
@@ -56,7 +56,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/__api/dataimages.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /__api/dataimages.json\)'):
+            r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(request)
 
 
@@ -67,7 +67,7 @@ class resultsTests(TestCase):
     def test__api_get_data_no_request(self):
         "[test_results.py] api_get_data: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/data.json\)'):
+            r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(None, 'json')
 
     def test__api_get_data_no_get(self):
@@ -76,7 +76,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/__api/data.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/data.json\)'):
+            r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(request, 'json')
 
 
@@ -88,7 +88,7 @@ class resultsTests(TestCase):
     def test__api_get_metadata_no_request(self):
         "[test_results.py] api_get_metadata: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/metadata_v2/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata(None, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self):
@@ -97,7 +97,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/metadata_v2/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
 
@@ -108,7 +108,7 @@ class resultsTests(TestCase):
     def test__api_get_metadata_v2_no_request(self):
         "[test_results.py] api_get_metadata_v2: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/metadata_v2/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata_v2(None, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_v2_no_get(self):
@@ -117,7 +117,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/metadata_v2/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata_v2(request, 'vg-iss-2-s-c4360845', 'json')
 
 
@@ -128,7 +128,7 @@ class resultsTests(TestCase):
     def test__api_get_images_no_request(self):
         "[test_results.py] api_get_images: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/None.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(None, 'json')
 
     def test__api_get_images_no_get(self):
@@ -137,7 +137,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/images.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/None.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(request, 'json')
 
 
@@ -148,7 +148,7 @@ class resultsTests(TestCase):
     def test__api_get_images_by_size_no_request(self):
         "[test_results.py] api_get_images_by_size: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/small.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(None, 'small', 'json')
 
     def test__api_get_images_by_size_no_get(self):
@@ -157,7 +157,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/images/small.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/small.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(request, 'small', 'json')
 
 
@@ -168,7 +168,7 @@ class resultsTests(TestCase):
     def test__api_get_image_no_request(self):
         "[test_results.py] api_get_image: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/small.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_image(None, 'vg-iss-2-s-c4360845', 'small', 'json')
 
     def test__api_get_image_no_get(self):
@@ -177,7 +177,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/images/small.json\)'):
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
 
 
@@ -188,7 +188,7 @@ class resultsTests(TestCase):
     def test__api_get_files_no_request(self):
         "[test_results.py] api_get_files: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/files/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(None, 'vg-iss-2-s-c4360845')
 
     def test__api_get_files_no_get(self):
@@ -197,7 +197,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/files/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(request, 'vg-iss-2-s-c4360845')
 
 
@@ -208,7 +208,7 @@ class resultsTests(TestCase):
     def test__api_get_categories_for_opus_id_no_request(self):
         "[test_results.py] api_get_categories_for_opus_id: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/categories/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(None, 'vg-iss-2-s-c4360845')
 
     def test__api_get_categories_for_opus_id_no_get(self):
@@ -217,7 +217,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/categories/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
 
@@ -229,7 +229,7 @@ class resultsTests(TestCase):
     def test__api_get_categories_for_search_no_request(self):
         "[test_results.py] api_get_categories_for_search: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/categories.json\)'):
+            r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(None)
 
     def test__api_get_categories_for_search_no_get(self):
@@ -238,7 +238,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/categories.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/categories.json\)'):
+            r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(request)
 
 
@@ -249,7 +249,7 @@ class resultsTests(TestCase):
     def test__api_get_product_types_for_opus_id_no_request(self):
         "[test_results.py] api_get_product_types_for_opus_id: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/product_types/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
             api_get_product_types_for_opus_id(None, 'vg-iss-2-s-c4360845')
 
     def test__api_get_product_types_for_opus_id_no_get(self):
@@ -258,7 +258,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/product_types/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/product_types/vg-iss-2-s-c4360845.json\)'):
+            r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
             api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
 
@@ -270,7 +270,7 @@ class resultsTests(TestCase):
     def test__api_get_product_types_for_search_no_request(self):
         "[test_results.py] api_get_product_types_for_search: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/product_types.json\)'):
+            r'Internal error \(No request was provided\) for /api/product_types.json'):
             api_get_product_types_for_search(None)
 
     def test__api_get_product_types_for_search_no_get(self):
@@ -279,7 +279,7 @@ class resultsTests(TestCase):
         request = self.factory.get('/api/product_types.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided for /api/product_types.json\)'):
+            r'Internal error \(No request was provided\) for /api/product_types.json'):
             api_get_product_types_for_search(request)
 
 

@@ -1120,18 +1120,6 @@ var o_search = {
                 $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
                                           <span>Max:&nbsp;<span class="op-hints-info">${multdata.max}</span></span>
                                           <span>Nulls:&nbsp;<span class="op-hints-info">${multdata.nulls}</span></span>`);
-            },
-            statusCode: {
-                404: function() {
-                    $(`#widget__${slug} .spinner`).fadeOut();
-                }
-            },
-            error:function(xhr, ajaxOptions, thrownError) {
-                $(`#widget__${slug} .spinner`).fadeOut();
-                // range input hints are "?" when wrong values of url is pasted
-                $(`#hint__${slug}`).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
-                                          <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
-                                          <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
             }
         }); // end mults ajax
     },
@@ -1189,18 +1177,6 @@ var o_search = {
                             }
                         }
                     }
-                });
-            },
-            statusCode: {
-                404: function() {
-                  $(`#widget__${slug} .spinner`).fadeOut();
-              }
-            },
-            error:function(xhr, ajaxOptions, thrownError) {
-                $(`#widget__${slug} .spinner`).fadeOut();
-                // checkbox hints are "?" when wrong values of url is pasted
-                $(".hints").each(function() {
-                    $(this).html("<span>?</span>");
                 });
             }
         }); // end mults ajax

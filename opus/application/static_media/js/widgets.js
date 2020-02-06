@@ -109,7 +109,7 @@ var o_widgets = {
 
             if (slug === "surfacegeometrytargetname" &&
                 $(".widget[id^='widget__SURFACEGEO']").length !== 0) {
-                $("#op-close-surfacegeo-widgets").modal("show");
+                $("#op-close-surfacegeo-widgets-modal").modal("show");
             } else {
                 o_widgets.closeAndRemoveWidgetFromDOM(slug);
             }
