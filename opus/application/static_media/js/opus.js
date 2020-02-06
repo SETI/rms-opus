@@ -1287,10 +1287,8 @@ var opus = {
 }; // end opus namespace
 
 $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
-    responseText = jqXHR.responseText;
-    console.log("");
-    console.log(responseText);
-    errorMsg = responseText.match(/<div id="info">(.*?)<\/div>/sm)[1]
+    let responseText = jqXHR.responseText;
+    let errorMsg = responseText.match(/<div id="info">([\s\S]*?)<\/div>/m)[1];
     let modal = $("#op-http-response-error-modal");
     let modalMsg = (`There was an error on the OPUS server. The following
                      response was received:
