@@ -30,7 +30,8 @@ class resultsTests(TestCase):
 
     def setUp(self):
         settings.OPUS_FAKE_API_DELAYS = 0
-        settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         self._empty_user_searches()
         self.maxDiff = None
         logging.disable(logging.ERROR)

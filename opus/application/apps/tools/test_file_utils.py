@@ -15,7 +15,8 @@ class fileUtilsTests(TestCase):
     def setUp(self):
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
-        settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         logging.disable(logging.ERROR)
         cache.clear()
 
