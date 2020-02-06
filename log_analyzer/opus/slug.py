@@ -75,6 +75,7 @@ class ToInfoMap:
                        'gallery_data_viewer', 'limit', 'loc_type', 'order', 'page',
                        'range', 'recyclebin', 'reqno', 'request', 'startobs', 'types', 'units', 'url_cols',
                        'view', 'widgets', 'widgets2',
+                       'not_selected',
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
                        }

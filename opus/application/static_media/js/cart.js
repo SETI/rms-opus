@@ -510,38 +510,57 @@ var o_cart = {
             o_browse.showPageLoaderSpinner();
 
             // redux: and nix this big thing:
-            $.ajax({ url: "/opus/__cart/view.html",
-                success: function(html) {
-                    // this div lives in the in the nav menu template
-                    $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
+            let hash = o_hash.getHash();
 
-                    // Init perfect scrollbar when .op-download-options-product-types is rendered.
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
-                        minScrollbarLength: opus.minimumPSLength,
+            // Figure out which product types are not selected
+            let notSelectedProductsList = $("#op-cart-summary .op-download-options-product-types :checkbox:not(:checked)");
+            let notSelectedProductInfoSlugName = [];
+            $.each(notSelectedProductsList, function(index, linkObj) {
+                notSelectedProductInfoSlugName.push($(linkObj).val());
+            });
+            let notSelected = "";
+            if (hash !== "") {
+                notSelected = "&";
+            }
+            notSelected += "not_selected=" + notSelectedProductInfoSlugName.join();
+            let selected = o_cart.getDownloadFiltersChecked();
+
+            o_cart.lastRequestNo++;
+            let url = `/opus/__cart/view.json?${hash}${notSelected}&${selected}&reqno=${o_cart.lastRequestNo}`;
+
+            $.getJSON(url, function(data) {
+                if (data.reqno < o_cart.lastRequestNo) {
+                    return;
+                }
+                // this div lives in the in the nav menu template
+                $("#op-download-options-container", "#cart").hide().html(data.html).fadeIn();
+
+                // Init perfect scrollbar when .op-download-options-product-types is rendered.
+                o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
+                    minScrollbarLength: opus.minimumPSLength,
                         suppressScrollX: true,
-                    });
+                });
 
-                    // Depending on the screen width, we move download data elements
-                    // to either original left pane or slide panel
-                    o_cart.displayCartLeftPane();
+                // Depending on the screen width, we move download data elements
+                // to either original left pane or slide panel
+                o_cart.displayCartLeftPane();
 
-                    if (o_cart.downloadInProcess) {
-                        $(".spinner", "#cart_summary").fadeIn();
-                    }
+                if (o_cart.downloadInProcess) {
+                    $(".spinner", "#op-cart-summary").fadeIn();
+                }
 
-                    let startObsLabel = o_browse.getStartObsLabel();
-                    let startObs = Math.max(opus.prefs[startObsLabel], 1);
-                    startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
-                    o_browse.loadData(view, startObs);
+                let startObsLabel = o_browse.getStartObsLabel();
+                let startObs = Math.max(opus.prefs[startObsLabel], 1);
+                startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
+                o_browse.loadData(view, startObs);
 
-                    if (zippedFiles_html) {
-                        $(".op-zipped-files", "#cart").html(zippedFiles_html);
-                    }
+                if (zippedFiles_html) {
+                    $(".op-zipped-files", "#cart").html(zippedFiles_html);
                 }
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches
-            // back to cart tab without reloading obs data in cart tab. 
+            // back to cart tab without reloading obs data in cart tab.
             $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
