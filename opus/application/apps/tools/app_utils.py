@@ -262,3 +262,90 @@ def cols_to_slug_list(slugs):
     if not slugs:
         return []
     return slugs.split(',')
+
+
+def HTTP404_NO_REQUEST(s):
+    return f'Internal error (No request was provided for {s})'
+
+def HTTP404_BAD_OR_MISSING_REQNO(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing reqno for {r})'
+
+def HTTP404_MISSING_OPUS_ID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Missing OPUSID for {r})'
+
+def HTTP404_UNKNOWN_FORMAT(fmt, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown return format "{fmt}" for {r}'
+
+def HTTP404_BAD_OR_MISSING_RANGE(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing range for {r})'
+
+def HTTP404_BAD_DOWNLOAD(download, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted download argument "{download}" for {r}'
+
+def HTTP404_BAD_RECYCLEBIN(recyclebin, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted recyclebin argument "{recyclebin}" for {r}'
+
+def HTTP404_BAD_COLLAPSE(collapse, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted collapse argument "{collapse}" for {r}'
+
+def HTTP404_BAD_LIMIT(limit, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted limit "{limit}" for {r}'
+
+def HTTP404_SEARCH_PARAMS_INVALID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Search parameters invalid for {r}'
+
+def HTTP404_UNKNOWN_SLUG(slug, r):
+    if type(r) != str:
+        r = r.path
+    if slug is None:
+        return f'Unknown metadata field slug for {r}'
+    return f'Unknown metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_UNITS(units, slug, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown units "{units}" for metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_RING_OBS_ID(ringobsid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown RINGOBSID "{ringobsid}" for {r}'
+
+def HTTP404_UNKNOWN_OPUS_ID(opusid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown OPUSID "{opusid}" for {r}'
+
+def HTTP404_UNKNOWN_CATEGORY(r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown category for {r}'
+
+def HTTP500_SEARCH_FAILED(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal server error (Search failed) for {r}'
+
+def HTTP500_DATABASE_ERROR(r):
+    return f'Internal server error (Database error) for {r}'
+
+def HTTP500_INTERNAL_ERROR(r):
+    return f'Internal server error for {r}'

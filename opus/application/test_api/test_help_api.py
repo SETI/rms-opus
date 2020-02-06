@@ -34,25 +34,25 @@ class ApiHelpTests(TestCase, ApiTestHelper):
 
     def test__api_help_about(self):
         "[test_help_api.py] /__help: about"
-        url = '/opus/__help/about.html'
+        url = '/__help/about.html'
         self._run_status_equal(url, 200)
 
     def test__api_help_volumes(self):
         "[test_help_api.py] /__help: volumes"
-        url = '/opus/__help/volumes.html'
+        url = '/__help/volumes.html'
         self._run_status_equal(url, 200)
 
     def test__api_help_faq(self):
         "[test_help_api.py] /__help: faq"
-        url = '/opus/__help/faq.html'
+        url = '/__help/faq.html'
         self._run_status_equal(url, 200)
 
     def test__api_help_apiguide(self):
         "[test_help_api.py] /__help: apiguide"
-        url = '/opus/__help/apiguide.html'
+        url = '/__help/apiguide.html'
         self._run_status_equal(url, 200)
 
     def test__api_help_bad(self):
         "[test_help_api.py] /__help: bad"
-        url = '/opus/__help/bad.html'
+        url = '/__help/bad.html'
         self._run_status_equal(url, 404)
