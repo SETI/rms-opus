@@ -112,6 +112,9 @@ OPUS_LOG_API_CALLS = False
 # Negative = Delay a random amount between 0 and abs(delay)
 OPUS_FAKE_API_DELAYS = None
 
+# Allow random throwing of Http404 or Http500 errors
+OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0.
+
 
 ##############################
 ### NEEDED FOR OPUS IMPORT ###

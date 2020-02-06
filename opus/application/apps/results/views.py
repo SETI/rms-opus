@@ -134,7 +134,7 @@ def api_get_data_and_images(request):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
-    if labels is None:
+    if labels is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -146,10 +146,10 @@ def api_get_data_and_images(request):
                                        return_opusids=True,
                                        return_cart_states=True,
                                        api_code=api_code)
-    if page is None:
+    if page is None or throw_random_http_error():
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
-        return ret
+        raise ret
 
     preview_jsons = [json.loads(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -187,7 +187,7 @@ def api_get_data_and_images(request):
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
     labels_no_units = labels_for_slugs(cols_to_slug_list(cols), units=False)
-    if labels is None or labels_no_units is None:
+    if labels is None or labels_no_units is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -195,7 +195,7 @@ def api_get_data_and_images(request):
     order_slugs = cols_to_slug_list(order)
     order_slugs_pure = [x[1:] if x[0] == '-' else x for x in order_slugs]
     order_labels = labels_for_slugs(order_slugs_pure, units=False)
-    if order_labels is None:
+    if order_labels is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -223,7 +223,7 @@ def api_get_data_and_images(request):
             return err
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http_error():
         log.error('api_get_data_and_images: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
@@ -319,7 +319,7 @@ def api_get_data(request, fmt):
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
-    if labels is None:
+    if labels is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -330,10 +330,10 @@ def api_get_data(request, fmt):
                                                      return_opusids=True,
                                                      api_code=api_code)
 
-    if page is None:
+    if page is None or throw_random_http_error():
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
-        return ret
+        raise ret
 
     result_count, _, err = get_result_count_helper(request, api_code)
     if err is not None: # pragma: no cover
@@ -484,7 +484,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id:
+    if not opus_id or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(opus_id, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -496,7 +496,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                      return_db_names,
                                      internal,
                                      api_code)
-        if ret is None:
+        if ret is None or throw_random_http_error():
             ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
             exit_api_call(api_code, ret)
             raise ret
@@ -506,12 +506,14 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     # Make sure it's a valid OPUS ID
     try:
         results = query_table_for_opus_id('obs_general', opus_id)
+        if throw_random_http_error(): # pragma: no cover
+            raise LookupError
     except LookupError: # pragma: no cover
         log.error('api_get_metadata: Could not find data model for obs_general')
         ret = HttpResponseServerError(HTTP500_INTERNAL_ERROR(request))
         exit_api_call(api_code, ret)
         return ret
-    if len(results) == 0:
+    if len(results) == 0 or throw_random_http_error():
         log.error('get_metadata: Error searching for opus_id "%s"',
                   opus_id)
         ret = Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
@@ -539,7 +541,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                        TableNames.objects.filter(table_name__in=cat_list,
                                                  display='Y'))
                                          .order_by('disp_order'))
-        if len(all_tables) != len(cat_list):
+        if len(all_tables) != len(cat_list) or throw_random_http_error():
             log.error('get_metadata: Unknown category name in "%s"',
                       cats)
             ret = Http404(HTTP404_UNKNOWN_CATEGORY(request))
@@ -566,6 +568,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
+                if throw_random_http_error(): # pragma: no cover
+                    raise LookupError
             except LookupError: # pragma: no cover
                 log.error('api_get_metadata: Could not find data model for '
                           +'category %s', model_name)
@@ -719,10 +723,10 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                                        return_opusids=True,
                                        return_ringobsids=True,
                                        api_code=api_code)
-    if page is None:
-        ret = Http404('Could not find page')
+    if page is None or throw_random_http_error():
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -855,7 +859,7 @@ def api_get_files(request, opus_id=None):
     if opus_id:
         # Backwards compatibility
         opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-        if not opus_id:
+        if not opus_id or throw_random_http_error():
             ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(opus_id, request))
             exit_api_call(api_code, ret)
             raise ret
@@ -934,7 +938,7 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id:
+    if not opus_id or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(opus_id, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -984,10 +988,10 @@ def api_get_categories_for_search(request):
         raise ret
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    if selections is None or throw_random_http_error():
         log.error('api_get_categories_for_search: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -1034,7 +1038,7 @@ def api_get_product_types_for_opus_id(request, opus_id):
 
     # Backwards compatibility
     opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-    if not opus_id:
+    if not opus_id or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_RING_OBS_ID(opus_id, request))
         exit_api_call(api_code, ret)
         raise ret
@@ -1084,19 +1088,19 @@ def api_get_product_types_for_search(request):
         raise ret
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    if selections is None or throw_random_http_error():
         log.error('api_get_product_types_for_search: Could not find selections '
                   +'for request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
     query_table = get_user_query_table(selections, extras, api_code)
-    if not query_table: # pragma: no cover
+    if not query_table or throw_random_http_error(): # pragma: no cover
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = Http404('Bad search')
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -1591,13 +1595,13 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                                                      limit=1,
                                                      api_code=api_code)
 
-    if page is None:
+    if page is None or throw_random_http_error():
         log.error('_get_metadata_by_slugs: Error during search')
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
-    if len(page) != 1:
+    if len(page) != 1 or throw_random_http_error():
         log.error('_get_metadata_by_slugs: Error searching for opus_id "%s"',
                   opus_id)
         ret = Http404(HTTP404_UNKNOWN_OPUS_ID(opus_id, request))
@@ -1606,7 +1610,7 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
 
     slug_list = cols_to_slug_list(cols)
     labels = labels_for_slugs(slug_list)
-    if labels is None:
+    if labels is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
         raise ret

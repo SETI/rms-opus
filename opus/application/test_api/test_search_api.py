@@ -18,6 +18,8 @@ class ApiSearchTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         self.search_count_threshold = settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD

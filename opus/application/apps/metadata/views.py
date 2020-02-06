@@ -26,7 +26,7 @@ import logging
 import settings
 
 from django.apps import apps
-from django.db import connection
+from django.db import connection, DatabaseError
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
@@ -100,7 +100,7 @@ def api_get_result_count(request, fmt, internal=False):
     data = {'result_count': count}
     if internal:
         reqno = get_reqno(request)
-        if reqno is None:
+        if reqno is None or throw_random_http_error():
             log.error('api_get_result_count: Missing or badly formatted reqno')
             ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(
                                         '/__api/meta/result_count.json'))
@@ -167,7 +167,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         raise ret
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    if selections is None or throw_random_http_error():
         log.error('api_get_mult_counts: Failed to get selections for slug %s, '
                   +'URL %s', str(slug), request.GET)
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
@@ -175,7 +175,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         raise ret
 
     param_info = get_param_info_by_slug(slug, 'col')
-    if not param_info:
+    if not param_info or throw_random_http_error():
         log.error('api_get_mult_counts: Could not find param_info entry for '
                   +'slug %s *** Selections %s *** Extras %s', str(slug),
                   str(selections), str(extras))
@@ -192,7 +192,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         del selections[param_qualified_name]
 
     cache_num, cache_new_flag = set_user_search_number(selections, extras)
-    if cache_num is None: # pragma: no cover
+    if cache_num is None or throw_random_http_error(): # pragma: no cover
         log.error('api_get_mult_counts: Failed to create user_selections entry'
                   +' for *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -215,6 +215,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             mult_model = apps.get_model('search',
                                         mult_name.title().replace('_',''))
+            if throw_random_http_error(): # pragma: no cover
+                raise LookupError
         except LookupError: # pragma: no cover
             log.error('api_get_mult_counts: Could not get_model for %s',
                       mult_name.title().replace('_',''))
@@ -225,6 +227,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
         try:
             table_model = apps.get_model('search',
                                          table_name.title().replace('_',''))
+            if throw_random_http_error(): # pragma: no cover
+                raise LookupError
         except LookupError: # pragma: no cover
             log.error('api_get_mult_counts: Could not get_model for %s',
                       table_name.title().replace('_',''))
@@ -237,7 +241,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
 
         user_table = get_user_query_table(selections, extras, api_code=api_code)
 
-        if selections and not user_table: # pragma: no cover
+        if ((selections and not user_table) or
+            throw_random_http_error()): # pragma: no cover
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -263,6 +268,8 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
                 mult = mult_model.objects.get(id=mult_id)
                 mult_disp_order = mult.disp_order
                 mult_label = mult.label
+                if throw_random_http_error(): # pragma: no cover
+                    raise ObjectDoesNotExist
             except ObjectDoesNotExist: # pragma: no cover
                 log.error('api_get_mult_counts: Could not find mult entry for '
                           +'mult_model %s id %s', str(mult_model), str(mult_id))
@@ -285,7 +292,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
             'mults': mults}
     if internal:
         reqno = get_reqno(request)
-        if reqno is None:
+        if reqno is None or throw_random_http_error():
             log.error('api_get_mult_counts: Missing or badly formatted reqno')
             ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
             exit_api_call(api_code, ret)
@@ -364,7 +371,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         raise ret
 
     param_info = get_param_info_by_slug(slug, 'widget')
-    if not param_info:
+    if not param_info or throw_random_http_error():
         log.error('get_range_endpoints: Could not find param_info entry for '+
                   'slug %s', str(slug))
         ret = Http404(HTTP404_UNKNOWN_SLUG(slug, request))
@@ -372,7 +379,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         raise ret
 
     units = request.GET.get('units', param_info.units)
-    if not opus_support.is_valid_unit(param_info.units, units):
+    if (not opus_support.is_valid_unit(param_info.units, units) or
+        throw_random_http_error()):
         log.error('get_range_endpoints: Bad units "%s" for '+
                   'slug %s', str(units), str(slug))
         ret = Http404(HTTP404_UNKNOWN_UNITS(units, slug, request))
@@ -389,6 +397,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     try:
         table_model = apps.get_model('search',
                                      table_name.title().replace('_',''))
+        if throw_random_http_error(): # pragma: no cover
+            raise LookupError
     except LookupError: # pragma: no cover
         log.error('api_get_range_endpoints: Could not get_model for %s',
                   table_name.title().replace('_',''))
@@ -405,7 +415,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         param1 = param2 = param_no_num  # single column range query
 
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    if selections is None or throw_random_http_error():
         log.error('api_get_range_endpoints: Could not find selections for '
                   +'request %s', str(request.GET))
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
@@ -423,7 +433,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             del selections[to_remove]
     if selections:
         user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None: # pragma: no cover
+        if user_table is None or throw_random_http_error(): # pragma: no cover
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
@@ -499,7 +509,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
 
     if internal:
         reqno = get_reqno(request)
-        if reqno is None:
+        if reqno is None or throw_random_http_error():
             log.error(
                 'api_get_range_endpoints: Missing or badly formatted reqno')
             ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
@@ -577,6 +587,8 @@ def api_get_fields(request, fmt, slug=None):
     collapse = request.GET.get('collapse', '0')
     try:
         collapse = int(collapse) != 0
+        if throw_random_http_error(): # pragma: no cover
+            raise ValueError
     except ValueError:
         ret = Http404(HTTP404_BAD_COLLAPSE(collapse, request))
         exit_api_call(api_code, ret)
@@ -598,7 +610,7 @@ def api_get_fields(request, fmt, slug=None):
 # in cart/views.py
 def get_result_count_helper(request, api_code):
     (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    if selections is None or throw_random_http_error():
         log.error('get_result_count_helper: Could not find selections for '
                   +'request %s', str(request.GET))
         ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
@@ -607,7 +619,7 @@ def get_result_count_helper(request, api_code):
 
     table = get_user_query_table(selections, extras, api_code=api_code)
 
-    if not table: # pragma: no cover
+    if not table or throw_random_http_error(): # pragma: no cover
         log.error('get_result_count_helper: Could not find/create query table '
                   +'for request %s', str(request.GET))
         ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
@@ -622,6 +634,8 @@ def get_result_count_helper(request, api_code):
         try:
             cursor.execute(sql)
             count = cursor.fetchone()[0]
+            if throw_random_http_error(): # pragma: no cover
+                raise DatabaseError('random')
         except DatabaseError as e: # pragma: no cover
             log.error('get_result_count_helper: SQL query failed for request '
                       +'%s: SQL "%s" ERR "%s"',

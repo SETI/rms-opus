@@ -18,6 +18,8 @@ class uiTests(TestCase):
     def setUp(self):
         self.maxDiff = None
         sys.tracebacklimit = 0 # default: 1000
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0
         logging.disable(logging.ERROR)
         cache.clear()
         self.factory = RequestFactory()

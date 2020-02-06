@@ -151,6 +151,12 @@ def exit_api_call(api_code, ret):
     if delay_amount:
         time.sleep(delay_amount)
 
+def throw_random_http_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY
+    if ret:
+        getattr(log, settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP error')
+    return ret
+
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
 

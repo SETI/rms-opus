@@ -30,6 +30,8 @@ class searchTests(TestCase):
         self.factory = RequestFactory()
 
     def setUp(self):
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR_PROBABILITY = 0
         self._empty_user_searches()
         self.maxDiff = None
         logging.disable(logging.ERROR)
