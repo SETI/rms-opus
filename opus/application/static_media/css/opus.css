@@ -54,6 +54,27 @@ even when the browser size is narrow. */
     padding-right: 0.5rem;
 }
 
+/* Override style.css so that the navbar buttons are always dark when the mouse
+   is away, and always light when the mouse is hovering. This makes them
+   consistent with the other nav items which go from dark grey to light grey. */
+#op-main-nav .navbar-nav .nav-link.active,
+#op-main-nav .navbar-nav .nav-link.open,
+#op-main-nav .navbar-nav .active>.nav-link,
+#op-main-nav .navbar-nav .nav-link.show,
+#op-main-nav .navbar-nav .show>.nav-link
+{
+    color: var(--dark); /* From style.css */
+}
+#op-main-nav .navbar-nav .nav-link.active:hover,
+#op-main-nav .navbar-nav .nav-link.open:hover {
+    color: var(--white); /* From style.css */
+}
+
+/* Remove annoying dotted border in Firefox */
+#op-main-nav .navbar-nav .nav-link {
+    outline: none; !important
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
@@ -104,8 +125,17 @@ appears & disappears. */
 
 /* Add padding to (?)help when main nav has the hamburger */
 #op-help-menu {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+@media (max-height: 490px) {
+    #op-help a {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
 }
 
 #op-tab img.newGIF {
@@ -291,11 +321,6 @@ to 100%, this will make the shrinking look smoother */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-}
-
-.op-redraw-menu .collapsing {
-     -webkit-transition: none;
-     transition: none;
 }
 
 hr.shadow-divider {
@@ -735,37 +760,42 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
-/* Make sure general constraints search title text is vertically aligned with
-.op-menu-text */
-.op-general-search-category {
+/* Make sure first category search title text is vertically aligned with
+   .op-menu-spinner */
+.op-menu-first-category {
     display: flex;
     align-items: center;
 }
 
-/* Make sure genreal constraints search category anchor tag takes the full width
-when spinner is not there. */
-.op-general-search-category .op-submenu-category {
+/* Make sure first category anchor tag takes the full width when spinner is not
+   there. */
+.op-menu-first-category .op-submenu-category {
     flex: 1 0 auto;
 }
 
-/* Make sure .op-menu text spinner stays next to general constraints search title
-when it's spinning. */
-.op-general-search-category .op-menu-text {
+/* Make sure .op-menu text spinner stays next to first category search title
+   when it's spinning. */
+.op-menu-first-category .op-menu-spinner {
     flex: 100 0 auto;
 }
 
+/* Make the first category name closer to the border line above it. */
+.op-menu-first-category .op-submenu-category {
+    padding-top: 0 !important;
+}
+
 /* Make sure the a tags for categories take up full width in select metadata
-and search sidebar menu */
+   and search sidebar menu */
 .op-submenu-category {
     display: block;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
 
-/* Shift the whole search term list up to reduce the spacing between the category
-name and search term in search sidebar and select metadata menu. Need to set both
-margin-top and margin-bottom to avoid the animation glitch when a category is
-collapsing. */
+/* Shift the whole search term list up to reduce the spacing between the
+   category name and search term in search sidebar and select metadata menu.
+   Need to set both margin-top and margin-bottom to avoid the animation glitch
+   when a category is collapsing. */
 .op-submenu-item-list {
     margin-top: -0.35rem;
     margin-bottom: 0.35rem;
@@ -807,11 +837,6 @@ collapsing. */
 narrow */
 .op-all-metadata-column .list-group-item {
     padding-right: 0;
-}
-
-/* Make the first category name closer to the border line above it. */
-.op-all-metadata-column .op-general-search-category .op-submenu-category {
-    padding-top: 0 !important;
 }
 
 .op-selected-metadata-column ul {
@@ -1772,9 +1797,10 @@ even when screen is narrow */
     margin: 0 10px;
 }
 
-/* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text.spinner {
+/* smaller spinner next to first category: shows up when menu is loading */
+.op-menu-spinner.spinner {
     display: none;
+    margin-top: -10px;
     margin-left: 5px;
     width: 18px;
     line-height: 16px;
@@ -2065,6 +2091,26 @@ footer {
 }
 
 /* End of API Guide */
+
+/* Styling for the Splash welcome message */
+
+#op-new-user-msg .modal-body {
+    padding: 10px;
+}
+
+#op-new-user-msg p:first-child {
+    margin-top: 10px;
+}
+
+#op-new-user-msg p {
+    margin-bottom: 12px;
+}
+
+#op-new-user-msg p:last-child {
+    margin-bottom: 0px;
+}
+
+/* End of Splash welcome message */
 
 .op-header-text {
     display: inline-block;
@@ -2474,12 +2520,6 @@ wiggling when mouse over autocomplete menu items */
     background: #d1dbe1 !important;
     /* Prevent menu item wiggling when we mouse over it */
     margin: 0;
-}
-
-/* Use to disable nav link (for the case that disables browse tab when
-we have an invalid search) */
-.op-disabled-nav-link {
-    pointer-events: none;
 }
 
 /* Styling for the button to delete a set of inputs in a widget */

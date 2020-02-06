@@ -16,8 +16,10 @@ from annoying.decorators import render_to
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.shortcuts import render
+from django.template.loader import get_template
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
@@ -42,7 +44,7 @@ class main_site(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(main_site, self).get_context_data(**kwargs)
-        menu = _get_menu_labels('', 'search')
+        menu = _get_menu_labels(None, 'search')
         context['default_columns'] = settings.DEFAULT_COLUMNS
         context['default_widgets'] = settings.DEFAULT_WIDGETS
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
@@ -96,15 +98,73 @@ def api_get_menu(request):
 
     This is a PRIVATE API.
 
-    This is a hack to provide the widget names to the metadata selector.
-
-    Format: __menu.html
+    Format: __menu.json
+    Arguments: reqno=<reqno>
+               Normal search arguments
     """
     api_code = enter_api_call('api_get_menu', request)
 
-    menu = _get_menu_labels(request, 'search')
-    menu['which'] = 'search' # Used to create DOM IDs
-    ret = render(request, "ui/menu.html", menu)
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_get_menu: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    menu_context = _get_menu_labels(request, 'search')
+    menu_context['which'] = 'search' # Used to create DOM IDs
+    menu_template = get_template('ui/menu.html')
+    html = menu_template.render(menu_context)
+    ret = json_response({'html': html, 'reqno': reqno})
+
+    exit_api_call(api_code, ret)
+    return ret
+
+
+@never_cache
+def api_get_metadata_selector(request):
+    """Create the metadata selector list.
+
+    This is a PRIVATE API.
+
+    Format: __metadata_selector.json
+    Arguments: reqno=<reqno>
+               Normal search arguments
+    """
+    api_code = enter_api_call('api_get_metadata_selector', request)
+
+    col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
+    col_slugs = cols_to_slug_list(col_slugs)
+    col_slugs = filter(None, col_slugs) # Eliminate empty slugs
+    if not col_slugs:
+        col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
+    col_slugs_info = OrderedDict()
+    for col_slug in col_slugs:
+        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col')
+
+    search_slugs_info = []
+    search_slugs = request.GET.get('widgets', None)
+    if search_slugs:
+        search_slugs = cols_to_slug_list(search_slugs)
+        search_slugs = filter(None, search_slugs) # Eliminate empty slugs
+        for search_slug in search_slugs:
+            search_slugs_info.append(get_param_info_by_slug(search_slug,
+                                                            'widget'))
+
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_get_menu: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    menu_context = _get_menu_labels(request, 'selector', search_slugs_info)
+
+    menu_context['all_slugs_info'] = col_slugs_info
+    menu_context['which'] = 'selector'
+    menu_template = get_template('ui/select_metadata.html')
+    html = menu_template.render(menu_context)
+    ret = json_response({'html': html, 'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
@@ -116,7 +176,7 @@ def api_get_widget(request, **kwargs):
 
     This is a PRIVATE API.
 
-    Format: __forms/widget/<slug>.html
+    Format: __widget/<slug>.html
     Arguments: slug=<slug>
                addlink=true|false XXX???
     """
@@ -360,45 +420,6 @@ def api_get_widget(request, **kwargs):
         "ranges": ranges
     }
     ret = render(request, template, context)
-
-    exit_api_call(api_code, ret)
-    return ret
-
-
-@never_cache
-def api_get_metadata_selector(request):
-    """Create the metadata selector list.
-
-    This is a PRIVATE API.
-
-    Format: __forms/metadata_selector.html
-    Arguments: None
-    """
-    api_code = enter_api_call('api_get_metadata_selector', request)
-
-    col_slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    col_slugs = cols_to_slug_list(col_slugs)
-    col_slugs = filter(None, col_slugs) # Eliminate empty slugs
-    if not col_slugs:
-        col_slugs = cols_to_slug_list(settings.DEFAULT_COLUMNS)
-    col_slugs_info = OrderedDict()
-    for col_slug in col_slugs:
-        col_slugs_info[col_slug] = get_param_info_by_slug(col_slug, 'col')
-
-    search_slugs_info = []
-    search_slugs = request.GET.get('widgets', None)
-    if search_slugs:
-        search_slugs = cols_to_slug_list(search_slugs)
-        search_slugs = filter(None, search_slugs) # Eliminate empty slugs
-        for search_slug in search_slugs:
-            search_slugs_info.append(get_param_info_by_slug(search_slug,
-                                                            'widget'))
-
-    menu = _get_menu_labels(request, 'selector', search_slugs_info)
-
-    menu['all_slugs_info'] = col_slugs_info
-    menu['which'] = 'selector'
-    ret = render(request, "ui/select_metadata.html", menu)
 
     exit_api_call(api_code, ret)
     return ret
@@ -1363,23 +1384,34 @@ def api_dummy(request, *args, **kwargs):
 ################################################################################
 
 def _get_menu_labels(request, labels_view, search_slugs_info=None):
-    "Return the categories in the menu for the search form."
+    "Return the categories in the search tab or metadata selector."
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
         filter = "display"
     else:
         filter = "display_results"
 
+    if search_slugs_info:
+        expanded_cats = ['search_fields']
+    else:
+        expanded_cats = ['obs_general']
     if request and request.GET:
         (selections, extras) = url_to_search_params(request.GET,
                                                     allow_errors=True)
+        get_expanded_cats = request.GET.get('expanded_cats')
+        if get_expanded_cats == '':
+            expanded_cats = []
+        elif get_expanded_cats is not None:
+            expanded_cats = get_expanded_cats.split(',')
     else:
         selections = None
 
     if not selections:
-        triggered_tables = settings.BASE_TABLES[:]  # makes a copy of settings.BASE_TABLES
+        # Makes a copy of settings.BASE_TABLES
+        triggered_tables = settings.BASE_TABLES[:]
     else:
-        triggered_tables = get_triggered_tables(selections, extras) # Needs api_code
+        # XXX Needs api_code to report errors
+        triggered_tables = get_triggered_tables(selections, extras)
 
     if labels_view == 'selector':
         if 'obs_surface_geometry' in triggered_tables:
@@ -1410,8 +1442,12 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     menu_data['labels_view'] = labels_view
 
     for d in divs:
-        d.start_expanded = (d.table_name == 'obs_general' and
-                            not search_slugs_info)
+        if d.table_name in expanded_cats:
+            d.collapsed = ''
+            d.show = 'show'
+        else:
+            d.collapsed = 'collapsed'
+            d.show = ''
         menu_data.setdefault(d.table_name, OrderedDict())
 
         # XXX This really shouldn't be here!!
@@ -1431,28 +1467,38 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
 
             menu_data[d.table_name].setdefault('data', OrderedDict())
             for sub_head in sub_headings[d.table_name]:
-                all_param_info = ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name, "sub_heading": sub_head})
+                if d.table_name+'-'+slugify(sub_head) in expanded_cats:
+                    sub_head_tuple = (sub_head, '', 'show')
+                else:
+                    sub_head_tuple = (sub_head, 'collapsed', '')
+
+                all_param_info = (ParamInfo.objects
+                                  .filter(**{filter:1,
+                                             'category_name':d.table_name,
+                                             'sub_heading': sub_head}))
                 for p in all_param_info:
                     if labels_view == 'search':
                         if p.slug[-1] == '2':
-                            # We can just skip these because we never use them for
-                            # widgets
+                            # We can just skip these because we never use them
+                            # for search widgets
                             continue
                         if p.slug[-1] == '1':
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
-                    menu_data[d.table_name]['data'].setdefault(sub_head, []).append(p)
+                    menu_data[d.table_name]['data'].setdefault(sub_head_tuple,
+                                                               []).append(p)
 
         else:
             # this div has no sub headings
             menu_data[d.table_name]['has_sub_heading'] = False
-            for p in ParamInfo.objects.filter(**{filter:1, "category_name":d.table_name}):
-                # in search view, we don't need trailing 1 & 2 for data-slug in menu
-                # but in metadata modal, we need trailing 1 & 2 for data-slug in modal menu
+            for p in ParamInfo.objects.filter(**{filter:1,
+                                                 'category_name':d.table_name}):
+                # On the search tab, we don't need the trailing 1 & 2 for
+                # data-slug in the Select Metadata modal we do.
                 if labels_view == 'search':
                     if p.slug[-1] == '2':
                         # We can just skip these because we never use them for
-                        # widgets
+                        # search widgets
                         continue
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
@@ -1464,8 +1510,13 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # Thanks to the way templates work, we can fake up a TableNames object
         # by using a standard dictionary.
         search_div = {'table_name': 'search_fields',
-                      'label': 'Current Search Fields',
-                      'start_expanded': True}
+                      'label': 'Current Search Fields'}
+        if 'search_fields' in expanded_cats:
+            search_div['collapsed'] = ''
+            search_div['show'] = 'show'
+        else:
+            search_div['collapsed'] = 'collapsed'
+            search_div['show'] = ''
         divs = [search_div] + list(divs)
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
@@ -1480,5 +1531,13 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # the min and max slugs to the list.
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
                 menu_data['search_fields'].setdefault('data', []).append(p2)
+
+    first_category = True
+    for div in divs:
+        if type(div) == dict:
+            div['first_category'] = first_category
+        else:
+            div.first_category = first_category
+        first_category = False
 
     return {'menu': {'data': menu_data, 'divs': divs}}

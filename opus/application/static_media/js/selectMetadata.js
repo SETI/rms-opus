@@ -19,6 +19,8 @@ var o_selectMetadata = {
     isSortingHappening: false,
     currentSelectedMetadata: opus.prefs.cols.slice(),
 
+    lastMetadataMenuRequestNo: 0,
+
     // metadata selector behaviors
     addBehaviors: function() {
         // global to allow the modal event handlers to communicate
@@ -129,16 +131,38 @@ var o_selectMetadata = {
         let buttonTitle = (tab === "#cart" ? "Download CSV (in cart)" : "Download CSV (all results)");
 
         if (!o_selectMetadata.rendered) {
+            let spinnerTimer = setTimeout(function() {
+                $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
-            let url = "/opus/__forms/metadata_selector.html?" + o_hash.getFullHashStr();
+            let hash = o_hash.getFullHashStr();
 
-            // When select metadata contents are outdated, we empty the old contents and display a
-            // small spinner before the new contents are fully loaded.
-            $(".modal-body.op-select-metadata-details").empty();
-            $(".modal-body.op-select-metadata-details").html(opus.spinner);
+            // Figure out which categories are already expanded
+            let numberCategories = $("#op-select-metadata .op-submenu-category").length;
+            let expandedCategoryLinks = $("#op-select-metadata .op-submenu-category").not(".collapsed");
+            let expandedCategories = [];
+            $.each(expandedCategoryLinks, function(index, linkObj) {
+                expandedCategories.push($(linkObj).data("cat"));
+            });
+            let expandedCats = "";
+            if (numberCategories > 0) {
+                /* If there aren't any categories, it means this is the first time we're
+                   loading the select metadata menu so let the backend do its default
+                   behavior. Otherwise, specify the categories to expand. */
+                if (hash !== "") {
+                    expandedCats = "&";
+                }
+                expandedCats += "expanded_cats=" + expandedCategories.join();
+            }
+            o_selectMetadata.lastMetadataMenuRequestNo++;
+            let url = `/opus/__metadata_selector.json?${hash}${expandedCats}&reqno=${o_selectMetadata.lastMetadataMenuRequestNo}`;
 
-            $(".modal-body.op-select-metadata-details").load(url, function(response, status, xhr)  {
+            $.getJSON(url, function(data) {
+                if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
+                    return;
+                }
+                $(".op-select-metadata-details").html(data.html);
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -170,7 +194,7 @@ var o_selectMetadata = {
                 $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
                 $("#op-select-metadata a.op-download-csv").text(buttonTitle);
 
-                $(".op-selected-metadata-column > ul").sortable({
+                $("#op-select-metadata .op-selected-metadata-column > ul").sortable({
                     items: "li",
                     cursor: "grab",
                     containment: "parent",
@@ -188,12 +212,13 @@ var o_selectMetadata = {
                     }
                 });
                 if (opus.prefs.cols.length <= 1) {
-                    $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
+                    $("#op-select-metadata .op-selected-metadata-column .op-selected-metadata-unselect").hide();
                 }
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
+                clearTimeout(spinnerTimer);
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);

@@ -94,13 +94,16 @@ var opus = {
     // An object that stores normalize input validation result for each range input.
     rangeInputFieldsValidation: {},
 
+    // Remember nav clicks during normalize input so we can actually process them
+    // later if the inputs are valid.
+    navLinkRemembered: null,
+
     force_load: true, // set this to true to force load() when selections haven't changed
 
     // searching - ui
     widgetsDrawn: [], // keeps track of what widgets are actually drawn
     widgetsFetching: [], // this widget is currently being fetched
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
-    menuState: {"cats": ["obs_general"]},
 
     // opusID of the current slide show/gallery view observation.
     // Note that both browse and cart use the same dialog for galleryView, so we
@@ -262,7 +265,7 @@ var opus = {
         $("#browse .op-observation-number").html(opus.spinner);
 
         // Start the spinners for the left side menu and each widget for hinting
-        $(".op-menu-text.spinner").addClass("op-show-spinner");
+        $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner");
         $("#op-search-widgets .spinner").fadeIn();
 
         // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
@@ -314,11 +317,9 @@ var opus = {
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
-            $(".op-browse-tab").addClass("op-disabled-nav-link");
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         } else {
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
         }
 
@@ -338,6 +339,9 @@ var opus = {
             }
         }
         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+
+        opus.changeTabToRemembered();
+
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -432,11 +436,32 @@ var opus = {
         });
     },
 
+    changeTabToRemembered: function() {
+        // If the user had clicked on a nav tab during the normalizeinput
+        // process, go ahead and execute that tab switch now
+        if (opus.navLinkRemembered !== null) {
+            opus.prefs.view = opus.navLinkRemembered;
+            opus.navLinkRemembered = null;
+            opus.triggerNavbarClick();
+        }
+    },
+
     changeTab: function(tab) {
         /**
          * This is the event handler for the user clicking on one of the main nav
          * bar tabs (views).
          */
+
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = tab;
+            return false;
+        }
+
+        opus.navLinkRemembered = null;
+
+        if (!opus.areRangeInputsValid()) {
+            return false;
+        }
 
         // First hide everything and stop any interval timers
         $("#search, #detail, #cart, #browse").hide();
@@ -489,6 +514,7 @@ var opus = {
                 o_search.activateSearchTab();
         }
 
+        return true;
     },
 
     hideHelpPanel: function() {
@@ -718,6 +744,7 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
+            opus.hideOrShowSplashText();
             o_widgets.attachStringDropdownToInput();
         });
 
@@ -736,12 +763,7 @@ var opus = {
 
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
-            opus.changeTab(tab);
-        });
-
-        // Make sure browse tab nav link does nothing when it's been disabled.
-        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
-            return false;
+            return opus.changeTab(tab);
         });
 
         $(".op-help-item").on("click", function(e) {
@@ -998,9 +1020,18 @@ var opus = {
                     $("#op-new-user-msg").modal("hide");
                     opus.displayHelpPane("faq");
                 });
+                opus.hideOrShowSplashText();
                 $("#op-new-user-msg").modal("show");
             }
         });
+    },
+
+    hideOrShowSplashText: function() {
+        if ($(window).height() < 540) {
+            $(".op-splash-text").hide();
+        } else {
+            $(".op-splash-text").show();
+        }
     },
 
     opusInitialization: function() {
@@ -1046,6 +1077,9 @@ var opus = {
             return elementBottom > viewportTop && elementTop < viewportBottom;
         };
 
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = opus.prefs.view;
+        }
         opus.triggerNavbarClick();
     },
 

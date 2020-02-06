@@ -114,13 +114,6 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
-            // Disable browse tab nav link when user focuses out and there is a change of value
-            // in range input. The button will be enabled or keep disabled based on the
-            // result of input validation in parseFinalNormalizedInputDataAndUpdateURL.
-            if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slugWithId]) ||
-                (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slugWithId])) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
-            }
 
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
@@ -964,14 +957,15 @@ var o_search = {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 return;
             }
+
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateRangeInput(normalizedInputData, true, slug, unit);
 
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.areRangeInputsValid()) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
+                opus.navLinkRemembered = null;
                 return;
             }
 
@@ -991,9 +985,10 @@ var o_search = {
                 }
             });
 
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
+
+            opus.changeTabToRemembered();
         });
     },
 
