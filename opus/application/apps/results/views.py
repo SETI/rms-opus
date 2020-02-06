@@ -139,17 +139,16 @@ def api_get_data_and_images(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+    (page_no, start_obs, limit,
+     page, order, aux, error) = get_search_results_chunk(
                                        request,
                                        prepend_cols='opusid',
                                        append_cols='**previewimages',
                                        return_opusids=True,
                                        return_cart_states=True,
                                        api_code=api_code)
-    if page is None or throw_random_http_error():
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
 
     preview_jsons = [json.loads(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -324,16 +323,14 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+    (page_no, start_obs, limit,
+     page, order, aux, error) = get_search_results_chunk(
                                                      request,
                                                      cols=cols,
                                                      return_opusids=True,
                                                      api_code=api_code)
-
-    if page is None or throw_random_http_error():
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
 
     result_count, _, err = get_result_count_helper(request, api_code)
     if err is not None: # pragma: no cover
@@ -717,16 +714,15 @@ def _api_get_images(request, fmt, api_code, size, include_search):
         exit_api_call(api_code, ret)
         raise ret
 
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+    (page_no, start_obs, limit,
+     page, order, aux, error) = get_search_results_chunk(
                                        request,
                                        cols='opusid,**previewimages',
                                        return_opusids=True,
                                        return_ringobsids=True,
                                        api_code=api_code)
-    if page is None or throw_random_http_error():
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        return ret
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
 
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
@@ -868,11 +864,14 @@ def api_get_files(request, opus_id=None):
         # No opus_id passed, get files from search results
         # Override cols because we don't care about anything except
         # opusid
-        (page_no, start_obs, limit, page,
-         order, aux) = get_search_results_chunk(request,
+        (page_no, start_obs, limit,
+         page, order, aux, error) = get_search_results_chunk(request,
                                                 cols='',
                                                 return_opusids=True,
                                                 api_code=api_code)
+        if error is not None:
+            return get_search_results_chunk_error_handler(error, api_code)
+
         opus_ids = aux['opus_ids']
 
     ret = get_pds_products(opus_ids,
@@ -1100,9 +1099,9 @@ def api_get_product_types_for_search(request):
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
+        ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     cursor = connection.cursor()
     q = connection.ops.quote_name
@@ -1137,6 +1136,17 @@ def api_get_product_types_for_search(request):
 # SUPPORT ROUTINES
 #
 ################################################################################
+
+def get_search_results_chunk_error_handler(error, api_code):
+    if error[0] == 404:
+        ret = Http404(error[1])
+        exit_api_call(api_code, ret)
+        raise ret
+    else:
+        assert(error[0] == 500)
+        ret = HttpResponseServerError(error[1])
+        exit_api_call(api_code, ret)
+        return ret
 
 def get_search_results_chunk(request, use_cart=None,
                              ignore_recycle_bin=False,
@@ -1196,8 +1206,13 @@ def get_search_results_chunk(request, use_cart=None,
                             opus_id if necessary.
         aux_dict            A dictionary that may contain keys as specified
                             above.
+        error               A tuple (response_code, string) if something went
+                            wrong. If response_code is 404, then the caller
+                            should raise an Http404 exception. If it is 500,
+                            then the caller should return
+                            HttpResponseServerError.
     """
-    none_return = (None, None, None, None, None, {})
+    def error_return(s, e): return (None, None, None, None, None, None, (s,e))
 
     session_id = get_session_id(request)
 
@@ -1214,12 +1229,12 @@ def get_search_results_chunk(request, use_cart=None,
         except ValueError:
             log.error('get_search_results_chunk: Unable to parse limit %s',
                       limit)
-            return none_return
+            return error_return(404, HTTP404_BAD_LIMIT(limit, request))
 
     if limit != 'all':
         if limit < 0 or limit > settings.SQL_MAX_LIMIT:
             log.error('get_search_results_chunk: Bad limit %s', str(limit))
-            return none_return
+            return error_return(404, HTTP404_BAD_LIMIT(limit, request))
 
     if cols is None:
         cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
@@ -1238,7 +1253,7 @@ def get_search_results_chunk(request, use_cart=None,
         pi = get_param_info_by_slug(slug, 'col')
         if not pi:
             log.error('get_search_results_chunk: Slug "%s" not found', slug)
-            return none_return
+            return error_return(404, HTTP404_UNKNOWN_SLUG(slug, request))
         column = pi.param_qualified_name()
         table = pi.category_name
         if column.endswith('.opus_id'):
@@ -1318,7 +1333,7 @@ def get_search_results_chunk(request, use_cart=None,
             except:
                 log.error('get_search_results_chunk: Unable to parse '
                           +'startobs "%s"', start_obs)
-                return none_return
+                return error_return(404, HTTP404_BAD_STARTOBS(start_obs, request))
             offset = start_obs-1
         else:
             try:
@@ -1326,14 +1341,14 @@ def get_search_results_chunk(request, use_cart=None,
             except:
                 log.error('get_search_results_chunk: Unable to parse page_no "%s"',
                           page_no)
-                return none_return
+                return error_return(404, HTTP404_BAD_PAGENO(page_no, request))
             offset = (page_no-1)*page_size
     else:
         offset = start_obs-1
 
     if offset < 0 or offset > settings.SQL_MAX_LIMIT:
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
-        return none_return
+        return error_return(404, HTTP404_BAD_OFFSET(offset, request))
 
     temp_table_name = None
     drop_temp_table = False
@@ -1353,7 +1368,7 @@ def get_search_results_chunk(request, use_cart=None,
         if selections is None:
             log.error('get_search_results_chunk: Could not find selections for'
                       +' request %s', str(request.GET))
-            return none_return
+            return error_return(404, HTTP404_SEARCH_PARAMS_INVALID(request))
 
         user_query_table = get_user_query_table(selections, extras,
                                                 api_code=api_code)
@@ -1361,7 +1376,7 @@ def get_search_results_chunk(request, use_cart=None,
             log.error('get_search_results_chunk: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return none_return
+            return error_return(500, HTTP500_SEARCH_FAILED(request))
 
         # First we create a temporary table that contains only those ids
         # in the limit window that we care about (if there's a limit window).
@@ -1389,7 +1404,7 @@ def get_search_results_chunk(request, use_cart=None,
         except DatabaseError as e:
             log.error('get_search_results_chunk: "%s" returned %s',
                       temp_sql, str(e))
-            return none_return
+            return error_return(500, HTTP500_DATABASE_ERROR(request))
         log.debug('get_search_results_chunk SQL (%.2f secs): %s',
                   time.time()-time1, temp_sql)
 
@@ -1509,7 +1524,7 @@ def get_search_results_chunk(request, use_cart=None,
     except DatabaseError as e:
         log.error('get_search_results_chunk: "%s" + "%s" returned %s',
                   sql, params, str(e))
-        return none_return
+        return error_return(500, HTTP500_DATABASE_ERROR(request))
     results = []
     more = True
     while more:
@@ -1527,7 +1542,7 @@ def get_search_results_chunk(request, use_cart=None,
         except DatabaseError as e:
             log.error('get_search_results_chunk: "%s" returned %s',
                       sql, str(e))
-            return none_return
+            return error_return(500, HTTP500_DATABASE_ERROR(request))
 
     if return_opusids:
         # Return a simple list of opus_ids
@@ -1581,25 +1596,22 @@ def get_search_results_chunk(request, use_cart=None,
     if return_cart_states:
         aux_dict['cart_states'] = cart_states
 
-    return (page_no, start_obs, limit, results, all_order, aux_dict)
+    return (page_no, start_obs, limit, results, all_order, aux_dict, None)
 
 
 def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                            internal, api_code):
     "Returns results for specified slugs."
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+    (page_no, start_obs, limit,
+     page, order, aux, error) = get_search_results_chunk(
                                                      request,
                                                      cols=cols,
                                                      opus_id=opus_id,
                                                      start_obs=1,
                                                      limit=1,
                                                      api_code=api_code)
-
-    if page is None or throw_random_http_error():
-        log.error('_get_metadata_by_slugs: Error during search')
-        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
-        exit_api_call(api_code, ret)
-        raise ret
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
 
     if len(page) != 1 or throw_random_http_error():
         log.error('_get_metadata_by_slugs: Error searching for opus_id "%s"',

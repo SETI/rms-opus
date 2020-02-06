@@ -523,7 +523,8 @@ class ApiCartTests(TestCase, ApiTestHelper):
     def test__api_cart_remove_one_recyclebinx(self):
         "[test_cart_api.py] /__cart/remove: recyclebin=x"
         url = '/__cart/remove.json?opusid=co-vims-v1484504505_ir&reqno=456&recyclebin=x'
-        self._run_status_equal(url, 500)
+        self._run_status_equal(url, 404,
+                HTTP404_BAD_RECYCLEBIN('x', '/__cart/remove.json'))
 
     def test__api_cart_remove_duplicate(self):
         "[test_cart_api.py] /__cart/remove: duplicate OPUSID no download"

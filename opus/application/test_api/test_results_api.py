@@ -599,42 +599,42 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_api.py] /api/metadata: bad cols 1 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,fredethel,volumeid'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('fredethel',
                                 '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols_csv(self):
         "[test_results_api.py] /api/metadata: bad cols 1 csv"
         url = '/api/metadata/vg-iss-2-s-c4360845.csv?cols=observationduration,fredethel,volumeid'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('fredethel',
                                 '/api/metadata/vg-iss-2-s-c4360845.csv'))
 
     def test__api_metadata_bad_cols_html(self):
         "[test_results_api.py] /api/metadata: bad cols 1 html"
         url = '/api/metadata/vg-iss-2-s-c4360845.html?cols=observationduration,fredethel,volumeid'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('fredethel',
                                 '/api/metadata/vg-iss-2-s-c4360845.html'))
 
     def test__api_metadata_bad_cols2_json(self):
         "[test_results_api.py] /api/metadata: bad cols 2 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=,observationduration,volumeid'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('',
                                 '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols3_json(self):
         "[test_results_api.py] /api/metadata: bad cols 3 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,,volumeid'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('',
                                 '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cols4_json(self):
         "[test_results_api.py] /api/metadata: bad cols 4 json"
         url = '/api/metadata/vg-iss-2-s-c4360845.json?cols=observationduration,volumeid,'
         self._run_status_equal(url, 404,
-                    HTTP404_SEARCH_PARAMS_INVALID(
+                    HTTP404_UNKNOWN_SLUG('',
                                 '/api/metadata/vg-iss-2-s-c4360845.json'))
 
     def test__api_metadata_bad_cats_json(self):

@@ -41,6 +41,7 @@ from dictionary.models import Definitions
 from metadata.views import (get_cart_count,
                             get_result_count_helper)
 from results.views import (get_search_results_chunk,
+                           get_search_results_chunk_error_handler,
                            labels_for_slugs)
 from search.models import ObsGeneral
 from search.views import (url_to_search_params,
@@ -202,7 +203,10 @@ def api_get_cart_csv(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    column_labels, page = _csv_helper(request, None, api_code)
+    column_labels, page, error = _csv_helper(request, None, api_code)
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
+
     if column_labels is None or throw_random_http_error():
         ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
         exit_api_call(api_code, ret)
@@ -311,8 +315,7 @@ def api_edit_cart(request, action, **kwargs):
     except:
         log.error('api_edit_cart: Bad value for recyclebin %s: %s', recycle_bin,
                   request.GET)
-        ret = HttpResponseServerError(HTTP404(
-                                HTTP404_BAD_RECYCLEBIN(recycle_bin, request)))
+        ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -1331,7 +1334,8 @@ def _zip_filename(opus_id, url_file_only):
 def _csv_helper(request, opus_id, api_code=None):
     "Create the data for a CSV file containing the cart data."
     slugs = request.GET.get('cols', settings.DEFAULT_COLUMNS)
-    (page_no, start_obs, limit, page, order, aux) = get_search_results_chunk(
+    (page_no, start_obs, limit,
+     page, order, aux, error) = get_search_results_chunk(
                                                      request,
                                                      use_cart=(opus_id is None),
                                                      ignore_recycle_bin=True,
@@ -1341,16 +1345,14 @@ def _csv_helper(request, opus_id, api_code=None):
 
     slug_list = cols_to_slug_list(slugs)
 
-    return labels_for_slugs(slug_list), page
+    return labels_for_slugs(slug_list), page, error
 
 
 def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     "Create a CSV file containing the cart data."
-    column_labels, page = _csv_helper(request, opus_id, api_code)
-    if column_labels is None or throw_random_http_error():
-        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
-        exit_api_call(api_code, ret)
-        raise ret
+    column_labels, page, error = _csv_helper(request, opus_id, api_code)
+    if error is not None:
+        return get_search_results_chunk_error_handler(error, api_code)
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

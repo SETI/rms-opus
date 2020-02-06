@@ -1084,7 +1084,6 @@ var o_search = {
     },
 
     getHinting: function(slug) {
-
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
@@ -1093,12 +1092,11 @@ var o_search = {
             // this is a mult field
             o_search.getValidMults(slug);
         } else {
-          $(`#widget__${slug} .spinner`).fadeOut();
+            $(`#widget__${slug} .spinner`).fadeOut();
         }
     },
 
     getRangeEndpoints: function(slug) {
-
         $(`#widget__${slug} .spinner`).fadeIn();
 
         let units = "";

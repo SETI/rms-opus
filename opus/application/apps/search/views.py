@@ -23,7 +23,7 @@ from django.db import connection, DatabaseError
 from django.db.models import Q
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.utils import IntegrityError
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseServerError
 
 from paraminfo.models import ParamInfo
 from search.models import *

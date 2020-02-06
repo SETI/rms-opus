@@ -313,6 +313,21 @@ def HTTP404_BAD_LIMIT(limit, r):
         r = r.path
     return f'Badly formatted limit "{limit}" for {r}'
 
+def HTTP404_BAD_STARTOBS(startobs, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted startobs "{startobs}" for {r}'
+
+def HTTP404_BAD_PAGENO(pageno, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted page number "{pageno}" for {r}'
+
+def HTTP404_BAD_OFFSET(pageno, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted offset "{offset}" for {r}'
+
 def HTTP404_SEARCH_PARAMS_INVALID(r):
     if type(r) != str:
         r = r.path
