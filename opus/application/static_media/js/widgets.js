@@ -655,14 +655,8 @@ var o_widgets = {
             $(".op-preprogrammed-ranges .container").collapse("hide");
         });
 
-        // Prevent dropdown from closing when clicking back on the input with dropdown open
+        // Prevent dropdown from closing when clicking on the focused input again
         $("#search").on("mousedown", "input.op-range-input-min", function(e) {
-            // let preprogrammedRangesDropdown = ($(this)
-            //                                    .next(".op-preprogrammed-ranges")
-            //                                    .find(".op-scrollable-menu"));
-            // if (preprogrammedRangesDropdown.hasClass("show")) {
-            //     o_widgets.isKeepingRangesDropdownOpen = true;
-            // }
             if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
             }

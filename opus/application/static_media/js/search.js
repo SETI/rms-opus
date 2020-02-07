@@ -70,7 +70,6 @@ var o_search = {
         });
 
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
-        // $("#search").on("blur", "input.RANGE", function(e) {
         $("#search").on("focus", "input.RANGE", function(e) {
             let inputName = $(this).attr("name");
             let currentValue = $(this).val().trim();
