@@ -51,6 +51,7 @@ var o_widgets = {
         $("#op-search-widgets").sortable({
             items: "> li",
             cursor: "grab",
+            // Note: this will cause input to lose focus when clicking on preprogrammed dropdown.
             handle: ".card-title",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.

@@ -104,6 +104,17 @@ var o_search = {
             }
         });
 
+        // When clicking inside a widget body, if the clicked element is not input,
+        // select, hints, and text, we will disable the default behavior of mousedown
+        // event. This will prevent input from focusing out when clicking on preprogrammed
+        // ranges dropdown, and also keep the ability to copy text & hints for mults.
+        $("#search").on("mousedown", ".widget .card-body", function(e) {
+            if (!$(e.target).is("input") && !$(e.target).is("select")
+                && !$(e.target).is("label") && !$(e.target).hasClass("hints")) {
+                e.preventDefault();
+            }
+        });
+
         /*
         This is to properly put back invalid search background
         when user focus out and there is no "change" event
