@@ -113,7 +113,6 @@ var o_search = {
                 && !$(e.target).is("label") && !$(e.target).hasClass("hints")) {
                 e.preventDefault();
             }
-
         });
 
         /*
