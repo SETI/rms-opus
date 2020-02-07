@@ -92,7 +92,11 @@ class SearchForm(forms.Form):
                 choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget = forms.TextInput(
-                    attrs = {'class':'STRING', 'size':'50', 'tabindex':0}),
+                    attrs = {'class': 'STRING',
+                             'size': '50',
+                             'tabindex': 0,
+                             'data-slugname': slug
+                            }),
                     required = False,
                     label = '')
                 self.fields['qtype-'+slug] = forms.CharField(
@@ -115,7 +119,7 @@ class SearchForm(forms.Form):
                 label = 'max' if num == '2' else 'min'
 
                 pi = get_param_info_by_slug(slug, 'search')
-                
+
                 # placeholder for input hints (only apply to Min input for now)
                 if num == '2':
                     # Get the hints for slug2 from slug1 field in database

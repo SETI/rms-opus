@@ -30,6 +30,7 @@ python-memcached==1.59
 pytz==2019.3
 PyYAML==5.1.2
 qrcode==6.1
+regex==2020.1.8
 requests==2.22.0
 six==1.12.0
 sqlparse==0.3.0
