@@ -2644,3 +2644,8 @@ at the right of -- OR -- label. */
         page-break-before: always;
     }
 }
+
+/* Make sure label names in mults have a caret cursor when users mouseover. */
+.choiceLabelName {
+    cursor: text;
+}

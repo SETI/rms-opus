@@ -1316,6 +1316,18 @@ var o_widgets = {
                 }
             }
 
+            // Wrap mults label names with span tag, we will style the span tag to have a caret cursor
+            // so that users know that they can select and copy the text.
+            if (widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) {
+                let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
+                let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
+                for (const label of allChoiceLabels) {
+                    $(label).contents().filter(function() {
+                        return this.nodeType === 3;
+                    }).wrap("<span class='choiceLabelName'></span>");
+                }
+            }
+
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
