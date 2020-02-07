@@ -70,6 +70,7 @@ var o_search = {
         });
 
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
+        // $("#search").on("blur", "input.RANGE", function(e) {
         $("#search").on("focus", "input.RANGE", function(e) {
             let inputName = $(this).attr("name");
             let currentValue = $(this).val().trim();
@@ -102,6 +103,18 @@ var o_search = {
                 o_widgets.isKeepingRangesDropdownOpen = true;
                 $(this).dropdown("toggle");
             }
+        });
+
+        // When clicking inside widget body, if it's not input, select, hints, and text,
+        // we will disable the default behavior of mousedown event. This will prevent
+        // input from focusing out when clicking on preprogrammed ranges dropdown, and
+        // also keep the ability to copy text & hints for mults.
+        $("#search").on("mousedown", ".widget .card-body", function(e) {
+            if (!$(e.target).is("input") && !$(e.target).is("select")
+                && !$(e.target).is("label") && !$(e.target).hasClass("hints")) {
+                e.preventDefault();
+            }
+
         });
 
         /*

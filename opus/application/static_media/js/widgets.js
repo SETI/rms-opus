@@ -51,6 +51,7 @@ var o_widgets = {
         $("#op-search-widgets").sortable({
             items: "> li",
             cursor: "grab",
+            // Note: this will cause input to lose focus when clicking on preprogrammed dropdown.
             handle: ".card-title",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
@@ -654,8 +655,14 @@ var o_widgets = {
             $(".op-preprogrammed-ranges .container").collapse("hide");
         });
 
-        // Prevent dropdown from closing when clicking on the focused input again
+        // Prevent dropdown from closing when clicking back on the input with dropdown open
         $("#search").on("mousedown", "input.op-range-input-min", function(e) {
+            // let preprogrammedRangesDropdown = ($(this)
+            //                                    .next(".op-preprogrammed-ranges")
+            //                                    .find(".op-scrollable-menu"));
+            // if (preprogrammedRangesDropdown.hasClass("show")) {
+            //     o_widgets.isKeepingRangesDropdownOpen = true;
+            // }
             if ($(".op-scrollable-menu").hasClass("show") && $(e.target).is(":focus")) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
             }
