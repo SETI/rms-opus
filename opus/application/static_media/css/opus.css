@@ -2646,6 +2646,6 @@ at the right of -- OR -- label. */
 }
 
 /* Make sure label names in mults have a caret cursor when users mouseover. */
-.choiceLabelName {
+.op-choice-label-name {
     cursor: text;
 }

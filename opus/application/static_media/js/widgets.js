@@ -1324,7 +1324,7 @@ var o_widgets = {
                 for (const label of allChoiceLabels) {
                     $(label).contents().filter(function() {
                         return this.nodeType === 3;
-                    }).wrap("<span class='choiceLabelName'></span>");
+                    }).wrap("<span class='op-choice-label-name'></span>");
                 }
             }
 
