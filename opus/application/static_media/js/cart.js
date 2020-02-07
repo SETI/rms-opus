@@ -228,11 +228,11 @@ var o_cart = {
         let add_to_url = o_cart.getDownloadFiltersChecked();
         o_cart.lastRequestNo++;
         let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
-        $.getJSON(url, function(info) {
-            if (info.reqno < o_cart.lastRequestNo) {
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
+            o_cart.updateCartStatus(data);
         });
     },
 
@@ -539,6 +539,7 @@ var o_cart = {
                 }
                 // this div lives in the in the nav menu template
                 $("#op-download-options-container", "#cart").hide().html(data.html).fadeIn();
+                o_cart.hideCartCountSpinner(data.count, data.recycled_count);
 
                 // Init perfect scrollbar when .op-download-options-product-types is rendered.
                 o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
@@ -794,7 +795,6 @@ var o_cart = {
                 });
             }
             o_cart.updateCartStatus(statusData);
-            o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
     },

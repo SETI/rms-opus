@@ -116,7 +116,10 @@ def api_view_cart(request):
 
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
-    ret = json_response({'html': html, 'reqno': reqno})
+    ret = json_response({'html': html,
+        'count': info['count'],
+        'recycled_count': info['recycled_count'],
+        'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
