@@ -99,7 +99,6 @@ def api_view_cart(request):
 
     product_types_str = request.GET.get('types', 'all')
     product_types = product_types_str.split(',')
-    log.error(product_types)
 
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
