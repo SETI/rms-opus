@@ -66,7 +66,8 @@ var o_cart = {
     gallerySliderStep: 10,
 
     // unique to o_cart
-    lastRequestNo: 0,
+    lastRequestNo: 0,           // for status
+    lastProductCountRequestNo: 0,   // just for the product counts in sidebar
     downloadInProcess: false,
     cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
     downloadSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
@@ -524,12 +525,16 @@ var o_cart = {
             }
             notSelected += "unselected_types=" + notSelectedProductInfoSlugName.join();
             let selected = o_cart.getDownloadFiltersChecked();
+            // make sure that if there are not types because this was a refresh, we reset the types to 'all'
+            if (selected === "types=") {
+                selected = "";
+            }
 
-            o_cart.lastRequestNo++;
+            o_cart.lastProductCountRequestNo++;
             let url = `/opus/__cart/view.json?${hash}${notSelected}&${selected}&reqno=${o_cart.lastRequestNo}`;
 
             $.getJSON(url, function(data) {
-                if (data.reqno < o_cart.lastRequestNo) {
+                if (data.reqno < o_cart.lastProductCountRequestNo) {
                     return;
                 }
                 // this div lives in the in the nav menu template

@@ -95,13 +95,22 @@ def api_view_cart(request):
 
     session_id = get_session_id(request)
     get_not_selected_product_types_str = request.GET.get('unselected_types')
-    get_not_selected_product_types = get_not_selected_product_types_str.split(',')
+    not_selected_product_types = get_not_selected_product_types_str.split(',')
 
     product_types_str = request.GET.get('types', 'all')
     product_types = product_types_str.split(',')
+    log.error(product_types)
 
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
+
+    for product in info['product_cat_list']:
+        (name, details) = product
+        for type in details:
+            if type['slug_name'] in not_selected_product_types:
+                type['selected'] = ''
+            else:
+                type['selected'] = 'checked'
 
     info['count'] = count
     info['recycled_count'] = recycled_count
