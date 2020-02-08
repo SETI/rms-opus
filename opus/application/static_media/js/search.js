@@ -1163,11 +1163,11 @@ var o_search = {
                 }
 
                 let dataSlug = multdata.field_id;
-                $("#widget__" + dataSlug + " .spinner").fadeOut('');
+                $("#widget__" + dataSlug + " .spinner").fadeOut("");
 
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;
-                $('#' + widget + ' input').each( function() {
+                $("#" + widget + " input").each( function() {
                     let hintsTextClass = "op-choice-hints-text";
                     let value = $(this).attr("value");
                     let id = "#hint__" + slug + "_" + value.replace(/ /g, "-").replace(/[^\w\s]/gi, "");  // id of hinting span, defined in widgets.js getWidget
