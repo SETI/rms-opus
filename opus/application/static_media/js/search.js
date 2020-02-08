@@ -105,12 +105,14 @@ var o_search = {
         });
 
         // When clicking inside a widget body, if the clicked element is not input,
-        // select, hints, and text, we will disable the default behavior of mousedown
+        // select, hints, and text nodes, we will disable the default behavior of mousedown
         // event. This will prevent input from focusing out when clicking on preprogrammed
         // ranges dropdown, and also keep the ability to copy text & hints for mults.
         $("#search").on("mousedown", ".widget .card-body", function(e) {
             if (!$(e.target).is("input") && !$(e.target).is("select")
-                && !$(e.target).is("label") && !$(e.target).hasClass("hints")) {
+                && !$(e.target).is("label") && !$(e.target).hasClass("hints")
+                && !$(e.target).hasClass("op-choice-hints-text")
+                && !$(e.target).hasClass("op-choice-label-name")) {
                 e.preventDefault();
             }
         });
@@ -1166,17 +1168,18 @@ var o_search = {
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;
                 $('#' + widget + ' input').each( function() {
+                    let hintsTextClass = "op-choice-hints-text";
                     let value = $(this).attr("value");
-                    let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+                    let id = "#hint__" + slug + "_" + value.replace(/ /g, "-").replace(/[^\w\s]/gi, "");  // id of hinting span, defined in widgets.js getWidget
 
                     if (!hideHintsForNonSelectedRadioButtons) {
                         if (mults[value]) {
-                            $(id).html('<span>' + mults[value] + '</span>');
+                            $(id).html(`<span class=${hintsTextClass}>` + mults[value] + "</span>");
                             if ($(id).parent().hasClass("fadey")) {
                                 $(id).parent().removeClass("fadey");
                             }
                         } else {
-                            $(id).html('<span>0</span>');
+                            $(id).html(`<span class=${hintsTextClass}>0</span>`);
                             $(id).parent().addClass("fadey");
                         }
                     } else {
@@ -1184,16 +1187,16 @@ var o_search = {
                         $(id).parent().removeClass("fadey");
                         if (mults[value]) {
                             if ($(this).is(":checked")) {
-                                $(id).html('<span>' + mults[value] + '</span>');
+                                $(id).html(`<span class=${hintsTextClass}>` + mults[value] + "</span>");
                             } else {
-                                $(id).html('<span>--</span>');
+                                $(id).html(`<span class=${hintsTextClass}>--</span>`);
                             }
                         } else {
                             if ($(this).is(":checked")) {
-                                $(id).html('<span>0</span>');
+                                $(id).html(`<span class=${hintsTextClass}>0</span>`);
 
                             } else {
-                                $(id).html('<span>--</span>');
+                                $(id).html(`<span class=${hintsTextClass}>--</span>`);
                             }
                         }
                     }
