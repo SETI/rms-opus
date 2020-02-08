@@ -95,7 +95,8 @@ even when the browser size is narrow. */
 }
 
 /* Make sure the height of top navbar will not change when "Recent Announcement"
-appears & disappears. */
+appears & disappears. Padding-top & bottom need to match ones for .op-user-msg
+so that both "Recent Announcements" and "Message" can be vertically aligned. */
 .op-tab .op-blog-link {
     padding-top: 0;
     padding-bottom: 0;
@@ -109,8 +110,12 @@ appears & disappears. */
     }
 }
 
+/* Padding-top & bottom need to match ones for .op-blog-link so that both
+"Recent Announcements" and "Message" can be vertically aligned. */
 .op-user-msg {
     display: none;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* display normalized url message */
@@ -2663,4 +2668,9 @@ at the right of -- OR -- label. */
     .op-new-page {
         page-break-before: always;
     }
+}
+
+/* Make sure label names in mults have a caret cursor when users mouseover. */
+.op-choice-label-name {
+    cursor: text;
 }
