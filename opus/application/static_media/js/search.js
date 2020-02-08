@@ -120,12 +120,6 @@ var o_search = {
         when user focus out and there is no "change" event
         */
         $("#search").on("focusout", "input.RANGE, input.STRING", function(e) {
-            let currentValue = $(this).val().trim();
-            let inputName = $(this).attr("name");
-            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
-            let uniqueid = $(this).attr("data-uniqueid");
-            let slugWithId = `${slug}_${uniqueid}`;
-
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
