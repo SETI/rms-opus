@@ -956,7 +956,7 @@ var o_search = {
             });
             // for mults
             $(".hints").each(function() {
-                $(this).html("<span>?</span>");
+                $(this).html(`<span class="${rangeHintsTextClass}">?</span>`);
             });
 
             if (removeSpinner) {
@@ -1225,10 +1225,11 @@ var o_search = {
               }
             },
             error:function(xhr, ajaxOptions, thrownError) {
+                let hintsTextClass = "op-hints-info";
                 $(`#widget__${slug} .spinner`).fadeOut();
                 // checkbox hints are "?" when wrong values of url is pasted
                 $(".hints").each(function() {
-                    $(this).html("<span>?</span>");
+                    $(this).html(`<span class="${hintsTextClass}">?</span>`);
                 });
             }
         }); // end mults ajax
