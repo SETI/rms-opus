@@ -2289,7 +2289,8 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Allow users to mouse over and select texts & hints in widgets */
-.op-input ul label, .op-input ul span {
+.op-input ul label, .op-input ul span,
+.op-hints-info, .op-hints-description {
     -ms-user-select: text;
     user-select: text;
     -moz-user-select: text;
@@ -2670,7 +2671,9 @@ at the right of -- OR -- label. */
     }
 }
 
-/* Make sure label names in mults have a caret cursor when users mouseover. */
-.op-choice-label-name {
+/* Make sure label names & hints in wdigets have a caret cursor when users mouseover. */
+.op-choice-label-name,
+.op-hints-description,
+.op-hints-info {
     cursor: text;
 }
