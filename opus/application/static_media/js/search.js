@@ -107,11 +107,13 @@ var o_search = {
         // When clicking inside a widget body, if the clicked element is not input,
         // select, hints, and text nodes, we will disable the default behavior of mousedown
         // event. This will prevent input from focusing out when clicking on preprogrammed
-        // ranges dropdown, and also keep the ability to copy text & hints for mults.
+        // ranges dropdown, and also keep the ability to copy text & hints in mults
+        // and hints in ranges widgets.
         $("#search").on("mousedown", ".widget .card-body", function(e) {
             if (!$(e.target).is("input") && !$(e.target).is("select")
                 && !$(e.target).is("label") && !$(e.target).hasClass("hints")
-                && !$(e.target).hasClass("op-choice-hints-text")
+                && !$(e.target).hasClass("op-hints-info")
+                && !$(e.target).hasClass("op-hints-description")
                 && !$(e.target).hasClass("op-choice-label-name")) {
                 e.preventDefault();
             }
@@ -940,11 +942,16 @@ var o_search = {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
+            let rangeHintsDescription = "op-hints-description";
+            let rangeHintsTextClass = "op-hints-info";
             $(".op-range-hints").each(function() {
                 if ($(this).children().length > 0) {
-                    $(this).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
-                                  <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
-                                  <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
+                    $(this).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>
+                                  <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>
+                                  <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>`);
                 }
             });
             // for mults
@@ -1122,14 +1129,19 @@ var o_search = {
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
+                let rangeHintsDescription = "op-hints-description";
+                let rangeHintsTextClass = "op-hints-info";
                 $(`#widget__${slug} .spinner`).fadeOut();
 
-                if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
+                if (multdata.reqno < o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-                $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
-                                          <span>Max:&nbsp;<span class="op-hints-info">${multdata.max}</span></span>
-                                          <span>Nulls:&nbsp;<span class="op-hints-info">${multdata.nulls}</span></span>`);
+                $("#hint__" + slug).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.min}</span></span>
+                                          <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.max}</span></span>
+                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.nulls}</span></span>`);
             },
             statusCode: {
                 404: function() {
@@ -1137,11 +1149,16 @@ var o_search = {
                 }
             },
             error:function(xhr, ajaxOptions, thrownError) {
+                let rangeHintsDescription = "op-hints-description";
+                let rangeHintsTextClass = "op-hints-info";
                 $(`#widget__${slug} .spinner`).fadeOut();
                 // range input hints are "?" when wrong values of url is pasted
-                $(`#hint__${slug}`).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
-                                          <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
-                                          <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
+                $(`#hint__${slug}`).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">?</span></span>
+                                          <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">?</span></span>
+                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">?</span></span>`);
             }
         }); // end mults ajax
     },
@@ -1168,18 +1185,18 @@ var o_search = {
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;
                 $("#" + widget + " input").each( function() {
-                    let hintsTextClass = "op-choice-hints-text";
+                    let hintsTextClass = "op-hints-info";
                     let value = $(this).attr("value");
                     let id = "#hint__" + slug + "_" + value.replace(/ /g, "-").replace(/[^\w\s]/gi, "");  // id of hinting span, defined in widgets.js getWidget
 
                     if (!hideHintsForNonSelectedRadioButtons) {
                         if (mults[value]) {
-                            $(id).html(`<span class=${hintsTextClass}>` + mults[value] + "</span>");
+                            $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
                             if ($(id).parent().hasClass("fadey")) {
                                 $(id).parent().removeClass("fadey");
                             }
                         } else {
-                            $(id).html(`<span class=${hintsTextClass}>0</span>`);
+                            $(id).html(`<span class="${hintsTextClass}">0</span>`);
                             $(id).parent().addClass("fadey");
                         }
                     } else {
@@ -1187,16 +1204,16 @@ var o_search = {
                         $(id).parent().removeClass("fadey");
                         if (mults[value]) {
                             if ($(this).is(":checked")) {
-                                $(id).html(`<span class=${hintsTextClass}>` + mults[value] + "</span>");
+                                $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
                             } else {
-                                $(id).html(`<span class=${hintsTextClass}>--</span>`);
+                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
                             }
                         } else {
                             if ($(this).is(":checked")) {
-                                $(id).html(`<span class=${hintsTextClass}>0</span>`);
+                                $(id).html(`<span class="${hintsTextClass}">0</span>`);
 
                             } else {
-                                $(id).html(`<span class=${hintsTextClass}>--</span>`);
+                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
                             }
                         }
                     }
