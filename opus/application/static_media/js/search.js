@@ -110,11 +110,11 @@ var o_search = {
         // ranges dropdown, and also keep the ability to copy text & hints in mults
         // and hints in ranges widgets.
         $("#search").on("mousedown", ".widget .card-body", function(e) {
-            if (!$(e.target).is("input") && !$(e.target).is("select")
-                && !$(e.target).is("label") && !$(e.target).hasClass("hints")
-                && !$(e.target).hasClass("op-hints-info")
-                && !$(e.target).hasClass("op-hints-description")
-                && !$(e.target).hasClass("op-choice-label-name")) {
+            if (!$(e.target).is("input") && !$(e.target).is("select") &&
+                !$(e.target).is("label") && !$(e.target).hasClass("hints") &&
+                !$(e.target).hasClass("op-hints-info") &&
+                !$(e.target).hasClass("op-hints-description") &&
+                !$(e.target).hasClass("op-choice-label-name")) {
                 e.preventDefault();
             }
         });
