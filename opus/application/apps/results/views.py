@@ -939,8 +939,8 @@ def api_get_categories_for_opus_id(request, opus_id):
 
     for tbl in table_info:
         table_name = tbl['table_name']
-        if table_name == 'obs_surface_geometry':
-            # obs_surface_geometry is not a data table
+        if table_name == 'obs_surface_geometry_name':
+            # obs_surface_geometry_name is not a data table
             # It's only used to select targets, not to hold data, so remove it
             continue
 
@@ -991,12 +991,12 @@ def api_get_categories_for_search(request):
         triggered_tables = get_triggered_tables(selections, extras,
                                                 api_code=api_code)
 
-    # The main geometry table, obs_surface_geometry, is not a table that holds
-    # results data. It is only there for selecting targets, which then trigger
-    # the other geometry tables. So in the context of returning list of
+    # The main geometry table, obs_surface_geometry_name, is not a table that
+    # holds results data. It is only there for selecting targets, which then
+    # trigger the other geometry tables. So in the context of returning list of
     # categories it gets removed.
-    if 'obs_surface_geometry' in triggered_tables:
-        triggered_tables.remove('obs_surface_geometry')
+    if 'obs_surface_geometry_name' in triggered_tables:
+        triggered_tables.remove('obs_surface_geometry_name')
 
     labels = (TableNames.objects.filter(table_name__in=triggered_tables)
               .values('table_name','label').order_by('disp_order'))
@@ -1325,6 +1325,8 @@ def get_search_results_chunk(request, use_cart=None,
         log.error('get_search_results_chunk: Bad offset %s', str(offset))
         return none_return
 
+    q = connection.ops.quote_name
+
     temp_table_name = None
     drop_temp_table = False
     params = []
@@ -1364,9 +1366,8 @@ def get_search_results_chunk(request, use_cart=None,
         temp_table_name = 'temp_'+user_query_table
         temp_table_name += '_'+pid_sfx+'_'+time_sfx
         temp_sql = 'CREATE TEMPORARY TABLE '
-        temp_sql += connection.ops.quote_name(temp_table_name)
-        temp_sql += ' SELECT sort_order, id FROM '
-        temp_sql += connection.ops.quote_name(user_query_table)
+        temp_sql += q(temp_table_name)
+        temp_sql += ' SELECT sort_order, id FROM '+q(user_query_table)
         temp_sql += ' ORDER BY sort_order'
         if limit == 'all':
             temp_sql += ' LIMIT '+str(settings.SQL_MAX_LIMIT)
@@ -1384,10 +1385,10 @@ def get_search_results_chunk(request, use_cart=None,
                   time.time()-time1, temp_sql)
 
         sql = 'SELECT '
-        sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
-                         connection.ops.quote_name(x.split('.')[1])
+        sql += ','.join([q(x.split('.')[0])+'.'+
+                         q(x.split('.')[1])
                          for x in column_names])
-        sql += ' FROM '+connection.ops.quote_name('obs_general')
+        sql += ' FROM '+q('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
@@ -1395,41 +1396,33 @@ def get_search_results_chunk(request, use_cart=None,
         for table in tables:
             if table == 'obs_general':
                 continue
-            sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-            sql += connection.ops.quote_name('id')+'='
-            sql += connection.ops.quote_name(table)+'.'
-            sql += connection.ops.quote_name('obs_general_id')
+            sql += ' LEFT JOIN '+q(table)
+            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+            sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
         for (mult_table, table) in mult_tables:
-            sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
-            sql += ' ON '+connection.ops.quote_name(table)+'.'
-            sql += connection.ops.quote_name(mult_table)+'='
-            sql += connection.ops.quote_name(mult_table)+'.'
-            sql += connection.ops.quote_name('id')
+            sql += ' LEFT JOIN '+q(mult_table)
+            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += q(mult_table)+'.'+q('id')
 
         # But the cache table is an INNER JOIN because we only want opus_ids
         # that appear in the cache table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name(temp_table_name)
-        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name(temp_table_name)+'.'
-        sql += connection.ops.quote_name('id')
+        sql += ' INNER JOIN '+q(temp_table_name)
+        sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+        sql += q(temp_table_name)+'.'+q('id')
 
         # Maybe join in the cart table if we need cart_state
         if return_cart_states:
-            sql += ' LEFT JOIN '+connection.ops.quote_name('cart')
-            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-            sql += connection.ops.quote_name('id')+'='
-            sql += connection.ops.quote_name('cart')+'.'
-            sql += connection.ops.quote_name('obs_general_id')
+            sql += ' LEFT JOIN '+q('cart')
+            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+            sql += q('cart')+'.'+q('obs_general_id')
             sql += ' AND '
-            sql += connection.ops.quote_name('session_id')+'=%s'
+            sql += q('session_id')+'=%s'
             params.append(session_id)
 
         sql += ' ORDER BY '
-        sql += connection.ops.quote_name(temp_table_name)+'.sort_order'
+        sql += q(temp_table_name)+'.sort_order'
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
@@ -1438,10 +1431,10 @@ def get_search_results_chunk(request, use_cart=None,
                                                  order_descending_params)
 
         sql = 'SELECT '
-        sql += ','.join([connection.ops.quote_name(x.split('.')[0])+'.'+
-                         connection.ops.quote_name(x.split('.')[1])
+        sql += ','.join([q(x.split('.')[0])+'.'+
+                         q(x.split('.')[1])
                          for x in column_names])
-        sql += ' FROM '+connection.ops.quote_name('obs_general')
+        sql += ' FROM '+q('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
         # have an entry for a given opus_id, we still want the row to show up,
@@ -1449,35 +1442,27 @@ def get_search_results_chunk(request, use_cart=None,
         for table in tables | order_obs_tables:
             if table == 'obs_general':
                 continue
-            sql += ' LEFT JOIN '+connection.ops.quote_name(table)
-            sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-            sql += connection.ops.quote_name('id')+'='
-            sql += connection.ops.quote_name(table)+'.'
-            sql += connection.ops.quote_name('obs_general_id')
+            sql += ' LEFT JOIN '+q(table)
+            sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+            sql += q(table)+'.'+q('obs_general_id')
 
         # Now JOIN in all the mult_ tables.
         for (mult_table, table) in mult_tables | order_mult_tables:
-            sql += ' LEFT JOIN '+connection.ops.quote_name(mult_table)
-            sql += ' ON '+connection.ops.quote_name(table)+'.'
-            sql += connection.ops.quote_name(mult_table)+'='
-            sql += connection.ops.quote_name(mult_table)+'.'
-            sql += connection.ops.quote_name('id')
+            sql += ' LEFT JOIN '+q(mult_table)
+            sql += ' ON '+q(table)+'.'+q(mult_table)+'='
+            sql += q(mult_table)+'.'+q('id')
 
         # But the cart table is an INNER JOIN because we only want
         # opus_ids that appear in the cart table to cause result rows
-        sql += ' INNER JOIN '+connection.ops.quote_name('cart')
-        sql += ' ON '+connection.ops.quote_name('obs_general')+'.'
-        sql += connection.ops.quote_name('id')+'='
-        sql += connection.ops.quote_name('cart')+'.'
-        sql += connection.ops.quote_name('obs_general_id')
+        sql += ' INNER JOIN '+q('cart')
+        sql += ' ON '+q('obs_general')+'.'+q('id')+'='
+        sql += q('cart')+'.'+q('obs_general_id')
         sql += ' AND '
-        sql += connection.ops.quote_name('cart')+'.'
-        sql += connection.ops.quote_name('session_id')+'=%s'
+        sql += q('cart')+'.'+q('session_id')+'=%s'
         params.append(session_id)
         if ignore_recycle_bin:
             sql += ' AND '
-            sql += connection.ops.quote_name('cart')+'.'
-            sql += connection.ops.quote_name('recycled')+'=0'
+            sql += q('cart')+'.'+q('recycled')+'=0'
 
         # Note we don't need to add in a special cart JOIN here for
         # return_cart_states, because we're already joining in the
@@ -1511,7 +1496,7 @@ def get_search_results_chunk(request, use_cart=None,
               time.time()-time1, sql)
 
     if drop_temp_table:
-        sql = 'DROP TABLE '+connection.ops.quote_name(temp_table_name)
+        sql = 'DROP TABLE '+q(temp_table_name)
         try:
             cursor.execute(sql)
         except DatabaseError as e:
@@ -1697,10 +1682,10 @@ def get_triggered_tables(selections, extras, api_code=None):
         # Surface geometry has multiple targets per observation
         # so we just want to know if our val is in the result
         # (not the only result)
-        if 'obs_surface_geometry.target_name' in selections:
-            if (trigger_tab == 'obs_surface_geometry' and
+        if 'obs_surface_geometry_name.target_name' in selections:
+            if (trigger_tab == 'obs_surface_geometry_name' and
                 trigger_val.upper() ==
-                selections['obs_surface_geometry.target_name'][0].upper()):
+                selections['obs_surface_geometry_name.target_name'][0].upper()):
                 # If the selected surfacegeo target has no result, we
                 # still want to have the related menu item displayed.
                 triggered_tables.append(partable)

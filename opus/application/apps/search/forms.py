@@ -178,7 +178,7 @@ class SearchForm(forms.Form):
                 else:
                     choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
-                if param_qualified_name == 'obs_surface_geometry.target_name':
+                if param_qualified_name == 'obs_surface_geometry_name.target_name':
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',

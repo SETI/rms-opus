@@ -1564,7 +1564,7 @@ var o_widgets = {
                 }
                 // Note: It is possible to get here if the current string field
                 // didn't pass validation, because we may not have gotten the results
-                // from normalizeapi yet. So sadly stringsearchchoices has to support
+                // from normalizeinput yet. So sadly stringsearchchoices has to support
                 // badly formed search strings (like invalid regex).
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
                 $.getJSON(url, function(stringSearchChoicesData) {

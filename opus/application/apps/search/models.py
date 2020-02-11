@@ -1189,7 +1189,7 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
         db_table = 'mult_obs_mission_voyager_mission_phase_name'
 
 
-class MultObsSurfaceGeometryTargetName(models.Model):
+class MultObsSurfaceGeometryNameTargetName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30)
@@ -1200,7 +1200,7 @@ class MultObsSurfaceGeometryTargetName(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_surface_geometry_target_name'
+        db_table = 'mult_obs_surface_geometry_name_target_name'
 
 
 class MultObsTypeImageImageTypeId(models.Model):
@@ -1745,14 +1745,29 @@ class ObsSurfaceGeometry(models.Model):
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
     instrument_id = models.CharField(max_length=9)
-    target_name = models.CharField(max_length=75)
-    mult_obs_surface_geometry_target_name = models.ForeignKey(MultObsSurfaceGeometryTargetName, models.DO_NOTHING, db_column='mult_obs_surface_geometry_target_name')
+    target_list = models.TextField()
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
         db_table = 'obs_surface_geometry'
+
+
+class ObsSurfaceGeometryName(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')
+    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
+    volume_id = models.CharField(max_length=11)
+    instrument_id = models.CharField(max_length=9)
+    target_name = models.CharField(max_length=75)
+    target_list = models.TextField()
+    mult_obs_surface_geometry_name_target_name = models.ForeignKey(MultObsSurfaceGeometryNameTargetName, models.DO_NOTHING, db_column='mult_obs_surface_geometry_name_target_name')
+    id = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_surface_geometry_name'
 
 
 class ObsSurfaceGeometryAdrastea(models.Model):

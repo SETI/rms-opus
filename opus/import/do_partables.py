@@ -82,7 +82,7 @@ def create_import_partables_table():
     for table_name in sorted(surface_geo_table_names):
         target_name = table_name.replace('obs_surface_geometry__', '')
         entry = {
-            'trigger_tab': 'obs_surface_geometry',
+            'trigger_tab': 'obs_surface_geometry_name',
             'trigger_col': 'target_name',
             'trigger_val': import_util.decode_target_name(target_name).upper(),
             'partable':    table_name

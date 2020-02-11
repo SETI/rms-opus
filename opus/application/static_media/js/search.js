@@ -166,7 +166,8 @@ var o_search = {
             o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
 
             // Call normalized api with the current focused input slug
-            let newHash = `${slugWithId}=${currentValue}`;
+            let encodedValue = o_hash.encodeSlugValue(currentValue);
+            let newHash = `${slugWithId}=${encodedValue}`;
             // If qtype input exists, we pass in qtype with id to normalize input api
             // so that we can properly validate string regex.
             if ($(`#widget__${slugName} [name="qtype-${inputName}"]`).length > 0) {
@@ -229,7 +230,7 @@ var o_search = {
         /*
         When user focusout or hit enter on any range input:
             Handle any preprogrammed range dropdown
-            Call final normalizeapi and validate all inputs
+            Call final normalizeinput and validate all inputs
             Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
@@ -291,7 +292,7 @@ var o_search = {
 
         /*
         When user focusout or hit enter on any string input:
-            Call final normalizeapi and validate all inputs
+            Call final normalizeinput and validate all inputs
             Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", 'input.STRING', function(e) {
@@ -301,7 +302,7 @@ var o_search = {
         /*
         When user changes any STRING qtype:
             Handle any preprogrammed range dropdown
-            Call final normalizeapi and validate all inputs
+            Call final normalizeinput and validate all inputs
             Update URL (and search) if all inputs are valid
         We do this because the validity of a regex is different from that of
         any other qtype.
@@ -538,7 +539,8 @@ var o_search = {
         let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
 
         // Call normalize input api with only the slug and value from current input.
-        let newHash = `${slugWithId}=${currentValue}`;
+        let encodedValue = o_hash.encodeSlugValue(currentValue);
+        let newHash = `${slugWithId}=${encodedValue}`;
         // If qtype input exists, we pass in qtype with id to normalize input api
         // so that we can properly validate string regex.
         if ($(`#widget__${slugName} [name="qtype-${inputName}"]`).length > 0) {
