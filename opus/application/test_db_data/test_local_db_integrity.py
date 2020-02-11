@@ -319,7 +319,7 @@ class DBIntegrityTest(TestCase):
                            .exclude(partable__contains='callirrhoe')
                            .exclude(partable__contains='elara')
                            .values('partable').distinct().count())
-        count_surface_geo = (ObsSurfaceGeometry.objects
+        count_surface_geo = (ObsSurfaceGeometryName.objects
                              .values('target_name').distinct().count())
         self.assertEqual(count_partables, count_surface_geo)
 
