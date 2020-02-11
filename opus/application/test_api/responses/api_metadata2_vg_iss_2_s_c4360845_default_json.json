@@ -45,6 +45,9 @@
     "specsize": null,
     "polarizationtype": "None"
   },
+  "Surface Geometry Constraints": {
+    "surfacegeometrytargetlist": "SATURN,TETHYS"
+  },
   "Saturn Surface Geometry Constraints": {
     "SURFACEGEOsaturn_planetographiclatitude1": "-63.471",
     "SURFACEGEOsaturn_planetographiclatitude2": "89.457",
