@@ -1017,14 +1017,20 @@ def import_one_volume(volume_id):
 
             assert obs_general_row is not None
 
-            # Handle surface_geo
+            # Handle obs_surface_geometry_name and
+            # obs_surface_geometry__<TARGET>
 
             if 'body_surface_geo' in metadata:
                 surface_geo_dict = metadata['body_surface_geo']
                 for table_name in table_names_in_order:
-                    if not table_name.startswith('obs_surface_geometry'):
-                        # Deal with surface geometry only
+                    if not table_name.startswith('obs_surface_geometry_'):
+                        # Deal with obs_surface_geometry_name and
+                        # obs_surface_geometry__<TARGET> only
                         continue
+                    # Here we are handling both obs_surface_geometry_name and
+                    # obs_surface_geometry as well as all of the
+                    # obs_surface_geometry__<TARGET> tables
+
                     # Retrieve the opus_id from obs_general to find the
                     # surface_geo
                     opus_id = obs_general_row['opus_id']
@@ -1054,6 +1060,34 @@ def import_one_volume(volume_id):
                             impglobals.LOGGER.log('debug',
                 f'Creating surface geo table for new target {new_target_name}')
                         table_rows[new_table_name].append(row)
+
+            # Handle obs_surface_geometry
+            # We have to do this later than the other obs_ tables because only
+            # now do we know what all the available targets are
+
+            surface_target_list = None
+            if 'body_surface_geo' in metadata:
+                surface_geo_dict = metadata['body_surface_geo']
+                if opus_id in surface_geo_dict:
+                    surface_target_list = surface_geo_dict[opus_id].keys()
+
+            for table_name in table_names_in_order:
+                if table_name != 'obs_surface_geometry':
+                    # Deal with obs_surface_geometry only
+                    continue
+                # This is used to populate the surface geo target_list
+                # field
+                metadata['body_surface_geo_target_list'] = surface_target_list
+
+                row = import_observation_table(volume_id,
+                                               instrument_name,
+                                               mission_abbrev,
+                                               table_name,
+                                               table_schemas[table_name],
+                                               metadata)
+                if table_name not in table_rows:
+                    table_rows[new_table_name] = []
+                table_rows[table_name].append(row)
 
             # Handle obs_files
 

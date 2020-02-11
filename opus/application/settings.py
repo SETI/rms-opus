@@ -284,7 +284,8 @@ DATABASES = {
 # Tables in which every observation in the database appears.
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
-               'obs_surface_geometry', 'obs_wavelength', 'obs_type_image']
+               'obs_surface_geometry_name', 'obs_surface_geometry',
+               'obs_wavelength', 'obs_type_image']
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
@@ -339,7 +340,7 @@ RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 
 # First one in list is the default
-STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes')
+STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes', 'regex')
 RANGE_QTYPES = ('any', 'all', 'only')
 
 DEFAULT_PAGE_LIMIT = 100

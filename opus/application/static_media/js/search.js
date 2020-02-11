@@ -39,7 +39,7 @@ var o_search = {
     slugNormalizeReqno: {},
     slugMultsReqno: {},
     slugEndpointsReqno: {},
-    slugRangeInputValidValueFromLastSearch: {},
+    slugInputValidValueFromLastSearch: {},
 
     // Based on user's input, store the number of matched info by category, for example:
     // In ring radius, when user types "ha":
@@ -70,7 +70,7 @@ var o_search = {
         });
 
         // Avoid the orange blinking on border color, and also display proper border when input is in focus
-        $("#search").on("focus", "input.RANGE", function(e) {
+        $("#search").on("focus", "input.RANGE, input.STRING", function(e) {
             let inputName = $(this).attr("name");
             let currentValue = $(this).val().trim();
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
@@ -79,7 +79,7 @@ var o_search = {
 
             o_search.performInputValidation[slugWithId] = (o_search.performInputValidation[slugWithId] ||
                                                            true);
-            if (o_search.slugRangeInputValidValueFromLastSearch[slugWithId] ||
+            if (o_search.slugInputValidValueFromLastSearch[slugWithId] ||
                 currentValue === "" || !o_search.performInputValidation[slugWithId] || !$(this).hasClass("search_input_invalid_no_focus")) {
                 $(this).addClass("search_input_original");
             } else {
@@ -123,13 +123,7 @@ var o_search = {
         This is to properly put back invalid search background
         when user focus out and there is no "change" event
         */
-        $("#search").on("focusout", "input.RANGE", function(e) {
-            let currentValue = $(this).val().trim();
-            let inputName = $(this).attr("name");
-            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
-            let uniqueid = $(this).attr("data-uniqueid");
-            let slugWithId = `${slug}_${uniqueid}`;
-
+        $("#search").on("focusout", "input.RANGE, input.STRING", function(e) {
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
                 $(this).addClass("search_input_invalid_no_focus");
@@ -155,7 +149,7 @@ var o_search = {
         o_search.addPreprogrammedRangesSearchBehaviors();
 
         // Dynamically get input values right after user input a character
-        $("#search").on("input", "input.RANGE", function(e) {
+        $("#search").on("input", "input.RANGE, input.STRING", function(e) {
             if (!$(this).hasClass("input_currently_focused")) {
                 $(this).addClass("input_currently_focused");
             }
@@ -165,6 +159,7 @@ var o_search = {
             let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
+            let qtypeSlugWithId = `qtype-${slugName}_${uniqueid}`;
             let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
 
             let currentValue = $(this).val().trim();
@@ -175,7 +170,14 @@ var o_search = {
             o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
 
             // Call normalized api with the current focused input slug
-            let newHash = `${slugWithId}=${currentValue}`;
+            let encodedValue = o_hash.encodeSlugValue(currentValue);
+            let newHash = `${slugWithId}=${encodedValue}`;
+            // If qtype input exists, we pass in qtype with id to normalize input api
+            // so that we can properly validate string regex.
+            if ($(`#widget__${slugName} [name="qtype-${inputName}"]`).length > 0) {
+                let currentQtypeVal = $(`#widget__${slugName} [name="qtype-${inputName}"]`).val();
+                newHash += `&${qtypeSlugWithId}=${currentQtypeVal}`;
+            }
             // If unit input exists, we pass in unit with id to normalize input api
             // to get the pretty value based on current value and unit.
             if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
@@ -188,7 +190,7 @@ var o_search = {
             2) Input value didn't change from the last successful search
             3) Input value didn't match any ranges names
             */
-            if (currentValue === "" || currentValue === o_search.slugRangeInputValidValueFromLastSearch[slugWithId] ||
+            if (currentValue === "" || currentValue === o_search.slugInputValidValueFromLastSearch[slugWithId] ||
                 !o_search.performInputValidation[slugWithId]) {
                 $(e.target).removeClass("search_input_valid search_input_invalid");
                 $(e.target).removeClass("search_input_invalid_no_focus");
@@ -231,8 +233,9 @@ var o_search = {
 
         /*
         When user focusout or hit enter on any range input:
-        Call final normalized api and validate all inputs
-        Update URL (and search) if all inputs are valid
+            Handle any preprogrammed range dropdown
+            Call final normalizeinput and validate all inputs
+            Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
             let inputName = $(this).attr("name");
@@ -240,11 +243,10 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
-            let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
 
-            let currentValue = $(this).val().trim();
+            // Handle preprogrammed ranges
             o_search.rangesNameTotalMatchedCounter[slugWithId] = (o_search.rangesNameTotalMatchedCounter[slugWithId] ||
-                                                                 0);
+                                                                  0);
             if (o_search.rangesNameTotalMatchedCounter[slugWithId] === 1) {
                 let matchedCatId = "";
                 let currentinputsRangesNameMatchedInfo = o_search.inputsRangesNameMatchedInfo[slugWithId] || {};
@@ -289,61 +291,31 @@ var o_search = {
                 }
             }
 
-            // Call normalize input api with only the slug and value from current input.
-            let newHash = `${slugWithId}=${currentValue}`;
-            // If unit input exists, we pass in unit with id to normalize input api
-            // to get the pretty value based on current value and unit.
-            if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
-                let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
-                newHash += `&${unitSlugWithId}=${currentUnitVal}`;
-            }
-
-            o_search.lastSlugNormalizeRequestNo++;
-            o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
-
-            opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
-
-            if ($(e.target).hasClass("input_currently_focused")) {
-                $(e.target).removeClass("input_currently_focused");
-            }
-
-            o_search.parseFinalNormalizedInputDataAndUpdateURL(slugWithId, url);
+            o_search.stringOrRangeChanged(e.target);
         });
 
-        $('#search').on("change", 'input.STRING', function(event) {
-            let inputName = $(this).attr("name");
-            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
+        /*
+        When user focusout or hit enter on any string input:
+            Call final normalizeinput and validate all inputs
+            Update URL (and search) if all inputs are valid
+        */
+        $("#search").on("change", 'input.STRING', function(e) {
+            o_search.stringOrRangeChanged(e.target);
+        });
 
-            let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(inputName);
-            let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
-            let currentValue = $(this).val().trim();
-            if (currentValue) {
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = currentValue;
-                } else {
-                    opus.selections[slug] = [currentValue];
-                }
-            } else {
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = null;
-                } else {
-                    opus.selections[slug] = [null];
-                }
-            }
+        /*
+        When user changes any STRING qtype:
+            Handle any preprogrammed range dropdown
+            Call final normalizeinput and validate all inputs
+            Update URL (and search) if all inputs are valid
+        We do this because the validity of a regex is different from that of
+        any other qtype.
+        */
+        $("#search").on("change", ".op-qtype-input .STRING", function(e) {
+            let inputName = $(this).attr("name").replace("qtype-", "");
+            let target = $(`#search input.STRING[name="${inputName}"]`);
 
-            if (opus.lastSelections && opus.lastSelections[slug]) {
-                if (opus.lastSelections[slug][idx] === $(this).val().trim()) {
-                    return;
-                }
-            }
-
-            // If there is an invalid value, and user still updates string input,
-            // update the last selections to prevent allNormalizeInputApiCall.
-            if (!opus.areRangeInputsValid()) {
-                opus.updateOPUSLastSelectionsWithOPUSSelections();
-            }
-            o_hash.updateURLFromCurrentHash();
+            o_search.stringOrRangeChanged(target);
         });
 
         $("#search").on("change", "input.multichoice, input.singlechoice", function() {
@@ -390,7 +362,7 @@ var o_search = {
 
             // If there is an invalid value, and user still updates mult input,
             // update the last selections to prevent allNormalizeInputApiCall.
-            if (!opus.areRangeInputsValid()) {
+            if (!opus.areInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
@@ -544,7 +516,7 @@ var o_search = {
             // steps in the block will be performed in parseFinalNormalizedInputDataAndUpdateURL when
             // normalize input is run.
             if (!performNormalizeInput) {
-                if (!opus.areRangeInputsValid() || areInputSetsEmpty) {
+                if (!opus.areInputsValid() || areInputSetsEmpty) {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
                 o_hash.updateURLFromCurrentHash();
@@ -558,6 +530,45 @@ var o_search = {
                 }
             }
         });
+    },
+
+    stringOrRangeChanged: function(target) {
+        let inputName = $(target).attr("name").replace("qtype-", "");
+        let slugName = $(target).data("slugname");
+        let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
+        let uniqueid = $(target).attr("data-uniqueid");
+        let slugWithId = `${slug}_${uniqueid}`;
+        let currentValue = $(target).val().trim();
+        let qtypeSlugWithId = `qtype-${slugName}_${uniqueid}`;
+        let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
+
+        // Call normalize input api with only the slug and value from current input.
+        let encodedValue = o_hash.encodeSlugValue(currentValue);
+        let newHash = `${slugWithId}=${encodedValue}`;
+        // If qtype input exists, we pass in qtype with id to normalize input api
+        // so that we can properly validate string regex.
+        if ($(`#widget__${slugName} [name="qtype-${inputName}"]`).length > 0) {
+            let currentQtypeVal = $(`#widget__${slugName} [name="qtype-${inputName}"]`).val();
+            newHash += `&${qtypeSlugWithId}=${currentQtypeVal}`;
+        }
+        // If unit input exists, we pass in unit with id to normalize input api
+        // to get the pretty value based on current value and unit.
+        if ($(`#widget__${slugName} .op-unit-${slugName}`).length > 0) {
+            let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
+            newHash += `&${unitSlugWithId}=${currentUnitVal}`;
+        }
+
+        o_search.lastSlugNormalizeRequestNo++;
+        o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
+
+        opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+
+        if ($(target).hasClass("input_currently_focused")) {
+            $(target).removeClass("input_currently_focused");
+        }
+
+        o_search.parseFinalNormalizedInputDataAndUpdateURL(slugWithId, url);
     },
 
     areSlugSelectionsEmpty: function(slugSelections, areInputSetsEmpty) {
@@ -856,19 +867,18 @@ var o_search = {
         return $.getJSON(url);
     },
 
-    validateRangeInput: function(normalizedInputData, removeSpinner=false, slug=opus.allSlug, unit=null) {
+    validateInput: function(normalizedInputData, removeSpinner=false, slug=opus.allSlug, unit=null) {
         /**
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
          */
-        o_search.slugRangeInputValidValueFromLastSearch = {};
-
+        o_search.slugInputValidValueFromLastSearch = {};
         $.each(normalizedInputData, function(eachSlug, value) {
             if (eachSlug === "reqno") {
                 return;
             }
-            opus.rangeInputFieldsValidation[eachSlug] = opus.rangeInputFieldsValidation[eachSlug] || true;
-            // Beacsue normalize input api call is based on hash with unique id (for RANGE & STRING
+            opus.InputFieldsValidation[eachSlug] = opus.InputFieldsValidation[eachSlug] || true;
+            // Because normalize input api call is based on hash with unique id (for RANGE & STRING
             // inputs), so we have to parse the return data based on unique id.
             let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(eachSlug);
             let uniqueid = o_utils.getSlugOrDataTrailingCounterStr(eachSlug);
@@ -883,7 +893,7 @@ var o_search = {
             }
 
             if (value === null) {
-                if (currentInput.hasClass("RANGE")) {
+                if (currentInput.hasClass("RANGE") || currentInput.hasClass("STRING")) {
                     if (currentInput.hasClass("input_currently_focused")) {
                         $("#sidebar").addClass("search_overlay");
                     } else {
@@ -894,19 +904,19 @@ var o_search = {
                         opus.selections[slugNoCounter][idx] = currentInput.val();
                     }
 
-                    opus.rangeInputFieldsValidation[eachSlug] = false;
+                    opus.InputFieldsValidation[eachSlug] = false;
                 }
             } else {
-                if (currentInput.hasClass("RANGE")) {
+                if (currentInput.hasClass("RANGE") || currentInput.hasClass("STRING")) {
                     /*
                     If current focused input value is different from returned normalized data
                     we will not overwrite its displayed value.
                     */
                     if (currentInput.hasClass("input_currently_focused") && currentInput.val() !== value) {
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        o_search.slugInputValidValueFromLastSearch[eachSlug] = value;
                     } else {
                         currentInput.val(value);
-                        o_search.slugRangeInputValidValueFromLastSearch[eachSlug] = value;
+                        o_search.slugInputValidValueFromLastSearch[eachSlug] = value;
                         if (value === "") {
                             value = null;
                         }
@@ -919,7 +929,7 @@ var o_search = {
                         // No color border if the input value is valid
                         o_search.clearInputBorder(currentInput);
                     }
-                    opus.rangeInputFieldsValidation[eachSlug] = true;
+                    opus.InputFieldsValidation[eachSlug] = true;
                 }
             }
         });
@@ -930,11 +940,11 @@ var o_search = {
             opus.currentUnitBySlug[slugNoNum] = unit;
         }
 
-        if (opus.rangeInputFieldsValidation[slug] ||
-            (slug === opus.allSlug && opus.areRangeInputsValid()) || slug.startsWith("unit-")) {
-            // If there is an invalid value, and user still updates range input,
+        if (opus.InputFieldsValidation[slug] ||
+            (slug === opus.allSlug && opus.areInputsValid()) || slug.startsWith("unit-")) {
+            // If there is an invalid value, and user still updates input,
             // update the last selections to prevent allNormalizeInputApiCall.
-            if (!opus.areRangeInputsValid()) {
+            if (!opus.areInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
             o_hash.updateURLFromCurrentHash();
@@ -967,7 +977,7 @@ var o_search = {
 
     parseFinalNormalizedInputDataAndUpdateURL: function(slug, url, unit=null) {
         /**
-         * Parse the return data from a normalize input API call. validateRangeInput
+         * Parse the return data from a normalize input API call. validateInput
          * is called here.
          */
         $.getJSON(url, function(normalizedInputData) {
@@ -978,12 +988,12 @@ var o_search = {
                 return;
             }
 
-            // check each range input, if it's not valid, change its background to red
+            // check each input, if it's not valid, change its background to red
             // and also remove spinner.
-            o_search.validateRangeInput(normalizedInputData, true, slug, unit);
+            o_search.validateInput(normalizedInputData, true, slug, unit);
 
             // When search is invalid, we disabled browse tab in nav link.
-            if (!opus.areRangeInputsValid()) {
+            if (!opus.areInputsValid()) {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 opus.navLinkRemembered = null;
                 return;
@@ -997,7 +1007,7 @@ var o_search = {
                 });
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
             }
-            $("input.RANGE").each(function() {
+            $("input.RANGE, input.STRING").each(function() {
                 if (!$(this).hasClass("input_currently_focused")) {
                     $(this).removeClass("search_input_valid");
                     $(this).removeClass("search_input_invalid");

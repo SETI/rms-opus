@@ -481,7 +481,7 @@ var o_widgets = {
             }
 
             if (!opus.isAnyNormalizeInputInProgress()) {
-                if (noSelectionsChange || !opus.areRangeInputsValid()) {
+                if (noSelectionsChange || !opus.areInputsValid()) {
                     // This will make sure normalize input api from opus.load is not called.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
@@ -582,14 +582,14 @@ var o_widgets = {
             // When we delete a set of inputs while there is a normalize input running,
             // we will trigger another normalize input call to make sure the latest
             // opus.selections get synced up properly. Because when parsing the return
-            // data from a normalize input call (in validateRangeInput), there is no way
+            // data from a normalize input call (in validateInput), there is no way
             // for us to tell if any idx changes (elements got removed) happened in
             // opus.selections, and this will mess up opus.selections. By calling one final
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
                 if ((noSelectionsChange && isRemovingEmptySet) ||
-                    !opus.areRangeInputsValid()) {
+                    !opus.areInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
@@ -603,12 +603,12 @@ var o_widgets = {
                         o_widgets.isRemovingInput = false;
                         return;
                     }
-                    o_search.validateRangeInput(normalizedData, false);
+                    o_search.validateInput(normalizedData, false);
 
-                    if (opus.areRangeInputsValid()) {
-                        $("input.RANGE").removeClass("search_input_valid");
-                        $("input.RANGE").removeClass("search_input_invalid");
-                        $("input.RANGE").addClass("search_input_original");
+                    if (opus.areInputsValid()) {
+                        $("input.RANGE, input.STRING").removeClass("search_input_valid");
+                        $("input.RANGE, input.STRING").removeClass("search_input_invalid");
+                        $("input.RANGE, input.STRING").addClass("search_input_original");
                         $("#sidebar").removeClass("search_overlay");
                         $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
                         if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
@@ -619,7 +619,7 @@ var o_widgets = {
                         }
                     }
 
-                    if (opus.areRangeInputsValid()) {
+                    if (opus.areInputsValid()) {
                         o_hash.updateURLFromCurrentHash();
                     }
 
@@ -678,8 +678,8 @@ var o_widgets = {
         let uniqueid = minInput.attr("data-uniqueid");
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
-        opus.rangeInputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
-        opus.rangeInputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
+        opus.InputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
+        opus.InputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
 
         let slug = "";
         let slugOrderNum = "";
@@ -716,7 +716,7 @@ var o_widgets = {
 
     removeInputsValidationInfo: function(inputs) {
         /**
-         * Remove input validation info in opus.rangeInputFieldsValidation when an input
+         * Remove input validation info in opus.InputFieldsValidation when an input
          * or a widget is removed.
          */
         for (const inputField of inputs) {
@@ -724,7 +724,7 @@ var o_widgets = {
             let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(inputField).attr("data-uniqueid");
             let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
-            delete opus.rangeInputFieldsValidation[slugWithId];
+            delete opus.InputFieldsValidation[slugWithId];
         }
     },
 
@@ -811,12 +811,12 @@ var o_widgets = {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
                 return;
             }
-            o_search.validateRangeInput(normalizedData, false);
+            o_search.validateInput(normalizedData, false);
 
-            if (opus.areRangeInputsValid()) {
-                $("input.RANGE").removeClass("search_input_valid");
-                $("input.RANGE").removeClass("search_input_invalid");
-                $("input.RANGE").addClass("search_input_original");
+            if (opus.areInputsValid()) {
+                $("input.RANGE, input.STRING").removeClass("search_input_valid");
+                $("input.RANGE, input.STRING").removeClass("search_input_invalid");
+                $("input.RANGE, input.STRING").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
                 if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
@@ -832,7 +832,7 @@ var o_widgets = {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
-            if (opus.areRangeInputsValid()) {
+            if (opus.areInputsValid()) {
                 o_hash.updateURLFromCurrentHash();
             }
 
@@ -1349,16 +1349,16 @@ var o_widgets = {
         let widgetInputs = $(`#widget__${slug} input`);
         if (widgetInputs.hasClass("RANGE")) {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
-            let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
-            let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
+            let minInputs = $(`#widget__${slug} input.op-range-input-min`);
+            let maxInputs = $(`#widget__${slug} input.op-range-input-max`);
             let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let trailingCounter = 0;
             let trailingCounterString = "";
             let minInputNamesArray = [];
 
-            let originalMinName = `${$(minRangeInputs).data("slugname")}1`;
-            let originalMaxName = `${$(maxRangeInputs).data("slugname")}2`;
+            let originalMinName = `${$(minInputs).data("slugname")}1`;
+            let originalMaxName = `${$(maxInputs).data("slugname")}2`;
             let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
             // If there are extra sets of RANGE inputs, we reorder the following:
             // 1. name attribute for min & max inputs.
@@ -1370,10 +1370,10 @@ var o_widgets = {
                 // The data will be used to set as data-mininput for corresponding ranges collapsible
                 // (categories) containers. That way each specific min input will be linked to its own
                 // ranges info dropdown.
-                minInputNamesArray = o_widgets.renumberAttributesOfSearchElements(minRangeInputs, true);
+                minInputNamesArray = o_widgets.renumberAttributesOfSearchElements(minInputs, true);
 
                 // Renumber max inputs.
-                o_widgets.renumberAttributesOfSearchElements(maxRangeInputs);
+                o_widgets.renumberAttributesOfSearchElements(maxInputs);
 
                 // Renumber preprogrammed ranges dropdown.
                 trailingCounter = 0;
@@ -1399,8 +1399,8 @@ var o_widgets = {
                 o_widgets.renumberAttributesOfSearchElements(qtypes);
             } else {
                 // When there is only one set of range input, remove the "_counter" trailing part.
-                minRangeInputs.attr("name", originalMinName);
-                maxRangeInputs.attr("name", originalMaxName);
+                minInputs.attr("name", originalMinName);
+                maxInputs.attr("name", originalMaxName);
                 qtypes.attr("name", `qtype-${slug}`);
                 if (preprogrammedRangesInfo.length > 0) {
                     let rangesDropdownCategories = preprogrammedRangesInfo.find("li");
@@ -1559,9 +1559,13 @@ var o_widgets = {
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
-                if (!opus.areRangeInputsValid()) {
+                if (!opus.areInputsValid()) {
                     return;
                 }
+                // Note: It is possible to get here if the current string field
+                // didn't pass validation, because we may not have gotten the results
+                // from normalizeinput yet. So sadly stringsearchchoices has to support
+                // badly formed search strings (like invalid regex).
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
                 $.getJSON(url, function(stringSearchChoicesData) {
                     if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slugWithCounter]) {

@@ -93,15 +93,15 @@ var o_hash = {
                         }
 
                         // If the slug in opus.selections has a valid value (check
-                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        // opus.InputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug1][trailingCounter-1] !== null &&
-                            opus.rangeInputFieldsValidation[slugWithId1] !== false) {
+                            opus.InputFieldsValidation[slugWithId1] !== false) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
                         // If the slug in opus.selections has a valid value (check
-                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        // opus.InputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug2][trailingCounter-1] !== null &&
-                            opus.rangeInputFieldsValidation[slugWithId2] !== false) {
+                            opus.InputFieldsValidation[slugWithId2] !== false) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
@@ -263,6 +263,19 @@ var o_hash = {
         window.location.hash = '/' + fullHashStr;
     },
 
+    encodeSlugValue: function(slugValue) {
+        /**
+         * Take in a single slug value and encode it.
+         */
+        let encodedValue = encodeURIComponent(slugValue);
+        encodedValue = encodedValue.replace(/\%20/g, "+");
+        // All ":" in the search string will be unencoded.
+        encodedValue = encodedValue.replace(/\%3A/g, ":");
+        encodedValue = encodedValue.replace(/\%2C/g, ",");
+
+        return encodedValue;
+    },
+
     encodeSlugValues: function(slugValueArray) {
         /**
          * Take in a slug value array (like opus.selections, each element
@@ -272,18 +285,13 @@ var o_hash = {
          * make sure slug values in the hash are all encoded before updating
          * the URL.
          */
-        let slugValue = [];
+        let encodedValues = [];
         for (const val of slugValueArray) {
-            let value = encodeURIComponent(val);
-            value = value.replace(/\%20/g, "+");
-            // All ":" in the search string will be unencoded.
-            value = value.replace(/\%3A/g, ":");
-            value = value.replace(/\%2C/g, ",");
-
-            slugValue.push(value);
+            let encodedValue = o_hash.encodeSlugValue(val);
+            encodedValues.push(encodedValue);
         }
 
-        return slugValue;
+        return encodedValues;
     },
 
     encodeHashArray: function(hashArray) {

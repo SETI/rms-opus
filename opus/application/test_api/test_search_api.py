@@ -98,6 +98,18 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         expected = {"note": "FRED", "reqno": 123}
         self._run_json_equal(url, expected)
 
+    def test__api_normalizeinput_string_regex_good(self):
+        "[test_search_api.py] /api/normalizeinput: string regex good"
+        url = r'/opus/__api/normalizeinput.json?note=^\d$&reqno=123'
+        expected = {"note": r"^\d$", "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeinput_string_regex_bad(self):
+        "[test_search_api.py] /api/normalizeinput: string regex bad"
+        url = r'/opus/__api/normalizeinput.json?note=^\d($&qtype-note=regex&reqno=123'
+        expected = {"note": None, "reqno": 123}
+        self._run_json_equal(url, expected)
+
     def test__api_normalizeinput_int_empty(self):
         "[test_search_api.py] /api/normalizeinput: integer empty"
         url = '/opus/__api/normalizeinput.json?levels1=&reqno=123'
@@ -623,6 +635,22 @@ class ApiSearchTests(TestCase, ApiTestHelper):
         url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=V1X&qtype-datasetid=excludes&reqno=123'
         expected = {'choices': ['CO-S-ISSNA/ISSWA-2-EDR-V1.0'],
                     'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_regex_good(self):
+        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex good"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}NA&qtype-datasetid=regex&reqno=123'
+        expected = {'choices': ['CO-S-<b>ISSNA</b>/ISSWA-2-EDR-V1.0'],
+                    'full_search': False,
+                    'truncated_results': False, "reqno": 123}
+        self._run_json_equal(url, expected)
+
+    def test__api_stringsearchchoices_datasetid_COISS_2002_regex_bad(self):
+        "[test_search_api.py] /api/stringsearchchoices: datasetid CO-S volumeid COISS_2002 regex bad"
+        url = '/opus/__api/stringsearchchoices/datasetid.json?volumeid=COISS_2002&datasetid=[A-Z]{3}(NA&qtype-datasetid=regex&reqno=123'
+        expected = {'choices': [],
+                    'full_search': True,
                     'truncated_results': False, "reqno": 123}
         self._run_json_equal(url, expected)
 
