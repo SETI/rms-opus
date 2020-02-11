@@ -85,6 +85,7 @@ def api_view_cart(request):
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
+    session_id = get_session_id(request)
 
     reqno = get_reqno(request)
     if reqno is None:
@@ -94,7 +95,7 @@ def api_view_cart(request):
         raise ret
 
     session_id = get_session_id(request)
-    get_not_selected_product_types_str = request.GET.get('unselected_types')
+    get_not_selected_product_types_str = request.GET.get('unselected_types', '')
     not_selected_product_types = get_not_selected_product_types_str.split(',')
 
     product_types_str = request.GET.get('types', 'all')
@@ -874,10 +875,11 @@ def _get_download_info(product_types, session_id):
         if product_types == ['all'] or short_name in product_types:
             total_download_size += download_size
             total_download_count += download_count
-            product_dict_by_short_name[short_name]['product_count'] = product_count
-            product_dict_by_short_name[short_name]['download_count'] = download_count
-            product_dict_by_short_name[short_name]['download_size'] = download_size
-            product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
+
+        product_dict_by_short_name[short_name]['product_count'] = product_count
+        product_dict_by_short_name[short_name]['download_count'] = download_count
+        product_dict_by_short_name[short_name]['download_size'] = download_size
+        product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
 
     ret = {
         'total_download_count': total_download_count,
