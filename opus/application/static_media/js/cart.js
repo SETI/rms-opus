@@ -598,7 +598,7 @@ var o_cart = {
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
             opus.prefs.cart_startobs = 0;
-            o_cart.updateCartStatus(data);
+            //o_cart.updateCartStatus(data);
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
