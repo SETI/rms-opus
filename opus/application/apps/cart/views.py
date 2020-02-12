@@ -5,7 +5,7 @@
 # The (private) API interface for adding and removing items from the cart
 # and creating download .zip and .csv files.
 #
-#    Format: __cart/view.html
+#    Format: __cart/view.json
 #    Format: __cart/status.json
 #    Format: __cart/data.csv
 #    Format: __cart/(?P<action>add|remove|addrange|removerange|addall).json
@@ -78,7 +78,6 @@ def api_view_cart(request):
     Arguments: reqno=<reqno>
                Normal search arguments
     """
-
     api_code = enter_api_call('api_view_cart', request)
 
     if not request or request.GET is None:
