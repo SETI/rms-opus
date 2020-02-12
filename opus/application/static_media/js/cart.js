@@ -510,7 +510,6 @@ var o_cart = {
             $("#cart .op-data-table tbody").empty();
             o_browse.showPageLoaderSpinner();
 
-            // redux: and nix this big thing:
             let hash = o_hash.getHash();
 
             // Figure out which product types are not selected
@@ -537,7 +536,7 @@ var o_cart = {
                 if (data.reqno < o_cart.lastProductCountRequestNo) {
                     return;
                 }
-                // this div lives in the in the nav menu template
+                // this div lives in the nav menu template
                 $("#op-download-options-container", "#cart").hide().html(data.html).fadeIn();
                 o_cart.hideCartCountSpinner(data.count, data.recycled_count);
 
@@ -598,7 +597,6 @@ var o_cart = {
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
             opus.prefs.cart_startobs = 0;
-            //o_cart.updateCartStatus(data);
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });

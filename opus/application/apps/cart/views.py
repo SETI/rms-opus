@@ -85,6 +85,7 @@ def api_view_cart(request):
         ret = Http404(settings.HTTP404_NO_REQUEST)
         exit_api_call(api_code, ret)
         raise ret
+
     session_id = get_session_id(request)
 
     reqno = get_reqno(request)
@@ -94,7 +95,6 @@ def api_view_cart(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    session_id = get_session_id(request)
     get_not_selected_product_types_str = request.GET.get('unselected_types', '')
     not_selected_product_types = get_not_selected_product_types_str.split(',')
 
@@ -104,8 +104,7 @@ def api_view_cart(request):
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
-    for product in info['product_cat_list']:
-        (name, details) = product
+    for name, details in info['product_cat_list']:
         for type in details:
             if type['slug_name'] in not_selected_product_types:
                 type['selected'] = ''
@@ -118,9 +117,9 @@ def api_view_cart(request):
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
     ret = json_response({'html': html,
-        'count': info['count'],
-        'recycled_count': info['recycled_count'],
-        'reqno': reqno})
+                         'count': info['count'],
+                         'recycled_count': info['recycled_count'],
+                         'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
