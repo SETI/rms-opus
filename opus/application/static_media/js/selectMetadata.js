@@ -30,27 +30,6 @@ var o_selectMetadata = {
 
         o_selectMetadata.currentSelectedMetadata = opus.prefs.cols.slice();
 
-        $("#op-select-metadata .close").on("click", function(e) {
-            clickedX = true;
-        });
-
-        $("#op-select-metadata").on("hide.bs.modal", function(e) {
-            // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.currentSelectedMetadata)) {
-                // only pop up the confirm modal if the user clicked the 'X' in the corner
-                if (clickedX) {
-                    clickedX = false;
-                    let targetModal = $(this).find("[data-target]").data("target");
-                    $(`#${targetModal}`).modal("show");
-                } else {
-                    o_selectMetadata.saveChanges();
-                }
-            } else {
-                // remove spinner if nothing is re-draw when we click save changes
-                o_browse.hidePageLoaderSpinner();
-            }
-        });
-
         $("#op-select-metadata").on("show.bs.modal", function(e) {
             // this is to make sure modal is back to it original position when open again
             $("#op-select-metadata .modal-dialog").css({top: 0, left: 0});
@@ -67,6 +46,27 @@ var o_selectMetadata = {
             let fakeUrl = "/opus/__fake/__selectmetadatamodal.json";
             $.getJSON(fakeUrl, function(data) {
             });
+        });
+
+        $("#op-select-metadata .close").on("click", function(e) {
+            clickedX = true;
+        });
+
+        $("#op-select-metadata").on("hide.bs.modal", function(e) {
+            // update the data table w/the new columns
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.currentSelectedMetadata)) {
+                // only pop up the confirm modal if the user clicked the 'X' in the corner
+                if (clickedX) {
+                    clickedX = false;
+                    let targetModal = $(this).find("[data-target]").data("target");
+                    $(`#${targetModal}`).modal("show");
+                } else {
+                    o_selectMetadata.saveChanges();
+                    return;
+                }
+            }
+            // remove spinner if nothing is re-draw when we click save changes
+            o_browse.hidePageLoaderSpinner();
         });
 
         $("#op-select-metadata .op-all-metadata-column").on("click", '.submenu li a', function() {
@@ -100,22 +100,10 @@ var o_selectMetadata = {
                     o_selectMetadata.resetMetadata(opus.defaultColumns);
                     break;
                 case "submit":
-                    o_browse.showPageLoaderSpinner();
                     break;
                 case "cancel":
                     o_selectMetadata.discardChanges();
                     break;
-            }
-        });
-
-        $("#op-select-metadata .close").on("click", function(e) {
-            // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.currentSelectedMetadata)) {
-                let targetModal = $(this).data("target");
-                $(targetModal).modal("show");
-            } else {
-                // remove spinner if nothing is re-draw when we click save changes
-                o_browse.hidePageLoaderSpinner();
             }
         });
 
