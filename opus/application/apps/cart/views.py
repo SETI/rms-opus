@@ -424,13 +424,14 @@ def api_reset_session(request):
     recycle_bin = request.GET.get('recyclebin', 0)
     try:
         recycle_bin = int(recycle_bin)
+        if throw_random_http404_error(): # pragma: no cover
+            raise ValueError
     except:
         log.error('api_reset_session: Bad value for recyclebin %s: %s',
                   recycle_bin, request.GET)
-        ret = HttpResponseServerError(
-                                HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
+        ret = Http404(HTTP404_BAD_RECYCLEBIN(recycle_bin, request))
         exit_api_call(api_code, ret)
-        return ret
+        raise ret
 
     sql = 'DELETE FROM '+connection.ops.quote_name('cart')
     sql += ' WHERE session_id=%s'
@@ -478,7 +479,7 @@ def api_create_download(request, opus_id=None):
 
     if not request or request.GET is None:
         if opus_id:
-            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.json'))
+            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.zip'))
         else:
             ret = Http404(HTTP404_NO_REQUEST('/__cart/download.json'))
         exit_api_call(api_code, ret)
@@ -1355,6 +1356,11 @@ def _create_csv_file(request, csv_file_name, opus_id, api_code=None):
     column_labels, page, error = _csv_helper(request, opus_id, api_code)
     if error is not None:
         return get_search_results_chunk_error_handler(error, api_code)
+
+    if column_labels is None or throw_random_http404_error():
+        ret = Http404(HTTP404_UNKNOWN_SLUG(None, request))
+        exit_api_call(api_code, ret)
+        raise ret
 
     with open(csv_file_name, 'a') as csv_file:
         wr = csv.writer(csv_file)

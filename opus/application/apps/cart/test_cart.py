@@ -148,8 +148,8 @@ class cartTests(TestCase):
     def test__api_create_download_opusid_no_get(self):
         "[test_cart.py] api_create_download: no GET"
         c = Client()
-        request = self.factory.get('/__cart/download.json')
+        request = self.factory.get('/api/download/testopusid.zip')
         request.GET = None
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /api/download/testopusid.json'):
+            r'Internal error \(No request was provided\) for /api/download/testopusid.zip'):
             api_create_download(request, 'testopusid')

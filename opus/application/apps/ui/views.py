@@ -15,6 +15,7 @@ from annoying.decorators import render_to
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.http import Http404
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.utils.decorators import method_decorator
@@ -105,7 +106,7 @@ def api_get_menu(request):
     api_code = enter_api_call('api_get_menu', request)
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_get_menu: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__menu.json'))
         exit_api_call(api_code, ret)
