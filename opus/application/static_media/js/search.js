@@ -104,6 +104,21 @@ var o_search = {
             }
         });
 
+        // When clicking inside a widget body, if the clicked element is not input,
+        // select, hints, and text nodes, we will disable the default behavior of mousedown
+        // event. This will prevent input from focusing out when clicking on preprogrammed
+        // ranges dropdown, and also keep the ability to copy text & hints in mults
+        // and hints in ranges widgets.
+        $("#search").on("mousedown", ".widget .card-body", function(e) {
+            if (!$(e.target).is("input") && !$(e.target).is("select") &&
+                !$(e.target).is("label") && !$(e.target).hasClass("hints") &&
+                !$(e.target).hasClass("op-hints-info") &&
+                !$(e.target).hasClass("op-hints-description") &&
+                !$(e.target).hasClass("op-choice-label-name")) {
+                e.preventDefault();
+            }
+        });
+
         /*
         This is to properly put back invalid search background
         when user focus out and there is no "change" event
@@ -114,13 +129,6 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
-            // Disable browse tab nav link when user focuses out and there is a change of value
-            // in range input. The button will be enabled or keep disabled based on the
-            // result of input validation in parseFinalNormalizedInputDataAndUpdateURL.
-            if ((currentValue && currentValue !== o_search.slugRangeInputValidValueFromLastSearch[slugWithId]) ||
-                (!currentValue && o_search.slugRangeInputValidValueFromLastSearch[slugWithId])) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
-            }
 
             $(this).removeClass("input_currently_focused");
             if ($(this).hasClass("search_input_invalid")) {
@@ -934,16 +942,21 @@ var o_search = {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
             // for range
+            let rangeHintsDescription = "op-hints-description";
+            let rangeHintsTextClass = "op-hints-info";
             $(".op-range-hints").each(function() {
                 if ($(this).children().length > 0) {
-                    $(this).html(`<span>Min:&nbsp;<span class="op-hints-info">?</span></span>
-                                  <span>Max:&nbsp;<span class="op-hints-info">?</span></span>
-                                  <span>Nulls:&nbsp;<span class="op-hints-info">?</span></span>`);
+                    $(this).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>
+                                  <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>
+                                  <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                  <span class="${rangeHintsTextClass}">?</span></span>`);
                 }
             });
             // for mults
             $(".hints").each(function() {
-                $(this).html("<span>?</span>");
+                $(this).html(`<span class="${rangeHintsTextClass}">?</span>`);
             });
 
             if (removeSpinner) {
@@ -964,14 +977,15 @@ var o_search = {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 return;
             }
+
             // check each range input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateRangeInput(normalizedInputData, true, slug, unit);
 
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.areRangeInputsValid()) {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
+                opus.navLinkRemembered = null;
                 return;
             }
 
@@ -991,9 +1005,10 @@ var o_search = {
                 }
             });
 
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
+
+            opus.changeTabToRemembered();
         });
     },
 
@@ -1112,9 +1127,11 @@ var o_search = {
         $.ajax({url: url,
             dataType:"json",
             success: function(multdata) {
+                let rangeHintsDescription = "op-hints-description";
+                let rangeHintsTextClass = "op-hints-info";
                 $(`#widget__${slug} .spinner`).fadeOut();
 
-                if (multdata.reqno< o_search.slugEndpointsReqno[slug]) {
+                if (multdata.reqno < o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
                 $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
@@ -1141,22 +1158,23 @@ var o_search = {
                 }
 
                 let dataSlug = multdata.field_id;
-                $("#widget__" + dataSlug + " .spinner").fadeOut('');
+                $("#widget__" + dataSlug + " .spinner").fadeOut("");
 
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;
-                $('#' + widget + ' input').each( function() {
+                $("#" + widget + " input").each( function() {
+                    let hintsTextClass = "op-hints-info";
                     let value = $(this).attr("value");
-                    let id = '#hint__' + slug + "_" + value.replace(/ /g,'-').replace(/[^\w\s]/gi, '');  // id of hinting span, defined in widgets.js getWidget
+                    let id = "#hint__" + slug + "_" + value.replace(/ /g, "-").replace(/[^\w\s]/gi, "");  // id of hinting span, defined in widgets.js getWidget
 
                     if (!hideHintsForNonSelectedRadioButtons) {
                         if (mults[value]) {
-                            $(id).html('<span>' + mults[value] + '</span>');
+                            $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
                             if ($(id).parent().hasClass("fadey")) {
                                 $(id).parent().removeClass("fadey");
                             }
                         } else {
-                            $(id).html('<span>0</span>');
+                            $(id).html(`<span class="${hintsTextClass}">0</span>`);
                             $(id).parent().addClass("fadey");
                         }
                     } else {
@@ -1164,16 +1182,16 @@ var o_search = {
                         $(id).parent().removeClass("fadey");
                         if (mults[value]) {
                             if ($(this).is(":checked")) {
-                                $(id).html('<span>' + mults[value] + '</span>');
+                                $(id).html(`<span class="${hintsTextClass}">` + mults[value] + "</span>");
                             } else {
-                                $(id).html('<span>--</span>');
+                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
                             }
                         } else {
                             if ($(this).is(":checked")) {
-                                $(id).html('<span>0</span>');
+                                $(id).html(`<span class="${hintsTextClass}">0</span>`);
 
                             } else {
-                                $(id).html('<span>--</span>');
+                                $(id).html(`<span class="${hintsTextClass}">--</span>`);
                             }
                         }
                     }

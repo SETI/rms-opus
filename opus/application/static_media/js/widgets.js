@@ -51,6 +51,7 @@ var o_widgets = {
         $("#op-search-widgets").sortable({
             items: "> li",
             cursor: "grab",
+            // Note: this will cause input to lose focus when clicking on preprogrammed dropdown.
             handle: ".card-title",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
             // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
@@ -616,9 +617,6 @@ var o_widgets = {
                                 o_search.getHinting(eachSlug);
                             });
                         }
-                        $(".op-browse-tab").removeClass("op-disabled-nav-link");
-                    } else {
-                        $(".op-browse-tab").addClass("op-disabled-nav-link");
                     }
 
                     if (opus.areRangeInputsValid()) {
@@ -827,9 +825,6 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-                $(".op-browse-tab").removeClass("op-disabled-nav-link");
-            } else {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
 
             // If the closing widget has empty values, don't perform a search.
@@ -1319,6 +1314,18 @@ var o_widgets = {
                 for (const eachInputSet of widgetInputSets) {
                     o_widgets.uniqueIdForInputs += 1;
                     $(eachInputSet).find("input").attr("data-uniqueid", o_widgets.uniqueIdForInputs);
+                }
+            }
+
+            // Wrap mults label names with span tag, we will style the span tag to have a caret cursor
+            // so that users know that they can select and copy the text.
+            if (widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) {
+                let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
+                let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
+                for (const label of allChoiceLabels) {
+                    $(label).contents().filter(function() {
+                        return this.nodeType === 3;
+                    }).wrap("<span class='op-choice-label-name'></span>");
                 }
             }
 

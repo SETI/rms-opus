@@ -95,7 +95,8 @@ even when the browser size is narrow. */
 }
 
 /* Make sure the height of top navbar will not change when "Recent Announcement"
-appears & disappears. */
+appears & disappears. Padding-top & bottom need to match ones for .op-user-msg
+so that both "Recent Announcements" and "Message" can be vertically aligned. */
 .op-tab .op-blog-link {
     padding-top: 0;
     padding-bottom: 0;
@@ -109,8 +110,12 @@ appears & disappears. */
     }
 }
 
+/* Padding-top & bottom need to match ones for .op-blog-link so that both
+"Recent Announcements" and "Message" can be vertically aligned. */
 .op-user-msg {
     display: none;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* display normalized url message */
@@ -2284,7 +2289,8 @@ ul.ui-autocomplete a.ui-state-active {
 }
 
 /* Allow users to mouse over and select texts & hints in widgets */
-.op-input ul label, .op-input ul span {
+.op-input ul label, .op-input ul span,
+.op-hints-info, .op-hints-description {
     -ms-user-select: text;
     user-select: text;
     -moz-user-select: text;
@@ -2522,12 +2528,6 @@ wiggling when mouse over autocomplete menu items */
     margin: 0;
 }
 
-/* Use to disable nav link (for the case that disables browse tab when
-we have an invalid search) */
-.op-disabled-nav-link {
-    pointer-events: none;
-}
-
 /* Styling for the button to delete a set of inputs in a widget */
 .op-remove-inputs {
     margin-left: 10px;
@@ -2611,6 +2611,26 @@ at the right of -- OR -- label. */
     padding-right: 3px;
 }
 
+/* Tooltips */
+
+[title] {
+    cursor: default;
+}
+
+/* This is for touch screens */
+.op-tooltip-text {
+    position: fixed;
+    top: 80px;
+    left: 10%;
+    right: 10%;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    background-color: white;
+    box-shadow: 2px 2px 6px;
+    padding: 0.3em;
+    line-height: 17px;
+    z-index: 20000;
+}
+
 /* Style for print - automatic creation of PDF files */
 
 @media print {
@@ -2649,4 +2669,11 @@ at the right of -- OR -- label. */
     .op-new-page {
         page-break-before: always;
     }
+}
+
+/* Make sure label names & hints in wdigets have a caret cursor when users mouseover. */
+.op-choice-label-name,
+.op-hints-description,
+.op-hints-info {
+    cursor: text;
 }
