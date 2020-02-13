@@ -262,3 +262,130 @@ def cols_to_slug_list(slugs):
     if not slugs:
         return []
     return slugs.split(',')
+
+
+def throw_random_http404_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP404 error')
+    return ret
+
+def throw_random_http500_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP500 error')
+    return ret
+
+def HTTP404_NO_REQUEST(s):
+    return f'Internal error (No request was provided) for {s}'
+
+def HTTP404_BAD_OR_MISSING_REQNO(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing reqno) for {r}'
+
+def HTTP404_MISSING_OPUS_ID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Missing OPUSID for {r}'
+
+def HTTP404_UNKNOWN_FORMAT(fmt, r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Unknown return format "{fmt}") for {r}'
+
+def HTTP404_BAD_OR_MISSING_RANGE(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing range) for {r}'
+
+def HTTP404_BAD_DOWNLOAD(download, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted download argument "{download}" for {r}'
+
+def HTTP404_BAD_RECYCLEBIN(recyclebin, r):
+    if type(r) != str:
+        r = r.path
+    return (f'Internal error (Badly formatted recyclebin argument '
+            f'"{recyclebin}") for {r}')
+
+def HTTP404_BAD_COLLAPSE(collapse, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted collapse argument "{collapse}" for {r}'
+
+def HTTP404_BAD_LIMIT(limit, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted limit "{limit}" for {r}'
+
+def HTTP404_BAD_STARTOBS(startobs, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted startobs "{startobs}" for {r}'
+
+def HTTP404_BAD_PAGENO(pageno, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted page number "{pageno}" for {r}'
+
+def HTTP404_BAD_OFFSET(pageno, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted offset "{offset}" for {r}'
+
+def HTTP404_SEARCH_PARAMS_INVALID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Search parameters invalid for {r}'
+
+def HTTP404_UNKNOWN_SLUG(slug, r):
+    if type(r) != str:
+        r = r.path
+    if slug is None:
+        return f'Unknown metadata field slug for {r}'
+    return f'Unknown metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_UNITS(units, slug, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown units "{units}" for metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_RING_OBS_ID(ringobsid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown RINGOBSID "{ringobsid}" for {r}'
+
+def HTTP404_UNKNOWN_OPUS_ID(opusid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown OPUSID "{opusid}" for {r}'
+
+def HTTP404_UNKNOWN_CATEGORY(r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown category for {r}'
+
+def wrap_http500_string(s):
+    # This duplicates the format for the Django debug page
+    ret = f'<div id="info">{s}</div>'
+    return ret
+
+def HTTP500_SEARCH_CACHE_FAILED(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(f'Internal database error for {r}')
+
+def HTTP500_DATABASE_ERROR(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(
+                f'Internal database error for {r}')
+
+def HTTP500_INTERNAL_ERROR(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(f'Unspecified internal server error for {r}')

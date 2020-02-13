@@ -106,10 +106,10 @@ var o_cart = {
 
         // Display the whole series of modals.
         // This will keep displaying multiple error message modals one after another when the previous modal is closed.
-        $("#op-cart-status-error-msg").on("hidden.bs.modal", function(e) {
+        $("#op-cart-status-error-msg-modal").on("hidden.bs.modal", function(e) {
             if (o_cart.statusDataErrorCollector.length !== 0) {
-                $("#op-cart-status-error-msg .modal-body").text(o_cart.statusDataErrorCollector.pop());
-                $("#op-cart-status-error-msg").modal("show");
+                $("#op-cart-status-error-msg-modal .modal-body").text(o_cart.statusDataErrorCollector.pop());
+                $("#op-cart-status-error-msg-modal").modal("show");
             }
         });
 
@@ -352,8 +352,8 @@ var o_cart = {
                     // hide the spinner and display error message in an open modal
                     $(".op-download-links-contents .spinner").hide();
                     $(".app-footer .op-download-links-btn").popover("update");
-                    $("#op-download-links-error-msg .modal-body").text(data.error);
-                    $("#op-download-links-error-msg").modal("show");
+                    $("#op-download-links-error-msg-modal .modal-body").text(data.error);
+                    $("#op-download-links-error-msg-modal").modal("show");
                 } else {
                     // To dynamically update and display contents of an open popover, we have to make sure html
                     // in both (1) #op-download-links (content when popover is initialized) and (2) .popover-body
@@ -378,8 +378,8 @@ var o_cart = {
                 // hide the spinner and display error message in an open modal
                 $(".op-download-links-contents .spinner").hide();
                 $(".app-footer .op-download-links-btn").popover("update");
-                $("#op-download-links-error-msg .modal-body").text(errorMsg);
-                $("#op-download-links-error-msg").modal("show");
+                $("#op-download-links-error-msg-modal .modal-body").text(errorMsg);
+                $("#op-download-links-error-msg-modal").modal("show");
             },
             complete: function() {
                 o_cart.downloadInProcess = false;
@@ -455,11 +455,11 @@ var o_cart = {
         }
 
         if (status.recycled_count === 0) {
-            $("[data-target='#op-empty-recycle-bin']").addClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin']").addClass("op-button-disabled");
+            $("[data-target='#op-empty-recycle-bin-modal']").addClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin-modal']").addClass("op-button-disabled");
         } else {
-            $("[data-target='#op-empty-recycle-bin']").removeClass("op-button-disabled");
-            $("[data-target='#op-restore-recycle-bin']").removeClass("op-button-disabled");
+            $("[data-target='#op-empty-recycle-bin-modal']").removeClass("op-button-disabled");
+            $("[data-target='#op-restore-recycle-bin-modal']").removeClass("op-button-disabled");
         }
 
         if (status.count === 0) {
@@ -740,11 +740,11 @@ var o_cart = {
             o_utils.enableUserInteraction();
             if (statusData.error) {
                 // if previous error modal is currently open, we store the error message for later displaying
-                if ($("#op-cart-status-error-msg").hasClass("show")) {
+                if ($("#op-cart-status-error-msg-modal").hasClass("show")) {
                     o_cart.statusDataErrorCollector.push(statusData.error);
                 } else {
-                    $("#op-cart-status-error-msg .modal-body").text(statusData.error);
-                    $("#op-cart-status-error-msg").modal("show");
+                    $("#op-cart-status-error-msg-modal .modal-body").text(statusData.error);
+                    $("#op-cart-status-error-msg-modal").modal("show");
                 }
             } else {
                 $.each(elementArray, function(index, elem) {

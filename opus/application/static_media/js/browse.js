@@ -535,14 +535,14 @@ var o_browse = {
          * modal.
          */
         if (o_browse.totalObsCount <= MAX_SELECTIONS_ALLOWED) {
-            $("#op-addall-to-cart").modal("show");
+            $("#op-addall-to-cart-modal").modal("show");
         } else {
             let warningMsg = "There are too many results to add them all to the cart. " +
                              "Please reduce the number of results to " +
                              ` ${o_utils.addCommas(MAX_SELECTIONS_ALLOWED)} ` +
                              "or fewer and try again.";
-            $("#op-addall-warning-msg .modal-body").text(warningMsg);
-            $("#op-addall-warning-msg").modal("show");
+            $("#op-addall-warning-msg-modal .modal-body").text(warningMsg);
+            $("#op-addall-warning-msg-modal").modal("show");
         }
     },
 
@@ -1513,7 +1513,7 @@ var o_browse = {
         opus.colLabelsNoUnits = columnsNoUnits;
 
         // check all box
-        // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart' " +
+        // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
                          "class='op-table-header-addall btn btn-link'>" +
                          "<i class='fas fa-cart-plus' data-action='addall'" +

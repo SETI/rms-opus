@@ -20,10 +20,12 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, expected)
-        # XXX Fix this once we have a proper 404 page
-        # if err_string:
-        #     print(response.content)
-        #     self.assertEqual(response.content, err_string)
+        if err_string:
+            ret_string = response.content.decode()
+            ret_string = ret_string.replace('&quot;', '"')
+            print(ret_string)
+            print(err_string)
+            self.assertTrue(err_string in ret_string)
 
     @staticmethod
     def _depth_first_remove(data, ignore_list):
