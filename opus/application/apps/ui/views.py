@@ -153,7 +153,7 @@ def api_get_metadata_selector(request):
                                                             'widget'))
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_get_menu: Missing or badly formatted reqno')
         ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
         exit_api_call(api_code, ret)
