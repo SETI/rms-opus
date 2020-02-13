@@ -14,6 +14,7 @@
     "filter_type": "W",
     "optical_element": null,
     "aperture_type": "ACS-HRC",
+    "proposed_aperture_type": null,
     "hst_proposal_id": "9975",
     "hst_pi_name": "James, Philip B.",
     "stsci_group_id": "J8N410LBQ",

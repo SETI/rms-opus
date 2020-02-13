@@ -1593,6 +1593,7 @@ class ObsMissionHubble(models.Model):
     filter_name = models.CharField(max_length=23)
     filter_type = models.CharField(max_length=3)
     aperture_type = models.CharField(max_length=22)
+    proposed_aperture_type = models.CharField(max_length=18)
     exposure_type = models.CharField(max_length=20)
     gain_mode_id = models.CharField(max_length=5)
     instrument_mode_id = models.CharField(max_length=10)
