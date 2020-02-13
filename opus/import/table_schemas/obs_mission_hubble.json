@@ -342,6 +342,32 @@
         "pi_units": null
     },
     {
+        "field_name": "proposed_aperture_type",
+        "field_type": "char18",
+        "field_notnull": false,
+        "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "obs_mission_hubble_<INST>_proposed_aperture_type"
+        ],
+        "pi_category_name": "obs_mission_hubble",
+        "pi_dict_context": "HST",
+        "pi_dict_name": "PROPOSED_APERTURE_TYPE",
+        "definition": "For STIS, the proposed name of the aperture used for the observation. Only differs from Aperture Type when pseudo-aperture positions are used.",
+        "pi_disp_order": 45,
+        "pi_display": 1,
+        "pi_display_results": 1,
+        "pi_form_type": "GROUP",
+        "pi_intro": null,
+        "pi_label": "STIS Proposed Aperture Type",
+        "pi_label_results": "STIS Proposed Aperture Type",
+        "pi_old_slug": null,
+        "pi_slug": "HSTproposedaperturetype",
+        "pi_sub_heading": null,
+        "pi_tooltip": null,
+        "pi_units": null
+    },
+    {
         "field_name": "exposure_type",
         "field_type": "char20",
         "field_notnull": true,

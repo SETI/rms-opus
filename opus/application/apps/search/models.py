@@ -1111,6 +1111,19 @@ class MultObsMissionHubblePc1Flag(models.Model):
         db_table = 'mult_obs_mission_hubble_pc1_flag'
 
 
+class MultObsMissionHubbleProposedApertureType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_mission_hubble_proposed_aperture_type'
+
+
 class MultObsMissionHubbleTargetedDetectorId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1594,6 +1607,7 @@ class ObsMissionHubble(models.Model):
     mult_obs_mission_hubble_filter_name = models.ForeignKey(MultObsMissionHubbleFilterName, models.DO_NOTHING, db_column='mult_obs_mission_hubble_filter_name')
     mult_obs_mission_hubble_filter_type = models.ForeignKey(MultObsMissionHubbleFilterType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_filter_type')
     mult_obs_mission_hubble_aperture_type = models.ForeignKey(MultObsMissionHubbleApertureType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_aperture_type')
+    mult_obs_mission_hubble_proposed_aperture_type = models.ForeignKey(MultObsMissionHubbleProposedApertureType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_proposed_aperture_type')
     mult_obs_mission_hubble_exposure_type = models.ForeignKey(MultObsMissionHubbleExposureType, models.DO_NOTHING, db_column='mult_obs_mission_hubble_exposure_type')
     mult_obs_mission_hubble_gain_mode = models.ForeignKey(MultObsMissionHubbleGainModeId, models.DO_NOTHING)
     mult_obs_mission_hubble_instrument_mode = models.ForeignKey(MultObsMissionHubbleInstrumentModeId, models.DO_NOTHING)
