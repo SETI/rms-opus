@@ -445,9 +445,6 @@ var o_cart = {
     },
 
     updateCartStatus: function(status) {
-        if (status.reqno < o_cart.lastRequestNo) {
-            return;
-        }
         o_cart.totalObsCount = status.count + status.recycled_count;
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
@@ -489,8 +486,11 @@ var o_cart = {
 
         // returns any user cart saved in session
         o_cart.lastRequestNo++;
-        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
-            o_cart.updateCartStatus(statusData);
+        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(data);
         });
     },
 
@@ -530,7 +530,7 @@ var o_cart = {
             }
 
             o_cart.lastProductCountRequestNo++;
-            let url = `/opus/__cart/view.json?${hash}${notSelected}&${selected}&reqno=${o_cart.lastRequestNo}`;
+            let url = `/opus/__cart/view.json?${hash}${notSelected}&${selected}&reqno=${o_cart.lastProductCountRequestNo}`;
 
             $.getJSON(url, function(data) {
                 if (data.reqno < o_cart.lastProductCountRequestNo) {
@@ -539,6 +539,7 @@ var o_cart = {
                 // this div lives in the nav menu template
                 $("#op-download-options-container", "#cart").hide().html(data.html).fadeIn();
                 o_cart.hideCartCountSpinner(data.count, data.recycled_count);
+                o_cart.hideDownloadSpinner();
 
                 // Init perfect scrollbar when .op-download-options-product-types is rendered.
                 o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
@@ -593,6 +594,9 @@ var o_cart = {
         let url = `/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`;
 
         $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
             o_cart.reloadObservationData = true;
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
@@ -618,8 +622,11 @@ var o_cart = {
 
         let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
 
-        $.getJSON(url, function(statusData) {
-            o_cart.updateCartStatus(statusData);
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(data);
             o_utils.enableUserInteraction();
         });
 
@@ -759,6 +766,7 @@ var o_cart = {
         let status = (action === "add" ?  "add" : "remove");
         let checked = (action === "add");
 
+        // we use when here so that we can change the thumbnail highlighting while we wait for the json to return
         $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
             o_utils.enableUserInteraction();
             if (statusData.error) {
