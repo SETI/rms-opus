@@ -1099,7 +1099,6 @@ var o_search = {
     },
 
     getHinting: function(slug) {
-
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
@@ -1108,12 +1107,11 @@ var o_search = {
             // this is a mult field
             o_search.getValidMults(slug);
         } else {
-          $(`#widget__${slug} .spinner`).fadeOut();
+            $(`#widget__${slug} .spinner`).fadeOut();
         }
     },
 
     getRangeEndpoints: function(slug) {
-
         $(`#widget__${slug} .spinner`).fadeIn();
 
         let units = "";
@@ -1136,29 +1134,9 @@ var o_search = {
                 if (multdata.reqno < o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-                $("#hint__" + slug).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">${multdata.min}</span></span>
-                                          <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">${multdata.max}</span></span>
-                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">${multdata.nulls}</span></span>`);
-            },
-            statusCode: {
-                404: function() {
-                    $(`#widget__${slug} .spinner`).fadeOut();
-                }
-            },
-            error:function(xhr, ajaxOptions, thrownError) {
-                let rangeHintsDescription = "op-hints-description";
-                let rangeHintsTextClass = "op-hints-info";
-                $(`#widget__${slug} .spinner`).fadeOut();
-                // range input hints are "?" when wrong values of url is pasted
-                $(`#hint__${slug}`).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">?</span></span>
-                                          <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">?</span></span>
-                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
-                                          <span class="${rangeHintsTextClass}">?</span></span>`);
+                $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
+                                          <span>Max:&nbsp;<span class="op-hints-info">${multdata.max}</span></span>
+                                          <span>Nulls:&nbsp;<span class="op-hints-info">${multdata.nulls}</span></span>`);
             }
         }); // end mults ajax
     },
@@ -1217,19 +1195,6 @@ var o_search = {
                             }
                         }
                     }
-                });
-            },
-            statusCode: {
-                404: function() {
-                  $(`#widget__${slug} .spinner`).fadeOut();
-              }
-            },
-            error:function(xhr, ajaxOptions, thrownError) {
-                let hintsTextClass = "op-hints-info";
-                $(`#widget__${slug} .spinner`).fadeOut();
-                // checkbox hints are "?" when wrong values of url is pasted
-                $(".hints").each(function() {
-                    $(this).html(`<span class="${hintsTextClass}">?</span>`);
                 });
             }
         }); // end mults ajax
