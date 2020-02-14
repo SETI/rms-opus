@@ -40,7 +40,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
+                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url-modal" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav flex-column flex-sm-row">
@@ -189,15 +189,15 @@
                             </div>
                             <div class="op-cart-actions">
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
                                         &nbsp;Empty Cart</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
                                         &nbsp;Empty Recycle Bin</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
+                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
                                         &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
                                 </li>
                             </div>
@@ -374,10 +374,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-addall-to-cart"
+            id_name="op-addall-to-cart-modal"
             confirm_title="Confirm Add All Observations To Cart"
             confirm_msg="Are you sure you want to add all observations to the cart?"
-            target="op-addall-to-cart"
+            target="op-addall-to-cart-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -385,10 +385,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-addall-warning-msg"
+            id_name="op-addall-warning-msg-modal"
             confirm_title="Failed to Add All Observations"
             confirm_msg=""
-            target="op-addall-warning-msg"
+            target="op-addall-warning-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=True
@@ -406,10 +406,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-empty-cart"
+            id_name="op-empty-cart-modal"
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from the cart?"
-            target="op-empty-cart"
+            target="op-empty-cart-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -417,10 +417,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-empty-recycle-bin"
+            id_name="op-empty-recycle-bin-modal"
             confirm_title="Confirm Empty Recycle Bin"
             confirm_msg="Are you sure you want to remove all observations from the recycle bin?"
-            target="op-empty-recycle-bin"
+            target="op-empty-recycle-bin-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -428,10 +428,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-restore-recycle-bin"
+            id_name="op-restore-recycle-bin-modal"
             confirm_title="Confirm Restore All Recycled Observations To Cart"
             confirm_msg="Are you sure you want to restore all observations from the recycle bin to the cart?"
-            target="op-restore-recycle-bin"
+            target="op-restore-recycle-bin-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -439,20 +439,20 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-cart-status-error-msg"
+            id_name="op-cart-status-error-msg-modal"
             confirm_title="Failed to Add Observations to Cart"
             confirm_msg=""
-            target="op-cart-status-error-msg"
+            target="op-cart-status-error-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-update-url"
+            id_name="op-update-url-modal"
             confirm_title="Message About Your URL"
             confirm_msg=""
-            target="op-update-url"
+            target="op-update-url-modal"
             yes_text="Keep Message"
             no_text="Discard Message"
             allow_close=True
@@ -460,52 +460,61 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-browser-version-msg"
+            id_name="op-browser-version-msg-modal"
             confirm_title="Message About Your Browser Version"
             confirm_msg="Please consider upgrading your Browser Version"
-            target="op-browser-version-msg"
+            target="op-browser-version-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-browser-size-msg"
+            id_name="op-browser-size-msg-modal"
             confirm_title="Message About Your Browser Size"
             confirm_msg=""
-            target="op-browser-size-msg"
+            target="op-browser-size-msg-modal"
             allow_close=False
             draggable=False
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-new-user-msg"
+            id_name="op-new-user-msg-modal"
             confirm_title="Welcome to OPUS3"
             confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
-            target="op-new-user-msg"
+            target="op-new-user-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-download-links-error-msg"
+            id_name="op-download-links-error-msg-modal"
             confirm_title="Download Error"
             confirm_msg=""
-            target="op-download-links-error-msg"
+            target="op-download-links-error-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-close-surfacegeo-widgets"
+            id_name="op-close-surfacegeo-widgets-modal"
             confirm_title="Confirm Close All Surface Geometry Search Fields"
             confirm_msg="Closing the Surface Geometry Target Selector search field will also close all target-specific search fields. Are you sure you wish to proceed?"
-            target="op-close-surfacegeo-widgets"
+            target="op-close-surfacegeo-widgets-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-http-response-error-modal"
+            confirm_title="Server Error"
+            confirm_msg=""
+            target="op-http-response-error-modal"
+            yes_text="Reload OPUS"
+            allow_close=False
+            draggable=True
         %}
 
         {% endblock %}

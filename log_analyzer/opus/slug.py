@@ -79,8 +79,10 @@ class ToInfoMap:
                        'expanded_cats',
                        'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
                        'range', 'recyclebin', 'reqno', 'request',
-                       'types', 'url_cols', 'units', 'view', 'widgets', 'widgets2',
+                       'types', 'url_cols', 'units', 'unselected_types', 'view',
+                       'widgets', 'widgets2',
                        '__sessionid',
+
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
                       }
