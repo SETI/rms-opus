@@ -64,19 +64,26 @@ log = logging.getLogger(__name__)
 
 @never_cache
 def api_view_cart(request):
-    """Return the OPUS-specific left side of the "Selections" page as HTML.
+    """Return the OPUS-specific left side of the Cart tab as HTML.
 
     This includes the number of files selected, total size of files selected,
     and list of product types with their number. This returns information about
     ALL files and product types, ignoring any user choices. However, there is
     an optional types=<PRODUCT_TYPES> parameter which, if specified, causes
-    product types not listed to return "0" for number of products and sizes.
+    product types not listed to be ignored when computing total number of files
+    selected and total size of files selected.
+
+    The optional list of types provided by unselected_types=<PRODUCT_TYPES>
+    indicates which types were NOT selected by the user in the UI and thus
+    should not have their checkboxes selected in the returned HTML. Any other
+    product types will have their checkbox selected.
 
     This is a PRIVATE API.
 
     Format: __cart/view.json
     Arguments: reqno=<reqno>
-               Normal search arguments
+               [types=<list of types>]
+               [unselected_types=<list of types>]
     """
     api_code = enter_api_call('api_view_cart', request)
 
