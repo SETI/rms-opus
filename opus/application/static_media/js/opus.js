@@ -673,7 +673,7 @@ var opus = {
         $.getJSON(url, function(normalizeURLData) {
             // Display returned message, if any, in the "you have a message" modal
             if (normalizeURLData.msg) {
-                $("#op-update-url .modal-body").html(normalizeURLData.msg);
+                $("#op-update-url-modal .modal-body").html(normalizeURLData.msg);
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
@@ -807,7 +807,7 @@ var opus = {
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
-                // Don't close "#op-browser-version-msg" and "#op-browser-size-msg"
+                // Don't close "#op-browser-version-msg-modal" and "#op-browser-size-msg-modal"
                 $.each($(".op-confirm-modal"), function(idx, confirmModal) {
                     if ($(confirmModal).data("action") === "esc") {
                         $(confirmModal).modal("hide");
@@ -821,7 +821,7 @@ var opus = {
         $(".op-confirm-modal").on("show.bs.modal", function (e) {
             let modal = $(this).attr("id");
             switch (modal) {
-                case "op-empty-cart":
+                case "op-empty-cart-modal":
                     let emptyCartModalMsg = "";
                     if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
                         emptyCartModalMsg = "Are you sure you want to remove all observations from the cart" +
@@ -829,16 +829,16 @@ var opus = {
                     } else {
                         emptyCartModalMsg = "Are you sure you want to remove all observations from the cart?";
                     }
-                     $("#op-empty-cart .modal-body").text(emptyCartModalMsg);
+                     $("#op-empty-cart-modal .modal-body").text(emptyCartModalMsg);
                     break;
-                case "op-addall-to-cart":
+                case "op-addall-to-cart-modal":
                     // Note: If we use `` for string concatenation in html text, text will split into
                     // multiple lines in html, but stay in one line in UI. Use "+" here can make
                     // sure text stays in one line in both html and UI, just looks cleaner (in html).
                     let addAllmodalMsg = "Are you sure you want to add all" +
                                          ` ${o_utils.addCommas(o_browse.totalObsCount)} ` +
                                          "observations to the cart?";
-                    $("#op-addall-to-cart .modal-body").text(addAllmodalMsg);
+                    $("#op-addall-to-cart-modal .modal-body").text(addAllmodalMsg);
                     break;
             }
         });
@@ -861,20 +861,23 @@ var opus = {
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
-                        case "op-empty-cart":
+                        case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;
-                        case "op-empty-recycle-bin":
+                        case "op-empty-recycle-bin-modal":
                             o_cart.emptyCartOrRecycleBin("recycleBin");
                             break;
-                        case "op-restore-recycle-bin":
+                        case "op-restore-recycle-bin-modal":
                             o_cart.restoreRecycleBin();
                             break;
-                        case "op-addall-to-cart":
+                        case "op-addall-to-cart-modal":
                             o_cart.addAllToCart();
                             break;
-                        case "op-close-surfacegeo-widgets":
+                        case "op-close-surfacegeo-widgets-modal":
                             o_widgets.closeAllSURFACEGEOWidgets();
+                            break;
+                        case "op-http-response-error-modal":
+                            location.reload();
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -882,7 +885,7 @@ var opus = {
 
                 case "cancel":
                     switch (target) {
-                        case "op-update-url":
+                        case "op-update-url-modal":
                             // if user clicks "Dismiss Message" ("No" button), we hide the
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
@@ -1033,18 +1036,18 @@ var opus = {
             url: url,
             dataType: "html",
             success: function(page) {
-                $("#op-new-user-msg .modal-body").html(page);
+                $("#op-new-user-msg-modal .modal-body").html(page);
                 $(".op-open-getting-started").on("click", function() {
-                    $("#op-new-user-msg").modal("hide");
+                    $("#op-new-user-msg-modal").modal("hide");
                     opus.displayHelpPane("gettingStarted");
                 });
 
                 $(".op-open-faq").on("click", function() {
-                    $("#op-new-user-msg").modal("hide");
+                    $("#op-new-user-msg-modal").modal("hide");
                     opus.displayHelpPane("faq");
                 });
                 opus.hideOrShowSplashText();
-                $("#op-new-user-msg").modal("show");
+                $("#op-new-user-msg-modal").modal("show");
             }
         });
     },
@@ -1226,16 +1229,16 @@ var opus = {
                         Opera (${opus.browserSupport.opera}+),
                         and other AppleWebKit-based browsers (${opus.browserSupport["based on applewebkit"]})+.
                         ${updateString}`);
-        $("#op-browser-version-msg .modal-body").html(modalMsg);
+        $("#op-browser-version-msg-modal .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
         opus.currentBrowser = browserName;
 
         if (opus.browserSupport[browserName] === undefined) {
-            $("#op-browser-version-msg").modal("show");
+            $("#op-browser-version-msg-modal").modal("show");
             return false;
         } else {
             if (parseFloat(browserVersion) < opus.browserSupport[browserName]) {
-                $("#op-browser-version-msg").modal("show");
+                $("#op-browser-version-msg-modal").modal("show");
                 return false;
             }
         }
@@ -1253,7 +1256,7 @@ var opus = {
              return;
          }
 
-         let modal = $("#op-browser-size-msg");
+         let modal = $("#op-browser-size-msg-modal");
 
          // This is required to handle problems of rapid hide/show sequencing
          // See: https://github.com/twbs/bootstrap/issues/3902
@@ -1268,17 +1271,17 @@ var opus = {
 
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
-            if (!$("#op-browser-size-msg").hasClass("show")) {
+            if (!$("#op-browser-size-msg-modal").hasClass("show")) {
                 let modalMsg = (`Please resize your browser. OPUS requires a browser
                                 size of at least ${opus.browserSupport.width} pixels by
                                 ${opus.browserSupport.height} pixels.`);
-                $("#op-browser-size-msg .modal-body").html(modalMsg);
+                $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
                 modal.modal("show");
             }
         } else {
-            if ($("#op-browser-size-msg").hasClass("show")) {
+            if ($("#op-browser-size-msg-modal").hasClass("show")) {
                 opus.browserSizeActionInProgress = true;
                 modal.on("hidden.bs.modal", hideCompleted);
                 modal.modal("hide");
@@ -1330,6 +1333,19 @@ var opus = {
     },
 
 }; // end opus namespace
+
+$(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    let responseText = jqXHR.responseText;
+    let errorMsg = responseText.match(/<div id="info">([\s\S]*?)<\/div>/m)[1];
+    let modal = $("#op-http-response-error-modal");
+    let modalMsg = (`There was an error on the OPUS server. The following
+                     response was received:
+                     <br/><br/>
+                     ${errorMsg}`);
+    $(modal).find(".modal-body").html(modalMsg);
+    modal.on("shown.bs.modal");
+    modal.modal("show");
+});
 
 $(document).ready(function() {
     opus.checkBrowserSupported();

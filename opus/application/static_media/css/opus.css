@@ -1246,7 +1246,7 @@ footer for popover window */
 
 /* Make sure browser size modal window has higher z-index than other
 windows, this will make sure it's not covered by any other windows. */
-#op-browser-size-msg {
+#op-browser-size-msg-modal {
     z-index: 9999;
 }
 
@@ -1821,7 +1821,7 @@ even when screen is narrow */
     /* top: 250px; */
 }
 
-#cart_summary .button-container button {
+#op-cart-summary .button-container button {
     margin-bottom: 1em;
 }
 
@@ -2099,19 +2099,19 @@ footer {
 
 /* Styling for the Splash welcome message */
 
-#op-new-user-msg .modal-body {
+#op-new-user-msg-modal .modal-body {
     padding: 10px;
 }
 
-#op-new-user-msg p:first-child {
+#op-new-user-msg-modal p:first-child {
     margin-top: 10px;
 }
 
-#op-new-user-msg p {
+#op-new-user-msg-modal p {
     margin-bottom: 12px;
 }
 
-#op-new-user-msg p:last-child {
+#op-new-user-msg-modal p:last-child {
     margin-bottom: 0px;
 }
 

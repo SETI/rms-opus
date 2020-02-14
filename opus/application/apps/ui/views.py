@@ -15,6 +15,7 @@ from annoying.decorators import render_to
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.http import Http404
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.utils.decorators import method_decorator
@@ -72,7 +73,7 @@ def api_last_blog_update(request):
     api_code = enter_api_call('api_last_blog_update', request)
 
     if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+        ret = Http404(HTTP404_NO_REQUEST('/__lastblogupdate.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -105,9 +106,9 @@ def api_get_menu(request):
     api_code = enter_api_call('api_get_menu', request)
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_get_menu: Missing or badly formatted reqno')
-        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__menu.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -152,9 +153,9 @@ def api_get_metadata_selector(request):
                                                             'widget'))
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_get_menu: Missing or badly formatted reqno')
-        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO('/__metadata_selector.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -562,7 +563,7 @@ def api_normalize_url(request):
     api_code = enter_api_call('api_normalize_url', request)
 
     if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+        ret = Http404(HTTP404_NO_REQUEST('/__normalizeurl.json'))
         exit_api_call(api_code, ret)
         raise ret
 
