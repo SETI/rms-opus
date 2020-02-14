@@ -1,4 +1,4 @@
-# opus/application/test_api/test_return_formats.py
+
 
 import logging
 import requests
@@ -57,8 +57,8 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_cart_view(self):
         "[test_return_formats.py] return formats /__cart/view.[fmt]"
-        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
-        self._test_return_formats('/__cart/view.[fmt]', ('json',))
+        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._test_return_formats('/__cart/view.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_cart_status(self):
         "[test_return_formats.py] return formats /__cart/status.[fmt]"
