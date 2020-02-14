@@ -1,6 +1,6 @@
 {% load humanize %}
 <div id="cart-sidebar" class="w-100">
-    <div id="cart_summary" class="well well-lg">
+    <div id="op-cart-summary" class="well well-lg">
         <div class="op-download-options-header border-bottom border-light">
             <span class="op-download-panel-title"><h1>Download Data</h1></span>
             <div class="op-cart-totals mb-1">
@@ -74,9 +74,7 @@
                             <div class="row col-7 no-gutters">
                                 <div class="col col-sm-1">
                                     <input type="checkbox" value="{{ product_info.slug_name }}" data-category="{{ product_cat|slugify }}"
-                                        {% if product_info.product_count > 0 %}
-                                            checked
-                                        {% endif %}
+                                        {{ product_info.selected }}
                                     >
                                 </div>
                                 <div class="col col-sm-1">
