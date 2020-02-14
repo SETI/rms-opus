@@ -1821,7 +1821,7 @@ even when screen is narrow */
     /* top: 250px; */
 }
 
-#cart_summary .button-container button {
+#op-cart-summary .button-container button {
     margin-bottom: 1em;
 }
 

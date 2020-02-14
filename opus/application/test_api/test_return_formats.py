@@ -55,7 +55,7 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def test__api_retfmt_cart_view(self):
         "[test_return_formats.py] return formats /__cart/view.[fmt]"
         self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
-        self._test_return_formats('/__cart/view.[fmt]', ('html',))
+        self._test_return_formats('/__cart/view.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_cart_status(self):
         "[test_return_formats.py] return formats /__cart/status.[fmt]"

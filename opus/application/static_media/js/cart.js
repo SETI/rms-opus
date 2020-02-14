@@ -66,7 +66,8 @@ var o_cart = {
     gallerySliderStep: 10,
 
     // unique to o_cart
-    lastRequestNo: 0,
+    lastRequestNo: 0,           // for status
+    lastProductCountRequestNo: 0,   // just for the product counts in sidebar
     downloadInProcess: false,
     cartCountSpinnerTimer: null,    // We have a single global spinner timer to handle overlapping API calls
     downloadSpinnerTimer: null, // similarly to why we have a single global lastRequestNo
@@ -227,11 +228,11 @@ var o_cart = {
         let add_to_url = o_cart.getDownloadFiltersChecked();
         o_cart.lastRequestNo++;
         let url = "/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo + "&" + add_to_url + "&download=1";
-        $.getJSON(url, function(info) {
-            if (info.reqno < o_cart.lastRequestNo) {
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
                 return;
             }
-            o_cart.hideDownloadSpinner(info.total_download_size_pretty, info.total_download_count);
+            o_cart.updateCartStatus(data);
         });
     },
 
@@ -444,9 +445,6 @@ var o_cart = {
     },
 
     updateCartStatus: function(status) {
-        if (status.reqno < o_cart.lastRequestNo) {
-            return;
-        }
         o_cart.totalObsCount = status.count + status.recycled_count;
         o_cart.recycledCount = status.recycled_count;
         o_cart.hideCartCountSpinner(status.count, status.recycled_count);
@@ -488,8 +486,11 @@ var o_cart = {
 
         // returns any user cart saved in session
         o_cart.lastRequestNo++;
-        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(statusData) {
-            o_cart.updateCartStatus(statusData);
+        $.getJSON("/opus/__cart/status.json?reqno=" + o_cart.lastRequestNo, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(data);
         });
     },
 
@@ -509,39 +510,63 @@ var o_cart = {
             $("#cart .op-data-table tbody").empty();
             o_browse.showPageLoaderSpinner();
 
-            // redux: and nix this big thing:
-            $.ajax({ url: "/opus/__cart/view.html",
-                success: function(html) {
-                    // this div lives in the in the nav menu template
-                    $("#op-download-options-container", "#cart").hide().html(html).fadeIn();
+            let hash = o_hash.getHash();
 
-                    // Init perfect scrollbar when .op-download-options-product-types is rendered.
-                    o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
-                        minScrollbarLength: opus.minimumPSLength,
+            // Figure out which product types are not selected
+            let notSelectedProductsList = $("#op-cart-summary .op-download-options-product-types :checkbox:not(:checked)");
+            let notSelectedProductInfoSlugName = [];
+            $.each(notSelectedProductsList, function(index, linkObj) {
+                notSelectedProductInfoSlugName.push($(linkObj).val());
+            });
+            let notSelected = "";
+            if (hash !== "") {
+                notSelected = "&";
+            }
+            notSelected += "unselected_types=" + notSelectedProductInfoSlugName.join();
+            let selected = o_cart.getDownloadFiltersChecked();
+            // make sure that if there are not types because this was a refresh, we reset the types to 'all'
+            if (selected === "types=") {
+                selected = "";
+            }
+
+            o_cart.lastProductCountRequestNo++;
+            let url = `/opus/__cart/view.json?${hash}${notSelected}&${selected}&reqno=${o_cart.lastProductCountRequestNo}`;
+
+            $.getJSON(url, function(data) {
+                if (data.reqno < o_cart.lastProductCountRequestNo) {
+                    return;
+                }
+                // this div lives in the nav menu template
+                $("#op-download-options-container", "#cart").hide().html(data.html).fadeIn();
+                o_cart.hideCartCountSpinner(data.count, data.recycled_count);
+                o_cart.hideDownloadSpinner();
+
+                // Init perfect scrollbar when .op-download-options-product-types is rendered.
+                o_cart.downloadOptionsScrollbar = new PerfectScrollbar(".op-product-type-table-body", {
+                    minScrollbarLength: opus.minimumPSLength,
                         suppressScrollX: true,
-                    });
+                });
 
-                    // Depending on the screen width, we move download data elements
-                    // to either original left pane or slide panel
-                    o_cart.displayCartLeftPane();
+                // Depending on the screen width, we move download data elements
+                // to either original left pane or slide panel
+                o_cart.displayCartLeftPane();
 
-                    if (o_cart.downloadInProcess) {
-                        $(".spinner", "#cart_summary").fadeIn();
-                    }
+                if (o_cart.downloadInProcess) {
+                    $(".spinner", "#op-cart-summary").fadeIn();
+                }
 
-                    let startObsLabel = o_browse.getStartObsLabel();
-                    let startObs = Math.max(opus.prefs[startObsLabel], 1);
-                    startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
-                    o_browse.loadData(view, startObs);
+                let startObsLabel = o_browse.getStartObsLabel();
+                let startObs = Math.max(opus.prefs[startObsLabel], 1);
+                startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
+                o_browse.loadData(view, startObs);
 
-                    if (zippedFiles_html) {
-                        $(".op-zipped-files", "#cart").html(zippedFiles_html);
-                    }
+                if (zippedFiles_html) {
+                    $(".op-zipped-files", "#cart").html(zippedFiles_html);
                 }
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches
-            // back to cart tab without reloading obs data in cart tab. 
+            // back to cart tab without reloading obs data in cart tab.
             $("#op-obs-menu .dropdown-item[data-action='addall']").addClass("op-hide-element");
         }
     },
@@ -569,11 +594,13 @@ var o_cart = {
         let url = `/opus/__cart/reset.json?reqno=${o_cart.lastRequestNo}&recyclebin=${recycleBin}&download=1`;
 
         $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
             o_cart.reloadObservationData = true;
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
-            opus.prefs.cart_startobs = 0;
-            o_cart.updateCartStatus(data);
+            opus.prefs.cart_startobs = 1;
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
@@ -595,8 +622,11 @@ var o_cart = {
 
         let url = `/opus/__cart/addall.json?reqno=${o_cart.lastRequestNo}&view=cart&download=1&recyclebin=1`;
 
-        $.getJSON(url, function(statusData) {
-            o_cart.updateCartStatus(statusData);
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_cart.lastRequestNo) {
+                return;
+            }
+            o_cart.updateCartStatus(data);
             o_utils.enableUserInteraction();
         });
 
@@ -736,6 +766,7 @@ var o_cart = {
         let status = (action === "add" ?  "add" : "remove");
         let checked = (action === "add");
 
+        // we use when here so that we can change the thumbnail highlighting while we wait for the json to return
         $.when(o_cart.sendEditRequest(url)).done(function(statusData) {
             o_utils.enableUserInteraction();
             if (statusData.error) {
@@ -770,7 +801,6 @@ var o_cart = {
                 });
             }
             o_cart.updateCartStatus(statusData);
-            o_cart.hideDownloadSpinner(statusData.total_download_size_pretty, statusData.total_download_count);
             o_browse.hidePageLoaderSpinner();
         });
     },

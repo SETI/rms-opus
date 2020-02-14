@@ -5,7 +5,7 @@
 # The (private) API interface for adding and removing items from the cart
 # and creating download .zip and .csv files.
 #
-#    Format: __cart/view.html
+#    Format: __cart/view.json
 #    Format: __cart/status.json
 #    Format: __cart/data.csv
 #    Format: __cart/(?P<action>add|remove|addrange|removerange|addall).json
@@ -32,6 +32,8 @@ from django.http import (HttpResponse,
                          HttpResponseServerError,
                          Http404)
 from django.shortcuts import render
+from django.template.loader import get_template
+from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
@@ -72,7 +74,9 @@ def api_view_cart(request):
 
     This is a PRIVATE API.
 
-    Format: __cart/view.html
+    Format: __cart/view.json
+    Arguments: reqno=<reqno>
+               Normal search arguments
     """
     api_code = enter_api_call('api_view_cart', request)
 
@@ -83,16 +87,38 @@ def api_view_cart(request):
 
     session_id = get_session_id(request)
 
-    product_types = ['all']
+    reqno = get_reqno(request)
+    if reqno is None:
+        log.error('api_view_cart: Missing or badly formatted reqno')
+        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        exit_api_call(api_code, ret)
+        raise ret
+
+    get_not_selected_product_types_str = request.GET.get('unselected_types', '')
+    not_selected_product_types = get_not_selected_product_types_str.split(',')
+
+    product_types_str = request.GET.get('types', 'all')
+    product_types = product_types_str.split(',')
 
     info = _get_download_info(product_types, session_id)
     count, recycled_count = get_cart_count(session_id, recycled=True)
 
+    for name, details in info['product_cat_list']:
+        for type in details:
+            if type['slug_name'] in not_selected_product_types:
+                type['selected'] = ''
+            else:
+                type['selected'] = 'checked'
+
     info['count'] = count
     info['recycled_count'] = recycled_count
 
-    template = 'cart/cart.html'
-    ret = render(request, template, info)
+    cart_template = get_template('cart/cart.html')
+    html = cart_template.render(info)
+    ret = json_response({'html': html,
+                         'count': info['count'],
+                         'recycled_count': info['recycled_count'],
+                         'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
@@ -847,10 +873,11 @@ def _get_download_info(product_types, session_id):
         if product_types == ['all'] or short_name in product_types:
             total_download_size += download_size
             total_download_count += download_count
-            product_dict_by_short_name[short_name]['product_count'] = product_count
-            product_dict_by_short_name[short_name]['download_count'] = download_count
-            product_dict_by_short_name[short_name]['download_size'] = download_size
-            product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
+
+        product_dict_by_short_name[short_name]['product_count'] = product_count
+        product_dict_by_short_name[short_name]['download_count'] = download_count
+        product_dict_by_short_name[short_name]['download_size'] = download_size
+        product_dict_by_short_name[short_name]['download_size_pretty'] = nice_file_size(download_size)
 
     ret = {
         'total_download_count': total_download_count,
