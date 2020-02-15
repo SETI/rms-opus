@@ -678,8 +678,8 @@ var o_widgets = {
         let uniqueid = minInput.attr("data-uniqueid");
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
-        opus.InputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
-        opus.InputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
+        opus.inputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
+        opus.inputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
 
         let slug = "";
         let slugOrderNum = "";
@@ -716,7 +716,7 @@ var o_widgets = {
 
     removeInputsValidationInfo: function(inputs) {
         /**
-         * Remove input validation info in opus.InputFieldsValidation when an input
+         * Remove input validation info in opus.inputFieldsValidation when an input
          * or a widget is removed.
          */
         for (const inputField of inputs) {
@@ -724,7 +724,7 @@ var o_widgets = {
             let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(inputField).attr("data-uniqueid");
             let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
-            delete opus.InputFieldsValidation[slugWithId];
+            delete opus.inputFieldsValidation[slugWithId];
         }
     },
 

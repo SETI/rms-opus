@@ -93,15 +93,15 @@ var o_hash = {
                         }
 
                         // If the slug in opus.selections has a valid value (check
-                        // opus.InputFieldsValidation), we push it to the hash.
+                        // opus.inputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug1][trailingCounter-1] !== null &&
-                            opus.InputFieldsValidation[slugWithId1] !== false) {
+                            opus.inputFieldsValidation[slugWithId1] !== false) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
                         // If the slug in opus.selections has a valid value (check
-                        // opus.InputFieldsValidation), we push it to the hash.
+                        // opus.inputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug2][trailingCounter-1] !== null &&
-                            opus.InputFieldsValidation[slugWithId2] !== false) {
+                            opus.inputFieldsValidation[slugWithId2] !== false) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
