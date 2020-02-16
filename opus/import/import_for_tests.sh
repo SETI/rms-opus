@@ -1,4 +1,15 @@
-#!/bin/sh
+echo "*************************************************************"
+echo "***** About to import TEST PDS DATA into a new database *****"
+echo "*************************************************************"
+echo
+echo "About to ERASE and import to this database:"
+grep "^DB_SCHEMA_NAME" ../../opus_secrets.py
+read -p "ARE YOU SURE? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
 python main_opus_import.py --drop-permanent-tables --scorched-earth
 python main_opus_import.py --do-all-import --import-fake-images COISS_2002,COISS_2008,COISS_2111
 python main_opus_import.py --do-all-import --import-fake-images COUVIS_0002
