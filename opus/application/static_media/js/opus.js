@@ -92,7 +92,7 @@ var opus = {
     lastExtras: {},
 
     // An object that stores normalizeinput validation result for each input.
-    InputFieldsValidation: {},
+    inputFieldsValidation: {},
 
     // Remember nav clicks during normalize input so we can actually process them
     // later if the inputs are valid.
@@ -303,13 +303,13 @@ var opus = {
          */
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
-        if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
+        if (normalizedData.reqno < o_search.lastAllNormalizeRequestNo) {
             return;
         }
 
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This updates the
-        // opus.InputFieldsValidation and also updates the hash.
+        // opus.inputFieldsValidation and also updates the hash.
         o_search.validateInput(normalizedData, true);
 
         if (!opus.areInputsValid()) {
@@ -362,7 +362,7 @@ var opus = {
 
         // If there are more result counts in the queue, don't trigger
         // spurious hinting queries that we won't use anyway
-        if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
+        if (resultCountData.data[0].reqno < opus.lastAllNormalizeRequestNo) {
             return;
         }
 
@@ -1314,8 +1314,8 @@ var opus = {
         /**
          * Check if all inputs are valid.
          */
-        for (const slugWithId in opus.InputFieldsValidation) {
-            if (opus.InputFieldsValidation[slugWithId] === false) {
+        for (const slugWithId in opus.inputFieldsValidation) {
+            if (opus.inputFieldsValidation[slugWithId] === false) {
                 return false;
             }
         }

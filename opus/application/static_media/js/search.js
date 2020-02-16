@@ -32,6 +32,7 @@ var o_search = {
     truncatedResults: false,
     truncatedResultsMsg: "&ltMore choices available&gt",
     lastSlugNormalizeRequestNo: 0,
+    lastAllNormalizeRequestNo: 0,
     lastMultsRequestNo: 0,
     lastEndpointsRequestNo: 0,
 
@@ -199,7 +200,7 @@ var o_search = {
             }
 
             opus.normalizeInputForCharInProgress[slugWithId] = true;
-            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+            let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.slugNormalizeReqno[slugWithId];
             $.getJSON(url, function(data) {
                 // Make sure the return json data is from the latest normalized api call
                 if (data.reqno < o_search.slugNormalizeReqno[slugWithId]) {
@@ -299,7 +300,7 @@ var o_search = {
             Call final normalizeinput and validate all inputs
             Update URL (and search) if all inputs are valid
         */
-        $("#search").on("change", 'input.STRING', function(e) {
+        $("#search").on("change", "input.STRING", function(e) {
             o_search.stringOrRangeChanged(e.target);
         });
 
@@ -498,14 +499,15 @@ var o_search = {
                     let newHash = hash.join("&");
 
                     o_search.lastSlugNormalizeRequestNo++;
+                    o_search.lastAllNormalizeRequestNo = o_search.lastSlugNormalizeRequestNo;
                     o_search.slugNormalizeReqno[unitSlug] = o_search.lastSlugNormalizeRequestNo;
 
                     opus.normalizeInputForAllFieldsInProgress[unitSlug] = true;
-                    let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+                    let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.slugNormalizeReqno[unitSlug];
                     performNormalizeInput = true;
                     o_search.parseFinalNormalizedInputDataAndUpdateURL(unitSlug, url, newUnitVal);
                 } else {
-                    // if normailze input api is not run, we update the record here.
+                    // if normalize input api is not run, we update the record here.
                     opus.currentUnitBySlug[slugNoNum] = newUnitVal;
                 }
             }
@@ -559,10 +561,11 @@ var o_search = {
         }
 
         o_search.lastSlugNormalizeRequestNo++;
+        o_search.lastAllNormalizeRequestNo = o_search.lastSlugNormalizeRequestNo;
         o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
 
         opus.normalizeInputForAllFieldsInProgress[slugWithId] = true;
-        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
+        let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.slugNormalizeReqno[slugWithId];
 
         if ($(target).hasClass("input_currently_focused")) {
             $(target).removeClass("input_currently_focused");
@@ -862,6 +865,7 @@ var o_search = {
 
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
         o_search.lastSlugNormalizeRequestNo++;
+        o_search.lastAllNormalizeRequestNo = o_search.lastSlugNormalizeRequestNo;
 
         let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.lastSlugNormalizeRequestNo;
         return $.getJSON(url);
@@ -877,7 +881,7 @@ var o_search = {
             if (eachSlug === "reqno") {
                 return;
             }
-            opus.InputFieldsValidation[eachSlug] = opus.InputFieldsValidation[eachSlug] || true;
+            opus.inputFieldsValidation[eachSlug] = opus.inputFieldsValidation[eachSlug] || true;
             // Because normalize input api call is based on hash with unique id (for RANGE & STRING
             // inputs), so we have to parse the return data based on unique id.
             let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(eachSlug);
@@ -904,7 +908,7 @@ var o_search = {
                         opus.selections[slugNoCounter][idx] = currentInput.val();
                     }
 
-                    opus.InputFieldsValidation[eachSlug] = false;
+                    opus.inputFieldsValidation[eachSlug] = false;
                 }
             } else {
                 if (currentInput.hasClass("RANGE") || currentInput.hasClass("STRING")) {
@@ -929,7 +933,7 @@ var o_search = {
                         // No color border if the input value is valid
                         o_search.clearInputBorder(currentInput);
                     }
-                    opus.InputFieldsValidation[eachSlug] = true;
+                    opus.inputFieldsValidation[eachSlug] = true;
                 }
             }
         });
@@ -940,7 +944,7 @@ var o_search = {
             opus.currentUnitBySlug[slugNoNum] = unit;
         }
 
-        if (opus.InputFieldsValidation[slug] ||
+        if (opus.inputFieldsValidation[slug] ||
             (slug === opus.allSlug && opus.areInputsValid()) || slug.startsWith("unit-")) {
             // If there is an invalid value, and user still updates input,
             // update the last selections to prevent allNormalizeInputApiCall.
@@ -1144,9 +1148,12 @@ var o_search = {
                 if (multdata.reqno < o_search.slugEndpointsReqno[slug]) {
                     return;
                 }
-                $('#hint__' + slug).html(`<span>Min:&nbsp;<span class="op-hints-info">${multdata.min}</span></span>
-                                          <span>Max:&nbsp;<span class="op-hints-info">${multdata.max}</span></span>
-                                          <span>Nulls:&nbsp;<span class="op-hints-info">${multdata.nulls}</span></span>`);
+                $("#hint__" + slug).html(`<span><span class="${rangeHintsDescription}">Min:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.min}</span></span>
+                                          <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.max}</span></span>
+                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                          <span class="${rangeHintsTextClass}">${multdata.nulls}</span></span>`);
             }
         }); // end mults ajax
     },

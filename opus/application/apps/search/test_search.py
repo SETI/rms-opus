@@ -2838,7 +2838,7 @@ class searchTests(TestCase):
         self.assertEqual(params, expected_params)
 
     def test__string_query_regex(self):
-        "[test_search.py] string_query: string query with qtype contains"
+        "[test_search.py] string_query: string query with qtype regex"
         selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d$']}
         sql, params = get_string_query(selections, 'obs_pds.volume_id',
                                        ['regex'])

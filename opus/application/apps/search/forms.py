@@ -92,11 +92,11 @@ class SearchForm(forms.Form):
                 choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget = forms.TextInput(
-                    attrs = {'class': 'STRING',
-                             'size': '50',
-                             'tabindex': 0,
-                             'data-slugname': slug
-                            }),
+                        attrs={'class': 'STRING',
+                               'size': '50',
+                               'tabindex': 0,
+                               'data-slugname': slug
+                              }),
                     required = False,
                     label = '')
                 self.fields['qtype-'+slug] = forms.CharField(
