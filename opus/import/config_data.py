@@ -19,11 +19,12 @@ TABLES_TO_POPULATE = ['obs_general',
                       'obs_files',
                       'obs_ring_geometry',
                       'obs_surface_geometry',
+                      'obs_surface_geometry_name',
                       'obs_surface_geometry__<TARGET>']
 
 # These mult tables have an extra column to allow for target_name grouping
 MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_target_name',
-                                    'mult_obs_surface_geometry_target_name']
+                                   'mult_obs_surface_geometry_name_target_name']
 
 # These instruments have ring geo available (maybe)
 INSTRUMENTS_WITH_RING_GEO = ['COISS',

@@ -1414,10 +1414,6 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         # XXX Needs api_code to report errors
         triggered_tables = get_triggered_tables(selections, extras)
 
-    if labels_view == 'selector':
-        if 'obs_surface_geometry' in triggered_tables:
-            triggered_tables.remove('obs_surface_geometry')
-
     divs = (TableNames.objects.filter(display='Y',
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
@@ -1442,40 +1438,57 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     menu_data = {}
     menu_data['labels_view'] = labels_view
 
+    obs_surface_geometry_div = None
+    obs_surface_geometry_name_div = None
     for d in divs:
-        if d.table_name in expanded_cats:
+        if d.table_name == 'obs_surface_geometry':
+            obs_surface_geometry_div = d
+        elif d.table_name == 'obs_surface_geometry_name':
+            obs_surface_geometry_name_div = d
+
+    for d in divs:
+        table_name = d.table_name
+        # We have to treat obs_surface_geometry_name and
+        # obs_surface_geometry_name specially. They are two separate tables but
+        # we want their fields to show up under the heading for
+        # obs_surface_geometry.
+        if d.table_name == 'obs_surface_geometry_name':
+            table_name = 'obs_surface_geometry'
+        if table_name in expanded_cats:
             d.collapsed = ''
             d.show = 'show'
         else:
             d.collapsed = 'collapsed'
             d.show = ''
-        menu_data.setdefault(d.table_name, OrderedDict())
+        menu_data.setdefault(table_name, OrderedDict())
 
-        # XXX This really shouldn't be here!!
-        menu_data[d.table_name]['menu_help'] = None
-        if d.table_name == 'obs_surface_geometry':
-            menu_data[d.table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Select a target name to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
+        if labels_view == 'search':
+            # Don't want these to show up in the metadata selector
+            # XXX This really shouldn't be here!!
+            menu_data[table_name]['menu_help'] = None
+            if table_name == 'obs_surface_geometry':
+                menu_data[table_name]['menu_help'] = "Surface geometry, when available, is provided for all bodies in the field of view. Use Surface Geometry Target Selector to reveal more options. Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 
-        if d.table_name == 'obs_ring_geometry':
-            menu_data[d.table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
+            if table_name == 'obs_ring_geometry':
+                menu_data[table_name]['menu_help'] = "Supported instruments: Cassini ISS, UVIS, and VIMS, New Horizons LORRI, and Voyager ISS."
 
-        if d.table_name == 'obs_instrument_cocirs':
-            menu_data[d.table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"
+            if table_name == 'obs_instrument_cocirs':
+                menu_data[table_name]['menu_help'] = "Cassini CIRS data is only available through June 30, 2010"
 
         if d.table_name in sub_headings and sub_headings[d.table_name]:
             # this div is divided into sub headings
-            menu_data[d.table_name]['has_sub_heading'] = True
+            menu_data[table_name]['has_sub_heading'] = True
 
-            menu_data[d.table_name].setdefault('data', OrderedDict())
+            menu_data[table_name].setdefault('data', OrderedDict())
             for sub_head in sub_headings[d.table_name]:
-                if d.table_name+'-'+slugify(sub_head) in expanded_cats:
+                if table_name+'-'+slugify(sub_head) in expanded_cats:
                     sub_head_tuple = (sub_head, '', 'show')
                 else:
                     sub_head_tuple = (sub_head, 'collapsed', '')
 
                 all_param_info = (ParamInfo.objects
                                   .filter(**{filter:1,
-                                             'category_name':d.table_name,
+                                             'category_name': d.table_name,
                                              'sub_heading': sub_head}))
                 for p in all_param_info:
                     if labels_view == 'search':
@@ -1486,14 +1499,14 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                         if p.slug[-1] == '1':
                             # Strip the trailing 1 off all ranges
                             p.slug = strip_numeric_suffix(p.slug)
-                    menu_data[d.table_name]['data'].setdefault(sub_head_tuple,
+                    menu_data[table_name]['data'].setdefault(sub_head_tuple,
                                                                []).append(p)
 
         else:
             # this div has no sub headings
-            menu_data[d.table_name]['has_sub_heading'] = False
+            menu_data[table_name]['has_sub_heading'] = False
             for p in ParamInfo.objects.filter(**{filter:1,
-                                                 'category_name':d.table_name}):
+                                                'category_name': d.table_name}):
                 # On the search tab, we don't need the trailing 1 & 2 for
                 # data-slug in the Select Metadata modal we do.
                 if labels_view == 'search':
@@ -1504,7 +1517,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     if p.slug[-1] == '1':
                         # Strip the trailing 1 off all ranges
                         p.slug = strip_numeric_suffix(p.slug)
-                menu_data[d.table_name].setdefault('data', []).append(p)
+                menu_data[table_name].setdefault('data', []).append(p)
 
     # If there are any search slugs, put those in first
     if labels_view == 'selector' and search_slugs_info:
@@ -1522,7 +1535,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         menu_data.setdefault('search_fields', OrderedDict())
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:
-            # "Surface Geometry Target Name" will never show up in "Current
+            # "Surface Geometry Target Selector" will never show up in "Current
             # Search Terms" of select metadata menu.
             if p.slug == 'surfacegeometrytargetname':
                 continue
@@ -1533,12 +1546,18 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 p2 = get_param_info_by_slug(p.slug[:-1]+'2', 'col')
                 menu_data['search_fields'].setdefault('data', []).append(p2)
 
+    new_div_list = []
     first_category = True
     for div in divs:
+        if div == obs_surface_geometry_name_div:
+            # Since we combined them above, we don't want to allow
+            # obs_surface_geometry_name to continue to the UI
+            continue
+        new_div_list.append(div)
         if type(div) == dict:
             div['first_category'] = first_category
         else:
             div.first_category = first_category
         first_category = False
 
-    return {'menu': {'data': menu_data, 'divs': divs}}
+    return {'menu': {'data': menu_data, 'divs': new_div_list}}

@@ -71,11 +71,12 @@ data OPUS has to offer.</p>
         select more than one item, your search will return results applicable
         to any of those items.</li>
     <li><b>String Fields</b> (such as <b>Volume ID</b>) allow you to search on
-        strings. You can provide partial strings that match the beginning or
-        end, are contained anywhere within, or match exactly, among
-        other choices. As you type your search string you will be presented
-        with suggestions; click on one of the suggestions to have it placed
-        in the search field.</li>
+        strings. You can provide strings that match the beginning or
+        end, match exactly, are (not) contained anywhere within, or match a
+        <a href="http://userguide.icu-project.org/strings/regexp"
+         target="_blank">regular expression</a>. As you type your search string
+        you will be presented with suggestions; click on one of the suggestions
+        to have it placed in the search field.</li>
     <li><b>Numeric Fields</b> (such as <b>Observation Duration</b> or
         <b>Observed Ring Radius</b>) allow you to search on a range of numbers
         by specifying either a minimum or a maximum value, or both. The
@@ -97,7 +98,7 @@ data OPUS has to offer.</p>
         standard format for you.</li>
 </ol>
 
-<p>For the latter two types of fields, as you type your search value you will
+<p>For the latter three types of fields, as you type your search value you will
     receive feedback indicating if the value is legal. A green box means it
     is fine as-is. A yellow box means the value is illegal and you should change
     something before leaving the search field (by clicking elsewhere or hitting
@@ -118,7 +119,7 @@ data OPUS has to offer.</p>
     minimum/maximum values or date/times, or the number of results for each
     multiple-choice item, based on your current search criteria.</p>
 
-<p>The <b>Surface Geometry Target Name</b> search field is special. Only one
+<p>The <b>Surface Geometry Target Selector</b> search field is special. Only one
     surface geometry target can be selected at a time. When you select a surface
     geometry target, a new <b>[Target] Surface Geometry Constraints</b>
     category will become available providing search fields for that single
@@ -128,8 +129,8 @@ data OPUS has to offer.</p>
     for cases such as searching for similar lighting geometry for different
     targets. In addition, any metadata fields you selected for the previous
     target will be duplicated for the new target. If you close the
-    <b>Surface Geometry Target Name</b>, all target-specific search fields will
-    also be closed.</p>
+    <b>Surface Geometry Target Selector</b>, all target-specific search fields
+    will also be closed.</p>
 
 <p>Once you have entered some search constraints, it's time to browse the
     results.</p>

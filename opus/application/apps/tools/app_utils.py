@@ -332,7 +332,7 @@ def HTTP404_BAD_PAGENO(pageno, r):
         r = r.path
     return f'Badly formatted page number "{pageno}" for {r}'
 
-def HTTP404_BAD_OFFSET(pageno, r):
+def HTTP404_BAD_OFFSET(offset, r):
     if type(r) != str:
         r = r.path
     return f'Badly formatted offset "{offset}" for {r}'

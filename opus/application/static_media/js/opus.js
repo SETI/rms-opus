@@ -91,8 +91,8 @@ var opus = {
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
 
-    // An object that stores normalize input validation result for each range input.
-    rangeInputFieldsValidation: {},
+    // An object that stores normalizeinput validation result for each input.
+    inputFieldsValidation: {},
 
     // Remember nav clicks during normalize input so we can actually process them
     // later if the inputs are valid.
@@ -240,7 +240,7 @@ var opus = {
                 if (o_widgets.isRemovingInput ||
                     o_widgets.isAddingInput ||
                     opus.isAnyNormalizeInputInProgress() ||
-                    !opus.areRangeInputsValid()) {
+                    !opus.areInputsValid()) {
                     return;
                 }
 
@@ -303,16 +303,16 @@ var opus = {
          */
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
-        if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
+        if (normalizedData.reqno < o_search.lastAllNormalizeRequestNo) {
             return;
         }
 
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This updates the
-        // opus.rangeInputFieldsValidation and also updates the hash.
-        o_search.validateRangeInput(normalizedData, true);
+        // opus.inputFieldsValidation and also updates the hash.
+        o_search.validateInput(normalizedData, true);
 
-        if (!opus.areRangeInputsValid()) {
+        if (!opus.areInputsValid()) {
             // We don't try to get a result count if any of the inputs are invalid.
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
@@ -354,15 +354,15 @@ var opus = {
          */
 
         // We don't update the search hinting if any of the inputs are invalid.
-        // The hints were previously marked as "?" in validateRangeInput so they
+        // The hints were previously marked as "?" in validateInput so they
         // will just stay that way.
-        if (!opus.areRangeInputsValid() || !resultCountData) {
+        if (!opus.areInputsValid() || !resultCountData) {
             return;
         }
 
         // If there are more result counts in the queue, don't trigger
         // spurious hinting queries that we won't use anyway
-        if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
+        if (resultCountData.data[0].reqno < opus.lastAllNormalizeRequestNo) {
             return;
         }
 
@@ -459,7 +459,7 @@ var opus = {
 
         opus.navLinkRemembered = null;
 
-        if (!opus.areRangeInputsValid()) {
+        if (!opus.areInputsValid()) {
             return false;
         }
 
@@ -1310,12 +1310,12 @@ var opus = {
                 Object.keys(opus.normalizeInputForCharInProgress).length > 0);
     },
 
-    areRangeInputsValid: function() {
+    areInputsValid: function() {
         /**
-         * Check if all range inputs are valid.
+         * Check if all inputs are valid.
          */
-        for (const slugWithId in opus.rangeInputFieldsValidation) {
-            if (opus.rangeInputFieldsValidation[slugWithId] === false) {
+        for (const slugWithId in opus.inputFieldsValidation) {
+            if (opus.inputFieldsValidation[slugWithId] === false) {
                 return false;
             }
         }

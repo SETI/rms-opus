@@ -303,6 +303,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Cassini')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini']
@@ -313,6 +314,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&instrument=COCIRS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_cocirs']
@@ -323,6 +325,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&instrument=COISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
@@ -333,6 +336,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
@@ -343,6 +347,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=COUVIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_couvis']
@@ -353,6 +358,7 @@ class resultsTests(TestCase):
         q = QueryDict('volumeid=COUVIS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_couvis']
@@ -363,6 +369,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=COVIMS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_covims']
@@ -373,6 +380,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Galileo')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_galileo',
@@ -384,6 +392,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Galileo+SSI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_galileo',
@@ -395,6 +404,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Voyager')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager',
@@ -406,6 +416,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Voyager+ISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager',
@@ -417,6 +428,7 @@ class resultsTests(TestCase):
         q = QueryDict('volumeid=VGISS_6210')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager', 'obs_instrument_vgiss']
@@ -427,6 +439,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Hubble')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -437,6 +450,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+ACS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -447,6 +461,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+NICMOS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -457,6 +472,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+STIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -467,6 +483,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+WFC3')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -477,6 +494,7 @@ class resultsTests(TestCase):
         q = QueryDict('primaryfilespec=IB4V12N4Q')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -487,6 +505,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+WFPC2')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -497,6 +516,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=New+Horizons')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons']
@@ -507,6 +527,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=New+Horizons+LORRI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons',
@@ -518,6 +539,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=New+Horizons+MVIC')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons',

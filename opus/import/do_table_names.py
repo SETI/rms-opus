@@ -71,6 +71,16 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
+    if impglobals.DATABASE.table_exists('perm', 'obs_surface_geometry_name'):
+        entry = {
+            'table_name': 'obs_surface_geometry_name',
+            'label':      'Surface Geometry Constraints',
+            'display':    'Y',
+            'disp_order': disp_order
+        }
+        disp_order += 1
+        rows.append(entry)
+
     if impglobals.DATABASE.table_exists('perm', 'obs_surface_geometry'):
         entry = {
             'table_name': 'obs_surface_geometry',

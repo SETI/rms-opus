@@ -157,7 +157,7 @@ General Questions:
             pointing fingers.</li>
             <li>If you are really interested in only a single planet or moon,
             expand the <b>Surface Geometry Constraints</b> menu on the left
-            and click on <b>Surface Geometry Target Name</b>. Then select
+            and click on <b>Surface Geometry Target Selector</b>. Then select
             the body in the search box that appears. This will show you
             every image that contains that body from a subset of the missions
             and instruments that are supported. You will also now have the
@@ -236,7 +236,7 @@ Using Search:
             The surface geometry metadata, supplied by the Ring-Moon Systems
             Node, provides information about <em>every</em> body in the field of
             view, regardless of how large or small it is. By selecting
-            a single <b>Surface Geometry Target Name</b> under
+            a single <b>Surface Geometry Target Selector</b> under
             <b>Surface Geometry Constraints</b> you can limit your search to
             only observations containing the given body in the field of view.
             However, this feature is only available for Cassini ISS, UVIS, and
@@ -246,20 +246,42 @@ Using Search:
             How do I search for observations that contain two particular bodies
             in the same observation?
         A: >
-            OPUS does not support this particular search directly, but there are
-            three ways that you can accomplish this goal with a little extra
-            work. Note that methods 1 and 2 only work for instruments that
-            support surface geometry (currently Cassini ISS, UVIS, and VIMS,
-            New Horizons LORRI, and Voyager ISS).
+            There are four ways that you can accomplish this goal. Note that
+            methods 1 through 3 only work for instruments that support surface
+            geometry (currently Cassini ISS, UVIS, and VIMS, New Horizons LORRI,
+            and Voyager ISS).
 
 
             <h4>Method 1</h4>
             <ol>
-            <li>Restrict the search to whatever mission, instrument, time period,
-            volume, etc. that you are interested in.</li>
             <li>Under <b>Surface Geometry Constraints</b> select the
-            <b>Surface Geometry Target Name</b> search field. Select the first
-            body in the <b>Surface Geometry Target Name</b> search box.</li>
+            <b>Multiple Target List</b> search field. The <b>Multiple Target
+            List</b> field contains an alphabetical comma-separated list of all
+            bodies in an observation plus the central planet.</li>
+            <li>If you want to find observations that have <b>only</b> two
+            particular bodies and no others, select <b>matches</b> from the
+            query type dropdown and enter "BODY1,BODY2,PLANET" in the search
+            field. Make sure the bodies and planet are in alphabetical order
+            (e.g. "DIONE,SATURN,TETHYS"). The result set will now contain
+            only observations that have those two, and only those two, bodies in
+            the field of view. Note that the observation may or may not also
+            show the central planet.</li>
+            <li>If you want to find observations that have two particular bodies
+            in the field of view, but other bodies are OK too, we need to use a
+            regular expression. Select <b>regex</b> in the query type dropdown
+            and enter "BODY1.*BODY2" in the search field. Again make sure that
+            BODY1 is alphabetically before BODY2.</li>
+            </ol>
+
+
+            <h4>Method 2</h4>
+            <ol>
+            <li>Restrict the search to whatever mission, instrument, time
+            period, volume, etc. that you are interested in.</li>
+            <li>Under <b>Surface Geometry Constraints</b> select the
+            <b>Surface Geometry Target Selector</b> search field. Select the
+            first body in the <b>Surface Geometry Target Selector</b> search
+            box.</li>
             <li>Using entries under <b>[Body] Surface Geometry Constraints</b>,
             restrict your search using lighting geometry, distance, resolution,
             etc.</li>
@@ -267,8 +289,8 @@ Using Search:
             <b>Download CSV</b> to retrieve a CSV containing information about
             each observation of the first body.</li>
             <li>Go back to the <b>Search</b> tab and select a different body
-            under <b>Surface Geometry Target Name</b>. Restrict this search as
-            desired.</li>
+            under <b>Surface Geometry Target Selector</b>. Restrict this search
+            as desired.</li>
             <li>Select the <b>Browse Results</b> tab and then click on
             <b>Download CSV</b> to retrieve a CSV containing information about
             each observation of the second body.</li>
@@ -277,18 +299,20 @@ Using Search:
             </ol>
 
 
-            <h4>Method 2</h4>
+            <h4>Method 3</h4>
             <ol>
-            <li>Restrict the search to whatever mission, instrument, time period,
-            volume, etc. that you are interested in.</li>
+            <li>Restrict the search to whatever mission, instrument, time
+            period, volume, etc. that you are interested in.</li>
             <li>Under <b>Surface Geometry Constraints</b> select the
-            <b>Surface Geometry Target Name</b> search field. Select the first
-            body in the <b>Surface Geometry Target Name</b> search box.</li>
+            <b>Surface Geometry Target Selector</b> search field. Select the
+            first body in the <b>Surface Geometry Target Selector</b> search
+            box.</li>
             <li>Using entries under <b>[Body] Surface Geometry Constraints</b>,
             restrict your search using lighting geometry, distance, resolution,
             etc.</li>
             <li>Select the <b>Browse Results</b> tab and visually scan through
-            the thumbnails looking for images with two or more bodies in them.</li>
+            the thumbnails looking for images with two or more bodies in
+            them.</li>
             <li>When you find such an image, click on the
             <i class="fas fa-info-circle fa-xs"></i> icon or select
             <b>View Detail</b> from the observation's menu. Scroll down the
@@ -296,9 +320,9 @@ Using Search:
             </ol>
 
 
-            <h4>Method 3</h4>
-            Note: This method is only applicable to Cassini observations. In
-            many cases, the Cassini team marked "mutual event" observations
+            <h4>Method 4</h4>
+            <b>Note: This method is only applicable to Cassini observations</b>.
+            In many cases, the Cassini team marked "mutual event" observations
             using the Cassini <b>Observation Name</b>.
 
             <ol>

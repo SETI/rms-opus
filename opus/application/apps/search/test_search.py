@@ -2837,6 +2837,20 @@ class searchTests(TestCase):
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
+    def test__string_query_regex(self):
+        "[test_search.py] string_query: string query with qtype regex"
+        selections = {'obs_pds.volume_id': [r'^COISS.\d\d\d\d$']}
+        sql, params = get_string_query(selections, 'obs_pds.volume_id',
+                                       ['regex'])
+        print(sql)
+        print(params)
+        expected = '`obs_pds`.`volume_id` RLIKE %s'
+        expected_params = [r'^COISS.\d\d\d\d$']
+        print(expected)
+        print(expected_params)
+        self.assertEqual(sql, expected)
+        self.assertEqual(params, expected_params)
+
     def test__string_query_ends_special_chars(self):
         "[test_search.py] string_query: string query with qtype matches special chars"
         selections = {'obs_pds.volume_id': ['ISS_\\%\\X\\']}

@@ -52,29 +52,30 @@
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
-        "field_name": "target_list",
-        "field_type": "text",
-        "field_notnull": false,
-        "field_key": false,
+        "field_name": "target_name",
+        "field_type": "char75",
+        "field_notnull": true,
+        "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_surface_geo_target_list"
+            "obs_surface_geo_name_target_name"
         ],
-        "definition": "An alphabetical, comma-separated list of all targets for which surface geometry information is available. Assuming that surface geometry has been computed for a given observation, this is essentially a list of bodies in the field of view. It is most useful for searching for observations that contain two or more specific bodies. Note that the central planet is always included in the list even if it is not in the field of view. See the FAQ for more information.",
-        "pi_category_name": "obs_surface_geometry",
+        "definition": "The name of the target for which surface geometry parameters will be searchable. Once a target is selected, new search parameters specific to that target will appear. Only one target may be selected at a time. To perform more complex searches on the list of bodies in the field of view, use Multiple Target List.",
+        "pi_category_name": "obs_surface_geometry_name",
         "pi_dict_context": "SURFACE_GEO",
-        "pi_dict_name": "TARGET_LIST",
-        "pi_disp_order": 20,
+        "pi_dict_name": "TARGET_NAME",
+        "pi_disp_order": 10,
         "pi_display": 1,
-        "pi_display_results": 1,
-        "pi_form_type": "STRING",
-        "pi_intro": "For supported instruments, this field contains an alphabetical comma-separated list of bodies in the field of view plus the central planet. It is most useful for searching for observations with two or more specific bodies. Note that additional search options will not usually be provided in the left menu. Use the Surface Geometry Target Selector to show them.",
-        "pi_label": "Multiple Target List",
-        "pi_label_results": "Multiple Target List",
-        "pi_slug": "surfacegeometrytargetlist",
+        "pi_display_results": 0,
+        "pi_form_type": "GROUP",
+        "pi_intro": "Select a target below and the results will be limited to observations from supported instruments that contain that body in the field of view. More search options for that target will appear in the left menu.",
+        "pi_label": "Surface Geometry Target Selector",
+        "pi_label_results": "Surface Geometry Target Selector",
+        "pi_slug": "surfacegeometrytargetname",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": null,
+        "comments": "Definition is from SURFACE_GEO label."
     },
     {
         "put_mults_here": true
