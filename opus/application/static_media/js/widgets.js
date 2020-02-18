@@ -1537,12 +1537,6 @@ var o_widgets = {
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
 
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = currentValue;
-                } else {
-                    opus.selections[slug] = [currentValue];
-                }
-
                 let newHash = o_hash.getHashStrFromSelections();
                 // // Make sure the existing STRING input value is not passed to stringsearchchoices
                 // // API call. This will make sure each autocomplete dropdown results for individual
@@ -1556,6 +1550,7 @@ var o_widgets = {
                         newHashArray.push(slugValuePair);
                     }
                 }
+                newHashArray.push(`${slugWithCounter}=${currentValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid

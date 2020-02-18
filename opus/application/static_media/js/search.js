@@ -861,7 +861,7 @@ var o_search = {
     },
 
     allNormalizeInputApiCall: function() {
-        let newHash = o_hash.getHashStrFromSelections(opus.selections, true);
+        let newHash = o_hash.getHashStrFromSelections(true);
 
         opus.normalizeInputForAllFieldsInProgress[opus.allSlug] = true;
         o_search.lastSlugNormalizeRequestNo++;
