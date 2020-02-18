@@ -14,10 +14,8 @@ import string
 import subprocess
 import time
 
-from django.core import serializers
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response
+from django.http import HttpResponse
 
 from search.models import ObsGeneral
 

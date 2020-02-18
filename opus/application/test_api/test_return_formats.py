@@ -1,8 +1,7 @@
-
+# opus/application/test_api/test_return_formats.py
 
 import logging
 import requests
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
