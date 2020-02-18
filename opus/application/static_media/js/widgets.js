@@ -1531,8 +1531,6 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(slugWithCounter);
-                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
