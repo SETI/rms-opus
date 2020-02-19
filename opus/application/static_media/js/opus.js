@@ -38,7 +38,7 @@ var opus = {
     defaultColumns: DEFAULT_COLUMNS.split(","),
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
-    searchChangeDelay: 2000, // How long to wait after a search changes to do the new search
+    searchChangeDelay: 1000, // How long to wait after a search changes to do the new search
     spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
