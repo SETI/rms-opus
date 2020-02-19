@@ -367,7 +367,8 @@ var o_search = {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
         });
 
         // range behaviors and string behaviors for search widgets - qtype and unit
@@ -521,7 +522,8 @@ var o_search = {
                 if (!opus.areInputsValid() || areInputSetsEmpty) {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
             }
 
             // If no search is performed, we still update the hints for a unit change.
@@ -951,7 +953,8 @@ var o_search = {
             if (!opus.areInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
         } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
@@ -1004,7 +1007,7 @@ var o_search = {
             }
 
             o_search.rangesNameTotalMatchedCounter[slug] = 0;
-            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+            if (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
