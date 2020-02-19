@@ -2677,3 +2677,16 @@ at the right of -- OR -- label. */
 .op-hints-info {
     cursor: text;
 }
+
+/* Make sure text in the menu align with text in the 1st line instead of (i) icon
+when wrapping into the 2nd line. */
+.op-menu-item {
+    display: flex;
+    align-items: baseline;
+}
+
+/* Spacing between V, (i) icon, and text in the menu. */
+.op-menu-item i.fa-info-circle {
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+}

@@ -47,7 +47,7 @@
                                                             {{ p.body_qualified_label }}
                                                         {% endif %}
                                                       " data-slug="{{ p.slug }}" class="op-search-param" href="#">
-                                                        <span>
+                                                        <span class="op-menu-item">
                                                             <span class="op-search-param-checkmark">
                                                                 <i class="fa fa-check"></i>
                                                             </span>
@@ -55,12 +55,12 @@
                                                                 {% if p.get_tooltip_results %}
                                                                     <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
                                                                 {% endif %}
-                                                                {{ p.label_results }}
+                                                                <span>{{ p.label_results }}</span>
                                                             {% else %}
                                                                 {% if p.get_tooltip %}
                                                                     <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
                                                                 {% endif %}
-                                                                {{ p.label }}
+                                                                <span>{{ p.label }}</span>
                                                             {% endif %}
                                                         </span>
                                                     </a>
@@ -89,7 +89,7 @@
                                             {{ p.body_qualified_label }}
                                         {% endif %}
                                       " data-slug="{{ p.slug }}" class="op-search-param" href="#">
-                                        <span>
+                                        <span class="op-menu-item">
                                             <span class="op-search-param-checkmark">
                                                 <i class="fa fa-check"></i>
                                             </span>
@@ -98,15 +98,15 @@
                                                     <i class="fas fa-info-circle" title="{{ p.get_tooltip_results }}"></i>
                                                 {% endif %}
                                                 {% if div.table_name == 'search_fields' %}
-                                                    {{ p.body_qualified_label_results }}
+                                                    <span>{{ p.body_qualified_label_results }}</span>
                                                 {% else %}
-                                                    {{ p.label_results }}
+                                                    <span>{{ p.label_results }}</span>
                                                 {% endif %}
                                             {% else %}
                                                 {% if p.get_tooltip %}
                                                     <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
                                                 {% endif %}
-                                                {{ p.label }}
+                                                <span>{{ p.label }}</span>
                                             {% endif %}
                                         </span>
                                     </a>
