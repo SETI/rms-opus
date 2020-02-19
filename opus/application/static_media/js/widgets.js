@@ -1339,6 +1339,10 @@ var o_widgets = {
             } else {
                 o_search.getHinting(slug);
             }
+            // Align data in opus.selections and opus.extras to make sure empty
+            // inputs will also have null in opus.selections
+            [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                                   opus.extras);
         }); // end callback for .done()
     }, // end getWidget function
 
