@@ -765,6 +765,13 @@ button.op-mini-thumbnail-zoom {
     right: 1.25em;
 }
 
+/* Add spacing between each menu item in select metadata menu */
+#op-select-metadata .op-search-param {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    display: flex;
+}
+
 /* Make sure first category search title text is vertically aligned with
    .op-menu-spinner */
 .op-menu-first-category {
