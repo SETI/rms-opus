@@ -1543,7 +1543,7 @@ var o_widgets = {
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
                     let slugParam = slugValuePair.split("=")[0];
-                    if (slugParam === slugWithCounter || !slugParam.match(slug) ||
+                    if (!slugParam.match(slug) ||
                         slugParam === `qtype-${slugWithCounter}`) {
                         newHashArray.push(slugValuePair);
                     }
