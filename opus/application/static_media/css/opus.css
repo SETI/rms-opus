@@ -168,6 +168,11 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     display: flex;
 }
 
+/* Spacing between (i) icon, and widget title text in search tab */
+#search .card-title i.fa-info-circle {
+    padding-right: 0.2rem;
+}
+
 #browse, #cart, #detail {
     padding: 0; margin:0;
     display: none;
@@ -2678,7 +2683,7 @@ at the right of -- OR -- label. */
     }
 }
 
-/* Make sure label names & hints in wdigets have a caret cursor when users mouseover. */
+/* Make sure label names & hints in wdigets have a caret cursor when users mouseover */
 .op-choice-label-name,
 .op-hints-description,
 .op-hints-info {
@@ -2686,13 +2691,13 @@ at the right of -- OR -- label. */
 }
 
 /* Make sure text in the menu align with text in the 1st line instead of (i) icon
-when wrapping into the 2nd line. */
+when wrapping into the 2nd line */
 .op-menu-item {
     display: flex;
     align-items: baseline;
 }
 
-/* Spacing between V, (i) icon, and text in the menu. */
+/* Spacing between V, (i) icon, and text in the menu */
 .op-menu-item i.fa-info-circle {
     padding-left: 0.2rem;
     padding-right: 0.2rem;

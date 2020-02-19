@@ -9,17 +9,19 @@
 <div class="card">
     <header class="card-header">
         <h6 class="card-title mt-0">
-            <div>
+            <div class="d-flex align-items-baseline">
                 <i class="fas fa-info-circle" title="{{ tooltip|safe }}"></i>
-                <span class="op-widget-title">{{ label }}&nbsp;</span>
-                {% if units %}
-                    <select class="op-unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
-                        {% for unit, display_name in units.items %}
-                            <option value="{{ unit }}">{{ display_name }}</option>
-                        {% endfor %}
-                    <select>
-                {% endif %}
-                <span class="spinner">&nbsp;</span>
+                <div>
+                    <span class="op-widget-title">{{ label }}&nbsp;</span>
+                    {% if units %}
+                        <select class="op-unit-{{ slug }}" name="unit-{{ slug }}" tabindex="0">
+                            {% for unit, display_name in units.items %}
+                                <option value="{{ unit }}">{{ display_name }}</option>
+                            {% endfor %}
+                        <select>
+                    {% endif %}
+                    <span class="spinner">&nbsp;</span>
+                </div>
             </div>
             <span class="float-right border-left border-dark">
                 <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">
