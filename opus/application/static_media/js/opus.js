@@ -565,11 +565,14 @@ var opus = {
          * Handle the 'Reset Search' and 'Reset Search and Metadata' buttons.
          */
 
-        // Reset the search query and return to the Search tab
+        // Reset the search query
         opus.selections = {};
         opus.extras = {};
+        // Update the URL so getWidget below doesn't have old concepts of
+        // what mults were selected in the default widgets.
+        o_hash.updateURLFromCurrentHash(false);
+
         o_browse.clearObservationData();
-        opus.changeTab('search');
 
         // Enable or disable the 'Reset Search' and 'Reset Search and Metadata' buttons
         if (!o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns)) {
