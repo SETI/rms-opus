@@ -1531,17 +1531,9 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(slugWithCounter);
-                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
-
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = currentValue;
-                } else {
-                    opus.selections[slug] = [currentValue];
-                }
 
                 let newHash = o_hash.getHashStrFromSelections();
                 // // Make sure the existing STRING input value is not passed to stringsearchchoices
@@ -1551,11 +1543,12 @@ var o_widgets = {
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
                     let slugParam = slugValuePair.split("=")[0];
-                    if (slugParam === slugWithCounter || !slugParam.match(slug) ||
+                    if (!slugParam.match(slug) ||
                         slugParam === `qtype-${slugWithCounter}`) {
                         newHashArray.push(slugValuePair);
                     }
                 }
+                newHashArray.push(`${slugWithCounter}=${currentValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
