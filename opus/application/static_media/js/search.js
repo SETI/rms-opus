@@ -1007,7 +1007,7 @@ var o_search = {
             }
 
             o_search.rangesNameTotalMatchedCounter[slug] = 0;
-            if (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections))  {
+            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);

@@ -208,8 +208,8 @@ var opus = {
         // identical.
         let currentExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(selections, extras);
         let lastExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.lastSelections, opus.lastExtras);
-        if (o_utils.areSelectionsExtrasEqual(selections, opus.lastSelections) &&
-            o_utils.areSelectionsExtrasEqual(currentExtrasQ, lastExtrasQ)) {
+        if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
+            o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
             if (!opus.force_load) {
                 return;
             }
@@ -221,8 +221,8 @@ var opus = {
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
             let opusExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.selections, opus.extras);
-            if (!o_utils.areSelectionsExtrasEqual(selections, opus.selections) ||
-                !o_utils.areSelectionsExtrasEqual(currentExtrasQ, opusExtrasQ)) {
+            if (!o_utils.areObjectsEqual(selections, opus.selections) ||
+                !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 // Make sure page will not reload in these cases:
                 // 1) When it's in the middle of an input removal process. After normalize input API
                 // call returns at the end of an input removal, URL and opus.selections will get updated
