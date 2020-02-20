@@ -1336,7 +1336,17 @@ var o_widgets = {
                                               ".op-range-qtype-helper, " +
                                               ".op-remove-inputs";
                 let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
-                qtypeWrappingGroup.wrapAll("<div class='d-inline-block op-qtype-wrapping-group'/>");
+                qtypeWrappingGroup.wrapAll("<li class='d-inline-block op-qtype-wrapping-group'/>");
+
+
+                // Assign classes to the li of range min/max inputs. These classes will be used
+                // to add the styling to group min/max with its corresponding input tag. This
+                // will make sure min/max and its corresponding input stay together as a unit
+                // when they move to a different line.
+                let minInputList = $(eachInputSet).find(".op-range-input-min").parent();
+                let maxInputList = $(eachInputSet).find(".op-range-input-max").parent();
+                minInputList.addClass("op-range-input-min-list");
+                maxInputList.addClass("op-range-input-max-list");
             }
 
             opus.widgetsDrawn.unshift(slug);

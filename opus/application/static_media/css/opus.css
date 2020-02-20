@@ -254,9 +254,30 @@ Not sure if this is the desired behavior
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
 @media (max-width: 970px) {
-    /* Make text input shrink proportionally when window is narrow */
-    #op-search-widgets input[type="text"] {
+    /* Make STRING input shrink proportionally when window is narrow */
+    #op-search-widgets input[class~="STRING"] {
         width: 100%;
+    }
+
+    /* The following styling are to group Min/Max with its corresponding input
+    when window is narrow */
+    #op-search-widgets input[class~="RANGE"] {
+        flex: 1 0 auto;
+    }
+
+    .op-range-input-min-list, .op-range-input-max-list {
+        white-space: nowrap;
+        display: inline-flex !important;
+        width: 100%;
+    }
+
+    /* Algin the Min/Max input tag when they are in different lines */
+    .op-range-input-min {
+        margin-left: 0.5rem;
+    }
+
+    .op-range-input-max {
+        margin-left: 0.3rem;
     }
 }
 
