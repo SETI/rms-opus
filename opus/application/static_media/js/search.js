@@ -239,7 +239,6 @@ var o_search = {
             Update URL (and search) if all inputs are valid
         */
         $("#search").on("change", "input.RANGE", function(e) {
-            console.log("search 242", opus.selections, opus.extras);
             let inputName = $(this).attr("name");
             let slugName = $(this).data("slugname");
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
@@ -574,7 +573,6 @@ var o_search = {
             $(target).removeClass("input_currently_focused");
         }
 
-        console.log("search 576", opus.selections, opus.extras);
         o_search.parseFinalNormalizedInputDataAndUpdateURL(slugWithId, url);
     },
 
@@ -880,7 +878,6 @@ var o_search = {
          * Validate the return data from a normalize input API call, and update hash & URL
          * based on the selections for the same normalize input API.
          */
-        console.log("search 882", normalizedInputData, opus.selections, opus.extras);
         o_search.slugInputValidValueFromLastSearch = {};
         $.each(normalizedInputData, function(eachSlug, value) {
             if (eachSlug === "reqno") {
@@ -943,7 +940,6 @@ var o_search = {
             }
         });
 
-        console.log("search 945", opus.selections, opus.extras);
         // Update newly selected unit to currentUnitBySlug
         if (slug.startsWith("unit-") && unit) {
             let slugNoNum = slug.match(/unit-(.*)$/)[1];
@@ -991,9 +987,7 @@ var o_search = {
          * Parse the return data from a normalize input API call. validateInput
          * is called here.
          */
-        console.log("search 991", slug, url);
         $.getJSON(url, function(normalizedInputData) {
-            console.log("search 993", normalizedInputData);
             // Make sure data is from the final normalize input call before parsing
             // normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
