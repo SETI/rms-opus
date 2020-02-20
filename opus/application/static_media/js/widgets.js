@@ -496,10 +496,10 @@ var o_widgets = {
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
+            let inputSetToBeDeleted = $(this).parents(".op-search-inputs-set");
 
-            let inputElement = $(this).parent(".op-search-inputs-set").find("input");
-            let qtypeElement = $(this).parent(".op-search-inputs-set").find("select");
+            let inputElement = $(this).parents(".op-search-inputs-set").find("input");
+            let qtypeElement = $(this).parents(".op-search-inputs-set").find("select");
             let slugNameFromInput = inputElement.attr("name");
             let trailingCounterString = o_utils.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
@@ -1327,6 +1327,16 @@ var o_widgets = {
                         return this.nodeType === 3;
                     }).wrap("<span class='op-choice-label-name'></span>");
                 }
+            }
+
+            // Wrap (i) icon, qtype, and trash icon with a div. This will make sure these
+            // three elements stay together when browser gets narrow.
+            for (const eachInputSet of $(`#widget__${slug} .op-search-inputs-set`)) {
+                let qtypeWrappingGroupClass = ".op-qtype-input, " +
+                                              ".op-range-qtype-helper, " +
+                                              ".op-remove-inputs";
+                let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
+                qtypeWrappingGroup.wrapAll("<div class='d-inline-block op-qtype-wrapping-group'/>");
             }
 
             opus.widgetsDrawn.unshift(slug);
