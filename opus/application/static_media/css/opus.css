@@ -215,6 +215,12 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     white-space: nowrap;
 }
 
+/* Group the magnifying glass and the value together in detail page. This will 
+make sure they always stay together when wrapping into a different line */
+#detail .op-detail-entry-values {
+    display: inline-block;
+}
+
 #nav-sidebar {
     margin: 0;
     padding: 0;

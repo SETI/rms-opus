@@ -11,10 +11,11 @@
                         {% endif %}
                         <div>
                             {% if param_info.get_units %}
-                                {{ param_info.label_results }} {{ param_info.get_units }}: {{ val }}
+                                {{ param_info.label_results }} {{ param_info.get_units }}:&nbsp;
                             {% else %}
-                                {{ param_info.label_results }}: {{ val }}
+                                {{ param_info.label_results }}:&nbsp;
                             {% endif %}
+                            <span class="op-detail-entry-values">{{ val }}
                             {% if param_info.is_string_or_mult %}
                                 <a href="/opus/#/{{ param_info.slug }}={{ val|encode_value }}{% if param_info.is_string %}&qtype-{{ param_info.slug }}=matches{% endif %}{% if url_cols %}&cols={{ url_cols }}{% endif %}"
                                         target="_blank">
@@ -22,6 +23,7 @@
                                         title='Open a new browser tab containing OPUS that searches for "{{ param_info.label_results }}" equal to "{{ val }}"'></i>
                                 </a>
                             {% endif %}
+                            </span>
                         </div>
                     {% endif %}
                 {% endfor %}
