@@ -38,6 +38,42 @@ var o_utils = {
         return true;
     },
 
+    areSelectionsExtrasEqual: function(obj1, obj2) {
+        /**
+         * This is for comparing objects whose values are all arrays.
+         * However, in this case we treat a missing key as equivalent to a
+         * list that has nothing but nulls.
+         * NOTE: We don't want to use JSON.stringify to directly compare
+         * two objects because the order of keys in the object will matter
+         * in that case.
+         **/
+        for (const key in obj1) {
+            if (!(key in obj2)) {
+                if (obj1[key].some(elem => elem !== null)) {
+                    return false;
+                }
+                continue;
+            }
+            // expect the array (value) of the same key to be the same for both objects
+            if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
+                return false;
+            }
+        }
+        for (const key in obj2) {
+            if (!(key in obj1)) {
+                if (obj2[key].some(elem => elem !== null)) {
+                    return false;
+                }
+                continue;
+            }
+            // expect the array (value) of the same key to be the same for both objects
+            if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
+                return false;
+            }
+        }
+        return true;
+    },
+
     // num is an int
     addCommas: function(num) {
           return num.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");

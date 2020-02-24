@@ -431,8 +431,8 @@ var o_widgets = {
 
             // Check if there is any selections change. This flag will be used to determine
             // if normalize input should be run when removing an empty input set.
-            let noSelectionsChange = (o_utils.areObjectsEqual(opus.selections, opus.lastSelections) &&
-                                      o_utils.areObjectsEqual(opus.extras, opus.lastExtras));
+            let noSelectionsChange = (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections) &&
+                                      o_utils.areSelectionsExtrasEqual(opus.extras, opus.lastExtras));
 
             if (newlyAddedInput.hasClass("RANGE")) {
                 opus.selections[`${slug}1`] = opus.selections[`${slug}1`] || [];
@@ -506,8 +506,8 @@ var o_widgets = {
 
             // Check if there is any selections change. This flag will be used to determine
             // if normalize input should be run when removing an empty input set.
-            let noSelectionsChange = (o_utils.areObjectsEqual(opus.selections, opus.lastSelections) &&
-                                      o_utils.areObjectsEqual(opus.extras, opus.lastExtras));
+            let noSelectionsChange = (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections) &&
+                                      o_utils.areSelectionsExtrasEqual(opus.extras, opus.lastExtras));
 
             if (inputElement.hasClass("RANGE")) {
                 let previousMinSelections = opus.selections[`${slug}1`];
@@ -610,7 +610,7 @@ var o_widgets = {
                         $("input.RANGE, input.STRING").addClass("search_input_original");
                         $("#sidebar").removeClass("search_overlay");
                         $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
-                        if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                        if (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections))  {
                             // Put back normal hinting info
                             opus.widgetsDrawn.forEach(function(eachSlug) {
                                 o_search.getHinting(eachSlug);
@@ -819,7 +819,7 @@ var o_widgets = {
                 $("input.RANGE, input.STRING").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
-                if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+                if (o_utils.areSelectionsExtrasEqual(opus.selections, opus.lastSelections))  {
                     // Put back normal hinting info
                     opus.widgetsDrawn.forEach(function(eachSlug) {
                         o_search.getHinting(eachSlug);
