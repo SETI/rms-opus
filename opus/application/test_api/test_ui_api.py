@@ -3,7 +3,6 @@
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache

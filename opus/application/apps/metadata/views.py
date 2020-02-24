@@ -20,7 +20,6 @@
 ################################################################################
 
 from collections import OrderedDict
-import json
 import logging
 
 import settings
@@ -36,12 +35,29 @@ from django.views.decorators.cache import never_cache
 
 from cart.models import Cart
 from paraminfo.models import ParamInfo
-from search.models import *
+from search.models import TableNames
 from search.views import (get_param_info_by_slug,
                           get_user_query_table,
                           set_user_search_number,
                           url_to_search_params)
-from tools.app_utils import *
+from tools.app_utils import (csv_response,
+                             enter_api_call,
+                             exit_api_call,
+                             format_metadata_number_or_func,
+                             get_mult_name,
+                             get_reqno,
+                             json_response,
+                             parse_form_type,
+                             strip_numeric_suffix,
+                             throw_random_http404_error,
+                             throw_random_http500_error,
+                             HTTP404_BAD_COLLAPSE,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_NO_REQUEST,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_FORMAT,
+                             HTTP404_UNKNOWN_SLUG,
+                             HTTP404_UNKNOWN_UNITS)
 
 import opus_support
 

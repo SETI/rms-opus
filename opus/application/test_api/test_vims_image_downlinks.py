@@ -1,13 +1,11 @@
 # opus/application/test_api/test_vims_image_downlinks.py
 
-
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, RequestsClient
+from rest_framework.test import RequestsClient
 
 import settings
 

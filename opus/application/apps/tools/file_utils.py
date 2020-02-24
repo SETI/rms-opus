@@ -8,14 +8,11 @@
 
 from collections import OrderedDict
 import json
-import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from django.http import HttpResponse
 
-from search.models import *
-import tools.app_utils as app_utils
+from search.models import ObsGeneral
 
 import settings
 
