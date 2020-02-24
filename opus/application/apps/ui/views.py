@@ -1,17 +1,24 @@
-# code coverage
-# bad clause number
-# Mix old and new slugs with clause numbers
 ################################################################################
 #
 # ui/views.py
+#
+# The (private) API interface for returning things for the main UI.
+#
+#    Format: __lastblogupdate.json
+#    Format: __menu.json
+#    Format: __metadata_selector.json
+#    Format: __widget/(?P<slug>[-\w]+).html
+#    Format: __initdetail/(?P<opus_id>[-\w]+).html
+#    Format: __normalizeurl.json
+#    Format: __dummy.json
+#    Format: __fake/__viewmetadatamodal/(?P<opus_id>[-\w]+).json
+#    Format: __fake/__selectmetadatamodal.json
 #
 ################################################################################
 
 from collections import OrderedDict
 
 import settings
-
-from annoying.decorators import render_to
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
@@ -24,15 +31,28 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
-from dictionary.models import *
-from metadata.views import *
-from paraminfo.models import *
-from results.views import *
+from dictionary.models import Definitions
+from paraminfo.models import ParamInfo
+from results.views import get_triggered_tables
 from search.forms import SearchForm
-from search.models import *
-from search.views import *
-from tools.app_utils import *
-from tools.file_utils import *
+from search.models import ObsGeneral, TableNames
+from search.views import (get_param_info_by_slug,
+                          is_single_column_range,
+                          url_to_search_params)
+from tools.app_utils import (cols_to_slug_list,
+                             convert_ring_obs_id_to_opus_id,
+                             enter_api_call,
+                             exit_api_call,
+                             get_git_version,
+                             get_mult_name,
+                             get_reqno,
+                             json_response,
+                             parse_form_type,
+                             strip_numeric_suffix,
+                             throw_random_http404_error,
+                             HTTP404_NO_REQUEST)
+from tools.file_utils import (get_pds_preview_images,
+                              get_pds_products)
 
 import opus_support
 

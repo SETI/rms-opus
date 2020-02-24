@@ -4,10 +4,9 @@ import csv
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
+from rest_framework.test import APIClient, RequestsClient
 
 import settings
 

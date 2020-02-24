@@ -2,10 +2,12 @@ import settings
 from collections import OrderedDict
 from django.apps import apps
 from django import forms
-from metadata.views import *
 from search.views import get_param_info_by_slug, is_single_column_range
-from paraminfo.models import *
-from tools.app_utils import *
+from paraminfo.models import ParamInfo
+from tools.app_utils import (get_mult_name,
+                             get_numeric_suffix,
+                             parse_form_type,
+                             strip_numeric_suffix)
 
 import logging
 log = logging.getLogger(__name__)

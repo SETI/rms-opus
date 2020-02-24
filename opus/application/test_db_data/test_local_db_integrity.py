@@ -5,9 +5,31 @@ from unittest import TestCase
 from django.apps import apps
 from django.db import connection
 from django.db.models import Count
-from django.http import QueryDict
 
-from search.views import *
+from paraminfo.models import ParamInfo
+from search.models import (MultObsGeneralPlanetId,
+                           ObsGeneral,
+                           ObsInstrumentCocirs,
+                           ObsInstrumentCoiss,
+                           ObsInstrumentCouvis,
+                           ObsInstrumentCovims,
+                           ObsInstrumentGossi,
+                           ObsInstrumentNhlorri,
+                           ObsInstrumentNhmvic,
+                           ObsInstrumentVgiss,
+                           ObsMissionCassini,
+                           ObsMissionGalileo,
+                           ObsMissionHubble,
+                           ObsMissionNewHorizons,
+                           ObsMissionVoyager,
+                           ObsPds,
+                           ObsSurfaceGeometryMimas,
+                           ObsSurfaceGeometryName,
+                           ObsTypeImage,
+                           ObsWavelength,
+                           Partables,
+                           TableNames)
+
 from tools.db_utils import MYSQL_TABLE_NOT_EXISTS
 
 class DBIntegrityTest(TestCase):

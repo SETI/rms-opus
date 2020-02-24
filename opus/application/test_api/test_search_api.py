@@ -3,14 +3,20 @@
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
 from rest_framework.test import RequestsClient
 
+from tools.app_utils import (HTTP404_BAD_LIMIT,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_CATEGORY,
+                             HTTP404_UNKNOWN_OPUS_ID,
+                             HTTP404_UNKNOWN_RING_OBS_ID,
+                             HTTP404_UNKNOWN_SLUG)
+
 from api_test_helper import ApiTestHelper
-from tools.app_utils import *
 
 import settings
 
