@@ -1272,9 +1272,10 @@ var opus = {
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             if (!$("#op-browser-size-msg-modal").hasClass("show")) {
-                let modalMsg = (`Please resize your browser. OPUS requires a browser
-                                size of at least ${opus.browserSupport.width} pixels by
-                                ${opus.browserSupport.height} pixels.`);
+                let modalMsg = (`Please resize your browser or rotate your mobile
+                                device to landscape mode. OPUS requires a browser
+                                size of at least ${opus.browserSupport.width} pixels
+                                by ${opus.browserSupport.height} pixels. `);
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);

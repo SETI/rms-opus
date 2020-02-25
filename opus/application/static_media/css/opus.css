@@ -155,6 +155,8 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     /* Make the whole search page shrink proportionally when window
     is narrower */
     width: 100%;
+    /* Make sure search tab will not scroll horizontally */
+    overflow-x: hidden;
 }
 
 #search .add_input {
