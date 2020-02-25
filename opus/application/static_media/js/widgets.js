@@ -1238,7 +1238,7 @@ var o_widgets = {
             }
 
             if ($.isEmptyObject(opus.selections)) {
-                $('#widget__' + slug + ' .spinner').fadeOut('');
+                $('#widget__' + slug + ' .spinner').fadeOut();
             }
 
             let widgetInputs = $(`#widget__${slug} input`);
@@ -1343,6 +1343,9 @@ var o_widgets = {
             // inputs will also have null in opus.selections
             [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                    opus.extras);
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
         }); // end callback for .done()
     }, // end getWidget function
 

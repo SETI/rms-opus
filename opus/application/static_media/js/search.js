@@ -185,19 +185,6 @@ var o_search = {
                 let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
                 newHash += `&${unitSlugWithId}=${currentUnitVal}`;
             }
-            /*
-            Do not perform normalized api call if:
-            1) Input field is empty OR
-            2) Input value didn't change from the last successful search
-            3) Input value didn't match any ranges names
-            */
-            if (currentValue === "" || currentValue === o_search.slugInputValidValueFromLastSearch[slugWithId] ||
-                !o_search.performInputValidation[slugWithId]) {
-                $(e.target).removeClass("search_input_valid search_input_invalid");
-                $(e.target).removeClass("search_input_invalid_no_focus");
-                $(e.target).addClass("search_input_original");
-                return;
-            }
 
             opus.normalizeInputForCharInProgress[slugWithId] = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.slugNormalizeReqno[slugWithId];
@@ -995,6 +982,9 @@ var o_search = {
                 return;
             }
 
+            // Save the old state which indicates if there are ? in the result count and hints
+            let inputsWereValid = opus.areInputsValid();
+
             // check each input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateInput(normalizedInputData, true, slug, unit);
@@ -1007,7 +997,8 @@ var o_search = {
             }
 
             o_search.rangesNameTotalMatchedCounter[slug] = 0;
-            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+            if (!inputsWereValid &&
+                o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
@@ -1119,7 +1110,6 @@ var o_search = {
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
-
         } else if ($(".widget__" + slug).hasClass("mult-widget")) {
             // this is a mult field
             o_search.getValidMults(slug);
@@ -1178,7 +1168,7 @@ var o_search = {
                 }
 
                 let dataSlug = multdata.field_id;
-                $("#widget__" + dataSlug + " .spinner").fadeOut("");
+                $("#widget__" + dataSlug + " .spinner").fadeOut();
 
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;

@@ -263,7 +263,12 @@ var opus = {
 
         // Start the spinners for the left side menu and each widget for hinting
         $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner");
-        $("#op-search-widgets .spinner").fadeIn();
+        opus.widgetsDrawn.forEach(function(eachSlug) {
+            if ($(`.widget__${eachSlug}`).hasClass("range-widget") ||
+                $(`.widget__${eachSlug}`).hasClass("mult-widget")) {
+                $(`#widget__${eachSlug} .spinner`).fadeIn();
+            }
+        });
 
         // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
         // avoid a recursive api call
