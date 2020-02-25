@@ -19,7 +19,11 @@
                         {% endfor %}
                     <select>
                 {% endif %}
-                <span class="spinner">&nbsp;</span>
+                <span class="spinner"
+                    {% if form_type not in range_form_types and form_type not in mult_form_types %}
+                        style="display: none"
+                    {% endif %}
+                >&nbsp;</span>
             </div>
             <span class="float-right border-left border-dark">
                 <a href="#card__{{ slug }}" data-toggle="collapse" data-target="#card__{{ slug }}" aria-expanded="true">

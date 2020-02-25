@@ -17,8 +17,7 @@ var o_utils = {
      **/
     areObjectsEqual: function(obj1, obj2) {
         /**
-         * This is for comparing selections or lastSelections
-         * Expects objects whose values are all arrays.
+         * This is for comparing objects whose values are all arrays.
          * NOTE: We don't want to use JSON.stringify to directly compare
          * two objects because the order of keys in the object will matter
          * in that case.
