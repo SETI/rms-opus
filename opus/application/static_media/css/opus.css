@@ -215,7 +215,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     white-space: nowrap;
 }
 
-/* Group the magnifying glass and the value together in detail page. This will 
+/* Group the magnifying glass and the value together in detail page. This will
 make sure they always stay together when wrapping into a different line */
 #detail .op-detail-entry-values {
     display: inline-block;
@@ -277,7 +277,7 @@ to 100%, this will make the shrinking look smoother */
         width: 100%;
     }
 
-    /* Algin the Min/Max input tag when they are in different lines */
+    /* Align the Min/Max input tag when they are in different lines */
     .op-range-input-min {
         margin-left: 0.5rem;
     }
@@ -2710,7 +2710,7 @@ at the right of -- OR -- label. */
     }
 }
 
-/* Make sure label names & hints in wdigets have a caret cursor when users mouseover */
+/* Make sure label names & hints in widgets have a caret cursor when users mouseover */
 .op-choice-label-name,
 .op-hints-description,
 .op-hints-info {
