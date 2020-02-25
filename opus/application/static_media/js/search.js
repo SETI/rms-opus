@@ -204,6 +204,7 @@ var o_search = {
                 */
                 if (returnData === "") {
                     $(e.target).removeClass("search_input_valid search_input_invalid");
+                    $(e.target).removeClass("search_input_invalid_no_focus");
                     $(e.target).addClass("search_input_original");
                 } else if (returnData !== null) {
                     $(e.target).removeClass("search_input_original search_input_invalid");
