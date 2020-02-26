@@ -326,7 +326,8 @@ var o_widgets = {
          * Make sure "+ (OR)" is attached to the right of last input set.
          * Display or hide the icon based on the number of input sets.
          */
-        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        let lastInputSet = $(`#widget__${slug} .op-search-inputs-set`).last();
+        lastInputSet.find(".op-qtype-wrapping-group").append(addInputIcon);
         let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
         if (numberOfInputSets === opus.maxAllowedInputSets) {
             $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
@@ -386,9 +387,9 @@ var o_widgets = {
             // to the first input set, and add remove icon to cloned input set, else we add "OR"
             // label to the last input set and remove "OR" label from cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
-                firstExistingSetOfInputs.append(removeInputIcon);
+                firstExistingSetOfInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
-                cloneInputs.append(removeInputIcon);
+                cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
@@ -1307,6 +1308,27 @@ var o_widgets = {
                     addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
                 }
 
+                // Wrap (i) icon, qtype, and trash icon with a div. This will make sure these
+                // three elements stay together when browser gets narrow.
+                for (const eachInputSet of $(`#widget__${slug} .op-search-inputs-set`)) {
+                    let qtypeWrappingGroupClass = ".op-qtype-input, " +
+                                                  ".op-range-qtype-helper, " +
+                                                  ".op-remove-inputs, " +
+                                                  ".op-add-inputs";
+                    let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
+                    qtypeWrappingGroup.wrapAll("<li class='d-inline-block op-qtype-wrapping-group'/>");
+
+
+                    // Assign classes to the li of range min/max inputs. These classes will be used
+                    // to add the styling to group min/max with its corresponding input tag. This
+                    // will make sure min/max and its corresponding input stay together as a unit
+                    // when they move to a different line.
+                    let minInputList = $(eachInputSet).find(".op-range-input-min").parent();
+                    let maxInputList = $(eachInputSet).find(".op-range-input-max").parent();
+                    minInputList.addClass("op-range-input-min-list");
+                    maxInputList.addClass("op-range-input-max-list");
+                }
+
                 o_widgets.attachAddInputIcon(slug, addInputIcon);
 
                 let widgetInputSets = $(`#widget__${slug} .op-search-inputs-set`);
@@ -1327,26 +1349,6 @@ var o_widgets = {
                         return this.nodeType === 3;
                     }).wrap("<span class='op-choice-label-name'></span>");
                 }
-            }
-
-            // Wrap (i) icon, qtype, and trash icon with a div. This will make sure these
-            // three elements stay together when browser gets narrow.
-            for (const eachInputSet of $(`#widget__${slug} .op-search-inputs-set`)) {
-                let qtypeWrappingGroupClass = ".op-qtype-input, " +
-                                              ".op-range-qtype-helper, " +
-                                              ".op-remove-inputs";
-                let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
-                qtypeWrappingGroup.wrapAll("<li class='d-inline-block op-qtype-wrapping-group'/>");
-
-
-                // Assign classes to the li of range min/max inputs. These classes will be used
-                // to add the styling to group min/max with its corresponding input tag. This
-                // will make sure min/max and its corresponding input stay together as a unit
-                // when they move to a different line.
-                let minInputList = $(eachInputSet).find(".op-range-input-min").parent();
-                let maxInputList = $(eachInputSet).find(".op-range-input-max").parent();
-                minInputList.addClass("op-range-input-min-list");
-                maxInputList.addClass("op-range-input-max-list");
             }
 
             opus.widgetsDrawn.unshift(slug);
