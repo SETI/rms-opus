@@ -106,16 +106,22 @@ var o_search = {
         });
 
         // When clicking inside a widget body, if the clicked element is not input,
-        // select, hints, and text nodes, we will disable the default behavior of mousedown
-        // event. This will prevent input from focusing out when clicking on preprogrammed
-        // ranges dropdown, and also keep the ability to copy text & hints in mults
-        // and hints in ranges widgets.
+        // select, hints, text nodes, add input "+" icon, and remove input trash icon,
+        // we will disable the default behavior of mousedown event. This will prevent
+        // input from focusing out when clicking on preprogrammed ranges dropdown, and
+        // also keep the ability to copy text & hints in mults and hints in ranges
+        // widgets. This will also make sure input focus out to trigger a change event
+        // when clicking any add/remove input icon.
         $("#search").on("mousedown", ".widget .card-body", function(e) {
             if (!$(e.target).is("input") && !$(e.target).is("select") &&
                 !$(e.target).is("label") && !$(e.target).hasClass("hints") &&
                 !$(e.target).hasClass("op-hints-info") &&
                 !$(e.target).hasClass("op-hints-description") &&
-                !$(e.target).hasClass("op-choice-label-name")) {
+                !$(e.target).hasClass("op-choice-label-name") &&
+                !$(e.target).hasClass("op-remove-inputs-btn") &&
+                !$(e.target).hasClass("op-add-inputs-btn") &&
+                !$(e.target).parent(".op-remove-inputs-btn").length &&
+                !$(e.target).parent(".op-add-inputs-btn").length) {
                 e.preventDefault();
             }
         });
