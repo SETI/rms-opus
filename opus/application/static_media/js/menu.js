@@ -69,6 +69,24 @@ var o_menu = {
             $("#sidebar").html(data.html);
             o_menu.markCurrentMenuItems();
             clearTimeout(spinnerTimer);
+
+            o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#search");
+        });
+    },
+
+    wrapTriangleArrowAndLastWordOfMenuCategory: function(tab) {
+        /**
+         * Wrap the last word of each menu category with triangle arrow. This is
+         * used to group the triangle arrow and the last word of category string,
+         * and make sure they will stay together when wrapped into a different
+         * line.
+         */
+        $.each($(`${tab} .op-submenu-category .title`), function(idx, category) {
+            let textArr = $(category).text().split(" ");
+            let lastWord = textArr.pop();
+            let lastWordWrappingGroup = `&nbsp;<span class="op-menu-triangle-group">${lastWord}` +
+                                        "<span class='op-menu-arrow'></span></span>";
+            $(category).html(textArr.join(" ") + lastWordWrappingGroup);
         });
     },
 

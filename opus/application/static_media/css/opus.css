@@ -347,6 +347,37 @@ to 100%, this will make the shrinking look smoother */
     -webkit-transform: rotate(-90deg);
 }
 
+/* Rotate triangle arrows when menu category is clicked */
+.op-search-menu .dropdown-toggle .op-menu-arrow {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+.op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+/* Css styling for triangle arrow pointing right */
+.op-menu-arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #000;
+    display: inline-block;
+}
+
+/* Make sure triangle arrow is veritcally centered */
+.op-menu-triangle-group {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Hide the default bootstrap dropdown triangle arrow */
+.op-search-menu .dropdown-toggle::after {
+    display: none !important;
+}
+
 .sidebar_wrapper {
     display: flex;
     margin: 0;
