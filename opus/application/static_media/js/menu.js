@@ -84,7 +84,8 @@ var o_menu = {
         $.each($(`${tab} .op-submenu-category .title`), function(idx, category) {
             let textArr = $(category).text().split(" ");
             let lastWord = textArr.pop();
-            let lastWordWrappingGroup = `&nbsp;<span class="op-menu-triangle-group">${lastWord}` +
+            let spacing = textArr.length ? "&nbsp;" : "";
+            let lastWordWrappingGroup = `${spacing}<span class="op-menu-triangle-group">${lastWord}` +
                                         "<span class='op-menu-arrow'></span></span>";
             $(category).html(textArr.join(" ") + lastWordWrappingGroup);
         });
