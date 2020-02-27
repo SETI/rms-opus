@@ -38,7 +38,7 @@ var opus = {
     defaultColumns: DEFAULT_COLUMNS.split(","),
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
-    mainTimerInterval: 1000,
+    searchChangeDelay: 1000, // How long to wait after a search changes to do the new search
     spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
@@ -85,11 +85,12 @@ var opus = {
 
     // searching - making queries
         // NOTE: Any changes to selections or extras will trigger load() to refresh
-        // the result count, hints, etc. at the next timer interval
+        // the result count, hints, etc. after a suitable delay
     selections: {},        // the user's search
     extras: {},            // extras to the query: qtypes
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
+    searchChangeTimer: null, // The timer used to trigger a new search
 
     // An object that stores normalizeinput validation result for each input.
     inputFieldsValidation: {},
@@ -109,10 +110,6 @@ var opus = {
     // Note that both browse and cart use the same dialog for galleryView, so we
     //      only need one variable to represent the last observation in that dialog
     metadataDetailOpusId: "",
-
-    // these are for the process that detects there was a change in the selection criteria and
-    // updates things
-    mainTimer: false,
 
     // store the browser version and width supported by OPUS
     browserSupport: {
@@ -154,14 +151,20 @@ var opus = {
 
     load: function() {
         /**
-         * This function is called periodically by a timer. Each time it checks to see
-         * if the selections or extras have changed since the last call. If either
-         * has changed, or opus.force_load is true, then it starts the chain of
+         * This function is called whenever the search changes and a given time
+         * delay is exceeded. It checks to see if the selections or extras have
+         * changed since the last call. (Even if a change timer has been
+         * triggered, it's possible the user changed those parameters back again
+         * before the timer fired, in which case we don't need to do a search.)
+         * If either has changed, or opus.force_load is true, then it starts the
+         * chain of
          * 1) Check inputs for validity
          * 2) Perform the search and get the result count
          * 3) Update the result count badge(s)
          * 4) Get hinting information and update all hints
          */
+
+        opus.stopSearchChangeTimer();
 
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
 
@@ -169,12 +172,6 @@ var opus = {
         // inputs will also have null in opus.selections
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                opus.extras);
-
-        // If we just opened a widget, we don't want to perform a search
-        if (o_widgets.isGetWidgetDone) {
-            opus.updateOPUSLastSelectionsWithOPUSSelections();
-            o_widgets.isGetWidgetDone = false;
-        }
 
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
@@ -205,12 +202,12 @@ var opus = {
         let leaveStartObs = true;
 
         // Compare selections and last selections, extras and last extras to see if anything
-        // has changed that would require an update to the results. We ignore q-types for
+        // has changed that would require an update to the results. We ignore q-types and units for
         // search fields that aren't actually being searched on because when the user changes
-        // such a q-type, there's no point in redoing the search since the results will be
+        // such a q-type or unit, there's no point in redoing the search since the results will be
         // identical.
-        let currentExtrasQ = o_hash.extrasWithoutUnusedQtypes(selections, extras);
-        let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
+        let currentExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(selections, extras);
+        let lastExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
             o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
             if (!opus.force_load) {
@@ -223,7 +220,7 @@ var opus = {
             // it means the user manually updated the URL in the browser,
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
-            let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
+            let opusExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.selections, opus.extras);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 // Make sure page will not reload in these cases:
@@ -266,7 +263,12 @@ var opus = {
 
         // Start the spinners for the left side menu and each widget for hinting
         $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner");
-        $("#op-search-widgets .spinner").fadeIn();
+        opus.widgetsDrawn.forEach(function(eachSlug) {
+            if ($(`.widget__${eachSlug}`).hasClass("range-widget") ||
+                $(`.widget__${eachSlug}`).hasClass("mult-widget")) {
+                $(`#widget__${eachSlug} .spinner`).fadeIn();
+            }
+        });
 
         // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
         // avoid a recursive api call
@@ -463,7 +465,7 @@ var opus = {
             return false;
         }
 
-        // First hide everything and stop any interval timers
+        // First hide everything
         $("#search, #detail, #cart, #browse").hide();
         o_browse.hideMenu();
 
@@ -568,14 +570,14 @@ var opus = {
          * Handle the 'Reset Search' and 'Reset Search and Metadata' buttons.
          */
 
-        // Stop polling for UI changes for a moment
-        clearInterval(opus.mainTimer);
-
-        // Reset the search query and return to the Search tab
+        // Reset the search query
         opus.selections = {};
         opus.extras = {};
+        // Update the URL so getWidget below doesn't have old concepts of
+        // what mults were selected in the default widgets.
+        o_hash.updateURLFromCurrentHash(false);
+
         o_browse.clearObservationData();
-        opus.changeTab('search');
 
         // Enable or disable the 'Reset Search' and 'Reset Search and Metadata' buttons
         if (!o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns)) {
@@ -608,10 +610,8 @@ var opus = {
         // Reload the search menu to get the proper checkmarks and categories
         o_menu.getNewSearchMenu();
 
-        o_hash.updateURLFromCurrentHash();
-
-        // Start the main timer again
-        opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
+        // We changed the selections so do a search, but no delay needed
+        o_hash.updateURLFromCurrentHash(true, false);
     },
 
     isDrawnWidgetsListDefault: function() {
@@ -695,8 +695,6 @@ var opus = {
 
             // Perform rest of initialization process
             opus.opusInitialization();
-            // Watch the hash and URL for changes; this runs continuously
-            opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
         });
     },
 
@@ -1107,6 +1105,30 @@ var opus = {
             opus.navLinkRemembered = opus.prefs.view;
         }
         opus.triggerNavbarClick();
+    },
+
+    searchChanged: function(delay) {
+        /**
+         * Start or restart the timer used to call opus.load() when a search
+         * parameter changes.
+         */
+        opus.stopSearchChangeTimer();
+        if (delay) {
+            opus.searchChangeTimer = setTimeout(opus.load, opus.searchChangeDelay);
+        } else {
+            opus.load();
+        }
+    },
+
+    stopSearchChangeTimer: function() {
+        /**
+         * Stop the timer used to call opus.load() when a search parameter
+         * changes.
+         */
+        if (opus.searchChangeTimer !== null) {
+            clearTimeout(opus.searchChangeTimer);
+            opus.searchChangeTimer = null;
+        }
     },
 
     checkBrowserSupported: function() {
