@@ -373,8 +373,7 @@ to 100%, this will make the shrinking look smoother */
 
 /* Make sure triangle arrow is veritcally centered */
 .op-menu-triangle-group {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
 }
 
 /* Hide the default bootstrap dropdown triangle arrow */
