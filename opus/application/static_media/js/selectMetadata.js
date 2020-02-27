@@ -185,7 +185,6 @@ var o_selectMetadata = {
                     containment: "parent",
                     tolerance: "pointer",
                     stop: function(event, ui) {
-                        o_selectMetadata.metadataDragged(this);
                         o_selectMetadata.isSortingHappening = false;
                     },
                     start: function(event, ui) {
@@ -241,13 +240,6 @@ var o_selectMetadata = {
             if ($(".op-selected-metadata-column li").length <= 1) {
                 $(".op-selected-metadata-column .op-selected-metadata-unselect").hide();
             }
-        });
-    },
-
-    // columns can be reordered wrt each other in 'metadata selector' by dragging them
-    metadataDragged: function(element) {
-        let cols = $.map($(element).sortable("toArray"), function(item) {
-            return item.split("__")[1];
         });
     },
 
