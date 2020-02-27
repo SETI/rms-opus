@@ -106,16 +106,22 @@ var o_search = {
         });
 
         // When clicking inside a widget body, if the clicked element is not input,
-        // select, hints, and text nodes, we will disable the default behavior of mousedown
-        // event. This will prevent input from focusing out when clicking on preprogrammed
-        // ranges dropdown, and also keep the ability to copy text & hints in mults
-        // and hints in ranges widgets.
+        // select, hints, text nodes, add input "+" icon, and remove input trash icon,
+        // we will disable the default behavior of mousedown event. This will prevent
+        // input from focusing out when clicking on preprogrammed ranges dropdown, and
+        // also keep the ability to copy text & hints in mults and hints in ranges
+        // widgets. This will also make sure input focus out to trigger a change event
+        // when clicking any add/remove input icon.
         $("#search").on("mousedown", ".widget .card-body", function(e) {
             if (!$(e.target).is("input") && !$(e.target).is("select") &&
                 !$(e.target).is("label") && !$(e.target).hasClass("hints") &&
                 !$(e.target).hasClass("op-hints-info") &&
                 !$(e.target).hasClass("op-hints-description") &&
-                !$(e.target).hasClass("op-choice-label-name")) {
+                !$(e.target).hasClass("op-choice-label-name") &&
+                !$(e.target).hasClass("op-remove-inputs-btn") &&
+                !$(e.target).hasClass("op-add-inputs-btn") &&
+                !$(e.target).parent(".op-remove-inputs-btn").length &&
+                !$(e.target).parent(".op-add-inputs-btn").length) {
                 e.preventDefault();
             }
         });
@@ -185,19 +191,6 @@ var o_search = {
                 let currentUnitVal = $(`#widget__${slugName} .op-unit-${slugName}`).val();
                 newHash += `&${unitSlugWithId}=${currentUnitVal}`;
             }
-            /*
-            Do not perform normalized api call if:
-            1) Input field is empty OR
-            2) Input value didn't change from the last successful search
-            3) Input value didn't match any ranges names
-            */
-            if (currentValue === "" || currentValue === o_search.slugInputValidValueFromLastSearch[slugWithId] ||
-                !o_search.performInputValidation[slugWithId]) {
-                $(e.target).removeClass("search_input_valid search_input_invalid");
-                $(e.target).removeClass("search_input_invalid_no_focus");
-                $(e.target).addClass("search_input_original");
-                return;
-            }
 
             opus.normalizeInputForCharInProgress[slugWithId] = true;
             let url = "/opus/__api/normalizeinput.json?" + newHash + "&reqno=" + o_search.slugNormalizeReqno[slugWithId];
@@ -217,6 +210,7 @@ var o_search = {
                 */
                 if (returnData === "") {
                     $(e.target).removeClass("search_input_valid search_input_invalid");
+                    $(e.target).removeClass("search_input_invalid_no_focus");
                     $(e.target).addClass("search_input_original");
                 } else if (returnData !== null) {
                     $(e.target).removeClass("search_input_original search_input_invalid");
@@ -367,7 +361,8 @@ var o_search = {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
         });
 
         // range behaviors and string behaviors for search widgets - qtype and unit
@@ -521,7 +516,8 @@ var o_search = {
                 if (!opus.areInputsValid() || areInputSetsEmpty) {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
             }
 
             // If no search is performed, we still update the hints for a unit change.
@@ -951,7 +947,8 @@ var o_search = {
             if (!opus.areInputsValid()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
         } else {
             $("#op-result-count").text("?");
             // set hinting info to ? when any range input has invalid value
@@ -992,6 +989,9 @@ var o_search = {
                 return;
             }
 
+            // Save the old state which indicates if there are ? in the result count and hints
+            let inputsWereValid = opus.areInputsValid();
+
             // check each input, if it's not valid, change its background to red
             // and also remove spinner.
             o_search.validateInput(normalizedInputData, true, slug, unit);
@@ -1004,7 +1004,8 @@ var o_search = {
             }
 
             o_search.rangesNameTotalMatchedCounter[slug] = 0;
-            if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
+            if (!inputsWereValid &&
+                o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
                 // Put back normal hinting info
                 opus.widgetsDrawn.forEach(function(eachSlug) {
                     o_search.getHinting(eachSlug);
@@ -1116,7 +1117,6 @@ var o_search = {
         if ($(".widget__" + slug).hasClass("range-widget")) {
             // this is a range field
             o_search.getRangeEndpoints(slug);
-
         } else if ($(".widget__" + slug).hasClass("mult-widget")) {
             // this is a mult field
             o_search.getValidMults(slug);
@@ -1175,7 +1175,7 @@ var o_search = {
                 }
 
                 let dataSlug = multdata.field_id;
-                $("#widget__" + dataSlug + " .spinner").fadeOut("");
+                $("#widget__" + dataSlug + " .spinner").fadeOut();
 
                 let widget = "widget__" + dataSlug;
                 let mults = multdata.mults;

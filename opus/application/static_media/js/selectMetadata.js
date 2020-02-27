@@ -160,6 +160,8 @@ var o_selectMetadata = {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                 });
 
+                o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
+
                 // Prevent the same event handlers from being attached to #op-select-metadata
                 // for multiple times. This will avoid o_selectMetadata.render() and
                 // /opus/__fake/__selectmetadatamodal.json being called for multiple times when

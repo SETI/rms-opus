@@ -1,6 +1,8 @@
 from django.db import models
 from dictionary.views import get_def_for_tooltip
 
+import json
+
 from search.models import TableNames
 from tools.app_utils import parse_form_type
 

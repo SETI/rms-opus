@@ -255,12 +255,15 @@ var o_hash = {
                 hashStrFromSelections + "&" + hashStrFromOPUSPrefs : hashStrFromOPUSPrefs);
     },
 
-    updateURLFromCurrentHash: function() {
+    updateURLFromCurrentHash: function(trigger_search=false, delay=false) {
         /**
          * Update URL with full hash string
          */
         let fullHashStr = o_hash.getFullHashStr();
         window.location.hash = '/' + fullHashStr;
+        if (trigger_search) {
+            opus.searchChanged(delay);
+        }
     },
 
     encodeSlugValue: function(slugValue) {
@@ -549,11 +552,12 @@ var o_hash = {
         }
     },
 
-    extrasWithoutUnusedQtypes: function(selections, extras) {
-        // If a qtype is present in extras but is not used in the search
-        // selections, then don't include it at all. This is so that when we
-        // compare selections and extras over time, a "lonely" qtype won't be
-        // taken into account and trigger a new backend search.
+    extrasWithoutUnusedQtypesUnits: function(selections, extras) {
+        // If a qtype or unit is present in extras but is not used in the search
+        // selections (either because it's not present as a slug, or because
+        // the search is entirely nulls), then don't include it at all. This is so
+        // that when we compare selections and extras over time, a "lonely" qtype
+        // or unit won't be taken into account and trigger a new backend search.
         let newExtras = {};
         $.each(extras, function(slug, value) {
             let slugInExtras = "";
@@ -562,10 +566,10 @@ var o_hash = {
             } else if (slug.startsWith("unit-")) {
                 slugInExtras = slug.slice(5);
             }
-            if (slugInExtras in selections ||
-                slugInExtras+'1' in selections ||
-                slugInExtras+'2' in selections) {
-                    newExtras[slug] = value;
+            if ((slugInExtras in selections && selections[slugInExtras].some(elem => elem !== null)) ||
+                (slugInExtras+'1' in selections && selections[slugInExtras+'1'].some(elem => elem !== null)) ||
+                (slugInExtras+'2' in selections && selections[slugInExtras+'2'].some(elem => elem !== null))) {
+                newExtras[slug] = value;
             }
         });
         return newExtras;

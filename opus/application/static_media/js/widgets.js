@@ -37,9 +37,6 @@ var o_widgets = {
 
     uniqueIdForInputs: 100,
     centerOrLabelDone: false,
-    // This flag is used to let opus.load know that a widget just opened and we don't
-    // want to perform a search when a widget has just opened.
-    isGetWidgetDone: false,
 
     // This flag is used to determine if we are closing any widget with empty input.
     // In a series of closing widget actions, if there is one input in a widget with a
@@ -326,7 +323,13 @@ var o_widgets = {
          * Make sure "+ (OR)" is attached to the right of last input set.
          * Display or hide the icon based on the number of input sets.
          */
-        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        let lastInputSet = $(`#widget__${slug} .op-search-inputs-set`).last();
+        if (lastInputSet.find(".op-qtype-wrapping-group").length > 0) {
+            lastInputSet.find(".op-qtype-wrapping-group").append(addInputIcon);
+        } else {
+            lastInputSet.append(addInputIcon);
+        }
+
         let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
         if (numberOfInputSets === opus.maxAllowedInputSets) {
             $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
@@ -386,9 +389,9 @@ var o_widgets = {
             // to the first input set, and add remove icon to cloned input set, else we add "OR"
             // label to the last input set and remove "OR" label from cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
-                firstExistingSetOfInputs.append(removeInputIcon);
+                firstExistingSetOfInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
-                cloneInputs.append(removeInputIcon);
+                cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
@@ -486,7 +489,8 @@ var o_widgets = {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
             }
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
             o_widgets.isAddingInput = false;
         });
 
@@ -496,10 +500,10 @@ var o_widgets = {
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
+            let inputSetToBeDeleted = $(this).parents(".op-search-inputs-set");
 
-            let inputElement = $(this).parent(".op-search-inputs-set").find("input");
-            let qtypeElement = $(this).parent(".op-search-inputs-set").find("select");
+            let inputElement = $(this).parents(".op-search-inputs-set").find("input");
+            let qtypeElement = $(this).parents(".op-search-inputs-set").find("select");
             let slugNameFromInput = inputElement.attr("name");
             let trailingCounterString = o_utils.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
@@ -594,7 +598,8 @@ var o_widgets = {
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
                 o_widgets.isRemovingInput = false;
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
@@ -620,7 +625,8 @@ var o_widgets = {
                     }
 
                     if (opus.areInputsValid()) {
-                        o_hash.updateURLFromCurrentHash();
+                        // User may have changed input, so trigger search with delay
+                        o_hash.updateURLFromCurrentHash(true, true);
                     }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -833,7 +839,8 @@ var o_widgets = {
             }
 
             if (opus.areInputsValid()) {
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
             }
 
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -841,7 +848,7 @@ var o_widgets = {
     },
 
     widgetDrop: function(obj) {
-            // if widget is moved to a different formscolumn,
+            // if widget is moved to a different location,
             // redefine the opus.prefs.widgets (preserves order)
             let widgets = $("#op-search-widgets").sortable("toArray");
             $.each(widgets, function(index, value) {
@@ -1189,6 +1196,7 @@ var o_widgets = {
                     o_hash.updateURLFromCurrentHash();
                 }
             }
+
             // Initialize popover, this for the (i) icon next to qtype
             $(".op-widget-main .op-range-qtype-helper a").popover({
                 html: true,
@@ -1231,12 +1239,12 @@ var o_widgets = {
                 });
             } catch(e) { } // these only apply to mult widgets
 
-            if ($.inArray(slug,opus.widgetsFetching) > -1) {
+            if ($.inArray(slug, opus.widgetsFetching) > -1) {
                 opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);
             }
 
             if ($.isEmptyObject(opus.selections)) {
-                $('#widget__' + slug + ' .spinner').fadeOut('');
+                $('#widget__' + slug + ' .spinner').fadeOut();
             }
 
             let widgetInputs = $(`#widget__${slug} input`);
@@ -1329,6 +1337,26 @@ var o_widgets = {
                 }
             }
 
+            // Wrap (i) icon, qtype, and trash icon with a div. This will make sure these
+            // three elements stay together when browser gets narrow.
+            for (const eachInputSet of $(`#widget__${slug} .op-search-inputs-set`)) {
+                let qtypeWrappingGroupClass = ".op-qtype-input, " +
+                                              ".op-range-qtype-helper, " +
+                                              ".op-remove-inputs, " +
+                                              ".op-add-inputs";
+                let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
+                qtypeWrappingGroup.wrapAll("<li class='d-inline-block op-qtype-wrapping-group'/>");
+
+                // Assign classes to the li of range min/max inputs. These classes will be used
+                // to add the styling to group min/max with its corresponding input tag. This
+                // will make sure min/max and its corresponding input stay together as a unit
+                // when they move to a different line.
+                let minInputList = $(eachInputSet).find(".op-range-input-min").parent();
+                let maxInputList = $(eachInputSet).find(".op-range-input-max").parent();
+                minInputList.addClass("op-range-input-min-list");
+                maxInputList.addClass("op-range-input-max-list");
+            }
+
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
@@ -1337,7 +1365,13 @@ var o_widgets = {
             } else {
                 o_search.getHinting(slug);
             }
-            o_widgets.isGetWidgetDone = true;
+            // Align data in opus.selections and opus.extras to make sure empty
+            // inputs will also have null in opus.selections
+            [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                                   opus.extras);
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
         }); // end callback for .done()
     }, // end getWidget function
 
