@@ -1,7 +1,6 @@
 # opus/application/test_api/api_test_helper.py
 
 import json
-import requests
 
 import settings
 

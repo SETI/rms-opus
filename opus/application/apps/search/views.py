@@ -17,20 +17,35 @@ import math
 import re
 import regex # This is used instead of "re" because it's closer to the ICU
              # regex library used by MySQL
-import sys
+import time
 
 from django.apps import apps
 from django.core.cache import cache
 from django.db import connection, DatabaseError
 from django.db.models import Q
-from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.utils import IntegrityError
-from django.http import Http404, HttpResponse, HttpResponseServerError
+from django.http import Http404, HttpResponseServerError
 
 from paraminfo.models import ParamInfo
-from search.models import *
-from tools.app_utils import *
-from tools.db_utils import *
+from search.models import UserSearches
+from tools.app_utils import (enter_api_call,
+                             exit_api_call,
+                             format_metadata_number_or_func,
+                             get_mult_name,
+                             get_reqno,
+                             json_response,
+                             parse_form_type,
+                             sort_dictionary,
+                             strip_numeric_suffix,
+                             throw_random_http404_error,
+                             throw_random_http500_error,
+                             HTTP404_BAD_LIMIT,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_NO_REQUEST,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_SLUG)
+from tools.db_utils import (MYSQL_EXECUTION_TIME_EXCEEDED,
+                            MYSQL_TABLE_ALREADY_EXISTS)
 
 import settings
 

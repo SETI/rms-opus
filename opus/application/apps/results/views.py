@@ -33,12 +33,12 @@ from collections import OrderedDict
 import json
 import logging
 import os
+import time
 
 import settings
 
 from django.apps import apps
 from django.core.cache import cache
-from django.core.exceptions import FieldError
 from django.db import connection, DatabaseError
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
@@ -46,17 +46,37 @@ from django.views.decorators.cache import never_cache
 
 from metadata.views import (get_cart_count,
                             get_result_count_helper)
-from paraminfo.models import *
-from search.models import *
+from paraminfo.models import ParamInfo
+from search.models import Partables, TableNames
 from search.views import (get_param_info_by_slug,
                           get_user_query_table,
                           url_to_search_params,
                           create_order_by_sql,
                           parse_order_slug)
-from cart.models import Cart
-from tools.app_utils import *
-from tools.db_utils import *
-from tools.file_utils import *
+from tools.app_utils import (cols_to_slug_list,
+                             convert_ring_obs_id_to_opus_id,
+                             csv_response,
+                             enter_api_call,
+                             exit_api_call,
+                             format_metadata_number_or_func,
+                             get_mult_name,
+                             get_reqno,
+                             get_session_id,
+                             json_response,
+                             parse_form_type,
+                             throw_random_http404_error,
+                             throw_random_http500_error,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_MISSING_OPUS_ID,
+                             HTTP404_NO_REQUEST,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_CATEGORY,
+                             HTTP404_UNKNOWN_OPUS_ID,
+                             HTTP404_UNKNOWN_RING_OBS_ID,
+                             HTTP404_UNKNOWN_SLUG)
+from tools.db_utils import (query_table_for_opus_id,
+                            lookup_pretty_value_for_mult)
+from tools.file_utils import get_pds_preview_images, get_pds_products
 
 log = logging.getLogger(__name__)
 
@@ -361,7 +381,7 @@ def api_get_data(request, fmt):
         context = {'data': data}
         ret = render(request, 'results/data.html', context)
     elif fmt == 'json':
-        ret = HttpResponse(json.dumps(data), content_type='application/json')
+        ret = json_response(data)
     else: # pragma: no cover
         log.error('api_get_data: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
@@ -631,7 +651,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         else:
             ret = render(request, 'results/detail_metadata.html', context)
     elif fmt == 'json':
-        ret = HttpResponse(json.dumps(data), content_type='application/json')
+        ret = json_response(data)
     else: # pragma: no cover
         log.error('get_metadata: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
@@ -817,7 +837,7 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                    'size': size}
         ret = render(request, 'results/image_list.html', context)
     elif fmt == 'json':
-        ret = HttpResponse(json.dumps(data), content_type='application/json')
+        ret = json_response(data)
     else: # pragma: no cover
         log.error('api_get_images_by_size: Unknown format "%s"', fmt)
         ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))

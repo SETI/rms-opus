@@ -17,23 +17,21 @@
 
 import csv
 import datetime
-import json
 import logging
 import os
 import random
 import string
+import time
 import zipfile
 
 import settings
 
 from django.db import connection, DatabaseError
 from django.http import (HttpResponse,
-                         HttpResponseNotFound,
                          HttpResponseServerError,
                          Http404)
 from django.shortcuts import render
 from django.template.loader import get_template
-from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 
 from hurry.filesize import size as nice_file_size
@@ -50,8 +48,22 @@ from search.views import (url_to_search_params,
                           get_user_query_table,
                           parse_order_slug,
                           create_order_by_sql)
-from tools.app_utils import *
-from tools.file_utils import *
+from tools.app_utils import (cols_to_slug_list,
+                             csv_response,
+                             enter_api_call,
+                             exit_api_call,
+                             get_reqno,
+                             get_session_id,
+                             json_response,
+                             throw_random_http404_error,
+                             throw_random_http500_error,
+                             HTTP404_BAD_OR_MISSING_RANGE,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_BAD_RECYCLEBIN,
+                             HTTP404_MISSING_OPUS_ID,
+                             HTTP404_NO_REQUEST,
+                             HTTP404_SEARCH_PARAMS_INVALID)
+from tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
 

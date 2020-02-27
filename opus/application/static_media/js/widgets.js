@@ -37,9 +37,6 @@ var o_widgets = {
 
     uniqueIdForInputs: 100,
     centerOrLabelDone: false,
-    // This flag is used to let opus.load know that a widget just opened and we don't
-    // want to perform a search when a widget has just opened.
-    isGetWidgetDone: false,
 
     // This flag is used to determine if we are closing any widget with empty input.
     // In a series of closing widget actions, if there is one input in a widget with a
@@ -492,7 +489,8 @@ var o_widgets = {
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
             }
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
             o_widgets.isAddingInput = false;
         });
 
@@ -600,7 +598,8 @@ var o_widgets = {
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
                 o_widgets.isRemovingInput = false;
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
@@ -626,7 +625,8 @@ var o_widgets = {
                     }
 
                     if (opus.areInputsValid()) {
-                        o_hash.updateURLFromCurrentHash();
+                        // User may have changed input, so trigger search with delay
+                        o_hash.updateURLFromCurrentHash(true, true);
                     }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -839,7 +839,8 @@ var o_widgets = {
             }
 
             if (opus.areInputsValid()) {
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
             }
 
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -847,7 +848,7 @@ var o_widgets = {
     },
 
     widgetDrop: function(obj) {
-            // if widget is moved to a different formscolumn,
+            // if widget is moved to a different location,
             // redefine the opus.prefs.widgets (preserves order)
             let widgets = $("#op-search-widgets").sortable("toArray");
             $.each(widgets, function(index, value) {
@@ -1195,6 +1196,7 @@ var o_widgets = {
                     o_hash.updateURLFromCurrentHash();
                 }
             }
+
             // Initialize popover, this for the (i) icon next to qtype
             $(".op-widget-main .op-range-qtype-helper a").popover({
                 html: true,
@@ -1237,12 +1239,12 @@ var o_widgets = {
                 });
             } catch(e) { } // these only apply to mult widgets
 
-            if ($.inArray(slug,opus.widgetsFetching) > -1) {
+            if ($.inArray(slug, opus.widgetsFetching) > -1) {
                 opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);
             }
 
             if ($.isEmptyObject(opus.selections)) {
-                $('#widget__' + slug + ' .spinner').fadeOut('');
+                $('#widget__' + slug + ' .spinner').fadeOut();
             }
 
             let widgetInputs = $(`#widget__${slug} input`);
@@ -1363,7 +1365,13 @@ var o_widgets = {
             } else {
                 o_search.getHinting(slug);
             }
-            o_widgets.isGetWidgetDone = true;
+            // Align data in opus.selections and opus.extras to make sure empty
+            // inputs will also have null in opus.selections
+            [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                                   opus.extras);
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
         }); // end callback for .done()
     }, // end getWidget function
 
@@ -1557,17 +1565,9 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(slugWithCounter);
-                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
-
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = currentValue;
-                } else {
-                    opus.selections[slug] = [currentValue];
-                }
 
                 let newHash = o_hash.getHashStrFromSelections();
                 // // Make sure the existing STRING input value is not passed to stringsearchchoices
@@ -1577,11 +1577,12 @@ var o_widgets = {
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
                     let slugParam = slugValuePair.split("=")[0];
-                    if (slugParam === slugWithCounter || !slugParam.match(slug) ||
+                    if (!slugParam.match(slug) ||
                         slugParam === `qtype-${slugWithCounter}`) {
                         newHashArray.push(slugValuePair);
                     }
                 }
+                newHashArray.push(`${slugWithCounter}=${currentValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
