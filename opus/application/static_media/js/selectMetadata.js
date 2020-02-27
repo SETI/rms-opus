@@ -49,10 +49,10 @@ var o_selectMetadata = {
 
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            let currentCols = []
+            let currentCols = [];
             $("#op-select-metadata .op-selected-metadata-column > ul").find("li").each(function(index, obj) {
                 currentCols.push(obj.id.slice(9));
-            })
+            });
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentCols)) {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
                 if (clickedX) {
@@ -287,7 +287,7 @@ var o_selectMetadata = {
         opus.prefs.cols = [];
         $(o_selectMetadata.lastSavedSelected).each(function(index, obj) {
             opus.prefs.cols.push(obj.id.slice(9));
-        })
+        });
     },
 
     saveChanges: function() {
