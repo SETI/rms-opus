@@ -51,7 +51,7 @@ var o_selectMetadata = {
             // update the data table w/the new columns
             let currentCols = [];
             $("#op-select-metadata .op-selected-metadata-column > ul").find("li").each(function(index, obj) {
-                currentCols.push(obj.id.slice(9));
+                currentCols.push(obj.id.replace("cchoose__", ""));
             });
             if (!o_utils.areObjectsEqual(opus.prefs.cols, currentCols)) {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
@@ -233,9 +233,7 @@ var o_selectMetadata = {
 
     removeColumn: function(slug) {
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
-        if ($(`#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`).length > 0) {
-            o_menu.markMenuItem(menuSelector, "unselected");
-        }
+        o_menu.markMenuItem(menuSelector, "unselected");
 
         $(`#cchoose__${slug}`).fadeOut(200, function() {
             $(this).remove();
@@ -252,9 +250,7 @@ var o_selectMetadata = {
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
             let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
-            if ($(menuSelector).length > 0) {
-                o_menu.markMenuItem(menuSelector);
-            }
+            o_menu.markMenuItem(menuSelector);
         });
         $(o_selectMetadata.lastSavedSelected).each(function(index, selected) {
             $("#op-select-metadata .op-selected-metadata-column > ul").append(selected);
@@ -280,7 +276,7 @@ var o_selectMetadata = {
     updatePrefsCols: function() {
         opus.prefs.cols = [];
         $(o_selectMetadata.lastSavedSelected).each(function(index, obj) {
-            opus.prefs.cols.push(obj.id.slice(9));
+            opus.prefs.cols.push(obj.id.replace("cchoose__", ""));
         });
     },
 
