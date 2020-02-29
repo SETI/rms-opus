@@ -1301,7 +1301,8 @@ var opus = {
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
-                modal.modal("show");
+                // TODO: Uncomment this later
+                // modal.modal("show");
             }
         } else {
             if ($("#op-browser-size-msg-modal").hasClass("show")) {
