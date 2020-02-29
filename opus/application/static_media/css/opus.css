@@ -168,6 +168,11 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     display: flex;
 }
 
+/* Spacing between (i) icon, and widget title text in search tab */
+#search .card-title i.fa-info-circle {
+    padding-right: 0.2rem;
+}
+
 #browse, #cart, #detail {
     padding: 0; margin:0;
     display: none;
@@ -210,6 +215,12 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     white-space: nowrap;
 }
 
+/* Group the magnifying glass and the value together in detail page. This will
+make sure they always stay together when wrapping into a different line */
+#detail .op-detail-entry-values {
+    display: inline-block;
+}
+
 #nav-sidebar {
     margin: 0;
     padding: 0;
@@ -249,9 +260,30 @@ Not sure if this is the desired behavior
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
 @media (max-width: 970px) {
-    /* Make text input shrink proportionally when window is narrow */
-    #op-search-widgets input[type="text"] {
+    /* Make STRING input shrink proportionally when window is narrow */
+    #op-search-widgets input[class~="STRING"] {
         width: 100%;
+    }
+
+    /* The following styling are to group Min/Max with its corresponding input
+    when window is narrow */
+    #op-search-widgets input[class~="RANGE"] {
+        flex: 1 0 auto;
+    }
+
+    .op-range-input-min-list, .op-range-input-max-list {
+        white-space: nowrap;
+        display: inline-flex !important;
+        width: 100%;
+    }
+
+    /* Align the Min/Max input tag when they are in different lines */
+    .op-range-input-min {
+        margin-left: 0.5rem;
+    }
+
+    .op-range-input-max {
+        margin-left: 0.3rem;
     }
 }
 
@@ -313,6 +345,40 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed::after {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+}
+
+/* Rotate triangle arrows when menu category is clicked */
+.op-search-menu .dropdown-toggle .op-menu-arrow {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+.op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+/* Css styling for triangle arrow pointing right */
+.op-menu-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+}
+
+/* Make sure triangle arrow is veritcally centered */
+.op-menu-triangle-group {
+    display: inline-block;
+}
+
+/* Hide the default bootstrap dropdown triangle arrow */
+.op-search-menu .dropdown-toggle::after {
+    display: none !important;
 }
 
 .sidebar_wrapper {
@@ -763,6 +829,13 @@ button.op-mini-thumbnail-zoom {
     position: fixed;
     bottom: 5.5em;
     right: 1.25em;
+}
+
+/* Add spacing between each menu item in select metadata menu */
+#op-select-metadata .op-search-param {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    display: flex;
 }
 
 /* Make sure first category search title text is vertically aligned with
@@ -2672,9 +2745,22 @@ at the right of -- OR -- label. */
     }
 }
 
-/* Make sure label names & hints in wdigets have a caret cursor when users mouseover. */
+/* Make sure label names & hints in widgets have a caret cursor when users mouseover */
 .op-choice-label-name,
 .op-hints-description,
 .op-hints-info {
     cursor: text;
+}
+
+/* Make sure text in the menu align with text in the 1st line instead of (i) icon
+when wrapping into the 2nd line */
+.op-menu-item {
+    display: flex;
+    align-items: baseline;
+}
+
+/* Spacing between V, (i) icon, and text in the menu */
+.op-menu-item i.fa-info-circle {
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
 }
