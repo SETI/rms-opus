@@ -18,6 +18,9 @@ var o_selectMetadata = {
     // be set.
     isSortingHappening: false,
 
+    // save the original copy in case we need to discard
+    opusPrefsCols: opus.prefs.cols,
+
     lastSavedSelected: [],
     lastMetadataMenuRequestNo: 0,
 
@@ -49,11 +52,7 @@ var o_selectMetadata = {
 
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            let currentCols = [];
-            $("#op-select-metadata .op-selected-metadata-column > ul").find("li").each(function(index, obj) {
-                currentCols.push(obj.id.replace("cchoose__", ""));
-            });
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, currentCols)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.opusPrefsCols)) {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
                 if (clickedX) {
                     clickedX = false;
@@ -160,8 +159,6 @@ var o_selectMetadata = {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                 });
 
-                o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
-
                 // Prevent the same event handlers from being attached to #op-select-metadata
                 // for multiple times. This will avoid o_selectMetadata.render() and
                 // /opus/__fake/__selectmetadatamodal.json being called for multiple times when
@@ -187,6 +184,7 @@ var o_selectMetadata = {
                     containment: "parent",
                     tolerance: "pointer",
                     stop: function(event, ui) {
+                        o_selectMetadata.metadataDragged(this);
                         o_selectMetadata.isSortingHappening = false;
                     },
                     start: function(event, ui) {
@@ -202,6 +200,8 @@ var o_selectMetadata = {
                 }
                 // save the current selected metadata
                 o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
+                o_selectMetadata.opusPrefsCols = [];
+                $.extend(o_selectMetadata.opusPrefsCols, opus.prefs.cols);
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
@@ -221,6 +221,7 @@ var o_selectMetadata = {
     addColumn: function(slug) {
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector);
+        opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
         let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
@@ -232,6 +233,12 @@ var o_selectMetadata = {
     },
 
     removeColumn: function(slug) {
+        let colIndex = $.inArray(slug, opus.prefs.cols);
+        if (colIndex < 0 || opus.prefs.cols.length <= 1) {
+            return;
+        }
+        opus.prefs.cols.splice(colIndex, 1);
+
         let menuSelector = `#op-select-metadata .op-all-metadata-column a[data-slug=${slug}]`;
         o_menu.markMenuItem(menuSelector, "unselected");
 
@@ -243,9 +250,22 @@ var o_selectMetadata = {
         });
     },
 
+    // columns can be reordered wrt each other in 'metadata selector' by dragging them
+    metadataDragged: function(element) {
+        let cols = $.map($(element).sortable("toArray"), function(item) {
+            return item.split("__")[1];
+        });
+        opus.prefs.cols = cols;
+    },
+
     discardChanges: function() {
+        // uncheck all on left; we will check them as we go
+        o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
         // remove all from selected column
         $("#op-select-metadata .op-selected-metadata-column li").remove();
+
+        opus.prefs.cols = [];
+        $.extend(opus.prefs.cols, o_selectMetadata.opusPrefsCols);
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
@@ -255,7 +275,6 @@ var o_selectMetadata = {
         $(o_selectMetadata.lastSavedSelected).each(function(index, selected) {
             $("#op-select-metadata .op-selected-metadata-column > ul").append(selected);
         });
-        o_selectMetadata.updatePrefsCols();
         $("#op-select-metadata .op-selected-metadata-column").find("li").show();
         $("#op-select-metadata").modal('hide');
     },
@@ -266,6 +285,7 @@ var o_selectMetadata = {
 
         // remove all from selected column
         $("#op-select-metadata .op-selected-metadata-column li").remove();
+        opus.prefs.cols = [];
 
         // add them back and set the check
         $.each(opus.defaultColumns, function(index, slug) {
@@ -273,16 +293,8 @@ var o_selectMetadata = {
         });
     },
 
-    updatePrefsCols: function() {
-        opus.prefs.cols = [];
-        $(o_selectMetadata.lastSavedSelected).each(function(index, obj) {
-            opus.prefs.cols.push(obj.id.replace("cchoose__", ""));
-        });
-    },
-
     saveChanges: function() {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
-        o_selectMetadata.updatePrefsCols();
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
         o_browse.loadData(opus.prefs.view);
