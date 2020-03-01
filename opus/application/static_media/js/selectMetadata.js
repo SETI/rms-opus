@@ -19,7 +19,7 @@ var o_selectMetadata = {
     isSortingHappening: false,
 
     // save the original copy in case we need to discard
-    opusPrefsCols: opus.prefs.cols,
+    originalOpusPrefsCols: [],
 
     lastSavedSelected: [],
     lastMetadataMenuRequestNo: 0,
@@ -34,6 +34,7 @@ var o_selectMetadata = {
         $("#op-select-metadata").on("show.bs.modal", function(e) {
             // this is to make sure modal is back to it original position when open again
             $("#op-select-metadata .modal-dialog").css({top: 0, left: 0});
+            o_selectMetadata.saveOpusPrefsCols();
             o_selectMetadata.adjustHeight();
             o_browse.hideMenu();
             o_selectMetadata.render();
@@ -52,7 +53,7 @@ var o_selectMetadata = {
 
         $("#op-select-metadata").on("hide.bs.modal", function(e) {
             // update the data table w/the new columns
-            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.opusPrefsCols)) {
+            if (!o_utils.areObjectsEqual(opus.prefs.cols, o_selectMetadata.originalOpusPrefsCols)) {
                 // only pop up the confirm modal if the user clicked the 'X' in the corner
                 if (clickedX) {
                     clickedX = false;
@@ -202,8 +203,7 @@ var o_selectMetadata = {
                 }
                 // save the current selected metadata
                 o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
-                o_selectMetadata.opusPrefsCols = [];
-                $.extend(o_selectMetadata.opusPrefsCols, opus.prefs.cols);
+                o_selectMetadata.saveOpusPrefsCols();
                 o_selectMetadata.adjustHeight();
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
@@ -218,6 +218,11 @@ var o_selectMetadata = {
     reRender: function() {
         o_selectMetadata.rendered = false;
         o_selectMetadata.render();
+    },
+
+    saveOpusPrefsCols: function() {
+        o_selectMetadata.originalOpusPrefsCols = [];
+        $.extend(o_selectMetadata.originalOpusPrefsCols, opus.prefs.cols);
     },
 
     addColumn: function(slug) {
@@ -267,7 +272,7 @@ var o_selectMetadata = {
         $("#op-select-metadata .op-selected-metadata-column li").remove();
 
         opus.prefs.cols = [];
-        $.extend(opus.prefs.cols, o_selectMetadata.opusPrefsCols);
+        $.extend(opus.prefs.cols, o_selectMetadata.originalOpusPrefsCols);
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
@@ -278,7 +283,7 @@ var o_selectMetadata = {
             $("#op-select-metadata .op-selected-metadata-column > ul").append(selected);
         });
         $("#op-select-metadata .op-selected-metadata-column").find("li").show();
-        $("#op-select-metadata").modal('hide');
+        $("#op-select-metadata").modal("hide");
     },
 
     resetMetadata: function() {
