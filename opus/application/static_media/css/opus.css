@@ -2766,15 +2766,31 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 575px) {
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
         display: none !important;
     }
+
+    body {
+        font-size: 80% !important;
+    }
+
+    .op-reset-search, .op-reset-search-metadata {
+        font-size: 90% !important;
+    }
+}
+
+@media (max-width: 575px), (max-height: 630px) {
+    /* Hide the feedback button when screen is narrow or short */
+    .feedbackTab {
+        display: none !important;
+    }
 }
 
 @media (max-width: 575px) {
+    /*  Make sure main nav tabs are displayed horizontally when screen is narrow */
     .op-tab {
         flex-direction: row !important;
     }

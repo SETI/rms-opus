@@ -119,8 +119,10 @@ var opus = {
         "opera": 42,
         "safari": 10.1,
         "based on applewebkit": 537, // Based on Chrome 56
-        "width": 600,
-        "height": 350
+        "width": 550,
+        "height": 300
+        // "width": 600,
+        // "height": 350
     },
 
     // current splash page version for storing in the visited cookie
@@ -1290,7 +1292,8 @@ var opus = {
              opus.browserSizeActionInProgress = false;
              modal.off("hidden.bs.modal", hideCompleted);
          }
-
+        console.log(`Current window height: ${$(window).height()}`);
+        console.log(`Current window height: ${$(window).width()}`);
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             if (!$("#op-browser-size-msg-modal").hasClass("show")) {
@@ -1302,7 +1305,7 @@ var opus = {
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
                 // TODO: Uncomment this later
-                // modal.modal("show");
+                modal.modal("show");
             }
         } else {
             if ($("#op-browser-size-msg-modal").hasClass("show")) {
