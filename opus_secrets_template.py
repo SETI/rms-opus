@@ -21,7 +21,7 @@ DB_DATABASE_NAME = '<DB_NAME>'
 # The main namespace in which OPUS tables live.
 # For MySQL this is the database name.
 # For PostgreSQL this is the schema name.
-DB_SCHEMA_NAME = 'XXX'
+DB_SCHEMA_NAME = '<SCHEMA_NAME>'
 
 # The database user and password. This user needs to have most privileges,
 # including table creation and deletion.
@@ -33,7 +33,7 @@ DB_PASSWORD = '<DB_PASSWORD>'
 PDS_DATA_DIR = '<HOLDING_DIR>'
 
 # The directory where pds-opus lives.
-PDS_OPUS_PATH = '<PATH>'
+PDS_OPUS_PATH = '<PDS_OPUS_PATH>'
 
 # The directory where the pds-opus library lives. This should normally be
 # .../pds-opus/lib
@@ -41,11 +41,11 @@ PDS_OPUS_LIB_PATH = os.path.join(PDS_OPUS_PATH, 'lib')
 
 # The directory where the pds-webtools repo lives. This should
 # normally be .../pds-webtools
-PDS_WEBTOOLS_PATH = '<PATH>'
+PDS_WEBTOOLS_PATH = '<PDS_WEBTOOLS_PATH>'
 
 # The directory where the pds-tools repo lives. This should
 # normally be .../pds-tools
-PDS_TOOLS_PATH = '<PATH>'
+PDS_TOOLS_PATH = '<PDS_TOOLS_PATH>'
 
 
 ############################################
@@ -78,12 +78,12 @@ STATIC_ROOT = '<STATIC_ROOT>'
 # Where static files are served from if this is a non-production environment,
 # usually .../pds-opus/opus/application/static_media
 # If this is a production environment, this should be the same as STATIC_ROOT
-OPUS_STATIC_ROOT = '<STATIC_ROOT>'
+OPUS_STATIC_ROOT = '<OPUS_STATIC_ROOT>'
 
 # The prefix to add to all cache keys indicating a unique string for this
 # installation on a server. This allows multiple OPUS installations on the
 # same server without causing memcached cache key conflicts.
-CACHE_SERVER_PREFIX = ''
+CACHE_SERVER_PREFIX = '<CACHE_SERVER_PREFIX>'
 
 # Where to put zipped cart files for downloading
 # Needs a TRAILING SLASH
@@ -91,14 +91,14 @@ TAR_FILE_PATH = '<TAR_FILE_PATH>/'
 
 # The root URL used to retrieve zipped collections files
 # Needs a TRAILING SLASH
-TAR_FILE_URL_PATH = '<URL>/'
+TAR_FILE_URL_PATH = '<TAR_FILE_URL>/'
 
 # The directory in which to place log files created by OPUS
-OPUS_LOGFILE_DIR = '<LOGFILE_DIR>'
+OPUS_LOGFILE_DIR = '<OPUS_LOGFILE_DIR>'
 OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
 
 # The file that contains the date of the last blog update
-OPUS_LAST_BLOG_UPDATE_FILE = '<FILE>'
+OPUS_LAST_BLOG_UPDATE_FILE = '<LAST_BLOG_UPDATE_FILE>'
 
 # What level of message to log at each destination
 OPUS_LOG_FILE_LEVEL = 'INFO'
@@ -125,7 +125,7 @@ OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0.
 IMPORT_TABLE_TEMP_PREFIX = 'imp_'
 
 # The directory in which to place log files created during the import process.
-IMPORT_LOGFILE_DIR = '<LOGFILE_DIR>'
+IMPORT_LOGFILE_DIR = '<IMPORT_LOGFILE_DIR>'
 IMPORT_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import.log')
 IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log')
 
@@ -135,7 +135,7 @@ IMPORT_DEBUG_LOG_FILE = os.path.join(IMPORT_LOGFILE_DIR, 'opus_import_debug.log'
 #############################################
 
 # The prefix URL to look up individual terms in the dictionary.
-DICTIONARY_TERM_URL = '<URL>'
+DICTIONARY_TERM_URL = '<DICTIONARY_URL>'
 
 
 ####################################
