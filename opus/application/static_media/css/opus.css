@@ -2774,11 +2774,36 @@ when wrapping into the 2nd line */
     }
 
     body {
-        font-size: 80% !important;
+        font-size: 75% !important;
     }
 
     .op-reset-search, .op-reset-search-metadata {
         font-size: 90% !important;
+    }
+
+    /*  Make sure main nav tabs are displayed horizontally when screen is narrow */
+    .op-tab {
+        flex-direction: row !important;
+    }
+
+    /* Shrink the height of main nav */
+    #op-main-nav {
+        padding-top: 3.5px;
+        padding-bottom: 3.5px;
+    }
+
+    /* Reduce the space around search sidebar & widgets when screen narrow */
+    #search {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Expand the width of widgets area when screen is narrow */
+    #search .op-widget-col {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
@@ -2789,25 +2814,6 @@ when wrapping into the 2nd line */
     }
 }
 
-@media (max-width: 575px) {
-    /*  Make sure main nav tabs are displayed horizontally when screen is narrow */
-    .op-tab {
-        flex-direction: row !important;
-    }
-}
-
 @media (min-width: 576px){
 
-}
-
-.op-main-nav-tabs-toggler {
-    /* color: rgba(255, 255, 255, 0.5);
-    border-color: rgba(255, 255, 255, 0.1)
-    padding: 0.25rem 0.75rem;
-    font-size: 1.09375rem;
-    line-height: 1;
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-    cursor: pointer; */
 }
