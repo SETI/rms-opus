@@ -2802,8 +2802,8 @@ when wrapping into the 2nd line */
 
     /* Expand the width of widgets area when screen is narrow */
     #search .op-widget-col {
-        padding-left: 0;
-        padding-right: 0;
+        padding-left: 5px;
+        padding-right: 5px;
     }
 }
 
@@ -2814,6 +2814,16 @@ when wrapping into the 2nd line */
     }
 }
 
-@media (min-width: 576px){
+@media (max-width: 575px), (max-height: 400px) {
+    /* Shrink the modal header when screen is narrow or short */
+    .modal-header {
+        padding: 0.25rem !important;
+    }
+}
 
+@media (max-height: 400px){
+    /* Hide download csv button menu in select metadata menu when screen is short */
+    .op-select-metadata-details .op-download-csv {
+        display: none !important;
+    }
 }
