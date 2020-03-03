@@ -2052,7 +2052,10 @@ var o_browse = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
-        let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
+        let navOverlappedHeight = $("#op-main-nav").offset().top + mainNavHeight -
+                                  $(`${tab} .panel-heading`).offset().top;
+        let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight - navOverlappedHeight;
+
         return $(window).height()-totalNonGalleryHeight;
     },
 
