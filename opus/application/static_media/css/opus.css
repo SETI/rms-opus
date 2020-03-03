@@ -1613,13 +1613,13 @@ panel are properly separated */
     vertical-align: middle;
 }
 
-.sort-contents {
+.op-sort-contents {
     /* display: flex; */
     display: block;
     margin-bottom: 0;
 }
 
-.sort-contents li {
+.op-sort-contents li {
     opacity: 0.7;
     margin-bottom: -10px;
 }

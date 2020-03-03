@@ -64,6 +64,22 @@ var o_browse = {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
+        $(".op-sort-contents").sortable({
+            items: "li",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "pointer",
+            stop: function(event, ui) {
+                // rebuild new search order and reload page
+                opus.prefs.order = [];
+                $(this).find("li span.badge-pill").each(function(index, obj) {
+                    let slug = $(obj).data("slug");
+                    opus.prefs.order.push(slug);
+                })
+                o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                o_browse.loadData(opus.prefs.view);
+            },
+        });
 
         // Mouse wheel up will also trigger ps-scroll-up.
         // NOTE: We put both wheel and ps-scroll-up here for a corner case like this:
@@ -320,7 +336,7 @@ var o_browse = {
             let opusidOrder = (hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
             let isDescending = true;
             let orderIndicator = $(this).find("span:last");
-            let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`);
+            let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .flip-sort`);
 
             if (orderIndicator.data("sort") === "sort-asc") {
                 // currently ascending, change to descending order
@@ -350,7 +366,7 @@ var o_browse = {
         });
 
         // browse sort order - remove sort slug
-        $(".sort-contents").on("click", "li .remove-sort", function() {
+        $(".op-sort-contents").on("click", "li .remove-sort", function() {
             o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
@@ -375,7 +391,7 @@ var o_browse = {
         });
 
         // browse sort order - flip sort order of a slug
-        $(".sort-contents").on("click", "li .flip-sort", function() {
+        $(".op-sort-contents").on("click", "li .flip-sort", function() {
             o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let targetSlug = slug;
@@ -586,7 +602,7 @@ var o_browse = {
             // The browse and cart sort pills will always be identical so we just get the one from browse
             // here. If we don't specify one, we end up getting two elements.
             let label = ($(`.op-data-table-view th a[data-slug="${orderEntrySlug}"]`).data("label") ||
-                         $(`#browse .sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text());
+                         $(`#browse .op-sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text());
             listHtml += "<li class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntrySlug}" data-descending="${isPillOrderDesc}">`;
             if (orderEntrySlug !== "opusid") {
@@ -597,7 +613,7 @@ var o_browse = {
             listHtml += ` <i class="${pillOrderArrow}"></i>`;
             listHtml += "</span></span></li>";
         });
-        $(".sort-contents").html(listHtml);
+        $(".op-sort-contents").html(listHtml);
     },
 
     renderSortedDataFromBeginning: function() {
@@ -1600,7 +1616,7 @@ var o_browse = {
             }
             opus.prefs.order.push(fullSlug);
         });
-        $(".sort-contents").html(listHtml);
+        $(".op-sort-contents").html(listHtml);
         o_hash.updateURLFromCurrentHash();
     },
 
