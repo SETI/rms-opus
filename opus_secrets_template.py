@@ -58,7 +58,8 @@ DEBUG = True
 
 # The list of hosts or IP addresses that Django is permitted to serve
 ALLOWED_HOSTS = ('127.0.0.1',
-                 'localhost')
+                 'localhost',
+                 <ADDITIONAL_ALLOWED_HOSTS>)
 
 # These settings are useful to include on a production server
 # ADMINS = (<email list>)
