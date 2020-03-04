@@ -1604,6 +1604,12 @@ panel are properly separated */
     justify-content: space-between;
 }
 
+/* Center "Download Data" in download panel in cart tab */
+#op-cart-download-panel .card-header h3,
+#op-cart-download-panel .card-header h2 {
+    margin-bottom: 0;
+}
+
 .op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
@@ -2766,7 +2772,7 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
-@media (max-width: 575px) {
+@media (max-width: 580px) {
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
@@ -2807,23 +2813,71 @@ when wrapping into the 2nd line */
     }
 }
 
-@media (max-width: 575px), (max-height: 630px) {
+@media (max-width: 580px), (max-height: 630px) {
     /* Hide the feedback button when screen is narrow or short */
     .feedbackTab {
         display: none !important;
     }
+
+    /* Hide download zip buttons in download data panel */
+    #create_zip_url_file, #create_zip_data_file {
+        display: none !important;
+    }
 }
 
-@media (max-width: 575px), (max-height: 400px) {
+@media (max-width: 580px), (max-height: 400px) {
     /* Shrink the modal header when screen is narrow or short */
     .modal-header {
         padding: 0.25rem !important;
     }
+
+    /* Reduce the space between "Download Options" download panel when screen is
+    narrow or short */
+    .op-download-options-header > h1 {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    /* Reduce the space around data in download panel when screen is narrow or
+    short */
+    #op-cart-download-panel .card-body {
+        padding-top: 0.5rem;
+        padding-left: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Reduce the space around "Download Data" in download panel when screen is
+    narrow or short */
+    #op-cart-download-panel .card-header {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
 }
 
-@media (max-height: 400px){
+@media (max-height: 400px) {
     /* Hide download csv button menu in select metadata menu when screen is short */
     .op-select-metadata-details .op-download-csv {
         display: none !important;
+    }
+
+    /* Hide product type select/deselect buttons when screen is short */
+    .op-product-types-select-btn-group {
+        display: none !important;
+    }
+
+    /* Hide "Download Options" when screen is short */
+    .op-download-options-title {
+        display: none !important;
+    }
+}
+
+/* Bypass .col-sm-1 breakpoint to have pretty table display in download panel
+when screen is narrow */
+@media (max-width: 576px) {
+    .op-product-type-table-body .row .col-sm-1 {
+        flex: 0 0 8.333333% !important;
+        max-width: 8.333333% !important;
     }
 }

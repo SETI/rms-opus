@@ -2052,6 +2052,9 @@ var o_browse = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
+        // The main navbar (#op-main-nav) and the 2nd navbar (.panel-heading) have an overlapping
+        // area, need to take this overlapped height into consideration when doing the calculation.
+        // This will make sure there is no gap between the end of .gallery-contents and .app-footer.
         let navOverlappedHeight = $("#op-main-nav").offset().top + mainNavHeight -
                                   $(`${tab} .panel-heading`).offset().top;
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight - navOverlappedHeight;

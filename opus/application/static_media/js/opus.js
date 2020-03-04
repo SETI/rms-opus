@@ -120,7 +120,7 @@ var opus = {
         "safari": 10.1,
         "based on applewebkit": 537, // Based on Chrome 56
         "width": 550,
-        "height": 300
+        "height": 270
         // "width": 600,
         // "height": 350
     },
@@ -1300,7 +1300,7 @@ var opus = {
                 let modalMsg = (`Please resize your browser or rotate your mobile
                                 device to landscape mode. OPUS requires a browser
                                 size of at least ${opus.browserSupport.width} pixels
-                                by ${opus.browserSupport.height} pixels. `);
+                                by ${opus.browserSupport.height} pixels. Current size ${$(window).width()} x ${$(window).height()}`);
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
