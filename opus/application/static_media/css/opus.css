@@ -670,7 +670,7 @@ th.sticky-header {
     text-decoration: none;
 }
 
-.op-data-table .column_ordering {
+.op-data-table .op-column-ordering {
     margin: 0 10px;
     /* display: inline-flex; */
     /* float: right; */
