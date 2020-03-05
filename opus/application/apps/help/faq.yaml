@@ -257,15 +257,15 @@ Using Search:
             <li>Under <b>Surface Geometry Constraints</b> select the
             <b>Multiple Target List</b> search field. The <b>Multiple Target
             List</b> field contains an alphabetical comma-separated list of all
-            bodies in an observation plus the central planet.</li>
+            targets in the field of view for which surface geometry information
+            is available.</li>
             <li>If you want to find observations that have <b>only</b> two
             particular bodies and no others, select <b>matches</b> from the
-            query type dropdown and enter "BODY1,BODY2,PLANET" in the search
-            field. Make sure the bodies and planet are in alphabetical order
-            (e.g. "DIONE,SATURN,TETHYS"). The result set will now contain
-            only observations that have those two, and only those two, bodies in
-            the field of view. Note that the observation may or may not also
-            show the central planet.</li>
+            query type dropdown and enter "BODY1,BODY2" in the search
+            field. Make sure the bodies are in alphabetical order
+            (e.g. "DIONE,TETHYS" not "TETHYS,DIONE"). The result set will now
+            contain only observations that have those two, and only those two,
+            bodies in the field of view.</li>
             <li>If you want to find observations that have two particular bodies
             in the field of view, but other bodies are OK too, we need to use a
             regular expression. Select <b>regex</b> in the query type dropdown

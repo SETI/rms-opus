@@ -1098,7 +1098,7 @@ def import_one_volume(volume_id):
                 inventory = metadata['inventory']
                 if opus_id in inventory:
                     surface_target_list = inventory[opus_id]['TARGET_LIST']
-            metadata['body_surface_geo_target_list'] = surface_target_list
+            metadata['inventory_list'] = surface_target_list
 
             for table_name in table_names_in_order:
                 if table_name != 'obs_surface_geometry':
