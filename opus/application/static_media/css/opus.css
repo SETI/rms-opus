@@ -1054,7 +1054,9 @@ when window sized is narrow */
 #galleryView {
     overflow-y: hidden;
     pointer-events: none;
-    z-index: 999;
+    /* Make sure metadata modal will not be covered by the main nav when screen
+    is short & narrow */
+    z-index: 1031;
 }
 
 #galleryView button.close {
@@ -2766,7 +2768,7 @@ when wrapping into the 2nd line */
 }
 
 /* The followings are for mobile support (width: 550px and height: 270px) */
-@media (max-width: 580px) {
+@media (max-width: 580px), (max-height: 400px){
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
@@ -2850,6 +2852,7 @@ when wrapping into the 2nd line */
         padding-right: 0.75rem;
     }
 }
+
 @media (max-width: 580px) and (max-height: 400px) {
     /* Shrink the table header font size to have a better table display when
     screen is narrow & short (browse/cart tab) */
@@ -2900,6 +2903,11 @@ when screen is narrow (cart tab) */
     .op-detail-content {
         flex-wrap: nowrap;
     }
+}
+
+/* Make sure image always stays at the left in metadata modal */
+#galleryViewContents .row {
+    flex-wrap: nowrap !important;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {

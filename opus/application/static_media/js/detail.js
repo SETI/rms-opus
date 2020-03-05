@@ -127,8 +127,11 @@ var o_detail = {
         let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
         // When detail image is moved to the top of detail left pane, we have to
         // account for the height of detail image as well when calculating the containerHeight
-        let detailImgHeight = ($(".op-detail-img").offset().top !== $(".op-detail-metadata").offset().top ?
+        let detailImgHeight = 0;
+        if ($(".op-detail-img").length && $(".op-detail-metadata").length) {
+            detailImgHeight = ($(".op-detail-img").offset().top !== $(".op-detail-metadata").offset().top ?
                                $(".op-detail-img").outerHeight() : 0);
+        }
         let containerHeight = ($(window).height() - footerHeight - mainNavHeight -
                                detailTabPaddingTop - detailImgHeight);
 

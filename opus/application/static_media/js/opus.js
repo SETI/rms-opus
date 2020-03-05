@@ -121,8 +121,6 @@ var opus = {
         "based on applewebkit": 537, // Based on Chrome 56
         "width": 550,
         "height": 270
-        // "width": 600,
-        // "height": 350
     },
 
     // current splash page version for storing in the visited cookie
@@ -1299,11 +1297,10 @@ var opus = {
                 let modalMsg = (`Please resize your browser or rotate your mobile
                                 device to landscape mode. OPUS requires a browser
                                 size of at least ${opus.browserSupport.width} pixels
-                                by ${opus.browserSupport.height} pixels. Current size ${$(window).width()} x ${$(window).height()}`);
+                                by ${opus.browserSupport.height} pixels.`);
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
-                // TODO: Uncomment this later
                 modal.modal("show");
             }
         } else {
