@@ -2614,6 +2614,13 @@ wiggling when mouse over autocomplete menu items */
     background: transparent !important;
 }
 
+/* Make "+ (OR)" sans-serif */
+.op-add-inputs-btn i {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+                 "Segoe UI Emoji", "Segoe UI Symbol", "Font Awesome 5 Free";
+}
+
 /* Styling for the text between each set of inputs in a widget */
 .op-or-labels {
     text-align: center;
