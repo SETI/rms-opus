@@ -1,0 +1,15 @@
+#!/bin/bash
+source <VENV>/bin/activate
+cd <DIR>/pds-opus/log_analyzer
+rm -rf /tmp/log_analyzer_results_temp_refresh
+mkdir /tmp/log_analyzer_results_temp_refresh
+for YEAR in {2018..2020}
+  do
+    for MONTH in "01" "02" "03" "04" "05" "06" "07" "08" "09" "10" "11" "12"
+      do
+        echo ${YEAR}-${MONTH}
+        python log_analyzer.py --cronjob --cronjob-date ${YEAR}-${MONTH} --html --dns -o "/tmp/log_analyzer_results_temp_refresh/%Y/OPUS-log-analysis-%Y-%m.html" "<APACHELOGDIR>/<PREFIX>_access_log-%Y-%m-%d"
+      done
+  done
+cp -r /tmp/log_analyzer_results_temp_refresh/* <WWW>/log_analyzer_results
+rm -rf /tmp/log_analyzer_results_temp_refresh

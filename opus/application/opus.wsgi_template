@@ -1,0 +1,18 @@
+# import newrelic.agent
+# newrelic.agent.initialize('newrelic.ini')
+
+import os
+import sys
+
+root = os.path.join(os.path.dirname(__file__), '..')
+home = '<PDSOPUSDIR>/opus/application'
+
+if root not in sys.path:
+    sys.path.insert(0, root)
+if home not in sys.path:
+    sys.path.append(home)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()

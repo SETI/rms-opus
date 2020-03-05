@@ -2420,6 +2420,7 @@ ul.ui-autocomplete a.ui-state-active {
     opacity: 0.5;
     animation: hvr-ripple-in 1s infinite;
     -webkit-animation: hvr-ripple-in 1s infinite;
+    z-index: 9999;
 }
 
 /* Make sure ranges info div not splitting input min and max into two lines */

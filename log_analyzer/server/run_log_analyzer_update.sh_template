@@ -1,0 +1,8 @@
+#!/bin/bash
+cd <DIR>/pds-opus/log_analyzer
+source <VENV>/bin/activate
+rm -rf /tmp/log_analyzer_results_temp
+mkdir /tmp/log_analyzer_results_temp
+python log_analyzer.py --cronjob --html --dns -o "/tmp/log_analyzer_results_temp/%Y/OPUS-log-analysis-%Y-%m.html" "<APACHELOGDIR>/<PREFIX>_access_log-%Y-%m-%d"
+cp -r /tmp/log_analyzer_results_temp/* <WWW>/log_analyzer_results
+rm -rf /tmp/log_analyzer_results_temp
