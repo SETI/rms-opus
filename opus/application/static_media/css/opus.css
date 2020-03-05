@@ -2010,13 +2010,6 @@ to the left pane when screen is getting too wide */
     max-width: 1800px;
 }
 
-@media (max-width: 768px) {
-    /* Move the detail image on top of the left pane */
-    .op-detail-content {
-        flex-wrap: wrap-reverse;
-    }
-}
-
 @media (max-width: 767px) {
     /* Set detail image size when it's above the left pane */
     .op-detail-img img {
@@ -2772,6 +2765,7 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
+/* The followings are for mobile support (width: 550px and height: 270px) */
 @media (max-width: 580px) {
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
@@ -2798,7 +2792,8 @@ when wrapping into the 2nd line */
         padding-bottom: 3.5px;
     }
 
-    /* Reduce the space around search sidebar & widgets when screen narrow */
+    /* Reduce the space around search sidebar & widgets when screen narrow
+    (search tab) */
     #search {
         padding-left: 0.25rem;
         padding-right: 0.25rem;
@@ -2806,7 +2801,7 @@ when wrapping into the 2nd line */
         padding-bottom: 0.5rem;
     }
 
-    /* Expand the width of widgets area when screen is narrow */
+    /* Expand the width of widgets area when screen is narrow (search tab) */
     #search .op-widget-col {
         padding-left: 5px;
         padding-right: 5px;
@@ -2819,27 +2814,27 @@ when wrapping into the 2nd line */
         display: none !important;
     }
 
-    /* Hide download zip buttons in download data panel */
+    /* Hide download zip buttons in download data panel (cart tab) */
     #create_zip_url_file, #create_zip_data_file {
         display: none !important;
     }
 }
 
 @media (max-width: 580px), (max-height: 400px) {
-    /* Shrink the modal header when screen is narrow or short */
+    /* Shrink the modal header when screen is narrow or short (confirm modal) */
     .modal-header {
         padding: 0.25rem !important;
     }
 
-    /* Reduce the space between "Download Options" download panel when screen is
-    narrow or short */
-    .op-download-options-header > h1 {
+    /* Reduce the top & bottom spaces around "Download Options" in download panel
+    when screen is narrow or short (cart tab) */
+    .op-download-options-title {
         margin-top: 0;
         margin-bottom: 0;
     }
 
-    /* Reduce the space around data in download panel when screen is narrow or
-    short */
+    /* Reduce the space around card body in download panel when screen is narrow
+    or short (cart tab) */
     #op-cart-download-panel .card-body {
         padding-top: 0.5rem;
         padding-left: 0.5rem;
@@ -2847,7 +2842,7 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce the space around "Download Data" in download panel when screen is
-    narrow or short */
+    narrow or short (cart tab) */
     #op-cart-download-panel .card-header {
         padding-top: 0.25rem;
         padding-bottom: 0.25rem;
@@ -2855,29 +2850,77 @@ when wrapping into the 2nd line */
         padding-right: 0.75rem;
     }
 }
+@media (max-width: 580px) and (max-height: 400px) {
+    /* Shrink the table header font size to have a better table display when
+    screen is narrow & short (browse/cart tab) */
+    .op-data-table-view thead {
+        font-size: 75%;
+    }
+}
 
 @media (max-height: 400px) {
-    /* Hide download csv button menu in select metadata menu when screen is short */
+    /* Hide download csv button menu in select metadata menu when screen is short
+    (browse tab) */
     .op-select-metadata-details .op-download-csv {
         display: none !important;
     }
 
-    /* Hide product type select/deselect buttons when screen is short */
+    /* Hide product type select/deselect buttons when screen is short (cart tab) */
     .op-product-types-select-btn-group {
         display: none !important;
     }
 
-    /* Hide "Download Options" when screen is short */
+    /* Hide "Download Options" in download panel when screen is short (cart tab) */
     .op-download-options-title {
         display: none !important;
     }
+
+
 }
 
 /* Bypass .col-sm-1 breakpoint to have pretty table display in download panel
-when screen is narrow */
+when screen is narrow (cart tab) */
 @media (max-width: 576px) {
     .op-product-type-table-body .row .col-sm-1 {
         flex: 0 0 8.333333% !important;
         max-width: 8.333333% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+@media (max-height: 400px) {
+    /* Keep detail image stay at the right of the page when screen is narrow
+    (detail tab) */
+    .op-detail-content {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 768px) and (max-height: 400px) {
+    /* Make observation detail area shrinkable when screen is short & narrow
+    (detail tab) */
+    .op-detail-metadata {
+        padding-right: 1rem !important;
+        min-width: 100%;
+    }
+
+    /* Make observation detail area take up 70% of width and image take up 30%
+    when screen is short & narrow (detail tab) */
+    .op-detail-metadata-container {
+        flex: 1 0 70%;
+    }
+
+    /* Reduce the spaces around detail tab when screen is short & narrow */
+    #detail {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }

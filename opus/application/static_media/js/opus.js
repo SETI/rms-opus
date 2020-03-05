@@ -1292,8 +1292,7 @@ var opus = {
              opus.browserSizeActionInProgress = false;
              modal.off("hidden.bs.modal", hideCompleted);
          }
-        console.log(`Current window height: ${$(window).height()}`);
-        console.log(`Current window height: ${$(window).width()}`);
+
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             if (!$("#op-browser-size-msg-modal").hasClass("show")) {
