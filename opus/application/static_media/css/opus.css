@@ -2671,6 +2671,11 @@ at the right of -- OR -- label. */
     padding-bottom: 5px;
 }
 
+/* Make sure hamburger menu will not be covered by metadata modal */
+#op-obs-menu {
+    z-index: 1032;
+}
+
 /* Styling for the first column of table header in browse tab */
 .op-table-first-col div {
     /* hamburger width 13px + 2px gap to align with checkboxes in other rows */
