@@ -7,10 +7,6 @@
 /* globals $, _, PerfectScrollbar */
 /* globals o_hash, opus */
 
-// The detail image will stay on top of detail left pane when screen width
-// is equal to or less than the threshold point.
-const detailImageThreshold = 767;
-
 /* jshint varstmt: false */
 var o_detail = {
 /* jshint varstmt: true */
