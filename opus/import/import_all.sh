@@ -28,4 +28,4 @@ fi
 source ~/p3venv/activate
 pip install -r ../../requirements-python3.txt
 echo "Running import with nohup - check nohup.out for status"
-nohup ./_import_all_internal.sh "$1" "$2"
+nohup ./_import_all_internal.sh "$1" "$2" &
