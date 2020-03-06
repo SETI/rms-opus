@@ -116,9 +116,12 @@
                         <div class="op-sort-order-container">
                             <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                 <i class="fas fa-random"></i>
-                            </span>&nbsp;
+                            </span>
                             <ul class="op-sort-contents list-inline"></ul>
-                        </div>
+                            <span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
+                                <i class="fas fa-pencil-alt"></i>
+                            </span>
+                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid">
                        <div class="op-results-message">
@@ -183,8 +186,11 @@
                             <div class="op-sort-order-container">
                                 <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                     <i class="fas fa-random"></i>
-                                </span>&nbsp;
+                                </span>
                                 <ul class="op-sort-contents list-inline"></ul>
+								<span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
+									<i class="fas fa-pencil-alt"></i>
+								</span>
                             </div>
                             <div class="op-cart-actions">
                                 <li class="list-inline-item">
@@ -587,6 +593,7 @@
     <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/sortMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>

@@ -1608,9 +1608,17 @@ panel are properly separated */
     /* padding-top: 0.5em; */
 }
 
-.op-sort-order-icon {
-    color: rgba(255, 255, 255, 0.5);
+.op-sort-order-icon, .op-sort-order-add-icon {
+    opacity: 0.5;
     vertical-align: middle;
+}
+
+.op-sort-order-icon {
+    padding-right: .3em;
+}
+
+.op-sort-order-add-icon {
+    padding-left: .3em;
 }
 
 .op-sort-contents {
