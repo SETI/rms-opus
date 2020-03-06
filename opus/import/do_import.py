@@ -4,6 +4,7 @@
 # This is the actual top-level import process.
 ################################################################################
 
+import csv
 import os
 import traceback
 
@@ -685,12 +686,34 @@ def import_one_volume(volume_id):
                     # These are cumulative geo files
                     continue
                 if (not basename.upper().endswith('SUMMARY.LBL') and
-                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL')):
+                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
+                    not basename.upper().endswith('INVENTORY.LBL')):
                     continue
                 assoc_label_path = os.path.join(assoc_pdsfile.abspath,
                                                 basename)
-                assoc_rows, assoc_label_dict = import_util.safe_pdstable_read(
+                if not basename.upper().endswith('INVENTORY.LBL'):
+                    (assoc_rows,
+                     assoc_label_dict) = import_util.safe_pdstable_read(
                                                             assoc_label_path)
+                else:
+                    # The pdstable.py module can't read non-fixed-length records
+                    # so we fake it up ourselves here.
+                    table_filename = (assoc_label_path.replace('.LBL', '.TAB')
+                                      .replace('.lbl', '.tab'))
+                    assoc_rows = []
+                    assoc_label_dict = {} # Not used
+                    with open(table_filename, 'r') as table_file:
+                        csvreader = csv.reader(table_file)
+                        for row in csvreader:
+                            (csv_volume, csv_filespec, csv_ringobsid,
+                             *csv_targets) = row
+                            row_dict = {'VOLUME_ID': csv_volume.strip(),
+                                        'FILE_SPECIFICATION_NAME':
+                                                     csv_filespec.strip(),
+                                        'RING_OBSERVATION_ID':
+                                                     csv_ringobsid.strip(),
+                                        'TARGET_LIST': csv_targets}
+                            assoc_rows.append(row_dict)
                 if not assoc_rows:
                     # No need to report an error here because safe_pdstable_read
                     # will have already done so
@@ -706,12 +729,16 @@ def import_one_volume(volume_id):
                     assoc_type = 'ring_geo'
                 elif 'SUPPLEMENTAL_INDEX' in basename.upper():
                     assoc_type = 'supp_index'
+                elif 'INVENTORY' in basename.upper():
+                    assoc_type = 'inventory'
                 else:
                     assoc_type = 'body_surface_geo'
                 impglobals.LOGGER.log('info',
         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
-                if assoc_type == 'ring_geo' or assoc_type == 'body_surface_geo':
+                if (assoc_type == 'ring_geo' or
+                    assoc_type == 'body_surface_geo' or
+                    assoc_type == 'inventory'):
                     for row in assoc_rows:
                         key = None
                         geo_vol = row.get('VOLUME_ID', None)
@@ -741,7 +768,7 @@ def import_one_volume(volume_id):
                             continue
                         key = key.replace('.', '-')
                         # WARNING: HACK FOR VIMS XXX
-                        # The current VIMS geo tables have entries
+                        # The current VIMS geo and inventory tables have entries
                         # for VIS and IR but the only way to distinguish
                         # between them is to look at the deprecated
                         # RING_OBSERVATION_ID. When Mark fixes this,
@@ -761,8 +788,9 @@ def import_one_volume(volume_id):
                             else:
                                 import_util.log_nonrepeating_error(
                  f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
-                 f'file_spec "{ring_full_file_spec}"')
-                        if assoc_type == 'ring_geo':
+                 f'file_spec "{geo_full_file_spec}"')
+                        if (assoc_type == 'ring_geo' or
+                            assoc_type == 'inventory'):
                             # RING_GEO is easy - there is at most a single entry
                             # per observation, so we just create a dictionary
                             # keyed by opus_id.
@@ -1066,10 +1094,11 @@ def import_one_volume(volume_id):
             # now do we know what all the available targets are
 
             surface_target_list = None
-            if 'body_surface_geo' in metadata:
-                surface_geo_dict = metadata['body_surface_geo']
-                if opus_id in surface_geo_dict:
-                    surface_target_list = surface_geo_dict[opus_id].keys()
+            if 'inventory' in metadata:
+                inventory = metadata['inventory']
+                if opus_id in inventory:
+                    surface_target_list = inventory[opus_id]['TARGET_LIST']
+            metadata['inventory_list'] = surface_target_list
 
             for table_name in table_names_in_order:
                 if table_name != 'obs_surface_geometry':
@@ -1077,7 +1106,6 @@ def import_one_volume(volume_id):
                     continue
                 # This is used to populate the surface geo target_list
                 # field
-                metadata['body_surface_geo_target_list'] = surface_target_list
 
                 row = import_observation_table(volume_id,
                                                instrument_name,

@@ -28,8 +28,16 @@ def populate_obs_surface_geo_name_target_name(**kwargs):
 def populate_obs_surface_geo_target_list(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_list = metadata['body_surface_geo_target_list']
+    target_list = metadata['inventory_list']
     if target_list is None:
         return None
 
-    return ','.join(sorted(target_list))
+    new_target_list = []
+    for target_name in target_list:
+        if target_name in TARGET_NAME_MAPPING:
+            target_name = TARGET_NAME_MAPPING[target_name]
+        if target_name not in TARGET_NAME_INFO:
+            import_util.announce_unknown_target_name(target_name)
+            return None
+        new_target_list.append(target_name)
+    return ','.join(sorted(new_target_list))
