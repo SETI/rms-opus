@@ -2777,7 +2777,9 @@ when wrapping into the 2nd line */
         font-size: 75% !important;
     }
 
-    .op-reset-search, .op-reset-search-metadata {
+    .op-reset-search,
+    .op-reset-search-metadata,
+    .op-slider-pointer {
         font-size: 90% !important;
     }
 
@@ -2788,8 +2790,18 @@ when wrapping into the 2nd line */
 
     /* Shrink the height of main nav */
     #op-main-nav {
-        padding-top: 3.5px;
-        padding-bottom: 3.5px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+    }
+
+    /* Reduce the padding around selected tab on main nav */
+    #op-main-nav .nav-link {
+        padding: 0.25rem;
+    }
+
+    /* Reduce the hamburger icon on main nav */
+    #op-main-nav .navbar-toggler {
+        padding: 0.1rem 0.6rem;
     }
 
     /* Reduce the space around search sidebar & widgets when screen narrow
@@ -2806,6 +2818,24 @@ when wrapping into the 2nd line */
         padding-left: 5px;
         padding-right: 5px;
     }
+
+    /* Reduce the padding around widget header */
+    #widget-container .card-header {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+    #widget-container .card-title {
+        margin-bottom: 0;
+    }
+
+    /* Reduce the spaces between each widget */
+    #widget-container .card {
+        margin-bottom: 0.75rem;
+    }
+
 }
 
 @media (max-width: 580px), (max-height: 630px) {
@@ -2821,19 +2851,24 @@ when wrapping into the 2nd line */
 }
 
 @media (max-width: 580px), (max-height: 400px) {
-    /* Shrink the modal header when screen is narrow or short (confirm modal) */
-    .modal-header {
+    /* Shrink the modal header, modal body, and modal footer when screen is
+    narrow or short (confirm modal) */
+    .modal-header, .modal-body, .modal-footer {
         padding: 0.25rem 0.5rem !important;
     }
 
-    /* Shrink the modal body when screen is narrow or short (confirm modal) */
-    .modal-body {
-        padding: 0.25rem 0.5rem !important;
+    /* Keep the spaces for detail metadata modal in browse & cart tab to have
+    the pretty display when screen is narrow or short */
+    #galleryView .modal-header,
+    #galleryView .modal-body,
+    #galleryView .modal-footer {
+        padding: 1rem !important;
     }
 
-    /* Shrink the modal footer when screen is narrow or short (confirm modal) */
-    .modal-footer {
-        padding: 0.25rem 0.5rem !important;
+    /* Reduce the modal buttons size when screen is narrow or short (confirm
+    modal) */
+    .modal-footer button {
+        padding: 0.175rem 0.55rem;
     }
 
     /* Reduce the top & bottom spaces around "Download Options" in download panel
@@ -2963,6 +2998,17 @@ when screen is narrow (cart tab) */
     (detail tab) */
     .op-detail-content {
         flex-wrap: nowrap;
+    }
+
+    /* Reduce the spaces around "Observation Detail" (detail tab) */
+    .op-detail-metadata h1 {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+    }
+
+    /* Reduce the spaces around "OPUS ID" in detail tab */
+    .op-detail-metadata p {
+        margin-bottom: 0.2em;
     }
 
     /* The followings are to move "Download Data" button to the same line as
