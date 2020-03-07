@@ -1558,14 +1558,6 @@ to stay in one line */
         padding-top: 0.5em;
     }
 
-    @media (max-height: 460px) {
-        /* Remove the nav-link for opening up download data panel when screen
-        is too small to see download data options */
-        .op-cart-toggle-download-panel {
-            display: none !important;
-        }
-    }
-
     /* Make sure gallery-contents not cut off by the right edge of the
     screen */
     #cart .gallery-contents {
@@ -1581,7 +1573,7 @@ to stay in one line */
 
 /* Remove the nav-link for opening up download data panel when screen
 is wide enough */
-@media (min-width: 1101px) {
+@media (min-width: 1101px) and (min-height: 461px) {
     .op-cart-toggle-download-panel {
         display: none !important;
     }
@@ -1996,13 +1988,6 @@ make ctrl + F search scroll to work with perfect scrollbar in FF. */
     /* Reduce the top space above the detail image when screen is short */
     .op-detail-img {
         padding-top: 1% !important;
-    }
-
-}
-
-@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
-    .op-detail-img p {
-        font-size: 0.5rem;
     }
 }
 
@@ -2838,7 +2823,17 @@ when wrapping into the 2nd line */
 @media (max-width: 580px), (max-height: 400px) {
     /* Shrink the modal header when screen is narrow or short (confirm modal) */
     .modal-header {
-        padding: 0.25rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    /* Shrink the modal body when screen is narrow or short (confirm modal) */
+    .modal-body {
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    /* Shrink the modal footer when screen is narrow or short (confirm modal) */
+    .modal-footer {
+        padding: 0.25rem 0.5rem !important;
     }
 
     /* Reduce the top & bottom spaces around "Download Options" in download panel
@@ -2866,11 +2861,44 @@ when wrapping into the 2nd line */
     }
 }
 
+/* Make sure confirm modal header is vertically centered */
+.modal-header {
+    align-items: center !important;
+}
+
 @media (max-width: 580px) and (max-height: 400px) {
     /* Shrink the table header font size to have a better table display when
     screen is narrow & short (browse/cart tab) */
     .op-data-table-view thead {
         font-size: 75%;
+    }
+
+    /* The followings are to make hide "Download CSV (all results)" and move the
+    slider a line above */
+    #browse .browse-nav-container {
+        flex-wrap: nowrap;
+    }
+
+    #browse .browse-nav-container .navbar-nav {
+        width: auto;
+    }
+
+    #browse .browse-nav-container .op-download-csv {
+        display: none !important;
+    }
+
+    #browse .op-sort-order-container {
+        margin-top: 0;
+    }
+
+    /* Reduce spaces to make sure cart actions buttons are wrapped into the next
+    line when screen is narrow & short */
+    .op-cart-actions > li {
+        margin-right: 0 !important;
+    }
+
+    .op-cart-actions a {
+        margin-right: 0.5rem !important;
     }
 }
 
@@ -2881,6 +2909,22 @@ when wrapping into the 2nd line */
         display: none !important;
     }
 
+    /* Reduce the spaces between each item in the hamburger menu when screen is
+    short */
+    #op-obs-menu .dropdown-item {
+        padding-top: 1px;
+        padding-bottom: 1px;
+    }
+
+    /* Reduce spaces between each item in the help menu when screen is short */
+    .op-help-item {
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        font-size: 90%;
+    }
+}
+
+@media (max-height: 500px) {
     /* Hide product type select/deselect buttons when screen is short (cart tab) */
     .op-product-types-select-btn-group {
         display: none !important;
@@ -2890,8 +2934,6 @@ when wrapping into the 2nd line */
     .op-download-options-title {
         display: none !important;
     }
-
-
 }
 
 /* Bypass .col-sm-1 breakpoint to have pretty table display in download panel
@@ -2910,11 +2952,33 @@ when screen is narrow (cart tab) */
     }
 }
 
+/* Group cart actions nav buttons & download panel button together */
+.op-cart-actions-group {
+    display: flex;
+    flex-direction: column
+}
+
 @media (max-height: 400px) {
     /* Keep detail image stay at the right of the page when screen is narrow
     (detail tab) */
     .op-detail-content {
         flex-wrap: nowrap;
+    }
+
+    /* The followings are to move "Download Data" button to the same line as
+    cart actions nav buttons  (cart tab) */
+    .op-cart-actions-group {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .op-cart-slide-download-panel i {
+        display: none !important;
+    }
+
+    .op-cart-toggle-download-panel {
+        padding: 0;
     }
 }
 
@@ -2935,6 +2999,7 @@ when screen is narrow (cart tab) */
     when screen is short & narrow (detail tab) */
     .op-detail-metadata-container {
         flex: 1 0 70%;
+        display: grid;
     }
 
     /* Reduce the spaces around detail tab when screen is short & narrow */

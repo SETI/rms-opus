@@ -298,7 +298,8 @@ var o_cart = {
          */
         // We use detach here to keep the event handlers attached to elements
         let html = $("#op-download-options-container").detach();
-        if ($(window).width() <= cartLeftPaneThreshold) {
+        if ($(window).width() <= cartLeftPaneThreshold ||
+            $(window).height() <= cartLeftPaneMinHeight) {
             $("#op-cart-download-panel .op-header-text").html("<h2>Download Data</h2>");
             $("#op-cart-download-panel .op-card-contents").html(html);
             $(".op-download-panel-title").hide();

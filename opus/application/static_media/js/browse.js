@@ -1175,6 +1175,13 @@ var o_browse = {
         let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
         let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
 
+        // Make sure hamburger won't go off the screen
+        if (top < 0) {
+            top = 0;
+        } else if ((top + menu.height) > $(window).height()) {
+            top -= (top + menu.height - $(window).height());
+        }
+
         $("#op-obs-menu").css({
             display: "block",
             top: top,
