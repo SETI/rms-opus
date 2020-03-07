@@ -2865,6 +2865,15 @@ when wrapping into the 2nd line */
         padding: 1rem !important;
     }
 
+    /* Reduce the size of font awesome icon in slide show */
+    #galleryView .close i {
+        font-size: 1.1em;
+    }
+
+    #galleryView .bottom i {
+        font-size: 1.8em;
+    }
+
     /* Reduce the modal buttons size when screen is narrow or short (confirm
     modal) */
     .modal-footer button {
