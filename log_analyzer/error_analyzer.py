@@ -9,7 +9,9 @@ from collections import deque, defaultdict
 from operator import attrgetter
 from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict
 
+from cronjob_utils import convert_cronjob_to_batchjob
 from log_entry import LogReader, LogEntry
+
 
 ERROR_PATTERN = re.compile(r'^\[([^\]]+)\] \[([^\]]+)\] \[([^\]]+)\] \[(client|remote) ([^\]]+):\d+\] (.*)$')
 
@@ -107,9 +109,9 @@ class ErrorReader(object):
         time = datetime.datetime.strptime(time_string, '%a %b %d %H:%M:%S.%f %Y')
         match = re.match(TEXT_ERROR_PATTERN, rest)
         if match:
-            time_string2, severity, code_location, message = match.groups()
-            time2 = datetime.datetime.strptime(time_string2, '%d/%b/%Y %H:%M:%S')
-            assert time2 == time.replace(microsecond=0, tzinfo=None)
+            _time_string2, severity, code_location, message = match.groups()
+            # time2 = datetime.datetime.strptime(time_string2, '%d/%b/%Y %H:%M:%S')
+            # assert time2 == time.replace(microsecond=0, tzinfo=None)
             return ErrorEntry(time=time, host_ip=host_ip, message=message,
                               code_location=code_location, severity=severity)
         else:
@@ -180,14 +182,29 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--ignore-ip', '-x', default=[], action="append", metavar='cidrlist', dest='ignore_ip',
                         type=parse_ignored_ips,
                         help='list of ips to ignore.  May be specified multiple times')
-    parser.add_argument('--output', '-o', type=argparse.FileType('w'), default=sys.stdout, dest='output',
-                        help="output file.  default is stdout")
 
-    parser.add_argument('files', nargs=argparse.REMAINDER, help='log and error files')
+    parser.add_argument('--output', '-o', dest='output',
+                        help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
+
+    parser.add_argument('--cronjob', action='store_true', dest='cronjob',
+                        help="Used by the chron job to generate a daily summary")
+
+    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
+                        help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
+
+    parser.add_argument('log_files', nargs=argparse.REMAINDER, help='error files')
     args = parser.parse_args(arguments)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    ErrorReader(args.files, ignored_ips, args.output).run()
+
+    if args.cronjob:
+        convert_cronjob_to_batchjob(args)
+        if not args.log_files:
+            print("No log files found.")
+            return
+
+    output = sys.stdout if not args.output else open(args.output, "w")
+    ErrorReader(args.log_files, ignored_ips, output).run()
 
 
 if __name__ == '__main__':
