@@ -22,6 +22,7 @@ from io import BytesIO
 import logging
 import mistune
 import os
+import platform
 import qrcode
 import re
 import time
@@ -71,10 +72,12 @@ def api_about(request, fmt):
     git_id = get_git_version(True, True)
     database_schema = settings.DB_SCHEMA_NAME
     database_host = settings.DB_HOST_NAME
+    hostname = platform.node()
     context = {
         'git_id': git_id,
         'database_schema': database_schema,
-        'database_host': database_host
+        'database_host': database_host,
+        'hostname': hostname
     }
 
     ret = _render_html_or_pdf(request, 'help/about.html', fmt, 'about',
