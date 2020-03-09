@@ -13,10 +13,12 @@ hurry.filesize==0.9
 idna==2.8
 Jinja2==2.10.3
 MarkupSafe==1.1.1
+mistune==0.8.4
 nose==1.3.7
 numpy==1.17.3
 oyaml==0.9
 packaging==19.2
+pdfkit==0.6.1
 Pillow==6.2.1
 pip-upgrader==1.4.15
 pyparsing==2.4.2
@@ -24,6 +26,7 @@ python-memcached==1.59
 pytz==2019.3
 PyYAML==5.1.2
 qrcode==6.1
+regex==2020.1.8
 requests==2.22.0
 six==1.12.0
 sqlparse==0.3.0

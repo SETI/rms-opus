@@ -363,7 +363,7 @@
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
         "pi_dict_name": "CASSINI_TARGET_NAME",
-        "definition": "The original TARGET_NAME as specified by the appropriate Cassini instrument team. This field does not always indicate which target is actually in the field of view. For that purpose, it is generally better to use Intended Target Name, which has been highly processed by the Ring-Moon Systems Node to more reliably indicate which primary target is in the field of view, or Surface Geometry Target Name, which can be used to search for any specific body.",
+        "definition": "The original TARGET_NAME as specified by the appropriate Cassini instrument team. This field does not always indicate which target is actually in the field of view. For that purpose, it is generally better to use Intended Target Name, which has been highly processed by the Ring-Moon Systems Node to more reliably indicate which primary target is in the field of view, or Surface Geometry Target Selector, which can be used to search for any specific body.",
         "pi_disp_order": 45,
         "pi_display": 1,
         "pi_display_results": 1,

@@ -37,24 +37,44 @@ var o_widgets = {
 
     uniqueIdForInputs: 100,
     centerOrLabelDone: false,
-    // This flag is used to let opus.load know that a widget just opened and we don't
-    // want to perform a search when a widget has just opened.
-    isGetWidgetDone: false,
+
+    // This flag is used to determine if we are closing any widget with empty input.
+    // In a series of closing widget actions, if there is one input in a widget with a
+    // value, we will make sure a search is performed after updating URL. If none of
+    // inputs have values, we don't need to perform a search.
+    isRemovingEmptyWidget: true,
 
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
-            cursor: "move",
+            cursor: "grab",
+            // Note: this will cause input to lose focus when clicking on preprogrammed dropdown.
+            handle: ".card-title",
             // we need the clone so that widgets in url gets changed only when sorting is stopped
+            // Note: this will make radio buttons deselected when a widget with radio buttons is dragged.
+            // We have to restore radio button checked status in stop event handler.
             helper: "clone",
             containment: "parent",
             axis: "y",
             opacity: 0.8,
             tolerance: "pointer",
             stop: function(event, ui) {
+                // this is a workaround for safari - set it back to what it was beforehand
+                $(event.target).css("cursor", "default");
+
+                // Restore radio button checked status.
+                for (const input of $(ui.item).find("input[type='radio']")) {
+                    if ($(input).attr("data-checked") === "true") {
+                        $(input).prop("checked", true);
+                        break;
+                    }
+                }
                 o_widgets.widgetDrop(this);
             },
             start: function(event, ui) {
+                // this is a workaround for safari
+                $(event.target).css('cursor', 'grab');
+
                 o_widgets.getMaxScrollTopVal(event.target);
             },
             sort: function(event, ui) {
@@ -84,27 +104,99 @@ var o_widgets = {
             e.preventDefault();
 
             let slug = $(this).data('slug');
-            o_widgets.closeWidget(slug);
-            let id = "#widget__"+slug;
-            try {
-                $(id).remove();
-            } catch (error) {
-                console.log("error on close widget, id="+id);
+
+            if (slug === "surfacegeometrytargetname" &&
+                $(".widget[id^='widget__SURFACEGEO']").length !== 0) {
+                $("#op-close-surfacegeo-widgets-modal").modal("show");
+            } else {
+                o_widgets.closeAndRemoveWidgetFromDOM(slug);
             }
         });
 
-        // close opened surfacegeo widget if user select another surfacegeo target
+        // Update surfacegeo widgets in place if user selects another surfacegeo target.
+        // 1. Update surfacegeo attributes/text in DOMs of all related surfacegeo widgets.
+        // 2. Update selections (opus.selections, opus.extras) & widgets.
         $('#search').on('change', 'input.singlechoice', function() {
-            $('a[data-slug^="SURFACEGEO"]').each( function(index) {
-                let slug = $(this).data('slug');
-                o_widgets.closeWidget(slug);
-                let id = "#widget__"+slug;
-                try {
-                    $(id).remove();
-                } catch (e) {
-                    console.log("error on close widget, id="+id);
+            let singlechoiceName = $(this).attr("name");
+            if (singlechoiceName === "surfacegeometrytargetname") {
+                let newTargetPrettyName = $(this).attr("value");
+                let newTargetSlug = $(this).attr("data-slug");
+                opus.oldSurfacegeoTarget = opus.oldSurfacegeoTarget || newTargetSlug;
+                let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}_`;
+                let newTargetStr = `SURFACEGEO${newTargetSlug}_`;
+
+                for (const eachSurfacegeoWidget of $(".widget[id^='widget__SURFACEGEO']")) {
+                    let currentWidget = $(eachSurfacegeoWidget);
+                    // Update attributes in widget and card header.
+                    let oldWidgetTitle = currentWidget.find(".op-widget-title").text();
+                    let newWidgetTitle = oldWidgetTitle.replace(/\[.*\]/, `[${newTargetPrettyName}]`);
+                    let unitInput = currentWidget.find("select[class^='op-unit']");
+                    let collapseIcon = currentWidget.find(`a[href^="#card__${oldTargetStr}"]`);
+                    let closeIcon = currentWidget.find(`a[data-slug^="${oldTargetStr}"]`);
+                    currentWidget.find(".op-widget-title").text(newWidgetTitle);
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget, newTargetSlug, "id");
+                    o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "class");
+                    o_widgets.updateSURFACEGEOattrInPlace(unitInput, newTargetSlug, "name");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "href");
+                    o_widgets.updateSURFACEGEOattrInPlace(collapseIcon, newTargetSlug, "data-target");
+                    o_widgets.updateSURFACEGEOattrInPlace(closeIcon, newTargetSlug, "data-slug");
+
+                    // Update attributes in card body
+                    let hint = currentWidget.find(`div[id^="hint__${oldTargetStr}"]`);
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".collapse"), newTargetSlug, "id");
+                    o_widgets.updateSURFACEGEOattrInPlace(currentWidget.find(".card-body"), newTargetSlug, "class");
+                    o_widgets.updateSURFACEGEOattrInPlace(hint, newTargetSlug, "id");
+
+                    // Update attributes in each input set
+                    for (const eachInputSet of currentWidget.find(".op-search-inputs-set")) {
+                        let inputs = $(eachInputSet).find("input");
+                        let removeBtns = $(eachInputSet).find(".op-remove-inputs > button");
+                        let addBtns = $(eachInputSet).find(".op-add-inputs > button");
+                        for (const input of inputs) {
+                            o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "name");
+                            o_widgets.updateSURFACEGEOattrInPlace($(input), newTargetSlug, "data-slugname");
+                        }
+                        o_widgets.updateSURFACEGEOattrInPlace($(eachInputSet).find("select"), newTargetSlug, "name");
+                        o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-widget");
+                        o_widgets.updateSURFACEGEOattrInPlace(removeBtns, newTargetSlug, "data-slug");
+                        o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-widget");
+                        o_widgets.updateSURFACEGEOattrInPlace(addBtns, newTargetSlug, "data-slug");
+                    }
                 }
-            });
+
+                // Update selections & extras
+                o_widgets.updateSURFACEGEODataObj(opus.selections, oldTargetStr, newTargetStr);
+                o_widgets.updateSURFACEGEODataObj(opus.extras, oldTargetStr, newTargetStr);
+
+                // Update widgets array in opus.prefs
+                $.each(opus.prefs.widgets, function(widgetIdx, widget) {
+                    if (widget.startsWith(oldTargetStr)) {
+                        let newWidget = widget.replace(oldTargetStr, newTargetStr);
+                        opus.prefs.widgets[widgetIdx] = newWidget;
+                    }
+                });
+
+                // Update metadata selections
+                let currentMetadataSelections = opus.prefs.cols.slice();
+                let newSurfacegeoMetadataSelections = [];
+                for (const col of currentMetadataSelections) {
+                    if (col.startsWith(oldTargetStr)) {
+                        let newCol = col.replace(oldTargetStr, newTargetStr);
+                        if (!opus.prefs.cols.includes(newCol)) {
+                            newSurfacegeoMetadataSelections.push(newCol);
+                            o_selectMetadata.rendered = false;
+                        }
+                    }
+                }
+                // New metadata selections will be added to the end of the list.
+                opus.prefs.cols.push(...newSurfacegeoMetadataSelections);
+
+                // Update unit record in opus.currentUnitBySlug
+                o_widgets.updateSURFACEGEODataObj(opus.currentUnitBySlug, oldTargetStr, newTargetStr);
+
+                opus.oldSurfacegeoTarget = newTargetSlug;
+            }
+            o_widgets.recordRadioButtonStatus(singlechoiceName);
         });
 
         // When user selects a ranges info item, update input fields and opus.selections
@@ -133,6 +225,72 @@ var o_widgets = {
 
         o_widgets.addPreprogrammedRangesBehaviors();
         o_widgets.addAttachOrRemoveInputsBehaviors();
+    },
+
+    recordRadioButtonStatus: function(slug) {
+        /**
+         * Loop through all radio inputs in a widget and set data-checked to true
+         * if the input is selected, and false if the input is not selected.
+         */
+        $.each($(`#widget__${slug} input[type="radio"]`), function(idx, eachChoice) {
+            if ($(eachChoice).is(":checked")) {
+                $(eachChoice).attr("data-checked", "true");
+            } else {
+                $(eachChoice).attr("data-checked", "false");
+            }
+        });
+    },
+
+    updateSURFACEGEOattrInPlace: function(targetElement, newSurfacegeoTargetSlug, attribute) {
+        /**
+         * Update surfacegeo attributes in place with newly selected target
+         */
+        if (targetElement.length === 0) {
+            return;
+        }
+        let oldTargetStr = `SURFACEGEO${opus.oldSurfacegeoTarget}_`;
+        let newTargetStr = `SURFACEGEO${newSurfacegeoTargetSlug}_`;
+        let newTargetAttr = targetElement.attr(attribute).replace(oldTargetStr, newTargetStr);
+        targetElement.attr(attribute, newTargetAttr);
+    },
+
+    updateSURFACEGEODataObj: function(dataObj, oldTargetStr, newTargetStr) {
+        /**
+         * Update data object (opus.selections, opus.extras, and opus.currentUnitBySlug)
+         * in place with newly selected target.
+         * NOTE: the passed in dataObj will be modified.
+         */
+        for (const oldTargetSlug in dataObj) {
+            if (oldTargetSlug.match(oldTargetStr)) {
+                let newSlug = oldTargetSlug.replace(oldTargetStr, newTargetStr);
+                dataObj[newSlug] = dataObj[oldTargetSlug];
+                delete dataObj[oldTargetSlug];
+            }
+        }
+    },
+
+    closeAllSURFACEGEOWidgets: function() {
+        /**
+         * Close surfacegeometrytargetname and all SURFACEGEO related widgets.
+         */
+        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname");
+        for (const closeWidgetIcon of $(".close_card[data-slug^='SURFACEGEO']")) {
+            let slug = $(closeWidgetIcon).attr("data-slug");
+            o_widgets.closeAndRemoveWidgetFromDOM(slug);
+        }
+    },
+
+    closeAndRemoveWidgetFromDOM: function(slug) {
+        /**
+         * Close #widget__slug and remove elements from DOM.
+         */
+        o_widgets.closeWidget(slug);
+        let id = "#widget__"+slug;
+        try {
+            $(id).remove();
+        } catch (e) {
+            opus.logError(`Error on close widget (closeAndRemoveWidgetFromDOM), id = ${id}`);
+        }
     },
 
     getMaxScrollTopVal: function(target) {
@@ -165,7 +323,13 @@ var o_widgets = {
          * Make sure "+ (OR)" is attached to the right of last input set.
          * Display or hide the icon based on the number of input sets.
          */
-        $(`#widget__${slug} .op-search-inputs-set`).last().append(addInputIcon);
+        let lastInputSet = $(`#widget__${slug} .op-search-inputs-set`).last();
+        if (lastInputSet.find(".op-qtype-wrapping-group").length > 0) {
+            lastInputSet.find(".op-qtype-wrapping-group").append(addInputIcon);
+        } else {
+            lastInputSet.append(addInputIcon);
+        }
+
         let numberOfInputSets = $(`#widget__${slug} .op-search-inputs-set`).length;
         if (numberOfInputSets === opus.maxAllowedInputSets) {
             $(`#widget__${slug} .op-add-inputs`).addClass("op-hide-element");
@@ -185,8 +349,8 @@ var o_widgets = {
             e.preventDefault();
             o_widgets.isAddingInput = true;
 
-            let widgetId = $(this).data("widget");
-            let slug = $(this).data("slug");
+            let widgetId = $(this).attr("data-widget");
+            let slug = $(this).attr("data-slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
             let firstExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).first();
             let lastExistingSetOfInputs = $(`#${widgetId} .op-search-inputs-set`).last();
@@ -225,9 +389,9 @@ var o_widgets = {
             // to the first input set, and add remove icon to cloned input set, else we add "OR"
             // label to the last input set and remove "OR" label from cloned input set.
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
-                firstExistingSetOfInputs.append(removeInputIcon);
+                firstExistingSetOfInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
-                cloneInputs.append(removeInputIcon);
+                cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
             } else {
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
@@ -320,12 +484,13 @@ var o_widgets = {
             }
 
             if (!opus.isAnyNormalizeInputInProgress()) {
-                if (noSelectionsChange || !opus.areRangeInputsValid()) {
+                if (noSelectionsChange || !opus.areInputsValid()) {
                     // This will make sure normalize input api from opus.load is not called.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
             }
-            o_hash.updateURLFromCurrentHash();
+            // User may have changed input, so trigger search with delay
+            o_hash.updateURLFromCurrentHash(true, true);
             o_widgets.isAddingInput = false;
         });
 
@@ -335,10 +500,10 @@ var o_widgets = {
 
             let slug = $(this).find(".op-remove-inputs-btn").data("slug");
             let addInputIcon = $(`#widget__${slug} .op-add-inputs`).detach();
-            let inputSetToBeDeleted = $(this).parent(".op-search-inputs-set");
+            let inputSetToBeDeleted = $(this).parents(".op-search-inputs-set");
 
-            let inputElement = $(this).parent(".op-search-inputs-set").find("input");
-            let qtypeElement = $(this).parent(".op-search-inputs-set").find("select");
+            let inputElement = $(this).parents(".op-search-inputs-set").find("input");
+            let qtypeElement = $(this).parents(".op-search-inputs-set").find("select");
             let slugNameFromInput = inputElement.attr("name");
             let trailingCounterString = o_utils.getSlugOrDataTrailingCounterStr(slugNameFromInput);
             let idx = trailingCounterString ? parseInt(trailingCounterString)-1 : 0;
@@ -421,34 +586,34 @@ var o_widgets = {
             // When we delete a set of inputs while there is a normalize input running,
             // we will trigger another normalize input call to make sure the latest
             // opus.selections get synced up properly. Because when parsing the return
-            // data from a normalize input call (in validateRangeInput), there is no way
+            // data from a normalize input call (in validateInput), there is no way
             // for us to tell if any idx changes (elements got removed) happened in
             // opus.selections, and this will mess up opus.selections. By calling one final
             // normalize input, the latest opus.selections will be used for this api call,
             // and opus.selections will get updated properly at the end.
             if (!opus.isAnyNormalizeInputInProgress()) {
                 if ((noSelectionsChange && isRemovingEmptySet) ||
-                    !opus.areRangeInputsValid()) {
+                    !opus.areInputsValid()) {
                     // Make sure normalize input api from opus.load is not called when an
                     // empty set is removed.
                     opus.updateOPUSLastSelectionsWithOPUSSelections();
                 }
-                o_hash.updateURLFromCurrentHash();
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
                 o_widgets.isRemovingInput = false;
             } else {
                 o_search.allNormalizeInputApiCall().then(function(normalizedData) {
 
                     if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-                        delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                         o_widgets.isRemovingInput = false;
                         return;
                     }
-                    o_search.validateRangeInput(normalizedData, false);
+                    o_search.validateInput(normalizedData, false);
 
-                    if (opus.areRangeInputsValid()) {
-                        $("input.RANGE").removeClass("search_input_valid");
-                        $("input.RANGE").removeClass("search_input_invalid");
-                        $("input.RANGE").addClass("search_input_original");
+                    if (opus.areInputsValid()) {
+                        $("input.RANGE, input.STRING").removeClass("search_input_valid");
+                        $("input.RANGE, input.STRING").removeClass("search_input_invalid");
+                        $("input.RANGE, input.STRING").addClass("search_input_original");
                         $("#sidebar").removeClass("search_overlay");
                         $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
                         if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
@@ -457,13 +622,11 @@ var o_widgets = {
                                 o_search.getHinting(eachSlug);
                             });
                         }
-                        $(".op-browse-tab").removeClass("op-disabled-nav-link");
-                    } else {
-                        $(".op-browse-tab").addClass("op-disabled-nav-link");
                     }
 
-                    if (opus.areRangeInputsValid()) {
-                        o_hash.updateURLFromCurrentHash();
+                    if (opus.areInputsValid()) {
+                        // User may have changed input, so trigger search with delay
+                        o_hash.updateURLFromCurrentHash(true, true);
                     }
 
                     delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -521,8 +684,8 @@ var o_widgets = {
         let uniqueid = minInput.attr("data-uniqueid");
         let minInputName = minInput.attr("name");
         let slugName = minInput.data("slugname");
-        opus.rangeInputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
-        opus.rangeInputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
+        opus.inputFieldsValidation[`${slugName}1_${uniqueid}`] = true;
+        opus.inputFieldsValidation[`${slugName}2_${uniqueid}`] = true;
 
         let slug = "";
         let slugOrderNum = "";
@@ -559,7 +722,7 @@ var o_widgets = {
 
     removeInputsValidationInfo: function(inputs) {
         /**
-         * Remove input validation info in opus.rangeInputFieldsValidation when an input
+         * Remove input validation info in opus.inputFieldsValidation when an input
          * or a widget is removed.
          */
         for (const inputField of inputs) {
@@ -567,7 +730,7 @@ var o_widgets = {
             let slugWithoutCounter = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(inputField).attr("data-uniqueid");
             let slugWithId = `${slugWithoutCounter}_${uniqueid}`;
-            delete opus.rangeInputFieldsValidation[slugWithId];
+            delete opus.inputFieldsValidation[slugWithId];
         }
     },
 
@@ -599,7 +762,6 @@ var o_widgets = {
     },
 
     closeWidget: function(slug) {
-        let isRemovingEmptyWidget = true;
         let slugNoNum;
         try {
             slugNoNum = slug.match(/(.*)[1|2]$/)[1];
@@ -634,15 +796,18 @@ var o_widgets = {
 
         delete opus.extras[`qtype-${slugNoNum}`];
         delete opus.extras[`unit-${slugNoNum}`];
+        // Remove unit record
+        delete opus.currentUnitBySlug[slugNoNum];
 
         let selector = `.op-search-menu li [data-slug='${slug}']`;
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
+
         // Check if the widget to be removed has empty values on all inputs.
         for (const input of inputs) {
             if ($(input).val() && $(input).val().trim()) {
-                isRemovingEmptyWidget = false;
+                o_widgets.isRemovingEmptyWidget = false;
             }
         }
 
@@ -650,15 +815,14 @@ var o_widgets = {
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-                delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
                 return;
             }
-            o_search.validateRangeInput(normalizedData, false);
+            o_search.validateInput(normalizedData, false);
 
-            if (opus.areRangeInputsValid()) {
-                $("input.RANGE").removeClass("search_input_valid");
-                $("input.RANGE").removeClass("search_input_invalid");
-                $("input.RANGE").addClass("search_input_original");
+            if (opus.areInputsValid()) {
+                $("input.RANGE, input.STRING").removeClass("search_input_valid");
+                $("input.RANGE, input.STRING").removeClass("search_input_invalid");
+                $("input.RANGE, input.STRING").addClass("search_input_original");
                 $("#sidebar").removeClass("search_overlay");
                 $("#op-result-count").text(o_utils.addCommas(o_browse.totalObsCount));
                 if (o_utils.areObjectsEqual(opus.selections, opus.lastSelections))  {
@@ -667,18 +831,16 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-                $(".op-browse-tab").removeClass("op-disabled-nav-link");
-            } else {
-                $(".op-browse-tab").addClass("op-disabled-nav-link");
             }
 
             // If the closing widget has empty values, don't perform a search.
-            if (isRemovingEmptyWidget) {
+            if (o_widgets.isRemovingEmptyWidget) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
-            if (opus.areRangeInputsValid()) {
-                o_hash.updateURLFromCurrentHash();
+            if (opus.areInputsValid()) {
+                // User may have changed input, so trigger search with delay
+                o_hash.updateURLFromCurrentHash(true, true);
             }
 
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
@@ -686,62 +848,101 @@ var o_widgets = {
     },
 
     widgetDrop: function(obj) {
-            // if widget is moved to a different formscolumn,
+            // if widget is moved to a different location,
             // redefine the opus.prefs.widgets (preserves order)
-            let widgets = $('#op-search-widgets').sortable('toArray');
-            $.each(widgets, function(index,value) {
-                widgets[index]=value.split('__')[1];
+            let widgets = $("#op-search-widgets").sortable("toArray");
+            $.each(widgets, function(index, value) {
+                widgets[index] = value.split("__")[1];
             });
             opus.prefs.widgets = widgets;
-            o_selectMetadata.reRender();
+            o_selectMetadata.rendered = false;
             o_hash.updateURLFromCurrentHash();
     },
 
     // this is called after a widget is drawn
     customWidgetBehaviors: function(slug) {
         switch(slug) {
-
-            // planet checkboxes open target groupings:
-            case 'planet':
-                // user checks a planet box - open the corresponding target group
+            // Planet checkboxes open target groupings:
+            case "planet":
+                // User checks a planet box - open the corresponding target group
                 // adding a behavior: checking a planet box opens the corresponding targets
-                $('#search').on('change', '#widget__planet input:checkbox:checked', function() {
-                    // a planet is .chosen_columns, and its corresponding target is not already open
-                    let mult_id = '.mult_group_' + $(this).attr('value');
-                    $(mult_id).find('.indicator').addClass('fa-minus');
-                    $(mult_id).find('.indicator').removeClass('fa-plus');
-                    $(mult_id).next().slideDown("fast");
+                $("#search").on("change", '#widget__planet input:checkbox:checked', function(e) {
+                    o_widgets.expandInputGroupBySelectedPlanet($(this));
                 });
-                break;
 
-            case 'target':
-                // when target widget is drawn, look for any checked planets:
+                break;
+            case "target":
+                // When target widget is drawn, look for any checked planets:
                 // usually for when a planet checkbox is checked on page load
                 $('#widget__planet input:checkbox:checked', '#search').each(function() {
-                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                        let mult_id = '.mult_group_' + $(this).attr('value');
-                        $(mult_id).find('.indicator').addClass('fa-minus');
-                        $(mult_id).find('.indicator').removeClass('fa-plus');
-                        $(mult_id).next().slideDown("fast");
+                    // confine to param/vals - not other input controls
+                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') {
+                       o_widgets.expandInputGroupBySelectedPlanet($(this));
                     }
                 });
+
+                // When target widget is drawn, look for any checked intended target
+                // and expand the group with the selected target.
+                let intendedTargetInputs = $(`#widget__${slug} input[type="checkbox"]:checked`);
+                o_widgets.expandInputGroupBySelectedTarget(intendedTargetInputs, slug);
+
                 break;
+            case "surfacegeometrytargetname":
+                // When target widget is drawn, look for any checked planets:
+                // usually for when a planet checkbox is checked on page load
+                $('#widget__planet input:checkbox:checked', '#search').each(function() {
+                    // confine to param/vals - not other input controls
+                    if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') {
+                        o_widgets.expandInputGroupBySelectedPlanet($(this));
+                    }
+                });
 
-            case 'surfacegeometrytargetname':
-               // when target widget is drawn, look for any checked planets:
-               // usually for when a planet checkbox is checked on page load
-               $('#widget__planet input:checkbox:checked', '#search').each(function() {
-                   if ($(this).attr('id') && $(this).attr('id').split('_')[0] == 'planet') { // confine to param/vals - not other input controls
-                       let mult_id = '.mult_group_' + $(this).attr('value');
-                       $(mult_id).find('.indicator').addClass('fa-minus');
-                       $(mult_id).find('.indicator').removeClass('fa-plus');
-                       $(mult_id).next().slideDown("fast");
-                   }
-               });
-               break;
-           //
+                // When surfacegeometrytargetname widget is drawn, look for any checked singlechoice input
+                // and expand the group with the selected target.
+                let surfacegeoTargetInputs = $(`#widget__${slug} input[type="radio"]:checked`);
+                o_widgets.expandInputGroupBySelectedTarget(surfacegeoTargetInputs, slug);
 
+                // Put each surfacegeo target slug into the data-slug attribute of the
+                // corresponding radio input.
+                $.each($(`#widget__${slug} input[type="radio"]`), function(idx, eachChoice) {
+                    let surfacegeoTarget = $(eachChoice).attr("value");
+                    let surfacegeoTargetSlug = o_utils.getSurfacegeoTargetSlug(surfacegeoTarget);
+                    $(eachChoice).attr("data-slug", surfacegeoTargetSlug);
+                    if ($(eachChoice).is(":checked")) {
+                        $(eachChoice).attr("data-checked", "true");
+                    } else {
+                        $(eachChoice).attr("data-checked", "false");
+                    }
+                });
+
+                break;
         }
+    },
+
+    expandInputGroupBySelectedTarget: function(targetInputs, slug) {
+        /**
+         * Loop through targetInputs and expand the group with selected inputs.
+         */
+        for (const input of targetInputs) {
+            if ($(input).attr("id") && $(input).attr("id").split("_")[0] === slug) {
+                let multGroup = $(input).parents(".mult_group");
+                let groupName = $(input).parents(".mult_group").attr("data-group");
+                let multGroupLabel = $(`.mult_group_${groupName}`);
+                multGroupLabel.find('.indicator').addClass('fa-minus');
+                multGroupLabel.find('.indicator').removeClass('fa-plus');
+                multGroup.slideDown("fast");
+            }
+        }
+    },
+
+    expandInputGroupBySelectedPlanet: function(selectedPlanet) {
+        /**
+         * Expand the corresponding input groups based on the selected planet.
+         */
+        let mult_id = ".mult_group_" + selectedPlanet.attr("value");
+        $(mult_id).find(".indicator").addClass("fa-minus");
+        $(mult_id).find(".indicator").removeClass("fa-plus");
+        $(mult_id).next().slideDown("fast");
     },
 
     // adjusts the widths of the widgets in the main column so they fit users screen size
@@ -936,7 +1137,7 @@ var o_widgets = {
         o_selectMetadata.reRender();
 
         $.ajax({
-            url: "/opus/__forms/widget/" + slug + '.html?' + o_hash.getHash(),
+            url: "/opus/__widget/" + slug + '.html?' + o_hash.getHash(),
             success: function(widget_str) {
                 $("#widget__"+slug).html(widget_str);
             }
@@ -995,6 +1196,7 @@ var o_widgets = {
                     o_hash.updateURLFromCurrentHash();
                 }
             }
+
             // Initialize popover, this for the (i) icon next to qtype
             $(".op-widget-main .op-range-qtype-helper a").popover({
                 html: true,
@@ -1037,12 +1239,12 @@ var o_widgets = {
                 });
             } catch(e) { } // these only apply to mult widgets
 
-            if ($.inArray(slug,opus.widgetsFetching) > -1) {
+            if ($.inArray(slug, opus.widgetsFetching) > -1) {
                 opus.widgetsFetching.splice(opus.widgetsFetching.indexOf(slug), 1);
             }
 
             if ($.isEmptyObject(opus.selections)) {
-                $('#widget__' + slug + ' .spinner').fadeOut('');
+                $('#widget__' + slug + ' .spinner').fadeOut();
             }
 
             let widgetInputs = $(`#widget__${slug} input`);
@@ -1123,11 +1325,53 @@ var o_widgets = {
                 }
             }
 
+            // Wrap mults label names with span tag, we will style the span tag to have a caret cursor
+            // so that users know that they can select and copy the text.
+            if (widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) {
+                let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
+                let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
+                for (const label of allChoiceLabels) {
+                    $(label).contents().filter(function() {
+                        return this.nodeType === 3;
+                    }).wrap("<span class='op-choice-label-name'></span>");
+                }
+            }
+
+            // Wrap (i) icon, qtype, and trash icon with a div. This will make sure these
+            // three elements stay together when browser gets narrow.
+            for (const eachInputSet of $(`#widget__${slug} .op-search-inputs-set`)) {
+                let qtypeWrappingGroupClass = ".op-qtype-input, " +
+                                              ".op-range-qtype-helper, " +
+                                              ".op-remove-inputs, " +
+                                              ".op-add-inputs";
+                let qtypeWrappingGroup = $(eachInputSet).find(qtypeWrappingGroupClass);
+                qtypeWrappingGroup.wrapAll("<li class='d-inline-block op-qtype-wrapping-group'/>");
+
+                // Assign classes to the li of range min/max inputs. These classes will be used
+                // to add the styling to group min/max with its corresponding input tag. This
+                // will make sure min/max and its corresponding input stay together as a unit
+                // when they move to a different line.
+                let minInputList = $(eachInputSet).find(".op-range-input-min").parent();
+                let maxInputList = $(eachInputSet).find(".op-range-input-max").parent();
+                minInputList.addClass("op-range-input-min-list");
+                maxInputList.addClass("op-range-input-max-list");
+            }
+
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
             o_widgets.scrollToWidget(widget);
-            o_search.getHinting(slug);
-            o_widgets.isGetWidgetDone = true;
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
+            // Align data in opus.selections and opus.extras to make sure empty
+            // inputs will also have null in opus.selections
+            [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
+                                                                                   opus.extras);
+            if (!opus.isAnyNormalizeInputInProgress()) {
+                opus.updateOPUSLastSelectionsWithOPUSSelections();
+            }
         }); // end callback for .done()
     }, // end getWidget function
 
@@ -1139,16 +1383,16 @@ var o_widgets = {
         let widgetInputs = $(`#widget__${slug} input`);
         if (widgetInputs.hasClass("RANGE")) {
             let extraSearchInputs = $(`#widget__${slug} .op-extra-search-inputs`);
-            let minRangeInputs = $(`#widget__${slug} input.op-range-input-min`);
-            let maxRangeInputs = $(`#widget__${slug} input.op-range-input-max`);
+            let minInputs = $(`#widget__${slug} input.op-range-input-min`);
+            let maxInputs = $(`#widget__${slug} input.op-range-input-max`);
             let qtypes = $(`#widget__${slug} .op-widget-main select`);
 
             let trailingCounter = 0;
             let trailingCounterString = "";
             let minInputNamesArray = [];
 
-            let originalMinName = `${$(minRangeInputs).data("slugname")}1`;
-            let originalMaxName = `${$(maxRangeInputs).data("slugname")}2`;
+            let originalMinName = `${$(minInputs).data("slugname")}1`;
+            let originalMaxName = `${$(maxInputs).data("slugname")}2`;
             let preprogrammedRangesInfo = $(`#widget__${slug} .op-preprogrammed-ranges`);
             // If there are extra sets of RANGE inputs, we reorder the following:
             // 1. name attribute for min & max inputs.
@@ -1160,10 +1404,10 @@ var o_widgets = {
                 // The data will be used to set as data-mininput for corresponding ranges collapsible
                 // (categories) containers. That way each specific min input will be linked to its own
                 // ranges info dropdown.
-                minInputNamesArray = o_widgets.renumberAttributesOfSearchElements(minRangeInputs, true);
+                minInputNamesArray = o_widgets.renumberAttributesOfSearchElements(minInputs, true);
 
                 // Renumber max inputs.
-                o_widgets.renumberAttributesOfSearchElements(maxRangeInputs);
+                o_widgets.renumberAttributesOfSearchElements(maxInputs);
 
                 // Renumber preprogrammed ranges dropdown.
                 trailingCounter = 0;
@@ -1189,8 +1433,8 @@ var o_widgets = {
                 o_widgets.renumberAttributesOfSearchElements(qtypes);
             } else {
                 // When there is only one set of range input, remove the "_counter" trailing part.
-                minRangeInputs.attr("name", originalMinName);
-                maxRangeInputs.attr("name", originalMaxName);
+                minInputs.attr("name", originalMinName);
+                maxInputs.attr("name", originalMaxName);
                 qtypes.attr("name", `qtype-${slug}`);
                 if (preprogrammedRangesInfo.length > 0) {
                     let rangesDropdownCategories = preprogrammedRangesInfo.find("li");
@@ -1321,17 +1565,9 @@ var o_widgets = {
             minLength: 1,
             source: function(request, response) {
                 let currentValue = request.term;
-                let inputCounter = o_utils.getSlugOrDataTrailingCounterStr(slugWithCounter);
-                let idx = inputCounter ? parseInt(inputCounter)-1 : 0;
 
                 o_widgets.lastStringSearchRequestNo++;
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
-
-                if (opus.selections[slug]) {
-                    opus.selections[slug][idx] = currentValue;
-                } else {
-                    opus.selections[slug] = [currentValue];
-                }
 
                 let newHash = o_hash.getHashStrFromSelections();
                 // // Make sure the existing STRING input value is not passed to stringsearchchoices
@@ -1341,17 +1577,22 @@ var o_widgets = {
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
                     let slugParam = slugValuePair.split("=")[0];
-                    if (slugParam === slugWithCounter || !slugParam.match(slug) ||
+                    if (!slugParam.match(slug) ||
                         slugParam === `qtype-${slugWithCounter}`) {
                         newHashArray.push(slugValuePair);
                     }
                 }
+                newHashArray.push(`${slugWithCounter}=${currentValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
-                if (!opus.areRangeInputsValid()) {
+                if (!opus.areInputsValid()) {
                     return;
                 }
+                // Note: It is possible to get here if the current string field
+                // didn't pass validation, because we may not have gotten the results
+                // from normalizeinput yet. So sadly stringsearchchoices has to support
+                // badly formed search strings (like invalid regex).
                 let url = `/opus/__api/stringsearchchoices/${slug}.json?` + newHash + "&reqno=" + o_widgets.lastStringSearchRequestNo;
                 $.getJSON(url, function(stringSearchChoicesData) {
                     if (stringSearchChoicesData.reqno < o_search.slugStringSearchChoicesReqno[slugWithCounter]) {

@@ -71,13 +71,21 @@ class ToInfoMap:
     OBSOLETE_SLUG_INFO = 'obsolete slug'
 
     # Slugs that should be ignored when see them as either a column name or as a search term.
-    SLUGS_NOT_IN_DB = {'browse', 'cart_browse', 'cart_startobs', 'col_chooser', 'colls_browse', 'cols', 'detail',
-                       'gallery_data_viewer', 'limit', 'loc_type', 'order', 'page',
-                       'range', 'recyclebin', 'reqno', 'request', 'startobs', 'types', 'units', 'url_cols',
-                       'view', 'widgets', 'widgets2',
+    SLUGS_NOT_IN_DB = {'browse', 'order', 'page', 'startobs',
+                       'cart_browse', 'cart_order', 'cart_page', 'cart_startobs',
+                       'colls_browse', 'colls_order', 'colls_page',
+                       'colls_startobs',
+                       'cols', 'col_chooser', 'detail', 'download',
+                       'expanded_cats',
+                       'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
+                       'range', 'recyclebin', 'reqno', 'request',
+                       'types', 'url_cols', 'units', 'unselected_types', 'view',
+                       'widgets', 'widgets2',
+                       '__sessionid',
+
                        # Not mentioned by Rob French, but ignored anyway.
                        'timesampling', 'wavelengthsampling', 'colls',
-                       }
+                      }
 
     def __init__(self, url_prefix: str):
         """Initializes the slug info by reading the JSON describing it either from a URL or from a file to which
@@ -126,7 +134,7 @@ class ToInfoMap:
             # value may be None, so we can't just check the value of search_map.get(slug)
             return search_map[slug]
 
-        match = re.fullmatch(r'(.*)_(\d{2,})', slug)
+        match = re.fullmatch(r'(.*)_(\d{2,})$', slug)
         if match:
             base_result = self._get_info_for_search_slug(match.group(1), create, value)
             result = search_map[slug] = base_result._replace(subgroup=int(match.group(2))) if base_result else None

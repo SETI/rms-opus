@@ -1,14 +1,31 @@
-#!/bin/sh
-python main_opus_import.py --drop-permanent-tables --scorched-earth
-python main_opus_import.py --import-check-duplicate-id --do-all-import GALILEO $1
-python main_opus_import.py --import-check-duplicate-id --do-all-import HST --exclude-volumes HSTJ0_9391 $1
-python main_opus_import.py --import-check-duplicate-id --do-all-import NEWHORIZONS $1
-python main_opus_import.py --import-check-duplicate-id --do-all-import COVIMS $1
-python main_opus_import.py --import-check-duplicate-id --do-all-import COUVIS $1
-python main_opus_import.py --do-all-import VOYAGER $1
-python main_opus_import.py --do-all-import COCIRS $1
-python main_opus_import.py --do-all-import COISS $1
-python main_opus_import.py --cleanup-aux-tables
-python main_opus_import.py --import-dictionary
-(cd ../application; python manage.py migrate)
-python main_opus_import.py --validate-perm
+#!/bin/bash
+if [ $# -ne 2 ];
+then
+    echo 'Usage: import_all.sh production_database_name "-u<username> -p<password> -h <hostname>"'
+    exit 1
+fi
+if [[ ! `hostname` =~ "tools" ]];
+then
+    echo "Please only run this script on tools.pds-rings.seti.org"
+    exit 1
+fi
+echo "************************************************************"
+echo "***** About to import ALL PDS DATA into a new database *****"
+echo "************************************************************"
+echo
+echo "The current production database is:"
+grep "^DB_SCHEMA_NAME" /home/django/src/pds-opus/opus_secrets.py
+echo
+echo "About to ERASE and import to this database:" $1
+echo "with these parameters:" $2
+echo "Note this should be the production-style name, not the dev-style name"
+echo -n ">>> Type YES to continue: "
+read yn
+if [ "$yn" != "YES" ]; then
+    echo "Aborting"
+    exit 1
+fi
+source ~/p3venv/activate
+pip install -r ../../requirements-python3.txt
+echo "Running import with nohup - check nohup.out for status"
+nohup ./_import_all_internal.sh "$1" "$2" &

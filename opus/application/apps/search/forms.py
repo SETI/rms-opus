@@ -2,10 +2,12 @@ import settings
 from collections import OrderedDict
 from django.apps import apps
 from django import forms
-from metadata.views import *
 from search.views import get_param_info_by_slug, is_single_column_range
-from paraminfo.models import *
-from tools.app_utils import *
+from paraminfo.models import ParamInfo
+from tools.app_utils import (get_mult_name,
+                             get_numeric_suffix,
+                             parse_form_type,
+                             strip_numeric_suffix)
 
 import logging
 log = logging.getLogger(__name__)
@@ -92,7 +94,11 @@ class SearchForm(forms.Form):
                 choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
                     widget = forms.TextInput(
-                    attrs = {'class':'STRING', 'size':'50', 'tabindex':0}),
+                        attrs={'class': 'STRING',
+                               'size': '50',
+                               'tabindex': 0,
+                               'data-slugname': slug
+                              }),
                     required = False,
                     label = '')
                 self.fields['qtype-'+slug] = forms.CharField(
@@ -115,7 +121,7 @@ class SearchForm(forms.Form):
                 label = 'max' if num == '2' else 'min'
 
                 pi = get_param_info_by_slug(slug, 'search')
-                
+
                 # placeholder for input hints (only apply to Min input for now)
                 if num == '2':
                     # Get the hints for slug2 from slug1 field in database
@@ -174,7 +180,7 @@ class SearchForm(forms.Form):
                 else:
                     choices = [(mult.label, mult.label) for mult in model.objects.filter(display='Y').order_by('disp_order')]
 
-                if param_qualified_name == 'obs_surface_geometry.target_name':
+                if param_qualified_name == 'obs_surface_geometry_name.target_name':
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
                             label = '',

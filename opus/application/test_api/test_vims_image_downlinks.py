@@ -1,13 +1,11 @@
 # opus/application/test_api/test_vims_image_downlinks.py
 
-
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, RequestsClient
+from rest_framework.test import RequestsClient
 
 import settings
 
@@ -18,6 +16,9 @@ class ApiVimsDownlinksTests(TestCase):
 
     # disable error logging and trace output before test
     def setUp(self):
+        settings.OPUS_FAKE_API_DELAYS = None
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
 

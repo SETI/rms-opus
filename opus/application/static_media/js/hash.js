@@ -93,15 +93,15 @@ var o_hash = {
                         }
 
                         // If the slug in opus.selections has a valid value (check
-                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        // opus.inputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug1][trailingCounter-1] !== null &&
-                            opus.rangeInputFieldsValidation[slugWithId1] !== false) {
+                            opus.inputFieldsValidation[slugWithId1] !== false) {
                             hash.push(slug1WithCounter + "=" + slug1EncodedSelections[trailingCounter-1]);
                         }
                         // If the slug in opus.selections has a valid value (check
-                        // opus.rangeInputFieldsValidation), we push it to the hash.
+                        // opus.inputFieldsValidation), we push it to the hash.
                         if (opus.selections[slug2][trailingCounter-1] !== null &&
-                            opus.rangeInputFieldsValidation[slugWithId2] !== false) {
+                            opus.inputFieldsValidation[slugWithId2] !== false) {
                             hash.push(slug2WithCounter + "=" + slug2EncodedSelections[trailingCounter-1]);
                         }
 
@@ -220,9 +220,9 @@ var o_hash = {
         slug = slug.toLowerCase();
         let trailingCounter = "";
         if (slug.includes("_")) {
-            let idx = slug.indexOf("_");
-            trailingCounter = slug.slice(idx);
-            slug = slug.slice(0, idx);
+            let idx = slug.lastIndexOf("_");
+            trailingCounter = parseInt(slug.slice(idx+1)) ? slug.slice(idx) : "";
+            slug = trailingCounter ? slug.slice(0, idx) : slug;
         }
         if (slug.startsWith("qtype-")) {
             slug = slug.slice(6) + "3";
@@ -255,12 +255,28 @@ var o_hash = {
                 hashStrFromSelections + "&" + hashStrFromOPUSPrefs : hashStrFromOPUSPrefs);
     },
 
-    updateURLFromCurrentHash: function() {
+    updateURLFromCurrentHash: function(trigger_search=false, delay=false) {
         /**
          * Update URL with full hash string
          */
         let fullHashStr = o_hash.getFullHashStr();
         window.location.hash = '/' + fullHashStr;
+        if (trigger_search) {
+            opus.searchChanged(delay);
+        }
+    },
+
+    encodeSlugValue: function(slugValue) {
+        /**
+         * Take in a single slug value and encode it.
+         */
+        let encodedValue = encodeURIComponent(slugValue);
+        encodedValue = encodedValue.replace(/\%20/g, "+");
+        // All ":" in the search string will be unencoded.
+        encodedValue = encodedValue.replace(/\%3A/g, ":");
+        encodedValue = encodedValue.replace(/\%2C/g, ",");
+
+        return encodedValue;
     },
 
     encodeSlugValues: function(slugValueArray) {
@@ -272,18 +288,13 @@ var o_hash = {
          * make sure slug values in the hash are all encoded before updating
          * the URL.
          */
-        let slugValue = [];
+        let encodedValues = [];
         for (const val of slugValueArray) {
-            let value = encodeURIComponent(val);
-            value = value.replace(/\%20/g, "+");
-            // All ":" in the search string will be unencoded.
-            value = value.replace(/\%3A/g, ":");
-            value = value.replace(/\%2C/g, ",");
-
-            slugValue.push(value);
+            let encodedValue = o_hash.encodeSlugValue(val);
+            encodedValues.push(encodedValue);
         }
 
-        return slugValue;
+        return encodedValues;
     },
 
     encodeHashArray: function(hashArray) {
@@ -404,7 +415,6 @@ var o_hash = {
         if (!hash) {
             return [undefined, undefined];
         }
-
         hash = (hash.search("&") > -1 ? hash.split("&") : [hash]);
         hash = o_hash.decodeHashArray(hash);
         let selections = {};  // the new set of pairs that will not include the result_table specific session vars
@@ -542,11 +552,12 @@ var o_hash = {
         }
     },
 
-    extrasWithoutUnusedQtypes: function(selections, extras) {
-        // If a qtype is present in extras but is not used in the search
-        // selections, then don't include it at all. This is so that when we
-        // compare selections and extras over time, a "lonely" qtype won't be
-        // taken into account and trigger a new backend search.
+    extrasWithoutUnusedQtypesUnits: function(selections, extras) {
+        // If a qtype or unit is present in extras but is not used in the search
+        // selections (either because it's not present as a slug, or because
+        // the search is entirely nulls), then don't include it at all. This is so
+        // that when we compare selections and extras over time, a "lonely" qtype
+        // or unit won't be taken into account and trigger a new backend search.
         let newExtras = {};
         $.each(extras, function(slug, value) {
             let slugInExtras = "";
@@ -555,10 +566,10 @@ var o_hash = {
             } else if (slug.startsWith("unit-")) {
                 slugInExtras = slug.slice(5);
             }
-            if (slugInExtras in selections ||
-                slugInExtras+'1' in selections ||
-                slugInExtras+'2' in selections) {
-                    newExtras[slug] = value;
+            if ((slugInExtras in selections && selections[slugInExtras].some(elem => elem !== null)) ||
+                (slugInExtras+'1' in selections && selections[slugInExtras+'1'].some(elem => elem !== null)) ||
+                (slugInExtras+'2' in selections && selections[slugInExtras+'2'].some(elem => elem !== null))) {
+                newExtras[slug] = value;
             }
         });
         return newExtras;
@@ -640,6 +651,13 @@ var o_hash = {
                     let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
                     let slugCounter = o_utils.getSlugOrDataTrailingCounterStr(slug);
                     slug = slugNoCounter;
+
+                    // If there is a value specified for surfacegeometrytargetname in the URL,
+                    // we have to initialize opus.oldSurfacegeoTarget with it so that we can
+                    // properly handle changes to surfacegeometrytargetname in the future.
+                    if (slug === "surfacegeometrytargetname") {
+                        opus.oldSurfacegeoTarget = o_utils.getSurfacegeoTargetSlug(value);
+                    }
 
                     if (slugCounter > opus.maxAllowedInputSets) {
                         return; // continue to next iteration

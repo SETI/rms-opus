@@ -41,15 +41,49 @@ body.modal-open .navbar {
     width: 3em !important;
 }
 
+/* Make the main nav bar just a little taller than normal (style says 8px) */
+#op-main-nav {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Keep the horizontal spacing between Search/Browse Results/Cart/Detail the same
+even when the browser size is narrow. */
+#op-main-nav .nav-link {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Override style.css so that the navbar buttons are always dark when the mouse
+   is away, and always light when the mouse is hovering. This makes them
+   consistent with the other nav items which go from dark grey to light grey. */
+#op-main-nav .navbar-nav .nav-link.active,
+#op-main-nav .navbar-nav .nav-link.open,
+#op-main-nav .navbar-nav .active>.nav-link,
+#op-main-nav .navbar-nav .nav-link.show,
+#op-main-nav .navbar-nav .show>.nav-link
+{
+    color: var(--dark); /* From style.css */
+}
+#op-main-nav .navbar-nav .nav-link.active:hover,
+#op-main-nav .navbar-nav .nav-link.open:hover {
+    color: var(--white); /* From style.css */
+}
+
+/* Remove annoying dotted border in Firefox */
+#op-main-nav .navbar-nav .nav-link {
+    outline: none; !important
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
-        display: block;
     }
+
     #op-main-nav.navbar .navbar-nav>.nav-item {
         float: none;
-        margin-left: .1rem;
     }
+
     #op-main-nav.navbar .navbar-nav {
         float: none !important;
     }
@@ -60,6 +94,14 @@ body.modal-open .navbar {
     }
 }
 
+/* Make sure the height of top navbar will not change when "Recent Announcement"
+appears & disappears. Padding-top & bottom need to match ones for .op-user-msg
+so that both "Recent Announcements" and "Message" can be vertically aligned. */
+.op-tab .op-blog-link {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 @media (max-width: 992px) {
     /* Add spaces between each nav-link item */
     #op-tab .nav-link {
@@ -68,8 +110,12 @@ body.modal-open .navbar {
     }
 }
 
+/* Padding-top & bottom need to match ones for .op-blog-link so that both
+"Recent Announcements" and "Message" can be vertically aligned. */
 .op-user-msg {
     display: none;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* display normalized url message */
@@ -84,8 +130,17 @@ body.modal-open .navbar {
 
 /* Add padding to (?)help when main nav has the hamburger */
 #op-help-menu {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+@media (max-height: 490px) {
+    #op-help a {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
 }
 
 #op-tab img.newGIF {
@@ -108,6 +163,14 @@ body.modal-open .navbar {
 
 #search .op-search-param {
     font-size: 90%;
+    margin-top: 1.5px;
+    margin-bottom: 1.5px;
+    display: flex;
+}
+
+/* Spacing between (i) icon, and widget title text in search tab */
+#search .card-title i.fa-info-circle {
+    padding-right: 0.2rem;
 }
 
 #browse, #cart, #detail {
@@ -152,6 +215,12 @@ body.modal-open .navbar {
     white-space: nowrap;
 }
 
+/* Group the magnifying glass and the value together in detail page. This will
+make sure they always stay together when wrapping into a different line */
+#detail .op-detail-entry-values {
+    display: inline-block;
+}
+
 #nav-sidebar {
     margin: 0;
     padding: 0;
@@ -191,9 +260,30 @@ Not sure if this is the desired behavior
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
 @media (max-width: 970px) {
-    /* Make text input shrink proportionally when window is narrow */
-    #op-search-widgets input[type="text"] {
+    /* Make STRING input shrink proportionally when window is narrow */
+    #op-search-widgets input[class~="STRING"] {
         width: 100%;
+    }
+
+    /* The following styling are to group Min/Max with its corresponding input
+    when window is narrow */
+    #op-search-widgets input[class~="RANGE"] {
+        flex: 1 0 auto;
+    }
+
+    .op-range-input-min-list, .op-range-input-max-list {
+        white-space: nowrap;
+        display: inline-flex !important;
+        width: 100%;
+    }
+
+    /* Align the Min/Max input tag when they are in different lines */
+    .op-range-input-min {
+        margin-left: 0.5rem;
+    }
+
+    .op-range-input-max {
+        margin-left: 0.3rem;
     }
 }
 
@@ -257,6 +347,40 @@ to 100%, this will make the shrinking look smoother */
     -webkit-transform: rotate(-90deg);
 }
 
+/* Rotate triangle arrows when menu category is clicked */
+.op-search-menu .dropdown-toggle .op-menu-arrow {
+    transition: all .3s;
+    -webkit-transition: all .3s;
+}
+.op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+/* Css styling for triangle arrow pointing right */
+.op-menu-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+}
+
+/* Make sure triangle arrow is veritcally centered */
+.op-menu-triangle-group {
+    display: inline-block;
+}
+
+/* Hide the default bootstrap dropdown triangle arrow */
+.op-search-menu .dropdown-toggle::after {
+    display: none !important;
+}
+
 .sidebar_wrapper {
     display: flex;
     margin: 0;
@@ -268,11 +392,6 @@ to 100%, this will make the shrinking look smoother */
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
-}
-
-.op-redraw-menu .collapsing {
-     -webkit-transition: none;
-     transition: none;
 }
 
 hr.shadow-divider {
@@ -305,6 +424,10 @@ ul.op-search-menu {
 /* Remove hyperlink underlines from chevron and X on widget title */
 .widget .card-header a {
     text-decoration: none;
+}
+
+.widget .card-header:hover {
+    cursor: grab;
 }
 
 /* Rotate the chevron on a widget header to indicate its open/closed status */
@@ -623,7 +746,7 @@ th.sticky-header {
 
 .op-mini-thumbnail img {
     transition: transform .1s;
-    width: 68%;
+    height: 21px;
 }
 
 /* zoom the mini-thumbnail on hover */
@@ -668,6 +791,11 @@ button.op-mini-thumbnail-zoom {
     overflow-y: hidden;
 }
 
+/* Center the header text in select metadata modal */
+#op-select-metadata .modal-header {
+    align-items: center;
+}
+
 /* make modal width shrink smoothly with screen */
 #op-select-metadata .modal-dialog {
     /* max-width: 1100px; */
@@ -701,6 +829,54 @@ button.op-mini-thumbnail-zoom {
     position: fixed;
     bottom: 5.5em;
     right: 1.25em;
+}
+
+/* Add spacing between each menu item in select metadata menu */
+#op-select-metadata .op-search-param {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    display: flex;
+}
+
+/* Make sure first category search title text is vertically aligned with
+   .op-menu-spinner */
+.op-menu-first-category {
+    display: flex;
+    align-items: center;
+}
+
+/* Make sure first category anchor tag takes the full width when spinner is not
+   there. */
+.op-menu-first-category .op-submenu-category {
+    flex: 1 0 auto;
+}
+
+/* Make sure .op-menu text spinner stays next to first category search title
+   when it's spinning. */
+.op-menu-first-category .op-menu-spinner {
+    flex: 100 0 auto;
+}
+
+/* Make the first category name closer to the border line above it. */
+.op-menu-first-category .op-submenu-category {
+    padding-top: 0 !important;
+}
+
+/* Make sure the a tags for categories take up full width in select metadata
+   and search sidebar menu */
+.op-submenu-category {
+    display: block;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Shift the whole search term list up to reduce the spacing between the
+   category name and search term in search sidebar and select metadata menu.
+   Need to set both margin-top and margin-bottom to avoid the animation glitch
+   when a category is collapsing. */
+.op-submenu-item-list {
+    margin-top: -0.35rem;
+    margin-bottom: 0.35rem;
 }
 
 /* Make white space (padding) in metadata selector modal responsive */
@@ -879,7 +1055,7 @@ when window sized is narrow */
     z-index: 999;
 }
 
-#galleryView button.close, #op-select-metadata button.close {
+#galleryView button.close {
     position: absolute;
     float: right;
     top: .8em;
@@ -1143,7 +1319,7 @@ footer for popover window */
 
 /* Make sure browser size modal window has higher z-index than other
 windows, this will make sure it's not covered by any other windows. */
-#op-browser-size-msg {
+#op-browser-size-msg-modal {
     z-index: 9999;
 }
 
@@ -1533,10 +1709,10 @@ panel are properly separated */
 }
 
 .op-search-menu a.op-search-param {
-    margin-top: 5px;
-    margin-bottom: 12px;
     font-weight: 70;
     color: initial;
+    /* Make sure each menu option takes up full width */
+    display: block;
 }
 
 .op-search-menu a.op-search-param:hover {
@@ -1545,6 +1721,11 @@ panel are properly separated */
 
 .op-search-menu .list-group li:nth-child(1) {
     border-top: 0 none;
+}
+
+/* Make sure full width of white space in search sidebar is clickable */
+.op-search-menu .list-group-item {
+    padding-right: 0;
 }
 
 /* Reduce left space in each widget (from 50px to 10px) */
@@ -1694,9 +1875,10 @@ even when screen is narrow */
     margin: 0 10px;
 }
 
-/* smaller spinner next to general constraints: shows up when menu is loading (search page) */
-.op-menu-text.spinner {
+/* smaller spinner next to first category: shows up when menu is loading */
+.op-menu-spinner.spinner {
     display: none;
+    margin-top: -10px;
     margin-left: 5px;
     width: 18px;
     line-height: 16px;
@@ -1712,7 +1894,7 @@ even when screen is narrow */
     /* top: 250px; */
 }
 
-#cart_summary .button-container button {
+#op-cart-summary .button-container button {
     margin-bottom: 1em;
 }
 
@@ -1913,8 +2095,117 @@ footer {
     border: 1px solid black;
 }
 
+/* Styling for the API Guide */
+
+.op-help-api-guide .op-api-guide-code-block {
+    margin-left: 3em;
+    padding-left: 1em;
+    margin-right: 3em;
+    border-left-style: solid;
+}
+
+.op-help-api-guide .op-api-guide-code-block code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+}
+
+.op-help-api-guide .op-api-guide-code code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+}
+
+.op-help-api-guide .op-table-nonfluid {
+    width: auto !important;
+}
+
+.op-help-api-guide .op-table-indent {
+    margin-left: 2em;
+}
+
+.op-help-api-guide .op-table-padding {
+    padding-right: 20px !important;
+}
+
+.op-help-api-guide h1:first-of-type {
+    counter-reset: apih1counter;
+}
+
+.op-help-api-guide h1 {
+    counter-reset: apih2counter;
+}
+.op-help-api-guide h1::before {
+    counter-increment: apih1counter;
+    content: counter(apih1counter) ". ";
+}
+
+.op-help-api-guide h2 {
+    counter-reset: apih3counter;
+}
+.op-help-api-guide h2::before {
+    counter-increment: apih2counter;
+    content: counter(apih1counter) "." counter(apih2counter) ". ";
+}
+
+.op-help-api-guide h3::before {
+    counter-increment: apih3counter;
+    content: counter(apih1counter) "." counter(apih2counter) "." counter(apih3counter) ". ";
+}
+
+.op-help-api-guide h1.op-help-api-guide-no-count::before,
+.op-help-api-guide h2.op-help-api-guide-no-count::before,
+.op-help-api-guide h3.op-help-api-guide-no-count::before {
+    content: "";
+    counter-increment: none;
+}
+
+.op-help-api-guide .op-help-api-guide-toc ul {
+    counter-reset: apiulcounter;
+    list-style-type: none;
+}
+
+.op-help-api-guide .op-help-api-guide-toc li::before {
+    counter-increment: apiulcounter;
+    content: counters(apiulcounter, ".") ". ";
+}
+
+/* End of API Guide */
+
+/* Styling for the Splash welcome message */
+
+#op-new-user-msg-modal .modal-body {
+    padding: 10px;
+}
+
+#op-new-user-msg-modal p:first-child {
+    margin-top: 10px;
+}
+
+#op-new-user-msg-modal p {
+    margin-bottom: 12px;
+}
+
+#op-new-user-msg-modal p:last-child {
+    margin-bottom: 0px;
+}
+
+/* End of Splash welcome message */
+
 .op-header-text {
     display: inline-block;
+}
+
+/* Remove default h tag margin-bottom to center the title text in help panel */
+#op-help-panel .op-header-text {
+    margin-bottom: 0;
+}
+
+#op-help-panel .op-header-text h2 {
+    margin-bottom: 0;
+}
+
+/* Center the "x" icon in help panel */
+#op-help-panel .close {
+    display: flex;
 }
 
 #op-help-panel .card-body {
@@ -1962,11 +2253,11 @@ gap next to ps */
     display: inline;
 }
 
-.about li:after {
+.about li::after {
     content: ', ';
 }
 
-.about li:last-child:after {
+.about li:last-child::after {
     content: '';
 }
 
@@ -2070,6 +2361,16 @@ ul.ui-autocomplete a.ui-state-active {
     user-select: none;
 }
 
+/* Allow users to mouse over and select texts & hints in widgets */
+.op-input ul label, .op-input ul span,
+.op-hints-info, .op-hints-description {
+    -ms-user-select: text;
+    user-select: text;
+    -moz-user-select: text;
+    -khtml-user-select: text;
+    -webkit-user-select: text;
+}
+
 /* prevents all click, state and cursor options on the specified HTML element */
 .op-prevent-pointer-events {
     pointer-events: none;
@@ -2105,7 +2406,7 @@ ul.ui-autocomplete a.ui-state-active {
     z-index: 20;
 }
 
-.hvr-ripple-in:before {
+.hvr-ripple-in::before {
     content: '';
     position: absolute;
     border: #20c997 solid 6px;
@@ -2116,6 +2417,7 @@ ul.ui-autocomplete a.ui-state-active {
     opacity: 0.5;
     animation: hvr-ripple-in 1s infinite;
     -webkit-animation: hvr-ripple-in 1s infinite;
+    z-index: 9999;
 }
 
 /* Make sure ranges info div not splitting input min and max into two lines */
@@ -2300,12 +2602,6 @@ wiggling when mouse over autocomplete menu items */
     margin: 0;
 }
 
-/* Use to disable nav link (for the case that disables browse tab when
-we have an invalid search) */
-.op-disabled-nav-link {
-    pointer-events: none;
-}
-
 /* Styling for the button to delete a set of inputs in a widget */
 .op-remove-inputs {
     margin-left: 10px;
@@ -2387,4 +2683,84 @@ at the right of -- OR -- label. */
     padding: 0px;
     color: #FFFFFF;
     padding-right: 3px;
+}
+
+/* Tooltips */
+
+[title] {
+    cursor: default;
+}
+
+/* This is for touch screens */
+.op-tooltip-text {
+    position: fixed;
+    top: 80px;
+    left: 10%;
+    right: 10%;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    background-color: white;
+    box-shadow: 2px 2px 6px;
+    padding: 0.3em;
+    line-height: 17px;
+    z-index: 20000;
+}
+
+/* Style for print - automatic creation of PDF files */
+
+@media print {
+    body {
+        font-size: 12pt;
+        font-family: "Times New Roman", Times, 'serif';
+        font-style: normal;
+        font-weight: 400;
+        color: #000;
+        background-color: #fff;
+        overflow: visible;
+    }
+
+    /* This gets rid of boxes around "pre" that show up with the Qt WebKit
+       rendering engine used to produce PDFs */
+    pre {
+        border: 0;
+        font-size: 10pt;
+        font-weight: 700;
+        color: #000;
+    }
+
+    /* Avoid breaking tables and rows across pages if possible. */
+    table, tr, td, th, tbody, thead, tfoot {
+        page-break-inside: avoid !important;
+    }
+
+    /* This is not actually implemented in WebKit right now, so there's
+       no way to avoid these ugly page breaks. But maybe some day it will be,
+       and this will magically start working. */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Arial, Helvetica, sans-serif;
+        page-break-after: avoid;
+    }
+
+    .op-new-page {
+        page-break-before: always;
+    }
+}
+
+/* Make sure label names & hints in widgets have a caret cursor when users mouseover */
+.op-choice-label-name,
+.op-hints-description,
+.op-hints-info {
+    cursor: text;
+}
+
+/* Make sure text in the menu align with text in the 1st line instead of (i) icon
+when wrapping into the 2nd line */
+.op-menu-item {
+    display: flex;
+    align-items: baseline;
+}
+
+/* Spacing between V, (i) icon, and text in the menu */
+.op-menu-item i.fa-info-circle {
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
 }

@@ -9,9 +9,15 @@
 
 2. Ubuntu dependencies
 
-  Ubuntu also requires the following package be installed:
+  Ubuntu also requires the following packages be installed:
 
-        apt-get install libncurses-dev
+        apt-get install libncurses-dev xvfb libfontconfig
+
+  and the patched version of wkhtmltopdf:
+
+        wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+        sudo tar xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+        sudo mv wkhtmltox/bin/wkhtmlto* /usr/bin/
 
 3. Create the mysql databases
 

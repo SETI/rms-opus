@@ -29,6 +29,9 @@ class resultsTests(TestCase):
         self.factory = RequestFactory()
 
     def setUp(self):
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         self._empty_user_searches()
         self.maxDiff = None
         logging.disable(logging.ERROR)
@@ -44,7 +47,8 @@ class resultsTests(TestCase):
 
     def test__api_get_data_and_images_no_request(self):
         "[test_results.py] api_get_data_and_images: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(None)
 
     def test__api_get_data_and_images_no_get(self):
@@ -52,7 +56,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/__api/dataimages.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__api/dataimages.json'):
             api_get_data_and_images(request)
 
 
@@ -62,7 +67,8 @@ class resultsTests(TestCase):
 
     def test__api_get_data_no_request(self):
         "[test_results.py] api_get_data: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(None, 'json')
 
     def test__api_get_data_no_get(self):
@@ -70,7 +76,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/__api/data.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/data.json'):
             api_get_data(request, 'json')
 
 
@@ -81,7 +88,8 @@ class resultsTests(TestCase):
 
     def test__api_get_metadata_no_request(self):
         "[test_results.py] api_get_metadata: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata(None, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_no_get(self):
@@ -89,7 +97,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata(request, 'vg-iss-2-s-c4360845', 'json')
 
 
@@ -99,7 +108,8 @@ class resultsTests(TestCase):
 
     def test__api_get_metadata_v2_no_request(self):
         "[test_results.py] api_get_metadata_v2: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata_v2(None, 'vg-iss-2-s-c4360845', 'json')
 
     def test__api_get_metadata_v2_no_get(self):
@@ -107,7 +117,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/metadata_v2/vg-iss-2-s-c4360845.json'):
             api_get_metadata_v2(request, 'vg-iss-2-s-c4360845', 'json')
 
 
@@ -117,7 +128,8 @@ class resultsTests(TestCase):
 
     def test__api_get_images_no_request(self):
         "[test_results.py] api_get_images: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(None, 'json')
 
     def test__api_get_images_no_get(self):
@@ -125,7 +137,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/images.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/None.json'):
             api_get_images(request, 'json')
 
 
@@ -135,7 +148,8 @@ class resultsTests(TestCase):
 
     def test__api_get_images_by_size_no_request(self):
         "[test_results.py] api_get_images_by_size: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(None, 'small', 'json')
 
     def test__api_get_images_by_size_no_get(self):
@@ -143,7 +157,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/images/small.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_images_by_size(request, 'small', 'json')
 
 
@@ -153,7 +168,8 @@ class resultsTests(TestCase):
 
     def test__api_get_image_no_request(self):
         "[test_results.py] api_get_image: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_image(None, 'vg-iss-2-s-c4360845', 'small', 'json')
 
     def test__api_get_image_no_get(self):
@@ -161,7 +177,8 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/images/small.json'):
             api_get_image(request, 'vg-iss-2-s-c4360845', 'small', 'json')
 
 
@@ -171,7 +188,8 @@ class resultsTests(TestCase):
 
     def test__api_get_files_no_request(self):
         "[test_results.py] api_get_files: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(None, 'vg-iss-2-s-c4360845')
 
     def test__api_get_files_no_get(self):
@@ -179,17 +197,19 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/files/vg-iss-2-s-c4360845.json'):
             api_get_files(request, 'vg-iss-2-s-c4360845')
 
 
-            #################################################################
+            #############################################################
             ######### api_get_categories_for_opus_id UNIT TESTS #########
-            #################################################################
+            #############################################################
 
     def test__api_get_categories_for_opus_id_no_request(self):
         "[test_results.py] api_get_categories_for_opus_id: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(None, 'vg-iss-2-s-c4360845')
 
     def test__api_get_categories_for_opus_id_no_get(self):
@@ -197,18 +217,20 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/categories/vg-iss-2-s-c4360845.json'):
             api_get_categories_for_opus_id(request, 'vg-iss-2-s-c4360845')
 
 
 
-            ################################################################
+            ############################################################
             ######### api_get_categories_for_search UNIT TESTS #########
-            ################################################################
+            ############################################################
 
     def test__api_get_categories_for_search_no_request(self):
         "[test_results.py] api_get_categories_for_search: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(None)
 
     def test__api_get_categories_for_search_no_get(self):
@@ -216,8 +238,50 @@ class resultsTests(TestCase):
         c = Client()
         request = self.factory.get('/api/categories.json')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/categories.json'):
             api_get_categories_for_search(request)
+
+
+            ################################################################
+            ######### api_get_product_types_for_opus_id UNIT TESTS #########
+            ################################################################
+
+    def test__api_get_product_types_for_opus_id_no_request(self):
+        "[test_results.py] api_get_product_types_for_opus_id: no request"
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
+            api_get_product_types_for_opus_id(None, 'vg-iss-2-s-c4360845')
+
+    def test__api_get_product_types_for_opus_id_no_get(self):
+        "[test_results.py] api_get_product_types_for_opus_id: no GET"
+        c = Client()
+        request = self.factory.get('/api/product_types/vg-iss-2-s-c4360845.json')
+        request.GET = None
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/product_types/vg-iss-2-s-c4360845.json'):
+            api_get_product_types_for_opus_id(request, 'vg-iss-2-s-c4360845')
+
+
+
+            ###############################################################
+            ######### api_get_product_types_for_search UNIT TESTS #########
+            ###############################################################
+
+    def test__api_get_product_types_for_search_no_request(self):
+        "[test_results.py] api_get_product_types_for_search: no request"
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/product_types.json'):
+            api_get_product_types_for_search(None)
+
+    def test__api_get_product_types_for_search_no_get(self):
+        "[test_results.py] api_get_product_types_for_search: no GET"
+        c = Client()
+        request = self.factory.get('/api/product_types.json')
+        request.GET = None
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /api/product_types.json'):
+            api_get_product_types_for_search(request)
 
 
             ###################################################
@@ -239,6 +303,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Cassini')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini']
@@ -249,6 +314,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&instrument=COCIRS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_cocirs']
@@ -259,6 +325,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&instrument=COISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
@@ -269,6 +336,7 @@ class resultsTests(TestCase):
         q = QueryDict('planet=SATURN&volumeid=COISS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_coiss']
@@ -279,6 +347,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=COUVIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_couvis']
@@ -289,6 +358,7 @@ class resultsTests(TestCase):
         q = QueryDict('volumeid=COUVIS&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_couvis']
@@ -299,6 +369,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=COVIMS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_cassini', 'obs_instrument_covims']
@@ -309,6 +380,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Galileo')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_galileo',
@@ -320,6 +392,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Galileo+SSI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_galileo',
@@ -331,6 +404,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Voyager')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager',
@@ -342,6 +416,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Voyager+ISS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager',
@@ -353,6 +428,7 @@ class resultsTests(TestCase):
         q = QueryDict('volumeid=VGISS_6210')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_voyager', 'obs_instrument_vgiss']
@@ -363,6 +439,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=Hubble')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -373,6 +450,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+ACS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -383,6 +461,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+NICMOS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -393,6 +472,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+STIS')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -403,6 +483,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+WFC3')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -413,6 +494,7 @@ class resultsTests(TestCase):
         q = QueryDict('primaryfilespec=IB4V12N4Q')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -423,6 +505,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=Hubble+WFPC2')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_hubble']
@@ -433,6 +516,7 @@ class resultsTests(TestCase):
         q = QueryDict('mission=New+Horizons')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons']
@@ -443,6 +527,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=New+Horizons+LORRI')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons',
@@ -454,6 +539,7 @@ class resultsTests(TestCase):
         q = QueryDict('instrument=New+Horizons+MVIC')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength',
+                    'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
                     'obs_mission_new_horizons',

@@ -10,7 +10,7 @@ from cart.views import (
 )
 
 urlpatterns = [
-    url(r'^__cart/view.html$', api_view_cart),
+    url(r'^__cart/view.json$', api_view_cart),
     url(r'^__cart/status.json$', api_cart_status),
     url(r'^__cart/data.csv$', api_get_cart_csv),
     url(r'^__cart/(?P<action>add|remove|addrange|removerange|addall).json$', api_edit_cart),

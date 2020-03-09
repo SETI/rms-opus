@@ -2,7 +2,6 @@
 
 import logging
 import requests
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
@@ -16,6 +15,9 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def setUp(self):
         self.maxDiff = None
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.ERROR)
         if settings.TEST_GO_LIVE: # pragma: no cover
@@ -55,41 +57,41 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     def test__api_retfmt_cart_view(self):
         "[test_return_formats.py] return formats /__cart/view.[fmt]"
         self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
-        self._test_return_formats('/__cart/view.[fmt]', ('html',))
+        self._test_return_formats('/__cart/view.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_cart_status(self):
         "[test_return_formats.py] return formats /__cart/status.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/status.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_cart_data(self):
         "[test_return_formats.py] return formats /__cart/data.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/data.[fmt]', ('csv',))
 
     def test__api_retfmt_cart_add(self):
         "[test_return_formats.py] return formats /__cart/add.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/add.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
 
     def test__api_retfmt_cart_remove(self):
         "[test_return_formats.py] return formats /__cart/remove.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/remove.[fmt]?opusid=vg-iss-2-s-c4362550&reqno=1', ('json',))
 
     def test__api_retfmt_cart_addrange(self):
         "[test_return_formats.py] return formats /__cart/addrange.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/addrange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
 
     def test__api_retfmt_cart_removerange(self):
         "[test_return_formats.py] return formats /__cart/removerange.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/removerange.[fmt]?volumeid=COVIMS_0006&range=co-vims-v1488549680_ir,co-vims-v1488550102_ir&reqno=1', ('json',))
 
     def test__api_retfmt_cart_addall(self):
         "[test_return_formats.py] return formats /__cart/addall.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/addall.[fmt]?volumeid=COVIMS_0006&reqno=1', ('json',))
 
     def test__api_retfmt_cart_reset(self):
@@ -98,7 +100,7 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_cart_download(self):
         "[test_return_formats.py] return formats /__cart/download.[fmt]"
-        self._run_status_equal('/opus/__cart/reset.json?reqno=1', 200)
+        self._run_status_equal('/__cart/reset.json?reqno=1', 200)
         self._test_return_formats('/__cart/download.[fmt]', ('json',))
 
     def test__api_retfmt_cart_download_opusid(self):
@@ -123,10 +125,6 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/faq.[fmt]"
         self._test_return_formats('/__help/faq.[fmt]', ('html',))
 
-    def test__api_retfmt_help_tutorial(self):
-        "[test_return_formats.py] return formats /__help/tutorial.[fmt]"
-        self._test_return_formats('/__help/tutorial.[fmt]', ('html',))
-
     def test__api_retfmt_help_gettingstarted(self):
         "[test_return_formats.py] return formats /__help/gettingstarted.[fmt]"
         self._test_return_formats('/__help/gettingstarted.[fmt]', ('html',))
@@ -135,9 +133,9 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /__help/splash.[fmt]"
         self._test_return_formats('/__help/splash.[fmt]', ('html',))
 
-    def test__api_retfmt_help_guide(self):
-        "[test_return_formats.py] return formats /__help/guide.[fmt]"
-        self._test_return_formats('/__help/guide.[fmt]', ('html',))
+    def test__api_retfmt_help_apiguide(self):
+        "[test_return_formats.py] return formats /__help/apiguide.[fmt]"
+        self._test_return_formats('/__help/apiguide.[fmt]', ('html',))
 
     def test__api_retfmt_help_citing(self):
         "[test_return_formats.py] return formats /__help/citing.[fmt]"
@@ -209,11 +207,11 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_results_images(self):
         "[test_return_formats.py] return formats /api/images.[fmt]"
-        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json', 'html', 'zip'))
+        self._test_return_formats('/api/images.[fmt]?target=Jupiter&limit=2', ('csv', 'json'))
 
     def test__api_retfmt_results_image(self):
         "[test_return_formats.py] return formats /api/image/small/opusid.[fmt]"
-        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html', 'zip'))
+        self._test_return_formats('/api/image/small/vg-iss-2-s-c4362550.[fmt]', ('csv', 'json', 'html'))
 
     def test__api_retfmt_results_files_opusid(self):
         "[test_return_formats.py] return formats /api/files/opusid.[fmt]"
@@ -235,6 +233,14 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
         "[test_return_formats.py] return formats /api/categories.[fmt]"
         self._test_return_formats('/api/categories.[fmt]?target=Jupiter', ('json',))
 
+    def test__api_retfmt_results_product_types_opusid(self):
+        "[test_return_formats.py] return formats /api/product_types/opusid.[fmt]"
+        self._test_return_formats('/api/product_types/vg-iss-2-s-c4362550.[fmt]', ('json',))
+
+    def test__api_retfmt_results_product_types(self):
+        "[test_return_formats.py] return formats /api/product_types.[fmt]"
+        self._test_return_formats('/api/product_types.[fmt]?target=Jupiter', ('json',))
+
     # search/urls.py
 
     def test__api_retfmt_search_normalizeinput_pvt(self):
@@ -253,15 +259,15 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
 
     def test__api_retfmt_ui_menu_pvt(self):
         "[test_return_formats.py] return formats /__menu.[fmt]"
-        self._test_return_formats('/__menu.[fmt]', ('html',))
-
-    def test__api_retfmt_ui_widget_pvt(self):
-        "[test_return_formats.py] return formats /__forms/widget/slug.[fmt]"
-        self._test_return_formats('/__forms/widget/planet.[fmt]', ('html',))
+        self._test_return_formats('/__menu.[fmt]?reqno=1', ('json',))
 
     def test__api_retfmt_ui_metadataselector_pvt(self):
-        "[test_return_formats.py] return formats /__forms/metadata_selector.[fmt]"
-        self._test_return_formats('/__forms/metadata_selector.[fmt]', ('html',))
+        "[test_return_formats.py] return formats /__metadata_selector.[fmt]"
+        self._test_return_formats('/__metadata_selector.[fmt]?reqno=1', ('json',))
+
+    def test__api_retfmt_ui_widget_pvt(self):
+        "[test_return_formats.py] return formats /__widget/slug.[fmt]"
+        self._test_return_formats('/__widget/planet.[fmt]', ('html',))
 
     def test__api_retfmt_ui_initdetail_pvt(self):
         "[test_return_formats.py] return formats /__initdetail/opusid.[fmt]"

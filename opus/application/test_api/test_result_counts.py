@@ -4,10 +4,9 @@ import csv
 import json
 import logging
 import requests
-import sys
 from unittest import TestCase
 
-from rest_framework.test import APIClient, CoreAPIClient, RequestsClient
+from rest_framework.test import APIClient, RequestsClient
 
 import settings
 
@@ -20,6 +19,9 @@ class APIResultCountsTests(TestCase):
     # disable error logging and trace output before test
     def setUp(self):
         self.maxDiff = None
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         settings.CACHE_KEY_PREFIX = 'opustest:' + settings.DB_SCHEMA_NAME
         logging.disable(logging.DEBUG)
 

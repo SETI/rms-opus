@@ -33,14 +33,14 @@
             <div class="collapse navbar-collapse" id="op-main-nav-collapse">
                 <ul class="op-tab nav navbar-nav mr-auto op-main-site-tabs flex-column flex-sm-row" role="tablist">
                     <li class="nav-item external-link blogspot">
-                        <a class="nav-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
+                        <a class="nav-link op-blog-link" href="https://ringsnodesearchtool.blogspot.com/" target="_blank" aria-controls="blogspot">
                             <div id="op-last-blog-update-date" class="container align-items-center d-flex h-100 my-auto" data-toggle="tooltip" data-placement="bottom" title="">
                                 <img class="newGIF" src="{{ STATIC_URL }}img/new_25.gif" alt="Recent Announcements"/>&nbsp;Recent Announcements
                             </div>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
+                        <a class="btn op-user-msg nav-link" data-toggle="modal" data-target="#op-update-url-modal" title="Click to read an important message"><i class="far fa-envelope-open text-warning"></i><span class=" text-warning"> Message</span></a>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav flex-column flex-sm-row">
@@ -54,7 +54,7 @@
                             <a class="dropdown-item op-help-item" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
                             <a class="dropdown-item op-help-item" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
                             <a class="dropdown-item op-help-item" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
-                            <a class="dropdown-item op-help-item" data-action="guide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
+                            <a class="dropdown-item op-help-item" data-action="apiguide" href="#" title="View a description of the OPUS API for external developers">API Guide</a>
                             <a class="dropdown-item op-help-item" data-action="splash" href="#" title="View the OPUS new-user splash screen">Welcome Message</a>
                             <a class="dropdown-item op-help-item" data-action="citing" href="#" title="How to cite OPUS in your papers or presentations">Citing OPUS</a>
                             <a class="dropdown-item op-help-item" data-action="contact" href="#" title="Send questions or feedback to the OPUS developers">Contact Us</a>
@@ -83,7 +83,6 @@
                     <!-- selected widgets -->
                     <div class="col op-widget-col">
                         <div id="widget-container" class="op-widget-column">
-                            <!-- note to self:    this is where the widgets will be replace by cards; should no longer by ul/li -->
                             <ul id="op-search-widgets"></ul>
                         </div>
                     </div>
@@ -189,15 +188,15 @@
                             </div>
                             <div class="op-cart-actions">
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
                                         &nbsp;Empty Cart</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
                                         &nbsp;Empty Recycle Bin</a>
                                 </li>
                                 <li class="list-inline-item">
-                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
+                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
                                         &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
                                 </li>
                             </div>
@@ -281,10 +280,10 @@
 
         <!--sliding panel for the help menu items -->
         <div id="op-help-panel" class="card w-75">
-            <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+            <div class="card-header align-items-center h-auto bg-secondary">
                 <h3 class='op-header-text'></h3>
                 <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
-             </div>
+            </div>
             <div class="card-body bg-light">
                 <div class="op-card-contents">
                     Loading... please wait.
@@ -322,7 +321,7 @@
                 <div class="modal-content op-no-select">
                     <div class="modal-header bg-dark text-light font-weight-bold font-lg py-3">
                         <div>Select Metadata</div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close" data-dismiss="modal" data-target="op-close-metadata-modal"  aria-label="Close">
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
@@ -367,17 +366,17 @@
             confirm_title="Confirm Reset OPUS"
             confirm_msg="Are you sure you want to reset OPUS to its default state? This will erase any search parameters, open search fields, selected metadata, and other customization you may have done, but will leave items in your cart."
             target="op-reset-opus-modal"
-            yes_text="OK"
+            yes_text="Yes"
             no_text="No"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-addall-to-cart"
+            id_name="op-addall-to-cart-modal"
             confirm_title="Confirm Add All Observations To Cart"
             confirm_msg="Are you sure you want to add all observations to the cart?"
-            target="op-addall-to-cart"
+            target="op-addall-to-cart-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -385,20 +384,31 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-addall-warning-msg"
+            id_name="op-addall-warning-msg-modal"
             confirm_title="Failed to Add All Observations"
             confirm_msg=""
-            target="op-addall-warning-msg"
+            target="op-addall-warning-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-empty-cart"
+            id_name="op-close-metadata-modal"
+            confirm_title="Confirm Save Changes to Selected Metadata"
+            confirm_msg="You have made changes to the selected metadata. Do you wish to keep these changes?"
+            target="op-close-metadata-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-empty-cart-modal"
             confirm_title="Confirm Remove All Observations From Cart"
             confirm_msg="Are you sure you want to remove all observations from the cart?"
-            target="op-empty-cart"
+            target="op-empty-cart-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -406,10 +416,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-empty-recycle-bin"
+            id_name="op-empty-recycle-bin-modal"
             confirm_title="Confirm Empty Recycle Bin"
             confirm_msg="Are you sure you want to remove all observations from the recycle bin?"
-            target="op-empty-recycle-bin"
+            target="op-empty-recycle-bin-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -417,10 +427,10 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-restore-recycle-bin"
+            id_name="op-restore-recycle-bin-modal"
             confirm_title="Confirm Restore All Recycled Observations To Cart"
             confirm_msg="Are you sure you want to restore all observations from the recycle bin to the cart?"
-            target="op-restore-recycle-bin"
+            target="op-restore-recycle-bin-modal"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -428,20 +438,20 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-cart-status-error-msg"
+            id_name="op-cart-status-error-msg-modal"
             confirm_title="Failed to Add Observations to Cart"
             confirm_msg=""
-            target="op-cart-status-error-msg"
+            target="op-cart-status-error-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-update-url"
+            id_name="op-update-url-modal"
             confirm_title="Message About Your URL"
             confirm_msg=""
-            target="op-update-url"
+            target="op-update-url-modal"
             yes_text="Keep Message"
             no_text="Discard Message"
             allow_close=True
@@ -449,41 +459,61 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-browser-version-msg"
+            id_name="op-browser-version-msg-modal"
             confirm_title="Message About Your Browser Version"
             confirm_msg="Please consider upgrading your Browser Version"
-            target="op-browser-version-msg"
+            target="op-browser-version-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-browser-size-msg"
+            id_name="op-browser-size-msg-modal"
             confirm_title="Message About Your Browser Size"
             confirm_msg=""
-            target="op-browser-size-msg"
+            target="op-browser-size-msg-modal"
             allow_close=False
             draggable=False
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-new-user-msg"
+            id_name="op-new-user-msg-modal"
             confirm_title="Welcome to OPUS3"
             confirm_msg="Please see the FAQ section from help menu or <a href='https://ringsnodesearchtool.blogspot.com/' target='_blank'>our blog</a> for details."
-            target="op-new-user-msg"
+            target="op-new-user-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
-            id_name="op-download-links-error-msg"
+            id_name="op-download-links-error-msg-modal"
             confirm_title="Download Error"
             confirm_msg=""
-            target="op-download-links-error-msg"
+            target="op-download-links-error-msg-modal"
             yes_text="OK"
             allow_close=True
             draggable=False
             close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-surfacegeo-widgets-modal"
+            confirm_title="Confirm Close All Surface Geometry Search Fields"
+            confirm_msg="Closing the Surface Geometry Target Selector search field will also close all target-specific search fields. Are you sure you wish to proceed?"
+            target="op-close-surfacegeo-widgets-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-http-response-error-modal"
+            confirm_title="Server Error"
+            confirm_msg=""
+            target="op-http-response-error-modal"
+            yes_text="Reload OPUS"
+            allow_close=False
+            draggable=True
         %}
 
         {% endblock %}
@@ -542,24 +572,24 @@
     <script src="{{ STATIC_URL }}perfect-scrollbar/dist/perfect-scrollbar.js"></script>
 
     <!-- NASA feedback widget -->
-    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/config.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}feedback/js/feedback.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/modernizr-custom.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/config.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}feedback/js/feedback.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
 
     {% block scripts %}
 
-    <script src="{{ STATIC_URL }}js/opus.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/menu.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/utils.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/cart.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/browse.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/detail.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/search.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/widgets.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/selectMetadata.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/hash.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/dictionary.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/mutationObserver.js?version={{ OPUS_FILE_VERSION }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/opus.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/menu.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/utils.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/cart.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/browse.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/detail.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     {% endblock    %}
 
 </body>

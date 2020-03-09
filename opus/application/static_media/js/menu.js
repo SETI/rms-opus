@@ -13,93 +13,95 @@ var o_menu = {
 
     /**
      *
-     *  the menu on the *search page*
+     *  The category/field list on the search tab or Select Metadata dialog
      *
      **/
 
-     addMenuBehaviors: function() {
-         // click param in menu get new widget
-         $("#sidebar").on("click", ".submenu li a", function() {
+    lastSearchMenuRequestNo: 0,
 
-             let slug = $(this).data("slug");
-             if (!slug) { return; }
-             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
-                 // widget is already showing do not fetch another
-                 try {
+    addMenuBehaviors: function() {
+        // click param in menu get new widget
+        $("#sidebar").on("click", ".submenu li a", function() {
+            let slug = $(this).data("slug");
+            if (!slug) { return; }
+            if ($.inArray(slug, opus.widgetsDrawn) > -1) {
+                // widget is already showing do not fetch another
+                try {
                     // scroll to widget and highlight it
                     o_widgets.scrollToWidget(`widget__#{slug}`);
-
                 } catch(e) {
                     return false;
                 }
                 return false;
-
-             } else {
-                  o_menu.markMenuItem(this);
-                  o_widgets.getWidget(slug,'#op-search-widgets');
-             }
-
-             o_hash.updateURLFromCurrentHash();
-             return false;
-         });
-
-
-        // menu state - keep track of what menu items are open
-        $("#sidebar").on("click", ".dropdown-toggle", function(e) {
-            // for opus: keeping track of menu state, since menu is constantly refreshed
-            // menu cats
-            let category = $(this).data( "cat" );
-            let groupElem = $(`#sidebar #search-submenu-${category}`);
-            if ($(groupElem).hasClass("show")) {
-                opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
             } else {
-                if ($.inArray(category, opus.menuState.cats) >= 0 ) {
-                    console.log(`submenu ${category } state already in array`);
-                } else {
-                    opus.menuState.cats.push(category);
-                }
+                o_menu.markMenuItem(this);
+                o_widgets.getWidget(slug,'#op-search-widgets');
             }
-        });
-     },
 
-     getNewSearchMenu: function() {
+            o_hash.updateURLFromCurrentHash();
+            return false;
+        });
+    },
+
+    getNewSearchMenu: function() {
         let spinnerTimer = setTimeout(function() {
-             $(".op-menu-text.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+            $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
         let hash = o_hash.getHash();
 
-        $("#sidebar").load("/opus/__menu.html?" + hash, function() {
-            // open menu items that were open before
-            $("#sidebar").toggleClass("op-redraw-menu");
-            $.each(opus.menuState.cats, function(key, category) {
-                if ($(`#sidebar #search-submenu-${category}`).length !== 0) {
-                    $(`#sidebar #search-submenu-${category}`).collapse("show");
-                } else {
-                    // this is if the surface geometry target is no longer applicable so it's not
-                    // on the menu, remove from the menuState
-                    opus.menuState.cats.splice(opus.menuState.cats.indexOf(category), 1);
-                }
-            });
-            $("#sidebar").toggleClass("op-redraw-menu");
-            $(".menu_spinner").fadeOut("fast");
-
-            o_menu.markCurrentMenuItems();
-
-            $('.op-menu-text.spinner').removeClass("op-show-spinner");
-            clearTimeout(spinnerTimer);
+        // Figure out which categories are already expanded
+        let expandedCategoryLinks = $("#sidebar .op-submenu-category").not(".collapsed");
+        let expandedCategories = [];
+        $.each(expandedCategoryLinks, function(index, linkObj) {
+            expandedCategories.push($(linkObj).data("cat"));
         });
-     },
+        let expandedCats = "";
+        if (hash !== "") {
+            expandedCats = "&";
+        }
+        expandedCats += "expanded_cats=" + expandedCategories.join();
+        o_menu.lastSearchMenuRequestNo++;
+        let url = `/opus/__menu.json?${hash}${expandedCats}&reqno=${o_menu.lastSearchMenuRequestNo}`;
 
-     markMenuItem: function(selector, selected) {
+        $.getJSON(url, function(data) {
+            if (data.reqno < o_menu.lastSearchMenuRequestNo) {
+                return;
+            }
+            $("#sidebar").html(data.html);
+            o_menu.markCurrentMenuItems();
+            clearTimeout(spinnerTimer);
+
+            o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#search");
+        });
+    },
+
+    wrapTriangleArrowAndLastWordOfMenuCategory: function(tab) {
+        /**
+         * Wrap the last word of each menu category with triangle arrow. This is
+         * used to group the triangle arrow and the last word of category string,
+         * and make sure they will stay together when wrapped into a different
+         * line.
+         */
+        $.each($(`${tab} .op-submenu-category .title`), function(idx, category) {
+            let textArr = $(category).text().split(" ");
+            let lastWord = textArr.pop();
+            let spacing = textArr.length ? "&nbsp;" : "";
+            let lastWordWrappingGroup = `${spacing}<span class="op-menu-triangle-group">${lastWord}` +
+                                        "<span class='op-menu-arrow'></span></span>";
+            $(category).html(textArr.join(" ") + lastWordWrappingGroup);
+        });
+    },
+
+    markMenuItem: function(selector, selected) {
         if (selected == undefined || selected == "select") {
-            $(selector).css({"background": "gainsboro"});
+            $(selector).children().css({"background": "gainsboro"});
             // We use find() here instead of just adding to the selector because
             // selector might be a string or it might be an actual DOM object
             $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
         } else {
-            $(selector).css({"background": "initial"});
+            $(selector).children().css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
         }
-     },
+    },
 
     markCurrentMenuItems: function() {
         $.each(opus.prefs.widgets, function(index, slug) {
@@ -107,17 +109,17 @@ var o_menu = {
         });
     },
 
-     // type = cat/group
-     getCatGroupFromSlug: function(slug) {
-         let cat = "";
-         let group = "";
-         $("ul.menu_list>li a", "#search").each(function() {
-             if (slug == $(this).data("slug")) {
-                 cat = $(this).data("cat");
-                 group = $(this).data("group");
-                 return false; // this is how you break in an each!
-             }
-         });
-         return {"cat":cat, "group":group};
-     },
+    // type = cat/group
+    getCatGroupFromSlug: function(slug) {
+        let cat = "";
+        let group = "";
+        $("ul.menu_list>li a", "#search").each(function() {
+            if (slug == $(this).data("slug")) {
+                cat = $(this).data("cat");
+                group = $(this).data("group");
+                return false; // this is how you break in an each!
+            }
+        });
+        return {"cat":cat, "group":group};
+    },
 };

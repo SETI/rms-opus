@@ -6,7 +6,7 @@
         <div class="op-all-metadata-column-header">
             <div class="text-center font-weight-bold h5">Available Metadata Fields</div>
             Click on a field name to include (or exclude) it from the Selected Metadata list.
-            To show Surface Geometry Constraints, select a Surface Geometry Target Name on
+            To show Surface Geometry Constraints, use the Surface Geometry Target Selector on
             the Search tab.
         </div>
     </div>
@@ -32,13 +32,9 @@
       	    <ul>
                 {% for slug, param_info in all_slugs_info.items %}
       		        <li id="cchoose__{{ slug }}">
-                        <span class="op-selected-metadata-info">&nbsp;<i class="fas fa-info-circle" title = "
-                            {% if param_info.get_tooltip_results %}
-                                {{ param_info.get_tooltip_results|striptags }}
-                            {% else  %}
-                                {{ param_info.body_qualified_label_results }}
-                            {% endif %}
-                        "></i></span>
+                        <span class="op-selected-metadata-info">
+                            &nbsp;<i class="fas fa-info-circle" title="{{ param_info.get_tooltip_results }}"></i>
+                        </span>
                         {{ param_info.body_qualified_label_results }}
                         <span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></i></span>
     	            </li>
@@ -47,7 +43,7 @@
         </div>
         <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download CSV of selected metadata for ALL observations in current results">
             <i class="fas fa-download"></i>&nbsp;Download CSV (all results)
-        </a>        
+        </a>
     </div>
 </div>
 {% endblock %}

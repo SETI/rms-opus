@@ -7,19 +7,15 @@
 from collections import OrderedDict
 import csv
 import datetime
-from io import StringIO
 import json
 import os
 import random
 import string
 import subprocess
 import time
-from zipfile import ZipFile
 
-from django.core import serializers
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response
+from django.http import HttpResponse
 
 from search.models import ObsGeneral
 
@@ -42,133 +38,6 @@ def csv_response(filename, data, column_names=None):
 
 def json_response(data):
     return HttpResponse(json.dumps(data), content_type='application/json')
-
-def response_formats(data, fmt, **kwargs):
-    """
-    this is REALLY AWFUL.
-
-    returns data in response format fmt
-
-    data is a dictionary,
-
-    data can contain dictionary objects or strings vars
-
-    for fmt=csv or fmt=html it looks for the first it finds
-
-    if you *do not* want it to use a list - like that list is for something else besides data
-    then define it in ignore (see fmt=html below)
-
-    if it doesn't find a list it displays the data itself
-
-    fmt=zip is in json format
-
-    NOTE: I hate this. problems!!!!
-    I wanted to find a way to not repeat code when I was just returning
-    data in some format, but this sucks.
-
-    """
-    # these are passed kwargs that may be lists but are metadata, not data (ugh)
-    ignore = ['labels','columns']
-
-    if fmt == 'json':
-        if 'path' in kwargs:
-            data['path'] = kwargs['path']
-        if 'order' in kwargs:
-            data['order'] = kwargs['order']
-        # if 'labels' in kwargs:
-        #     data['columns'] = kwargs['labels']
-
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    elif fmt == 'html':
-
-        try: path = data['path']
-        except: path = ''
-
-        for d in data:
-            if isinstance(data[d], list) or isinstance(data[d], tuple):
-                # it's a list and apparently we assume
-                # that it is the actual data not its metadata #forheadsmack#
-
-                if d in ignore: continue
-                returndata = {'data':data[d]}
-
-                if 'size' in kwargs:
-                    returndata['size'] = kwargs['size']
-                if 'path' in kwargs:
-                    returndata['path'] = kwargs['path']
-                if 'columns_str' in kwargs:
-                    returndata['columns_str'] = ','.join(kwargs['columns_str'])
-                if 'labels' in kwargs:
-                    returndata['labels'] = kwargs['labels']
-                if 'checkboxes' in kwargs:
-                    returndata['checkboxes'] = kwargs['checkboxes']
-                if 'cart' in kwargs:
-                    returndata['cart'] = kwargs['cart']
-                if 'id_index' in kwargs:
-                    returndata['id_index'] = kwargs['id_index']
-                if 'page_no' in data:
-                    returndata['page_no']=data['page_no']
-
-                return render_to_response(kwargs['template'],returndata)
-
-        return render_to_response(kwargs['template'],{'data':data})
-
-
-    elif fmt == 'zip':
-        return zipped(json.dumps(data))
-
-    elif fmt == 'raw':
-        return data
-
-    # data is a list of dictionaries
-    # like: [{opus_id=something1, planet=SAt, target = Pan}, {opus_id=something21, planet=Sat, target = Pan}]
-    # each row is one dictionary
-    elif fmt == 'csv':   # must pass a list of dicts
-        if 'page' not in data:
-            # Placeholder until this routine goes away
-            log.error('response_formats: Tried to write CSV but no page')
-            data = []
-            field_names = []
-        else:
-            data = data['page']
-            field_names = kwargs['labels']
-        filename = download_file_name()
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
-        writer = csv.writer(response)
-        writer.writerow([label for label in field_names])   # first row
-        writer.writerows(data)
-        return response
-
-    raise Http404
-
-
-def zipped(data):
-    "Create a zip file from the given data"
-    # XXX NOTE: Zip file creation is completely broken and all of this needs
-    # to be rewritten. This is just a placeholder for now so that the API calls
-    # don't crash. Downloading of archive zip files does not use this routine
-    # and still works fine.
-    filename = download_file_name()
-
-    # in_memory = StringIO()
-    # zip = ZipFile(in_memory, "a")
-    # zip.writestr(filename + '.txt', str(data))
-    #
-    # # fix for Linux zip files read in Windows
-    # for file in zip.filelist:
-    #     file.create_system = 0
-    #
-    # zip.close()
-
-    response = HttpResponse(content_type="application/zip")
-    response["Content-Disposition"] = "attachment; filename=" + filename + ".zip"
-
-    # in_memory.seek(0)
-    # response.write(in_memory.read())
-
-    return response
 
 def download_file_name():
     "Create a unique download filename based on the current time"
@@ -268,7 +137,10 @@ def exit_api_call(api_code, ret):
         ret_str = ' '.join(ret_str.split()) # Compress whitespace
         s += ': ' + ret_str[:240]
         if isinstance(ret, HttpResponse):
-            s += '\n' + ret.content.decode()[:240]
+            try:
+                s += '\n' + ret.content.decode()[:240]
+            except:
+                s += '\n(Unable to display)'
         if delay_amount:
             s += f'\nDELAYING RETURN {delay_amount} SECONDS'
         getattr(log, settings.OPUS_LOG_API_CALLS.lower())(s)
@@ -388,3 +260,130 @@ def cols_to_slug_list(slugs):
     if not slugs:
         return []
     return slugs.split(',')
+
+
+def throw_random_http404_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP404 error')
+    return ret
+
+def throw_random_http500_error():
+    ret = random.random() < settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY
+    if ret:
+        getattr(log,
+            settings.OPUS_LOG_API_CALLS.lower())('Faking HTTP500 error')
+    return ret
+
+def HTTP404_NO_REQUEST(s):
+    return f'Internal error (No request was provided) for {s}'
+
+def HTTP404_BAD_OR_MISSING_REQNO(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing reqno) for {r}'
+
+def HTTP404_MISSING_OPUS_ID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Missing OPUSID for {r}'
+
+def HTTP404_UNKNOWN_FORMAT(fmt, r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Unknown return format "{fmt}") for {r}'
+
+def HTTP404_BAD_OR_MISSING_RANGE(r):
+    if type(r) != str:
+        r = r.path
+    return f'Internal error (Bad or missing range) for {r}'
+
+def HTTP404_BAD_DOWNLOAD(download, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted download argument "{download}" for {r}'
+
+def HTTP404_BAD_RECYCLEBIN(recyclebin, r):
+    if type(r) != str:
+        r = r.path
+    return (f'Internal error (Badly formatted recyclebin argument '
+            f'"{recyclebin}") for {r}')
+
+def HTTP404_BAD_COLLAPSE(collapse, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted collapse argument "{collapse}" for {r}'
+
+def HTTP404_BAD_LIMIT(limit, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted limit "{limit}" for {r}'
+
+def HTTP404_BAD_STARTOBS(startobs, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted startobs "{startobs}" for {r}'
+
+def HTTP404_BAD_PAGENO(pageno, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted page number "{pageno}" for {r}'
+
+def HTTP404_BAD_OFFSET(offset, r):
+    if type(r) != str:
+        r = r.path
+    return f'Badly formatted offset "{offset}" for {r}'
+
+def HTTP404_SEARCH_PARAMS_INVALID(r):
+    if type(r) != str:
+        r = r.path
+    return f'Search parameters invalid for {r}'
+
+def HTTP404_UNKNOWN_SLUG(slug, r):
+    if type(r) != str:
+        r = r.path
+    if slug is None:
+        return f'Unknown metadata field slug for {r}'
+    return f'Unknown metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_UNITS(units, slug, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown units "{units}" for metadata field "{slug}" for {r}'
+
+def HTTP404_UNKNOWN_RING_OBS_ID(ringobsid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown RINGOBSID "{ringobsid}" for {r}'
+
+def HTTP404_UNKNOWN_OPUS_ID(opusid, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown OPUSID "{opusid}" for {r}'
+
+def HTTP404_UNKNOWN_CATEGORY(r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown category for {r}'
+
+def wrap_http500_string(s):
+    # This duplicates the format for the Django debug page
+    ret = f'<div id="info">{s}</div>'
+    return ret
+
+def HTTP500_SEARCH_CACHE_FAILED(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(f'Internal database error for {r}')
+
+def HTTP500_DATABASE_ERROR(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(
+                f'Internal database error for {r}')
+
+def HTTP500_INTERNAL_ERROR(r):
+    if type(r) != str:
+        r = r.path
+    return wrap_http500_string(f'Unspecified internal server error for {r}')

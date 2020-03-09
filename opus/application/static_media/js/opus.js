@@ -38,7 +38,7 @@ var opus = {
     defaultColumns: DEFAULT_COLUMNS.split(","),
     defaultWidgets: DEFAULT_WIDGETS.split(","),
 
-    mainTimerInterval: 1000,
+    searchChangeDelay: 1000, // How long to wait after a search changes to do the new search
     spinnerDelay: 250, // The amount of time to wait before showing a spinner in case the API returns quickly
 
     // avoiding race conditions in ajax calls
@@ -85,14 +85,19 @@ var opus = {
 
     // searching - making queries
         // NOTE: Any changes to selections or extras will trigger load() to refresh
-        // the result count, hints, etc. at the next timer interval
+        // the result count, hints, etc. after a suitable delay
     selections: {},        // the user's search
     extras: {},            // extras to the query: qtypes
     lastSelections: {},    // lastXXX are used to monitor changes
     lastExtras: {},
+    searchChangeTimer: null, // The timer used to trigger a new search
 
-    // An object that stores normalize input validation result for each range input.
-    rangeInputFieldsValidation: {},
+    // An object that stores normalizeinput validation result for each input.
+    inputFieldsValidation: {},
+
+    // Remember nav clicks during normalize input so we can actually process them
+    // later if the inputs are valid.
+    navLinkRemembered: null,
 
     force_load: true, // set this to true to force load() when selections haven't changed
 
@@ -100,16 +105,11 @@ var opus = {
     widgetsDrawn: [], // keeps track of what widgets are actually drawn
     widgetsFetching: [], // this widget is currently being fetched
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
-    menuState: {"cats": ["obs_general"]},
 
     // opusID of the current slide show/gallery view observation.
     // Note that both browse and cart use the same dialog for galleryView, so we
     //      only need one variable to represent the last observation in that dialog
     metadataDetailOpusId: "",
-
-    // these are for the process that detects there was a change in the selection criteria and
-    // updates things
-    mainTimer: false,
 
     // store the browser version and width supported by OPUS
     browserSupport: {
@@ -143,6 +143,7 @@ var opus = {
         }
     },
 
+    oldSurfacegeoTarget: null,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
@@ -150,14 +151,20 @@ var opus = {
 
     load: function() {
         /**
-         * This function is called periodically by a timer. Each time it checks to see
-         * if the selections or extras have changed since the last call. If either
-         * has changed, or opus.force_load is true, then it starts the chain of
+         * This function is called whenever the search changes and a given time
+         * delay is exceeded. It checks to see if the selections or extras have
+         * changed since the last call. (Even if a change timer has been
+         * triggered, it's possible the user changed those parameters back again
+         * before the timer fired, in which case we don't need to do a search.)
+         * If either has changed, or opus.force_load is true, then it starts the
+         * chain of
          * 1) Check inputs for validity
          * 2) Perform the search and get the result count
          * 3) Update the result count badge(s)
          * 4) Get hinting information and update all hints
          */
+
+        opus.stopSearchChangeTimer();
 
         let [selections, extras] = o_hash.getSelectionsExtrasFromHash();
 
@@ -165,12 +172,6 @@ var opus = {
         // inputs will also have null in opus.selections
         [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
                                                                                opus.extras);
-
-        // If we just opened a widget, we don't want to perform a search
-        if (o_widgets.isGetWidgetDone) {
-            opus.updateOPUSLastSelectionsWithOPUSSelections();
-            o_widgets.isGetWidgetDone = false;
-        }
 
         // Note: When URL has an empty hash, both selections and extras returned from
         // getSelectionsExtrasFromHash will be undefined. There won't be a case when only
@@ -201,12 +202,12 @@ var opus = {
         let leaveStartObs = true;
 
         // Compare selections and last selections, extras and last extras to see if anything
-        // has changed that would require an update to the results. We ignore q-types for
+        // has changed that would require an update to the results. We ignore q-types and units for
         // search fields that aren't actually being searched on because when the user changes
-        // such a q-type, there's no point in redoing the search since the results will be
+        // such a q-type or unit, there's no point in redoing the search since the results will be
         // identical.
-        let currentExtrasQ = o_hash.extrasWithoutUnusedQtypes(selections, extras);
-        let lastExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.lastSelections, opus.lastExtras);
+        let currentExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(selections, extras);
+        let lastExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.lastSelections, opus.lastExtras);
         if (o_utils.areObjectsEqual(selections, opus.lastSelections) &&
             o_utils.areObjectsEqual(currentExtrasQ, lastExtrasQ)) {
             if (!opus.force_load) {
@@ -219,7 +220,7 @@ var opus = {
             // it means the user manually updated the URL in the browser,
             // so we have to reload the page. We can't just continue on normally
             // because we need to re-run the URL normalization process.
-            let opusExtrasQ = o_hash.extrasWithoutUnusedQtypes(opus.selections, opus.extras);
+            let opusExtrasQ = o_hash.extrasWithoutUnusedQtypesUnits(opus.selections, opus.extras);
             if (!o_utils.areObjectsEqual(selections, opus.selections) ||
                 !o_utils.areObjectsEqual(currentExtrasQ, opusExtrasQ)) {
                 // Make sure page will not reload in these cases:
@@ -236,7 +237,7 @@ var opus = {
                 if (o_widgets.isRemovingInput ||
                     o_widgets.isAddingInput ||
                     opus.isAnyNormalizeInputInProgress() ||
-                    !opus.areRangeInputsValid()) {
+                    !opus.areInputsValid()) {
                     return;
                 }
 
@@ -261,8 +262,13 @@ var opus = {
         $("#browse .op-observation-number").html(opus.spinner);
 
         // Start the spinners for the left side menu and each widget for hinting
-        $(".op-menu-text.spinner").addClass("op-show-spinner");
-        $("#op-search-widgets .spinner").fadeIn();
+        $("#sidebar .op-menu-spinner.spinner").addClass("op-show-spinner");
+        opus.widgetsDrawn.forEach(function(eachSlug) {
+            if ($(`.widget__${eachSlug}`).hasClass("range-widget") ||
+                $(`.widget__${eachSlug}`).hasClass("mult-widget")) {
+                $(`#widget__${eachSlug} .spinner`).fadeIn();
+            }
+        });
 
         // Mark the changes as complete. We have to do this before allNormalizeInputApiCall to
         // avoid a recursive api call
@@ -299,26 +305,23 @@ var opus = {
          */
         // If there are more normalized data requests in the queue, don't trigger
         // spurious result counts that we won't use anyway
-        if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
-            delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+        if (normalizedData.reqno < o_search.lastAllNormalizeRequestNo) {
             return;
         }
 
         // Take the results from the normalization, check for errors, and update the
         // UI to show the user if anything is wrong. This updates the
-        // opus.rangeInputFieldsValidation and also updates the hash.
-        o_search.validateRangeInput(normalizedData, true);
+        // opus.inputFieldsValidation and also updates the hash.
+        o_search.validateInput(normalizedData, true);
 
-        if (!opus.areRangeInputsValid()) {
+        if (!opus.areInputsValid()) {
             // We don't try to get a result count if any of the inputs are invalid.
             // Remove spinning effect on browse counts and mark as unknown.
             $("#op-result-count").text("?");
             $("#browse .op-observation-number").html("?");
-            $(".op-browse-tab").addClass("op-disabled-nav-link");
             delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
             return;
         } else {
-            $(".op-browse-tab").removeClass("op-disabled-nav-link");
             $("#sidebar").removeClass("search_overlay");
         }
 
@@ -338,6 +341,9 @@ var opus = {
             }
         }
         delete opus.normalizeInputForAllFieldsInProgress[opus.allSlug];
+
+        opus.changeTabToRemembered();
+
         // Execute the query and return the result count
         opus.lastResultCountRequestNo++;
         return $.getJSON(`/opus/__api/meta/result_count.json?${o_hash.getHash()}&reqno=${opus.lastResultCountRequestNo}`);
@@ -350,15 +356,15 @@ var opus = {
          */
 
         // We don't update the search hinting if any of the inputs are invalid.
-        // The hints were previously marked as "?" in validateRangeInput so they
+        // The hints were previously marked as "?" in validateInput so they
         // will just stay that way.
-        if (!opus.areRangeInputsValid() || !resultCountData) {
+        if (!opus.areInputsValid() || !resultCountData) {
             return;
         }
 
         // If there are more result counts in the queue, don't trigger
         // spurious hinting queries that we won't use anyway
-        if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
+        if (resultCountData.data[0].reqno < opus.lastAllNormalizeRequestNo) {
             return;
         }
 
@@ -372,7 +378,11 @@ var opus = {
 
         // Finally, update all the hints
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_search.getHinting(slug);
+            if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
+                o_search.getValidMults(slug, true);
+            } else {
+                o_search.getHinting(slug);
+            }
         });
     },
 
@@ -428,13 +438,34 @@ var opus = {
         });
     },
 
+    changeTabToRemembered: function() {
+        // If the user had clicked on a nav tab during the normalizeinput
+        // process, go ahead and execute that tab switch now
+        if (opus.navLinkRemembered !== null) {
+            opus.prefs.view = opus.navLinkRemembered;
+            opus.navLinkRemembered = null;
+            opus.triggerNavbarClick();
+        }
+    },
+
     changeTab: function(tab) {
         /**
          * This is the event handler for the user clicking on one of the main nav
          * bar tabs (views).
          */
 
-        // First hide everything and stop any interval timers
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = tab;
+            return false;
+        }
+
+        opus.navLinkRemembered = null;
+
+        if (!opus.areInputsValid()) {
+            return false;
+        }
+
+        // First hide everything
         $("#search, #detail, #cart, #browse").hide();
         o_browse.hideMenu();
 
@@ -485,6 +516,7 @@ var opus = {
                 o_search.activateSearchTab();
         }
 
+        return true;
     },
 
     hideHelpPanel: function() {
@@ -538,14 +570,14 @@ var opus = {
          * Handle the 'Reset Search' and 'Reset Search and Metadata' buttons.
          */
 
-        // Stop polling for UI changes for a moment
-        clearInterval(opus.mainTimer);
-
-        // Reset the search query and return to the Search tab
+        // Reset the search query
         opus.selections = {};
         opus.extras = {};
+        // Update the URL so getWidget below doesn't have old concepts of
+        // what mults were selected in the default widgets.
+        o_hash.updateURLFromCurrentHash(false);
+
         o_browse.clearObservationData();
-        opus.changeTab('search');
 
         // Enable or disable the 'Reset Search' and 'Reset Search and Metadata' buttons
         if (!o_utils.areObjectsEqual(opus.prefs.cols, opus.defaultColumns)) {
@@ -578,10 +610,8 @@ var opus = {
         // Reload the search menu to get the proper checkmarks and categories
         o_menu.getNewSearchMenu();
 
-        o_hash.updateURLFromCurrentHash();
-
-        // Start the main timer again
-        opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
+        // We changed the selections so do a search, but no delay needed
+        o_hash.updateURLFromCurrentHash(true, false);
     },
 
     isDrawnWidgetsListDefault: function() {
@@ -643,7 +673,7 @@ var opus = {
         $.getJSON(url, function(normalizeURLData) {
             // Display returned message, if any, in the "you have a message" modal
             if (normalizeURLData.msg) {
-                $("#op-update-url .modal-body").html(normalizeURLData.msg);
+                $("#op-update-url-modal .modal-body").html(normalizeURLData.msg);
                 $(".op-user-msg").addClass("op-show-msg");
             }
 
@@ -665,8 +695,6 @@ var opus = {
 
             // Perform rest of initialization process
             opus.opusInitialization();
-            // Watch the hash and URL for changes; this runs continuously
-            opus.mainTimer = setInterval(opus.load, opus.mainTimerInterval);
         });
     },
 
@@ -714,7 +742,18 @@ var opus = {
             adjustBrowseDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
+            opus.hideOrShowSplashText();
             o_widgets.attachStringDropdownToInput();
+        });
+
+        // Support for tooltips on touch screens
+        $(window).on("touchstart", function () {
+            // The DOM may have changed since the last touch, so remove
+            // the click handler on the remaining tooltip elements and then
+            // add it to all of them. This way we don't end up with duplicate
+            // handlers.
+            $("i[title]").off("click", opus.tooltipClickHandler);
+            $("i[title]").on("click", opus.tooltipClickHandler);
         });
 
         // Add the navbar clicking behaviors, selecting which tab to view
@@ -732,12 +771,7 @@ var opus = {
 
             // little hack in case something calls onclick programmatically
             tab = tab ? tab : "search";
-            opus.changeTab(tab);
-        });
-
-        // Make sure browse tab nav link does nothing when it's been disabled.
-        $("#op-main-nav").on("click", ".op-main-site-tabs .nav-item.op-disabled-nav-link a", function() {
-            return false;
+            return opus.changeTab(tab);
         });
 
         $(".op-help-item").on("click", function(e) {
@@ -771,7 +805,7 @@ var opus = {
         $(document).on("keydown click", function(e) {
             if ((e.which || e.keyCode) == 27) {
                 // ESC key - close modals and help panel
-                // Don't close "#op-browser-version-msg" and "#op-browser-size-msg"
+                // Don't close "#op-browser-version-msg-modal" and "#op-browser-size-msg-modal"
                 $.each($(".op-confirm-modal"), function(idx, confirmModal) {
                     if ($(confirmModal).data("action") === "esc") {
                         $(confirmModal).modal("hide");
@@ -785,7 +819,7 @@ var opus = {
         $(".op-confirm-modal").on("show.bs.modal", function (e) {
             let modal = $(this).attr("id");
             switch (modal) {
-                case "op-empty-cart":
+                case "op-empty-cart-modal":
                     let emptyCartModalMsg = "";
                     if (o_cart.recycledCount !== undefined && o_cart.recycledCount > 0) {
                         emptyCartModalMsg = "Are you sure you want to remove all observations from the cart" +
@@ -793,16 +827,16 @@ var opus = {
                     } else {
                         emptyCartModalMsg = "Are you sure you want to remove all observations from the cart?";
                     }
-                     $("#op-empty-cart .modal-body").text(emptyCartModalMsg);
+                     $("#op-empty-cart-modal .modal-body").text(emptyCartModalMsg);
                     break;
-                case "op-addall-to-cart":
+                case "op-addall-to-cart-modal":
                     // Note: If we use `` for string concatenation in html text, text will split into
                     // multiple lines in html, but stay in one line in UI. Use "+" here can make
                     // sure text stays in one line in both html and UI, just looks cleaner (in html).
                     let addAllmodalMsg = "Are you sure you want to add all" +
                                          ` ${o_utils.addCommas(o_browse.totalObsCount)} ` +
                                          "observations to the cart?";
-                    $("#op-addall-to-cart .modal-body").text(addAllmodalMsg);
+                    $("#op-addall-to-cart-modal .modal-body").text(addAllmodalMsg);
                     break;
             }
         });
@@ -819,20 +853,29 @@ var opus = {
                         case "op-reset-search-modal":
                             opus.handleResetButtons(false);
                             break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.saveChanges();
+                            break;
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
-                        case "op-empty-cart":
+                        case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;
-                        case "op-empty-recycle-bin":
+                        case "op-empty-recycle-bin-modal":
                             o_cart.emptyCartOrRecycleBin("recycleBin");
                             break;
-                        case "op-restore-recycle-bin":
+                        case "op-restore-recycle-bin-modal":
                             o_cart.restoreRecycleBin();
                             break;
-                        case "op-addall-to-cart":
+                        case "op-addall-to-cart-modal":
                             o_cart.addAllToCart();
+                            break;
+                        case "op-close-surfacegeo-widgets-modal":
+                            o_widgets.closeAllSURFACEGEOWidgets();
+                            break;
+                        case "op-http-response-error-modal":
+                            location.reload();
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -840,10 +883,13 @@ var opus = {
 
                 case "cancel":
                     switch (target) {
-                        case "op-update-url":
+                        case "op-update-url-modal":
                             // if user clicks "Dismiss Message" ("No" button), we hide the
                             // link to the message on the nav bar
                             $(".op-user-msg").removeClass("op-show-msg");
+                            break;
+                        case "op-close-metadata-modal":
+                            o_selectMetadata.discardChanges();
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -852,39 +898,60 @@ var opus = {
         });
     },
 
+    tooltipClickHandler: function () {
+        opus.tooltipRemoveHandler();
+        let title = $(this).attr("title");
+        $(this).append(`<span class="op-tooltip-text">${title}</span>`);
+        $(window).on("touchstart", opus.tooltipRemoveHandler);
+        return false;
+    },
+
+    tooltipRemoveHandler: function() {
+        $(".op-tooltip-text").remove();
+        $(window).off("touchstart", opus.tooltipRemoveHandler);
+    },
+
     displayHelpPane: function(action) {
         /**
          * Given the name of a help menu entry, open the help pane and load the
          * help contents.
          */
-        let url = "/opus/__help/";
+        let baseURL = "/opus/__help/";
+        let pdfURL = false;
+        let url = "";
         let header = "";
         switch (action) {
             case "about":
-                url += "about.html";
+                url = baseURL + "about.html";
+                pdfURL = baseURL + "about.pdf";
                 header = "About OPUS";
                 break;
             case "volumes":
-                url += "volumes.html";
+                url = baseURL + "volumes.html";
+                pdfURL = baseURL + "volumes.pdf";
                 header = "Volumes Available for Searching with OPUS";
                 break;
             case "faq":
-                url += "faq.html";
-                header = "Frequently Asked Questions (FAQ)";
+                url = baseURL + "faq.html";
+                pdfURL = baseURL + "faq.pdf";
+                header = "Frequently Asked Questions (FAQ) About OPUS";
                 break;
-            case "guide":
-                url += "guide.html";
+            case "apiguide":
+                url = baseURL + "apiguide.html";
+                pdfURL = baseURL + "apiguide.pdf";
                 header = "OPUS API Guide";
                 break;
             case "citing":
                 let searchHash = o_hash.getHashStrFromSelections();
-                url += "citing.html?stateurl=" + encodeURIComponent(window.location);
+                url = baseURL + "citing.html?stateurl=" + encodeURIComponent(window.location);
                 url += "&searchurl=" + encodeURIComponent(o_utils.getWindowURLPrefix()+"/#/"+searchHash);
                 header = "How to Cite OPUS";
+                // Can't allow pdf because wkhtmltopdf doesn't support inline image data
                 break;
             case "gettingStarted":
-                url += "gettingstarted.html";
-                header = "Getting Started";
+                url = baseURL + "gettingstarted.html";
+                pdfURL = baseURL + "gettingstarted.pdf";
+                header = "Getting Started with OPUS";
                 break;
             case "contact":
                 FeedbackMethods.open();
@@ -897,7 +964,12 @@ var opus = {
                 return;
         }
 
-        let openInNewTabButton = `<div class="op-open-help"><button type="button" class="btn btn-sm btn-secondary" data-action="${action}" title="Open the contents of this panel in a new browser tab.">View in new browser tab</button></div>`;
+        let buttons = '<div class="op-open-help">';
+        buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
+        if (pdfURL) {
+            buttons += `&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-pdf" data-action="${pdfURL}" title="Download PDF version of this panel">Download PDF</button>`;
+        }
+        buttons += "</div>";
 
         $("#op-help-panel").addClass("op-no-select");
         $(".op-cite-opus-btn").addClass(".op-prevent-pointer-events");
@@ -931,20 +1003,26 @@ var opus = {
                 document.getSelection().removeAllRanges();
                 $("#op-help-panel").removeClass("op-no-select");
 
-                let contents = `${openInNewTabButton}<div class="op-help-contents">${page}</div>`;
+                let contents = `${buttons}<div class="op-help-contents">${page}</div>`;
                 $("#op-help-panel .op-card-contents").html(contents);
-                $(".op-open-help .btn").on("click", function(e) {
+                $(".op-open-help-new-tab").on("click", function(e) {
                     let contents = $("#op-help-panel .op-help-contents").clone()[0];
                     let contentsHtml = $(contents).html().replace(/class="collapse"/g, 'class="collapse show"');
+                    contentsHtml = `<div class="op-help-contents-printable"><h1>${header}</h1>${contentsHtml}</div>`;
                     $(contents).html(contentsHtml);
                     let newTabWindow = window.open("", "_blank");
                     $(newTabWindow.document.head).html($(document.head).html().replace(/\/static_media/g, o_utils.getWindowURLPrefix()+"/static_media"));
+                    newTabWindow.document.getElementsByTagName("title")[0].innerHTML = header;
                     $(newTabWindow.document.body).append(contents)
                         .css({
                             overflow: "auto",
                             margin: "1.5em",
                             backgroundColor: "inherit"
                         });
+                });
+                $(".op-open-help-pdf").on("click", function(e) {
+                    let pdfURL = $(".op-open-help-pdf").data("action");
+                    window.open(pdfURL, "_blank");
                 });
             }
         });
@@ -956,19 +1034,28 @@ var opus = {
             url: url,
             dataType: "html",
             success: function(page) {
-                $("#op-new-user-msg .modal-body").html(page);
+                $("#op-new-user-msg-modal .modal-body").html(page);
                 $(".op-open-getting-started").on("click", function() {
-                    $("#op-new-user-msg").modal("hide");
+                    $("#op-new-user-msg-modal").modal("hide");
                     opus.displayHelpPane("gettingStarted");
                 });
 
                 $(".op-open-faq").on("click", function() {
-                    $("#op-new-user-msg").modal("hide");
+                    $("#op-new-user-msg-modal").modal("hide");
                     opus.displayHelpPane("faq");
                 });
-                $("#op-new-user-msg").modal("show");
+                opus.hideOrShowSplashText();
+                $("#op-new-user-msg-modal").modal("show");
             }
         });
+    },
+
+    hideOrShowSplashText: function() {
+        if ($(window).height() < 540) {
+            $(".op-splash-text").hide();
+        } else {
+            $(".op-splash-text").show();
+        }
     },
 
     opusInitialization: function() {
@@ -1014,7 +1101,34 @@ var opus = {
             return elementBottom > viewportTop && elementTop < viewportBottom;
         };
 
+        if (opus.isAnyNormalizeInputInProgress()) {
+            opus.navLinkRemembered = opus.prefs.view;
+        }
         opus.triggerNavbarClick();
+    },
+
+    searchChanged: function(delay) {
+        /**
+         * Start or restart the timer used to call opus.load() when a search
+         * parameter changes.
+         */
+        opus.stopSearchChangeTimer();
+        if (delay) {
+            opus.searchChangeTimer = setTimeout(opus.load, opus.searchChangeDelay);
+        } else {
+            opus.load();
+        }
+    },
+
+    stopSearchChangeTimer: function() {
+        /**
+         * Stop the timer used to call opus.load() when a search parameter
+         * changes.
+         */
+        if (opus.searchChangeTimer !== null) {
+            clearTimeout(opus.searchChangeTimer);
+            opus.searchChangeTimer = null;
+        }
     },
 
     checkBrowserSupported: function() {
@@ -1137,16 +1251,16 @@ var opus = {
                         Opera (${opus.browserSupport.opera}+),
                         and other AppleWebKit-based browsers (${opus.browserSupport["based on applewebkit"]})+.
                         ${updateString}`);
-        $("#op-browser-version-msg .modal-body").html(modalMsg);
+        $("#op-browser-version-msg-modal .modal-body").html(modalMsg);
         browserName = browserName.toLowerCase();
         opus.currentBrowser = browserName;
 
         if (opus.browserSupport[browserName] === undefined) {
-            $("#op-browser-version-msg").modal("show");
+            $("#op-browser-version-msg-modal").modal("show");
             return false;
         } else {
             if (parseFloat(browserVersion) < opus.browserSupport[browserName]) {
-                $("#op-browser-version-msg").modal("show");
+                $("#op-browser-version-msg-modal").modal("show");
                 return false;
             }
         }
@@ -1164,7 +1278,7 @@ var opus = {
              return;
          }
 
-         let modal = $("#op-browser-size-msg");
+         let modal = $("#op-browser-size-msg-modal");
 
          // This is required to handle problems of rapid hide/show sequencing
          // See: https://github.com/twbs/bootstrap/issues/3902
@@ -1179,17 +1293,17 @@ var opus = {
 
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
-            if (!$("#op-browser-size-msg").hasClass("show")) {
+            if (!$("#op-browser-size-msg-modal").hasClass("show")) {
                 let modalMsg = (`Please resize your browser. OPUS requires a browser
                                 size of at least ${opus.browserSupport.width} pixels by
                                 ${opus.browserSupport.height} pixels.`);
-                $("#op-browser-size-msg .modal-body").html(modalMsg);
+                $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
                 modal.modal("show");
             }
         } else {
-            if ($("#op-browser-size-msg").hasClass("show")) {
+            if ($("#op-browser-size-msg-modal").hasClass("show")) {
                 opus.browserSizeActionInProgress = true;
                 modal.on("hidden.bs.modal", hideCompleted);
                 modal.modal("hide");
@@ -1218,12 +1332,12 @@ var opus = {
                 Object.keys(opus.normalizeInputForCharInProgress).length > 0);
     },
 
-    areRangeInputsValid: function() {
+    areInputsValid: function() {
         /**
-         * Check if all range inputs are valid.
+         * Check if all inputs are valid.
          */
-        for (const slugWithId in opus.rangeInputFieldsValidation) {
-            if (opus.rangeInputFieldsValidation[slugWithId] === false) {
+        for (const slugWithId in opus.inputFieldsValidation) {
+            if (opus.inputFieldsValidation[slugWithId] === false) {
                 return false;
             }
         }
@@ -1241,6 +1355,19 @@ var opus = {
     },
 
 }; // end opus namespace
+
+$(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    let responseText = jqXHR.responseText;
+    let errorMsg = responseText.match(/<div id="info">([\s\S]*?)<\/div>/m)[1];
+    let modal = $("#op-http-response-error-modal");
+    let modalMsg = (`There was an error on the OPUS server. The following
+                     response was received:
+                     <br/><br/>
+                     ${errorMsg}`);
+    $(modal).find(".modal-body").html(modalMsg);
+    modal.on("shown.bs.modal");
+    modal.modal("show");
+});
 
 $(document).ready(function() {
     opus.checkBrowserSupported();

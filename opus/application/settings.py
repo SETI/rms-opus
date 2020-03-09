@@ -284,7 +284,8 @@ DATABASES = {
 # Tables in which every observation in the database appears.
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
-               'obs_surface_geometry', 'obs_wavelength', 'obs_type_image']
+               'obs_surface_geometry_name', 'obs_surface_geometry',
+               'obs_wavelength', 'obs_type_image']
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
@@ -293,9 +294,11 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'colls_browse', 'colls_order', 'colls_page',
                    'colls_startobs',
                    'cols', 'col_chooser', 'detail', 'download',
+                   'expanded_cats',
                    'gallery_data_viewer', 'ignorelog', 'limit', 'loc_type',
                    'range', 'recyclebin', 'reqno', 'request',
-                   'types', 'url_cols', 'units', 'view', 'widgets', 'widgets2',
+                   'types', 'url_cols', 'units', 'unselected_types', 'view',
+                   'widgets', 'widgets2',
                    '__sessionid')
 
 # The public URL to access OPUS
@@ -338,7 +341,7 @@ RANGE_FORM_TYPES = ('LONG','RANGE')
 MULT_FORM_TYPES  = ('GROUP','TARGETS')
 
 # First one in list is the default
-STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes')
+STRING_QTYPES = ('contains', 'begins', 'ends', 'matches', 'excludes', 'regex')
 RANGE_QTYPES = ('any', 'all', 'only')
 
 DEFAULT_PAGE_LIMIT = 100
@@ -366,20 +369,3 @@ THRESHOLD_FOR_EXPONENTIAL = 1e8
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
-
-HTTP404_NO_REQUEST = 'No request'
-HTTP404_SEARCH_PARAMS_INVALID = 'Search params invalid'
-HTTP404_UNKNOWN_FORMAT = 'Unknown format'
-HTTP404_UNKNOWN_SLUG = 'Unknown slug'
-HTTP404_UNKNOWN_OPUS_ID = 'Unknown OPUSID'
-HTTP404_MISSING_OPUS_ID = 'Missing OPUSID'
-HTTP404_UNKNOWN_RING_OBS_ID = 'Unknown RINGOBSID'
-HTTP404_UNKNOWN_CATEGORY = 'Unknown category'
-HTTP404_MISSING_REQNO = 'Missing reqno'
-HTTP404_BAD_OR_MISSING_RANGE = 'Bad or missing range'
-HTTP404_UNKNOWN_UNITS = 'Unknown units'
-
-HTTP500_SEARCH_FAILED = 'Search failed'
-HTTP500_SQL_FAILED = 'SQL query failed'
-HTTP500_DATABASE_ERROR = 'Database error'
-HTTP500_INTERNAL_ERROR = 'Internal error'

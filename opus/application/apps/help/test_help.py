@@ -15,6 +15,9 @@ class helpTests(TestCase):
 
     def setUp(self):
         self.maxDiff = None
+        settings.OPUS_FAKE_API_DELAYS = 0
+        settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
+        settings.OPUS_FAKE_SERVER_ERROR500_PROBABILITY = 0
         logging.disable(logging.ERROR)
         cache.clear()
         self.factory = RequestFactory()
@@ -29,16 +32,18 @@ class helpTests(TestCase):
 
     def test__api_about_no_request(self):
         "[test_help.py] api_about: no request"
-        with self.assertRaises(Http404):
-            api_about(None)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/about.html'):
+            api_about(None, 'html')
 
     def test__api_about_no_get(self):
         "[test_help.py] api_about: no GET"
         c = Client()
         request = self.factory.get('__help/about.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_about(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/about.html'):
+            api_about(request, 'html')
 
 
             ##########################################
@@ -47,16 +52,18 @@ class helpTests(TestCase):
 
     def test__api_volumes_no_request(self):
         "[test_help.py] api_volumes: no request"
-        with self.assertRaises(Http404):
-            api_volumes(None)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/volumes.html'):
+            api_volumes(None, 'html')
 
     def test__api_volumes_no_get(self):
         "[test_help.py] api_volumes: no GET"
         c = Client()
         request = self.factory.get('__help/volumes.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_volumes(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/volumes.html'):
+            api_volumes(request, 'html')
 
 
             ######################################
@@ -65,52 +72,38 @@ class helpTests(TestCase):
 
     def test__api_faq_no_request(self):
         "[test_help.py] api_faq: no request"
-        with self.assertRaises(Http404):
-            api_faq(None)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/faq.html'):
+            api_faq(None, 'html')
 
     def test__api_faq_no_get(self):
         "[test_help.py] api_faq: no GET"
         c = Client()
         request = self.factory.get('__help/faq.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_faq(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/faq.html'):
+            api_faq(request, 'html')
 
 
             ########################################
             ######### api_guide UNIT TESTS #########
             ########################################
 
-    def test__api_guide_no_request(self):
-        "[test_help.py] api_guide: no request"
-        with self.assertRaises(Http404):
-            api_guide(None)
+    def test__api_api_guide_no_request(self):
+        "[test_help.py] api_api_guide: no request"
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/apiguide.html'):
+            api_api_guide(None, 'html')
 
-    def test__api_guide_no_get(self):
-        "[test_help.py] api_guide: no GET"
+    def test__api_api_guide_no_get(self):
+        "[test_help.py] api_api_guide: no GET"
         c = Client()
-        request = self.factory.get('__help/guide.html')
+        request = self.factory.get('__help/apiguide.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_guide(request)
-
-
-            ###########################################
-            ######### api_tutorial UNIT TESTS #########
-            ###########################################
-
-    def test__api_tutorial_no_request(self):
-        "[test_help.py] api_tutorial: no request"
-        with self.assertRaises(Http404):
-            api_tutorial(None)
-
-    def test__api_tutorial_no_get(self):
-        "[test_help.py] api_tutorial: no GET"
-        c = Client()
-        request = self.factory.get('__help/tutorial.html')
-        request.GET = None
-        with self.assertRaises(Http404):
-            api_tutorial(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/apiguide.html'):
+            api_api_guide(request, 'html')
 
 
             #################################################
@@ -119,16 +112,18 @@ class helpTests(TestCase):
 
     def test__api_gettingstarted_no_request(self):
         "[test_help.py] api_gettingstarted: no request"
-        with self.assertRaises(Http404):
-            api_gettingstarted(None)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/gettingstarted.html'):
+            api_gettingstarted(None, 'html')
 
     def test__api_gettingstarted_no_get(self):
         "[test_help.py] api_gettingstarted: no GET"
         c = Client()
         request = self.factory.get('__help/gettingstarted.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_gettingstarted(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/gettingstarted.html'):
+            api_gettingstarted(request, 'html')
 
 
             #########################################
@@ -137,7 +132,8 @@ class helpTests(TestCase):
 
     def test__api_splash_no_request(self):
         "[test_help.py] api_splash: no request"
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/splash.html'):
             api_splash(None)
 
     def test__api_splash_no_get(self):
@@ -145,7 +141,8 @@ class helpTests(TestCase):
         c = Client()
         request = self.factory.get('__help/splash.html')
         request.GET = None
-        with self.assertRaises(Http404):
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/splash.html'):
             api_splash(request)
 
 
@@ -155,13 +152,15 @@ class helpTests(TestCase):
 
     def test__api_citing_opus_no_request(self):
         "[test_help.py] api_citing_opus: no request"
-        with self.assertRaises(Http404):
-            api_citing_opus(None)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/citing.html'):
+            api_citing_opus(None, 'html')
 
     def test__api_citing_opus_no_get(self):
         "[test_help.py] api_citing_opus: no GET"
         c = Client()
         request = self.factory.get('__help/citing.html')
         request.GET = None
-        with self.assertRaises(Http404):
-            api_citing_opus(request)
+        with self.assertRaisesRegex(Http404,
+            r'Internal error \(No request was provided\) for /__help/citing.html'):
+            api_citing_opus(request, 'html')

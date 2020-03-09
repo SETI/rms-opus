@@ -15,20 +15,37 @@ import json
 import logging
 import math
 import re
-import sys
+import regex # This is used instead of "re" because it's closer to the ICU
+             # regex library used by MySQL
+import time
 
 from django.apps import apps
 from django.core.cache import cache
 from django.db import connection, DatabaseError
 from django.db.models import Q
-from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.utils import IntegrityError
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponseServerError
 
 from paraminfo.models import ParamInfo
-from search.models import *
-from tools.app_utils import *
-from tools.db_utils import *
+from search.models import UserSearches
+from tools.app_utils import (enter_api_call,
+                             exit_api_call,
+                             format_metadata_number_or_func,
+                             get_mult_name,
+                             get_reqno,
+                             json_response,
+                             parse_form_type,
+                             sort_dictionary,
+                             strip_numeric_suffix,
+                             throw_random_http404_error,
+                             throw_random_http500_error,
+                             HTTP404_BAD_LIMIT,
+                             HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_NO_REQUEST,
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_SLUG)
+from tools.db_utils import (MYSQL_EXECUTION_TIME_EXCEEDED,
+                            MYSQL_TABLE_ALREADY_EXISTS)
 
 import settings
 
@@ -63,24 +80,24 @@ def api_normalize_input(request):
     api_code = enter_api_call('api_normalize_input', request)
 
     if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+        ret = Http404(HTTP404_NO_REQUEST('/__api/normalizeinput.json'))
         exit_api_call(api_code, ret)
         raise ret
     (selections, extras) = url_to_search_params(request.GET,
                                                 allow_errors=True,
                                                 return_slugs=True,
                                                 pretty_results=True)
-    if selections is None:
+    if selections is None or throw_random_http404_error():
         log.error('api_normalize_input: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_normalize_input: Missing or badly formatted reqno')
-        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
         raise ret
     selections['reqno'] = reqno
@@ -124,15 +141,16 @@ def api_string_search_choices(request, slug):
     api_code = enter_api_call('api_string_search_choices', request)
 
     if not request or request.GET is None:
-        ret = Http404(settings.HTTP404_NO_REQUEST)
+        ret = Http404(HTTP404_NO_REQUEST(
+                                f'/__api/stringsearchchoices/{slug}.json'))
         exit_api_call(api_code, ret)
         raise ret
 
     param_info = get_param_info_by_slug(slug, 'search')
-    if not param_info:
+    if not param_info or throw_random_http404_error():
         log.error('api_string_search_choices: unknown slug "%s"',
                   slug)
-        ret = Http404('Unknown slug')
+        ret = Http404(HTTP404_UNKNOWN_SLUG(slug, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -140,18 +158,24 @@ def api_string_search_choices(request, slug):
     param_category = param_info.category_name
     param_name = param_info.name
 
-    (selections, extras) = url_to_search_params(request.GET)
-    if selections is None:
+    # We'd really rather not have to use allow_regex_errors here,
+    # but the front end will send us search strings with bad regex
+    # in the current input field due to the way autocomplete is timed
+    # relative to input validation. Note that we'll delete this bad
+    # search term later and catch the bad regex below.
+    (selections, extras) = url_to_search_params(request.GET,
+                                                allow_regex_errors=True)
+    if selections is None or throw_random_http404_error():
         log.error('api_string_search_choices: Could not find selections for'
                   +' request %s', str(request.GET))
-        ret = Http404('Parsing of selections failed')
+        ret = Http404(HTTP404_SEARCH_PARAMS_INVALID(request))
         exit_api_call(api_code, ret)
         raise ret
 
     reqno = get_reqno(request)
-    if reqno is None:
+    if reqno is None or throw_random_http404_error():
         log.error('api_normalize_input: Missing or badly formatted reqno')
-        ret = Http404(settings.HTTP404_MISSING_REQNO)
+        ret = Http404(HTTP404_BAD_OR_MISSING_REQNO(request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -173,38 +197,46 @@ def api_string_search_choices(request, slug):
     # Must do this here before deleting the slug from selections below
     like_query, like_params = get_string_query(selections, param_qualified_name,
                                                query_qtype_list)
-    if like_query is None: # pragma: no cover
-        ret = Http404('Bad string query')
+    if like_query is None or throw_random_http500_error(): # pragma: no cover
+        # This is usually caused by a bad regex
+        result = {'choices': [],
+                  'full_search': True,
+                  'truncated_results': False}
+        result['reqno'] = reqno
+        ret = json_response(result)
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     partial_query = selections[param_qualified_name][0]
     del selections[param_qualified_name]
 
     user_query_table = get_user_query_table(selections, extras,
                                             api_code=api_code)
-    if not user_query_table: # pragma: no cover
+    if not user_query_table or throw_random_http500_error(): # pragma: no cover
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = Http404('Bad search')
+        ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     limit = request.GET.get('limit', settings.DEFAULT_STRINGCHOICE_LIMIT)
     try:
         limit = int(limit)
+        if throw_random_http404_error(): # pragma: no cover
+            raise ValueError
     except ValueError:
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        ret = Http404('Bad limit')
+        ret = Http404(HTTP404_BAD_LIMIT(limit, request))
         exit_api_call(api_code, ret)
         raise ret
 
-    if limit < 1 or limit > settings.SQL_MAX_LIMIT:
+    if (limit < 1 or limit > settings.SQL_MAX_LIMIT or
+        throw_random_http404_error()):
         log.error('api_string_search_choices: Bad limit for'
                   +' request %s', str(request.GET))
-        ret = Http404('Bad limit')
+        ret = Http404(HTTP404_BAD_LIMIT(limit, request))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -240,11 +272,12 @@ def api_string_search_choices(request, slug):
     cursor = connection.cursor()
     cursor.execute(sql)
     results = cursor.fetchall()
-    if len(results) != 1 or len(results[0]) != 1: # pragma: no cover
+    if (len(results) != 1 or len(results[0]) != 1 or
+        throw_random_http500_error()): # pragma: no cover
         log.error('api_string_search_choices: SQL failure: %s', sql)
-        ret = Http404('Bad SQL')
+        ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
         exit_api_call(api_code, ret)
-        raise ret
+        return ret
 
     final_results = None
     truncated_results = False
@@ -282,13 +315,15 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
+            if throw_random_http500_error(): # pragma: no cover
+                raise DatabaseError('random')
         except DatabaseError as e:
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
-                ret = Http404('Bad SQL')
+                ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
                 exit_api_call(api_code, ret)
-                raise ret
+                return ret
             do_simple_search = True
 
     if do_simple_search:
@@ -311,13 +346,15 @@ def api_string_search_choices(request, slug):
 
         try:
             cursor.execute(sql, tuple(sql_params))
+            if throw_random_http500_error(): # pragma: no cover
+                raise DatabaseError('random')
         except DatabaseError as e:
             if e.args[0] != MYSQL_EXECUTION_TIME_EXCEEDED: # pragma: no cover
                 log.error('api_string_search_choices: "%s" returned %s',
                           sql, str(e))
-                ret = Http404('Bad SQL')
+                ret = HttpResponseServerError(HTTP500_DATABASE_ERROR(request))
                 exit_api_call(api_code, ret)
-                raise ret
+                return ret
             final_results = []
 
     if final_results is None: # pragma: no cover
@@ -331,10 +368,21 @@ def api_string_search_choices(request, slug):
 
         final_results = [x[0] for x in final_results]
         if partial_query:
-            pattern = re.compile('('+re.escape(partial_query)+')',
-                                 re.IGNORECASE)
-            final_results = [pattern.sub('<b>\\1</b>', x)
-                             for x in final_results]
+            esc_partial_query = partial_query
+            if query_qtype != 'regex':
+                # Note - there is no regex.escape function available
+                esc_partial_query = re.escape(partial_query)
+            try:
+                # We have to catch all random exceptions here because the
+                # compile may fail if the user gives regex that is bad for
+                # the regex library but wasn't caught by _valid_regex
+                # because it wasn't bad for MySQL
+                pattern = regex.compile(f'({esc_partial_query})',
+                                        regex.IGNORECASE | regex.V1)
+                final_results = [pattern.sub('<b>\\1</b>', x)
+                                 for x in final_results]
+            except:
+                pass
 
     if len(final_results) > limit:
         final_results = final_results[:limit]
@@ -356,8 +404,11 @@ def api_string_search_choices(request, slug):
 #
 ################################################################################
 
-def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
-                         pretty_results=False, allow_empty=False):
+def url_to_search_params(request_get, allow_errors=False,
+                         allow_regex_errors=False,
+                         return_slugs=False,
+                         pretty_results=False,
+                         allow_empty=False):
     """Convert a URL to a set of selections and extras.
 
     This is the MAIN routine for taking a URL and parsing it for searching.
@@ -381,6 +432,10 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
 
     If allow_errors is True, then even if a value can't be parsed, the rest
     of the slugs are processed and the bad slug is just marked with None.
+
+    If allow_regex_errors is True, then even if a regex is badly formatted,
+    the rest of the slugs are processed and the bad slug is just marked with
+    None.
 
     If return_slugs is True, the indexes into selections are slug names, not
     qualified names (table.column).
@@ -452,16 +507,19 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
         clause_num = 1
         clause_num_str = ''
         if '_' in slug:
-            clause_num_str = slug[slug.index('_'):]
-            slug = slug[:slug.index('_')]
+            clause_num_str = slug[slug.rindex('_'):]
             try:
                 clause_num = int(clause_num_str[1:])
-                if clause_num < 1:
+                if clause_num > 0:
+                    slug = slug[:slug.rindex('_')]
+                else:
                     raise ValueError
             except ValueError:
-                log.error('url_to_search_params: Slug has illegal clause '+
-                          'number "%s"', orig_slug)
-                return None, None
+                # If clause_num is not a positive integer, leave the slug as is.
+                # If the slug is unknown, it will be caught later as an unknown
+                # slug.
+                clause_num = 1
+                clause_num_str = ''
 
         # Find the master param_info
         param_info = None
@@ -821,14 +879,22 @@ def url_to_search_params(request_get, allow_errors=False, return_slugs=False,
             log.error('url_to_search_params: String field "%s" has unit',
                       orig_slug)
             return None, None
-        new_value = None
+        new_value = ''
         new_slug = slug_no_num+clause_num_str
         if new_slug in request_get:
             new_value = request_get[new_slug]
+        if new_value and qtype_val == 'regex' and not allow_regex_errors:
+            if not _valid_regex(new_value):
+                if not allow_errors:
+                    log.error('url_to_search_params: String "%s" '
+                              +'slug "%s" is not a valid regex',
+                              new_value, slug)
+                    return None, None
+                new_value = None
         if return_slugs:
-            selections[slug] = new_value
-            qtypes[slug] = qtype_val
-            units[slug] = unit_val
+            selections[new_slug] = new_value
+            qtypes[new_slug] = qtype_val
+            units[new_slug] = unit_val
         elif (allow_empty or
               (new_value is not None and
                new_value != '')):
@@ -1364,6 +1430,18 @@ def construct_query_string(selections, extras):
     return sql, clause_params
 
 
+def _valid_regex(r):
+    # Validate the regex syntax. The only way to do this with certainty
+    # is to actually try it on the SQL server and see if it throws
+    # an error. No need to log this, though, because it's just bad
+    # user input, not a real internal error.
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f'SELECT REGEXP_LIKE("x", %s)', (r,))
+    except DatabaseError:
+        return False
+    return True
+
 def get_string_query(selections, param_qualified_name, qtypes):
     """Builds query for strings.
 
@@ -1411,10 +1489,11 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
         clause = ''
 
-        value = value.replace('\\', '\\\\')
-        if qtype != 'matches':
-            value = value.replace('%', '\\%')
-            value = value.replace('_', '\\_')
+        if qtype != 'regex':
+            value = value.replace('\\', '\\\\')
+            if qtype != 'matches':
+                value = value.replace('%', '\\%')
+                value = value.replace('_', '\\_')
 
         if qtype == 'contains':
             clause = quoted_param_qualified_name + ' LIKE %s'
@@ -1431,6 +1510,11 @@ def get_string_query(selections, param_qualified_name, qtypes):
         elif qtype == 'excludes':
             clause = quoted_param_qualified_name + ' NOT LIKE %s'
             params.append('%'+value+'%')
+        elif qtype == 'regex':
+            if not _valid_regex(value):
+                return None, None
+            clause = quoted_param_qualified_name + ' RLIKE %s'
+            params.append(value)
         else:
             log.error('_get_string_query: Unknown qtype "%s" '
                       +'for "%s" '

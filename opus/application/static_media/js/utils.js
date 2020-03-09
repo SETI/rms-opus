@@ -17,8 +17,7 @@ var o_utils = {
      **/
     areObjectsEqual: function(obj1, obj2) {
         /**
-         * This is for comparing selections or lastSelections
-         * Expects objects whose values are all arrays.
+         * This is for comparing objects whose values are all arrays.
          * NOTE: We don't want to use JSON.stringify to directly compare
          * two objects because the order of keys in the object will matter
          * in that case.
@@ -109,7 +108,19 @@ var o_utils = {
     // or inner objects. In our case, we only have arrays as values.
     deepCloneObj: function(obj) {
         return JSON.parse(JSON.stringify(obj));
-    }
+    },
+
+    // This function is patterned after slug_name_for_sfc_target in import_util.py.
+    getSurfacegeoTargetSlug: function(target) {
+        /**
+         * Take in a surface geo target pretty name and return a slug name
+         * for the target.
+         */
+        let slugName = target.toLowerCase();
+        // remove all "_", "/", and " "
+        slugName = slugName.replace(/_/g, "").replace(/\//g, "").replace(/ /g, "");
+        return slugName;
+    },
 };
 
 /**
