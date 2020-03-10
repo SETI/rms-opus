@@ -117,11 +117,11 @@
                             <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                 <i class="fas fa-random"></i>
                             </span>
-                            <ul class="op-sort-contents list-inline"></ul>
-                            <span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
-                                <i class="fas fa-pencil-alt"></i>
-                            </span>
-                         </div>
+                            <ul class="op-sort-contents font-sm list-inline"></ul>
+							<span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
+								<i class="fas fa-plus"></i>
+							</span>
+                        </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid">
                        <div class="op-results-message">
@@ -189,7 +189,7 @@
                                 </span>
                                 <ul class="op-sort-contents list-inline"></ul>
 								<span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
-									<i class="fas fa-pencil-alt"></i>
+									<i class="fas fa-plus"></i>
 								</span>
                             </div>
                             <div class="op-cart-actions">
@@ -282,6 +282,12 @@
             <a class="dropdown-item" data-action="downloadCSVAll" href="#" download><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
             <a class="dropdown-item" data-action="downloadData" href="#" download><i class="fas fa-download"></i>Download zipped data archive&nbsp;</a>
             <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
+        </div>
+
+        <!-- dropdown menu for sort metadata columns -->
+        <div class="dropdown-menu dropdown-menu-sm" id="op-add-sort-metadata" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add metadata to sort</h2>
+			<div class="op-sort-list"></div>
         </div>
 
         <!--sliding panel for the help menu items -->

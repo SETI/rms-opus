@@ -467,7 +467,7 @@ var opus = {
 
         // First hide everything
         $("#search, #detail, #cart, #browse").hide();
-        o_browse.hideMenu();
+        o_browse.hideMenus();
 
         // Close any open modals
         $("#galleryView").modal('hide');
@@ -709,6 +709,7 @@ var opus = {
         o_browse.addBrowseBehaviors();
         o_cart.addCartBehaviors();
         o_search.addSearchBehaviors();
+        o_sortMetadata.addBehaviours();
     },
 
     addOpusBehaviors: function() {

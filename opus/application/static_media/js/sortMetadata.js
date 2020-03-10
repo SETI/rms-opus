@@ -18,7 +18,7 @@ var o_sortMetadata = {
     *  all the things that happen when editting the sort on metadata
     *
     **/
-    addSortMetadataBehaviours: function() {
+    addBehaviours: function() {
         $(".op-sort-contents").sortable({
             items: "li",
             cursor: "grab",
@@ -37,18 +37,27 @@ var o_sortMetadata = {
         });
 
         // click table column header to reorder by that column
-        $("#browse, #cart").on("click", ".op-data-table-view th a",  function() {
+        $("#browse, #cart").on("click", ".op-data-table-view th a",  function(e) {
+            o_browse.hideMenus();
+            o_sortMetadata.onClickSortOrder($(this).data("slug"));
+            return false;
+        });
+
+        $(".op-sort-list").on("click", ".dropdown-item", function(e) {
+            o_browse.hideMenus();
             o_sortMetadata.onClickSortOrder($(this).data("slug"));
             return false;
         });
 
         // browse sort order - flip sort order of a slug
-        $(".op-sort-contents").on("click", "li .flip-sort", function() {
+        $(".op-sort-contents").on("click", "li .op-flip-sort", function(e) {
+            o_browse.hideMenus();
             o_sortMetadata.onClickSortOrder($(this).parent().data("slug"));
         });
 
         // browse sort order - remove sort slug
-        $(".op-sort-contents").on("click", "li .remove-sort", function() {
+        $(".op-sort-contents").on("click", "li .op-remove-sort", function(e) {
+            o_browse.hideMenus();
             o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
             let descending = $(this).parent().attr("data-descending");
@@ -71,15 +80,16 @@ var o_sortMetadata = {
             o_sortMetadata.renderSortedDataFromBeginning();
         });
 
-        $(".op-sort-order-add-icon").on("click", function() {
-            console.log("click");
+        $(".op-sort-order-add-icon").on("click", function(e) {
+            o_browse.hideMenus();
+            o_sortMetadata.showMenu(e);
+            return false;
         });
     }, // end edit sort metadata behaviours
 
     onClickSortOrder: function(orderBy) {
         o_browse.showPageLoaderSpinner();
 
-        // get order of opusid when table header is clicked
         let order = [];
         let orderIndex = -1;
         let hash = o_hash.getHashArray();
@@ -89,7 +99,7 @@ var o_sortMetadata = {
 
         let isDescending = true;
         let tableOrderIndicator = $(`[data-slug='${orderBy}'] .op-column-ordering`);
-        let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .flip-sort`);
+        let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .op-flip-sort`);
 
         switch (tableOrderIndicator.data("sort")) {
             case "asc":
@@ -125,6 +135,36 @@ var o_sortMetadata = {
         o_sortMetadata.renderSortedDataFromBeginning();
     },
 
+    showMenu: function(e) {
+        // make this like a default right click menu
+        let tab = opus.getViewTab();
+        let contextMenu = "#op-add-sort-metadata";
+        if ($(contextMenu).hasClass("show")) {
+            //o_browse.hideMenu();
+        }
+
+        let menu = {"height":$("#op-add-sort-metadata").innerHeight(), "width":$(contextMenu).innerWidth()};
+        let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY + 8: e.pageY-menu.height;
+        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
+
+        html = "";
+
+        $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
+            let slug = $(obj).data("slug");
+            let label = $(obj).data("label");
+            if ($(obj).find(".op-column-ordering").data("sort") === "none") {
+                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#">${label}<i class="pl-4 fas fa-sort"></i></a>`;
+            }
+        });
+        $("#op-add-sort-metadata .op-sort-list").html(html);
+
+        $(contextMenu).css({
+            display: "block",
+            top: top,
+            left: left
+        }).addClass("show");
+    },
+
     // update order arrows right away when user clicks on sorting arrows in pill or table header
     // sync up arrows in both sorting pill and table header
     updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending, slug) {
@@ -150,14 +190,14 @@ var o_sortMetadata = {
             listHtml += "<li class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${descending}">`;
             if (removeable) {
-                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
+                listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
             if (descending) {
-                listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
+                listHtml += "<span class='op-flip-sort' title='Change to ascending sort'>";
                 listHtml += label;
                 listHtml += ` <i class="${pillSortUpArrow}"></i>`;
             } else {
-                listHtml += "<span class='flip-sort' title='Change to descending sort'>";
+                listHtml += "<span class='op-flip-sort' title='Change to descending sort'>";
                 listHtml += label;
                 listHtml += ` <i class="${pillSortDownArrow}"></i>`;
             }

@@ -88,7 +88,7 @@ var o_browse = {
                     }
                 }
             }
-            o_browse.hideMenu();
+            o_browse.hideMenus();
         });
 
         $("#op-select-metadata").modal({
@@ -103,7 +103,7 @@ var o_browse = {
                 return false;
             }
 
-            o_browse.hideMenu();
+            o_browse.hideMenus();
             let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
             if (!o_browse.isGalleryView()) {
@@ -143,7 +143,7 @@ var o_browse = {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
             e.preventDefault();
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             let opusId = $(this).parent().data("id");
 
@@ -183,7 +183,7 @@ var o_browse = {
         $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
             e.preventDefault();
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -225,12 +225,12 @@ var o_browse = {
 
             switch (iconAction) {
                 case "info":  // detail page
-                    o_browse.hideMenu();
+                    o_browse.hideMenus();
                     o_browse.showDetail(e, opusId);
                     break;
 
                 case "cart":   // add to cart
-                    o_browse.hideMenu();
+                    o_browse.hideMenus();
 
                     if (e.shiftKey) {
                         o_browse.cartShiftKeyHandler(e, opusId);
@@ -256,7 +256,7 @@ var o_browse = {
             handle: ".modal-content",
             cancel: ".contents",
             drag: function(event, ui) {
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             }
         });
 
@@ -306,14 +306,14 @@ var o_browse = {
         });
 
         $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
-            o_browse.hideMenu();
+            o_browse.hideMenus();
             return false;
         });
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
             let opusId = $(this).parent().attr("data-id");
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -362,7 +362,7 @@ var o_browse = {
             slide: function(event, ui) {
                 let tab = ui.handle.dataset.target;
                 o_browse.onSliderHandleMoving(tab, ui.value);
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             },
             stop: function(event, ui) {
                 let tab = ui.handle.dataset.target;
@@ -374,7 +374,7 @@ var o_browse = {
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
            if (!(e.ctrlKey || e.metaKey)) {
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             }
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
@@ -978,8 +978,9 @@ var o_browse = {
         opus.metadataDetailOpusId = "";
     },
 
-    hideMenu: function() {
+    hideMenus: function() {
         $("#op-obs-menu").removeClass("show").hide();
+        $("#op-add-sort-metadata").removeClass("show").hide();
     },
 
     showMenu: function(e, opusId) {
@@ -1149,6 +1150,10 @@ var o_browse = {
         let browseViewSelector = $(`${tab} .op-browse-view`);
 
         let suppressScrollY = false;
+
+        if (opus.prefs.order.length === 0) {
+            //$("op-sort-order-add-icon").addClass("op-button-disabled");
+        }
 
         if (o_browse.isGalleryView()) {
             $(".op-data-table-view", tab).hide();

@@ -1632,7 +1632,7 @@ panel are properly separated */
     margin-bottom: -10px;
 }
 
-.flip-sort {
+.op-flip-sort {
     cursor: row-resize;
 }
 

@@ -36,7 +36,7 @@ var o_selectMetadata = {
             $("#op-select-metadata .modal-dialog").css({top: 0, left: 0});
             o_selectMetadata.saveOpusPrefsCols();
             o_selectMetadata.adjustHeight();
-            o_browse.hideMenu();
+            o_browse.hideMenus();
             o_selectMetadata.render();
 
             // Do the fake API call to write in the Apache log files that
