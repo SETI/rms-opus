@@ -57,7 +57,10 @@ from tools.app_utils import (csv_response,
                              HTTP404_SEARCH_PARAMS_INVALID,
                              HTTP404_UNKNOWN_FORMAT,
                              HTTP404_UNKNOWN_SLUG,
-                             HTTP404_UNKNOWN_UNITS)
+                             HTTP404_UNKNOWN_UNITS,
+                             HTTP500_DATABASE_ERROR,
+                             HTTP500_INTERNAL_ERROR,
+                             HTTP500_SEARCH_CACHE_FAILED)
 
 import opus_support
 
@@ -262,7 +265,7 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
             log.error('api_get_mult_counts: has selections but no user_table '
                       +'found *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+            ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
             exit_api_call(api_code, ret)
             return ret
 
@@ -454,7 +457,7 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             log.error('api_get_range_endpoints: Count not retrieve query table'
                       +' for *** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+            ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
             exit_api_call(api_code, ret)
             return ret
     else:
@@ -639,7 +642,7 @@ def get_result_count_helper(request, api_code):
     if not table or throw_random_http500_error(): # pragma: no cover
         log.error('get_result_count_helper: Could not find/create query table '
                   +'for request %s', str(request.GET))
-        ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
         return None, None, ret
 
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
