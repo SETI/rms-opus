@@ -73,7 +73,10 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP404_UNKNOWN_CATEGORY,
                              HTTP404_UNKNOWN_OPUS_ID,
                              HTTP404_UNKNOWN_RING_OBS_ID,
-                             HTTP404_UNKNOWN_SLUG)
+                             HTTP404_UNKNOWN_SLUG,
+                             HTTP500_DATABASE_ERROR,
+                             HTTP500_INTERNAL_ERROR,
+                             HTTP500_SEARCH_CACHE_FAILED)
 from tools.db_utils import (query_table_for_opus_id,
                             lookup_pretty_value_for_mult)
 from tools.file_utils import get_pds_preview_images, get_pds_products
@@ -1120,7 +1123,7 @@ def api_get_product_types_for_search(request):
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
         exit_api_call(api_code, ret)
         return ret
 
@@ -1407,7 +1410,7 @@ def get_search_results_chunk(request, use_cart=None,
             log.error('get_search_results_chunk: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            return error_return(500, HTTP500_SEARCH_FAILED(request))
+            return error_return(500, HTTP500_SEARCH_CACHE_FAILED(request))
 
         # First we create a temporary table that contains only those ids
         # in the limit window that we care about (if there's a limit window).

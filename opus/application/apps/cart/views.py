@@ -62,7 +62,10 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP404_BAD_RECYCLEBIN,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
-                             HTTP404_SEARCH_PARAMS_INVALID)
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP500_DATABASE_ERROR,
+                             HTTP500_INTERNAL_ERROR,
+                             HTTP500_SEARCH_CACHE_FAILED)
 from tools.file_utils import get_pds_products
 
 log = logging.getLogger(__name__)
@@ -1121,7 +1124,7 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
             log.error('_edit_cart_range: get_user_query_table failed '
                       +'*** Selections %s *** Extras %s',
                       str(selections), str(extras))
-            ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+            ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
             return ret
 
     cursor = connection.cursor()

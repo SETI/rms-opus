@@ -43,7 +43,9 @@ from tools.app_utils import (enter_api_call,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
-                             HTTP404_UNKNOWN_SLUG)
+                             HTTP404_UNKNOWN_SLUG,
+                             HTTP500_DATABASE_ERROR,
+                             HTTP500_SEARCH_CACHE_FAILED)
 from tools.db_utils import (MYSQL_EXECUTION_TIME_EXCEEDED,
                             MYSQL_TABLE_ALREADY_EXISTS)
 
@@ -216,7 +218,7 @@ def api_string_search_choices(request, slug):
         log.error('api_string_search_choices: get_user_query_table failed '
                   +'*** Selections %s *** Extras %s',
                   str(selections), str(extras))
-        ret = HttpResponseServerError(HTTP500_SEARCH_FAILED(request))
+        ret = HttpResponseServerError(HTTP500_SEARCH_CACHE_FAILED(request))
         exit_api_call(api_code, ret)
         return ret
 
