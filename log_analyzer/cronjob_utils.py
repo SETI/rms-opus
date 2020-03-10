@@ -22,10 +22,8 @@ def convert_cronjob_to_batchjob(args: Namespace) -> None:
     log_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(log_file_pattern)
                  for log_file_pattern in log_file_patterns
                  for day in range(1, run_date.day + 1)]
-    print(log_files)
     # Rob wants me to silently ignore non-existent files.
     log_files = [file for file in log_files if Path(file).exists()]
-    print(log_files)
     output_file = run_date.strftime(output_file_pattern)
     if log_files:
         # Create all necessary intermediate directories
