@@ -1,7 +1,6 @@
 /* opus-specific values live here... */
 :root {
     --op-cart-panel-width-break: 1100px;
-    --op-cart-panel-height-break: 460px;
 }
 
 body {
@@ -1534,13 +1533,6 @@ to stay in one line */
     }
 }
 
-@media (max-height: 460px) {
-    /* Hide download data pane when the screen is too short */
-    .cart_details {
-        display: none;
-    }
-}
-
 @media (max-width: 1100px) {
     /* Hide download data pane when the screen is too narrow */
     .cart_details {
@@ -1573,7 +1565,8 @@ to stay in one line */
 
 /* Remove the nav-link for opening up download data panel when screen
 is wide enough */
-@media (min-width: 1101px) and (min-height: 461px) {
+/* @media (min-width: 1101px) and (min-height: 461px) { */
+@media (min-width: 1101px) {
     .op-cart-toggle-download-panel {
         display: none !important;
     }
@@ -2854,6 +2847,11 @@ when wrapping into the 2nd line */
         display: none !important;
     }
 
+    /* Hide contact us when screen is narrow or short */
+    .op-help-item[data-action="contact"] {
+        display: none !important;
+    }
+
     /* Hide download zip buttons in download data panel (cart tab) */
     #create_zip_url_file, #create_zip_data_file {
         display: none !important;
@@ -2900,18 +2898,26 @@ when wrapping into the 2nd line */
     /* Reduce the space around card body in download panel when screen is narrow
     or short (cart tab) */
     #op-cart-download-panel .card-body {
-        padding-top: 0.5rem;
-        padding-left: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding-top: 0.5em;
+        padding-left: 0.5em;
+        padding-bottom: 0.5em;
     }
 
     /* Reduce the space around "Download Data" in download panel when screen is
     narrow or short (cart tab) */
     #op-cart-download-panel .card-header {
-        padding-top: 0.25rem;
-        padding-bottom: 0.25rem;
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
+        padding-top: 0.25em 0.75em;
+    }
+
+    /* Reduce the space around "Download Data" in download pane */
+    .op-download-panel-title h1 {
+        margin-top: 0.25em;
+        margin-bottom: 0.25em;
+    }
+
+    /* Reduce the size of "Metadata CSV" button */
+    .op-download-csv {
+        padding: 0.175em 0.55em;
     }
 }
 
