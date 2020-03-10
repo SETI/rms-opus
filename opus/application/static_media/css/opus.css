@@ -2766,7 +2766,7 @@ when wrapping into the 2nd line */
 }
 
 /* The followings are for mobile support (width: 550px and height: 270px) */
-@media (max-width: 580px), (max-height: 400px){
+@media (max-width: 700px), (max-height: 400px){
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
@@ -2804,6 +2804,11 @@ when wrapping into the 2nd line */
         padding: 0.1rem 0.6rem;
     }
 
+    /* Remove the top margin to make reset buttons horizontally centered */
+    .op-reset-button button {
+        margin-top: 0;
+    }
+
     /* Reduce the space around search sidebar & widgets when screen narrow
     (search tab) */
     #search {
@@ -2817,6 +2822,11 @@ when wrapping into the 2nd line */
     #search .op-widget-col {
         padding-left: 5px;
         padding-right: 5px;
+    }
+
+    /* Reduce widget title font-size to 75% */
+    .op-widget-title {
+        font-size: 75%;
     }
 
     /* Reduce the padding around widget header */
@@ -2838,7 +2848,7 @@ when wrapping into the 2nd line */
 
 }
 
-@media (max-width: 580px), (max-height: 630px) {
+@media (max-width: 700px), (max-height: 630px) {
     /* Hide the feedback button when screen is narrow or short */
     .feedbackTab {
         display: none !important;
@@ -2850,7 +2860,7 @@ when wrapping into the 2nd line */
     }
 }
 
-@media (max-width: 580px), (max-height: 400px) {
+@media (max-width: 700px), (max-height: 400px) {
     /* Shrink the modal header, modal body, and modal footer when screen is
     narrow or short (confirm modal) */
     .modal-header, .modal-body, .modal-footer {
@@ -2910,7 +2920,7 @@ when wrapping into the 2nd line */
     align-items: center !important;
 }
 
-@media (max-width: 580px) and (max-height: 400px) {
+@media (max-width: 700px) and (max-height: 400px) {
     /* Shrink the table header font size to have a better table display when
     screen is narrow & short (browse/cart tab) */
     .op-data-table-view thead {
