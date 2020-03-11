@@ -260,7 +260,8 @@ Not sure if this is the desired behavior
 
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
-@media (max-width: 970px) {
+@media (max-width: 940px) {
+/* @media (max-width: 970px) { */
     /* Make STRING input shrink proportionally when window is narrow */
     #op-search-widgets input[class~="STRING"] {
         width: 100%;
@@ -285,6 +286,18 @@ to 100%, this will make the shrinking look smoother */
 
     .op-range-input-max {
         margin-left: 0.3rem;
+    }
+
+    .op-or-labels {
+        width: auto !important;
+    }
+}
+
+/* Make sure input tags shrink more when screen get narrower before qtype groups
+are wrapped into a different line */
+@media (max-width: 1100px) {
+    input.RANGE {
+        width: 20% !important;
     }
 }
 
@@ -2558,9 +2571,17 @@ expanded/collapsed */
     display: none !important;
 }
 
-/* Make palceholder hints visible when browser width is large enough */
+/* Set the width of input.STRING to make sure it can be shrunk more when screen
+is shrinking (before reaching to the breakpoint at 940px)*/
+input.STRING {
+    width: 55%;
+}
+
+/* Make palceholder hints visible when browser width is large enough, and also
+make sure it can be shrunk more when screen is shrinking (before reaching to
+the breakpoint at 940px) */
 input.RANGE {
-    min-width: 25%;
+    width: 25%;
 }
 
 /* Style placeholder to have "..." when text is overflow */
@@ -2605,6 +2626,7 @@ wiggling when mouse over autocomplete menu items */
     text-align: center;
     font-style: italic;
     font-weight: bold;
+    width: 75%;
 }
 
 /* Styling for horizontal divider between OR label when there are multiple
@@ -2627,12 +2649,6 @@ searches */
     pointer-events: none;
 }
 
-/* Styling to make each input set takes up the width that will fit its contents */
-.op-search-inputs-set {
-    width: fit-content;
-    width: -moz-fit-content;
-}
-
 /* Hide the element but still keep its space. This is used for dummy items placed
 at the right of -- OR -- label. */
 .op-visibility-hidden {
@@ -2644,7 +2660,7 @@ at the right of -- OR -- label. */
     display: inline-block;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 940px) {
     .op-dummy-item1, .op-dummy-item2 {
         display: none !important;
     }
@@ -2769,6 +2785,13 @@ when wrapping into the 2nd line */
 
     body {
         font-size: 75% !important;
+    }
+
+    /* Reduce the thumbnail container from 100x100 to 90x90 (10% off) when font
+    size is changed */
+    .op-thumbnail-container {
+        min-width: 88px;
+        min-height: 88px;
     }
 
     .op-reset-search,
