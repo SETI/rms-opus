@@ -2783,18 +2783,18 @@ when wrapping into the 2nd line */
 
     /* Shrink the height of main nav */
     #op-main-nav {
-        padding-top: 3px;
-        padding-bottom: 3px;
+        padding-top: 0.3em;
+        padding-bottom: 0.3em;
     }
 
     /* Reduce the padding around selected tab on main nav */
     #op-main-nav .nav-link {
-        padding: 0.25rem;
+        padding: 0.4em;
     }
 
     /* Reduce the hamburger icon on main nav */
     #op-main-nav .navbar-toggler {
-        padding: 0.1rem 0.6rem;
+        padding: 0.1em 0.6em;
     }
 
     /* Remove the top margin to make reset buttons horizontally centered */
@@ -2805,16 +2805,16 @@ when wrapping into the 2nd line */
     /* Reduce the space around search sidebar & widgets when screen narrow
     (search tab) */
     #search {
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
-        padding-top: 0.25rem;
-        padding-bottom: 0.5rem;
+        padding-left: 0.25em;
+        padding-right: 0.25em;
+        padding-top: 0.25em;
+        padding-bottom: 0.5em;
     }
 
     /* Expand the width of widgets area when screen is narrow (search tab) */
     #search .op-widget-col {
-        padding-left: 5px;
-        padding-right: 5px;
+        padding-left: 0.3em;
+        padding-right: 0.3em;
     }
 
     /* Reduce widget title font-size to 75% */
@@ -2824,10 +2824,7 @@ when wrapping into the 2nd line */
 
     /* Reduce the padding around widget header */
     #widget-container .card-header {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-        padding-top: 0.25rem;
-        padding-bottom: 0.25rem;
+        padding: 0.25em 0.75em;
     }
 
     #widget-container .card-title {
@@ -2836,7 +2833,7 @@ when wrapping into the 2nd line */
 
     /* Reduce the spaces between each widget */
     #widget-container .card {
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.75em;
     }
 
 }
@@ -2862,7 +2859,7 @@ when wrapping into the 2nd line */
     /* Shrink the modal header, modal body, and modal footer when screen is
     narrow or short (confirm modal) */
     .modal-header, .modal-body, .modal-footer {
-        padding: 0.25rem 0.5rem !important;
+        padding: 0.25em 0.5em !important;
     }
 
     /* Keep the spaces for detail metadata modal in browse & cart tab to have
@@ -2870,7 +2867,7 @@ when wrapping into the 2nd line */
     #galleryView .modal-header,
     #galleryView .modal-body,
     #galleryView .modal-footer {
-        padding: 1rem !important;
+        padding: 1.3em !important;
     }
 
     /* Reduce the size of font awesome icon in slide show */
@@ -2958,7 +2955,7 @@ when wrapping into the 2nd line */
     }
 
     .op-cart-actions a {
-        margin-right: 0.5rem !important;
+        margin-right: 0.5em !important;
     }
 }
 
@@ -2972,8 +2969,8 @@ when wrapping into the 2nd line */
     /* Reduce the spaces between each item in the hamburger menu when screen is
     short */
     #op-obs-menu .dropdown-item {
-        padding-top: 1px;
-        padding-bottom: 1px;
+        padding-top: 0.1em;
+        padding-bottom: 0.1em;
     }
 
     /* Reduce spaces between each item in the help menu when screen is short */
@@ -3062,7 +3059,7 @@ when screen is narrow (cart tab) */
     /* Make observation detail area shrinkable when screen is short & narrow
     (detail tab) */
     .op-detail-metadata {
-        padding-right: 1rem !important;
+        padding-right: 1em !important;
         min-width: 100%;
     }
 
@@ -3075,9 +3072,9 @@ when screen is narrow (cart tab) */
 
     /* Reduce the spaces around detail tab when screen is short & narrow */
     #detail {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-top: 1em;
+        padding-bottom: 1em;
+        padding-left: 1em;
+        padding-right: 1em;
     }
 }
