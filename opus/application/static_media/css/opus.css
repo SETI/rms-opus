@@ -1032,20 +1032,21 @@ when window sized is narrow */
 #galleryViewContents .op-metadata-details {
     overflow-y: auto;
     /* Make #galleryView modal right contents shrink vertically
-    95% for the metadata info, 5% for the bottom icons */
-    height: 95%;
+    93% for the metadata info, 5% for the bottom icons, 2% for the gap between
+    metadata and font awesome icons */
+    height: 90%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
     right: 0;
 }
 
-@media (max-height: 300px) {
+@media (max-height: 400px) {
     #galleryViewContents .op-metadata-details {
         height: 85%;
     }
     #galleryView .bottom {
-        height: 15%;
+        height: 5%;
     }
 }
 
@@ -1376,7 +1377,7 @@ to stay in one line */
 
     /* Move the last item in flexbox to the 2nd line */
     #browse .browse-nav-container .navbar-nav {
-        flex-wrap: wrap;
+        /* flex-wrap: wrap; */
         width: 100%;
     }
 
@@ -2789,7 +2790,7 @@ when wrapping into the 2nd line */
 
     /* Reduce the padding around selected tab on main nav */
     #op-main-nav .nav-link {
-        padding: 0.4em;
+        padding: 0.25rem;
     }
 
     /* Reduce the hamburger icon on main nav */
@@ -2805,10 +2806,10 @@ when wrapping into the 2nd line */
     /* Reduce the space around search sidebar & widgets when screen narrow
     (search tab) */
     #search {
-        padding-left: 0.25em;
-        padding-right: 0.25em;
-        padding-top: 0.25em;
-        padding-bottom: 0.5em;
+        padding-left: 0.5rem;
+        padding-right: 0.25rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.5rem;
     }
 
     /* Expand the width of widgets area when screen is narrow (search tab) */
@@ -2836,6 +2837,28 @@ when wrapping into the 2nd line */
         margin-bottom: 0.75em;
     }
 
+    /* Reduce the font-size of category headers to 75% */
+    /* Original font-size 2.1875rem */
+    .op-detail-metadata h1 {
+        font-size: 1.64rem;
+    }
+
+    /* Original font-size 1.75rem */
+    .op-detail-metadata h2 {
+        font-size: 1.3125rem;
+    }
+
+    /* Original font-size 1.53125rem */
+    .op-detail-metadata h3 {
+        font-size: 1.15rem;
+    }
+
+    /* Reduce the size of zoom-in mini-thumbnail on hover */
+    .op-mini-thumbnail img:hover {
+        -ms-transform: scale(2.5); /* IE 9 */
+        -webkit-transform: scale(2.5); /* Safari 3-8 */
+        transform: scale(2.5);
+    }
 }
 
 @media (max-width: 700px), (max-height: 630px) {
@@ -2915,6 +2938,15 @@ when wrapping into the 2nd line */
     /* Reduce the size of "Metadata CSV" button */
     .op-download-csv {
         padding: 0.175em 0.55em;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Position "Download CSV (all results)" button right above the modal footer
+    when screen is narrow */
+    #op-select-metadata .op-download-csv {
+        margin-top: 0.1em;
+        bottom: auto;
     }
 }
 
