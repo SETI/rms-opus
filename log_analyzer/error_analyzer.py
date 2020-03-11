@@ -62,7 +62,7 @@ class ErrorReader(object):
         self._show_results()
 
     def _get_error_entries(self) -> List[ErrorEntry]:
-        files = [file for file in self._files if "pds_error_log" in file]
+        files = [file for file in self._files if "error" in file]
         if not files:
             raise Exception("You must specify at least one error log.")
 
@@ -77,7 +77,7 @@ class ErrorReader(object):
         return error_entries
 
     def _get_log_entries(self) -> List[LogEntry]:
-        files = [file for file in self._files if "pds_access_log" in file]
+        files = [file for file in self._files if "access" in file]
         log_entries = LogReader.read_logs(files)
         return [entry for entry in log_entries
                 # Not, we don't bother filtering out ignored ips or local network.  They won't get in the way
