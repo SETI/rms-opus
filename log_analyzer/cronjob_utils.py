@@ -5,10 +5,15 @@ from pathlib import Path
 
 import pytz
 
+
 """ Common code used for parsing cronjob args """
 
 
-def convert_cronjob_to_batchjob(args: Namespace) -> None:
+DEFAULT_TIMEZONE = pytz.utc
+# DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
+
+
+def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -> None:
     if len(args.log_files) == 0:
         raise Exception("Must specify at least one file pattern for cronjob mode")
     log_file_patterns = args.log_files
@@ -19,10 +24,15 @@ def convert_cronjob_to_batchjob(args: Namespace) -> None:
     if not output_file_pattern:
         raise Exception("Must specify the output file pattern for cronjob mode")
     run_date = __parse_cronjob_date_arg(args)
-    log_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(log_file_pattern)
-                 for log_file_pattern in log_file_patterns
-                 for day in range(1, run_date.day + 1)]
-    # Rob wants me to silently ignore non-existent files.
+    if from_first_of_month:
+        log_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(log_file_pattern)
+                     for log_file_pattern in log_file_patterns
+                     for day in range(1, run_date.day + 1)]
+    else:
+        log_files = [datetime.datetime(
+            year=run_date.year, month=run_date.month, day=run_date.day).strftime(log_file_pattern)
+                     for log_file_pattern in log_file_patterns]
+
     log_files = [file for file in log_files if Path(file).exists()]
     output_file = run_date.strftime(output_file_pattern)
     if log_files:
@@ -38,22 +48,23 @@ def __parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
     cronjob_date = args.cronjob_date
     # if the argument isn't present, use today
     if not cronjob_date:
-        today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
         return today
     # if the argument is -<number>, then it means that many days ago
     match = re.match(r'-(\d+)', cronjob_date)
     if match:
-        today = datetime.datetime.now(tz=pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
         return today - datetime.timedelta(days=int(match.group(1)))
     # if the argument is dddd-dd, then it is a year and month, and indicates the last day of that month
     match = re.match(r'(\d\d\d\d)-(\d\d)', cronjob_date)
     if match:
-        year_month = datetime.datetime(tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=1)
+        year_month = datetime.datetime(
+            tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=1)
         sometime_following_month = year_month + datetime.timedelta(days=31)
         return sometime_following_month - datetime.timedelta(days=sometime_following_month.day)
     # if the argument is dddd-dd-dd, then treat it as year-month-day
     match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d)', cronjob_date)
     if match:
         return datetime.datetime(
-            tzinfo=pytz.utc, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
+            tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
     raise Exception('cronjob_date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')

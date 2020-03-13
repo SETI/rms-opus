@@ -198,7 +198,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
 
     if args.cronjob:
-        convert_cronjob_to_batchjob(args)
+        convert_cronjob_to_batchjob(args, from_first_of_month=False)
         if not args.log_files:
             print("No log files found.")
             return
