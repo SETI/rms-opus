@@ -4,10 +4,11 @@ echo "*************************************************************"
 echo
 echo "About to ERASE and import to this database:"
 grep "^DB_SCHEMA_NAME" ../../opus_secrets.py
-read -p "ARE YOU SURE? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
+echo "Note this should be the test-style name"
+echo -n ">>> Type YES to continue: "
+read yn
+if [ "$yn" != "YES" ]; then
+    echo "Aborting"
     exit 1
 fi
 python main_opus_import.py --drop-permanent-tables --scorched-earth

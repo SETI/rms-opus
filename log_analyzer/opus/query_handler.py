@@ -11,11 +11,8 @@ from markupsafe import Markup
 from opus import slug as slug
 from opus.slug import FamilyType
 
-SearchSlugInfo = Dict[slug.Family, Dict[int, List[Tuple[slug.Info, str]]]]
-ColumnSlugInfo = Dict[slug.Family, slug.Info]
 
-
-class SearchFamilyValues(NamedTuple):
+class SearchClause(NamedTuple):
     single_value: Optional[str]
     min_value: Optional[str]
     max_value: Optional[str]
@@ -23,8 +20,24 @@ class SearchFamilyValues(NamedTuple):
     unit: Optional[str]
     flags: slug.Flags
 
+    @staticmethod
+    def from_slug_list(pairs: List[Tuple[slug.Info, str]]) -> 'SearchClause':
+        mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
+        return SearchClause(
+            min_value=mapping.get(slug.FamilyType.MIN),
+            max_value=mapping.get(slug.FamilyType.MAX),
+            single_value=mapping.get(slug.FamilyType.SINGLETON),
+            qtype=mapping.get(slug.FamilyType.QTYPE),
+            unit=mapping.get(slug.FamilyType.UNIT),
+            flags=reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
+        )
+
     def is_value_only(self) -> bool:
         return self.qtype is None and self.unit is None
+
+
+SearchSlugInfo = Dict[slug.Family, Dict[int, SearchClause]]
+ColumnSlugInfo = Dict[slug.Family, slug.Info]
 
 
 class State(Enum):
@@ -166,9 +179,8 @@ class QueryHandler:
         self._session_info.changed_search_slugs()
         is_add = family not in old_info
 
-        def pull_data(info: SearchSlugInfo) -> List[SearchFamilyValues]:
-            return [self.__parse_search_family(info[family][subgroup])
-                    for subgroup in sorted(info[family].keys())]
+        def pull_data(info: SearchSlugInfo) -> List[SearchClause]:
+            return [info[family][subgroup] for subgroup in sorted(info[family].keys())]
 
         old_data = [] if is_add else pull_data(old_info)
         new_data = pull_data(new_info)
@@ -194,7 +206,7 @@ class QueryHandler:
         self.__show_unexpected_change(family, fields_info, new_data, result)
 
     def __show_search_change_add(self, family: slug.Family, fields_info: Sequence[Tuple[str, str]],
-                                 new_data: List[SearchFamilyValues], index: int,
+                                 new_data: List[SearchClause], index: int,
                                  result: List[str], *,
                                  action: str = 'Add Search') -> None:
         search_family_values = new_data[index]
@@ -215,14 +227,14 @@ class QueryHandler:
                 joined_info = Markup(', ').join(
                     self.safe_format('<mark><ins>{}:{}</ins></mark>', name, self.__format_search_value(value), )
                     for (name, value) in fields)
-                result.append(self.safe_format('{}: &quot;{}&quot; = ({}){}', action, label, joined_info, postscript))
+                result.append(self.safe_format('{}: "{}" = ({}){}', action, label, joined_info, postscript))
             else:
                 joined_info = ", ".join(
                     f'{name.upper()}:{self.__format_search_value(value)}' for (name, value) in fields)
                 result.append(f'{action}:{space} "{label}" = ({joined_info}){postscript}')
 
     def __show_search_change_remove(self, family: slug.Family, fields_info: Sequence[Tuple[str, str]],
-                                    old_data: List[SearchFamilyValues], new_data: List[SearchFamilyValues],
+                                    old_data: List[SearchClause], new_data: List[SearchClause],
                                     index: int,
                                     result: List[str]) -> None:
         length = len(old_data)
@@ -232,14 +244,14 @@ class QueryHandler:
             self.__show_search_change_add(family, fields_info, new_data, i, result, action="- Current Search Term")
 
     def __show_unexpected_change(self, family: slug.Family, fields_info: Sequence[Tuple[str, str]],
-                                 new_data: List[SearchFamilyValues],
+                                 new_data: List[SearchClause],
                                  result: List[str]) -> None:
         result.append(f'Complex Change for Search Term: "{family.label}"')
         for i in range(len(new_data)):
             self.__show_search_change_add(family, fields_info, new_data, i, result, action="- Current Search Term")
 
     def __show_search_change_delta(self, family: slug.Family, fields_info: Sequence[Tuple[str, str]],
-                                   old_list: List[SearchFamilyValues], new_list: List[SearchFamilyValues], index: int,
+                                   old_list: List[SearchClause], new_list: List[SearchClause], index: int,
                                    result: List[str]) -> None:
         old_values, new_values = old_list[index], new_list[index]
         label = family.label if index == 0 and len(old_list) == 1 else f"{family.label} #{index + 1}"
@@ -255,7 +267,7 @@ class QueryHandler:
                     return self.safe_format(fmt, tag, self.__format_search_value(new))
 
                 joined_info = Markup(', ').join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
-                result.append(self.safe_format('Change Search: &quot;{}&quot;: ({})', label, joined_info))
+                result.append(self.safe_format('Change Search: "{}": ({})', label, joined_info))
             else:
                 def maybe_mark(tag: str, old: Optional[str], new: Optional[str]) -> str:
                     return f'{tag if old == new else tag.upper()}:{self.__format_search_value(new)}'
@@ -330,7 +342,7 @@ class QueryHandler:
                 else:
                     marked_changes.append(Markup(formatted_value))
             joined_values = Markup(',').join(marked_changes)
-            result.append(self.safe_format('Change Search: &quot;{}&quot; = {}', name, joined_values))
+            result.append(self.safe_format('Change Search: "{}" = {}', name, joined_values))
         elif old_value_set.intersection(new_value_set):
             change_list: List[Tuple[str, str]] = []
             for value in sorted(old_value_set.union(new_value_set)):
@@ -358,11 +370,11 @@ class QueryHandler:
                 self._session_info.add_search_slug(slug_name, slug_info)
 
         # Only keep the family/subgroup if there is something there besides QTYPE and UNIT
-        result: SearchSlugInfo = defaultdict(lambda: defaultdict(list))
+        result: SearchSlugInfo = defaultdict(dict)
         for (family, subgroup), slug_info_value_list in family_group_mapping.items():
             family_types = {slug_info.family_type for (slug_info, _) in slug_info_value_list}
             if family_types.difference((FamilyType.QTYPE, FamilyType.UNIT)):
-                result[family][subgroup] = slug_info_value_list
+                result[family][subgroup] = SearchClause.from_slug_list(slug_info_value_list)
         return result
 
     @staticmethod
@@ -388,7 +400,7 @@ class QueryHandler:
             if value is None:
                 return Markup('&ndash;')
             else:
-                return self.safe_format('&quot;<samp>{}</samp>&quot;', value)
+                return self.safe_format('"<samp>{}</samp>"', value)
         else:
             return '~' if value is None else '"' + value + '"'
 
@@ -399,17 +411,6 @@ class QueryHandler:
             return self.safe_format(' <span class="text-danger">({})</span>', flags.pretty_print())
         else:
             return f' **{flags.pretty_print()}**'
-
-    def __parse_search_family(self, pairs: List[Tuple[slug.Info, str]]) -> SearchFamilyValues:
-        mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
-        return SearchFamilyValues(
-            min_value=mapping.get(slug.FamilyType.MIN),
-            max_value=mapping.get(slug.FamilyType.MAX),
-            single_value=mapping.get(slug.FamilyType.SINGLETON),
-            qtype=mapping.get(slug.FamilyType.QTYPE),
-            unit=mapping.get(slug.FamilyType.UNIT),
-            flags=reduce(operator.or_, (slug_info.flags for (slug_info, _) in pairs))
-        )
 
     def safe_format(self, format_string: str, *args: Any) -> str:
         return cast(str, self._session_info.safe_format(format_string, *args))

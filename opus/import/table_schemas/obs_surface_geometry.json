@@ -60,7 +60,7 @@
             "FUNCTION",
             "obs_surface_geo_target_list"
         ],
-        "definition": "An alphabetical, comma-separated list of all targets for which surface geometry information is available. Assuming that surface geometry has been computed for a given observation, this is essentially a list of bodies in the field of view. It is most useful for searching for observations that contain two or more specific bodies. Note that the central planet is always included in the list even if it is not in the field of view. See the FAQ for more information.",
+        "definition": "An alphabetical, comma-separated list of all targets in the field of view for which surface geometry information is available. It is most useful for searching for observations that contain two or more specific bodies. See the FAQ for more information.",
         "pi_category_name": "obs_surface_geometry",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "TARGET_LIST",
@@ -68,7 +68,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "STRING",
-        "pi_intro": "For supported instruments, this field contains an alphabetical comma-separated list of bodies in the field of view plus the central planet. It is most useful for searching for observations with two or more specific bodies. Note that additional search options will not usually be provided in the left menu. Use the Surface Geometry Target Selector to show them.",
+        "pi_intro": "For supported instruments, this field contains an alphabetical comma-separated list of bodies in the field of view. It is most useful for searching for observations with two or more specific bodies. Note that additional search options will not usually be provided in the left menu. Use the Surface Geometry Target Selector to show them.",
         "pi_label": "Multiple Target List",
         "pi_label_results": "Multiple Target List",
         "pi_slug": "surfacegeometrytargetlist",
