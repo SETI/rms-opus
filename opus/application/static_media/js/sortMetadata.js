@@ -11,7 +11,6 @@ const pillSortUpArrow = "fas fa-arrow-circle-up";
 const pillSortDownArrow = "fas fa-arrow-circle-down";
 const tableSortUpArrow = "fas fa-sort-up";
 const tableSortDownArrow = "fas fa-sort-down";
-const defaultTableSortArrow = "fas fa-sort";
 
 let o_sortMetadata = {
     /**
@@ -165,7 +164,7 @@ let o_sortMetadata = {
             let slug = $(obj).data("slug");
             let label = $(obj).data("label");
             if ($(obj).find(".op-column-ordering").data("sort") === "none") {
-                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#">${label}<i class="pl-4 ${defaultTableSortArrow}"></i></a>`;
+                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#"><i class="fas fa-random pr-1"/>${label}</a>`;
             }
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
