@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_cart, o_hash, o_utils, o_selectMetadata, opus */
+/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
@@ -1377,11 +1377,28 @@ var o_browse = {
             let label = columnsNoUnits[index];
 
             // Assigning data attribute for table column sorting
-            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
-            let columnSorting = icon === "-down" ? "asc" : icon === "-up" ? "desc" : "none";
-            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' class='op-column-ordering fas fa-sort${icon}'></span></a>`;
+            let positionAsc = $.inArray(slug, order);
+            let positionDesc = $.inArray("-"+slug, order);
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
+            let orderToolTip = "";
+            let icon = "";
+            let columnSorting = "none";
+            let columnOrderPostion = "";
+
+            if (positionAsc >= 0) {
+                orderToolTip = "title='Change to descending sort'";
+                columnSorting = "asc";
+                icon =  "-down";
+                columnOrderPostion = `<span class="op-sort-position-indicator text-primary font-xs">${positionAsc+1}</span>`;
+            } else if (positionDesc >= 0) {
+                orderToolTip = "title='Change to ascending sort'";
+                columnSorting = "desc";
+                icon = "-up";
+                columnOrderPostion = `<span class="op-sort-position-indicator text-primary font-xs">${positionDesc+1}</span>`;
+            }
+            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' ${orderToolTip} class='op-column-ordering fas fa-sort${icon}'></span></a>`;
+
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}${columnOrderPostion}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);

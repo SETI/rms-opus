@@ -665,7 +665,7 @@ th.sticky-header {
 }
 
 .op-data-table th a {
-    display: block;
+    display: inline-block;
     text-align: center;
     text-decoration: none;
 }
@@ -731,6 +731,11 @@ th.sticky-header {
 /* avoid seeing through ps__rail_x in table view */
 .op-data-table-view .ps__thumb-x {
     bottom: 1px;
+}
+
+.op-sort-position-indicator {
+    vertical-align: super;
+    opacity: .7;
 }
 
 .op-mini-thumbnail {

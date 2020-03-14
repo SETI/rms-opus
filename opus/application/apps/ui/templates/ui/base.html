@@ -385,6 +385,17 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-overwrite-sort-order"
+            confirm_title="Confirm overwrite of Metadata Fields Sort Order"
+            confirm_msg="Select 'Overwrite' to update your metadata fields sort order to OPUS ID + the selected metadata field or 'Append' to append to your current sort criteria."
+            target="op-overwrite-sort-order"
+            yes_text="Overwrite"
+            no_text="Append"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-addall-to-cart-modal"
             confirm_title="Confirm Add All Observations To Cart"
             confirm_msg="Are you sure you want to add all observations to the cart?"
