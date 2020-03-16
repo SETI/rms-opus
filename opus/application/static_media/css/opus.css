@@ -1047,20 +1047,11 @@ when window sized is narrow */
     /* Make #galleryView modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
     metadata and font awesome icons */
-    height: 90%;
+    height: 93%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
     right: 0;
-}
-
-@media (max-height: 400px) {
-    #galleryViewContents .op-metadata-details {
-        height: 85%;
-    }
-    #galleryView .bottom {
-        height: 5%;
-    }
 }
 
 /* prevent weird browser y-scrollbar */
@@ -2884,7 +2875,7 @@ when wrapping into the 2nd line */
     }
 }
 
-@media (max-width: 700px), (max-height: 630px) {
+@media (max-width: 560px), (max-height: 630px) {
     /* Hide the feedback button when screen is narrow or short */
     .feedbackTab {
         display: none !important;
@@ -2892,11 +2883,6 @@ when wrapping into the 2nd line */
 
     /* Hide contact us when screen is narrow or short */
     .op-help-item[data-action="contact"] {
-        display: none !important;
-    }
-
-    /* Hide download zip buttons in download data panel (cart tab) */
-    #create_zip_url_file, #create_zip_data_file {
         display: none !important;
     }
 }
@@ -2958,8 +2944,11 @@ when wrapping into the 2nd line */
         margin-bottom: 0.25em;
     }
 
-    /* Reduce the size of "Metadata CSV" button */
-    .op-download-csv {
+    /* Reduce the size of "Metadata CSV", "Data Archive", and "URL Archive"
+    buttons */
+    .op-download-csv,
+    #create_zip_url_file a,
+    #create_zip_data_file a {
         padding: 0.175em 0.55em;
     }
 }
@@ -3108,6 +3097,12 @@ when screen is narrow (cart tab) */
 /* Make sure image always stays at the left in metadata modal */
 #galleryViewContents .row {
     flex-wrap: nowrap !important;
+}
+
+/* Make sure bottom icons will be vertically centered in metadata modal in
+different browsers */
+#galleryViewContents .bottom {
+    align-items: stretch;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {
