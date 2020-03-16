@@ -9,8 +9,7 @@ import pytz
 """ Common code used for parsing cronjob args """
 
 
-DEFAULT_TIMEZONE = pytz.utc
-# DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
+DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
 
 
 def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -> None:
