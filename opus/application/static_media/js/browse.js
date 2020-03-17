@@ -1522,9 +1522,10 @@ var o_browse = {
         // check all box
         // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
-                         "class='op-table-header-addall btn btn-link'>" +
-                         "<i class='fas fa-cart-plus' data-action='addall'" +
-                         " title='Add All Results to Cart'></i></button>";
+                         "class='op-table-header-addall btn btn-link'" +
+                         " title='Add All Results to Cart'>" +
+                         "<i class='fas fa-cart-plus' data-action='addall'></i></button>";
+
         let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col'><div>${addallIcon}</div></th>`;
         // note: this column header will be empty
         let tableHeaderThumbnailCol = `<th scope='col' class='sticky-header op-table-first-col'></th>`;

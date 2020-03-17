@@ -293,14 +293,6 @@ to 100%, this will make the shrinking look smoother */
     }
 }
 
-/* Make sure input tags shrink more when screen get narrower before qtype groups
-are wrapped into a different line */
-@media (max-width: 1100px) {
-    input.RANGE {
-        width: 20% !important;
-    }
-}
-
 @media (max-width: 860px) {
     /* Make search menu shrink proportionally when screen width is narrower */
     .sidebar-area {
