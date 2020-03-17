@@ -112,7 +112,10 @@ let o_sortMetadata = {
         let tableOrderIndicator = $(`[data-slug='${orderBy}'] .op-column-ordering`);
         let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .op-flip-sort`);
 
-        switch (tableOrderIndicator.data("sort")) {
+        // account for the case when the sort pill is present, but the metadata field column is not
+        let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
+
+        switch (sortOrder) {
             case "asc":
                 // currently ascending, change to descending order
                 isDescending = true;
@@ -164,7 +167,7 @@ let o_sortMetadata = {
             let slug = $(obj).data("slug");
             let label = $(obj).data("label");
             if ($(obj).find(".op-column-ordering").data("sort") === "none") {
-                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#"><i class="fas fa-random pr-1"/>${label}</a>`;
+                html += `<a class="dropdown-item font-sm" data-slug="${slug}" href="#">${label}</a>`;
             }
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
@@ -190,7 +193,15 @@ let o_sortMetadata = {
     },
 
     updateSortOrder: function(data) {
+        let tab = opus.getViewTab();
         let listHtml = "";
+
+        let tableColumnFields = {};
+        $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
+            tableColumnFields[$(obj).data("slug")] = index;
+        });
+
+        let unsortedFields = [];
         opus.prefs.order = [];
         $.each(data.order_list, function(index, order_entry) {
             let slug = order_entry.slug;
@@ -206,15 +217,25 @@ let o_sortMetadata = {
             }
             listHtml += `<span class='op-flip-sort' title='${orderTooltip}'>`;
             listHtml += label;
-            listHtml += (isDescending ? `<i class="${pillSortUpArrow}"></i>` : `<i class="${pillSortDownArrow}"></i>`);
+            listHtml += (isDescending ? `<i class="${pillSortUpArrow} ml-1"></i>` : `<i class="${pillSortDownArrow} ml-1"></i>`);
             listHtml += "</span></span></li>";
 
             let fullSlug = slug;
             if (isDescending) {
                 fullSlug = "-" + slug;
             }
-            opus.prefs.order.push(fullSlug);
+            opus.prefs.order.push(slug);
+            if (tableColumnFields[slug] !== undefined) {
+                delete tableColumnFields[slug];
+            }
         });
+
+        // if all the metadata field columns are already in the sort list, disable the add button
+        if (Object.keys(tableColumnFields).length === 0) {
+            $(".op-sort-order-add-icon").addClass("op-button-disabled");
+        } else {
+            $(".op-sort-order-add-icon").removeClass("op-button-disabled");
+        }
         $(".op-sort-contents").html(listHtml);
         o_hash.updateURLFromCurrentHash();
     },
