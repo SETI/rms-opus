@@ -261,7 +261,6 @@ Not sure if this is the desired behavior
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
 @media (max-width: 940px) {
-/* @media (max-width: 970px) { */
     /* Make STRING input shrink proportionally when window is narrow */
     #op-search-widgets input[class~="STRING"] {
         width: 100%;
@@ -1373,7 +1372,6 @@ to stay in one line */
 
     /* Move the last item in flexbox to the 2nd line */
     #browse .browse-nav-container .navbar-nav {
-        /* flex-wrap: wrap; */
         width: 100%;
     }
 
@@ -1562,7 +1560,6 @@ to stay in one line */
 
 /* Remove the nav-link for opening up download data panel when screen
 is wide enough */
-/* @media (min-width: 1101px) and (min-height: 461px) { */
 @media (min-width: 1101px) {
     .op-cart-toggle-download-panel {
         display: none !important;
@@ -2381,7 +2378,8 @@ ul.ui-autocomplete a.ui-state-active {
     -webkit-transform: perspective(1px) translateZ(0);
     transform: perspective(1px) translateZ(0);
     position: relative;
-    z-index: 20;
+    /* Avoid overlapping with table header (z-index: 10) */
+    z-index: 9;
 }
 
 .hvr-ripple-in::before {
@@ -2759,15 +2757,21 @@ when wrapping into the 2nd line */
 }
 
 /* The followings are for mobile support (width: 550px and height: 270px) */
-@media (max-width: 700px), (max-height: 400px){
+@media (max-width: 700px), (max-height: 400px) {
+    body {
+        font-size: 75% !important;
+    }
+
     /* Need to use !important here so that the footer (inside a flex container)
     will not take up the space when hidden */
     .app-footer {
         display: none !important;
     }
 
-    body {
-        font-size: 75% !important;
+    /* When footer is gone, make sure range select info box at the lower left
+    corner has the proper height */
+    .op-range-select-info-box.op-range-select {
+        height: 1.6em;
     }
 
     /* Reduce the thumbnail container from 100x100 to 90x90 (10% off) when font
