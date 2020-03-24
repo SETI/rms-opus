@@ -12,7 +12,7 @@ from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
 
 
-DEFAULT_FIELDS_PREFIX = 'https://tools.pds-rings.seti.org'
+DEFAULT_FIELDS_PREFIX = 'https://opus.pds-rings.seti.org'
 
 
 def main(arguments: Optional[List[str]] = None) -> None:

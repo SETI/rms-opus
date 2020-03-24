@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Error Analyzer</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+<style>
+
+</style>
+</head>
+<body>
+
+{% for key, count, min_time, all_sorted_log_entries in results %}
+    {% if count == 1 %}
+        This error occurs once at {{ min_time }}.
+    {% else %}
+        This error occurs {{ count }} times; the first occurrence is at {{ min_time }}.
+    {% endif %}
+    {% for line in key %}
+        {{ line }}
+    {% endfor %}
+    {% for log_entries in all_sorted_log_entries %}
+        --
+        {% if log_entries %}
+            IP: {{ log_entries[0].host_ip }}
+            {% for log_entry in log_entries %}
+                {{log_entry.time}} {{log_entry.url.geturl()}}
+            {% endfor %}
+        {% else %}
+            Log entries missing
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+<script>
+
+
+</script>
+</body>
+</html>
+
+
+                    for log_entry in log_entries:
+                        output.write(f'{log_entry.time} {log_entry.url.geturl()}\n')
