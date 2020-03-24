@@ -1151,6 +1151,11 @@ a:-webkit-any-link, a::any-link {
     opacity: 0.30 !important;
 }
 
+.op-sort-add-disabled {
+    cursor: default;
+    opacity: 0.30 !important;
+}
+
 #cart .op-cart-gallery-side {
     /* margin-top:.25em; */
     background-color: #303030; /* #383838; */
