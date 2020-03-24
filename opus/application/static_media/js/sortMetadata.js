@@ -34,6 +34,7 @@ let o_sortMetadata = {
                 });
                 // only bother if something actually changed...
                 if (!o_utils.areObjectsEqual(opus.prefs.order, order)) {
+                    opus.prefs.order = o_utils.deepCloneObj(order);
                     o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                     o_sortMetadata.renderSortedDataFromBeginning();
                 }
