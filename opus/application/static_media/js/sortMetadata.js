@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $ */
-/* globals o_hash, o_browse, , o_utils, opus */
+/* globals o_hash, o_browse, o_utils, opus */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -221,7 +221,6 @@ let o_sortMetadata = {
             tableColumnFields[$(obj).data("slug")] = index;
         });
 
-        let unsortedFields = [];
         opus.prefs.order = [];
         $.each(data.order_list, function(index, order_entry) {
             let slug = order_entry.slug;
