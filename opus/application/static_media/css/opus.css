@@ -2939,14 +2939,14 @@ when wrapping into the 2nd line */
     in help panel when screen is narrow or short */
     #op-cart-download-panel .card-header,
     #op-help-panel .card-header {
-        padding: 0.35em 0.75em;
+        padding: 0.5em 0.75em;
     }
 
     /* Shrink the font size of "Download Data" in download panel & the header text
-    in help panel to 90% when screen is narrow or short */
+    in help panel to 75% when screen is narrow or short */
     #op-cart-download-panel .op-header-text h2,
     #op-help-panel .op-header-text h2  {
-        font-size: 90%;
+        font-size: 75%;
     }
 
     /* Shrink "x" icon in download & help panel when screen is narrow or short */
