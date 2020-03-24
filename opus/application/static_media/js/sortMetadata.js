@@ -62,13 +62,13 @@ let o_sortMetadata = {
         });
 
         // browse sort order - flip sort order of a slug
-        $(".op-sort-contents").on("click", "list-inline-item .op-flip-sort", function(e) {
+        $(".op-sort-contents").on("click", ".op-flip-sort", function(e) {
             o_browse.hideMenus();
             o_sortMetadata.onClickSortOrder($(this).parent().data("slug"));
         });
 
         // browse sort order - remove sort slug
-        $(".op-sort-contents").on("click", "list-inline-item .op-remove-sort", function(e) {
+        $(".op-sort-contents").on("click", ".op-remove-sort", function(e) {
             o_browse.hideMenus();
             o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
@@ -118,7 +118,7 @@ let o_sortMetadata = {
 
         let tableOrderIndicator = $(`[data-slug='${orderBy}'] .op-column-ordering`);
         let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .op-flip-sort`);
-        let isDescending = $(pillOrderIndicator).parent().data("descending") === "true";
+        let isDescending = $(pillOrderIndicator).parent().data("descending") === true;
 
         // account for the case when the sort pill is present, but the metadata field column is not
         let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
@@ -210,6 +210,7 @@ let o_sortMetadata = {
             headerOrderIndicator.data("sort", `${headerOrder}`);
             headerOrderIndicator.attr("class", `op-column-ordering ${headerOrderArrow}`);
         }
+        $(pillOrderIndicator).parent().data("descending", (isDescending ? "true" : "false"));
     },
 
     updateSortOrder: function(data) {
@@ -243,7 +244,7 @@ let o_sortMetadata = {
             if (isDescending) {
                 fullSlug = "-" + slug;
             }
-            opus.prefs.order.push(slug);
+            opus.prefs.order.push(fullSlug);
             if (tableColumnFields[slug] !== undefined) {
                 delete tableColumnFields[slug];
             }
