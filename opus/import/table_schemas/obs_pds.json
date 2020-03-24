@@ -177,7 +177,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "STRING",
-        "pi_intro": null,
+        "pi_intro": "The Primary File Spec uses different filename extensions depending on the mission and instrument, and in many cases specifies the label file instead of the data file. Thus we suggest that you do not include the extension in your search and that you use the \"contains\" query type to guarantee the best match.",
         "pi_label": "Primary File Spec",
         "pi_label_results": "Primary File Spec",
         "pi_slug": "primaryfilespec",
