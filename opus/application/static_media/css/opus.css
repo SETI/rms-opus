@@ -2938,7 +2938,7 @@ when wrapping into the 2nd line */
     /* Reduce the space around "Download Data" in download panel when screen is
     narrow or short (cart tab) */
     #op-cart-download-panel .card-header {
-        padding-top: 0.25em 0.75em;
+        padding: 0.25em 0.75em;
     }
 
     /* Reduce the space around "Download Data" in download pane */
