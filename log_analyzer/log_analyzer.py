@@ -69,7 +69,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     if args.cronjob:
         # Fix up the arguments to match what everyone else wants
-        convert_cronjob_to_batchjob(args)
+        convert_cronjob_to_batchjob(args, from_first_of_month=True)
         if not args.log_files:
             print("No log files found.")
             return

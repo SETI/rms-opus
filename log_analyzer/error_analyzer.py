@@ -7,7 +7,7 @@ import sys
 from bisect import bisect_left, bisect_right
 from collections import deque, defaultdict
 from operator import attrgetter
-from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict
+from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict, cast
 
 from cronjob_utils import convert_cronjob_to_batchjob
 from log_entry import LogReader, LogEntry
@@ -25,6 +25,7 @@ class ErrorEntry(NamedTuple):
     time: datetime.datetime
     host_ip: ipaddress.IPv4Address
     message: str
+    full_message: str
     code_location: Optional[str] = None
     severity: Optional[str] = None
 
@@ -37,12 +38,15 @@ class ErrorAndLog(NamedTuple):
 class ErrorReader(object):
     _files: List[str]
     _ignored_ips: List[ipaddress.IPv4Network]
+    _ignored_errors: List[str]
     _output: TextIO
     _seen_errors: Dict[Tuple[str, ...], List[ErrorAndLog]]
 
-    def __init__(self, files: List[str], ignored_ips: List[ipaddress.IPv4Network], output: TextIO):
+    def __init__(self, files: List[str], ignored_ips: List[ipaddress.IPv4Network], ignored_errors: List[str],
+                 output: TextIO):
         self._files = files
         self._ignored_ips = ignored_ips
+        self._ignored_errors = ignored_errors
         self._output = output
         self._seen_errors = defaultdict(list)
 
@@ -73,14 +77,18 @@ class ErrorReader(object):
                          # private networks mean a VPN or the local link
                          if not entry.host_ip.is_private
                          # we don't are about "URL not found" messages
-                         if not (entry.severity and entry.message.startswith('Not Found: '))]
+                         if not self._ignore_error_message(entry)]
         return error_entries
+
+    def _ignore_error_message(self, entry: ErrorEntry):
+        result = any(ignored_error in entry.full_message for ignored_error in self._ignored_errors)
+        return result
 
     def _get_log_entries(self) -> List[LogEntry]:
         files = [file for file in self._files if "access" in file]
         log_entries = LogReader.read_logs(files)
         return [entry for entry in log_entries
-                # Not, we don't bother filtering out ignored ips or local network.  They won't get in the way
+                # Note, we don't bother filtering out ignored ips or local network.  They won't get in the way
                 # We do filter out /static_media requests returning 200, because they can't possible be the cause of
                 # an error message.
                 if not(entry.status == 200 and entry.url.path.startswith('/static_media'))]
@@ -113,9 +121,9 @@ class ErrorReader(object):
             # time2 = datetime.datetime.strptime(time_string2, '%d/%b/%Y %H:%M:%S')
             # assert time2 == time.replace(microsecond=0, tzinfo=None)
             return ErrorEntry(time=time, host_ip=host_ip, message=message,
-                              code_location=code_location, severity=severity)
+                              code_location=code_location, severity=severity, full_message=rest)
         else:
-            return ErrorEntry(time=time, host_ip=host_ip, message=rest)
+            return ErrorEntry(time=time, host_ip=host_ip, message=rest, full_message=rest)
 
     def _check_one_ip(self, error_entries: List[ErrorEntry], log_entries: List[LogEntry]) -> None:
         error_entries_deque = deque(error_entries)
@@ -192,19 +200,28 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
                         help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
 
+    parser.add_argument('--ignore-errors-file', type=argparse.FileType('r'), default=None, dest='ignore_errors_file')
+
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='error files')
     args = parser.parse_args(arguments)
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
 
     if args.cronjob:
-        convert_cronjob_to_batchjob(args)
+        convert_cronjob_to_batchjob(args, from_first_of_month=False)
         if not args.log_files:
             print("No log files found.")
             return
 
+    if args.ignore_errors_file:
+        lines = cast(TextIO, args.ignore_errors_file).readlines()
+        ignored_errors = [line.strip() for line in lines if line.strip()]
+    else:
+        ignored_errors = []
+
+
     output = sys.stdout if not args.output else open(args.output, "w")
-    ErrorReader(args.log_files, ignored_ips, output).run()
+    ErrorReader(args.log_files, ignored_ips, ignored_errors, output).run()
 
 
 if __name__ == '__main__':
