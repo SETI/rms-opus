@@ -266,7 +266,7 @@ let o_sortMetadata = {
         // limit the total number of sort columns to 9
         if (Object.keys(tableColumnFields).length === 0 || opus.prefs.order.length === 9) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
-            $(".op-sort-order-add-icon").attr("title", "The maximun of 9 metadata fields to sort on have already been selected");
+            $(".op-sort-order-add-icon").attr("title", "The maximun of 9 metadata fields to sort on has already been selected");
         } else {
             $(".op-sort-order-add-icon").removeClass("op-sort-add-disabled");
         }
