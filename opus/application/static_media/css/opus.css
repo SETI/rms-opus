@@ -2935,10 +2935,24 @@ when wrapping into the 2nd line */
         padding-bottom: 0.5em;
     }
 
-    /* Reduce the space around "Download Data" in download panel when screen is
-    narrow or short (cart tab) */
-    #op-cart-download-panel .card-header {
-        padding: 0.25em 0.75em;
+    /* Reduce the space around "Download Data" in download panel & the header text
+    in help panel when screen is narrow or short */
+    #op-cart-download-panel .card-header,
+    #op-help-panel .card-header {
+        padding: 0.35em 0.75em;
+    }
+
+    /* Shrink the font size of "Download Data" in download panel & the header text
+    in help panel to 90% when screen is narrow or short */
+    #op-cart-download-panel .op-header-text h2,
+    #op-help-panel .op-header-text h2  {
+        font-size: 90%;
+    }
+
+    /* Shrink "x" icon in download & help panel when screen is narrow or short */
+    #op-cart-download-panel .close i,
+    #op-help-panel .close i {
+        font-size: 1.1em;
     }
 
     /* Reduce the space around "Download Data" in download pane */
