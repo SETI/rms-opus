@@ -223,14 +223,15 @@ var o_browse = {
                 retValue = undefined; // need to use the default handler to allow the context menu to work
             }
 
+            o_sortMetadata.hideMenu();
             switch (iconAction) {
                 case "info":  // detail page
-                    o_browse.hideMenus();
+                    o_browse.hideMenu();
                     o_browse.showDetail(e, opusId);
                     break;
 
                 case "cart":   // add to cart
-                    o_browse.hideMenus();
+                    o_browse.hideMenu();
 
                     if (e.shiftKey) {
                         o_browse.cartShiftKeyHandler(e, opusId);
@@ -978,9 +979,13 @@ var o_browse = {
         opus.metadataDetailOpusId = "";
     },
 
-    hideMenus: function() {
+    hideMenu: function() {
         $("#op-obs-menu").removeClass("show").hide();
-        $("#op-add-sort-metadata").removeClass("show").hide();
+    },
+
+    hideMenus: function() {
+        o_browse.hideMenu();
+        o_sortMetadata.hideMenu();
     },
 
     showMenu: function(e, opusId) {
@@ -1035,7 +1040,7 @@ var o_browse = {
     },
 
     showDetail: function(e, opusId) {
-        o_browse.hideMenu();
+        o_browse.hideMenus();
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
@@ -1384,24 +1389,32 @@ var o_browse = {
             let icon = "";
             let columnSorting = "none";
             let columnOrderPostion = "";
+            let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
 
             if (positionAsc >= 0) {
                 orderToolTip = "title='Change to descending sort'";
                 columnSorting = "asc";
                 icon =  "-down";
-                columnOrderPostion = `<span class="op-sort-position-indicator text-primary font-xs">${positionAsc+1}</span>`;
+                columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionAsc+1}</span>`;
             } else if (positionDesc >= 0) {
                 orderToolTip = "title='Change to ascending sort'";
                 columnSorting = "desc";
                 icon = "-up";
-                columnOrderPostion = `<span class="op-sort-position-indicator text-primary font-xs">${positionDesc+1}</span>`;
+                columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionDesc+1}</span>`;
             }
-            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' ${orderToolTip} class='op-column-ordering fas fa-sort${icon}'></span></a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}${columnOrderPostion}</div></th>`);
+            let headerArr = header.split(" ");
+            let lastWord = headerArr.pop();
+            let spacing = headerArr.length ? "&nbsp;" : "";
+            let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
+                            `<span data-sort='${columnSorting}' ${orderToolTip} class='op-column-ordering fas fa-sort${icon}'>${columnOrderPostion}</span>`;
+            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'>${lastWordWrappingGroup}</a>`;
+
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
+        $("body").removeClass("op-prevent-pointer-events");
     },
 
     initResizableColumn: function(tab) {
@@ -1902,6 +1915,7 @@ var o_browse = {
     adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let view = opus.prefs.view;
+        o_sortMetadata.hideMenu();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);

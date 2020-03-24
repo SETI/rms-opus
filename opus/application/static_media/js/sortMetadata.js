@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $ */
-/* globals o_hash, o_browse, opus */
+/* globals o_hash, o_browse, , o_utils, opus */
 
 // font awesome icon class
 const pillSortUpArrow = "fas fa-arrow-circle-up";
@@ -20,19 +20,23 @@ let o_sortMetadata = {
     **/
     addBehaviours: function() {
         $(".op-sort-contents").sortable({
-            items: "li",
+            items: "div",
             cursor: "grab",
             containment: "parent",
             tolerance: "pointer",
+            cancel: ".op-sort-order-add-icon",
             stop: function(event, ui) {
                 // rebuild new search order and reload page
-                opus.prefs.order = [];
-                $(this).find("li span.badge-pill").each(function(index, obj) {
+                let order = [];
+                $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
                     let slug = $(obj).data("slug");
-                    opus.prefs.order.push(slug);
+                    order.push(slug);
                 });
-                o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                o_sortMetadata.renderSortedDataFromBeginning();
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.order, order)) {
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
+                }
             },
         });
 
@@ -58,13 +62,13 @@ let o_sortMetadata = {
         });
 
         // browse sort order - flip sort order of a slug
-        $(".op-sort-contents").on("click", "li .op-flip-sort", function(e) {
+        $(".op-sort-contents").on("click", "list-inline-item .op-flip-sort", function(e) {
             o_browse.hideMenus();
             o_sortMetadata.onClickSortOrder($(this).parent().data("slug"));
         });
 
         // browse sort order - remove sort slug
-        $(".op-sort-contents").on("click", "li .op-remove-sort", function(e) {
+        $(".op-sort-contents").on("click", "list-inline-item .op-remove-sort", function(e) {
             o_browse.hideMenus();
             o_browse.showPageLoaderSpinner();
             let slug = $(this).parent().attr("data-slug");
@@ -88,14 +92,20 @@ let o_sortMetadata = {
             o_sortMetadata.renderSortedDataFromBeginning();
         });
 
-        $(".op-sort-order-add-icon").on("click", function(e) {
-            o_browse.hideMenus();
-            o_sortMetadata.showMenu(e);
+        $(".op-sort-contents").on("click", ".op-sort-order-add-icon", function(e) {
+            // if the menu is already displayed, onclick should just close it.
+            o_browse.hideMenu();
+            if ($("#op-add-sort-metadata").hasClass("show")) {
+                o_sortMetadata.hideMenu();
+            } else {
+                o_sortMetadata.showMenu(e);
+            }
             return false;
         });
     }, // end edit sort metadata behaviours
 
     onClickSortOrder: function(orderBy, addToSort) {
+        $("body").addClass("op-prevent-pointer-events");
         o_browse.showPageLoaderSpinner();
 
         addToSort = (addToSort === undefined ? true : addToSort);
@@ -104,13 +114,11 @@ let o_sortMetadata = {
         let orderIndex = -1;
         if (addToSort) {
             order = opus.prefs.order;
-        } else {
-            order.push("opusid");
         }
 
-        let isDescending = true;
         let tableOrderIndicator = $(`[data-slug='${orderBy}'] .op-column-ordering`);
         let pillOrderIndicator = $(`.op-sort-contents span[data-slug="${orderBy}"] .op-flip-sort`);
+        let isDescending = $(pillOrderIndicator).parent().data("descending") === "true";
 
         // account for the case when the sort pill is present, but the metadata field column is not
         let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
@@ -120,6 +128,9 @@ let o_sortMetadata = {
                 // currently ascending, change to descending order
                 isDescending = true;
                 orderIndex = $.inArray(orderBy, order);
+                if ($.inArray(`-${orderBy}`, order) >= 0) {
+                    console.log("1 backwards");
+                }
                 orderBy = '-' + orderBy;
                 break;
 
@@ -127,6 +138,9 @@ let o_sortMetadata = {
                 // currently descending, change to ascending order
                 isDescending = false;
                 orderIndex = $.inArray(`-${orderBy}`, order);
+                if ($.inArray(`${orderBy}`, order) >= 0) {
+                    console.log("2 backwards");
+                }
                 break;
 
             case "none":
@@ -142,6 +156,10 @@ let o_sortMetadata = {
         } else {
             order[orderIndex] = orderBy;
         }
+        // push it here so that opusID is last
+        if (!addToSort) {
+            order.push("opusid");
+        }
         opus.prefs.order = order;
         o_sortMetadata.updateOrderIndicator(tableOrderIndicator, pillOrderIndicator, isDescending, orderBy);
 
@@ -149,17 +167,15 @@ let o_sortMetadata = {
         o_sortMetadata.renderSortedDataFromBeginning();
     },
 
+    hideMenu: function() {
+        $("#op-add-sort-metadata").removeClass("show").hide();
+    },
+
     showMenu: function(e) {
         // make this like a default right click menu
         let tab = opus.getViewTab();
         let contextMenu = "#op-add-sort-metadata";
-        if ($(contextMenu).hasClass("show")) {
-            //o_browse.hideMenu();
-        }
-
-        let menu = {"height":$("#op-add-sort-metadata").innerHeight(), "width":$(contextMenu).innerWidth()};
-        let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY + 8: e.pageY-menu.height;
-        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
+        o_browse.hideMenu();
 
         let html = "";
 
@@ -171,6 +187,10 @@ let o_sortMetadata = {
             }
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
+
+        let menu = {"height":$("#op-add-sort-metadata").innerHeight(), "width":$(contextMenu).innerWidth()};
+        let top =  e.pageY;
+        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
 
         $(contextMenu).css({
             display: "block",
@@ -210,7 +230,7 @@ let o_sortMetadata = {
             let orderTooltip = (isDescending ? "Change to ascending sort" : "Change to descending sort");
 
             let removeable = order_entry.removeable;
-            listHtml += "<li class='list-inline-item'>";
+            listHtml += "<div class='list-inline-item'>";
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
@@ -218,7 +238,7 @@ let o_sortMetadata = {
             listHtml += `<span class='op-flip-sort' title='${orderTooltip}'>`;
             listHtml += label;
             listHtml += (isDescending ? `<i class="${pillSortUpArrow} ml-1"></i>` : `<i class="${pillSortDownArrow} ml-1"></i>`);
-            listHtml += "</span></span></li>";
+            listHtml += "</span></span></div>";
 
             let fullSlug = slug;
             if (isDescending) {
@@ -230,8 +250,13 @@ let o_sortMetadata = {
             }
         });
 
+        listHtml += `<div class="op-sort-order-add-icon list-inline-item" title="Edit sort by adding metadata fields">`+
+					   `<i class="fas fa-plus"></i>`+
+					`</div>`;
+
         // if all the metadata field columns are already in the sort list, disable the add button
-        if (Object.keys(tableColumnFields).length === 0) {
+        // limit the total number of sort columns to 9
+        if (Object.keys(tableColumnFields).length === 0 || opus.prefs.order.length === 9) {
             $(".op-sort-order-add-icon").addClass("op-button-disabled");
         } else {
             $(".op-sort-order-add-icon").removeClass("op-button-disabled");

@@ -117,10 +117,7 @@
                             <span class="op-sort-order-icon" title="Results are sorted by these metadata fields&#10;Drag to reorder the sort fields">
                                 <i class="fas fa-random"></i>
                             </span>
-                            <ul class="op-sort-contents list-inline"></ul>
-							<span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
-								<i class="fas fa-plus"></i>
-							</span>
+							<div class="op-sort-contents"></div>
                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid">
@@ -161,7 +158,7 @@
                     <div class="col cart_details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
                     </div>
-                    <div class="col pl-0 cart-gallery-side">
+                    <div class="col pl-0 op-cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container">
                                 <div class="op-cart-nav-container">
@@ -187,10 +184,7 @@
                                 <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
                                     <i class="fas fa-random"></i>
                                 </span>
-                                <ul class="op-sort-contents list-inline"></ul>
-								<span class="op-sort-order-add-icon" title="Edit sort by adding metadata fields">
-									<i class="fas fa-plus"></i>
-								</span>
+								<div class="op-sort-contents"></div>
                             </div>
                             <div class="op-cart-actions">
                                 <li class="list-inline-item">
@@ -285,8 +279,8 @@
         </div>
 
         <!-- dropdown menu for sort metadata columns -->
-        <div class="dropdown-menu dropdown-menu-sm" id="op-add-sort-metadata" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
-            <h2 class="dropdown-header">Add metadata fields to sort</h2>
+        <div id="op-add-sort-metadata" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add metadata field to sort</h2>
 			<div class="op-sort-list"></div>
         </div>
 
@@ -387,7 +381,7 @@
         {% include "ui/confirm_modal.html" with
             id_name="op-overwrite-sort-order"
             confirm_title="Confirm Overwrite of Metadata Fields Sort Order"
-            confirm_msg="Select 'Overwrite' to update your metadata fields sort order to the selected metadata field + OPUS ID or 'Append' to append to your current sort criteria."
+            confirm_msg="Select \"Overwrite\" to update your metadata fields sort order to the selected metadata field + OPUS ID or \"Append\" to append to your current sort criteria."
             target="op-overwrite-sort-order"
             yes_text="Overwrite"
             no_text="Append"

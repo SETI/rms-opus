@@ -672,8 +672,11 @@ th.sticky-header {
 
 .op-data-table .op-column-ordering {
     margin: 0 10px;
-    /* display: inline-flex; */
-    /* float: right; */
+}
+
+.op-data-table .op-last-word-group {
+    display: inline-block;
+    white-space: nowrap;
 }
 
 .op-data-table td {
@@ -734,8 +737,17 @@ th.sticky-header {
 }
 
 .op-sort-position-indicator {
-    vertical-align: super;
-    opacity: .7;
+    border-radius: 0.6em;
+    -moz-border-radius: 0.6em;
+    -webkit-border-radius: 0.8em;
+    color: #ffffff;
+    border: 1px solid #20a8d8;
+    display: inline-block;
+    font-weight: bold;
+    line-height: 1.2em;
+    margin-right: 5px;
+    text-align: center;
+    width: 1.2em;
 }
 
 .op-mini-thumbnail {
@@ -1139,13 +1151,9 @@ a:-webkit-any-link, a::any-link {
     opacity: 0.30 !important;
 }
 
-#cart .cart-gallery-side {
+#cart .op-cart-gallery-side {
     /* margin-top:.25em; */
     background-color: #303030; /* #383838; */
-}
-
-#cart .thumb-page {
-    padding: 0 1.0em;
 }
 
 #cart-sidebar {
@@ -1575,7 +1583,7 @@ to stay in one line */
 
     /* Remove the white space at the bottom of gallery-contents when screen
     is narrow */
-    #cart .cart-gallery-side {
+    #cart .op-cart-gallery-side {
         height: 100vh;
     }
 }
@@ -1610,11 +1618,12 @@ panel are properly separated */
 .op-sort-order-container {
     display: inline-flex;
     padding-left: 0.5em;
+    margin-top: 0.35em;
     /* padding-top: 0.5em; */
 }
 
 .op-sort-order-icon, .op-sort-order-add-icon {
-    opacity: 0.5;
+    opacity: 0.5 !important;
     vertical-align: middle;
 }
 
@@ -1623,7 +1632,7 @@ panel are properly separated */
 }
 
 .op-sort-order-add-icon {
-    padding-left: .3em;
+    margin-bottom: 0.1em !important;
 }
 
 .op-sort-contents {
@@ -1632,9 +1641,21 @@ panel are properly separated */
     margin-bottom: 0;
 }
 
-.op-sort-contents li {
+.op-sort-contents .list-inline-item {
     opacity: 0.7;
     margin-bottom: -10px;
+}
+
+#op-add-sort-metadata .op-sort-list {
+    max-height: 50vh;
+    overflow-y: auto;
+
+}
+
+/* Set the vertical spacing between each dropdown item */
+.op-sort-list .dropdown-item {
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
 }
 
 .op-flip-sort {
@@ -2677,8 +2698,8 @@ at the right of -- OR -- label. */
 /* Set the vertical spacing between each dropdown item in the hamburger */
 #op-obs-menu .dropdown-item {
     /* default is 10px at top and bottom, and total menu height 368px */
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
 }
 
 /* Styling for the first column of table header in browse tab */
