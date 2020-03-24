@@ -2756,7 +2756,12 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
-/* The followings are for mobile support (width: 550px and height: 270px) */
+/* ************************************************************************** */
+/* The followings are for mobile support (width: 550px and height: 270px)     */
+/* NOTE: Current breakpoints are width: 700px & height: 400px, these have to  */
+/* match the constant browserThresholdWidth & browserThresholdHeight in       */
+/* opus.js.                                                                   */
+/* ************************************************************************** */
 @media (max-width: 700px), (max-height: 400px) {
     body {
         font-size: 75% !important;

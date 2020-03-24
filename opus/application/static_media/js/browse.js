@@ -2084,9 +2084,27 @@ var o_browse = {
         return width;
     },
 
+    updateImageSize: function() {
+        /**
+         * Update the thumbnail image size based on the browser size.
+         * The default value & updated value need to match min-height & min-width
+         * values assigned to .op-thumbnail-container in opus.css.
+         */
+        if ($(window).width() <= opus.browserThresholdWidth ||
+            $(window).height() <= opus.browserThresholdHeight) {
+            // udpated thumbnail size: 90x90
+            o_browse.imageSize = 90;
+        } else {
+            // default thumbnail size: 100x100
+            o_browse.imageSize = 100;
+        }
+    },
+
     adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let view = opus.prefs.view;
+        // Check screen size and update o_browse.imageSize
+        o_browse.updateImageSize();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);

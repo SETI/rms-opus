@@ -134,6 +134,11 @@ var opus = {
     // Max number of input sets per (RANGE or STRING) widget
     maxAllowedInputSets: 10,
 
+    // The browser threshold width & height that font & thumbnail size start to shirnk.
+    // NTOE: These two variables have to match the breakpoints in mobile support section in opus.css.
+    browserThresholdWidth: 700,
+    browserThresholdHeight: 400,
+
     //------------------------------------------------------------------------------------
     // Debugging support
     //------------------------------------------------------------------------------------
