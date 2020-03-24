@@ -454,6 +454,7 @@ ul.op-search-menu {
     float: left;
     position: relative;
     margin: 1px;
+    /* Extra 2px margin + 98px (content + padding + border) = 100px */
     min-width: 98px;  /* This gives us a 100x100 thumbnail including margin */
     min-height: 98px;
     border: medium solid transparent;
@@ -2782,6 +2783,7 @@ when wrapping into the 2nd line */
     /* Reduce the thumbnail container from 100x100 to 90x90 (10% off) when font
     size is changed */
     .op-thumbnail-container {
+        /* Extra 2px margin + 88px (content + padding + border) = 90px */
         min-width: 88px;
         min-height: 88px;
     }
