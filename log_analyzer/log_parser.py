@@ -6,21 +6,10 @@ from collections import deque
 from ipaddress import IPv4Address
 from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
+from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
-
-JINJA_ENVIRONMENT = Environment(
-    loader=FileSystemLoader("templates/"),
-    autoescape=True,
-    # line_statement_prefix='#',
-    line_comment_prefix='##',
-    undefined=StrictUndefined,
-    trim_blocks=True,
-    lstrip_blocks=True
-)
 
 
 class LiveSession(NamedTuple):

@@ -1023,6 +1023,13 @@ var o_browse = {
         let top = ($(tab).innerHeight() - e.pageY > menu.height) ? e.pageY-5 : e.pageY-menu.height;
         let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX-5 : e.pageX-menu.width;
 
+        // Make sure hamburger won't go off the screen
+        if (top < 0) {
+            top = 0;
+        } else if ((top + menu.height) > $(window).height()) {
+            top -= (top + menu.height - $(window).height());
+        }
+
         $("#op-obs-menu").css({
             display: "block",
             top: top,
@@ -1365,9 +1372,10 @@ var o_browse = {
         // check all box
         // let addallIcon = "<button type='button' data-toggle='modal' data-target='#op-addall-to-cart-modal' " +
         let addallIcon = "<button type='button'" +
-                         "class='op-table-header-addall btn btn-link'>" +
-                         "<i class='fas fa-cart-plus' data-action='addall'" +
-                         " title='Add All Results to Cart'></i></button>";
+                         "class='op-table-header-addall btn btn-link'" +
+                         " title='Add All Results to Cart'>" +
+                         "<i class='fas fa-cart-plus' data-action='addall'></i></button>";
+
         let tableHeaderFirstCol = `<th scope='col' class='sticky-header op-table-first-col'><div>${addallIcon}</div></th>`;
         // note: this column header will be empty
         let tableHeaderThumbnailCol = `<th scope='col' class='sticky-header op-table-first-col'></th>`;
@@ -1894,7 +1902,13 @@ var o_browse = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
-        let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight;
+        // The main navbar (#op-main-nav) and the 2nd navbar (.panel-heading) have an overlapping
+        // area, need to take this overlapped height into consideration when doing the calculation.
+        // This will make sure there is no gap between the end of .gallery-contents and .app-footer.
+        let navOverlappedHeight = $("#op-main-nav").offset().top + mainNavHeight -
+                                  $(`${tab} .panel-heading`).offset().top;
+        let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight - navOverlappedHeight;
+
         return $(window).height()-totalNonGalleryHeight;
     },
 
@@ -1912,10 +1926,29 @@ var o_browse = {
         return width;
     },
 
+    updateImageSize: function() {
+        /**
+         * Update the thumbnail image size based on the browser size.
+         * The default value & updated value need to match min-height & min-width
+         * values assigned to .op-thumbnail-container in opus.css.
+         */
+        if ($(window).width() <= opus.browserThresholdWidth ||
+            $(window).height() <= opus.browserThresholdHeight) {
+            // udpated thumbnail size: 90x90
+            o_browse.imageSize = 90;
+        } else {
+            // default thumbnail size: 100x100
+            o_browse.imageSize = 100;
+        }
+    },
+
     adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let view = opus.prefs.view;
         o_sortMetadata.hideMenu();
+
+        // Check screen size and update o_browse.imageSize
+        o_browse.updateImageSize();
         let containerHeight = o_browse.calculateGalleryHeight();
         $(`${tab} .gallery-contents`).height(containerHeight);
         $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);

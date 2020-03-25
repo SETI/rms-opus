@@ -1034,7 +1034,8 @@ var o_search = {
     },
 
     searchBarContainerHeight: function() {
-        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let mainNavHeight = $(".op-reset-opus").outerHeight() +
+                            $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let footerHeight = $(".app-footer").outerHeight();
         let resetButtonHeight = $(".op-reset-button").outerHeight();
         let dividerHeight = $(".shadow-divider").outerHeight();
@@ -1065,7 +1066,8 @@ var o_search = {
 
     searchWidgetHeightChanged: function() {
         let footerHeight = $(".app-footer").outerHeight();
-        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let mainNavHeight = $(".op-reset-opus").outerHeight() +
+                            $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let totalNonSearchAreaHeight = footerHeight + mainNavHeight;
         let containerHeight = $("#search").height() - totalNonSearchAreaHeight;
         let searchWidgetHeight = $("#op-search-widgets").height();

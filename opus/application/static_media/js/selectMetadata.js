@@ -9,6 +9,9 @@
 /******************************************/
 /********* SELECT METADATA DIALOG *********/
 /******************************************/
+const metadataModalHeightBreakPoint = 400;
+const gapBetweenBottomEdgeAndMetadataModal = 55;
+
 /* jshint varstmt: false */
 var o_selectMetadata = {
 /* jshint varstmt: true */
@@ -314,7 +317,8 @@ var o_selectMetadata = {
         $(".op-select-metadata-headers").show(); // Show now so computations are accurate
         $(".op-select-metadata-headers-hr").show();
         let footerHeight = $(".app-footer").outerHeight();
-        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let mainNavHeight = $(".op-reset-opus").outerHeight() +
+                            $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let modalHeaderHeight = $("#op-select-metadata .modal-header").outerHeight();
         let modalFooterHeight = $("#op-select-metadata .modal-footer").outerHeight();
         let selectMetadataHeadersHeight = $(".op-select-metadata-headers").outerHeight()+30;
@@ -340,7 +344,9 @@ var o_selectMetadata = {
            130 is the minimum size required to display four metadata fields.
            Anything less than that makes the dialog useless. In that case we hide the
            header text to give us more room. */
-        let height = Math.max($(window).height()-totalNonScrollableHeight-55);
+        let height = (($(window).height() > metadataModalHeightBreakPoint) ?
+                      $(window).height()-totalNonScrollableHeight-gapBetweenBottomEdgeAndMetadataModal : $(window).height()-totalNonScrollableHeight);
+
         if (height < 130) {
             $(".op-select-metadata-headers").hide();
             $(".op-select-metadata-headers-hr").hide();
