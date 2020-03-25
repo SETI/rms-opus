@@ -186,25 +186,27 @@
                                 </span>&nbsp;
                                 <ul class="sort-contents list-inline"></ul>
                             </div>
-                            <div class="op-cart-actions">
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
-                                        &nbsp;Empty Cart</a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
-                                        &nbsp;Empty Recycle Bin</a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
-                                        &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
-                                </li>
-                            </div>
-                            <div class="op-cart-toggle-download-panel">
-                                <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
-                                   <i class="fas fa-arrow-left"></i>
-                                   <span>&nbsp;Download Data</span>
-                               </button>
+                            <div class="op-cart-actions-group">
+                                <div class="op-cart-actions">
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                            &nbsp;Empty Cart</a>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                            &nbsp;Empty Recycle Bin</a>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
+                                            &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
+                                    </li>
+                                </div>
+                                <div class="op-cart-toggle-download-panel">
+                                    <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
+                                       <i class="fas fa-arrow-left"></i>
+                                       <span>&nbsp;Download Data</span>
+                                   </button>
+                                </div>
                             </div>
                         </nav>
                         <div class="panel-body gallery-contents flex-container">
@@ -241,7 +243,7 @@
                     </div>
                 </div>
                 <div id="op-cart-download-panel" class="card">
-                    <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+                    <div class="card-header align-items-center h-auto bg-secondary">
                         <h3 class="op-header-text"></h3>
                         <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
                      </div>

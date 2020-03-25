@@ -1,7 +1,6 @@
 /* opus-specific values live here... */
 :root {
     --op-cart-panel-width-break: 1100px;
-    --op-cart-panel-height-break: 460px;
 }
 
 body {
@@ -155,6 +154,8 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     /* Make the whole search page shrink proportionally when window
     is narrower */
     width: 100%;
+    /* Make sure search tab will not scroll horizontally */
+    overflow-x: hidden;
 }
 
 #search .add_input {
@@ -259,7 +260,7 @@ Not sure if this is the desired behavior
 
 /* As long as q-type shrink to the 2nd line, we set text input width
 to 100%, this will make the shrinking look smoother */
-@media (max-width: 970px) {
+@media (max-width: 940px) {
     /* Make STRING input shrink proportionally when window is narrow */
     #op-search-widgets input[class~="STRING"] {
         width: 100%;
@@ -284,6 +285,10 @@ to 100%, this will make the shrinking look smoother */
 
     .op-range-input-max {
         margin-left: 0.3rem;
+    }
+
+    .op-or-labels {
+        width: auto !important;
     }
 }
 
@@ -449,6 +454,7 @@ ul.op-search-menu {
     float: left;
     position: relative;
     margin: 1px;
+    /* Extra 2px margin + 98px (content + padding + border) = 100px */
     min-width: 98px;  /* This gives us a 100x100 thumbnail including margin */
     min-height: 98px;
     border: medium solid transparent;
@@ -1031,28 +1037,22 @@ when window sized is narrow */
 #galleryViewContents .op-metadata-details {
     overflow-y: auto;
     /* Make #galleryView modal right contents shrink vertically
-    95% for the metadata info, 5% for the bottom icons */
-    height: 95%;
+    93% for the metadata info, 5% for the bottom icons, 2% for the gap between
+    metadata and font awesome icons */
+    height: 93%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
     right: 0;
 }
 
-@media (max-height: 300px) {
-    #galleryViewContents .op-metadata-details {
-        height: 85%;
-    }
-    #galleryView .bottom {
-        height: 15%;
-    }
-}
-
 /* prevent weird browser y-scrollbar */
 #galleryView {
     overflow-y: hidden;
     pointer-events: none;
-    z-index: 999;
+    /* Make sure metadata modal will not be covered by the main nav when screen
+    is short & narrow */
+    z-index: 1031;
 }
 
 #galleryView button.close {
@@ -1373,7 +1373,6 @@ to stay in one line */
 
     /* Move the last item in flexbox to the 2nd line */
     #browse .browse-nav-container .navbar-nav {
-        flex-wrap: wrap;
         width: 100%;
     }
 
@@ -1530,13 +1529,6 @@ to stay in one line */
     }
 }
 
-@media (max-height: 460px) {
-    /* Hide download data pane when the screen is too short */
-    .cart_details {
-        display: none;
-    }
-}
-
 @media (max-width: 1100px) {
     /* Hide download data pane when the screen is too narrow */
     .cart_details {
@@ -1552,14 +1544,6 @@ to stay in one line */
         display: flex !important;
         padding-left: 0.5em;
         padding-top: 0.5em;
-    }
-
-    @media (max-height: 460px) {
-        /* Remove the nav-link for opening up download data panel when screen
-        is too small to see download data options */
-        .op-cart-toggle-download-panel {
-            display: none !important;
-        }
     }
 
     /* Make sure gallery-contents not cut off by the right edge of the
@@ -1600,6 +1584,12 @@ panel are properly separated */
 #op-cart-download-panel .card-header {
     display: flex;
     justify-content: space-between;
+}
+
+/* Center "Download Data" in download panel in cart tab */
+#op-cart-download-panel .card-header h3,
+#op-cart-download-panel .card-header h2 {
+    margin-bottom: 0;
 }
 
 .op-sort-order-container {
@@ -1987,26 +1977,12 @@ make ctrl + F search scroll to work with perfect scrollbar in FF. */
     .op-detail-img {
         padding-top: 1% !important;
     }
-
-}
-
-@media (max-height: 370px) and (min-width: 768px) and (max-width: 905px) {
-    .op-detail-img p {
-        font-size: 0.5rem;
-    }
 }
 
 /* Set max width of flexbox container so that detail image will keep close
 to the left pane when screen is getting too wide */
 .op-detail-content {
     max-width: 1800px;
-}
-
-@media (max-width: 768px) {
-    /* Move the detail image on top of the left pane */
-    .op-detail-content {
-        flex-wrap: wrap-reverse;
-    }
 }
 
 @media (max-width: 767px) {
@@ -2403,7 +2379,8 @@ ul.ui-autocomplete a.ui-state-active {
     -webkit-transform: perspective(1px) translateZ(0);
     transform: perspective(1px) translateZ(0);
     position: relative;
-    z-index: 20;
+    /* Avoid overlapping with table header (z-index: 10) */
+    z-index: 9;
 }
 
 .hvr-ripple-in::before {
@@ -2576,9 +2553,17 @@ expanded/collapsed */
     display: none !important;
 }
 
-/* Make palceholder hints visible when browser width is large enough */
+/* Set the width of input.STRING to make sure it can be shrunk more when screen
+is shrinking (before reaching to the breakpoint at 940px)*/
+input.STRING {
+    width: 55%;
+}
+
+/* Make palceholder hints visible when browser width is large enough, and also
+make sure it can be shrunk more when screen is shrinking (before reaching to
+the breakpoint at 940px) */
 input.RANGE {
-    min-width: 25%;
+    width: 25%;
 }
 
 /* Style placeholder to have "..." when text is overflow */
@@ -2611,11 +2596,19 @@ wiggling when mouse over autocomplete menu items */
     background: transparent !important;
 }
 
+/* Make "+ (OR)" sans-serif */
+.op-add-inputs-btn i {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+                 "Segoe UI Emoji", "Segoe UI Symbol", "Font Awesome 5 Free";
+}
+
 /* Styling for the text between each set of inputs in a widget */
 .op-or-labels {
     text-align: center;
     font-style: italic;
     font-weight: bold;
+    width: 75%;
 }
 
 /* Styling for horizontal divider between OR label when there are multiple
@@ -2638,12 +2631,6 @@ searches */
     pointer-events: none;
 }
 
-/* Styling to make each input set takes up the width that will fit its contents */
-.op-search-inputs-set {
-    width: fit-content;
-    width: -moz-fit-content;
-}
-
 /* Hide the element but still keep its space. This is used for dummy items placed
 at the right of -- OR -- label. */
 .op-visibility-hidden {
@@ -2655,7 +2642,7 @@ at the right of -- OR -- label. */
     display: inline-block;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 940px) {
     .op-dummy-item1, .op-dummy-item2 {
         display: none !important;
     }
@@ -2666,6 +2653,11 @@ at the right of -- OR -- label. */
     /* default is 10px at top and bottom, and total menu height 368px */
     padding-top: 5px;
     padding-bottom: 5px;
+}
+
+/* Make sure hamburger menu will not be covered by metadata modal */
+#op-obs-menu {
+    z-index: 1032;
 }
 
 /* Styling for the first column of table header in browse tab */
@@ -2763,4 +2755,393 @@ when wrapping into the 2nd line */
 .op-menu-item i.fa-info-circle {
     padding-left: 0.2rem;
     padding-right: 0.2rem;
+}
+
+/* ************************************************************************** */
+/* The followings are for mobile support (width: 550px and height: 270px)     */
+/* NOTE: Current breakpoints are width: 700px & height: 400px, these have to  */
+/* match the constant browserThresholdWidth & browserThresholdHeight in       */
+/* opus.js.                                                                   */
+/* ************************************************************************** */
+@media (max-width: 700px), (max-height: 400px) {
+    body {
+        font-size: 75% !important;
+    }
+
+    /* Need to use !important here so that the footer (inside a flex container)
+    will not take up the space when hidden */
+    .app-footer {
+        display: none !important;
+    }
+
+    /* When footer is gone, make sure range select info box at the lower left
+    corner has the proper height */
+    .op-range-select-info-box.op-range-select {
+        height: 1.6em;
+    }
+
+    /* Reduce the thumbnail container from 100x100 to 90x90 (10% off) when font
+    size is changed */
+    .op-thumbnail-container {
+        /* Extra 2px margin + 88px (content + padding + border) = 90px */
+        min-width: 88px;
+        min-height: 88px;
+    }
+
+    .op-reset-search,
+    .op-reset-search-metadata,
+    .op-slider-pointer {
+        font-size: 90% !important;
+    }
+
+    /*  Make sure main nav tabs are displayed horizontally when screen is narrow */
+    .op-tab {
+        flex-direction: row !important;
+    }
+
+    /* Shrink the height of main nav */
+    #op-main-nav {
+        padding-top: 0.3em;
+        padding-bottom: 0.3em;
+    }
+
+    /* Reduce the padding around selected tab on main nav */
+    #op-main-nav .nav-link {
+        padding: 0.25rem;
+    }
+
+    /* Reduce the hamburger icon on main nav */
+    #op-main-nav .navbar-toggler {
+        padding: 0.1em 0.6em;
+    }
+
+    /* Remove the top margin to make reset buttons horizontally centered */
+    .op-reset-button button {
+        margin-top: 0;
+    }
+
+    /* Reduce the space around search sidebar & widgets when screen narrow
+    (search tab) */
+    #search {
+        padding-left: 0.5rem;
+        padding-right: 0.25rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Expand the width of widgets area when screen is narrow (search tab) */
+    #search .op-widget-col {
+        padding-left: 0.3em;
+        padding-right: 0.3em;
+    }
+
+    /* Reduce widget title font-size to 75% */
+    .op-widget-title {
+        font-size: 75%;
+    }
+
+    /* Reduce the padding around widget header */
+    #widget-container .card-header {
+        padding: 0.25em 0.75em;
+    }
+
+    #widget-container .card-title {
+        margin-bottom: 0;
+    }
+
+    /* Reduce the spaces between each widget */
+    #widget-container .card {
+        margin-bottom: 0.75em;
+    }
+
+    /* Reduce the font-size of category headers to 75% */
+    /* Original font-size 2.1875rem */
+    .op-detail-metadata h1 {
+        font-size: 1.64rem;
+    }
+
+    /* Original font-size 1.75rem */
+    .op-detail-metadata h2 {
+        font-size: 1.3125rem;
+    }
+
+    /* Original font-size 1.53125rem */
+    .op-detail-metadata h3 {
+        font-size: 1.15rem;
+    }
+
+    /* Reduce the size of zoom-in mini-thumbnail on hover */
+    .op-mini-thumbnail img:hover {
+        -ms-transform: scale(2.5); /* IE 9 */
+        -webkit-transform: scale(2.5); /* Safari 3-8 */
+        transform: scale(2.5);
+    }
+}
+
+@media (max-width: 560px), (max-height: 630px) {
+    /* Hide the feedback button when screen is narrow or short */
+    .feedbackTab {
+        display: none !important;
+    }
+
+    /* Hide contact us when screen is narrow or short */
+    .op-help-item[data-action="contact"] {
+        display: none !important;
+    }
+}
+
+@media (max-width: 700px), (max-height: 400px) {
+    /* Shrink the modal header, modal body, and modal footer when screen is
+    narrow or short (confirm modal) */
+    .modal-header, .modal-body, .modal-footer {
+        padding: 0.25em 0.5em !important;
+    }
+
+    /* Keep the spaces for detail metadata modal in browse & cart tab to have
+    the pretty display when screen is narrow or short */
+    #galleryView .modal-header,
+    #galleryView .modal-body,
+    #galleryView .modal-footer {
+        padding: 1.3em !important;
+    }
+
+    /* Reduce the size of font awesome icon in slide show */
+    #galleryView .close i {
+        font-size: 1.1em;
+    }
+
+    #galleryView .bottom i {
+        font-size: 1.8em;
+    }
+
+    /* Reduce the modal buttons size when screen is narrow or short (confirm
+    modal) */
+    .modal-footer button {
+        padding: 0.175rem 0.55rem;
+    }
+
+    /* Reduce the top & bottom spaces around "Download Options" in download panel
+    when screen is narrow or short (cart tab) */
+    .op-download-options-title {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    /* Reduce the space around card body in download panel when screen is narrow
+    or short (cart tab) */
+    #op-cart-download-panel .card-body {
+        padding-top: 0.5em;
+        padding-left: 0.5em;
+        padding-bottom: 0.5em;
+    }
+
+    /* Reduce the space around "Download Data" in download panel & the header text
+    in help panel when screen is narrow or short */
+    #op-cart-download-panel .card-header,
+    #op-help-panel .card-header {
+        padding: 0.5em 0.75em;
+    }
+
+    /* Shrink the font size of "Download Data" in download panel & the header text
+    in help panel to 75% when screen is narrow or short */
+    #op-cart-download-panel .op-header-text h2,
+    #op-help-panel .op-header-text h2  {
+        font-size: 75%;
+    }
+
+    /* Shrink "x" icon in download & help panel when screen is narrow or short */
+    #op-cart-download-panel .close i,
+    #op-help-panel .close i {
+        font-size: 1.1em;
+    }
+
+    /* Reduce the space around "Download Data" in download pane */
+    .op-download-panel-title h1 {
+        margin-top: 0.25em;
+        margin-bottom: 0.25em;
+    }
+
+    /* Reduce the size of "Metadata CSV", "Data Archive", and "URL Archive"
+    buttons */
+    .op-download-csv,
+    #create_zip_url_file a,
+    #create_zip_data_file a {
+        padding: 0.175em 0.55em;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Position "Download CSV (all results)" button right above the modal footer
+    when screen is narrow */
+    #op-select-metadata .op-download-csv {
+        margin-top: 0.1em;
+        bottom: auto;
+    }
+}
+
+/* Make sure confirm modal header is vertically centered */
+.modal-header {
+    align-items: center !important;
+}
+
+@media (max-width: 700px) and (max-height: 400px) {
+    /* Shrink the table header font size to have a better table display when
+    screen is narrow & short (browse/cart tab) */
+    .op-data-table-view thead {
+        font-size: 75%;
+    }
+
+    /* The followings are to make hide "Download CSV (all results)" and move the
+    slider a line above */
+    #browse .browse-nav-container {
+        flex-wrap: nowrap;
+    }
+
+    #browse .browse-nav-container .navbar-nav {
+        width: auto;
+    }
+
+    #browse .browse-nav-container .op-download-csv {
+        display: none !important;
+    }
+
+    #browse .op-sort-order-container {
+        margin-top: 0;
+    }
+
+    /* Reduce spaces to make sure cart actions buttons are wrapped into the next
+    line when screen is narrow & short */
+    .op-cart-actions > li {
+        margin-right: 0 !important;
+    }
+
+    .op-cart-actions a {
+        margin-right: 0.5em !important;
+    }
+}
+
+@media (max-height: 400px) {
+    /* Hide download csv button menu in select metadata menu when screen is short
+    (browse tab) */
+    .op-select-metadata-details .op-download-csv {
+        display: none !important;
+    }
+
+    /* Reduce the spaces between each item in the hamburger menu when screen is
+    short */
+    #op-obs-menu .dropdown-item {
+        padding-top: 0.1em;
+        padding-bottom: 0.1em;
+    }
+
+    /* Reduce spaces between each item in the help menu when screen is short */
+    .op-help-item {
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        font-size: 90%;
+    }
+}
+
+@media (max-height: 500px) {
+    /* Hide product type select/deselect buttons when screen is short (cart tab) */
+    .op-product-types-select-btn-group {
+        display: none !important;
+    }
+
+    /* Hide "Download Options" in download panel when screen is short (cart tab) */
+    .op-download-options-title {
+        display: none !important;
+    }
+}
+
+/* Bypass .col-sm-1 breakpoint to have pretty table display in download panel
+when screen is narrow (cart tab) */
+@media (max-width: 576px) {
+    .op-product-type-table-body .row .col-sm-1 {
+        flex: 0 0 8.333333% !important;
+        max-width: 8.333333% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+}
+
+/* Group cart actions nav buttons & download panel button together */
+.op-cart-actions-group {
+    display: flex;
+    flex-direction: column
+}
+
+@media (max-height: 400px) {
+    /* Keep detail image stay at the right of the page when screen is narrow
+    (detail tab) */
+    .op-detail-content {
+        flex-wrap: nowrap;
+    }
+
+    /* Reduce the spaces around "Observation Detail" (detail tab) */
+    .op-detail-metadata h1 {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+    }
+
+    /* Reduce the spaces around "OPUS ID" in detail tab */
+    .op-detail-metadata p {
+        margin-bottom: 0.2em;
+    }
+
+    /* The followings are to move "Download Data" button to the same line as
+    cart actions nav buttons  (cart tab) */
+    .op-cart-actions-group {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .op-cart-slide-download-panel i {
+        display: none !important;
+    }
+
+    .op-cart-toggle-download-panel {
+        padding: 0;
+    }
+}
+
+/* Make sure image always stays at the left in metadata modal */
+#galleryViewContents .row {
+    flex-wrap: nowrap !important;
+}
+
+/* Make sure bottom icons will be vertically centered in metadata modal in
+different browsers */
+#galleryViewContents .bottom {
+    align-items: stretch;
+}
+
+@media (max-width: 768px) and (max-height: 400px) {
+    /* Make observation detail area shrinkable when screen is short & narrow
+    (detail tab) */
+    .op-detail-metadata {
+        padding-right: 1em !important;
+        min-width: 100%;
+    }
+
+    /* Make observation detail area take up 70% of width and image take up 30%
+    when screen is short & narrow (detail tab) */
+    .op-detail-metadata-container {
+        flex: 1 0 70%;
+        display: grid;
+    }
+
+    /* Reduce the spaces around detail tab when screen is short & narrow */
+    #detail {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        padding-left: 1em;
+        padding-right: 1em;
+    }
 }

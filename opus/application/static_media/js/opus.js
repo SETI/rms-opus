@@ -119,8 +119,8 @@ var opus = {
         "opera": 42,
         "safari": 10.1,
         "based on applewebkit": 537, // Based on Chrome 56
-        "width": 600,
-        "height": 350
+        "width": 550,
+        "height": 270
     },
 
     // current splash page version for storing in the visited cookie
@@ -133,6 +133,11 @@ var opus = {
 
     // Max number of input sets per (RANGE or STRING) widget
     maxAllowedInputSets: 10,
+
+    // The browser threshold width & height that font & thumbnail size start to shirnk.
+    // NTOE: These two variables have to match the breakpoints in mobile support section in opus.css.
+    browserThresholdWidth: 700,
+    browserThresholdHeight: 400,
 
     //------------------------------------------------------------------------------------
     // Debugging support
@@ -718,7 +723,6 @@ var opus = {
 
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
-        let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
         let adjustBrowseHeightDB = function() {o_browse.adjustBrowseHeight(true);};
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
@@ -730,7 +734,7 @@ var opus = {
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
-            searchHeightChangedDB();
+            o_search.searchHeightChanged();
             adjustBrowseHeightDB();
             adjustTableSizeDB();
             adjustProductInfoHeightDB();
@@ -1294,9 +1298,10 @@ var opus = {
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             if (!$("#op-browser-size-msg-modal").hasClass("show")) {
-                let modalMsg = (`Please resize your browser. OPUS requires a browser
-                                size of at least ${opus.browserSupport.width} pixels by
-                                ${opus.browserSupport.height} pixels.`);
+                let modalMsg = (`Please resize your browser or rotate your mobile
+                                device to landscape mode. OPUS requires a browser
+                                size of at least ${opus.browserSupport.width} pixels
+                                by ${opus.browserSupport.height} pixels.`);
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);
