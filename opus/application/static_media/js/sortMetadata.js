@@ -24,7 +24,7 @@ let o_sortMetadata = {
             cursor: "grab",
             containment: "parent",
             tolerance: "pointer",
-            cancel: ".op-sort-order-add-icon",
+            cancel: ".op-sort-order-add-icon, .op-no-sort",
             stop: function(event, ui) {
                 // rebuild new search order and reload page
                 let order = [];
@@ -32,11 +32,16 @@ let o_sortMetadata = {
                     let slug = $(obj).data("slug");
                     order.push(slug);
                 });
-                // only bother if something actually changed...
-                if (!o_utils.areObjectsEqual(opus.prefs.order, order)) {
-                    opus.prefs.order = o_utils.deepCloneObj(order);
-                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                    o_sortMetadata.renderSortedDataFromBeginning();
+                if (order[length-1] !== "opusid") {
+                    // again, we always want opusid last
+                    $( ".op-sort-contents" ).sortable("cancel");
+                } else {
+                    // only bother if something actually changed...
+                    if (!o_utils.areObjectsEqual(opus.prefs.order, order)) {
+                        opus.prefs.order = o_utils.deepCloneObj(order);
+                        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                        o_sortMetadata.renderSortedDataFromBeginning();
+                    }
                 }
             },
         });
@@ -48,8 +53,9 @@ let o_sortMetadata = {
             o_browse.hideMenus();
             let inOrderList = $(this).find(".op-column-ordering").data("sort") !== "none";
             let slug = $(this).data("slug");
-            if (inOrderList || opus.prefs.order.length < 2 || (e.ctrlKey || e.metaKey)) {
-                o_sortMetadata.onClickSortOrder(slug);
+            let append = (e.ctrlKey || e.metaKey || e.shiftKey);
+            if (inOrderList || opus.prefs.order.length <= 2 || (e.ctrlKey || e.metaKey || e.shiftKey)) {
+                o_sortMetadata.onClickSortOrder(slug, append);
             } else {
                 $("#op-overwrite-sort-order").modal("show").data("slug", slug);
             }
@@ -158,7 +164,8 @@ let o_sortMetadata = {
 
         // if the user clicked on a header that is not yet in the order list, add it ...
         if (orderIndex < 0) {
-            order.push(orderBy);
+            // opusid must always be last, so instead of push we splice.
+            order.splice(order.length-1, 0, orderBy);
         } else {
             order[orderIndex] = orderBy;
         }
@@ -222,6 +229,7 @@ let o_sortMetadata = {
     updateSortOrder: function(data) {
         let tab = opus.getViewTab();
         let listHtml = "";
+        let dragTooltip = " - Drag to reorder";
 
         let tableColumnFields = {};
         $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
@@ -233,10 +241,11 @@ let o_sortMetadata = {
             let slug = order_entry.slug;
             let label = order_entry.label;
             let isDescending = order_entry.descending;
-            let orderTooltip = (isDescending ? "Change to ascending sort" : "Change to descending sort");
+            let orderTooltip = (isDescending ? "Change to ascending sort" : "Change to descending sort") + (slug === "opusid" ? "" : dragTooltip);
 
             let removeable = order_entry.removeable;
-            listHtml += "<div class='list-inline-item'>";
+            let extraClass = (slug === "opusid" ? "op-no-sort" : "");
+            listHtml += `<div class='list-inline-item ${extraClass}'>`;
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
@@ -264,7 +273,10 @@ let o_sortMetadata = {
 
         // if all the metadata field columns are already in the sort list, disable the add button
         // limit the total number of sort columns to 9
-        if (Object.keys(tableColumnFields).length === 0 || opus.prefs.order.length === 9) {
+        if (Object.keys(tableColumnFields).length === 0) {
+            $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
+            $(".op-sort-order-add-icon").attr("title", "No metadata fields are currently available to add to the sort.");
+        } else if (opus.prefs.order.length === 9) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
             $(".op-sort-order-add-icon").attr("title", "The maximun of 9 metadata fields to sort on has already been selected");
         } else {

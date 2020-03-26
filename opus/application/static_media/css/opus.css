@@ -1617,17 +1617,15 @@ panel are properly separated */
     /* padding-top: 0.5em; */
 }
 
-.op-sort-order-icon, .op-sort-order-add-icon {
+.op-sort-order-icon {
     opacity: 0.5 !important;
     vertical-align: middle;
-}
-
-.op-sort-order-icon {
     padding-right: .3em;
 }
 
 .op-sort-order-add-icon {
     margin-bottom: 0.1em !important;
+    vertical-align: middle;
 }
 
 .op-sort-contents {
@@ -1639,6 +1637,12 @@ panel are properly separated */
 .op-sort-contents .list-inline-item {
     opacity: 0.7;
     margin-bottom: -10px;
+}
+
+.op-no-sort {
+    border-left-style: solid;
+    border-width: 1px;
+    padding-left: .5em;
 }
 
 #op-add-sort-metadata .op-sort-list {
