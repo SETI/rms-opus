@@ -1389,7 +1389,7 @@ var o_browse = {
             let positionAsc = $.inArray(slug, order);
             let positionDesc = $.inArray("-"+slug, order);
 
-            let orderToolTip = "";
+            let orderToolTip = "title='Click to sort on this field\nCtrl+click to append to current sort'";
             let icon = "";
             let columnSorting = "none";
             let columnOrderPostion = "";
@@ -1411,8 +1411,8 @@ var o_browse = {
             let lastWord = headerArr.pop();
             let spacing = headerArr.length ? "&nbsp;" : "";
             let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
-                                        `<span data-sort="${columnSorting}" ${orderToolTip} class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
-            let columnOrdering = `<a href="" data-slug="${slug}" data-label="${label}">${lastWordWrappingGroup}</a>`;
+                                        `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
+            let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
             $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
         });

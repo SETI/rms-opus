@@ -226,7 +226,7 @@ let o_sortMetadata = {
     updateSortOrder: function(data) {
         let tab = opus.getViewTab();
         let listHtml = "";
-        let dragTooltip = " - Drag to reorder";
+        let dragTooltip = "\nDrag to reorder";
 
         let tableColumnFields = {};
         $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
