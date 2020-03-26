@@ -865,8 +865,7 @@ var opus = {
                             location.assign("/opus");
                             break;
                         case "op-overwrite-sort-order":
-                            let addToSort = false;
-                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), addToSort);
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), false);
                             break;
                         case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");

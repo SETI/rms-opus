@@ -1165,7 +1165,9 @@ def api_normalize_url(request):
         #        +'they have been replaced with the new defaults.')
         # msg_list.append(msg)
         orders = settings.DEFAULT_SORT_ORDER
-    for order in orders.split(','):
+
+    order_split = orders.split(',')
+    for order_num, order in enumerate(order_split):
         if order == '':
             continue
         if order == 'ringobsid':
@@ -1202,11 +1204,18 @@ def api_normalize_url(request):
             order_list.append(pi.slug)
         if order != pi.slug:
             old_ui_slug_flag = True
+        if pi.slug == 'opusid':
+            if order_num != len(order_split)-1:
+                msg = 'Fields after "opusid" in the sort order have been removed.'
+                msg_list.append(msg)
+            break
     if len(order_list) == 0:
         msg = 'The "order" field is empty; it has been set to the default.'
         msg_list.append(msg)
         order_str = settings.DEFAULT_SORT_ORDER
     else:
+        if 'opusid' not in order_list and '-opusid' not in order_list:
+            order_list.append('opusid')
         order_str = ','.join(order_list)
     new_url_suffix_list.append(('order', order_str))
 

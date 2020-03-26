@@ -49,7 +49,7 @@ let o_sortMetadata = {
         // click table column header to reorder by that column
         // On click, if there are already 2 items in the sort <opusId + slug>, display overwrite modal option
         // On ctrl click will append the selected sort
-        $("#browse, #cart").on("click", ".op-data-table-view th a",  function(e) {
+        $("#browse, #cart").on("click", ".op-data-table-view th a", function(e) {
             o_browse.hideMenus();
             let inOrderList = $(this).find(".op-column-ordering").data("sort") !== "none";
             let slug = $(this).data("slug");
@@ -102,7 +102,6 @@ let o_sortMetadata = {
         $(".op-sort-contents").on("click", ".op-sort-order-add-icon", function(e) {
             // allow the hover to work but the click appear to be disabled
             if ($(".op-sort-order-add-icon").hasClass("op-sort-add-disabled")) {
-
                 return false;
             }
             // if the menu is already displayed, onclick should just close it.
@@ -116,11 +115,9 @@ let o_sortMetadata = {
         });
     }, // end edit sort metadata behaviours
 
-    onClickSortOrder: function(orderBy, addToSort) {
+    onClickSortOrder: function(orderBy, addToSort=true) {
         $("body").addClass("op-prevent-pointer-events");
         o_browse.showPageLoaderSpinner();
-
-        addToSort = (addToSort === undefined ? true : addToSort);
 
         let order = [];
         let orderIndex = -1;
@@ -265,8 +262,8 @@ let o_sortMetadata = {
             }
         });
 
-        listHtml += `<div class="op-sort-order-add-icon list-inline-item" title="Edit sort by adding metadata fields">`+
-					   `<i class="fas fa-plus"></i>`+
+        listHtml += `<div class="op-sort-order-add-icon list-inline-item" title="Add metadata fields to sort order">`+
+					    `<i class="fas fa-plus"></i>` +
 					`</div>`;
 
         $(".op-sort-contents").html(listHtml);
@@ -275,10 +272,10 @@ let o_sortMetadata = {
         // limit the total number of sort columns to 9
         if (Object.keys(tableColumnFields).length === 0) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
-            $(".op-sort-order-add-icon").attr("title", "No metadata fields are currently available to add to the sort.");
+            $(".op-sort-order-add-icon").attr("title", "All selected metadata fields have been used");
         } else if (opus.prefs.order.length === 9) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
-            $(".op-sort-order-add-icon").attr("title", "The maximun of 9 metadata fields to sort on has already been selected");
+            $(".op-sort-order-add-icon").attr("title", "The maximum of nine metadata sort fields has been reached");
         } else {
             $(".op-sort-order-add-icon").removeClass("op-sort-add-disabled");
         }

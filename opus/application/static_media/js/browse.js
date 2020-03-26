@@ -1163,10 +1163,6 @@ var o_browse = {
 
         let suppressScrollY = false;
 
-        if (opus.prefs.order.length === 0) {
-            //$("op-sort-order-add-icon").addClass("op-button-disabled");
-        }
-
         if (o_browse.isGalleryView()) {
             $(".op-data-table-view", tab).hide();
             $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
@@ -1415,10 +1411,10 @@ var o_browse = {
             let lastWord = headerArr.pop();
             let spacing = headerArr.length ? "&nbsp;" : "";
             let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
-                            `<span data-sort='${columnSorting}' ${orderToolTip} class='op-column-ordering fas fa-sort${icon}'>${columnOrderPostion}</span>`;
-            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'>${lastWordWrappingGroup}</a>`;
+                                        `<span data-sort="${columnSorting}" ${orderToolTip} class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
+            let columnOrdering = `<a href="" data-slug="${slug}" data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
