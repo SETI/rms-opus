@@ -865,6 +865,7 @@ var opus = {
                             location.assign("/opus");
                             break;
                         case "op-overwrite-sort-order":
+                            // this case handles the replace sort
                             o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), false);
                             break;
                         case "op-empty-cart-modal":
@@ -900,8 +901,8 @@ var opus = {
                             o_selectMetadata.discardChanges();
                             break;
                         case "op-overwrite-sort-order":
-                            let addToSort = true;
-                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), addToSort);
+                            // this case handles the append to sort
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"));
                             break;
                     }
                     $(`#${target}`).modal("hide");

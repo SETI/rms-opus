@@ -263,8 +263,8 @@ let o_sortMetadata = {
         });
 
         listHtml += `<div class="op-sort-order-add-icon list-inline-item" title="Add metadata fields to sort order">`+
-					    `<i class="fas fa-plus"></i>` +
-					`</div>`;
+                        `<i class="fas fa-plus"></i>` +
+                    `</div>`;
 
         $(".op-sort-contents").html(listHtml);
 
