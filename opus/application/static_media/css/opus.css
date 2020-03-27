@@ -1642,6 +1642,7 @@ panel are properly separated */
     border-left-style: solid;
     border-width: 1px;
     padding-left: .5em;
+    margin-left: 2em;
 }
 
 #op-add-sort-metadata .op-sort-list {

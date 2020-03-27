@@ -868,6 +868,9 @@ var opus = {
                             // this case handles the replace sort
                             o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), false);
                             break;
+                        case "op-reset-sort-order":
+                            o_sortMetadata.resetSortOrder();
+                            break;
                         case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;

@@ -3,7 +3,7 @@
 /* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
-/* globals $ */
+/* globals $, DEFAULT_SORT_ORDER */
 /* globals o_hash, o_browse, o_utils, opus */
 
 // font awesome icon class
@@ -19,6 +19,7 @@ let o_sortMetadata = {
     *
     **/
     addBehaviours: function() {
+        $(".op-sort-order-icon").attr("title", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
         $(".op-sort-contents").sortable({
             items: "div",
             cursor: "grab",
@@ -113,6 +114,13 @@ let o_sortMetadata = {
             }
             return false;
         });
+
+        $(".op-sort-order-icon").on("click", function(e) {
+            // this will reset the current sort
+            if (opus.prefs.order.join(",") !== DEFAULT_SORT_ORDER) {
+                $("#op-reset-sort-order").modal("show");
+            }
+        });
     }, // end edit sort metadata behaviours
 
     onClickSortOrder: function(orderBy, addToSort=true) {
@@ -121,7 +129,10 @@ let o_sortMetadata = {
 
         let order = [];
         let orderIndex = -1;
-        if (addToSort) {
+
+        if (orderBy === "opusid") {
+            order = opus.prefs.order.slice(0,1);
+        } else if (addToSort) {
             order = opus.prefs.order;
         }
 
@@ -137,9 +148,6 @@ let o_sortMetadata = {
                 // currently ascending, change to descending order
                 isDescending = true;
                 orderIndex = $.inArray(orderBy, order);
-                if ($.inArray(`-${orderBy}`, order) >= 0) {
-                    console.log("1 backwards");
-                }
                 orderBy = '-' + orderBy;
                 break;
 
@@ -147,9 +155,6 @@ let o_sortMetadata = {
                 // currently descending, change to ascending order
                 isDescending = false;
                 orderIndex = $.inArray(`-${orderBy}`, order);
-                if ($.inArray(`${orderBy}`, order) >= 0) {
-                    console.log("2 backwards");
-                }
                 break;
 
             case "none":
@@ -225,8 +230,11 @@ let o_sortMetadata = {
 
     updateSortOrder: function(data) {
         let tab = opus.getViewTab();
-        let listHtml = "";
         let dragTooltip = "\nDrag to reorder";
+
+        let addIconHtml = `<div class="op-sort-order-add-icon list-inline-item" title="Add metadata fields to sort order">`+
+                              `<i class="fas fa-plus"></i>` +
+                          `</div>`;
 
         let tableColumnFields = {};
         $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
@@ -234,6 +242,7 @@ let o_sortMetadata = {
         });
 
         opus.prefs.order = [];
+        $(".op-sort-contents").empty();
         $.each(data.order_list, function(index, order_entry) {
             let slug = order_entry.slug;
             let label = order_entry.label;
@@ -242,7 +251,8 @@ let o_sortMetadata = {
 
             let removeable = order_entry.removeable;
             let extraClass = (slug === "opusid" ? "op-no-sort" : "");
-            listHtml += `<div class='list-inline-item ${extraClass}'>`;
+
+            let listHtml = `<div class='list-inline-item ${extraClass}'>`;
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
@@ -260,13 +270,11 @@ let o_sortMetadata = {
             if (tableColumnFields[slug] !== undefined) {
                 delete tableColumnFields[slug];
             }
+            if (slug === "opusid") {
+                $(".op-sort-contents").append(addIconHtml);
+            }
+            $(".op-sort-contents").append(listHtml);
         });
-
-        listHtml += `<div class="op-sort-order-add-icon list-inline-item" title="Add metadata fields to sort order">`+
-                        `<i class="fas fa-plus"></i>` +
-                    `</div>`;
-
-        $(".op-sort-contents").html(listHtml);
 
         // if all the metadata field columns are already in the sort list, disable the add button
         // limit the total number of sort columns to 9
@@ -280,6 +288,12 @@ let o_sortMetadata = {
             $(".op-sort-order-add-icon").removeClass("op-sort-add-disabled");
         }
         o_hash.updateURLFromCurrentHash();
+    },
+
+    resetSortOrder: function () {
+        opus.prefs.order = DEFAULT_SORT_ORDER;
+        o_hash.updateURLFromCurrentHash();
+        o_sortMetadata.renderSortedDataFromBeginning();
     },
 
     renderSortedDataFromBeginning: function() {
