@@ -21,25 +21,25 @@ let o_sortMetadata = {
     addBehaviours: function() {
         $(".op-sort-order-icon").attr("title", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
         $(".op-sort-contents").sortable({
-            items: "div",
+            items: "div:not(.op-no-sort), div:not(.op-sort-order-add-icon)",
             cursor: "grab",
             containment: "parent",
             tolerance: "pointer",
             cancel: ".op-sort-order-add-icon, .op-no-sort",
             stop: function(event, ui) {
                 // rebuild new search order and reload page
-                let order = [];
+                let newOrder = [];
                 $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
                     let slug = $(obj).data("slug");
-                    order.push(slug);
+                    newOrder.push(slug);
                 });
-                if (order[length-1] !== "opusid") {
+                if (newOrder[newOrder.length-1] !== "opusid") {
                     // again, we always want opusid last
                     $( ".op-sort-contents" ).sortable("cancel");
                 } else {
                     // only bother if something actually changed...
-                    if (!o_utils.areObjectsEqual(opus.prefs.order, order)) {
-                        opus.prefs.order = o_utils.deepCloneObj(order);
+                    if (!o_utils.areObjectsEqual(opus.prefs.order, newOrder)) {
+                        opus.prefs.order = o_utils.deepCloneObj(newOrder);
                         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                         o_sortMetadata.renderSortedDataFromBeginning();
                     }
@@ -127,13 +127,11 @@ let o_sortMetadata = {
         $("body").addClass("op-prevent-pointer-events");
         o_browse.showPageLoaderSpinner();
 
-        let order = [];
+        let newOrder = [];
         let orderIndex = -1;
 
-        if (orderBy === "opusid") {
-            order = opus.prefs.order.slice(0,1);
-        } else if (addToSort) {
-            order = opus.prefs.order;
+        if (addToSort) {
+            newOrder = opus.prefs.order;
         }
 
         let tableOrderIndicator = $(`[data-slug='${orderBy}'] .op-column-ordering`);
@@ -142,40 +140,41 @@ let o_sortMetadata = {
 
         // account for the case when the sort pill is present, but the metadata field column is not
         let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
+        //(hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
 
         switch (sortOrder) {
             case "asc":
                 // currently ascending, change to descending order
                 isDescending = true;
-                orderIndex = $.inArray(orderBy, order);
+                orderIndex = $.inArray(orderBy, newOrder);
                 orderBy = '-' + orderBy;
                 break;
 
             case "desc":
                 // currently descending, change to ascending order
                 isDescending = false;
-                orderIndex = $.inArray(`-${orderBy}`, order);
+                orderIndex = $.inArray(`-${orderBy}`, newOrder);
                 break;
 
             case "none":
                 // if not currently ordered, change to ascending
                 isDescending = false;
-                orderIndex = $.inArray(orderBy, order);
+                orderIndex = $.inArray(orderBy, newOrder);
                 break;
         }
 
         // if the user clicked on a header that is not yet in the order list, add it ...
         if (orderIndex < 0) {
             // opusid must always be last, so instead of push we splice.
-            order.splice(order.length-1, 0, orderBy);
+            newOrder.splice(newOrder.length-1, 0, orderBy);
         } else {
-            order[orderIndex] = orderBy;
+            newOrder[orderIndex] = orderBy;
         }
         // push it here so that opusID is last
         if (!addToSort) {
-            order.push("opusid");
+            newOrder.push("opusid");
         }
-        opus.prefs.order = order;
+        opus.prefs.order = newOrder;
         o_sortMetadata.updateOrderIndicator(tableOrderIndicator, pillOrderIndicator, isDescending, orderBy);
 
         o_hash.updateURLFromCurrentHash();
