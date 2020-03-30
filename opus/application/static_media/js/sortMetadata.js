@@ -231,7 +231,7 @@ let o_sortMetadata = {
         let tab = opus.getViewTab();
         let dragTooltip = "\nDrag to reorder";
 
-        let addIconHtml = `<div class="op-sort-order-add-icon list-inline-item" title="Add metadata fields to sort order">`+
+        let addIconHtml = `<div class="op-sort-order-add-icon op-no-sort list-inline-item" title="Add metadata fields to sort order">`+
                               `<i class="fas fa-plus"></i>` +
                           `</div>`;
 
@@ -249,7 +249,7 @@ let o_sortMetadata = {
             let orderTooltip = (isDescending ? "Change to ascending sort" : "Change to descending sort") + (slug === "opusid" ? "" : dragTooltip);
 
             let removeable = order_entry.removeable;
-            let extraClass = (slug === "opusid" ? "op-no-sort" : "");
+            let extraClass = (slug === "opusid" ? "op-no-sort op-sort-last" : "");
 
             let listHtml = `<div class='list-inline-item ${extraClass}'>`;
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;

@@ -1640,7 +1640,7 @@ panel are properly separated */
     margin-bottom: -10px;
 }
 
-.op-no-sort {
+.op-sort-last {
     border-left-style: solid;
     border-width: 1px;
     padding-left: .5em;
