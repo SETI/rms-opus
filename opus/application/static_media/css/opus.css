@@ -1627,6 +1627,7 @@ panel are properly separated */
     margin-bottom: 0.1em !important;
     vertical-align: middle;
     margin-left: 0.5em;
+    display: inline-flex;
 }
 
 .op-sort-contents {
@@ -1641,6 +1642,7 @@ panel are properly separated */
 }
 
 .op-sort-last {
+    display: inline-block;
     border-left-style: solid;
     border-width: 1px;
     padding-left: .5em;

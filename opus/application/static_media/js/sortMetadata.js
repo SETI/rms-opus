@@ -21,11 +21,11 @@ let o_sortMetadata = {
     addBehaviours: function() {
         $(".op-sort-order-icon").attr("title", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
         $(".op-sort-contents").sortable({
-            items: "div:not(.op-no-sort), div:not(.op-sort-order-add-icon)",
+            items: " div.op-sort-only",
             cursor: "grab",
             containment: "parent",
-            tolerance: "pointer",
-            cancel: ".op-sort-order-add-icon, .op-no-sort",
+            tolerance: "intersect",
+            cancel: ".op-no-sort",
             stop: function(event, ui) {
                 // rebuild new search order and reload page
                 let newOrder = [];
@@ -140,7 +140,6 @@ let o_sortMetadata = {
 
         // account for the case when the sort pill is present, but the metadata field column is not
         let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
-        //(hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
 
         switch (sortOrder) {
             case "asc":
@@ -231,9 +230,10 @@ let o_sortMetadata = {
         let tab = opus.getViewTab();
         let dragTooltip = "\nDrag to reorder";
 
-        let addIconHtml = `<div class="op-sort-order-add-icon op-no-sort list-inline-item" title="Add metadata fields to sort order">`+
-                              `<i class="fas fa-plus"></i>` +
-                          `</div>`;
+        let addIconHtml = `<div class="op-no-sort list-inline-item">` +
+                             `<div class="op-sort-order-add-icon" title="Add metadata fields to sort order">`+
+                                `<i class="fas fa-plus"></i>` +
+                             `</div>`;  // opusID pill will get tagged onto this later thus ending the </div>
 
         let tableColumnFields = {};
         $(`${tab} .op-data-table-view th`).find("a[data-slug]").each(function(index, obj) {
@@ -249,9 +249,9 @@ let o_sortMetadata = {
             let orderTooltip = (isDescending ? "Change to ascending sort" : "Change to descending sort") + (slug === "opusid" ? "" : dragTooltip);
 
             let removeable = order_entry.removeable;
-            let extraClass = (slug === "opusid" ? "op-no-sort op-sort-last" : "");
+            let itemClasses = (slug === "opusid" ? "op-sort-last" : "list-inline-item op-sort-only");
 
-            let listHtml = `<div class='list-inline-item ${extraClass}'>`;
+            let listHtml = `<div class='${itemClasses}'>`;
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
                 listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
@@ -270,10 +270,12 @@ let o_sortMetadata = {
                 delete tableColumnFields[slug];
             }
             if (slug === "opusid") {
-                $(".op-sort-contents").append(addIconHtml);
+                addIconHtml += listHtml + "</div>";
+            } else {
+                $(".op-sort-contents").append(listHtml);
             }
-            $(".op-sort-contents").append(listHtml);
         });
+        $(".op-sort-contents").append(addIconHtml);
 
         // if all the metadata field columns are already in the sort list, disable the add button
         // limit the total number of sort columns to 9
