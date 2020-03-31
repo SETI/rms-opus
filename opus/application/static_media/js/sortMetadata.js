@@ -21,7 +21,7 @@ let o_sortMetadata = {
     addBehaviours: function() {
         $(".op-sort-order-icon").attr("title", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
         $(".op-sort-contents").sortable({
-            items: " div.op-sort-only",
+            items: "div.op-sort-only",
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
@@ -33,16 +33,11 @@ let o_sortMetadata = {
                     let slug = $(obj).data("slug");
                     newOrder.push(slug);
                 });
-                if (newOrder[newOrder.length-1] !== "opusid") {
-                    // again, we always want opusid last
-                    $( ".op-sort-contents" ).sortable("cancel");
-                } else {
-                    // only bother if something actually changed...
-                    if (!o_utils.areObjectsEqual(opus.prefs.order, newOrder)) {
-                        opus.prefs.order = o_utils.deepCloneObj(newOrder);
-                        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                        o_sortMetadata.renderSortedDataFromBeginning();
-                    }
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.order, newOrder)) {
+                    opus.prefs.order = o_utils.deepCloneObj(newOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
                 }
             },
         });
@@ -54,7 +49,7 @@ let o_sortMetadata = {
             o_browse.hideMenus();
             let inOrderList = $(this).find(".op-column-ordering").data("sort") !== "none";
             let slug = $(this).data("slug");
-            let append = (e.ctrlKey || e.metaKey || e.shiftKey);
+            let append = ((e.ctrlKey || e.metaKey || e.shiftKey) || slug === "opusid");
             if (inOrderList || opus.prefs.order.length <= 2 || (e.ctrlKey || e.metaKey || e.shiftKey)) {
                 o_sortMetadata.onClickSortOrder(slug, append);
             } else {
