@@ -1134,6 +1134,27 @@ class ApiUITests(TestCase, ApiTestHelper):
         new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
 
+    def test__api_normalizeurl_order_opusid_dec_not_last_1(self):
+        "[test_ui_api.py] /__normalizeurl: order -opusid,instrument"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=-opusid,instrument'
+        new_slugs['order'] = '-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_dec_not_last_2(self):
+        "[test_ui_api.py] /__normalizeurl: order -opusid,instrument,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=-opusid,instrument,time'
+        new_slugs['order'] = '-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_dec_not_last_3(self):
+        "[test_ui_api.py] /__normalizeurl: order instrument,-opusid,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=instrument,-opusid,time'
+        new_slugs['order'] = 'instrument,-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
     # Old defaults
 
     def test__api_normalizeurl_order_default(self):
