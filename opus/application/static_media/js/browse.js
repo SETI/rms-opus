@@ -1389,11 +1389,11 @@ var o_browse = {
             let positionAsc = $.inArray(slug, order);
             let positionDesc = $.inArray("-"+slug, order);
 
-            let orderToolTip = "title='Click to sort on this field\nCtrl+click to append to current sort'";
             let icon = "";
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
+            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Click to sort on this field\nCtrl+click to append to current sort'" : "title='Click to sort'");
 
             if (positionAsc >= 0) {
                 orderToolTip = "title='Change to descending sort'";
