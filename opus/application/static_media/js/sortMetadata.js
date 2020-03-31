@@ -48,10 +48,12 @@ let o_sortMetadata = {
         $("#browse, #cart").on("click", ".op-data-table-view th a", function(e) {
             o_browse.hideMenus();
             let inOrderList = $(this).find(".op-column-ordering").data("sort") !== "none";
+            if (!inOrderList && opus.prefs.order.length >= 9) {
+                return false;
+            }
             let slug = $(this).data("slug");
-            let append = ((e.ctrlKey || e.metaKey || e.shiftKey) || slug === "opusid");
             if (inOrderList || opus.prefs.order.length <= 2 || (e.ctrlKey || e.metaKey || e.shiftKey)) {
-                o_sortMetadata.onClickSortOrder(slug, append);
+                o_sortMetadata.onClickSortOrder(slug);
             } else {
                 $("#op-overwrite-sort-order").modal("show").data("slug", slug);
             }
@@ -277,7 +279,7 @@ let o_sortMetadata = {
         if (Object.keys(tableColumnFields).length === 0) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
             $(".op-sort-order-add-icon").attr("title", "All selected metadata fields have been used");
-        } else if (opus.prefs.order.length === 9) {
+        } else if (opus.prefs.order.length >= 9) {
             $(".op-sort-order-add-icon").addClass("op-sort-add-disabled");
             $(".op-sort-order-add-icon").attr("title", "The maximum of nine metadata sort fields has been reached");
         } else {
