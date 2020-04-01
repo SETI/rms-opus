@@ -114,10 +114,10 @@
                             </ul>
                         </div>
                         <div class="op-sort-order-container">
-                            <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
-                                <i class="fas fa-random"></i>
-                            </span>&nbsp;
-                            <ul class="sort-contents list-inline"></ul>
+                            <span class="op-sort-order-icon">
+                                <i class="fas fa-random"></i>&nbspSort by&nbsp
+                            </span>
+                            <div class="op-sort-contents"></div>
                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid">
@@ -158,7 +158,7 @@
                     <div class="col cart_details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
                     </div>
-                    <div class="col pl-0 cart-gallery-side">
+                    <div class="col pl-0 op-cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container">
                                 <div class="op-cart-nav-container">
@@ -182,9 +182,9 @@
                             </div>
                             <div class="op-sort-order-container">
                                 <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
-                                    <i class="fas fa-random"></i>
-                                </span>&nbsp;
-                                <ul class="sort-contents list-inline"></ul>
+                                    <i class="fas fa-random"></i>&nbspSort by&nbsp
+                                </span>
+                                <div class="op-sort-contents"></div>
                             </div>
                             <div class="op-cart-actions-group">
                                 <div class="op-cart-actions">
@@ -280,6 +280,12 @@
             <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
         </div>
 
+        <!-- dropdown menu for sort metadata columns -->
+        <div id="op-add-sort-metadata" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add Metadata Field to Sort</h2>
+            <div class="op-sort-list"></div>
+        </div>
+
         <!--sliding panel for the help menu items -->
         <div id="op-help-panel" class="card w-75">
             <div class="card-header align-items-center h-auto bg-secondary">
@@ -368,6 +374,28 @@
             confirm_title="Confirm Reset OPUS"
             confirm_msg="Are you sure you want to reset OPUS to its default state? This will erase any search parameters, open search fields, selected metadata, and other customization you may have done, but will leave items in your cart."
             target="op-reset-opus-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-overwrite-sort-order"
+            confirm_title="Confirm Overwrite of Metadata Fields Sort Order"
+            confirm_msg="Select \"Overwrite\" to update your metadata fields sort order to the selected metadata field + OPUS ID or \"Append\" to append to your current sort criteria."
+            target="op-overwrite-sort-order"
+            yes_text="Overwrite"
+            no_text="Append"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-reset-sort-order"
+            confirm_title="Confirm Reset of Metadata Fields Sort Order"
+            confirm_msg="Are you sure you want to reset the sort order to its default?"
+            target="op-reset-sort-order"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -589,6 +617,7 @@
     <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/sortMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>

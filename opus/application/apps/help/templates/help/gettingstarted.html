@@ -182,14 +182,28 @@ data OPUS has to offer.</p>
     set to the cart. See the section on the <b>Cart</b> tab below for more
     information on downloading the contents of the cart.</p>
 
-<p>The sort order for all results may be modified by clicking on a column header
-    in the table view; this is the only way to choose a different metadata field
-    to sort on. However, the current sort field and sort direction are always
-    displayed at the top after the <i class="fas fa-random"></i> icon. Clicking
-    a field name there will toggle the order between ascending and descending,
-    and clicking on the <i class="fas fa-times-circle"></i> icon will remove
-    that field from the sort order. The same sort order applies to the
-    <b>Browse</b> tab and the <b>Cart</b> tab.</p>
+<p>Results may be sorted in either ascending or descending order by one or more
+    metadata fields. The current sort fields and their associated sort
+    directions are always displayed at the top after the
+    <i class="fas fa-random"></i> icon (the sort order must always include OPUS
+    ID as the final field to ensure a deterministic ordering). The sort fields
+    may be reordered by dragging the field name and the sort direction for a
+    field may be changed by clicking on the field name. Sort fields may be
+    added from the currently selected metadata fields by clicking
+    <i class="fas fa-plus"></i>; to change the list of available fields use
+    Select Metadata. A sort field may be removed by clicking its
+    <i class="fas fa-times-circle"></i> icon. In the table view, if a column is
+    being used to sort it will display the sort direction
+    (<i class="fas fa-sort-up"></i> or <i class="fas fa-sort-down"></i>) and a
+    number in a circle showing its position in the sort order. Clicking on the
+    header of a column that is used in the current sort will change the
+    direction for that field. Clicking on the header of a column that is not
+    currently being used will replace the current sort if there is only one
+    field there (other than OPUS ID), or ask if you want to overwrite or append
+    to the end of the current sort otherwise. Ctrl+clicking on a table header
+    will always append that field to the end of the sort (but before OPUS ID).
+    The same sort order applies to the <b>Browse</b> tab and the <b>Cart</b>
+    tab.</p>
 
 <p>Clicking on a gallery thumbnail or table row will display a larger version
     of the thumbnail along with the metadata for the currently selected metadata

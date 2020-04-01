@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_sortMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
 /* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
 
 // defining the opus namespace first; document ready comes after...
@@ -472,7 +472,7 @@ var opus = {
 
         // First hide everything
         $("#search, #detail, #cart, #browse").hide();
-        o_browse.hideMenu();
+        o_browse.hideMenus();
 
         // Close any open modals
         $("#galleryView").modal('hide');
@@ -714,6 +714,7 @@ var opus = {
         o_browse.addBrowseBehaviors();
         o_cart.addCartBehaviors();
         o_search.addSearchBehaviors();
+        o_sortMetadata.addBehaviours();
     },
 
     addOpusBehaviors: function() {
@@ -863,6 +864,13 @@ var opus = {
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
+                        case "op-overwrite-sort-order":
+                            // this case handles the replace sort
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), false);
+                            break;
+                        case "op-reset-sort-order":
+                            o_sortMetadata.resetSortOrder();
+                            break;
                         case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;
@@ -894,6 +902,10 @@ var opus = {
                             break;
                         case "op-close-metadata-modal":
                             o_selectMetadata.discardChanges();
+                            break;
+                        case "op-overwrite-sort-order":
+                            // this case handles the append to sort
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"));
                             break;
                     }
                     $(`#${target}`).modal("hide");

@@ -4,15 +4,9 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_cart, o_hash, o_utils, o_selectMetadata, opus */
+/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
-// font awesome icon class
-const pillSortUpArrow = "fas fa-arrow-circle-up";
-const pillSortDownArrow = "fas fa-arrow-circle-down";
-const tableSortUpArrow = "fas fa-sort-up";
-const tableSortDownArrow = "fas fa-sort-down";
-const defaultTableSortArrow = "fas fa-sort";
 const infiniteScrollUpThreshold = 100;
 
 /* jshint varstmt: false */
@@ -64,7 +58,6 @@ var o_browse = {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
-
         // Mouse wheel up will also trigger ps-scroll-up.
         // NOTE: We put both wheel and ps-scroll-up here for a corner case like this:
         // 1. Scroll slider to the very end (scrollbar will be at the bottom and is fairly long)
@@ -95,7 +88,7 @@ var o_browse = {
                     }
                 }
             }
-            o_browse.hideMenu();
+            o_browse.hideMenus();
         });
 
         $("#op-select-metadata").modal({
@@ -110,7 +103,7 @@ var o_browse = {
                 return false;
             }
 
-            o_browse.hideMenu();
+            o_browse.hideMenus();
             let browse = o_browse.getBrowseView();
             opus.prefs[browse] = $(this).data("view");
             if (!o_browse.isGalleryView()) {
@@ -150,7 +143,7 @@ var o_browse = {
             // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
             // but is not caught in time before hidden.bs to get correct opusId
             e.preventDefault();
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             let opusId = $(this).parent().data("id");
 
@@ -190,7 +183,7 @@ var o_browse = {
         $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
             let opusId = $(this).parent().data("id");
             e.preventDefault();
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -230,6 +223,7 @@ var o_browse = {
                 retValue = undefined; // need to use the default handler to allow the context menu to work
             }
 
+            o_sortMetadata.hideMenu();
             switch (iconAction) {
                 case "info":  // detail page
                     o_browse.hideMenu();
@@ -263,7 +257,7 @@ var o_browse = {
             handle: ".modal-content",
             cancel: ".contents",
             drag: function(event, ui) {
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             }
         });
 
@@ -307,122 +301,20 @@ var o_browse = {
             return false;
         });
 
-        // click table column header to reorder by that column
-        $("#browse, #cart").on("click", ".op-data-table-view th a",  function() {
-            // show this spinner right away when table is clicked
-            // we will hide page status loader from infiniteScroll if op-page-loading-status loader is spinning
-            o_browse.showPageLoaderSpinner();
-            let orderBy =  $(this).data("slug");
-            let targetSlug = orderBy;
-
-            // get order of opusid when table header is clicked
-            let hash = o_hash.getHashArray();
-            let opusidOrder = (hash.order && hash.order.match(/(-?opusid)/)) ? hash.order.match(/(-?opusid)/)[0] : "opusid";
-            let isDescending = true;
-            let orderIndicator = $(this).find("span:last");
-            let pillOrderIndicator = $(`.sort-contents span[data-slug="${orderBy}"] .flip-sort`);
-
-            if (orderIndicator.data("sort") === "sort-asc") {
-                // currently ascending, change to descending order
-                orderBy = '-' + orderBy;
-            } else if (orderIndicator.data("sort") === "sort-desc") {
-                // currently descending, change to ascending order
-                isDescending = false;
-                orderBy = orderBy;
-            } else {
-                // not currently ordered, change to ascending
-                isDescending = false;
-            }
-
-            // make sure opusid is always in order slug values
-            opus.prefs.order = orderBy.match(/opusid/) ? [orderBy] : [orderBy, opusidOrder];
-            o_browse.updateOrderIndicator(orderIndicator, pillOrderIndicator, isDescending, targetSlug);
-
-            o_hash.updateURLFromCurrentHash();
-            o_browse.renderSortedDataFromBeginning();
-
-            return false;
-        });
-
         // Click add all to cart icon in the first column of the browse table header
         $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
             o_browse.confirmationBeforeAddAll();
         });
 
-        // browse sort order - remove sort slug
-        $(".sort-contents").on("click", "li .remove-sort", function() {
-            o_browse.showPageLoaderSpinner();
-            let slug = $(this).parent().attr("data-slug");
-            let descending = $(this).parent().attr("data-descending");
-
-            if (descending == "true") {
-                slug = "-"+slug;
-            }
-            let slugIndex = $.inArray(slug, opus.prefs.order);
-            // The clicked-on slug should always be in the order list;
-            // The "if" is a safety precaution and the condition should always be true
-            if (slugIndex >= 0) {
-                opus.prefs.order.splice(slugIndex, 1);
-            }
-
-            // remove the sort pill right away
-            // NOTE: we will find a better way to do this using data-xxx in the future.
-            $(this).closest(".list-inline-item").remove();
-
-            o_hash.updateURLFromCurrentHash();
-            // o_browse.updatePage();
-            o_browse.renderSortedDataFromBeginning();
-        });
-
-        // browse sort order - flip sort order of a slug
-        $(".sort-contents").on("click", "li .flip-sort", function() {
-            o_browse.showPageLoaderSpinner();
-            let slug = $(this).parent().attr("data-slug");
-            let targetSlug = slug;
-            let isDescending = true;
-            let descending = $(this).parent().attr("data-descending");
-            let headerOrderIndicator = $(`.op-data-table-view th a[data-slug="${slug}"]`).find("span:last");
-            let pillOrderIndicator = $(this);
-
-            let new_slug = slug;
-            if (descending == "true") {
-                slug = "-"+slug; // Old descending, new ascending
-                isDescending = false;
-            } else {
-                new_slug = "-"+slug; // Old ascending, new descending
-                isDescending = true;
-            }
-            let slugIndex = $.inArray(slug, opus.prefs.order);
-            // The clicked-on slug should always be in the order list;
-            // The "if" is a safety precaution and the condition should always be true
-            if (slugIndex >= 0) {
-                opus.prefs.order[slugIndex] = new_slug;
-            }
-
-            // When clicking on opusid sorting pill AND there is another sort order other an opusid, we don't update the table header arrows
-            // Only one arrow will displayed either up or down at a time, rest of arrows will be up + down in table header
-            if (targetSlug === "opusid" && opus.prefs.order.length > 1) {
-                o_browse.updateOrderIndicator(null, pillOrderIndicator, isDescending, targetSlug);
-            } else {
-                o_browse.updateOrderIndicator(headerOrderIndicator, pillOrderIndicator, isDescending, targetSlug);
-            }
-
-            // order in the url will get updated right away
-            o_hash.updateURLFromCurrentHash();
-
-            // o_browse.updatePage();
-            o_browse.renderSortedDataFromBeginning();
-        });
-
         $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
-            o_browse.hideMenu();
+            o_browse.hideMenus();
             return false;
         });
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
             let opusId = $(this).parent().attr("data-id");
-            o_browse.hideMenu();
+            o_browse.hideMenus();
 
             switch ($(this).data("action")) {
                 case "cart":  // add/remove from cart
@@ -471,7 +363,7 @@ var o_browse = {
             slide: function(event, ui) {
                 let tab = ui.handle.dataset.target;
                 o_browse.onSliderHandleMoving(tab, ui.value);
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             },
             stop: function(event, ui) {
                 let tab = ui.handle.dataset.target;
@@ -483,7 +375,7 @@ var o_browse = {
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
            if (!(e.ctrlKey || e.metaKey)) {
-                o_browse.hideMenu();
+                o_browse.hideMenus();
             }
 
             if ((e.which || e.keyCode) == 27) { // esc - close modals
@@ -554,55 +446,6 @@ var o_browse = {
         } else {
             o_cart.toggleInCart(fromOpusId, opusId);
         }
-    },
-
-    // update order arrows right away when user clicks on sorting arrows in pill or table header
-    // sync up arrows in both sorting pill and table header
-    updateOrderIndicator: function(headerOrderIndicator, pillOrderIndicator, isDescending, slug) {
-        let headerOrder = isDescending ? "sort-desc" : "sort-asc";
-        let headerOrderArrow = isDescending ? tableSortUpArrow : tableSortDownArrow;
-        let pillOrderTooltip = isDescending ? "Change to ascending sort" : "Change to descending sort";
-
-        // If header already exists, we update the header arrow, else we do nothing
-        if (headerOrderIndicator && headerOrderIndicator.length !== 0) {
-            headerOrderIndicator.data("sort", `${headerOrder}`);
-            headerOrderIndicator.attr("class", `column_ordering ${headerOrderArrow}`);
-
-            // Reset arrows on rest of table headers
-            // let headers = $(`.op-data-table-view th a:not([data-slug="opusid"], [data-slug=${slug}])`).find("span:last");
-            let headers = $(`.op-data-table-view th a:not([data-slug=${slug}])`).find("span:last");
-            headers.data("sort", "none");
-            headers.attr("class", `column_ordering ${defaultTableSortArrow}`);
-        }
-
-        // Re-render each pill
-        let listHtml = "";
-        $.each(opus.prefs.order, function(index, orderEntry) {
-            let isPillOrderDesc = orderEntry[0] === "-" ? "true" : "false";
-            let pillOrderArrow = orderEntry[0] === "-" ? pillSortUpArrow : pillSortDownArrow;
-            let orderEntrySlug = orderEntry[0] === "-" ? orderEntry.slice(1) : orderEntry;
-
-            // Retrieve label from either displayed header's data-label attribute or displayed pill's text
-            // The browse and cart sort pills will always be identical so we just get the one from browse
-            // here. If we don't specify one, we end up getting two elements.
-            let label = ($(`.op-data-table-view th a[data-slug="${orderEntrySlug}"]`).data("label") ||
-                         $(`#browse .sort-contents span[data-slug="${orderEntrySlug}"] .flip-sort`).text());
-            listHtml += "<li class='list-inline-item'>";
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${orderEntrySlug}" data-descending="${isPillOrderDesc}">`;
-            if (orderEntrySlug !== "opusid") {
-                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
-            }
-            listHtml += `<span class='flip-sort' title="${pillOrderTooltip}">`;
-            listHtml += label;
-            listHtml += ` <i class="${pillOrderArrow}"></i>`;
-            listHtml += "</span></span></li>";
-        });
-        $(".sort-contents").html(listHtml);
-    },
-
-    renderSortedDataFromBeginning: function() {
-        o_browse.clearObservationData();
-        o_browse.loadData(opus.prefs.view);
     },
 
     loadPageIfNeeded: function(direction, opusId) {
@@ -1140,6 +983,11 @@ var o_browse = {
         $("#op-obs-menu").removeClass("show").hide();
     },
 
+    hideMenus: function() {
+        o_browse.hideMenu();
+        o_sortMetadata.hideMenu();
+    },
+
     showMenu: function(e, opusId) {
         // make this like a default right click menu
         let tab = opus.getViewTab();
@@ -1199,7 +1047,7 @@ var o_browse = {
     },
 
     showDetail: function(e, opusId) {
-        o_browse.hideMenu();
+        o_browse.hideMenus();
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
@@ -1513,8 +1361,6 @@ var o_browse = {
         let hashArray = o_hash.getHashArray();
         let slugs = hashArray.cols.split(",");
         let order = hashArray.order.split(",");
-        // we only want to sort the column based on first slug in order for now
-        order.splice(1);
 
         opus.colLabels = columns;
         opus.colLabelsNoUnits = columnsNoUnits;
@@ -1540,14 +1386,39 @@ var o_browse = {
             let label = columnsNoUnits[index];
 
             // Assigning data attribute for table column sorting
-            let icon = ($.inArray(slug, order) >= 0 ? "-down" : ($.inArray("-"+slug, order) >= 0 ? "-up" : ""));
-            let columnSorting = icon === "-down" ? "sort-asc" : icon === "-up" ? "sort-desc" : "none";
-            let columnOrdering = `<a href='' data-slug='${slug}' data-label='${label}'><span>${header}</span><span data-sort='${columnSorting}' class='column_ordering fas fa-sort${icon}'></span></a>`;
+            let positionAsc = $.inArray(slug, order);
+            let positionDesc = $.inArray("-"+slug, order);
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id='${slug} 'scope='col' class='sticky-header'><div>${columnOrdering}</div></th>`);
+            let icon = "";
+            let columnSorting = "none";
+            let columnOrderPostion = "";
+            let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
+            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Click to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
+
+            if (positionAsc >= 0) {
+                orderToolTip = "title='Change to descending sort'";
+                columnSorting = "asc";
+                icon =  "-down";
+                columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionAsc+1}</span>`;
+            } else if (positionDesc >= 0) {
+                orderToolTip = "title='Change to ascending sort'";
+                columnSorting = "desc";
+                icon = "-up";
+                columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionDesc+1}</span>`;
+            }
+
+            let headerArr = header.split(" ");
+            let lastWord = headerArr.pop();
+            let spacing = headerArr.length ? "&nbsp;" : "";
+            let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
+                                        `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
+            let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
+
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
+        $("body").removeClass("op-prevent-pointer-events");
     },
 
     initResizableColumn: function(tab) {
@@ -1577,39 +1448,6 @@ var o_browse = {
                 }
             },
         });
-    },
-
-    updateSortOrder: function(data) {
-        let listHtml = "";
-        opus.prefs.order = [];
-        $.each(data.order_list, function(index, order_entry) {
-            let slug = order_entry.slug;
-            let label = order_entry.label;
-            let descending = order_entry.descending;
-            let removeable = order_entry.removeable;
-            listHtml += "<li class='list-inline-item'>";
-            listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${descending}">`;
-            if (removeable) {
-                listHtml += "<span class='remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
-            }
-            if (descending) {
-                listHtml += "<span class='flip-sort' title='Change to ascending sort'>";
-                listHtml += label;
-                listHtml += ` <i class="${pillSortUpArrow}"></i>`;
-            } else {
-                listHtml += "<span class='flip-sort' title='Change to descending sort'>";
-                listHtml += label;
-                listHtml += ` <i class="${pillSortDownArrow}"></i>`;
-            }
-            listHtml += "</span></span></li>";
-            let fullSlug = slug;
-            if (descending) {
-                fullSlug = "-"+slug;
-            }
-            opus.prefs.order.push(fullSlug);
-        });
-        $(".sort-contents").html(listHtml);
-        o_hash.updateURLFromCurrentHash();
     },
 
     // number of images that can be fit in current window size
@@ -1932,7 +1770,7 @@ var o_browse = {
             if (opus.metadataDetailOpusId !== "") {
                 o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);
             }
-            o_browse.updateSortOrder(data);
+            o_sortMetadata.updateSortOrder(data);
 
             viewNamespace.reloadObservationData = false;
             viewNamespace.loadDataInProgress = false;
@@ -2103,6 +1941,8 @@ var o_browse = {
     adjustBrowseHeight: function(browserResized=false, isDOMChanged=false) {
         let tab = opus.getViewTab();
         let view = opus.prefs.view;
+        o_sortMetadata.hideMenu();
+
         // Check screen size and update o_browse.imageSize
         o_browse.updateImageSize();
         let containerHeight = o_browse.calculateGalleryHeight();
