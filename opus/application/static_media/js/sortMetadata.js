@@ -136,7 +136,7 @@ let o_sortMetadata = {
         let isDescending = $(pillOrderIndicator).parent().data("descending") === true;
 
         // account for the case when the sort pill is present, but the metadata field column is not
-        let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "asc" : "desc"));
+        let sortOrder = (tableOrderIndicator.length !== 0 ? tableOrderIndicator.data("sort") : (isDescending ? "desc" : "asc"));
 
         switch (sortOrder) {
             case "asc":
