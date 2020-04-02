@@ -136,137 +136,137 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_spec",
+        "pi_dict_name": "cocirs_spec",
         "definition": "Calibrated interferograms (SPEC*.DAT) for Cassini CIRS. Files are in binary format and contain re-gridded, interpolated spectra. Associated labels (SPEC*.LBL) are text files that contain information about the data files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_geo",
+        "pi_dict_name": "cocirs_geo",
         "definition": "Text files (GEO*_XXX.TAB) that tabulate the planetary system geometry for every body (identified by its NAIF ID, XXX) that appeared inside any CIRS spectrum within the time frame of an observation. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files. Also included is GEODATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_ispm",
+        "pi_dict_name": "cocirs_ispm",
         "definition": "Text files (ISPM*_FPx.TAB) that tabulate the instrument parameters and timing information for each of the interferograms in an observation for detector FPx. Associated labels (ISPM*_FPx.LBL) are text files that contain information about the table files. Also included is ISPMDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_poi",
+        "pi_dict_name": "cocirs_poi",
         "definition": "Text files (POI*_FPx.TAB) that tabulate the footprint geometry on a body for each of the interferograms in an observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is POIDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_rin",
+        "pi_dict_name": "cocirs_rin",
         "definition": "Text files (RIN*_FPx.TAB) that tabulate the footprint geometry on the rings for each of the interferograms in this observation for detector FPx. Associated labels (GEO*_XXX.LBL) are text files that contain information about the table files as well as summary information about the footprint geometry. Also included is RINDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_tar",
+        "pi_dict_name": "cocirs_tar",
         "definition": "Text files (TAR*_FPx.TAB) that tabulate which objects fall within the field of view for detector FPx. Associated labels (TAR*_XXX.LBL) are text files that contain information about the table files. Also included is TARDATA.FMT, which describes the format of the table file."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_target",
+        "pi_dict_name": "cocirs_browse_target",
         "definition": "Diagrams (IMG*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on the default target. Associated labels (IMG*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_saturn",
+        "pi_dict_name": "cocirs_browse_saturn",
         "definition": "Diagrams (POI*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn. Associated labels (POI*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_rings",
+        "pi_dict_name": "cocirs_browse_rings",
         "definition": "Diagrams (RIN*_FPx.PNG) showing the footprint of the spectra in a CIRS observation on Saturn's rings. Associated labels (RIN*_FPx.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_mimas",
+        "pi_dict_name": "cocirs_browse_mimas",
         "definition": "Diagrams (POI*_FPx_601.PNG) showing the footprint of the spectra in a CIRS observation on Mimas. Associated labels (POI*_FPx_601.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_enceladus",
+        "pi_dict_name": "cocirs_browse_enceladus",
         "definition": "Diagrams (POI*_FPx_602.PNG) showing the footprint of the spectra in a CIRS observation on Enceladus. Associated labels (POI*_FPx_602.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_tethys",
+        "pi_dict_name": "cocirs_browse_tethys",
         "definition": "Diagrams (POI*_FPx_603.PNG) showing the footprint of the spectra in a CIRS observation on Tethys. Associated labels (POI*_FPx_603.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_dione",
+        "pi_dict_name": "cocirs_browse_dione",
         "definition": "Diagrams (POI*_FPx_604.PNG) showing the footprint of the spectra in a CIRS observation on Dione. Associated labels (POI*_FPx_604.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_rhea",
+        "pi_dict_name": "cocirs_browse_rhea",
         "definition": "Diagrams (POI*_FPx_605.PNG) showing the footprint of the spectra in a CIRS observation on Rhea. Associated labels (POI*_FPx_605.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_titan",
+        "pi_dict_name": "cocirs_browse_titan",
         "definition": "Diagrams (POI*_FPx_606.PNG) showing the footprint of the spectra in a CIRS observation on Titan. Associated labels (POI*_FPx_606.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_hyperion",
+        "pi_dict_name": "cocirs_browse_hyperion",
         "definition": "Diagrams (POI*_FPx_607.PNG) showing the footprint of the spectra in a CIRS observation on Hyperion. Associated labels (POI*_FPx_607.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_iapetus",
+        "pi_dict_name": "cocirs_browse_iapetus",
         "definition": "Diagrams (POI*_FPx_608.PNG) showing the footprint of the spectra in a CIRS observation on Iapetus. Associated labels (POI*_FPx_608.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_phoebe",
+        "pi_dict_name": "cocirs_browse_phoebe",
         "definition": "Diagrams (POI*_FPx_609.PNG) showing the footprint of the spectra in a CIRS observation on Phoebe. Associated labels (POI*_FPx_609.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_janus",
+        "pi_dict_name": "cocirs_browse_janus",
         "definition": "Diagrams (POI*_FPx_610.PNG) showing the footprint of the spectra in a CIRS observation on Janus. Associated labels (POI*_FPx_610.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_epimetheus",
+        "pi_dict_name": "cocirs_browse_epimetheus",
         "definition": "Diagrams (POI*_FPx_611.PNG) showing the footprint of the spectra in a CIRS observation on Epimetheus. Associated labels (POI*_FPx_611.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_helene",
+        "pi_dict_name": "cocirs_browse_helene",
         "definition": "Diagrams (POI*_FPx_612.PNG) showing the footprint of the spectra in a CIRS observation on Helene. Associated labels (POI*_FPx_612.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_telesto",
+        "pi_dict_name": "cocirs_browse_telesto",
         "definition": "Diagrams (POI*_FPx_613.PNG) showing the footprint of the spectra in a CIRS observation on Telesto. Associated labels (POI*_FPx_613.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_calypso",
+        "pi_dict_name": "cocirs_browse_calypso",
         "definition": "Diagrams (POI*_FPx_614.PNG) showing the footprint of the spectra in a CIRS observation on Calypso. Associated labels (POI*_FPx_614.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_atlas",
+        "pi_dict_name": "cocirs_browse_atlas",
         "definition": "Diagrams (POI*_FPx_615.PNG) showing the footprint of the spectra in a CIRS observation on Atlas. Associated labels (POI*_FPx_615.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_prometheus",
+        "pi_dict_name": "cocirs_browse_prometheus",
         "definition": "Diagrams (POI*_FPx_616.PNG) showing the footprint of the spectra in a CIRS observation on Prometheus. Associated labels (POI*_FPx_616.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_pandora",
+        "pi_dict_name": "cocirs_browse_pandora",
         "definition": "Diagrams (POI*_FPx_617.PNG) showing the footprint of the spectra in a CIRS observation on Pandora. Associated labels (POI*_FPx_617.LBL) are text files that contain information about the footprint diagrams."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "cirs_browse_pan",
+        "pi_dict_name": "cocirs_browse_pan",
         "definition": "Diagrams (POI*_FPx_618.PNG) showing the footprint of the spectra in a CIRS observation on Pan. Associated labels (POI*_FPx_618.LBL) are text files that contain information about the footprint diagrams."
     },
     {
