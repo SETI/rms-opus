@@ -1418,6 +1418,7 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn(tab);
+        o_browse.initDraggableColumn(tab);
         $("body").removeClass("op-prevent-pointer-events");
     },
 
@@ -1445,6 +1446,26 @@ var o_browse = {
                     $(event.target).find("div").height($(event.target).parent().height());
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
+                }
+            },
+        });
+    },
+
+    initDraggableColumn: function(tab) {
+        $(`${tab} .op-data-table thead`).sortable({
+            items: "th",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "intersect",
+            stop: function(event, ui) {;
+                let columnOrder = $.map($(this).find("th").not(".op-table-first-col"), function(n, i) {
+                    return n.id;
+                });
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
                 }
             },
         });
