@@ -369,7 +369,7 @@ var opus = {
 
         // If there are more result counts in the queue, don't trigger
         // spurious hinting queries that we won't use anyway
-        if (resultCountData.data[0].reqno < opus.lastAllNormalizeRequestNo) {
+        if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
             return;
         }
 
