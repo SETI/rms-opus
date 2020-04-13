@@ -53,7 +53,11 @@ let o_sortMetadata = {
             }
             let slug = $(this).data("slug");
             if (inOrderList || opus.prefs.order.length <= 2 || (e.ctrlKey || e.metaKey || e.shiftKey)) {
-                o_sortMetadata.onClickSortOrder(slug);
+                // if there are two or less sort options, always select append
+                let append = (!inOrderList && opus.prefs.order.length <=2 ? false : true);
+                // control/shift keys overrides and always appends
+                append |= (e.ctrlKey || e.metaKey || e.shiftKey);
+                o_sortMetadata.onClickSortOrder(slug, append);
             } else {
                 $("#op-overwrite-sort-order").modal("show").data("slug", slug);
             }
