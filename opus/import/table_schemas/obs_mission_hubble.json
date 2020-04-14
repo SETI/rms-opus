@@ -546,8 +546,8 @@
     {
         "field_name": "targeted_detector_id",
         "field_type": "enum",
-        "field_enum_options": "'PC1','WF2','WF3','WF4','N/A'",
-        "field_notnull": true,
+        "field_enum_options": "'PC1','WF2','WF3','WF4'",
+        "field_default": null,
         "data_source": [
             "FUNCTION",
             "obs_mission_hubble_<INST>_targeted_detector_id"
@@ -573,7 +573,7 @@
               [   1,  "WF2",  "WF2",  20, "Y", null],
               [   2,  "WF3",  "WF3",  30, "Y", null],
               [   3,  "WF4",  "WF4",  40, "Y", null],
-              [   4,  "N/A",  "N/A",  50, "Y", null]
+              [   4,   null,  "N/A",  50, "Y", null]
           ]
     },
     {

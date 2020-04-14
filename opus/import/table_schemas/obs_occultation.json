@@ -142,7 +142,7 @@
         "pi_units": null
     },
     {
-        "field_name": "sampling",
+        "field_name": "temporal_sampling",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,

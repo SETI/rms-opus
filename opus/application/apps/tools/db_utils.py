@@ -33,7 +33,7 @@ def query_table_for_opus_id(table_name, opus_id):
         return table_model.objects.filter(opus_id=opus_id)
     return table_model.objects.filter(obs_general__opus_id=opus_id)
 
-def lookup_pretty_value_for_mult(param_info, value):
+def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     "Given a param_info for a mult and the mult value, return the pretty label"
     if param_info.form_type is None: # pragma: no cover
         return None
@@ -47,7 +47,9 @@ def lookup_pretty_value_for_mult(param_info, value):
     mult_param = get_mult_name(param_info.param_qualified_name())
     model = apps.get_model('search', mult_param.title().replace('_',''))
 
-    results = model.objects.filter(id=value).values('label')
+    results = model.objects.filter(id=value).values('value','label')
     if not results: # pragma: no cover
+        return None
+    if not cvt_null and results[0]['value'] is None:
         return None
     return results[0]['label']

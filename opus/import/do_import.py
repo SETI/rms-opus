@@ -403,8 +403,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label):
-    """Update a single value in the cached version of a mult table.
-    If label is None the mult is marked as not-displayed."""
+    """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
     mult_table = read_or_create_mult_table(mult_table_name, table_column)
@@ -1368,7 +1367,7 @@ def import_observation_table(volume_id,
                     else:
                         column_val = 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
-                    column_val = 'N/A'
+                    column_val = None
                 else:
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+

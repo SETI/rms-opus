@@ -33,12 +33,13 @@
     "imagetype": "Frame"
   },
   "Occultation Constraints": {
-    "bodyoccflag": "None",
+    "bodyoccflag": null,
     "occreceiverhost": null,
-    "occdir": "N/A",
+    "occdir": null,
     "occtype": null,
     "occdepth1": null,
     "occdepth2": null,
+    "occtimesampling": null,
     "occsource": null,
     "occwlband": null
   },

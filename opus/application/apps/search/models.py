@@ -1733,6 +1733,7 @@ class ObsOccultation(models.Model):
     body_occ_flag = models.CharField(max_length=3, blank=True, null=True)
     optical_depth1 = models.FloatField(blank=True, null=True)
     optical_depth2 = models.FloatField(blank=True, null=True)
+    temporal_sampling = models.FloatField(blank=True, null=True)
     wl_band = models.CharField(max_length=2, blank=True, null=True)
     source = models.CharField(max_length=40, blank=True, null=True)
     host = models.CharField(max_length=40, blank=True, null=True)

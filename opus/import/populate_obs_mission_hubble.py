@@ -1050,16 +1050,16 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     return (ret, ret)
 
 def populate_obs_mission_hubble_HSTACS_targeted_detector_id(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTNICMOS_targeted_detector_id(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTSTIS_targeted_detector_id(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFC3_targeted_detector_id(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFPC2_targeted_detector_id(**kwargs):
     metadata = kwargs['metadata']
@@ -1086,16 +1086,16 @@ def populate_obs_mission_hubble_HSTSTIS_optical_element(**kwargs):
     return (element, element)
 
 def populate_obs_mission_hubble_HSTACS_pc1_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTNICMOS_pc1_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTSTIS_pc1_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFC3_pc1_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFPC2_pc1_flag(**kwargs):
     metadata = kwargs['metadata']
@@ -1104,16 +1104,16 @@ def populate_obs_mission_hubble_HSTWFPC2_pc1_flag(**kwargs):
     return pc1_flag
 
 def populate_obs_mission_hubble_HSTACS_wf2_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTNICMOS_wf2_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTSTIS_wf2_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFC3_wf2_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFPC2_wf2_flag(**kwargs):
     metadata = kwargs['metadata']
@@ -1122,16 +1122,16 @@ def populate_obs_mission_hubble_HSTWFPC2_wf2_flag(**kwargs):
     return wf2_flag
 
 def populate_obs_mission_hubble_HSTACS_wf3_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTNICMOS_wf3_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTSTIS_wf3_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFC3_wf3_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFPC2_wf3_flag(**kwargs):
     metadata = kwargs['metadata']
@@ -1140,16 +1140,16 @@ def populate_obs_mission_hubble_HSTWFPC2_wf3_flag(**kwargs):
     return wf3_flag
 
 def populate_obs_mission_hubble_HSTACS_wf4_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTNICMOS_wf4_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTSTIS_wf4_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFC3_wf4_flag(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_mission_hubble_HSTWFPC2_wf4_flag(**kwargs):
     metadata = kwargs['metadata']
