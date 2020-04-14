@@ -36,7 +36,7 @@ def _COVIMS_file_spec_helper(**kwargs):
 
     return volume_id + path_name + '/' + file_name
 
-def populate_obs_general_COVIMS_opus_id(**kwargs):
+def populate_obs_general_COVIMS_opus_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name'].lower()
     file_spec = _COVIMS_file_spec_helper(**kwargs)
@@ -54,7 +54,7 @@ def populate_obs_general_COVIMS_opus_id(**kwargs):
     opus_id += '_' + phase_name
     return opus_id
 
-def populate_obs_general_COVIMS_ring_obs_id(**kwargs):
+def populate_obs_general_COVIMS_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filename = index_row['FILE_NAME']
@@ -68,10 +68,10 @@ def populate_obs_general_COVIMS_ring_obs_id(**kwargs):
 
     return pl_str + '_CUBE_CO_VIMS_' + image_num + '_' + phase_name
 
-def populate_obs_general_COVIMS_inst_host_id(**kwargs):
+def populate_obs_general_COVIMS_inst_host_id_OBS(**kwargs):
     return 'CO'
 
-def populate_obs_general_COVIMS_quantity(**kwargs):
+def populate_obs_general_COVIMS_quantity_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
@@ -81,7 +81,7 @@ def populate_obs_general_COVIMS_quantity(**kwargs):
     return 'REFLECT'
     # XXX CAL?
 
-def populate_obs_general_COVIMS_observation_type(**kwargs):
+def populate_obs_general_COVIMS_observation_type_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
@@ -90,7 +90,7 @@ def populate_obs_general_COVIMS_observation_type(**kwargs):
         return 'TS' # Time Series
     return 'SCU' # Spectral Cube
 
-def populate_obs_general_COVIMS_time1(**kwargs):
+def populate_obs_general_COVIMS_time1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = index_row['START_TIME']
@@ -107,7 +107,7 @@ def populate_obs_general_COVIMS_time1(**kwargs):
 
     return start_time_sec
 
-def populate_obs_general_COVIMS_time2(**kwargs):
+def populate_obs_general_COVIMS_time2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = import_util.safe_column(index_row, 'STOP_TIME')
@@ -133,26 +133,26 @@ def populate_obs_general_COVIMS_time2(**kwargs):
 
     return stop_time_sec
 
-def populate_obs_general_COVIMS_target_name(**kwargs):
+def populate_obs_general_COVIMS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
 
-def populate_obs_general_COVIMS_observation_duration(**kwargs):
+def populate_obs_general_COVIMS_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     time_sec1 = obs_general_row['time1']
     time_sec2 = obs_general_row['time2']
     return max(time_sec2 - time_sec1, 0)
 
-def populate_obs_pds_COVIMS_note(**kwargs):
+def populate_obs_pds_COVIMS_note_OBS(**kwargs):
     None
 
-def populate_obs_general_COVIMS_primary_file_spec(**kwargs):
+def populate_obs_general_COVIMS_primary_file_spec_OBS(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COVIMS_primary_file_spec(**kwargs):
+def populate_obs_pds_COVIMS_primary_file_spec_OBS(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COVIMS_product_creation_time(**kwargs):
+def populate_obs_pds_COVIMS_product_creation_time_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -167,7 +167,7 @@ def populate_obs_pds_COVIMS_product_creation_time(**kwargs):
     return pct_sec
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
-def populate_obs_pds_COVIMS_data_set_id(**kwargs):
+def populate_obs_pds_COVIMS_data_set_id_OBS(**kwargs):
     # For VIMS the DATA_SET_ID is provided in the volume label file,
     # not the individual observation rows
     metadata = kwargs['metadata']
@@ -176,14 +176,14 @@ def populate_obs_pds_COVIMS_data_set_id(**kwargs):
     return (dsi, dsi)
 
 # Format: "1/1294638283_1"
-def populate_obs_pds_COVIMS_product_id(**kwargs):
+def populate_obs_pds_COVIMS_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
 
     return product_id
 
-def populate_obs_general_COVIMS_right_asc1(**kwargs):
+def populate_obs_general_COVIMS_right_asc1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -193,7 +193,7 @@ def populate_obs_general_COVIMS_right_asc1(**kwargs):
     ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_COVIMS_right_asc2(**kwargs):
+def populate_obs_general_COVIMS_right_asc2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -203,7 +203,7 @@ def populate_obs_general_COVIMS_right_asc2(**kwargs):
     ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_COVIMS_declination1(**kwargs):
+def populate_obs_general_COVIMS_declination1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -213,7 +213,7 @@ def populate_obs_general_COVIMS_declination1(**kwargs):
     dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
-def populate_obs_general_COVIMS_declination2(**kwargs):
+def populate_obs_general_COVIMS_declination2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -223,10 +223,10 @@ def populate_obs_general_COVIMS_declination2(**kwargs):
     dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
-def populate_obs_mission_cassini_COVIMS_mission_phase_name(**kwargs):
+def populate_obs_mission_cassini_COVIMS_mission_phase_name_OBS(**kwargs):
     return helper_cassini_mission_phase_name(**kwargs)
 
-def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
+def populate_obs_mission_cassini_COVIMS_sequence_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     seqid = index_row['SEQ_ID']
@@ -235,7 +235,7 @@ def populate_obs_mission_cassini_COVIMS_sequence_id(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
+def populate_obs_type_image_COVIMS_image_type_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
     index_row = metadata['index_row']
@@ -247,7 +247,7 @@ def populate_obs_type_image_COVIMS_image_type_id(**kwargs):
         return 'PUSH'
     return 'RAST'
 
-def populate_obs_type_image_COVIMS_duration(**kwargs):
+def populate_obs_type_image_COVIMS_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
@@ -273,10 +273,10 @@ def populate_obs_type_image_COVIMS_duration(**kwargs):
         return None
     return vis_exp/1000
 
-def populate_obs_type_image_COVIMS_levels(**kwargs):
+def populate_obs_type_image_COVIMS_levels_OBS(**kwargs):
     return 4096
 
-def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_COVIMS_lesser_pixel_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
@@ -289,7 +289,7 @@ def populate_obs_type_image_COVIMS_lesser_pixel_size(**kwargs):
 
     return min(width, length)
 
-def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
+def populate_obs_type_image_COVIMS_greater_pixel_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_mod = index_row['INSTRUMENT_MODE_ID']
@@ -305,7 +305,7 @@ def populate_obs_type_image_COVIMS_greater_pixel_size(**kwargs):
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_COVIMS_wavelength1(**kwargs):
+def populate_obs_wavelength_COVIMS_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 
@@ -313,7 +313,7 @@ def populate_obs_wavelength_COVIMS_wavelength1(**kwargs):
         return 0.8842
     return 0.35054
 
-def populate_obs_wavelength_COVIMS_wavelength2(**kwargs):
+def populate_obs_wavelength_COVIMS_wavelength2_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 
@@ -321,7 +321,7 @@ def populate_obs_wavelength_COVIMS_wavelength2(**kwargs):
         return 5.1225
     return 1.04598
 
-def populate_obs_wavelength_COVIMS_wave_res1(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 
@@ -329,7 +329,7 @@ def populate_obs_wavelength_COVIMS_wave_res1(**kwargs):
         return 0.01662
     return 0.0073204
 
-def populate_obs_wavelength_COVIMS_wave_res2(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 
@@ -337,17 +337,17 @@ def populate_obs_wavelength_COVIMS_wave_res2(**kwargs):
         return 0.01662
     return 0.0073204
 
-def populate_obs_wavelength_COVIMS_wave_no1(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength2'] # cm^-1
 
-def populate_obs_wavelength_COVIMS_wave_no2(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
-def populate_obs_wavelength_COVIMS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res2 = wl_row['wave_res2']
@@ -358,7 +358,7 @@ def populate_obs_wavelength_COVIMS_wave_no_res1(**kwargs):
 
     return wave_res2 * 10000. / (wl2*wl2)
 
-def populate_obs_wavelength_COVIMS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_COVIMS_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res1 = wl_row['wave_res1']
@@ -369,10 +369,10 @@ def populate_obs_wavelength_COVIMS_wave_no_res2(**kwargs):
 
     return wave_res1 * 10000. / (wl1*wl1)
 
-def populate_obs_wavelength_COVIMS_spec_flag(**kwargs):
+def populate_obs_wavelength_COVIMS_spec_flag_OBS(**kwargs):
     return 'Y'
 
-def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
+def populate_obs_wavelength_COVIMS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 
@@ -380,21 +380,51 @@ def populate_obs_wavelength_COVIMS_spec_size(**kwargs):
         return 256
     return 96
 
-def populate_obs_wavelength_COVIMS_polarization_type(**kwargs):
+def populate_obs_wavelength_COVIMS_polarization_type_OBS(**kwargs):
     return 'NONE'
+
+
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_COVIMS_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_host_OBS(**kwargs):
+    return None
 
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_COVIMS_ert1(**kwargs):
+def populate_obs_mission_cassini_COVIMS_ert1_OBS(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COVIMS_ert2(**kwargs):
+def populate_obs_mission_cassini_COVIMS_ert2_OBS(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
+def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_START_COUNT']
@@ -408,7 +438,7 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1(**kwargs):
         return None
     return sc_cvt
 
-def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
+def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
@@ -436,7 +466,7 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2(**kwargs):
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COVIMS
 ################################################################################
 
-def populate_obs_instrument_COVIMS_channel(**kwargs):
+def populate_obs_instrument_covims_channel_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name']
 

@@ -58,7 +58,7 @@ def helper_new_horizons_planet_id(**kwargs):
         f'Unknown MISSION_PHASE_NAME "{mp}"')
     return None
 
-def populate_obs_general_NH_planet_id(**kwargs):
+def populate_obs_general_NH_planet_id_OBS(**kwargs):
     pl = helper_new_horizons_planet_id(**kwargs)
     if pl is None:
         return 'OTH'

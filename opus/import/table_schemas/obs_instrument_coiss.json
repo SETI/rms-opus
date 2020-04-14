@@ -147,7 +147,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COISS_image_observation_type"
+            "obs_instrument_coiss_image_observation_type"
         ],
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
@@ -338,7 +338,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COISS_target_desc"
+            "obs_instrument_coiss_target_desc"
         ],
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
@@ -364,7 +364,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COISS_combined_filter"
+            "obs_instrument_coiss_combined_filter"
         ],
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",
@@ -391,7 +391,7 @@
         "field_enum_options": "'W','N'",
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COISS_camera"
+            "obs_instrument_coiss_camera"
         ],
         "pi_category_name": "obs_instrument_coiss",
         "pi_dict_context": "COISS",

@@ -32,6 +32,16 @@
     "levels": "256",
     "imagetype": "Frame"
   },
+  "Occultation Constraints": {
+    "bodyoccflag": "None",
+    "occreceiverhost": null,
+    "occdir": "N/A",
+    "occtype": null,
+    "occdepth1": null,
+    "occdepth2": null,
+    "occsource": null,
+    "occwlband": null
+  },
   "Wavelength Constraints": {
     "wavelength1": "0.35",
     "wavelength2": "0.45",

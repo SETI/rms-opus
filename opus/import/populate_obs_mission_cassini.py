@@ -328,7 +328,7 @@ def helper_fix_cassini_sclk(count):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
 
-def populate_obs_general_CO_planet_id(**kwargs):
+def populate_obs_general_CO_planet_id_OBS(**kwargs):
     planet_id = helper_cassini_planet_id(**kwargs)
     if planet_id is None:
         return 'OTH'
@@ -345,10 +345,10 @@ def populate_obs_mission_cassini_obs_name(**kwargs):
 def populate_obs_mission_cassini_prime_inst_id(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
     if obs_name is None:
-        return None
+        return 'UNK'
 
     if not helper_cassini_valid_obs_name(obs_name):
-        return None
+        return 'UNK'
 
     obs_parts = obs_name.split('_')
     first = obs_parts[0]
@@ -375,7 +375,7 @@ def populate_obs_mission_cassini_prime_inst_id(**kwargs):
         else:
             prime_inst_id = last
 
-    if prime_inst_id not in ['CIRS', 'ISS', 'UVIS', 'VIMS']:
+    if prime_inst_id not in ['CIRS', 'ISS', 'RSS', 'UVIS', 'VIMS']:
         prime_inst_id = 'OTHER'
 
     return prime_inst_id

@@ -45,6 +45,16 @@
     "spec_size": null,
     "polarization_type": "NONE"
   },
+  "Occultation Constraints": {
+    "body_occ_flag": null,
+    "host": null,
+    "occ_dir": null,
+    "occ_type": null,
+    "optical_depth1": null,
+    "optical_depth2": null,
+    "source": null,
+    "wl_band": null
+  },
   "Surface Geometry Constraints": {
     "target_list": "SATURN,TETHYS"
   },

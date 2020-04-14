@@ -1189,6 +1189,84 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
         db_table = 'mult_obs_mission_voyager_mission_phase_name'
 
 
+class MultObsOccultationBodyOccFlag(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_body_occ_flag'
+
+
+class MultObsOccultationHost(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_host'
+
+
+class MultObsOccultationOccDir(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_occ_dir'
+
+
+class MultObsOccultationOccType(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_occ_type'
+
+
+class MultObsOccultationSource(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_source'
+
+
+class MultObsOccultationWlBand(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_wl_band'
+
+
 class MultObsSurfaceGeometryNameTargetName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1643,6 +1721,33 @@ class ObsMissionVoyager(models.Model):
     class Meta:
         managed = False
         db_table = 'obs_mission_voyager'
+
+
+class ObsOccultation(models.Model):
+    obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')
+    opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
+    volume_id = models.CharField(max_length=11)
+    instrument_id = models.CharField(max_length=9)
+    occ_type = models.CharField(max_length=3, blank=True, null=True)
+    occ_dir = models.CharField(max_length=1, blank=True, null=True)
+    body_occ_flag = models.CharField(max_length=3, blank=True, null=True)
+    optical_depth1 = models.FloatField(blank=True, null=True)
+    optical_depth2 = models.FloatField(blank=True, null=True)
+    wl_band = models.CharField(max_length=2, blank=True, null=True)
+    source = models.CharField(max_length=40, blank=True, null=True)
+    host = models.CharField(max_length=40, blank=True, null=True)
+    mult_obs_occultation_occ_type = models.ForeignKey(MultObsOccultationOccType, models.DO_NOTHING, db_column='mult_obs_occultation_occ_type')
+    mult_obs_occultation_occ_dir = models.ForeignKey(MultObsOccultationOccDir, models.DO_NOTHING, db_column='mult_obs_occultation_occ_dir')
+    mult_obs_occultation_body_occ_flag = models.ForeignKey(MultObsOccultationBodyOccFlag, models.DO_NOTHING, db_column='mult_obs_occultation_body_occ_flag')
+    mult_obs_occultation_wl_band = models.ForeignKey(MultObsOccultationWlBand, models.DO_NOTHING, db_column='mult_obs_occultation_wl_band')
+    mult_obs_occultation_source = models.ForeignKey(MultObsOccultationSource, models.DO_NOTHING, db_column='mult_obs_occultation_source')
+    mult_obs_occultation_host = models.ForeignKey(MultObsOccultationHost, models.DO_NOTHING, db_column='mult_obs_occultation_host')
+    id = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'obs_occultation'
 
 
 class ObsPds(models.Model):

@@ -132,7 +132,7 @@
     {
         "field_name": "detector_id",
         "field_type": "char14",
-        "field_default": null,
+        "field_notnull": true,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -161,9 +161,9 @@
               [   3,       "IR",        "WFC3-IR",   40, "Y", null],
               [   4,     "UVIS",      "WFC3-UVIS",   50, "Y", null],
               [   5,    "WFPC2",          "WFPC2",   60, "Y", null],
-              [   6,      "CCD",       "STIS-CCD",   60, "Y", null],
-              [   7, "FUV-MAMA",  "STIS-FUV-MAMA",   60, "Y", null],
-              [   8,    null,      "NULL",   70, "Y", null]
+              [   6,      "CCD",       "STIS-CCD",   70, "Y", null],
+              [   7, "FUV-MAMA",  "STIS-FUV-MAMA",   80, "Y", null],
+              [   8,  "UNKNOWN",        "Unknown",   90, "Y", null]
           ]
     },
     {
@@ -546,8 +546,8 @@
     {
         "field_name": "targeted_detector_id",
         "field_type": "enum",
-        "field_enum_options": "'PC1','WF2','WF3','WF4'",
-        "field_default": null,
+        "field_enum_options": "'PC1','WF2','WF3','WF4','N/A'",
+        "field_notnull": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_hubble_<INST>_targeted_detector_id"
@@ -573,14 +573,13 @@
               [   1,  "WF2",  "WF2",  20, "Y", null],
               [   2,  "WF3",  "WF3",  30, "Y", null],
               [   3,  "WF4",  "WF4",  40, "Y", null],
-              [   4, "NONE", "None",  50, "Y", null],
-              [   5,   null, "NULL",  60, "Y", null]
+              [   4,  "N/A",  "N/A",  50, "Y", null]
           ]
     },
     {
         "field_name": "optical_element",
         "field_type": "char6",
-        "field_notnull": false,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "FUNCTION",

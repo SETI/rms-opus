@@ -58,7 +58,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wavelength1"
+            "obs_wavelength_<INST>_wavelength1_<TYPE>"
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_wavelength",
@@ -91,7 +91,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wavelength2"
+            "obs_wavelength_<INST>_wavelength2_<TYPE>"
         ],
         "data_source_order": 1,
         "pi_category_name": "obs_wavelength",
@@ -118,7 +118,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_res1"
+            "obs_wavelength_<INST>_wave_res1_<TYPE>"
         ],
         "data_source_order": 2,
         "pi_category_name": "obs_wavelength",
@@ -148,7 +148,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_res2"
+            "obs_wavelength_<INST>_wave_res2_<TYPE>"
         ],
         "data_source_order": 3,
         "pi_category_name": "obs_wavelength",
@@ -175,7 +175,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_no1"
+            "obs_wavelength_<INST>_wave_no1_<TYPE>"
         ],
         "data_source_order": 10,
         "pi_category_name": "obs_wavelength",
@@ -205,7 +205,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_no2"
+            "obs_wavelength_<INST>_wave_no2_<TYPE>"
         ],
         "data_source_order": 10,
         "pi_category_name": "obs_wavelength",
@@ -232,7 +232,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_no_res1"
+            "obs_wavelength_<INST>_wave_no_res1_<TYPE>"
         ],
         "data_source_order": 20,
         "pi_category_name": "obs_wavelength",
@@ -262,7 +262,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_wave_no_res2"
+            "obs_wavelength_<INST>_wave_no_res2_<TYPE>"
         ],
         "data_source_order": 20,
         "pi_category_name": "obs_wavelength",
@@ -288,7 +288,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_spec_flag"
+            "obs_wavelength_<INST>_spec_flag_<TYPE>"
         ],
         "data_source_order": 30,
         "pi_category_name": "obs_wavelength",
@@ -315,7 +315,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_spec_size"
+            "obs_wavelength_<INST>_spec_size_<TYPE>"
         ],
         "data_source_order": 30,
         "pi_category_name": "obs_wavelength",
@@ -342,7 +342,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_wavelength_<INST>_polarization_type"
+            "obs_wavelength_<INST>_polarization_type_<TYPE>"
         ],
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",

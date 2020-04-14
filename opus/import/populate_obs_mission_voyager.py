@@ -57,7 +57,7 @@ def helper_voyager_planet_id(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
 
-def populate_obs_general_VG_planet_id(**kwargs):
+def populate_obs_general_VG_planet_id_OBS(**kwargs):
     return helper_voyager_planet_id(**kwargs)
 
 

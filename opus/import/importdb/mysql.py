@@ -395,9 +395,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 assert enum_str, (raw_table_name, column)
                 cmd += f'enum({enum_str})'
             elif field_type == 'flag_yesno':
-                cmd += "enum('Yes','No')"
+                cmd += "enum('Yes','No','N/A')"
             elif field_type == 'flag_onoff':
-                cmd += "enum('On','Off')"
+                cmd += "enum('On','Off','N/A')"
             elif field_type == 'timestamp':
                 cmd += 'timestamp'
             elif field_type == 'datetime':

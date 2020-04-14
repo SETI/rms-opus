@@ -16,6 +16,7 @@ TABLES_TO_POPULATE = ['obs_general',
                       'obs_instrument_<INST>',
                       'obs_type_image',
                       'obs_wavelength',
+                      'obs_occultation',
                       'obs_files',
                       'obs_ring_geometry',
                       'obs_surface_geometry',
@@ -83,6 +84,7 @@ INST_HOST_ABBREV_TO_INST_HOST = {
 INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'COCIRS':    'CO',
     'COISS':     'CO',
+    'CORSS':     'CO',
     'COUVIS':    'CO',
     'COVIMS':    'CO',
     'GOSSI':     'GO',
@@ -117,6 +119,7 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
 VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'COCIRS': 'COCIRS',
     'COISS':  'COISS',
+    'CORSS':  'CORSS',
     'COUVIS': 'COUVIS',
     'COVIMS': 'COVIMS',
     'GO':     'GOSSI',

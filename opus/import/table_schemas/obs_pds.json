@@ -87,7 +87,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_data_set_id"
+            "obs_pds_<INST>_data_set_id_<TYPE>"
         ],
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
@@ -112,7 +112,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_product_id"
+            "obs_pds_<INST>_product_id_<TYPE>"
         ],
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
@@ -137,7 +137,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_product_creation_time"
+            "obs_pds_<INST>_product_creation_time_<TYPE>"
         ],
         "data_source_order": 10,
         "pi_category_name": "obs_pds",
@@ -166,7 +166,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_primary_file_spec"
+            "obs_pds_<INST>_primary_file_spec_<TYPE>"
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",
@@ -192,7 +192,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_pds_<INST>_note"
+            "obs_pds_<INST>_note_<TYPE>"
         ],
         "data_source_order": 0,
         "pi_category_name": "obs_pds",

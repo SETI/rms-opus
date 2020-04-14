@@ -12,8 +12,8 @@ columns. Each dictionary can contain the following fields:
                           'varcharNNN' (variable-length char field)
                           'text' (arbitrary-length char field)
                           'enum'
-                          'flag_yesno' (Enum 'Yes','No')
-                          'flag_onoff' (Enum 'On','Off')
+                          'flag_yesno' (Enum 'Yes','No','N/A')
+                          'flag_onoff' (Enum 'On','Off','N/A')
                           'timestamp' (implies ON UPDATE CURRENT_TIMESTAMP)
                           'datetime'
 

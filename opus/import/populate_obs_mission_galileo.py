@@ -42,7 +42,7 @@ def helper_galileo_planet_id(**kwargs):
     # was in Jupiter orbit (GO_0017 to GO_0023).
     return 'JUP'
 
-def populate_obs_general_GO_planet_id(**kwargs):
+def populate_obs_general_GO_planet_id_OBS(**kwargs):
     return helper_galileo_planet_id(**kwargs)
 
 

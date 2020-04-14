@@ -169,6 +169,7 @@
         "field_name": "prime_inst_id",
         "field_type": "char6",
         "field_key": true,
+        "field_notnull": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_prime_inst_id"
@@ -191,12 +192,13 @@
         "pi_units": null,
         "comments": "",
         "mult_options": [
-              [   0,  "CIRS",  "CIRS",   10, "Y", null],
-              [   1,   "ISS",   "ISS",   20, "Y", null],
-              [   2,  "UVIS",  "UVIS",   30, "Y", null],
-              [   3,  "VIMS",  "VIMS",   40, "Y", null],
-              [   4, "OTHER", "Other",   50, "Y", null],
-              [   5,    null,  "Null",   60, "Y", null]
+              [   0,  "CIRS",    "CIRS",   10, "Y", null],
+              [   1,   "ISS",     "ISS",   20, "Y", null],
+              [   2,   "RSS",     "RSS",   30, "Y", null],
+              [   3,  "UVIS",    "UVIS",   40, "Y", null],
+              [   4,  "VIMS",    "VIMS",   50, "Y", null],
+              [   5, "OTHER",   "Other",   60, "Y", null],
+              [   6,   "UNK", "Unknown",   70, "Y", null]
           ]
     },
     {
@@ -206,7 +208,7 @@
         "field_key": true,
         "data_source": [
               "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count1"
+              "obs_mission_cassini_<INST>_spacecraft_clock_count1_<TYPE>"
         ],
         "data_source_order": 10,
         "val_min": 1.28e9,
@@ -239,7 +241,7 @@
         "field_key": true,
         "data_source": [
               "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count2"
+              "obs_mission_cassini_<INST>_spacecraft_clock_count2_<TYPE>"
         ],
         "data_source_order": 20,
         "val_min": 1.28e9,
@@ -409,7 +411,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_mission_phase_name"
+            "obs_mission_cassini_<INST>_mission_phase_name_<TYPE>"
         ],
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -434,7 +436,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_sequence_id"
+            "obs_mission_cassini_<INST>_sequence_id_<TYPE>"
         ],
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",

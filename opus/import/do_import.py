@@ -24,6 +24,7 @@ from populate_obs_pds import *
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
+from populate_obs_instrument_CORSS import *
 from populate_obs_instrument_COUVIS import *
 from populate_obs_instrument_COVIMS import *
 
@@ -427,7 +428,7 @@ def update_mult_table(table_name, field_name, table_column, val, label):
         next_id = max([x['id'] for x in mult_table])+1
         next_disp_order = max([x['disp_order'] for x in mult_table])+10
     if label is None:
-        label = 'NULL'
+        label = 'N/A'
     new_entry = {
         'id': next_id,
         'value': val,
@@ -480,13 +481,24 @@ def dump_import_mult_tables():
                     all_numeric = False
                     break
             for row in rows:
-                # None always comes last. Yes comes before No.
-                # On comes before Off.
-                if row['label'] in [None, 'NONE', 'None', 'NULL', 'Null']:
+                # Null always comes last. N/A always comes before that.
+                # None always comes before that.
+                # Yes comes before No. On comes before Off.
+                if row['label'] in [None, 'NULL', 'Null']:
                     if range_func is not None:
                         row['sort_label'] = 1e38
                     else:
                         row['sort_label'] = 'ZZZ' + str(row['label'])
+                elif row['label'] == 'N/A':
+                    if range_func is not None:
+                        row['sort_label'] = 1e37
+                    else:
+                        row['sort_label'] = 'ZZY' + str(row['label'])
+                elif row['label'] in ['NONE', 'None']:
+                    if range_func is not None:
+                        row['sort_label'] = 1e37
+                    else:
+                        row['sort_label'] = 'ZZX' + str(row['label'])
                 elif range_func:
                     try:
                         row['sort_label'] = range_func(str(row['value']))
@@ -497,9 +509,9 @@ def dump_import_mult_tables():
                         row['sort_label'] = str(row['label'])
                 elif all_numeric:
                     row['sort_label'] = ('%20.9f' % float(row['label']))
-                elif row['label'] == 'Yes' or row['label'] == 'On':
+                elif row['label'] in ('Yes', 'On'):
                     row['sort_label'] = 'ZZAYes'
-                elif row['label'] == 'No' or row['label'] == 'Off':
+                elif row['label'] in ('No', 'Off'):
                     row['sort_label'] = 'ZZBNo'
                 else:
                     row['sort_label'] = str(row['label'])
@@ -933,6 +945,10 @@ def import_one_volume(volume_id):
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
     ##############################################
 
+    volume_type = 'OBS'
+    # if '_8' in volume_id:
+    #     volume_type = 'OCC'
+
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
@@ -1011,6 +1027,7 @@ def import_one_volume(volume_id):
                 row = import_observation_table(volume_id,
                                                instrument_name,
                                                mission_abbrev,
+                                               volume_type,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1080,6 +1097,7 @@ def import_one_volume(volume_id):
                         row = import_observation_table(volume_id,
                                                        instrument_name,
                                                        mission_abbrev,
+                                                       volume_type,
                                                        new_table_name,
                                                       table_schemas[table_name],
                                                        metadata)
@@ -1110,6 +1128,7 @@ def import_one_volume(volume_id):
                 row = import_observation_table(volume_id,
                                                instrument_name,
                                                mission_abbrev,
+                                               volume_type,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1183,6 +1202,7 @@ def import_one_volume(volume_id):
 def import_observation_table(volume_id,
                              instrument_name,
                              mission_abbrev,
+                             volume_type,
                              table_name,
                              table_schema,
                              metadata):
@@ -1302,6 +1322,7 @@ def import_observation_table(volume_id,
                                                 volume_id,
                                                 instrument_name,
                                                 mission_abbrev,
+                                                volume_type,
                                                 table_name,
                                                 table_schema,
                                                 metadata,
@@ -1347,7 +1368,7 @@ def import_observation_table(volume_id,
                     else:
                         column_val = 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
-                    column_val = None
+                    column_val = 'N/A'
                 else:
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
@@ -1444,7 +1465,7 @@ def import_observation_table(volume_id,
                                                            field_name)
             if not mult_label_set:
                 if column_val is None:
-                    mult_label = 'NULL'
+                    mult_label = 'N/A'
                 else:
                     mult_label = str(column_val)
                     if (not mult_label[0].isdigit() or
@@ -1479,12 +1500,14 @@ def import_observation_table(volume_id,
 def import_run_field_function(func_name_suffix, volume_id,
                               instrument_name,
                               mission_abbrev,
+                              volume_type,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
     func_name = 'populate_'+func_name_suffix
     func_name = func_name.replace('<INST>', instrument_name)
     func_name = func_name.replace('<MISSION>', mission_abbrev)
+    func_name = func_name.replace('<TYPE>', volume_type)
     if func_name not in globals():
         import_util.log_nonrepeating_error(
             f'Unknown table populate function "{func_name}" for '+

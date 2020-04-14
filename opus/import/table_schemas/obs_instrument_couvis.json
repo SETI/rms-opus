@@ -46,7 +46,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COUVIS_observation_type"
+            "obs_instrument_couvis_observation_type_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -147,7 +147,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COUVIS_occultation_port_state"
+            "obs_instrument_couvis_occultation_port_state_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -244,15 +244,15 @@
         "val_sentinel": -999,
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
-        "pi_dict_name": "DWELL_TIME",
+        "pi_dict_name": "HDAC_DWELL_TIME",
         "definition": "The length of time the HDAC filament stayed at one voltage level, expressed in multiples of 0.125 ms.",
         "pi_disp_order": 110,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
         "pi_intro": null,
-        "pi_label": "Dwell Time",
-        "pi_label_results": "Dwell Time",
+        "pi_label": "HDAC Dwell Time",
+        "pi_label_results": "HDAC Dwell Time",
         "pi_old_slug": "DWELLTIME",
         "pi_slug": "COUVISdwelltime",
         "pi_sub_heading": null,
@@ -267,7 +267,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COUVIS_channel"
+            "obs_instrument_couvis_channel_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
