@@ -31,6 +31,7 @@ MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_target_name',
 INSTRUMENTS_WITH_RING_GEO = ['COISS',
                              'COUVIS',
                              'COVIMS',
+                             'EB',
                              'NHLORRI',
                              'VGISS']
 
@@ -45,6 +46,7 @@ INSTRUMENTS_WITH_SURFACE_GEO = ['COISS',
 # These are used for table names
 MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
     'CO':  'cassini',
+    'EB':  'earth',
     'GO':  'galileo',
     'HST': 'hubble',
     'NH':  'new_horizons',
@@ -54,6 +56,7 @@ MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
 # Mapping from mission abbreviation (UC) to full mission name (displayable)
 MISSION_ABBREV_TO_MISSION_NAME = {
     'CO':  'Cassini',
+    'EB':  'Earth-based',
     'GO':  'Galileo',
     'HST': 'Hubble',
     'NH':  'New Horizons',
@@ -63,6 +66,7 @@ MISSION_ABBREV_TO_MISSION_NAME = {
 # Mapping from instrument host abbreviation to mission abbreviation
 INST_HOST_ABBREV_TO_MISSION_ABBREV = {
     'CO':  'CO',
+    'EB':  'EB',
     'GO':  'GO',
     'HST': 'HST',
     'NH':  'NH',
@@ -73,6 +77,7 @@ INST_HOST_ABBREV_TO_MISSION_ABBREV = {
 # Mapping from instrument host abbreviation to instrument host name
 INST_HOST_ABBREV_TO_INST_HOST = {
     'CO':  'Cassini',
+    'EB':  'Earth-based',
     'GO':  'Galileo',
     'HST': 'Hubble',
     'NH':  'New Horizons',
@@ -100,19 +105,26 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
 
 # Mapping from instrument abbrev to instrument name
 INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
-    'COCIRS':    'Cassini CIRS',
-    'COISS':     'Cassini ISS',
-    'COUVIS':    'Cassini UVIS',
-    'COVIMS':    'Cassini VIMS',
-    'GOSSI':     'Galileo SSI',
-    'HSTACS':    'Hubble ACS',
-    'HSTNICMOS': 'Hubble NICMOS',
-    'HSTSTIS':   'Hubble STIS',
-    'HSTWFC3':   'Hubble WFC3',
-    'HSTWFPC2':  'Hubble WFPC2',
-    'NHLORRI':   'New Horizons LORRI',
-    'NHMVIC':    'New Horizons MVIC',
-    'VGISS':     'Voyager ISS'
+    'COCIRS':      'Cassini CIRS',
+    'COISS':       'Cassini ISS',
+    'COUVIS':      'Cassini UVIS',
+    'COVIMS':      'Cassini VIMS',
+    'GOSSI':       'Galileo SSI',
+    'HSTACS':      'Hubble ACS',
+    'HSTNICMOS':   'Hubble NICMOS',
+    'HSTSTIS':     'Hubble STIS',
+    'HSTWFC3':     'Hubble WFC3',
+    'HSTWFPC2':    'Hubble WFPC2',
+    'NHLORRI':     'New Horizons LORRI',
+    'NHMVIC':      'New Horizons MVIC',
+    'VGISS':       'Voyager ISS',
+    # Earth-based
+    'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
+    'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',
+    'IRTFURAC':    'NASA IRTF URAC',
+    'LICK1MCCDC':  'Lick 1-Meter CCD Camera',
+    'MCD27MIIRAR': 'McDonald Observatory 2.7-Meter INSB IR Array',
+    'PAL200CIRC':  'Palomar Observatory 200-Inch Cassegrain IR Camera'
 }
 
 # Mapping from VOLUME ID prefix to instrument name
@@ -122,6 +134,7 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'CORSS':  'CORSS',
     'COUVIS': 'COUVIS',
     'COVIMS': 'COVIMS',
+    'EBROCC': None, # The instrument must be looked up in the label file
     'GO':     'GOSSI',
     'HSTI1':  'HSTWFC3',
     'HSTJ0':  'HSTACS',
@@ -141,6 +154,61 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'NHPCMV': 'NHMVIC',
     'NHPEMV': 'NHMVIC',
     'VGISS':  'VGISS'
+}
+
+# Mapping from VOLUME ID prefix to mission abbreviation
+VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
+    'COCIRS': 'CO',
+    'COISS':  'CO',
+    'CORSS':  'CO',
+    'COUVIS': 'CO',
+    'COVIMS': 'CO',
+    'EBROCC': 'EB',
+    'GO':     'GO',
+    'HSTI1':  'HST',
+    'HSTJ0':  'HST',
+    'HSTJ1':  'HST',
+    'HSTN0':  'HST',
+    'HSTN1':  'HST',
+    'HSTO0':  'HST',
+    'HSTO1':  'HST',
+    'HSTU0':  'HST',
+    'HSTU1':  'HST',
+    'NHJULO': 'NH',
+    'NHLALO': 'NH',
+    'NHPCLO': 'NH',
+    'NHPELO': 'NH',
+    'NHJUMV': 'NH',
+    'NHLAMV': 'NH',
+    'NHPCMV': 'NH',
+    'NHPEMV': 'NH',
+    'VGISS':  'VG'
+}
+
+# Mapping from VOLUME root to observation type
+VOLUME_ID_ROOT_TO_TYPE = {
+    'COCIRS_5xxx': 'OBS',
+    'COCIRS_6xxx': 'OBS',
+    'COISS_1xxx':  'OBS',
+    'COISS_2xxx':  'OBS',
+    'CORSS_8xxx':  'OCC',
+    'COUVIS_0xxx': 'OBS',
+    'COUVIS_8xxx': 'OCC',
+    'COVIMS_0xxx': 'OBS',
+    'COVIMS_8xxx': 'OCC',
+    'EBROCC_xxxx': 'OCC',
+    'GO_0xxx':     'OBS',
+    'HSTIx_xxxx':  'OBS',
+    'HSTJx_xxxx':  'OBS',
+    'HSTNx_xxxx':  'OBS',
+    'HSTOx_xxxx':  'OBS',
+    'HSTUx_xxxx':  'OBS',
+    'NHxxLO_xxxx': 'OBS',
+    'NHxxMV_xxxx': 'OBS',
+    'VGISS_5xxx':  'OBS',
+    'VGISS_6xxx':  'OBS',
+    'VGISS_7xxx':  'OBS',
+    'VGISS_8xxx':  'OBS'
 }
 
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU

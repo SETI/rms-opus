@@ -40,6 +40,9 @@ from populate_obs_instrument_NHMVIC import *
 from populate_obs_mission_voyager import *
 from populate_obs_instrument_VGISS import *
 
+from populate_obs_mission_earthbased_occ import *
+from populate_obs_instrument_EB_occ import *
+
 from populate_obs_surface_geo import *
 
 
@@ -162,7 +165,9 @@ def create_tables_for_import(volume_id, namespace):
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
+    if instrument_name is None:
+        instrument_name = 'EB'
+    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
@@ -582,10 +587,6 @@ def import_one_volume(volume_id):
         impglobals.CURRENT_VOLUME_ID = None
         return False
 
-    volume_id_prefix = volume_id[:volume_id.find('_')]
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    mission_abbrev = INSTRUMENT_ABBREV_TO_MISSION_ABBREV[instrument_name]
-
 
     #################################
     ### FIND RELEVANT INDEX FILES ###
@@ -638,7 +639,30 @@ def import_one_volume(volume_id):
             # Voyager
             volume_label_path = os.path.join(volume_pdsfile.abspath,
                                              'INDEX', 'IMGINDEX.LBL')
-        # If not COCIRS or Voyager, try all the capitalizations
+        if not os.path.exists(volume_label_path):
+            # If not COCIRS or Voyager, loop through the INDEX directory
+            # to find all the index files.
+            found_label_file = False
+            ret = True
+            for index_dir in ('INDEX', 'index'):
+                for root, dirs, files in os.walk(os.path.join(
+                                                    volume_pdsfile.abspath,
+                                                    index_dir)):
+                    for filename in sorted(files):
+                        if filename.lower().endswith('index.lbl'):
+                            found_label_file = True
+                            volume_label_path = os.path.join(root, filename)
+                            ret = ret and import_one_index(volume_id,
+                                                           volume_pdsfile,
+                                                           paths,
+                                                           volume_label_path)
+
+            if found_label_file:
+                impglobals.LOGGER.close()
+                impglobals.CURRENT_VOLUME_ID = None
+                impglobals.CURRENT_INDEX_ROW_NUMBER = None
+                return ret
+
         if not os.path.exists(volume_label_path):
             volume_label_path = os.path.join(volume_pdsfile.abspath,
                                              'index', 'index.lbl')
@@ -662,15 +686,38 @@ def import_one_volume(volume_id):
         impglobals.CURRENT_VOLUME_ID = None
         return False
 
+    ret = import_one_index(volume_id, volume_pdsfile, paths, volume_label_path)
+
+    impglobals.LOGGER.close()
+    impglobals.CURRENT_VOLUME_ID = None
+    impglobals.CURRENT_INDEX_ROW_NUMBER = None
+
+    return ret
+
+def import_one_index(volume_id, volume_pdsfile, paths, volume_label_path):
+    volume_id_prefix = volume_id[:volume_id.find('_')]
+    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
+
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
         impglobals.LOGGER.log('error', f'Read failed: "{volume_label_path}"')
-        impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
         return False
 
     impglobals.LOGGER.log('info',
                f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
+
+    # This is used to make all Earth-based observations look like they were
+    # done by a single instrument to make writing the populate_* functions
+    # easier.
+    func_instrument_name = instrument_name
+    if instrument_name is None:
+        # There could be multiple instruments in a single volume, in which case
+        # we need to look in the index labelself.
+        # We assume this only happens for Earth-based instruments.
+        instrument_name = (obs_label_dict['INSTRUMENT_HOST_ID']
+                           +obs_label_dict['INSTRUMENT_ID'])
+        func_instrument_name = 'EB'
 
     metadata = {}
     metadata['index'] = obs_rows
@@ -733,8 +780,6 @@ def import_one_volume(volume_id):
                     if impglobals.ARGUMENTS.import_ignore_errors:
                         impglobals.IMPORT_HAS_BAD_DATA = True
                         continue
-                    impglobals.LOGGER.close()
-                    impglobals.CURRENT_VOLUME_ID = None
                     return False
                 if 'RING_SUMMARY' in basename.upper():
                     assoc_type = 'ring_geo'
@@ -944,9 +989,7 @@ def import_one_volume(volume_id):
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
     ##############################################
 
-    volume_type = 'OBS'
-    # if '_8' in volume_id:
-    #     volume_type = 'OCC'
+    volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
 
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
@@ -993,6 +1036,17 @@ def import_one_volume(volume_id):
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
+        # Some index files, like for occultations, have rows that are for
+        # products other than the data so we ignore any FILE_SPECIFICATION_NAME
+        # that doesn't have 'DATA/' in it.
+        filespec = metadata['index_row'].get('FILE_SPECIFICATION_NAME')
+        if filespec is None and 'supp_index_row' in metadata:
+            filespec = metadata['supp_index_row'].get('FILE_SPECIFICATION_NAME')
+        if (filespec is None or
+            (not filespec.lower().startswith('/data/') and
+             not filespec.lower().startswith('data/'))):
+            continue
+
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
@@ -1025,6 +1079,7 @@ def import_one_volume(volume_id):
                     continue
                 row = import_observation_table(volume_id,
                                                instrument_name,
+                                               func_instrument_name,
                                                mission_abbrev,
                                                volume_type,
                                                table_name,
@@ -1095,6 +1150,7 @@ def import_one_volume(volume_id):
 
                         row = import_observation_table(volume_id,
                                                        instrument_name,
+                                                       func_instrument_name,
                                                        mission_abbrev,
                                                        volume_type,
                                                        new_table_name,
@@ -1126,6 +1182,7 @@ def import_one_volume(volume_id):
 
                 row = import_observation_table(volume_id,
                                                instrument_name,
+                                               func_instrument_name,
                                                mission_abbrev,
                                                volume_type,
                                                table_name,
@@ -1192,14 +1249,12 @@ def import_one_volume(volume_id):
                 impglobals.DATABASE.insert_rows('import', new_table_name,
                     table_rows[new_table_name])
 
-    impglobals.LOGGER.close()
-    impglobals.CURRENT_VOLUME_ID = None
-    impglobals.CURRENT_INDEX_ROW_NUMBER = None
     return True # SUCCESS!
 
 
 def import_observation_table(volume_id,
                              instrument_name,
+                             func_instrument_name,
                              mission_abbrev,
                              volume_type,
                              table_name,
@@ -1320,6 +1375,7 @@ def import_observation_table(volume_id,
                 ret = import_run_field_function(data_source_val,
                                                 volume_id,
                                                 instrument_name,
+                                                func_instrument_name,
                                                 mission_abbrev,
                                                 volume_type,
                                                 table_name,
@@ -1498,13 +1554,14 @@ def import_observation_table(volume_id,
 
 def import_run_field_function(func_name_suffix, volume_id,
                               instrument_name,
+                              func_instrument_name,
                               mission_abbrev,
                               volume_type,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
     func_name = 'populate_'+func_name_suffix
-    func_name = func_name.replace('<INST>', instrument_name)
+    func_name = func_name.replace('<INST>', func_instrument_name)
     func_name = func_name.replace('<MISSION>', mission_abbrev)
     func_name = func_name.replace('<TYPE>', volume_type)
     if func_name not in globals():

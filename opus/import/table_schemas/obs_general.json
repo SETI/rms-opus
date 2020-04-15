@@ -49,7 +49,7 @@
     },
     {
         "field_name": "instrument_id",
-        "field_type": "char9",
+        "field_type": "char12",
         "field_notnull": true,
         "field_key": true,
         "data_source": [
@@ -74,20 +74,26 @@
         "pi_tooltip": "",
         "pi_units": null,
         "mult_options": [
-              [   0,    "COCIRS",       "Cassini CIRS",   10, "Y", null],
-              [   1,     "COISS",        "Cassini ISS",   20, "Y", null],
-              [   2,     "CORSS",        "Cassini RSS",   30, "Y", null],
-              [   3,    "COUVIS",       "Cassini UVIS",   40, "Y", null],
-              [   4,    "COVIMS",       "Cassini VIMS",   50, "Y", null],
-              [   5,     "GOSSI",        "Galileo SSI",   60, "Y", null],
-              [   6,     "VGISS",        "Voyager ISS",   70, "Y", null],
-              [   7,    "HSTACS",         "Hubble ACS",   80, "Y", null],
-              [   8, "HSTNICMOS",      "Hubble NICMOS",   90, "Y", null],
-              [   9,   "HSTSTIS",        "Hubble STIS",  100, "Y", null],
-              [  10,   "HSTWFC3",        "Hubble WFC3",  110, "Y", null],
-              [  11,  "HSTWFPC2",       "Hubble WFPC2",  120, "Y", null],
-              [  12,   "NHLORRI", "New Horizons LORRI",  130, "Y", null],
-              [  13,    "NHMVIC",  "New Horizons MVIC",  140, "Y", null]
+              [   0,      "COCIRS",           "Cassini CIRS",   10, "Y", null],
+              [   1,       "COISS",            "Cassini ISS",   20, "Y", null],
+              [   2,       "CORSS",            "Cassini RSS",   30, "Y", null],
+              [   3,      "COUVIS",           "Cassini UVIS",   40, "Y", null],
+              [   4,      "COVIMS",           "Cassini VIMS",   50, "Y", null],
+              [   5,       "GOSSI",            "Galileo SSI",   60, "Y", null],
+              [   6,       "VGISS",            "Voyager ISS",   70, "Y", null],
+              [   7,      "HSTACS",             "Hubble ACS",   80, "Y", null],
+              [   8,   "HSTNICMOS",          "Hubble NICMOS",   90, "Y", null],
+              [   9,     "HSTSTIS",            "Hubble STIS",  100, "Y", null],
+              [  10,     "HSTWFC3",            "Hubble WFC3",  110, "Y", null],
+              [  11,    "HSTWFPC2",           "Hubble WFPC2",  120, "Y", null],
+              [  12,     "NHLORRI",     "New Horizons LORRI",  130, "Y", null],
+              [  13,      "NHMVIC",      "New Horizons MVIC",  140, "Y", null],
+              [  14,   "ESO1MAPPH",         "ESO 1-m ApPhot",  150, "Y", null],
+              [  15,  "ESO22MAPPH",       "ESO 2.2-m ApPhot",  160, "Y", null],
+              [  16,    "IRTFURAC",         "NASA IRTF URAC",  170, "Y", null],
+              [  17,  "LICK1MCCDC",           "Lick 1-m CCD",  180, "Y", null],
+              [  18, "MCD27MIIRAR",    "McDonald 2.7-m INSB",  190, "Y", null],
+              [  19,  "PAL200CIRC", "Palomar 200-in Cass IR",  200, "Y", null]
           ]
     },
     {
@@ -124,7 +130,8 @@
               [   1,  "GO",      "Galileo",   20, "Y", null],
               [   2, "HST",       "Hubble",   30, "Y", null],
               [   3,  "NH", "New Horizons",   40, "Y", null],
-              [   4,  "VG",      "Voyager",   50, "Y", null]
+              [   4,  "VG",      "Voyager",   50, "Y", null],
+              [   5,  "EB",  "Earth-based",   60, "Y", null]
           ]
     },
     {
@@ -159,7 +166,8 @@
               [   2, "HST",       "Hubble",   30, "Y", null],
               [   3,  "NH", "New Horizons",   40, "Y", null],
               [   4, "VG1",    "Voyager 1",   50, "Y", null],
-              [   5, "VG2",    "Voyager 2",   60, "Y", null]
+              [   5, "VG2",    "Voyager 2",   60, "Y", null],
+              [   6,  "EB",  "Earth-based",   70, "Y", null]
           ]
     },
     {
@@ -571,7 +579,8 @@
               [   2, "SPI",       "Spectral Image",  30, "Y", null],
               [   3, "SCU",        "Spectral Cube",  40, "Y", null],
               [   4,  "TS",          "Time Series",  50, "Y", null],
-              [   5, "STS", "Spectral Time Series",  60, "Y", null]
+              [   5, "STS", "Spectral Time Series",  60, "Y", null],
+              [   6, "OCC",  "Occultation Profile",  70, "Y", null]
         ]
     },
     {
