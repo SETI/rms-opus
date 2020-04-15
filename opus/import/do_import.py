@@ -592,109 +592,110 @@ def import_one_volume(volume_id):
     ### FIND RELEVANT INDEX FILES ###
     #################################
 
-    # First see if we have a brand new label and index tab in the metadata
-    # directory. If so, ignore the one in volumes because it's probably
-    # broken.
-    paths = volume_pdsfile.associated_logical_paths('metadata', must_exist=True)
-    volume_label_path = None
+    # Look through these paths, in order, for index files of various types:
+    # 1) metadata
+    # 2) index (or INDEX)
 
-    if paths:
-        for path in paths:
-            assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
-            basenames = assoc_pdsfile.childnames
+    paths = []
+    metadata_paths = volume_pdsfile.associated_logical_paths('metadata',
+                                                             must_exist=True)
+    for path in metadata_paths:
+        paths.append(pdsfile.PdsFile.from_path(path).abspath)
+    if not impglobals.ARGUMENTS.import_force_metadata_index:
+        paths.append(os.path.join(volume_pdsfile.abspath, 'INDEX'))
+        paths.append(os.path.join(volume_pdsfile.abspath, 'index'))
+
+    for path in paths:
+        if not os.path.exists(path):
+            continue
+        found_in_this_dir = False
+        basenames = os.listdir(path)
+        print(path, basenames)
+        volume_label_path = None
+
+        # First look for higher-priority versions of the index file.
+        # If these exist, then there's only one of them.
+        for basename in basenames:
+            # Give preference to non-standard index files first.
+            # VGISS - the normal index file contains lots of data products like
+            # calibrated files. We want just the single raw file for each
+            # product, and that's in the RAW_IMAGE_INDEX
+            if (basename.upper().endswith('_RAW_IMAGE_INDEX.LBL') and
+                basename.find('999') == -1):
+                volume_label_path = os.path.join(path, basename)
+                impglobals.LOGGER.log('debug',
+                    f'Using RAW_IMAGE_INDEX metadata version of main index: '+
+                    f'{volume_label_path}')
+                break
+
+        if volume_label_path is None:
+            # COCIRS - give preference to OBSINDEX over INDEX
             for basename in basenames:
-                if (basename.upper().endswith('_RAW_IMAGE_INDEX.LBL') and
-                    basename.find('999') == -1):
-                    volume_label_path = os.path.join(assoc_pdsfile.abspath,
-                                                     basename)
+                if basename.upper().endswith('OBSINDEX.LBL'):
+                    volume_label_path = os.path.join(path, basename)
                     impglobals.LOGGER.log('debug',
-                f'Using raw_image_index metadata version of main index: '+
-                f'"{volume_label_path}"')
+                        f'Using OBSINDEX version of main index: '+
+                        f'{volume_label_path}')
                     break
 
-    if volume_label_path is None:
-        if paths:
-            for path in paths:
-                assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
-                basenames = assoc_pdsfile.childnames
-                for basename in basenames:
-                    if (basename.upper().endswith('_INDEX.LBL') and
-                        not basename.upper().endswith(
-                                            'SUPPLEMENTAL_INDEX.LBL') and
-                        basename.find('999') == -1):
-                        volume_label_path = os.path.join(assoc_pdsfile.abspath,
-                                                         basename)
-                        impglobals.LOGGER.log('debug',
-                    f'Using metadata version of main index: '+
-                    f'"{volume_label_path}"')
-                        break
+        if volume_label_path is None:
+            # GOSSI - give preference to IMGINDEX over INDEX
+            for basename in basenames:
+                if (volume_label_path is None and
+                    basename.upper().endswith('IMGINDEX.LBL')):
+                    volume_label_path = os.path.join(path, basename)
+                    impglobals.LOGGER.log('debug',
+                        f'Using IMGINDEX version of main index: '+
+                        f'{volume_label_path}')
+                    break
 
-    # Now look for non-metadata versions if we haven't found an index yet.
-    if (volume_label_path is None and
-        not impglobals.ARGUMENTS.import_force_metadata_index):
-        # COCIRS - give preference to OBSINDEX over INDEX
-        volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                         'INDEX', 'OBSINDEX.LBL')
-        if not os.path.exists(volume_label_path):
-            # Voyager
-            volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                             'INDEX', 'IMGINDEX.LBL')
-        if not os.path.exists(volume_label_path):
-            # If not COCIRS or Voyager, loop through the INDEX directory
-            # to find all the index files.
-            found_label_file = False
-            ret = True
-            for index_dir in ('INDEX', 'index'):
-                for root, dirs, files in os.walk(os.path.join(
-                                                    volume_pdsfile.abspath,
-                                                    index_dir)):
-                    for filename in sorted(files):
-                        if filename.lower().endswith('index.lbl'):
-                            found_label_file = True
-                            volume_label_path = os.path.join(root, filename)
-                            ret = ret and import_one_index(volume_id,
-                                                           volume_pdsfile,
-                                                           paths,
-                                                           volume_label_path)
+        if volume_label_path is not None:
+            # Found that one and only label
+            ret = import_one_index(volume_id,
+                                   volume_pdsfile,
+                                   metadata_paths,
+                                   volume_label_path)
+            impglobals.LOGGER.close()
+            impglobals.CURRENT_VOLUME_ID = None
+            impglobals.CURRENT_INDEX_ROW_NUMBER = None
+            return ret
 
-            if found_label_file:
+        # For the remaining, there might be more than one index file (like
+        # for EBROCC), but we still give priority.
+
+        # EBROCC - give preference to PROFILE_INDEX over INDEX
+        # Otherwise just use normal INDEX
+        ret = True
+        for index_name in ('_PROFILE_INDEX.LBL', '_INDEX.LBL'):
+            for basename in basenames:
+                if (basename.upper().endswith(index_name) and
+                    not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
+                    basename.find('999') == -1):
+                    volume_label_path = os.path.join(path, basename)
+                    impglobals.LOGGER.log('debug',
+                        f'Using index: {volume_label_path}')
+                    found_in_this_dir = True
+                    ret = ret and import_one_index(volume_id,
+                                                   volume_pdsfile,
+                                                   metadata_paths,
+                                                   volume_label_path)
+
+            if found_in_this_dir:
                 impglobals.LOGGER.close()
                 impglobals.CURRENT_VOLUME_ID = None
                 impglobals.CURRENT_INDEX_ROW_NUMBER = None
                 return ret
 
-        if not os.path.exists(volume_label_path):
-            volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                             'index', 'index.lbl')
-        if not os.path.exists(volume_label_path):
-            volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                             'INDEX', 'INDEX.LBL')
-        if not os.path.exists(volume_label_path):
-            volume_label_path = os.path.join(volume_pdsfile.abspath,
-                                             'INDEX', 'index.lbl')
-    if volume_label_path is None:
-        impglobals.LOGGER.log('error',
-            f'No appropriate label file found: "{volume_id}"')
-        impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
-        return False
-
-    if not os.path.exists(volume_label_path):
-        impglobals.LOGGER.log('error',
-            f'Label file does not exist: "{volume_label_path}"')
-        impglobals.LOGGER.close()
-        impglobals.CURRENT_VOLUME_ID = None
-        return False
-
-    ret = import_one_index(volume_id, volume_pdsfile, paths, volume_label_path)
-
+    impglobals.LOGGER.log('error',
+        f'No appropriate label file found: "{volume_id}"')
     impglobals.LOGGER.close()
     impglobals.CURRENT_VOLUME_ID = None
-    impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
-    return ret
+    return False
 
-def import_one_index(volume_id, volume_pdsfile, paths, volume_label_path):
+
+def import_one_index(volume_id, volume_pdsfile, metadata_paths,
+                     volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
@@ -735,8 +736,8 @@ def import_one_index(volume_id, volume_pdsfile, paths, volume_label_path):
     #   <vol>_<planet>_summary.lbl
     #   <vol>_supplemental_index.lbl
 
-    if paths:
-        for path in paths:
+    if metadata_paths:
+        for path in metadata_paths:
             assoc_pdsfile = pdsfile.PdsFile.from_logical_path(path)
             basenames = assoc_pdsfile.childnames
             for basename in basenames:
@@ -1035,20 +1036,6 @@ def import_one_index(volume_id, volume_pdsfile, paths, volume_label_path):
                     f'File "{file_spec_name}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
-
-        # Some index files, like for occultations, have rows that are for
-        # products other than the data so we ignore any FILE_SPECIFICATION_NAME
-        # that doesn't have 'DATA/' in it.
-        # XXX We won't need this once we have the new index files.
-        if volume_id.startswith('EBROCC'):
-            filespec = metadata['index_row'].get('FILE_SPECIFICATION_NAME')
-            if filespec is None and 'supp_index_row' in metadata:
-                filespec = metadata['supp_index_row'].get(
-                                                    'FILE_SPECIFICATION_NAME')
-            if (filespec is None or
-                (not filespec.lower().startswith('/data/') and
-                 not filespec.lower().startswith('data/'))):
-                continue
 
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
