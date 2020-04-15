@@ -98,7 +98,7 @@ def populate_obs_general_COUVIS_quantity_OBS(**kwargs):
     description = supp_index_row['DESCRIPTION'].upper()
     if (description.find('OCCULTATION') != -1 and
         description.find('CALIBRATION') == -1):
-        return 'OPTICAL'
+        return 'OPDEPTH'
     return 'EMISSION'
 
     # This is the OLD logic
@@ -556,6 +556,9 @@ def populate_obs_occultation_COUVIS_optical_depth_max_OBS(**kwargs):
     return None
 
 def populate_obs_occultation_COUVIS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COUVIS_quality_score_OBS(**kwargs):
     return None
 
 def populate_obs_occultation_COUVIS_wl_band_OBS(**kwargs):

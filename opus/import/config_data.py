@@ -567,6 +567,7 @@ TARGET_NAME_INFO = {
 
     # Stars
     'STAR':          (None,  'OTHER'),
+      '28 SGR':      (None,  'OTHER'),
       'ARCTURUS':    (None,  'OTHER'),
       'BETA CMA':    (None,  'OTHER'),
       'FOMALHAUT':   (None,  'OTHER'),
@@ -593,4 +594,9 @@ TARGET_NAME_INFO = {
     'ACQ-ECLPSE':    (None,  'OTHER'),
     'SYSTEM':        (None,  'OTHER'),
     'M7':            (None,  'OTHER'), # Open Cluster
+}
+
+# Map each star name to its RA and DEC
+STAR_RA_DEC = {
+    '28 SGR': (18/24.+46/60.+20.61/3600., -(22+23/60.+31.83/3600.))
 }

@@ -77,7 +77,7 @@ def populate_obs_general_COVIMS_quantity_OBS(**kwargs):
     inst_mod = index_row['INSTRUMENT_MODE_ID']
 
     if inst_mod == 'OCCULTATION':
-        return 'OPTICAL'
+        return 'OPDEPTH'
     return 'REFLECT'
     # XXX CAL?
 
@@ -402,6 +402,9 @@ def populate_obs_occultation_COVIMS_optical_depth_max_OBS(**kwargs):
     return None
 
 def populate_obs_occultation_COVIMS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COVIMS_quality_score_OBS(**kwargs):
     return None
 
 def populate_obs_occultation_COVIMS_wl_band_OBS(**kwargs):

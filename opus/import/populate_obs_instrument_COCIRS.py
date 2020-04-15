@@ -310,6 +310,9 @@ def populate_obs_occultation_COCIRS_optical_depth_max_OBS(**kwargs):
 def populate_obs_occultation_COCIRS_temporal_sampling_OBS(**kwargs):
     return None
 
+def populate_obs_occultation_COCIRS_quality_score_OBS(**kwargs):
+    return None
+
 def populate_obs_occultation_COCIRS_wl_band_OBS(**kwargs):
     return None
 

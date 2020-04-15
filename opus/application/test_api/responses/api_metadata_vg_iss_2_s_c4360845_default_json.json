@@ -53,6 +53,7 @@
     "optical_depth1": null,
     "optical_depth2": null,
     "temporal_sampling": null,
+    "quality_score": null,
     "source": null,
     "wl_band": null
   },

@@ -1241,6 +1241,19 @@ class MultObsOccultationOccType(models.Model):
         db_table = 'mult_obs_occultation_occ_type'
 
 
+class MultObsOccultationQualityScore(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    value = models.CharField(max_length=100, blank=True, null=True)
+    label = models.CharField(max_length=60)
+    disp_order = models.IntegerField()
+    display = models.CharField(max_length=1)
+    timestamp = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mult_obs_occultation_quality_score'
+
+
 class MultObsOccultationSource(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
@@ -1734,12 +1747,14 @@ class ObsOccultation(models.Model):
     optical_depth1 = models.FloatField(blank=True, null=True)
     optical_depth2 = models.FloatField(blank=True, null=True)
     temporal_sampling = models.FloatField(blank=True, null=True)
+    quality_score = models.CharField(max_length=16, blank=True, null=True)
     wl_band = models.CharField(max_length=2, blank=True, null=True)
     source = models.CharField(max_length=40, blank=True, null=True)
     host = models.CharField(max_length=40, blank=True, null=True)
     mult_obs_occultation_occ_type = models.ForeignKey(MultObsOccultationOccType, models.DO_NOTHING, db_column='mult_obs_occultation_occ_type')
     mult_obs_occultation_occ_dir = models.ForeignKey(MultObsOccultationOccDir, models.DO_NOTHING, db_column='mult_obs_occultation_occ_dir')
     mult_obs_occultation_body_occ_flag = models.ForeignKey(MultObsOccultationBodyOccFlag, models.DO_NOTHING, db_column='mult_obs_occultation_body_occ_flag')
+    mult_obs_occultation_quality_score = models.ForeignKey(MultObsOccultationQualityScore, models.DO_NOTHING, db_column='mult_obs_occultation_quality_score')
     mult_obs_occultation_wl_band = models.ForeignKey(MultObsOccultationWlBand, models.DO_NOTHING, db_column='mult_obs_occultation_wl_band')
     mult_obs_occultation_source = models.ForeignKey(MultObsOccultationSource, models.DO_NOTHING, db_column='mult_obs_occultation_source')
     mult_obs_occultation_host = models.ForeignKey(MultObsOccultationHost, models.DO_NOTHING, db_column='mult_obs_occultation_host')

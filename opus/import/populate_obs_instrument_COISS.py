@@ -562,6 +562,9 @@ def populate_obs_occultation_COISS_optical_depth_max_OBS(**kwargs):
 def populate_obs_occultation_COISS_temporal_sampling_OBS(**kwargs):
     return None
 
+def populate_obs_occultation_COISS_quality_score_OBS(**kwargs):
+    return None
+
 def populate_obs_occultation_COISS_wl_band_OBS(**kwargs):
     return None
 

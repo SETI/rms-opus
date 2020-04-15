@@ -21,6 +21,11 @@ def helper_earthbased_target_name(**kwargs):
     index_label = metadata['index_label']
     target_name = index_label['TARGET_NAME']
 
+    if target_name != 'S RINGS':
+        import_util.log_nonrepeating_error(
+            f'Earth-based mission targets "{target_name}" instead of "S RINGS"'
+        )
+
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]
     if target_name is None:
@@ -43,30 +48,5 @@ def populate_obs_general_EB_planet_id_OCC(**kwargs):
 
 
 ################################################################################
-# THESE ARE SPECIFIC TO OBS_MISSION_GALILEO
+# THESE ARE SPECIFIC TO OBS_MISSION_EARTHBASED
 ################################################################################
-
-def populate_obs_mission_earthbased_spacecraft_clock_count1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    try:
-        sc_cvt = opus_support.parse_earthbased_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Unable to parse Galileo SCLK "{sc}": {e}')
-        return None
-    return sc_cvt
-
-# There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-def populate_obs_mission_earthbased_spacecraft_clock_count2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    try:
-        sc_cvt = opus_support.parse_earthbased_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Unable to parse Galileo SCLK "{sc}": {e}')
-        return None
-    return sc_cvt

@@ -40,6 +40,7 @@
     "occdepth1": null,
     "occdepth2": null,
     "occtimesampling": null,
+    "occdataquality": null,
     "occsource": null,
     "occwlband": null
   },

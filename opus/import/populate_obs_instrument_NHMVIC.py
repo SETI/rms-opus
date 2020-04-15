@@ -300,6 +300,9 @@ def populate_obs_occultation_NHMVIC_optical_depth_max_OBS(**kwargs):
 def populate_obs_occultation_NHMVIC_temporal_sampling_OBS(**kwargs):
     return None
 
+def populate_obs_occultation_NHMVIC_quality_score_OBS(**kwargs):
+    return None
+
 def populate_obs_occultation_NHMVIC_wl_band_OBS(**kwargs):
     return None
 

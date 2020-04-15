@@ -1039,13 +1039,16 @@ def import_one_index(volume_id, volume_pdsfile, paths, volume_label_path):
         # Some index files, like for occultations, have rows that are for
         # products other than the data so we ignore any FILE_SPECIFICATION_NAME
         # that doesn't have 'DATA/' in it.
-        filespec = metadata['index_row'].get('FILE_SPECIFICATION_NAME')
-        if filespec is None and 'supp_index_row' in metadata:
-            filespec = metadata['supp_index_row'].get('FILE_SPECIFICATION_NAME')
-        if (filespec is None or
-            (not filespec.lower().startswith('/data/') and
-             not filespec.lower().startswith('data/'))):
-            continue
+        # XXX We won't need this once we have the new index files.
+        if volume_id.startswith('EBROCC'):
+            filespec = metadata['index_row'].get('FILE_SPECIFICATION_NAME')
+            if filespec is None and 'supp_index_row' in metadata:
+                filespec = metadata['supp_index_row'].get(
+                                                    'FILE_SPECIFICATION_NAME')
+            if (filespec is None or
+                (not filespec.lower().startswith('/data/') and
+                 not filespec.lower().startswith('data/'))):
+                continue
 
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation

@@ -9,6 +9,7 @@ import numpy as np
 import julian
 import pdsfile
 
+from config_data import *
 import import_util
 
 from populate_obs_mission_earthbased_occ import *
@@ -102,20 +103,17 @@ def populate_obs_general_EB_target_name_OCC(**kwargs):
 
 def populate_obs_general_EB_observation_duration_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
-    stop_time = index_row['STOP_TIME']
+    general_row = metadata['obs_general_row']
+    start_time_sec = general_row['time1']
+    stop_time_sec = general_row['time2']
 
-    if start_time == 'UNK' or stop_time == 'UNK':
+    if start_time_sec is None or stop_time_sec is None:
         return None
-
-    start_time_sec = julian.tai_from_iso(start_time)
-    stop_time_sec = julian.tai_from_iso(stop_time)
 
     return stop_time_sec - start_time_sec
 
 def populate_obs_general_EB_quantity_OCC(**kwargs):
-    return 'OPTICAL'
+    return 'OPDEPTH'
 
 def populate_obs_general_EB_observation_type_OCC(**kwargs):
     return 'OCC'
@@ -158,17 +156,29 @@ def populate_obs_pds_EB_product_id_OCC(**kwargs):
 
     return product_id
 
+def _ra_dec_helper(**kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata['index_label']
+    star_name = index_label['STAR_NAME']
+    if star_name not in import_util.STAR_RA_DEC:
+        import_util.log_nonrepeating_error(
+            f'Star "{star_name}" missing RA and DEC information'
+        )
+        return None, None
+
+    return STAR_RA_DEC[star_name]
+
 def populate_obs_general_EB_right_asc1_OCC(**kwargs):
-    return None
+    return _ra_dec_helper(**kwargs)[0]
 
 def populate_obs_general_EB_right_asc2_OCC(**kwargs):
-    return None
+    return _ra_dec_helper(**kwargs)[0]
 
 def populate_obs_general_EB_declination1_OCC(**kwargs):
-    return None
+    return _ra_dec_helper(**kwargs)[1]
 
 def populate_obs_general_EB_declination2_OCC(**kwargs):
-    return None
+    return _ra_dec_helper(**kwargs)[1]
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -282,6 +292,9 @@ def populate_obs_occultation_EB_optical_depth_max_OCC(**kwargs):
 
 def populate_obs_occultation_EB_temporal_sampling_OCC(**kwargs):
     return None # Not available
+
+def populate_obs_occultation_EB_quality_score_OCC(**kwargs):
+    return ("UNASSIGNED", "Unassigned")
 
 def populate_obs_occultation_EB_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
