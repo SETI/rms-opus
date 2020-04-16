@@ -1095,22 +1095,65 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order ,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=,instrument'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_order_empty_2(self):
         "[test_ui_api.py] /__normalizeurl: order instrument,"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrument,'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_order_empty_3(self):
         "[test_ui_api.py] /__normalizeurl: order ,,instrument,,"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=,,instrument,,'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs)
+
+    # OPUS ID not last
+    def test__api_normalizeurl_order_opusid_not_last_1(self):
+        "[test_ui_api.py] /__normalizeurl: order opusid,instrument"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=opusid,instrument'
+        new_slugs['order'] = 'opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_not_last_2(self):
+        "[test_ui_api.py] /__normalizeurl: order opusid,instrument,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=opusid,instrument,time'
+        new_slugs['order'] = 'opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_not_last_3(self):
+        "[test_ui_api.py] /__normalizeurl: order instrument,opusid,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=instrument,opusid,time'
+        new_slugs['order'] = 'instrument,opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_dec_not_last_1(self):
+        "[test_ui_api.py] /__normalizeurl: order -opusid,instrument"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=-opusid,instrument'
+        new_slugs['order'] = '-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_dec_not_last_2(self):
+        "[test_ui_api.py] /__normalizeurl: order -opusid,instrument,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=-opusid,instrument,time'
+        new_slugs['order'] = '-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
+
+    def test__api_normalizeurl_order_opusid_dec_not_last_3(self):
+        "[test_ui_api.py] /__normalizeurl: order instrument,-opusid,time"
+        new_slugs = dict(self.default_url_slugs)
+        url = '/__normalizeurl.json?order=instrument,-opusid,time'
+        new_slugs['order'] = 'instrument,-opusid'
+        self._run_url_slugs_equal(url, new_slugs, msg_contains='We found the following issues with your bookmarked URL:</p><ul><li>Fields after "opusid" in the sort order have been removed.</li></ul><p>We strongly recommend that you replace your old bookmark with the updated URL in your browser so that you will not see this message in the future.')
 
     # Old defaults
 
@@ -1125,7 +1168,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order default 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=-time1'
-        new_slugs['order'] = '-time1'
+        new_slugs['order'] = '-time1,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     # Something that has an old_slug
@@ -1134,56 +1177,56 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrument'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_order_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrumentid'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     def test__api_normalizeurl_order_instrument_instrument(self):
         "[test_ui_api.py] /__normalizeurl: order instrument,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrument,instrument'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrument_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: order instrument,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrument,instrumentid'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrumentid,instrument'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument_2(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrumentid,-instrument'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrument_3(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrument 3"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=-instrumentid,instrument'
-        new_slugs['order'] = '-instrument'
+        new_slugs['order'] = '-instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     def test__api_normalizeurl_order_instrumentid_instrumentid(self):
         "[test_ui_api.py] /__normalizeurl: order instrumentid,instrumentid"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=instrumentid,instrumentid'
-        new_slugs['order'] = 'instrument'
+        new_slugs['order'] = 'instrument,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "Instrument Name" is duplicated in the list of sort orders; only one copy is being used.')
 
     # Something that doesn't have an old slug
@@ -1192,7 +1235,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order productid"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=productid'
-        new_slugs['order'] = 'productid'
+        new_slugs['order'] = 'productid,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     # Bad order
@@ -1208,7 +1251,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order bad 2"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=XXX,productid'
-        new_slugs['order'] = 'productid'
+        new_slugs['order'] = 'productid,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='Sort order metadata field "XXX" is unknown; it has been removed.')
 
     # Not viewable
@@ -1233,14 +1276,14 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order observationduration"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=observationduration'
-        new_slugs['order'] = 'observationduration'
+        new_slugs['order'] = 'observationduration,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     def test__api_normalizeurl_order_observationduration1(self):
         "[test_ui_api.py] /__normalizeurl: order observationduration1"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=observationduration1'
-        new_slugs['order'] = 'observationduration'
+        new_slugs['order'] = 'observationduration,opusid'
         self._run_url_slugs_equal(url, new_slugs, msg_contains='previous version')
 
     # Multi-column range with '1' suffix
@@ -1256,7 +1299,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: order rightasc1"
         new_slugs = dict(self.default_url_slugs)
         url = '/__normalizeurl.json?order=rightasc1'
-        new_slugs['order'] = 'rightasc1'
+        new_slugs['order'] = 'rightasc1,opusid'
         self._run_url_slugs_equal(url, new_slugs)
 
     ### Search slugs

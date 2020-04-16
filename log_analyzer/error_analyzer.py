@@ -10,6 +10,7 @@ from operator import attrgetter
 from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict, cast
 
 from cronjob_utils import convert_cronjob_to_batchjob
+from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogReader, LogEntry
 
 
@@ -41,14 +42,16 @@ class ErrorReader(object):
     _ignored_errors: List[str]
     _output: TextIO
     _seen_errors: Dict[Tuple[str, ...], List[ErrorAndLog]]
+    _uses_html: bool
 
     def __init__(self, files: List[str], ignored_ips: List[ipaddress.IPv4Network], ignored_errors: List[str],
-                 output: TextIO):
+                 output: TextIO, uses_html: bool):
         self._files = files
         self._ignored_ips = ignored_ips
         self._ignored_errors = ignored_errors
         self._output = output
         self._seen_errors = defaultdict(list)
+        self._uses_html = uses_html
 
     def run(self) -> None:
         error_entries = self._get_error_entries()
@@ -80,7 +83,7 @@ class ErrorReader(object):
                          if not self._ignore_error_message(entry)]
         return error_entries
 
-    def _ignore_error_message(self, entry: ErrorEntry):
+    def _ignore_error_message(self, entry: ErrorEntry) -> bool:
         result = any(ignored_error in entry.full_message for ignored_error in self._ignored_errors)
         return result
 
@@ -159,27 +162,49 @@ class ErrorReader(object):
             self._seen_errors[error_key].append(ErrorAndLog(these_error_entries, these_log_entries))
 
     def _show_results(self) -> None:
-        output = self._output
         seen_errors = self._seen_errors
+        results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]] = []
         for key in sorted(seen_errors.keys(), key=lambda strs: (-len(seen_errors[strs]), -len(strs), strs)):
             sorted_error_and_log_pairs = sorted(seen_errors[key], key=lambda x: x.error_entries[0].time)
             min_time = sorted_error_and_log_pairs[0].error_entries[0].time
-            output.write('\n========================\n\n')
+            all_sorted_log_entries = [
+                sorted(log_entries, key=attrgetter('time')) for _, log_entries in sorted_error_and_log_pairs
+            ]
             count = len(seen_errors[key])
+            results.append((key, count, min_time, all_sorted_log_entries))
+
+        if not self._uses_html:
+            self.__generate_text_output(results)
+        else:
+            self.__generate_html_output(results)
+
+    def __generate_text_output(
+            self,
+            results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]]) -> None:
+        output = self._output
+        for key, count, min_time, all_sorted_log_entries in results:
+            output.write('\n========================\n\n')
             if count == 1:
                 output.write(f'This error occurs once at {min_time}.\n')
             else:
-                output.write(f'This error occurs { count } times; the first occurrence is at {min_time}.\n')
+                output.write(f'This error occurs {count} times; the first occurrence is at {min_time}.\n')
             for line in key:
                 output.write(f'{line}\n')
-            for error_entries, log_entries in sorted_error_and_log_pairs:
+            for log_entries in all_sorted_log_entries:
                 output.write('   --- \n')
                 if log_entries:
                     output.write(f'IP: {log_entries[0].host_ip}\n')
-                    for log_entry in sorted(log_entries, key=attrgetter('time')):
+                    for log_entry in log_entries:
                         output.write(f'{log_entry.time} {log_entry.url.geturl()}\n')
                 else:
                     output.write(f'Log entries missing\n')
+
+    def __generate_html_output(
+            self,
+            results: List[Tuple[Tuple[str, ...], int, datetime.datetime, List[List[LogEntry]]]]) -> None:
+        template = JINJA_ENVIRONMENT.get_template('error_analysis.html')
+        for result in template.generate(results=results):
+            self._output.write(result)
 
 
 def main(arguments: Optional[List[str]] = None) -> None:
@@ -193,6 +218,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
+    parser.add_argument('--html', action='store_true', dest='uses_html',
+                        help='Generate html output rather than text output')
 
     parser.add_argument('--cronjob', action='store_true', dest='cronjob',
                         help="Used by the chron job to generate a daily summary")
@@ -219,9 +246,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
     else:
         ignored_errors = []
 
-
     output = sys.stdout if not args.output else open(args.output, "w")
-    ErrorReader(args.log_files, ignored_ips, ignored_errors, output).run()
+    ErrorReader(args.log_files, ignored_ips, ignored_errors, output, args.uses_html).run()
 
 
 if __name__ == '__main__':
