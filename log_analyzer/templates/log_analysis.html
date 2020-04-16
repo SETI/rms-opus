@@ -53,6 +53,9 @@ table.SessionLinkTable {
   border-collapse: separate;
   border-spacing: 4px 2px;
 }
+.Summary2 {
+  left: 10pt
+}
 .show_all {   /* Used by --xxshowall for URLs that would orderinarily be ignored. */
   white-space: nowrap;
   color: darkgray;
@@ -79,27 +82,28 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <nav class="navbar navbar-light bg-light">
 <ul class="nav nav-tabs">
-    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#ByIP">By IP</a></li>
+    <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByIP">By IP</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByTime">By Time</a></li>
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#Summary">Summary</a></li>
 </ul>
 </nav>
 
 <div class="tab-content">
 
-
-{% set marker_to_glyph = { "HAS_SEARCH": "search", "HAS_COLUMNS": "list-ul", "FETCHED_GALLERY": "images",
-                           "HAS_DOWNLOAD": "file-download", "HAS_OBSOLETE_SLUG" : "book-dead" }
+{% set name_and_glyph =   (("HAS_SEARCH", "search"),
+                           ("FETCHED_GALLERY",  "images"),
+                           ("HAS_COLUMNS", "list-ul"),
+                           ("HAS_DOWNLOAD", "file-download"),
+                           ("HAS_OBSOLETE_SLUG" , "book-dead"))
 %}
+
 {% macro generate_session_row(session, full) %}
     <tr>
-    {% for flag in action_flags_list %}
-        {% set a = session %}
-        {% set b = session.session_info %}
-        {% set c = session.session_info.get_session_flags() %}
+    {% for flag_name, glyph in name_and_glyph %}
+        {% set flag = action_name_to_flag[flag_name] %}
         {% set flag_in_use = flag in session.session_info.get_session_flags() %}
         {% if flag_in_use or full %}
-            {% set glyph = 'fa-' ~ marker_to_glyph[flag.name] %}
-            {% set classes = ['fas', glyph] + ([] if flag_in_use else ['invisible']) %}
+            {% set classes = ['fas', 'fa-' + glyph] + ([] if flag_in_use else ['invisible']) %}
             <td><span class="{{ classes | join(' ') }}">&zwj;</span></td>
         {% else %}
             <td></td>
@@ -117,11 +121,21 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endif %}
 {% endmacro %}
 
+{% macro session_info_ip_or_name(session_info) %}
+    {% if session_info.host_ip in ip_to_host_name %}
+        <a data-toggle="tooltip" title="{{ session_info.host_ip }}"> {{ ip_to_host_name[session_info.host_ip] }}</a>
+    {% else %}
+        {{ session_info.host_ip }}
+    {% endif %}
+{% endmacro %}
+
+
+
 <div id="ByIP" class="tab-pane show active">
 {% for host_info in host_infos_by_ip %}
     {% if not loop.first %}<hr/>{% endif %}
     {{ host_info_ip_or_name(host_info) }}
-    ({{ host_info.total_time() }})
+    ({{ host_info.total_time }})
     <table class="SessionLinkTable">
         {% for session in host_info.sessions %}
             {% call generate_session_row(session, loop.first) %}
@@ -148,14 +162,65 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endfor %}
     </table>
 {% endfor %}
-
 </div>  ## #ByTime
+
+<div id="Summary" class="tab-pane show active">
+<details class="Summary1"><summary>Usage by IP</summary>
+{% for host_info in host_infos_by_ip|sort(attribute="total_time", reverse=True) %}
+    <details class="Summary2">
+        <summary>
+            {{ host_info_ip_or_name(host_info) }}
+            ({{ host_info.total_time }})
+        </summary>
+        <table class="SessionLinkTable SummarySession">
+            {% for session in host_info.sessions|sort(attribute="total_time", reverse=True) %}
+            <tr><td>
+            <a href="#" class=SessionLink data-target="#{{ session.id }}">
+                {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                {{ host_info_ip_or_name(host_info) }}
+            </td></tr>
+            {% endfor %}
+        </table>
+    </details>
+{% endfor %}
+</details>
+
+
+{% macro summarize_slugs(summary_name, summary_slug_info) %}
+    <details class="Summary1"><summary>{{ summary_name }}</summary>
+    {% for slug_name, sessions in summary_slug_info %}
+        <details class="Summary2">
+            <summary><span  class="text-dark">{{ slug_name }}</span> [{{ sessions|length }}]</summary>
+            <table class="SessionLinkTable SummarySession">
+                {% for session in sessions %}
+                <tr><td>
+                <a href="#" class=SessionLink data-target="#{{ session.id }}">
+                   {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                    {{ session_info_ip_or_name(session) }}
+                </td></tr>
+                {% endfor %}
+            </table>
+        </details>
+    {% endfor %}
+    </details>
+{% endmacro %}
+
+<hr/>
+{{ summarize_slugs('Search Terms', ordered_search_slugs) }}
+<hr/>
+{{ summarize_slugs('Columns', ordered_column_slugs) }}
+<hr/>
+
+</div>  ## #Summary
+
+
 </div>  ## Tab Content containing #ByIp and #ByTime
 </div>  ## #left
 
 {% macro print_slugs(session) %}
      <ul class="list-unstyled">
-     {% for type, slug_info in session.session_info.get_slug_info() %}
+     {% set search_slug_list, column_slug_list = session.session_info.get_slug_info() %}
+     {% for type, slug_info in (('search', search_slug_list), ('column', column_slug_list)) %}
          <li>
          <b>{{ type.title() }} Slugs: </b>
          {% for slug_name, is_obsolete in slug_info %}
@@ -203,7 +268,8 @@ because it requires that all the navigation tabs be within a single unordered li
         {{ print_slugs(session) }}
         <hr/>
         {{ print_session_entries(session) }}
-    </div>{% endfor %}
+    </div>
+    {% endfor %}
 {% endfor %}
 </div>  ## class=tabContent
 </div>  ## #right

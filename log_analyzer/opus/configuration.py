@@ -14,7 +14,6 @@ from opus.slug import Info
 
 
 class ActionFlags(Flag):
-    # These should be in the order we want to see them in the output
     HAS_SEARCH = auto()
     FETCHED_GALLERY = auto()
     HAS_COLUMNS = auto()
@@ -48,7 +47,7 @@ class Configuration(AbstractConfiguration):
         action_flag_list = list(ActionFlags)
         return {
             'api_host_url': self._api_host_url,
-            'action_flags_list': action_flag_list,
+            'action_name_to_flag': {x.name: x for x in ActionFlags},
         }
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
@@ -123,7 +122,7 @@ class SessionInfo(AbstractSessionInfo):
     def fetched_gallery(self) -> None:
         self._action_flags |= ActionFlags.FETCHED_GALLERY
 
-    def get_slug_info(self) -> Iterable[Tuple[str, List[Tuple[str, bool]]]]:
+    def get_slug_info(self) -> Iterable[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
             return [(slug, info[slug].flags.is_obsolete())
                     for slug in sorted(info, key=str.lower)
@@ -141,7 +140,7 @@ class SessionInfo(AbstractSessionInfo):
 
         search_slug_list = fixit(session_search_slugs)
         column_slug_list = fixit(self._session_column_slugs)
-        return ('search', search_slug_list), ('column', column_slug_list)
+        return search_slug_list, column_slug_list
 
     def get_session_flags(self) -> ActionFlags:
         return self._action_flags

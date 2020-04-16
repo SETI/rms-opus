@@ -2,9 +2,11 @@ import datetime
 import ipaddress
 import itertools
 import sys
-from collections import deque
+from collections import deque, defaultdict
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple, Union
+
+from jinja2 import Template
 
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
@@ -46,6 +48,10 @@ class Session(NamedTuple):
     def duration(self) -> datetime.timedelta:
         return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
 
+    @property
+    def total_time(self) -> datetime.timedelta:
+        return self.duration()
+
 
 class HostInfo(NamedTuple):
     ip: IPv4Address
@@ -55,7 +61,9 @@ class HostInfo(NamedTuple):
     def hostname(self) -> str:
         return f'{self.name} ({self.ip})' if self.name else str(self.ip)
 
+    @property
     def total_time(self) -> datetime.timedelta:
+        x = datetime.timedelta(0)
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
 
     def start_time(self) -> datetime.datetime:
@@ -73,6 +81,7 @@ class LogParser:
     _ignored_ips: List[ipaddress.IPv4Network]
     _ip_to_host_converter: IpToHostConverter
     _id_generator: Iterator[str]
+    _template: Optional[Template]
 
     def __init__(self, configuration: AbstractConfiguration, *,
                  session_timeout_minutes: int, output: str,
@@ -88,6 +97,9 @@ class LogParser:
         self._ignored_ips = ignored_ips
         self._ip_to_host_converter = ip_to_host_converter
         self._id_generator = (f'{value:X}' for value in itertools.count(100))
+
+        if self._uses_html:
+            self._template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
         print(f'Parsing input')
@@ -254,10 +266,32 @@ class LogParser:
         host_infos_by_date = [(date, list(values))
                               for date, values in itertools.groupby(host_infos_by_time,
                                                                     lambda host_info: host_info.start_time().date())]
-        template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
-        for result in template.generate(host_infos_by_ip=host_infos_by_ip,
-                                        host_infos_by_date=host_infos_by_date,
-                                        **self._configuration.additional_template_info()):
+        ip_to_host_name = { host_info.ip : host_info.name for host_info in host_infos_by_ip}
+
+        sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
+        search_slug_sessions = defaultdict(list)
+        column_slug_sessions = defaultdict(list)
+
+        def sort_order(dict_item):
+            name, value = dict_item
+            return -len(value), name
+
+        for session in sessions:
+            search_slugs, column_slugs = session.session_info.get_slug_info()
+            for search_slug, _ in search_slugs:
+                search_slug_sessions[search_slug].append(session)
+            for column_slug, _ in column_slugs:
+                column_slug_sessions[column_slug].append(session)
+            ordered_search_slugs = sorted(search_slug_sessions.items(), key=sort_order)
+            ordered_column_slugs = sorted(column_slug_sessions.items(), key=sort_order)
+
+        for result in self._template.generate(host_infos_by_ip=host_infos_by_ip,
+                                              host_infos_by_date=host_infos_by_date,
+                                              ip_to_host_name=ip_to_host_name,
+                                              sessions=sessions,
+                                              ordered_search_slugs=ordered_search_slugs,
+                                              ordered_column_slugs=ordered_column_slugs,
+                                              **self._configuration.additional_template_info()):
             self._output.write(result)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
@@ -274,6 +308,7 @@ class LogParser:
             return f'{name} ({ip})'
         else:
             return f'{ip}'
+
 
 
 
