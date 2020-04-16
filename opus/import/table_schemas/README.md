@@ -65,6 +65,13 @@ included:
                         ':', then the number of the array element.
       'FUNCTION'         in which case the data is the name of the function
                          to execute. <INST> and <MISSION> are substituted.
+      'MAX_ID'           in which case the data is ignored. The value used
+                         is the largest id used for that table so far + 1.
+    These can also be combined like 'TAB:<TABLE_NAME>||FUNCTION' in which case
+    data_source has three elements; the second is the table specifier and the
+    last is the function. If the first table is not found at all, then the
+    function is tried instead.
+
 
 Optional fields include:
 

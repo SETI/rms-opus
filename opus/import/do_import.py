@@ -610,8 +610,8 @@ def import_one_volume(volume_id):
             continue
         found_in_this_dir = False
         basenames = os.listdir(path)
-        print(path, basenames)
         volume_label_path = None
+        vol_prefix = ''
 
         # First look for higher-priority versions of the index file.
         # If these exist, then there's only one of them.
@@ -623,6 +623,8 @@ def import_one_volume(volume_id):
             if (basename.upper().endswith('_RAW_IMAGE_INDEX.LBL') and
                 basename.find('999') == -1):
                 volume_label_path = os.path.join(path, basename)
+                vol_prefix = basename.replace('_raw_image_index.lbl', '')
+                vol_prefix = vol_prefix.replace('_RAW_IMAGE_INDEX.LBL', '')
                 impglobals.LOGGER.log('debug',
                     f'Using RAW_IMAGE_INDEX metadata version of main index: '+
                     f'{volume_label_path}')
@@ -631,28 +633,29 @@ def import_one_volume(volume_id):
         if volume_label_path is None:
             # COCIRS - give preference to OBSINDEX over INDEX
             for basename in basenames:
-                if basename.upper().endswith('OBSINDEX.LBL'):
+                if basename.upper() == 'OBSINDEX.LBL':
                     volume_label_path = os.path.join(path, basename)
                     impglobals.LOGGER.log('debug',
                         f'Using OBSINDEX version of main index: '+
                         f'{volume_label_path}')
                     break
 
-        if volume_label_path is None:
-            # GOSSI - give preference to IMGINDEX over INDEX
-            for basename in basenames:
-                if (volume_label_path is None and
-                    basename.upper().endswith('IMGINDEX.LBL')):
-                    volume_label_path = os.path.join(path, basename)
-                    impglobals.LOGGER.log('debug',
-                        f'Using IMGINDEX version of main index: '+
-                        f'{volume_label_path}')
-                    break
+        # if volume_label_path is None:
+        #     # GOSSI - give preference to IMGINDEX over INDEX
+        #     for basename in basenames:
+        #         if (volume_label_path is None and
+        #             basename.upper().endswith('IMGINDEX.LBL')):
+        #             volume_label_path = os.path.join(path, basename)
+        #             impglobals.LOGGER.log('debug',
+        #                 f'Using IMGINDEX version of main index: '+
+        #                 f'{volume_label_path}')
+        #             break
 
         if volume_label_path is not None:
             # Found that one and only label
             ret = import_one_index(volume_id,
                                    volume_pdsfile,
+                                   vol_prefix,
                                    metadata_paths,
                                    volume_label_path)
             impglobals.LOGGER.close()
@@ -675,8 +678,11 @@ def import_one_volume(volume_id):
                     impglobals.LOGGER.log('debug',
                         f'Using index: {volume_label_path}')
                     found_in_this_dir = True
+                    vol_prefix = basename.replace(index_name, '')
+                    vol_prefix = vol_prefix.replace(index_name.lower(), '')
                     ret = ret and import_one_index(volume_id,
                                                    volume_pdsfile,
+                                                   vol_prefix,
                                                    metadata_paths,
                                                    volume_label_path)
 
@@ -694,7 +700,7 @@ def import_one_volume(volume_id):
     return False
 
 
-def import_one_index(volume_id, volume_pdsfile, metadata_paths,
+def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
@@ -743,6 +749,8 @@ def import_one_index(volume_id, volume_pdsfile, metadata_paths,
             for basename in basenames:
                 if basename.find('999') != -1:
                     # These are cumulative geo files
+                    continue
+                if vol_prefix != '' and not basename.startswith(vol_prefix):
                     continue
                 if (not basename.upper().endswith('SUMMARY.LBL') and
                     not basename.upper().endswith('SUPPLEMENTAL_INDEX.LBL') and
@@ -890,9 +898,9 @@ def import_one_index(volume_id, volume_pdsfile, metadata_paths,
                                 break
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
-                    elif instrument_name == 'VGISS':
-                        # The VGISS supplemental index is keyed by
-                        # FILE_SPECIFICATION_NAME
+                    elif instrument_name == 'VGISS' or mission_abbrev == 'EB':
+                        # The VGISS and Earth-based supplemental indexes are
+                        # keyed by FILE_SPECIFICATION_NAME
                         # (DATA/C13854XX/C1385455_RAW.LBL)
                         # that maps to the FILE_SPECIFICATION_NAME field in the
                         # main index.
@@ -1010,7 +1018,8 @@ def import_one_index(volume_id, volume_pdsfile, metadata_paths,
                     f'File "{couvis_filename}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
-        elif 'supp_index' in metadata and instrument_name == 'VGISS':
+        elif ('supp_index' in metadata and
+              (instrument_name == 'VGISS' or mission_abbrev == 'EB')):
             # Match up the FILENAME
             filename = index_row['FILE_SPECIFICATION_NAME']
             supp_index = metadata['supp_index']
@@ -1295,11 +1304,18 @@ def import_observation_table(volume_id,
 
             ### COMPUTE THE NEW COLUMN VALUE ###
 
+            processed = False
             column_val = None
             mult_label = None
             mult_label_set = False
 
-            data_source_cmd, data_source_val = data_source_tuple
+            data_source_cmd = data_source_tuple[0]
+            data_source_first = data_source_tuple[1]
+            data_source_last = data_source_tuple[-1] # Same as first if only 2
+            force_function = False
+            if data_source_cmd.endswith('||FUNCTION'):
+                data_source_cmd = data_source_cmd.replace('||FUNCTION', '')
+                force_function = True
             if data_source_cmd.find(':') != -1:
                 (data_source_cmd_prefix,
                  data_source_cmd_param) = data_source_cmd.split(':')
@@ -1308,11 +1324,14 @@ def import_observation_table(volume_id,
                 data_source_cmd_param = None
 
             if data_source_cmd_prefix == 'IGNORE':
+                processed = True
                 continue
-            elif data_source_cmd_prefix == 'TAB':
+            elif data_source_cmd_prefix.startswith('TAB'):
+                processed = True
                 ref_index_row = None
                 if data_source_cmd_param+'_row' not in metadata:
-                    if data_source_cmd_param != 'ring_geo':
+                    if (not force_function and
+                        data_source_cmd_param != 'ring_geo'):
                         # If we don't have ring_geo for this volume, don't
                         # bitch about it because we already did earlier.
                         import_util.log_nonrepeating_error(
@@ -1323,20 +1342,23 @@ def import_observation_table(volume_id,
                 else:
                     ref_index_row = metadata[data_source_cmd_param+'_row']
                 if ref_index_row is not None:
-                    if data_source_val not in ref_index_row:
+                    if data_source_first not in ref_index_row:
                         import_util.log_nonrepeating_error(
-                            f'Unknown referenced column "{data_source_val}" '+
+                            f'Unknown referenced column "{data_source_first}" '+
                             f'while processing column "{field_name}" in '+
                             f'table "{table_name}"')
                         continue
                     column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_val)
-            elif data_source_cmd_prefix == 'ARRAY':
+                                                         data_source_first)
+                    force_function = False
+            elif data_source_cmd_prefix.startswith('ARRAY'):
+                processed = True
                 ref_index_name, array_index = data_source_cmd_param.split('.')
                 array_index = int(array_index)
                 ref_index_row = None
                 if ref_index_name+'_row' not in metadata:
-                    if data_source_cmd_param != 'ring_geo':
+                    if (not force_function and
+                        data_source_cmd_param != 'ring_geo'):
                         # If we don't have ring_geo for this volume, don't
                         # bitch about it because we already did earlier.
                         import_util.log_nonrepeating_error(
@@ -1346,23 +1368,26 @@ def import_observation_table(volume_id,
                         continue
                 else:
                     ref_index_row = metadata[ref_index_name+'_row']
-                if data_source_val not in ref_index_row:
-                    import_util.log_nonrepeating_error(
-                        f'Unknown PDS column "{data_source_val}" while '+
-                        f'processing table "{table_name}"')
-                    continue
-                if (array_index < 0 or
-                    array_index >= len(ref_index_row[data_source_val])):
-                    import_util.log_nonrepeating_error(
-                        f'Bad array index "{array_index}" for column '+
-                        f'"{field_name}" in table "{table_name}"')
-                    continue
-                column_val = import_util.safe_column(ref_index_row,
-                                                     data_source_val,
-                                                     array_index)
+                if ref_index_row is not None:
+                    if data_source_first not in ref_index_row:
+                        import_util.log_nonrepeating_error(
+                            f'Unknown PDS column "{data_source_first}" while '+
+                            f'processing table "{table_name}"')
+                        continue
+                    if (array_index < 0 or
+                        array_index >= len(ref_index_row[data_source_first])):
+                        import_util.log_nonrepeating_error(
+                            f'Bad array index "{array_index}" for column '+
+                            f'"{field_name}" in table "{table_name}"')
+                        continue
+                    column_val = import_util.safe_column(ref_index_row,
+                                                         data_source_first,
+                                                         array_index)
+                    force_function = False
 
-            elif data_source_cmd_prefix == 'FUNCTION':
-                ret = import_run_field_function(data_source_val,
+            if data_source_cmd_prefix == 'FUNCTION' or force_function:
+                processed = True
+                ret = import_run_field_function(data_source_last,
                                                 volume_id,
                                                 instrument_name,
                                                 func_instrument_name,
@@ -1377,7 +1402,9 @@ def import_observation_table(volume_id,
                     mult_label_set = True
                 else:
                     column_val = ret
-            elif data_source_cmd_prefix == 'MAX_ID':
+
+            if data_source_cmd_prefix == 'MAX_ID':
+                processed = True
                 if table_name not in impglobals.MAX_TABLE_ID_CACHE:
                     impglobals.MAX_TABLE_ID_CACHE[table_name] = (
                         import_util.find_max_table_id(table_name))
@@ -1385,7 +1412,7 @@ def import_observation_table(volume_id,
                     impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
                 column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
 
-            else:
+            if not processed:
                 import_util.log_nonrepeating_error(
                     f'Unknown data_source type "{data_source_cmd}" for'+
                     f'"{field_name}" in table "{table_name}"')
@@ -1550,14 +1577,20 @@ def import_run_field_function(func_name_suffix, volume_id,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
+    not_exists_is_ok = False
+    if func_name_suffix[0] == '~':
+        not_exists_is_ok = True
+        func_name_suffix = func_name_suffix[1:]
+
     func_name = 'populate_'+func_name_suffix
     func_name = func_name.replace('<INST>', func_instrument_name)
     func_name = func_name.replace('<MISSION>', mission_abbrev)
     func_name = func_name.replace('<TYPE>', volume_type)
     if func_name not in globals():
-        import_util.log_nonrepeating_error(
-            f'Unknown table populate function "{func_name}" for '+
-            f'"{field_name}" in table "{table_name}"')
+        if not not_exists_is_ok:
+            import_util.log_nonrepeating_error(
+                f'Unknown table populate function "{func_name}" for '+
+                f'"{field_name}" in table "{table_name}"')
         return None
     func = globals()[func_name]
     return func(volume_id=volume_id, instrument_name=instrument_name,

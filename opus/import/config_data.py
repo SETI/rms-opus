@@ -28,14 +28,15 @@ MULT_TABLES_WITH_TARGET_GROUPING = ['mult_obs_general_target_name',
                                    'mult_obs_surface_geometry_name_target_name']
 
 # These instruments have ring geo available (maybe)
+# This is only used to give a warning if the ring geo isn't available
 INSTRUMENTS_WITH_RING_GEO = ['COISS',
                              'COUVIS',
                              'COVIMS',
-                             'EB',
                              'NHLORRI',
                              'VGISS']
 
 # These instruments have surface geo available (maybe)
+# This is only used to give a warning if the surface geo isn't available
 INSTRUMENTS_WITH_SURFACE_GEO = ['COISS',
                                 'COUVIS',
                                 'COVIMS',

@@ -52,6 +52,7 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('HSTUx_xxxx')
                     volume_descs.append('NHxxLO_xxxx')
                     volume_descs.append('NHxxMV_xxxx')
+                    volume_descs.append('EBROCC_xxxx')
                 elif desc.upper() == 'ALLBUTNH':
                     # This is useful because NH has duplicate opus_id that require
                     # checking while the others don't.
@@ -71,6 +72,7 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('HSTNx_xxxx')
                     volume_descs.append('HSTOx_xxxx')
                     volume_descs.append('HSTUx_xxxx')
+                    volume_descs.append('EBROCC_xxxx')
                 elif desc.upper() == 'CASSINI':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
@@ -108,6 +110,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('NHxxLO_xxxx')
                 elif desc.upper() == 'NHMVIC':
                     volume_descs.append('NHxxMV_xxxx')
+                elif desc.upper() == 'EBROCC':
+                    volume_descs.append('EBROCC_xxxx')
                 else:
                     volume_descs.append(desc)
         # First make sure everything is valid

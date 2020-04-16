@@ -57,8 +57,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_RADIUS"
+            "TAB:ring_geo||FUNCTION",
+            "MINIMUM_RING_RADIUS",
+            "~obs_ring_geometry_<INST>_ring_radius1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e32,
@@ -93,8 +94,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_RADIUS"
+            "TAB:ring_geo||FUNCTION",
+            "MAXIMUM_RING_RADIUS",
+            "~obs_ring_geometry_<INST>_ring_radius2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e32,
@@ -123,8 +125,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "FINEST_RING_INTERCEPT_RESOLUTION"
+            "TAB:ring_geo||FUNCTION",
+            "FINEST_RING_INTERCEPT_RESOLUTION",
+            "~obs_ring_geometry_<INST>_resolution1_<TYPE>"
         ],
         "val_min": 0,
         "val_sentinel": -999,
@@ -155,8 +158,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "COARSEST_RING_INTERCEPT_RESOLUTION"
+            "TAB:ring_geo||FUNCTION",
+            "COARSEST_RING_INTERCEPT_RESOLUTION",
+            "~obs_ring_geometry_<INST>_resolution2_<TYPE>"
         ],
         "val_min": 0,
         "val_sentinel": -999,
@@ -184,8 +188,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "FINEST_RADIAL_RESOLUTION"
+            "TAB:ring_geo||FUNCTION",
+            "FINEST_RADIAL_RESOLUTION",
+            "~obs_ring_geometry_<INST>_proj_resolution1_<TYPE>"
         ],
         "val_min": 0,
         "val_sentinel": -999,
@@ -216,8 +221,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "COARSEST_RADIAL_RESOLUTION"
+            "TAB:ring_geo||FUNCTION",
+            "COARSEST_RADIAL_RESOLUTION",
+            "~obs_ring_geometry_<INST>_proj_resolution2_<TYPE>"
         ],
         "val_min": 0,
         "val_sentinel": -999,
@@ -876,8 +882,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_PHASE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "MINIMUM_RING_PHASE_ANGLE",
+            "~obs_ring_geometry_<INST>_phase1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -909,8 +916,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_PHASE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "MAXIMUM_RING_PHASE_ANGLE",
+            "~obs_ring_geometry_<INST>_phase2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -939,8 +947,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_INCIDENCE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "MINIMUM_RING_INCIDENCE_ANGLE",
+            "~obs_ring_geometry_<INST>_incidence1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 90,
@@ -972,8 +981,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_INCIDENCE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "MAXIMUM_RING_INCIDENCE_ANGLE",
+            "~obs_ring_geometry_<INST>_incidence2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 90,
@@ -1191,8 +1201,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_PHASE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "RING_CENTER_PHASE_ANGLE",
+            "~obs_ring_geometry_<INST>_center_phase_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -1221,8 +1232,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_INCIDENCE_ANGLE"
+            "TAB:ring_geo||FUNCTION",
+            "RING_CENTER_INCIDENCE_ANGLE",
+            "~obs_ring_geometry_<INST>_center_incidence_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 90,

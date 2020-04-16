@@ -317,7 +317,7 @@
     },
     {
         "field_name": "host",
-        "field_type": "char40",
+        "field_type": "char100",
         "field_default": null,
         "field_key": true,
         "data_source": [

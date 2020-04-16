@@ -201,9 +201,6 @@ def populate_obs_type_image_EB_greater_pixel_size_OCC(**kwargs):
 
 ### OBS_WAVELENGTH TABLE ###
 
-# For EB, effective wavelengths are taken from the published table.
-# Other wavelengths are taken by eyeballing the filter graphs.
-
 def populate_obs_wavelength_EB_wavelength1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
@@ -254,7 +251,7 @@ def populate_obs_wavelength_EB_polarization_type_OCC(**kwargs):
     return 'NONE'
 
 
-### populate_obs_occultation TABLE ###
+### OBS_OCCULTATION TABLE ###
 
 def populate_obs_occultation_EB_occ_type_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -282,7 +279,11 @@ def populate_obs_occultation_EB_occ_dir_OCC(**kwargs):
     return None
 
 def populate_obs_occultation_EB_body_occ_flag_OCC(**kwargs):
-    return None # XXX FROM LABEL
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    body_occ_flag = supp_index_row['PLANETARY_OCCULTATION_FLAG']
+
+    return body_occ_flag
 
 def populate_obs_occultation_EB_optical_depth_min_OCC(**kwargs):
     return None # Not available
@@ -315,7 +316,86 @@ def populate_obs_occultation_EB_source_OCC(**kwargs):
     return star_name
 
 def populate_obs_occultation_EB_host_OCC(**kwargs):
-    return None # XXX FROM LABEL
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_label']
+    insthost = supp_index_row['INSTRUMENT_HOST_NAME']
+
+    return insthost
+
+
+### OBS_RING_GEOMETRY TABLE ###
+
+def populate_obs_ring_geometry_EB_ring_radius1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    radius1 = import_util.safe_column(supp_index_row, 'MINIMUM_RING_RADIUS')
+
+    return radius1
+
+def populate_obs_ring_geometry_EB_ring_radius2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    radius2 = import_util.safe_column(supp_index_row, 'MAXIMUM_RING_RADIUS')
+
+    return radius2
+
+def populate_obs_ring_geometry_EB_resolution1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
+
+    return res
+
+def populate_obs_ring_geometry_EB_resolution2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
+
+    return res
+
+def populate_obs_ring_geometry_EB_proj_resolution1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
+
+    return res
+
+def populate_obs_ring_geometry_EB_proj_resolution2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
+
+    return res
+
+def populate_obs_ring_geometry_EB_phase1_OCC(**kwargs):
+    return 180.
+
+def populate_obs_ring_geometry_EB_phase2_OCC(**kwargs):
+    return 180.
+
+def populate_obs_ring_geometry_EB_incidence1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+
+    return inc
+
+def populate_obs_ring_geometry_EB_incidence2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+
+    return inc
+
+def populate_obs_ring_geometry_EB_center_phase_OCC(**kwargs):
+    return 180.
+
+def populate_obs_ring_geometry_EB_center_incidence_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    supp_index_row = metadata['supp_index_row']
+    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+
+    return inc
 
 
 ################################################################################
