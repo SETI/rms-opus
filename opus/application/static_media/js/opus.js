@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
+/* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_sortMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
 /* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
 
 // defining the opus namespace first; document ready comes after...
@@ -119,8 +119,8 @@ var opus = {
         "opera": 42,
         "safari": 10.1,
         "based on applewebkit": 537, // Based on Chrome 56
-        "width": 600,
-        "height": 350
+        "width": 550,
+        "height": 270
     },
 
     // current splash page version for storing in the visited cookie
@@ -133,6 +133,11 @@ var opus = {
 
     // Max number of input sets per (RANGE or STRING) widget
     maxAllowedInputSets: 10,
+
+    // The browser threshold width & height that font & thumbnail size start to shirnk.
+    // NTOE: These two variables have to match the breakpoints in mobile support section in opus.css.
+    browserThresholdWidth: 700,
+    browserThresholdHeight: 400,
 
     //------------------------------------------------------------------------------------
     // Debugging support
@@ -364,7 +369,7 @@ var opus = {
 
         // If there are more result counts in the queue, don't trigger
         // spurious hinting queries that we won't use anyway
-        if (resultCountData.data[0].reqno < opus.lastAllNormalizeRequestNo) {
+        if (resultCountData.data[0].reqno < opus.lastResultCountRequestNo) {
             return;
         }
 
@@ -467,7 +472,7 @@ var opus = {
 
         // First hide everything
         $("#search, #detail, #cart, #browse").hide();
-        o_browse.hideMenu();
+        o_browse.hideMenus();
 
         // Close any open modals
         $("#galleryView").modal('hide');
@@ -709,6 +714,7 @@ var opus = {
         o_browse.addBrowseBehaviors();
         o_cart.addCartBehaviors();
         o_search.addSearchBehaviors();
+        o_sortMetadata.addBehaviours();
     },
 
     addOpusBehaviors: function() {
@@ -718,7 +724,6 @@ var opus = {
 
         // When the browser is resized, we need to recalculate the scrollbars
         // for all tabs.
-        let searchHeightChangedDB = _.debounce(o_search.searchHeightChanged, 200);
         let adjustBrowseHeightDB = function() {o_browse.adjustBrowseHeight(true);};
         let adjustTableSizeDB = _.debounce(o_browse.adjustTableSize, 200);
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
@@ -730,7 +735,7 @@ var opus = {
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
-            searchHeightChangedDB();
+            o_search.searchHeightChanged();
             adjustBrowseHeightDB();
             adjustTableSizeDB();
             adjustProductInfoHeightDB();
@@ -859,6 +864,13 @@ var opus = {
                         case "op-reset-opus-modal":
                             location.assign("/opus");
                             break;
+                        case "op-overwrite-sort-order":
+                            // this case handles the replace sort
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"), false);
+                            break;
+                        case "op-reset-sort-order":
+                            o_sortMetadata.resetSortOrder();
+                            break;
                         case "op-empty-cart-modal":
                             o_cart.emptyCartOrRecycleBin("cart");
                             break;
@@ -890,6 +902,10 @@ var opus = {
                             break;
                         case "op-close-metadata-modal":
                             o_selectMetadata.discardChanges();
+                            break;
+                        case "op-overwrite-sort-order":
+                            // this case handles the append to sort
+                            o_sortMetadata.onClickSortOrder($(`#${target}`).data("slug"));
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -1294,9 +1310,10 @@ var opus = {
         if ($(window).width() < opus.browserSupport.width ||
             $(window).height() < opus.browserSupport.height) {
             if (!$("#op-browser-size-msg-modal").hasClass("show")) {
-                let modalMsg = (`Please resize your browser. OPUS requires a browser
-                                size of at least ${opus.browserSupport.width} pixels by
-                                ${opus.browserSupport.height} pixels.`);
+                let modalMsg = (`Please resize your browser or rotate your mobile
+                                device to landscape mode. OPUS requires a browser
+                                size of at least ${opus.browserSupport.width} pixels
+                                by ${opus.browserSupport.height} pixels.`);
                 $("#op-browser-size-msg-modal .modal-body").html(modalMsg);
                 opus.browserSizeActionInProgress = true;
                 modal.on("shown.bs.modal", showCompleted);

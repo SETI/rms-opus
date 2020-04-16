@@ -114,10 +114,10 @@
                             </ul>
                         </div>
                         <div class="op-sort-order-container">
-                            <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
-                                <i class="fas fa-random"></i>
-                            </span>&nbsp;
-                            <ul class="sort-contents list-inline"></ul>
+                            <span class="op-sort-order-icon">
+                                <i class="fas fa-random"></i>&nbspSort by&nbsp
+                            </span>
+                            <div class="op-sort-contents"></div>
                         </div>
                     </nav>
                     <div class="panel-body gallery-contents container-fluid">
@@ -158,7 +158,7 @@
                     <div class="col cart_details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
                     </div>
-                    <div class="col pl-0 cart-gallery-side">
+                    <div class="col pl-0 op-cart-gallery-side">
                         <nav class="panel-heading navbar navbar-expand-lg navbar-dark bg-dark">
                             <div class="browse-nav-container">
                                 <div class="op-cart-nav-container">
@@ -182,29 +182,31 @@
                             </div>
                             <div class="op-sort-order-container">
                                 <span class="op-sort-order-icon" title="Results are sorted by these metadata fields">
-                                    <i class="fas fa-random"></i>
-                                </span>&nbsp;
-                                <ul class="sort-contents list-inline"></ul>
+                                    <i class="fas fa-random"></i>&nbspSort by&nbsp
+                                </span>
+                                <div class="op-sort-contents"></div>
                             </div>
-                            <div class="op-cart-actions">
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
-                                        &nbsp;Empty Cart</a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
-                                        &nbsp;Empty Recycle Bin</a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
-                                        &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
-                                </li>
-                            </div>
-                            <div class="op-cart-toggle-download-panel">
-                                <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
-                                   <i class="fas fa-arrow-left"></i>
-                                   <span>&nbsp;Download Data</span>
-                               </button>
+                            <div class="op-cart-actions-group">
+                                <div class="op-cart-actions">
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-cart-modal" title="Remove all observations from the cart"><i class="fas fa-trash-alt"></i>
+                                            &nbsp;Empty Cart</a>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info mr-3" data-toggle="modal" data-target="#op-empty-recycle-bin-modal" title="Remove all observations from the recycle bin"><i class="fas fa-recycle"></i>
+                                            &nbsp;Empty Recycle Bin</a>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <a href="#" class="text-info" data-toggle="modal" data-target="#op-restore-recycle-bin-modal" title="Restore all observations from the recycle bin to the cart"><i class="fas fa-undo"></i>
+                                            &nbsp;Restore Recycle Bin to Cart&nbsp;<span id="op-recycled-count" class="badge badge-primary">0</span></a>
+                                    </li>
+                                </div>
+                                <div class="op-cart-toggle-download-panel">
+                                    <button type="button" class="op-cart-slide-download-panel btn btn-secondary btn-sm nav-link text-dark font-weight-bold p-1" title="Slide over download data panel">
+                                       <i class="fas fa-arrow-left"></i>
+                                       <span>&nbsp;Download Data</span>
+                                   </button>
+                                </div>
                             </div>
                         </nav>
                         <div class="panel-body gallery-contents flex-container">
@@ -241,7 +243,7 @@
                     </div>
                 </div>
                 <div id="op-cart-download-panel" class="card">
-                    <div class="card-header align-items-center h-auto pb-0 bg-secondary">
+                    <div class="card-header align-items-center h-auto bg-secondary">
                         <h3 class="op-header-text"></h3>
                         <a class="close" aria-label="Close"><i class="far fa-times-circle fa-lg"></i></a>
                      </div>
@@ -276,6 +278,12 @@
             <a class="dropdown-item" data-action="downloadCSVAll" href="#" download><i class="fas fa-file-csv"></i>Download CSV of all metadata&nbsp;</a>
             <a class="dropdown-item" data-action="downloadData" href="#" download><i class="fas fa-download"></i>Download zipped data archive&nbsp;</a>
             <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
+        </div>
+
+        <!-- dropdown menu for sort metadata columns -->
+        <div id="op-add-sort-metadata" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add Metadata Field to Sort</h2>
+            <div class="op-sort-list"></div>
         </div>
 
         <!--sliding panel for the help menu items -->
@@ -366,6 +374,28 @@
             confirm_title="Confirm Reset OPUS"
             confirm_msg="Are you sure you want to reset OPUS to its default state? This will erase any search parameters, open search fields, selected metadata, and other customization you may have done, but will leave items in your cart."
             target="op-reset-opus-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-overwrite-sort-order"
+            confirm_title="Confirm Overwrite of Metadata Fields Sort Order"
+            confirm_msg="Select \"Overwrite\" to update your metadata fields sort order to the selected metadata field + OPUS ID or \"Append\" to append to your current sort criteria."
+            target="op-overwrite-sort-order"
+            yes_text="Overwrite"
+            no_text="Append"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-reset-sort-order"
+            confirm_title="Confirm Reset of Metadata Fields Sort Order"
+            confirm_msg="Are you sure you want to reset the sort order to its default?"
+            target="op-reset-sort-order"
             yes_text="Yes"
             no_text="No"
             allow_close=True
@@ -587,6 +617,7 @@
     <script src="{{ STATIC_URL }}js/search.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/widgets.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/selectMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}js/sortMetadata.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/hash.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/dictionary.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}js/mutationObserver.js{{ VERSION_SUFFIX }}" type="text/javascript"></script>

@@ -417,13 +417,19 @@ var o_cart = {
     adjustProductInfoHeight: function() {
         let containerHeight = o_browse.calculateGalleryHeight();
         let footerHeight = $(".app-footer").outerHeight();
-        let mainNavHeight = $("#op-main-nav").outerHeight();
+        let mainNavHeight = $(".op-reset-opus").outerHeight() +
+                            $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
         let downloadOptionsHeight = $(window).height() - (footerHeight + mainNavHeight);
         let cardHeaderHeight = $("#op-cart-download-panel .card-header").outerHeight();
         let downloadOptionsHeaderHeight = $(".op-download-options-header").outerHeight();
         let productTypesTableHeader = $(".op-product-type-table-header").outerHeight();
+        let downloadContainerTopPadding = 0;
+        if ( $("#cart-sidebar").length && $("#op-download-options-container").length) {
+            downloadContainerTopPadding = $("#cart-sidebar").offset().top -
+                                          $("#op-download-options-container").offset().top;
+        }
         let downloadOptionsScrollableHeight = (downloadOptionsHeight - downloadOptionsHeaderHeight -
-                                          footerHeight - productTypesTableHeader);
+                                               productTypesTableHeader - downloadContainerTopPadding);
 
         $("#cart .gallery-contents").height(containerHeight);
         if ($(window).width() < cartLeftPaneThreshold) {
@@ -433,7 +439,6 @@ var o_cart = {
         }
 
         $("#cart .sidebar_wrapper").height(downloadOptionsHeight);
-        // $(".op-download-options-product-types").height(downloadOptionsScrollableHeight);
         $(".op-product-type-table-body").height(downloadOptionsScrollableHeight);
 
         if (o_cart.downloadOptionsScrollbar) {
