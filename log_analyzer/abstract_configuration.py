@@ -1,7 +1,7 @@
 import abc
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, Sequence
 
 from markupsafe import Markup
 
@@ -19,16 +19,14 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def additional_template_info(self) -> Dict[str, Any]:
-        """
-        Returns configuration-specific information that must be passed to the Jinja template.
-        """
-        raise Exception()
-
-    @abc.abstractmethod
     def show_summary(self, sessions: List[Any], output: TextIO) -> None:
         """Implements the --summary operation, whatever that happens to mean for this configuration"""
         raise Exception()
+
+    @abc.abstractmethod
+    def get_action_flags(self) -> Sequence[Flag]:
+        raise Exception()
+
 
 
 class AbstractSessionInfo(metaclass=abc.ABCMeta):
@@ -38,6 +36,10 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_session_flags(self) -> Flag:
+        raise Exception()
+
+    @abc.abstractmethod
+    def get_slug_names(self) -> Sequence[List[str]]:
         raise Exception()
 
     @staticmethod

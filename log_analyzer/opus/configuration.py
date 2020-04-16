@@ -3,7 +3,7 @@ import re
 import textwrap
 import urllib.parse
 from enum import auto, Flag
-from typing import List, Dict, Optional, Match, Any, Iterable, Tuple, TextIO, cast
+from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence
 
 from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
 from log_entry import LogEntry
@@ -29,6 +29,7 @@ class Configuration(AbstractConfiguration):
     _default_column_slug_info: ColumnSlugInfo
     _api_host_url: str
     _debug_show_all: bool
+    _flag_name_to_flag: Dict[str, ActionFlags]
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
@@ -37,24 +38,30 @@ class Configuration(AbstractConfiguration):
         self._default_column_slug_info = QueryHandler.get_column_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
         self._api_host_url = api_host_url
         self._debug_show_all = debug_show_all
+        self._flag_name_to_flag = {x.name: x for x in ActionFlags}
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
         return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html)
 
-    def additional_template_info(self) -> Dict[str, Any]:
+    @property
+    def api_host_url(self) -> str:
+        return self._api_host_url
+
+    def get_action_flags(self) -> Sequence[Flag]:
         # noinspection PyTypeChecker
         action_flag_list = list(ActionFlags)
-        return {
-            'api_host_url': self._api_host_url,
-            'action_name_to_flag': {x.name: x for x in ActionFlags},
-        }
+        return action_flag_list
+
+    def flag_name_to_flag(self, name: str) -> Flag:
+        return self._flag_name_to_flag[name]
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
         all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
         for session in sessions:
             session_info = cast(SessionInfo, session.session_info)
-            for info_type, slug_and_flags in session_info.get_slug_info():
+            search_slug_info, column_slug_info = session_info.get_slug_info()
+            for info_type, slug_and_flags in (("search", search_slug_info), ("column", column_slug_info)):
                 for slug, is_obsolete in slug_and_flags:
                     all_info[info_type][slug] = is_obsolete
 
@@ -122,7 +129,7 @@ class SessionInfo(AbstractSessionInfo):
     def fetched_gallery(self) -> None:
         self._action_flags |= ActionFlags.FETCHED_GALLERY
 
-    def get_slug_info(self) -> Iterable[List[Tuple[str, bool]]]:
+    def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
             return [(slug, info[slug].flags.is_obsolete())
                     for slug in sorted(info, key=str.lower)
@@ -141,6 +148,11 @@ class SessionInfo(AbstractSessionInfo):
         search_slug_list = fixit(session_search_slugs)
         column_slug_list = fixit(self._session_column_slugs)
         return search_slug_list, column_slug_list
+
+    def get_slug_names(self) -> Sequence[List[str]]:
+        def get_names(slug_dict: Dict[str, slug.Info]) -> List[str]:
+            return list({value.family.label for value in slug_dict.values()})
+        return get_names(self._session_search_slugs), get_names(self._session_column_slugs)
 
     def get_session_flags(self) -> ActionFlags:
         return self._action_flags

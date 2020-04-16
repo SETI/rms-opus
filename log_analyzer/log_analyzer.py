@@ -102,4 +102,10 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
 
 if __name__ == '__main__':
-    main()
+    import glob
+    files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/logs-2020-02/*2020-02-2*")
+    args = ["--output", "/Users/fy/www/save.html",
+            "--batch", "--html",
+            "--xxlocal", "--dns",
+            *files]
+    main(args)
