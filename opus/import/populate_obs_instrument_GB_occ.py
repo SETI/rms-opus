@@ -1,7 +1,7 @@
 ################################################################################
-# populate_obs_instrument_EB.py
+# populate_obs_instrument_GB_occ.py
 #
-# Routines to populate fields specific to Earth-based instruments.
+# Routines to populate fields specific to ground-based instruments.
 ################################################################################
 
 import numpy as np
@@ -12,7 +12,8 @@ import pdsfile
 from config_data import *
 import import_util
 
-from populate_obs_mission_earthbased_occ import *
+from populate_obs_mission_groundbased_occ import *
+from populate_util import *
 
 
 ################################################################################
@@ -21,7 +22,7 @@ from populate_obs_mission_earthbased_occ import *
 
 ### OBS_GENERAL TABLE ###
 
-def _EB_file_spec_helper(**kwargs):
+def _GB_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata.get('index_row', None)
     if index_row is None:
@@ -31,8 +32,8 @@ def _EB_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + file_spec
 
-def populate_obs_general_EB_opus_id_OCC(**kwargs):
-    file_spec = _EB_file_spec_helper(**kwargs)
+def populate_obs_general_GB_opus_id_OCC(**kwargs):
+    file_spec = _GB_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
         opus_id = pds_file.opus_id
@@ -46,115 +47,52 @@ def populate_obs_general_EB_opus_id_OCC(**kwargs):
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_EB_ring_obs_id_OCC(**kwargs):
+def populate_obs_general_GB_ring_obs_id_OCC(**kwargs):
     return None
 
-def populate_obs_general_EB_inst_host_id_OCC(**kwargs):
-    return 'EB'
+def populate_obs_general_GB_inst_host_id_OCC(**kwargs):
+    return 'GB'
 
-def populate_obs_general_EB_data_type_OCC(**kwargs):
+def populate_obs_general_GB_data_type_OCC(**kwargs):
     return 'OCC'
 
-def populate_obs_general_EB_time1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+def populate_obs_general_GB_time1_OCC(**kwargs):
+    return populate_time1_from_index(**kwargs)
 
-    if start_time is None or start_time == 'UNK':
-        return None
+def populate_obs_general_GB_time2_OCC(**kwargs):
+    return populate_time2_from_index(**kwargs)
 
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
-
-def populate_obs_general_EB_time2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None or stop_time == 'UNK':
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
-
-def populate_obs_general_EB_target_name_OCC(**kwargs):
+def populate_obs_general_GB_target_name_OCC(**kwargs):
     return helper_earthbased_target_name(**kwargs)
 
-def populate_obs_general_EB_observation_duration_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-    stop_time_sec = general_row['time2']
+def populate_obs_general_GB_observation_duration_OCC(**kwargs):
+    return populate_observation_duration_from_time(**kwargs)
 
-    if start_time_sec is None or stop_time_sec is None:
-        return None
-
-    return stop_time_sec - start_time_sec
-
-def populate_obs_general_EB_quantity_OCC(**kwargs):
+def populate_obs_general_GB_quantity_OCC(**kwargs):
     return 'OPDEPTH'
 
-def populate_obs_general_EB_observation_type_OCC(**kwargs):
+def populate_obs_general_GB_observation_type_OCC(**kwargs):
     return 'OCC'
 
-def populate_obs_pds_EB_note_OCC(**kwargs):
+def populate_obs_pds_GB_note_OCC(**kwargs):
     return None
 
-def populate_obs_general_EB_primary_file_spec_OCC(**kwargs):
-    return _EB_file_spec_helper(**kwargs)
+def populate_obs_general_GB_primary_file_spec_OCC(**kwargs):
+    return _GB_file_spec_helper(**kwargs)
 
-def populate_obs_pds_EB_primary_file_spec_OCC(**kwargs):
-    return _EB_file_spec_helper(**kwargs)
+def populate_obs_pds_GB_primary_file_spec_OCC(**kwargs):
+    return _GB_file_spec_helper(**kwargs)
 
-def populate_obs_pds_EB_product_creation_time_OCC(**kwargs):
-    # For EB the PRODUCT_CREATION_TIME is provided in the volume label file,
-    # not the individual observation rows
-    metadata = kwargs['metadata']
-    index_label = metadata['index_row']
-    pct = index_label['PRODUCT_CREATION_TIME']
+def populate_obs_pds_GB_product_creation_time_OCC(**kwargs):
+    return populate_product_creation_time_from_index(**kwargs)
 
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
+# Format: "ESO1M-SR-APPH-4-OCC-V1.0"
+def populate_obs_pds_GB_data_set_id_OCC(**kwargs):
+    return populate_data_set_id_from_index_label(**kwargs)
 
-    return pct_sec
-
-def populate_obs_pds_EB_data_set_id_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    dsi = index_label['DATA_SET_ID']
-    return dsi
-
-def populate_obs_pds_EB_product_id_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    product_id = index_row['PRODUCT_ID']
-
-    return product_id
+# Format: "ES1_EGRESS"
+def populate_obs_pds_GB_product_id_OCC(**kwargs):
+    return populate_product_id_from_index(**kwargs)
 
 def _ra_dec_helper(**kwargs):
     metadata = kwargs['metadata']
@@ -168,92 +106,92 @@ def _ra_dec_helper(**kwargs):
 
     return STAR_RA_DEC[star_name]
 
-def populate_obs_general_EB_right_asc1_OCC(**kwargs):
+def populate_obs_general_GB_right_asc1_OCC(**kwargs):
     return _ra_dec_helper(**kwargs)[0]
 
-def populate_obs_general_EB_right_asc2_OCC(**kwargs):
+def populate_obs_general_GB_right_asc2_OCC(**kwargs):
     return _ra_dec_helper(**kwargs)[0]
 
-def populate_obs_general_EB_declination1_OCC(**kwargs):
+def populate_obs_general_GB_declination1_OCC(**kwargs):
     return _ra_dec_helper(**kwargs)[1]
 
-def populate_obs_general_EB_declination2_OCC(**kwargs):
+def populate_obs_general_GB_declination2_OCC(**kwargs):
     return _ra_dec_helper(**kwargs)[1]
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_EB_image_type_id_OCC(**kwargs):
+def populate_obs_type_image_GB_image_type_id_OCC(**kwargs):
     return None
 
-def populate_obs_type_image_EB_duration_OCC(**kwargs):
+def populate_obs_type_image_GB_duration_OCC(**kwargs):
     return None
 
-def populate_obs_type_image_EB_levels_OCC(**kwargs):
+def populate_obs_type_image_GB_levels_OCC(**kwargs):
     return None
 
-def populate_obs_type_image_EB_lesser_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_GB_lesser_pixel_size_OCC(**kwargs):
     return None
 
-def populate_obs_type_image_EB_greater_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_GB_greater_pixel_size_OCC(**kwargs):
     return None
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_EB_wavelength1_OCC(**kwargs):
+def populate_obs_wavelength_GB_wavelength1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     wl = index_label['WAVELENGTH'] # microns
 
     return wl
 
-def populate_obs_wavelength_EB_wavelength2_OCC(**kwargs):
+def populate_obs_wavelength_GB_wavelength2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     wl = index_label['WAVELENGTH'] # microns
 
     return wl
 
-def populate_obs_wavelength_EB_wave_res1_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_res1_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_wavelength_EB_wave_res2_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_res2_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_wavelength_EB_wave_no1_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_no1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     wl = index_label['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
-def populate_obs_wavelength_EB_wave_no2_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_no2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     wl = index_label['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
-def populate_obs_wavelength_EB_wave_no_res1_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_no_res1_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_wavelength_EB_wave_no_res2_OCC(**kwargs):
+def populate_obs_wavelength_GB_wave_no_res2_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_wavelength_EB_spec_flag_OCC(**kwargs):
+def populate_obs_wavelength_GB_spec_flag_OCC(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_EB_spec_size_OCC(**kwargs):
+def populate_obs_wavelength_GB_spec_size_OCC(**kwargs):
     return None
 
-def populate_obs_wavelength_EB_polarization_type_OCC(**kwargs):
+def populate_obs_wavelength_GB_polarization_type_OCC(**kwargs):
     return 'NONE'
 
 
 ### OBS_OCCULTATION TABLE ###
 
-def populate_obs_occultation_EB_occ_type_OCC(**kwargs):
+def populate_obs_occultation_GB_occ_type_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     star_name = index_label['STAR_NAME']
@@ -262,7 +200,7 @@ def populate_obs_occultation_EB_occ_type_OCC(**kwargs):
         return 'SOL'
     return 'STE'
 
-def populate_obs_occultation_EB_occ_dir_OCC(**kwargs):
+def populate_obs_occultation_GB_occ_dir_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     occ_dir = index_row['OCCULTATION_DIRECTION']
@@ -278,26 +216,26 @@ def populate_obs_occultation_EB_occ_dir_OCC(**kwargs):
         f'Unknown OCCULTATION_DIRECTIN "{occ_dir}"')
     return None
 
-def populate_obs_occultation_EB_body_occ_flag_OCC(**kwargs):
+def populate_obs_occultation_GB_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     body_occ_flag = supp_index_row['PLANETARY_OCCULTATION_FLAG']
 
     return body_occ_flag
 
-def populate_obs_occultation_EB_optical_depth_min_OCC(**kwargs):
+def populate_obs_occultation_GB_optical_depth_min_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_occultation_EB_optical_depth_max_OCC(**kwargs):
+def populate_obs_occultation_GB_optical_depth_max_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_occultation_EB_temporal_sampling_OCC(**kwargs):
+def populate_obs_occultation_GB_temporal_sampling_OCC(**kwargs):
     return None # Not available
 
-def populate_obs_occultation_EB_quality_score_OCC(**kwargs):
+def populate_obs_occultation_GB_quality_score_OCC(**kwargs):
     return ("UNASSIGNED", "Unassigned")
 
-def populate_obs_occultation_EB_wl_band_OCC(**kwargs):
+def populate_obs_occultation_GB_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     wl = index_label['WAVELENGTH'] # microns
@@ -308,89 +246,89 @@ def populate_obs_occultation_EB_wl_band_OCC(**kwargs):
         return 'VIS'
     return 'UV'
 
-def populate_obs_occultation_EB_source_OCC(**kwargs):
+def populate_obs_occultation_GB_source_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     star_name = index_label['STAR_NAME']
 
     return star_name
 
-def populate_obs_occultation_EB_host_OCC(**kwargs):
+def populate_obs_occultation_GB_host_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_label']
     insthost = supp_index_row['INSTRUMENT_HOST_NAME']
 
-    return insthost
+    return (insthost, insthost)
 
 
 ### OBS_RING_GEOMETRY TABLE ###
 
-def populate_obs_ring_geometry_EB_ring_radius1_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_ring_radius1_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     radius1 = import_util.safe_column(supp_index_row, 'MINIMUM_RING_RADIUS')
 
     return radius1
 
-def populate_obs_ring_geometry_EB_ring_radius2_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_ring_radius2_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     radius2 = import_util.safe_column(supp_index_row, 'MAXIMUM_RING_RADIUS')
 
     return radius2
 
-def populate_obs_ring_geometry_EB_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_resolution1_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_EB_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_resolution2_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_EB_proj_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_proj_resolution1_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_EB_proj_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_proj_resolution2_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_EB_phase1_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_phase1_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_EB_phase2_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_phase2_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_EB_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
 
     return inc
 
-def populate_obs_ring_geometry_EB_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_incidence2_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
 
     return inc
 
-def populate_obs_ring_geometry_EB_center_phase_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_center_phase_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_EB_center_incidence_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_center_incidence_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
@@ -399,7 +337,7 @@ def populate_obs_ring_geometry_EB_center_incidence_OCC(**kwargs):
 
 
 ################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY EARTH-BASED INSTRUMENT
+# THESE NEED TO BE IMPLEMENTED FOR EVERY GROUND-BASED INSTRUMENT
 ################################################################################
 
 

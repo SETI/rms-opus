@@ -136,7 +136,7 @@ def helper_cassini_obs_name(**kwargs):
     index_row = metadata['index_row']
     obs_id = index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
-        supp_index_row = metadata.get('supp_index_row', None) # COUVIS
+        supp_index_row = metadata.get('supp_index_row', None) # COUVIS & CORSS
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
@@ -432,51 +432,6 @@ def populate_obs_mission_cassini_rev_no(**kwargs):
     if rev_no[0] == 'C':
         return None
     return (rev_no, rev_no)
-
-def populate_obs_mission_cassini_ert1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    # START_TIME isn't available for COUVIS
-    start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time is None or start_time == 'UNK':
-        return None
-
-    try:
-        ert_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad earth received start time format "{start_time}": {e}')
-        return None
-
-    return ert_sec
-
-def populate_obs_mission_cassini_ert2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    # STOP_TIME isn't available for COUVIS
-    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time is None or stop_time == 'UNK':
-        return None
-
-    try:
-        ert_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad earth received stop time format "{stop_time}": {e}')
-        return None
-
-    cassini_row = metadata['obs_mission_cassini_row']
-    start_time_sec = cassini_row['ert1']
-
-    if start_time_sec is not None and ert_sec < start_time_sec:
-        import_util.log_warning(
-            f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-            +f'are in the wrong order - setting to ert1')
-        ert_sec = start_time_sec
-
-    return ert_sec
 
 def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     metadata = kwargs['metadata']

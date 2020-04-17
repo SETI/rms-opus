@@ -271,7 +271,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_ert1"
+            "obs_mission_cassini_<INST>_ert1_OBS"
         ],
         "data_source_order": 10,
         "val_min": -94607970.0,
@@ -304,7 +304,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_ert2"
+            "obs_mission_cassini_<INST>_ert2_OBS"
         ],
         "data_source_order": 11,
         "val_min": -94607970.0,

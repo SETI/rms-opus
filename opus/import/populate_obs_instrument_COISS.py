@@ -15,6 +15,7 @@ import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
+from populate_util import *
 
 
 # Wavelength information for combinations of filters
@@ -229,47 +230,10 @@ def populate_obs_general_COISS_inst_host_id_OBS(**kwargs):
     return 'CO'
 
 def populate_obs_general_COISS_time1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-
-    if start_time is None:
-        return None
-
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
+    return populate_time1_from_index(**kwargs)
 
 def populate_obs_general_COISS_time2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
+    return populate_time2_from_index(**kwargs)
 
 def populate_obs_general_COISS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
@@ -304,33 +268,15 @@ def populate_obs_pds_COISS_primary_file_spec_OBS(**kwargs):
     return _COISS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COISS_product_creation_time_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    pct = index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return populate_product_creation_time_from_index(**kwargs)
 
 # Format: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0"
 def populate_obs_pds_COISS_data_set_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    dsi = index_row['DATA_SET_ID']
-    return (dsi, dsi)
+    return populate_data_set_id_from_index(**kwargs)
 
 # Format: 1_W1294561143.000
 def populate_obs_pds_COISS_product_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    product_id = index_row['PRODUCT_ID']
-
-    return product_id
+    return populate_product_id_from_index(**kwargs)
 
 # We occasionally don't bother to generate ring_geo data for COISS, like during
 # cruise, so just use the given RA/DEC from the label if needed. We don't make
@@ -374,21 +320,6 @@ def populate_obs_general_COISS_declination2_OBS(**kwargs):
     index_row = metadata['index_row']
     dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
-
-# Format: "SCIENCE_CRUISE"
-def populate_obs_mission_cassini_COISS_mission_phase_name_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
-    if mp.upper() == 'NULL':
-        return None
-    return mp.replace('_', ' ')
-
-def populate_obs_mission_cassini_COISS_sequence_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    seqid = index_row['SEQUENCE_ID']
-    return seqid
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -579,6 +510,51 @@ def populate_obs_occultation_COISS_host_OBS(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
+def populate_obs_mission_cassini_COISS_ert1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    # START_TIME isn't available for COUVIS
+    start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
+    if start_time is None or start_time == 'UNK':
+        return None
+
+    try:
+        ert_sec = julian.tai_from_iso(start_time)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Bad earth received start time format "{start_time}": {e}')
+        return None
+
+    return ert_sec
+
+def populate_obs_mission_cassini_COISS_ert2_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    # STOP_TIME isn't available for COUVIS
+    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
+    if stop_time is None or stop_time == 'UNK':
+        return None
+
+    try:
+        ert_sec = julian.tai_from_iso(stop_time)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Bad earth received stop time format "{stop_time}": {e}')
+        return None
+
+    cassini_row = metadata['obs_mission_cassini_row']
+    start_time_sec = cassini_row['ert1']
+
+    if start_time_sec is not None and ert_sec < start_time_sec:
+        import_util.log_warning(
+            f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
+            +f'are in the wrong order - setting to ert1')
+        ert_sec = start_time_sec
+
+    return ert_sec
+
 def populate_obs_mission_cassini_COISS_spacecraft_clock_count1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -625,6 +601,21 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2_OBS(**kwargs):
     +f'({image_number}) don\'t match')
 
     return sc_cvt
+
+# Format: "SCIENCE_CRUISE"
+def populate_obs_mission_cassini_COISS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME']
+    if mp.upper() == 'NULL':
+        return None
+    return mp.replace('_', ' ')
+
+def populate_obs_mission_cassini_COISS_sequence_id_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    seqid = index_row['SEQUENCE_ID']
+    return seqid
 
 
 ################################################################################

@@ -12,6 +12,8 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_galileo import *
+from populate_util import *
+
 
 # Data from:
 #   Title: The Galileo Solid-State Imaging experiment
@@ -163,26 +165,10 @@ def populate_obs_pds_GOSSI_primary_file_spec_OBS(**kwargs):
     return _GOSSI_file_spec_helper(**kwargs)
 
 def populate_obs_pds_GOSSI_product_creation_time_OBS(**kwargs):
-    # For GOSSI the PRODUCT_CREATION_TIME is provided in the volume label file,
-    # not the individual observation rows
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    pct = index_label['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return populate_product_creation_time_from_index_label(**kwargs)
 
 def populate_obs_pds_GOSSI_data_set_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    dsi = index_row['DATA_SET_ID']
-    return dsi
+    return populate_data_set_id_from_index(**kwargs)
 
 def populate_obs_pds_GOSSI_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']

@@ -12,6 +12,8 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_voyager import *
+from populate_util import *
+
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
 # (WL MIN, WL MAX)
@@ -84,51 +86,10 @@ def populate_obs_general_VGISS_inst_host_id_OBS(**kwargs):
     return 'VG'+inst_host[-1]
 
 def populate_obs_general_VGISS_time1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    start_time = import_util.safe_column(supp_index_row, 'START_TIME')
-
-    if start_time is None:
-        return None
-
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
+    return populate_time1_from_supp_index(**kwargs)
 
 def populate_obs_general_VGISS_time2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    stop_time = import_util.safe_column(supp_index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
+    return populate_time2_from_supp_index(**kwargs)
 
 def populate_obs_general_VGISS_target_name_OBS(**kwargs):
     return helper_voyager_target_name(**kwargs)
@@ -169,28 +130,10 @@ def populate_obs_pds_VGISS_primary_file_spec_OBS(**kwargs):
 
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
 def populate_obs_pds_VGISS_data_set_id_OBS(**kwargs):
-    # For VGISS the DATA_SET_ID is provided in the volume label file,
-    # not the individual observation rows
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    dsi = index_label['DATA_SET_ID']
-    return (dsi, dsi)
+    return populate_data_set_id_from_index_label(**kwargs)
 
 def populate_obs_pds_VGISS_product_creation_time_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    pct = supp_index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "C1385455_CALIB.IMG"
 def populate_obs_pds_VGISS_product_id_OBS(**kwargs):

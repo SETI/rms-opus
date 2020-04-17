@@ -47,7 +47,7 @@ INSTRUMENTS_WITH_SURFACE_GEO = ['COISS',
 # These are used for table names
 MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
     'CO':  'cassini',
-    'EB':  'earth',
+    'GB':  'earth',
     'GO':  'galileo',
     'HST': 'hubble',
     'NH':  'new_horizons',
@@ -57,7 +57,7 @@ MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
 # Mapping from mission abbreviation (UC) to full mission name (displayable)
 MISSION_ABBREV_TO_MISSION_NAME = {
     'CO':  'Cassini',
-    'EB':  'Earth-based',
+    'GB':  'Ground-based',
     'GO':  'Galileo',
     'HST': 'Hubble',
     'NH':  'New Horizons',
@@ -67,7 +67,7 @@ MISSION_ABBREV_TO_MISSION_NAME = {
 # Mapping from instrument host abbreviation to mission abbreviation
 INST_HOST_ABBREV_TO_MISSION_ABBREV = {
     'CO':  'CO',
-    'EB':  'EB',
+    'GB':  'GB',
     'GO':  'GO',
     'HST': 'HST',
     'NH':  'NH',
@@ -78,7 +78,7 @@ INST_HOST_ABBREV_TO_MISSION_ABBREV = {
 # Mapping from instrument host abbreviation to instrument host name
 INST_HOST_ABBREV_TO_INST_HOST = {
     'CO':  'Cassini',
-    'EB':  'Earth-based',
+    'GB':  'Ground-based',
     'GO':  'Galileo',
     'HST': 'Hubble',
     'NH':  'New Horizons',
@@ -119,7 +119,7 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'NHLORRI':     'New Horizons LORRI',
     'NHMVIC':      'New Horizons MVIC',
     'VGISS':       'Voyager ISS',
-    # Earth-based
+    # Ground-based
     'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
     'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',
     'IRTFURAC':    'NASA IRTF URAC',
@@ -164,7 +164,7 @@ VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
     'CORSS':  'CO',
     'COUVIS': 'CO',
     'COVIMS': 'CO',
-    'EBROCC': 'EB',
+    'EBROCC': 'GB',
     'GO':     'GO',
     'HSTI1':  'HST',
     'HSTJ0':  'HST',

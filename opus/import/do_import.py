@@ -24,7 +24,7 @@ from populate_obs_pds import *
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS import *
+from populate_obs_instrument_CORSS_occ import *
 from populate_obs_instrument_COUVIS import *
 from populate_obs_instrument_COVIMS import *
 
@@ -40,8 +40,8 @@ from populate_obs_instrument_NHMVIC import *
 from populate_obs_mission_voyager import *
 from populate_obs_instrument_VGISS import *
 
-from populate_obs_mission_earthbased_occ import *
-from populate_obs_instrument_EB_occ import *
+from populate_obs_mission_groundbased_occ import *
+from populate_obs_instrument_GB_occ import *
 
 from populate_obs_surface_geo import *
 
@@ -166,7 +166,7 @@ def create_tables_for_import(volume_id, namespace):
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     if instrument_name is None:
-        instrument_name = 'EB'
+        instrument_name = 'GB'
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
 
@@ -714,17 +714,17 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     impglobals.LOGGER.log('info',
                f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
 
-    # This is used to make all Earth-based observations look like they were
+    # This is used to make all ground-based observations look like they were
     # done by a single instrument to make writing the populate_* functions
     # easier.
     func_instrument_name = instrument_name
     if instrument_name is None:
         # There could be multiple instruments in a single volume, in which case
         # we need to look in the index labelself.
-        # We assume this only happens for Earth-based instruments.
+        # We assume this only happens for ground-based instruments.
         instrument_name = (obs_label_dict['INSTRUMENT_HOST_ID']
                            +obs_label_dict['INSTRUMENT_ID'])
-        func_instrument_name = 'EB'
+        func_instrument_name = 'GB'
 
     metadata = {}
     metadata['index'] = obs_rows
@@ -898,8 +898,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                 break
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
-                    elif instrument_name == 'VGISS' or mission_abbrev == 'EB':
-                        # The VGISS and Earth-based supplemental indexes are
+                    elif instrument_name == 'VGISS' or mission_abbrev == 'GB':
+                        # The VGISS and ground-based supplemental indexes are
                         # keyed by FILE_SPECIFICATION_NAME
                         # (DATA/C13854XX/C1385455_RAW.LBL)
                         # that maps to the FILE_SPECIFICATION_NAME field in the
@@ -1019,7 +1019,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif ('supp_index' in metadata and
-              (instrument_name == 'VGISS' or mission_abbrev == 'EB')):
+              (instrument_name == 'VGISS' or mission_abbrev == 'GB')):
             # Match up the FILENAME
             filename = index_row['FILE_SPECIFICATION_NAME']
             supp_index = metadata['supp_index']

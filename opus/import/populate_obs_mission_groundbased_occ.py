@@ -1,8 +1,8 @@
 ################################################################################
-# populate_obs_mission_earthbased.py
+# populate_obs_mission_groundbased.py
 #
-# Routines to populate fields specific to Earth-based instruments.
-# It may change fields in obs_general or obs_mission_earthbased.
+# Routines to populate fields specific to ground-based instruments.
+# It may change fields in obs_general or obs_mission_groundbased.
 ################################################################################
 
 import opus_support
@@ -23,7 +23,7 @@ def helper_earthbased_target_name(**kwargs):
 
     if target_name != 'S RINGS':
         import_util.log_nonrepeating_error(
-            f'Earth-based mission targets "{target_name}" instead of "S RINGS"'
+            f'Ground-based mission targets "{target_name}" instead of "S RINGS"'
         )
 
     if target_name in TARGET_NAME_MAPPING:
@@ -43,7 +43,7 @@ def helper_earthbased_target_name(**kwargs):
 def helper_earthbased_planet_id(**kwargs):
     return 'SAT'
 
-def populate_obs_general_EB_planet_id_OCC(**kwargs):
+def populate_obs_general_GB_planet_id_OCC(**kwargs):
     return helper_earthbased_planet_id(**kwargs)
 
 

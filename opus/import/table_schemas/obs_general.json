@@ -131,7 +131,7 @@
               [   2, "HST",       "Hubble",   30, "Y", null],
               [   3,  "NH", "New Horizons",   40, "Y", null],
               [   4,  "VG",      "Voyager",   50, "Y", null],
-              [   5,  "EB",  "Earth-based",   60, "Y", null]
+              [   5,  "GB",  "Ground-based",  60, "Y", null]
           ]
     },
     {
@@ -147,7 +147,7 @@
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "INSTRUMENT_HOST_NAME",
-        "definition": "The name of the spacecraft, satellite, or Earth-based observatory/telescope that took the observation. See Help/About for a discussion of the instrument hosts supported by OPUS.",
+        "definition": "The name of the spacecraft, satellite, or ground-based observatory/telescope that took the observation. See Help/About for a discussion of the instrument hosts supported by OPUS.",
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -167,7 +167,7 @@
               [   3,  "NH", "New Horizons",   40, "Y", null],
               [   4, "VG1",    "Voyager 1",   50, "Y", null],
               [   5, "VG2",    "Voyager 2",   60, "Y", null],
-              [   6,  "EB",  "Earth-based",   70, "Y", null]
+              [   6,  "GB",  "Ground-based",  70, "Y", null]
           ]
     },
     {

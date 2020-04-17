@@ -11,6 +11,7 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_new_horizons import *
+from populate_util import *
 
 
 ################################################################################
@@ -61,47 +62,10 @@ def populate_obs_general_NHMVIC_inst_host_id_OBS(**kwargs):
     return 'NH'
 
 def populate_obs_general_NHMVIC_time1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-
-    if start_time is None:
-        return None
-
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
+    return populate_time1_from_index(**kwargs)
 
 def populate_obs_general_NHMVIC_time2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
+    return populate_time2_from_index(**kwargs)
 
 def populate_obs_general_NHMVIC_target_name_OBS(**kwargs):
     target_name = helper_new_horizons_target_name(**kwargs)
@@ -137,32 +101,15 @@ def populate_obs_pds_NHMVIC_primary_file_spec_OBS(**kwargs):
     return _NHMVIC_file_spec_helper(**kwargs)
 
 def populate_obs_pds_NHMVIC_product_creation_time_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    pct = supp_index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "NH-J-MVIC-2-JUPITER-V2.0"
 def populate_obs_pds_NHMVIC_data_set_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    return supp_index_row['DATA_SET_ID']
+    return populate_data_set_id_from_supp_index(**kwargs)
 
 # Format: "MC0_0032528036_0X536_ENG_1"
 def populate_obs_pds_NHMVIC_product_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    return supp_index_row['PRODUCT_ID']
+    return populate_product_id_from_supp_index(**kwargs)
 
 # We occasionally don't bother to generate ring_geo data for NHMVIC, like during
 # cruise, so just use the given RA/DEC from the label if needed. We don't make

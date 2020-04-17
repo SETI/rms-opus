@@ -15,6 +15,7 @@ import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
+from populate_util import *
 
 
 ################################################################################
@@ -68,47 +69,10 @@ def populate_obs_general_COCIRS_inst_host_id_OBS(**kwargs):
     return 'CO'
 
 def populate_obs_general_COCIRS_time1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
-
-    if start_time is None:
-        return None
-
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
+    return populate_time1_from_index(**kwargs)
 
 def populate_obs_general_COCIRS_time2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad stop time format "{stop_time}": {e} Exception as e')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
+    return populate_time2_from_index(**kwargs)
 
 def populate_obs_general_COCIRS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
@@ -136,25 +100,11 @@ def populate_obs_pds_COCIRS_primary_file_spec_OBS(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COCIRS_product_creation_time_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    pct = index_label['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return populate_product_creation_time_from_index_label(**kwargs)
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
 def populate_obs_pds_COCIRS_data_set_id_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    dsi = index_label['DATA_SET_ID']
-    return (dsi, dsi)
+    return populate_data_set_id_from_index_label(**kwargs)
 
 def populate_obs_pds_COCIRS_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -174,18 +124,6 @@ def populate_obs_general_COCIRS_declination1_OBS(**kwargs):
     return None
 
 def populate_obs_general_COCIRS_declination2_OBS(**kwargs):
-    return None
-
-# Format: "SCIENCE_CRUISE"
-def populate_obs_mission_cassini_COCIRS_mission_phase_name_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
-    if mp.upper() == 'NULL':
-        return None
-    return mp.replace('_', ' ')
-
-def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
     return None
 
 
@@ -327,6 +265,12 @@ def populate_obs_occultation_COCIRS_host_OBS(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
+def populate_obs_mission_cassini_COCIRS_ert1_OBS(**kwargs):
+    return None
+
+def populate_obs_mission_cassini_COCIRS_ert2_OBS(**kwargs):
+    return None
+
 def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -371,6 +315,18 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2_OBS(**kwargs):
         sc_cvt = sc1
 
     return sc_cvt
+
+# Format: "SCIENCE_CRUISE"
+def populate_obs_mission_cassini_COCIRS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME']
+    if mp.upper() == 'NULL':
+        return None
+    return mp.replace('_', ' ')
+
+def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
+    return None
 
 
 ################################################################################
