@@ -1458,20 +1458,25 @@ var o_browse = {
 
     initDraggableColumn: function(tab) {
         // Return a helper with preserved width of cells
-        let fixHelper = function(e, ui) {
-            let slug = ui.attr("id");
-            let td = $("tbody tr").find(`[data-slug="${slug}"]`);
-            $(td).width($(td).width());
-            return ui;
-        };
+        let fixHelper =
         $(`${tab} .op-data-table thead`).sortable({
             items: "th",
             axis: "x",
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
-            helper: fixHelper,
+            helper: function(e, ui) {
+                let slug = ui.attr("id");
+                let td = $("tbody tr").find(`[data-slug="${slug}"]`);
+                let width = ui.width();
+                ui.width(width);
+                td.width(width);
+                return ui;
+            },
             cancel: ".op-table-first-col",
+            start: function(e, ui) {
+                $("tbody").animate({opacity: '0.4'});
+            },
             stop: function(event, ui) {;
                 let columnOrder = $.map($(this).find("th").not(".op-table-first-col"), function(n, i) {
                     return n.id;
@@ -1482,6 +1487,7 @@ var o_browse = {
                     o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                     o_sortMetadata.renderSortedDataFromBeginning();
                 }
+                $("tbody").animate({opacity: '1'});
             },
         });
     },
