@@ -1222,6 +1222,10 @@ var o_browse = {
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollDataObj = $(selector).data("infiniteScroll").options;
 
+        let hashArray = o_hash.getHashArray();
+        let slugs = hashArray.cols.split(",");
+
+
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
         let tableHtml = "";
@@ -1312,7 +1316,8 @@ var o_browse = {
 
                 let tr = `<tr data-id="${opusId}" ${recycled} data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
-                    row += `<td>${cell}</td>`;
+                    let slug = slugs[index];
+                    row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
                 });
                 tableHtml += `${tr}${row}</tr>`;
             });
@@ -1452,11 +1457,21 @@ var o_browse = {
     },
 
     initDraggableColumn: function(tab) {
+        // Return a helper with preserved width of cells
+        let fixHelper = function(e, ui) {
+            let slug = ui.attr("id");
+            let td = $("tbody tr").find(`[data-slug="${slug}"]`);
+            $(td).width($(td).width());
+            return ui;
+        };
         $(`${tab} .op-data-table thead`).sortable({
             items: "th",
+            axis: "x",
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
+            helper: fixHelper,
+            cancel: ".op-table-first-col",
             stop: function(event, ui) {;
                 let columnOrder = $.map($(this).find("th").not(".op-table-first-col"), function(n, i) {
                     return n.id;
