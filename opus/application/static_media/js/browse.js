@@ -1465,15 +1465,15 @@ var o_browse = {
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
+            cancel: ".op-table-first-col",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
                 let td = $("tbody tr").find(`[data-slug="${slug}"]`);
-                let width = ui.width();
-                ui.width(width);
-                td.width(width);
+                $("tbody tr:first").find('td').each(function(column, td) {
+                    $(td).width($(td).width());
+                });
                 return ui;
             },
-            cancel: ".op-table-first-col",
             start: function(e, ui) {
                 $("tbody").animate({opacity: '0.4'});
             },
