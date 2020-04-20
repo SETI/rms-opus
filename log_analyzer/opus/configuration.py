@@ -1,8 +1,11 @@
 import collections
+import itertools
 import re
 import textwrap
 import urllib.parse
 from enum import auto, Flag
+from ipaddress import IPv4Address
+from operator import itemgetter, attrgetter
 from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence
 
 from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
@@ -16,7 +19,7 @@ from opus.slug import Info
 class ActionFlags(Flag):
     HAS_SEARCH = auto()
     FETCHED_GALLERY = auto()
-    HAS_COLUMNS = auto()
+    HAS_METADATA = auto()
     HAS_DOWNLOAD = auto()
     HAS_OBSOLETE_SLUG = auto()
 
@@ -78,6 +81,61 @@ class Configuration(AbstractConfiguration):
         print('', file=output)
         show_info('column')
 
+    def generate_ordered_slugs(self, sessions: Sequence[Session], ip_to_host_name: Dict[IPv4Address, str]) -> \
+            Sequence[List[Tuple[str, int, List[List[Session]]]]]:
+        search_name_info: List[Tuple[str, Session]] = []
+        column_name_info: List[Tuple[str, Session]] = []
+        for session in sessions:
+            search_names, column_names = session.session_info.get_slug_names()
+            search_name_info.extend((search_name, session) for search_name in search_names)
+            column_name_info.extend((search_name, session) for search_name in column_names)
+
+        def order_name_info(name_info: List[Tuple[str, Session]]) -> List[Tuple[str, int, List[List[Session]]]]:
+            name_info_dict: Dict[str, List[Session]] = collections.defaultdict(list)
+            for name, session in name_info:
+                name_info_dict[name].append(session)
+            info_by_name = sorted(name_info_dict.items(), key=lambda x: (-len(x[1]), x[0].lower()))
+            temp = [(name, len(sessions), self.group_sessions_by_host_id(sessions, ip_to_host_name))
+                    for name, sessions in info_by_name]
+            return temp
+
+        return order_name_info(search_name_info), order_name_info(column_name_info)
+
+    def generate_ordered_action_flags(self, sessions: Sequence[Session], ip_to_host_name: Dict[IPv4Address, str]) -> \
+            List[Tuple[Flag, int, List[List[Session]]]]:
+        flags = self.get_action_flags()
+        result = []
+        for flag in flags:
+            flagged_sessions = [session for session in sessions if flag in session.session_info.get_session_flags()]
+            grouped_sessions = self.group_sessions_by_host_id(flagged_sessions, ip_to_host_name)
+            result.append((flag, len(flagged_sessions), grouped_sessions))
+        result.sort(key=itemgetter(2, 1))
+        return result
+
+    @classmethod
+    def group_sessions_by_host_id(cls, sessions: List[Session], ip_to_host_name: Dict[IPv4Address, str])\
+            -> List[List[Session]]:
+        sessions.sort(key=lambda session: session.start_time())
+        sessions.sort(key=lambda session: session.host_ip)
+        grouped_sessions = [list(sessions) for _, sessions in itertools.groupby(sessions, attrgetter("host_ip"))]
+
+        # At this point, groups are sorted by host_ip, and within each group, they are sorted by start time
+        # But we want the groups sorted by length, and within length, we want them in our standard sort order
+        def group_session_sorter(sessions: List[Session]) -> Tuple[int, Any]:
+            host_ip = sessions[0].host_ip
+            name = ip_to_host_name.get(host_ip)
+            return -len(sessions), cls.__sort_key_from_ip_and_name(host_ip, name)
+
+        grouped_sessions.sort(key=group_session_sorter)
+        return grouped_sessions
+
+    @staticmethod
+    def __sort_key_from_ip_and_name(ip: IPv4Address, name: Optional[str]) -> Any:
+        if name:
+            return 1, tuple(reversed(name.lower().split('.')))
+        else:
+            return 2, ip
+
 
 class SessionInfo(AbstractSessionInfo):
     """
@@ -121,7 +179,7 @@ class SessionInfo(AbstractSessionInfo):
         self._action_flags |= ActionFlags.HAS_SEARCH
 
     def changed_column_slugs(self) -> None:
-        self._action_flags |= ActionFlags.HAS_COLUMNS
+        self._action_flags |= ActionFlags.HAS_METADATA
 
     def performed_download(self) -> None:
         self._action_flags |= ActionFlags.HAS_DOWNLOAD

@@ -267,51 +267,16 @@ class LogParser:
                               for date, values in itertools.groupby(host_infos_by_time,
                                                                     lambda host_info: host_info.start_time().date())]
 
-        ordered_search_slugs, ordered_column_slugs = self.generate_ordered_slugs(sessions, ip_to_host_name)
         for result in self._template.generate(
-            host_infos_by_ip=host_infos_by_ip,
-            host_infos_by_date=host_infos_by_date,
+                host_infos_by_ip=host_infos_by_ip,
+                host_infos_by_date=host_infos_by_date,
+                sessions=sessions,
                 ip_to_host_name=ip_to_host_name,
-                ordered_search_slugs=ordered_search_slugs,
-                ordered_column_slugs=ordered_column_slugs,
-                ordered_action_flags=self.generate_ordered_action_flags(sessions, ip_to_host_name),
-                configuration=self._configuration,
-           ):
+                configuration=self._configuration):
             for line in result.split("\n"):
                 if line:
                     self._output.write(line.strip())
                     self._output.write('\n')
-
-    def generate_ordered_slugs(self, sessions: Sequence[Session], ip_to_host_name: Dict[IPv4Address, str]) -> \
-            Sequence[List[Tuple[str, int, List[List[Session]]]]]:
-        search_name_info: List[Tuple[str, Session]] = []
-        column_name_info: List[Tuple[str, Session]] = []
-        for session in sessions:
-            search_names, column_names = session.session_info.get_slug_names()
-            search_name_info.extend((search_name, session) for search_name in search_names)
-            column_name_info.extend((search_name, session) for search_name in column_names)
-
-        def order_name_info(name_info: List[Tuple[str, Session]]) -> List[Tuple[str, int, List[List[Session]]]]:
-            name_info_dict: Dict[str, List[Session]] = defaultdict(list)
-            for name, session in name_info:
-                name_info_dict[name].append(session)
-            info_by_name = sorted(name_info_dict.items(), key=lambda x: (-len(x[1]), x[0].lower()))
-            temp = [(name, len(sessions), self.group_sessions_by_host_id(sessions, ip_to_host_name))
-                    for name, sessions in info_by_name]
-            return temp
-
-        return order_name_info(search_name_info), order_name_info(column_name_info)
-
-    def generate_ordered_action_flags(self, sessions: Sequence[Session], ip_to_host_name: Dict[IPv4Address, str]) -> \
-            List[Tuple[Flag, int, List[List[Session]]]]:
-        flags = self._configuration.get_action_flags()
-        result = []
-        for flag in flags:
-            flagged_sessions = [session for session in sessions if flag in session.session_info.get_session_flags()]
-            grouped_sessions = self.group_sessions_by_host_id(flagged_sessions, ip_to_host_name)
-            result.append((flag, len(flagged_sessions), grouped_sessions))
-        result.sort(key=itemgetter(2, 1))
-        return result
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
@@ -334,20 +299,3 @@ class LogParser:
             return 1, tuple(reversed(name.lower().split('.')))
         else:
             return 2, ip
-
-    @classmethod
-    def group_sessions_by_host_id(cls, sessions: List[Session], ip_to_host_name: Dict[IPv4Address, str])\
-            -> List[List[Session]]:
-        sessions.sort(key=lambda session: session.start_time())
-        sessions.sort(key=lambda session: session.host_ip)
-        grouped_sessions = [list(sessions) for _, sessions in itertools.groupby(sessions, attrgetter("host_ip"))]
-
-        # At this point, groups are sorted by host_ip, and within each group, they are sorted by start time
-        # But we want the groups sorted by length, and within length, we want them in our standard sort order
-        def group_session_sorter(sessions: List[Session]) -> Tuple[int, Any]:
-            host_ip = sessions[0].host_ip
-            name = ip_to_host_name.get(host_ip)
-            return -len(sessions), cls.__sort_key_from_ip_and_name(host_ip, name)
-
-        grouped_sessions.sort(key=group_session_sorter)
-        return grouped_sessions

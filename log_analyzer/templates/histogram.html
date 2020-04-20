@@ -1,48 +1,39 @@
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-    google.charts.load("current", {packages:["corechart"]});
-    google.charts.setOnLoadCallback(drawChart);
-    function drawChart() {
-        let ip_data = google.visualization.arrayToDataTable([
-            ['IP', 'Minutes'],
-            {% for host_info in host_infos_by_ip|sort(attribute="total_time") %}
-                [  '{{ host_info.name or host_info.ip }}', {{ host_info.total_time.total_seconds() / 60 }}  ],
-            {% endfor %}
-        ]);
-
-        let session_data = google.visualization.arrayToDataTable([
-            ['Session', 'Minutes'],
-            {% for host_info in host_infos_by_ip %}
-                 {% for session in host_info.sessions %}
-                      [  '{{ session.id }}', {{ session.duration().total_seconds() / 60 }}  ],
-                 {%  endfor %}
-            {% endfor %}
-        ]);
-
-        var options = {
-            legend: { position: 'none' },
-            width: 600,
-            height: 600,
-            hAxis: {
-	            title: 'Minutes',
-            },
-            vAxis: {
-	            title: 'Hosts',
-	            format: 'decimal',
-            },
-        };
-
-        let chart1 = new google.visualization.Histogram(document.getElementById('chart_div1'));
-        options.vAxis.title = 'Hosts';
-        chart1.draw(ip_data, options);
-
-        let chart2 = new google.visualization.Histogram(document.getElementById('chart_div2'));
-        options.vAxis.title = 'Sessions';
-        chart2.draw(session_data, options);
-    }
-</script>
+<script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
 <div id="Histogram" class="SessionInfo tab-pane">
-    <div id="chart_div1"></div>
-    <div id="chart_div2"></div>
+    <div id="chart_ips"></div>
+    <div id="chart_sessions"></div>
 </div>
+
+<script type="text/javascript">
+$(function()
+{
+    let ip_data = [
+        {% for host_info in host_infos_by_ip|sort(attribute="total_time") %}
+            {{ host_info.total_time.total_seconds() / 60 }},
+        {% endfor %}
+    ];
+
+    let session_data = [
+        {% for host_info in host_infos_by_ip %}
+            {% for session in host_info.sessions %}
+                {{ session.duration().total_seconds() / 60 }},
+            {%  endfor %}
+        {% endfor %}
+    ];
+
+    var layout = {
+        xaxis: {title: "Minutes"},
+        yaxis: {title: ""},
+        bargap: 0.05,
+
+    };
+
+    layout.yaxis.title = '# Hosts'
+    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout);
+
+    layout.yaxis.title = '# Sessions'
+    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
+});
+</script>
+

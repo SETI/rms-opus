@@ -95,7 +95,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% set name_and_glyph =   (("HAS_SEARCH", "search"),
                            ("FETCHED_GALLERY",  "images"),
-                           ("HAS_COLUMNS", "list-ul"),
+                           ("HAS_METADATA", "list-ul"),
                            ("HAS_DOWNLOAD", "file-download"),
                            ("HAS_OBSOLETE_SLUG" , "book-dead"))
 %}
@@ -210,15 +210,17 @@ because it requires that all the navigation tabs be within a single unordered li
 {% endmacro %}
 
 {% macro summarize_slugs(summary_name, summary_slug_info) %}
-    {% call(flag) summarize_info(summary_name, summary_slug_info) %}
-        {{ flag }}
+    {% call(slug_name) summarize_info(summary_name, summary_slug_info) %}
+        <span class="text-dark">{{ slug_name }}</span>
     {% endcall %}
 {% endmacro %}
 
+{% set ordered_search_slugs, ordered_column_slugs = configuration.generate_ordered_slugs(sessions, ip_to_host_name) %}
+{% set ordered_action_flags = configuration.generate_ordered_action_flags(sessions, ip_to_host_name) %}
 <hr/>
 {{ summarize_slugs('Search Terms', ordered_search_slugs) }}
 <hr/>
-{{ summarize_slugs('Columns', ordered_column_slugs) }}
+{{ summarize_slugs('Metadata', ordered_column_slugs) }}
 <hr/>
 {% call(flag) summarize_info('Actions', ordered_action_flags) %}
     {{  flag.name|replace("_", " ") }}
@@ -291,7 +293,6 @@ because it requires that all the navigation tabs be within a single unordered li
 </div>  ## class=container
 
 <script>
-
 
 $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
