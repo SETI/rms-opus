@@ -2,37 +2,47 @@
 
 <div id="Histogram" class="SessionInfo tab-pane">
     <div id="chart_ips"></div>
+    <hr/>
     <div id="chart_sessions"></div>
 </div>
 
-<script type="text/javascript">
+<script>
 $(function()
 {
     let ip_data = [
-        {% for host_info in host_infos_by_ip|sort(attribute="total_time") %}
-            {{ host_info.total_time.total_seconds() / 60 }},
+        {% for host_info in host_infos_by_ip %}
+            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
         {% endfor %}
     ];
 
     let session_data = [
         {% for host_info in host_infos_by_ip %}
             {% for session in host_info.sessions %}
-                {{ session.duration().total_seconds() / 60 }},
-            {%  endfor %}
+                {{ [session.duration().total_seconds() / 60, 480.0]|min }},
+            {%-  endfor %}
         {% endfor %}
     ];
 
     var layout = {
-        xaxis: {title: "Minutes"},
+        xaxis: {
+            title: "Minutes",
+            tickangle: -90,
+        },
+        xbins: {
+            start: 0,
+            size: 10,
+        },
         yaxis: {title: ""},
         bargap: 0.05,
 
     };
 
-    layout.yaxis.title = '# Hosts'
+    layout.yaxis.title = '# Host IPs';
     Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout);
 
-    layout.yaxis.title = '# Sessions'
+    layout.yaxis.title = '# Sessions';
+    layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
+    layout.xaxis.autorange=false;
     Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
 });
 </script>

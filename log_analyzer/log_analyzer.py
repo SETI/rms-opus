@@ -40,6 +40,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--html', action='store_true', dest='uses_html',
                         help='Generate html output rather than text output')
+    parser.add_argument('--no-sessions', action='store_true', dest='no_sessions',
+                        help="Don't generate detailed session information")
 
     parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
                         help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
@@ -103,9 +105,10 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
 if __name__ == '__main__':
     import glob
-    files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/logs-2020-02/*2020-02-2*")
+    files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/logs-2020-02/*2020-02-*")
     args = ["--output", "/Users/fy/www/save.html",
             "--batch", "--html",
             "--xxlocal", "--dns",
+            # "--no-sessions",
             *files]
     main(args)

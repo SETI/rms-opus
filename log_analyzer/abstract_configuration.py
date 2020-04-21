@@ -18,13 +18,15 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         """
         raise Exception()
 
-    @abc.abstractmethod
-    def show_summary(self, sessions: List[Any], output: TextIO) -> None:
-        """Implements the --summary operation, whatever that happens to mean for this configuration"""
+    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> Any:
+        """
+        Creates a blackbox capable of giving the Jinja template whatever information it needs
+        """
         raise Exception()
 
     @abc.abstractmethod
-    def get_action_flags(self) -> Sequence[Flag]:
+    def show_summary(self, sessions: List[Any], output: TextIO) -> None:
+        """Implements the --summary operation, whatever that happens to mean for this configuration"""
         raise Exception()
 
 

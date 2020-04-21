@@ -85,20 +85,23 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <nav class="navbar navbar-light bg-light">
 <ul class="nav nav-tabs">
-    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#ByIP">By IP</a></li>
+    <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByIP">By IP</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByTime">By Time</a></li>
-    <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#Summary">Summary</a></li>
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#Summary">Summary</a></li>
 </ul>
 </nav>
 
 <div class="tab-content">
 
-{% set name_and_glyph =   (("HAS_SEARCH", "search"),
-                           ("FETCHED_GALLERY",  "images"),
-                           ("HAS_METADATA", "list-ul"),
-                           ("HAS_DOWNLOAD", "file-download"),
-                           ("HAS_OBSOLETE_SLUG" , "book-dead"))
+{% set name_and_glyph = (
+    ("HAS_SEARCH", "search"),
+    ("FETCHED_GALLERY",  "images"),
+    ("HAS_METADATA", "list-ul"),
+    ("HAS_DOWNLOAD", "file-download"),
+    ("HAS_OBSOLETE_SLUG" , "book-dead"))
 %}
+
+{% set ip_to_host_name = configuration.ip_to_host_name %}
 
 {% macro generate_session_row(session, full) %}
     <tr>
@@ -118,7 +121,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro host_info_ip_or_name(host_info) %}
     {% if host_info.name %}
-        <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
+        <a data-toggle="tooltip" title="{{ host_info.ip }}">{{host_info.name}}</a>
     {% else %}
         {{ host_info.ip }}
     {% endif %}
@@ -126,15 +129,14 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro session_ip_or_name(session_info) %}
     {% if session_info.host_ip in ip_to_host_name %}
-        <a data-toggle="tooltip" title="{{ session_info.host_ip }}"> {{ ip_to_host_name[session_info.host_ip] }}</a>
+        <a data-toggle="tooltip" title="{{ session_info.host_ip }}">{{ ip_to_host_name[session_info.host_ip] }}</a>
     {% else %}
         {{ session_info.host_ip }}
     {% endif %}
 {% endmacro %}
 
 
-
-<div id="ByIP" class="tab-pane show active">
+<div id="ByIP" class="tab-pane">
 {% for host_info in host_infos_by_ip %}
     {% if not loop.first %}<hr/>{% endif %}
     {{ host_info_ip_or_name(host_info) }}
@@ -142,8 +144,8 @@ because it requires that all the navigation tabs be within a single unordered li
     <table class="SessionLinkTable">
         {% for session in host_info.sessions %}
             {% call generate_session_row(session, loop.first) -%}
-               <a href="#" class=SessionLink data-target="#{{ session.id }}">
-                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+               <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                    {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
             {%- endcall %}
         {% endfor %}
     </table>
@@ -151,16 +153,15 @@ because it requires that all the navigation tabs be within a single unordered li
 </div>  ## #ByIP
 
 <div id="ByTime" class="tab-pane">
-{% for day, host_infos_for_day in host_infos_by_date %}
+{% for day, sessions_for_day in configuration.get_host_infos_by_date() %}
     {% if not loop.first %}<hr/>{% endif %}
     <h4>{{ day.strftime("%Y %b %d") }}</h4>
     <table class="SessionLinkTable">
-    {% for host_info in host_infos_for_day %}
-        {% set session = host_info.sessions[0] %}
+    {% for session in sessions_for_day %}
         {% call generate_session_row(session, loop.first) -%}
-            <a href="#" class=SessionLink data-target="#{{ session.id }}">
-               {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
-            {{ host_info_ip_or_name(host_info) }}
+            <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+               {{- session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
+            {{ session_ip_or_name(session) }}
         {%- endcall %}
     {% endfor %}
     </table>
@@ -168,17 +169,21 @@ because it requires that all the navigation tabs be within a single unordered li
 </div>  ## #ByTime
 
 <div id="Summary" class="tab-pane show active">
+{{ configuration.session_count }} total sessions<br>
+{{ configuration.total_duration }} total duration<br>
+<hr/>
 <details class="Summary1"><summary>Usage by IP</summary>
-    <a href="#" class=SessionLink data-target="#Histogram">Histogram</a>
+    <a href="#" class="SessionLink Summary2" data-target="#Histogram">Histogram</a>
 
 {% for host_info in host_infos_by_ip|sort(attribute="total_time", reverse=True) %}
     <details class="Summary2">
-        <summary>{{ host_info_ip_or_name(host_info) }} ({{ host_info.total_time }})</summary>
+        {% set this_count = host_info.sessions|length %}
+        <summary>{{ host_info_ip_or_name(host_info) }} ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
         <ul class="SummarySession">
             {% for session in host_info.sessions|sort(attribute="total_time", reverse=True) %}
             <li>
-            <a href="#" class=SessionLink data-target="#{{ session.id }}">
-                {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+            <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
             </li>
             {% endfor %}
         </ul>
@@ -187,18 +192,24 @@ because it requires that all the navigation tabs be within a single unordered li
 </details>
 
 {% macro summarize_info(header_name, summary_info) %}
+    {%  set session_count = configuration.session_count %}
     <details class="Summary1"><summary>{{ header_name }}</summary>
     {% for name, count, grouped_sessions in summary_info %}
         <details class="Summary2">
-            <summary>{{ caller(name) }} <span class="badge">{{ count }}</span></summary>
+            <summary>{{ caller(name) }}
+                <span class="badge">{{ count }} ({{ "{:.1%}".format(count / session_count) }})</span>
+            </summary>
             {% for sessions in grouped_sessions %}
                 <details class="Summary3">
-                    <summary>{{ session_ip_or_name(sessions[0]) }} <span class="badge">{{ sessions|length }}</span></summary>
+                    {% set this_count = sessions|length  %}
+                    <summary>{{ session_ip_or_name(sessions[0]) }}
+                        <span class="badge">{{ this_count }} ({{ "{:.1%}".format(this_count / session_count) }})</span>
+                    </summary>
                     <ul class="SummarySession">
                     {% for session in sessions %}
                         <li>
-                         <a href="#" class=SessionLink data-target="#{{ session.id }}">
-                             {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                         <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                             {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
                         </li>
                     {% endfor %}
                     </ul>
@@ -215,16 +226,20 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endcall %}
 {% endmacro %}
 
-{% set ordered_search_slugs, ordered_column_slugs = configuration.generate_ordered_slugs(sessions, ip_to_host_name) %}
-{% set ordered_action_flags = configuration.generate_ordered_action_flags(sessions, ip_to_host_name) %}
-<hr/>
-{{ summarize_slugs('Search Terms', ordered_search_slugs) }}
-<hr/>
-{{ summarize_slugs('Metadata', ordered_column_slugs) }}
-<hr/>
-{% call(flag) summarize_info('Actions', ordered_action_flags) %}
-    {{  flag.name|replace("_", " ") }}
-{% endcall %}
+{% with %}
+    {% set (ordered_search_slugs, ordered_column_slugs, ordered_sort_slugs) = configuration.generate_ordered_slugs() %}
+    {% set ordered_action_flags = configuration.generate_ordered_info_flags() %}
+    <hr/>
+    {{ summarize_slugs('Search Terms', ordered_search_slugs) }}
+    <hr/>
+    {{ summarize_slugs('Metadata', ordered_column_slugs) }}
+    <hr/>
+    {{ summarize_slugs('Sort', ordered_sort_slugs) }}
+    <hr/>
+    {% call(flag) summarize_info('Actions', ordered_action_flags) %}
+        {{  flag.get_fancy_name() }}
+    {% endcall %}
+{%  endwith %}
 </div>  ## #Summary
 
 
@@ -279,9 +294,11 @@ because it requires that all the navigation tabs be within a single unordered li
     {% for session in host_info.sessions %}
     <div id="{{ session.id }}" class="SessionInfo tab-pane">
         <h3>{{ host_info.hostname() }} at {{ session.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
-        {{ print_slugs(session) }}
-        <hr/>
-        {{ print_session_entries(session) }}
+        {% if not configuration.no_sessions %}
+            {{ print_slugs(session) }}
+            <hr/>
+            {{ print_session_entries(session) }}
+        {% endif %}
     </div>
     {% endfor %}
 {% endfor %}

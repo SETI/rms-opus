@@ -9,6 +9,7 @@ from typing import Dict, Tuple, List, Optional, Any, cast, NamedTuple, Sequence
 from markupsafe import Markup
 
 from opus import slug as slug
+from opus.info_flags import InfoFlags
 from opus.slug import FamilyType
 
 
@@ -136,6 +137,13 @@ class QueryHandler:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
             viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
+            tentative_flag = {
+                ("Browse", "Table"): InfoFlags.VIEWED_BROWSE_TAB_AS_TABLE,
+                ("Browse", "Gallery"): InfoFlags.VIEWED_BROWSE_TAB_AS_GALLERY,
+                ("Cart", "Table"): InfoFlags.VIEWED_CART_TAB_AS_TABLE,
+                ("Cart", "Gallery"): InfoFlags.VIEWED_CART_TAB_AS_GALLERY,
+            }[browse_or_cart, viewed]
+
             if current_state != previous_state or browse[is_browsing] != previous_browse:
                 result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
             elif info:
@@ -145,6 +153,8 @@ class QueryHandler:
 
             previous_info[is_browsing] = info
             self._previous_browses[is_browsing] = browse[is_browsing]
+        else:
+            tentative_flag = InfoFlags(0)
 
         self._previous_state = current_state
 
@@ -155,6 +165,9 @@ class QueryHandler:
 
         if result and query_type != 'result_count':
             self._session_info.fetched_gallery()
+
+        if result and query_type == 'dataimages':
+            self._session_info.update_info_flags(tentative_flag)
 
         return result, url
 
@@ -324,6 +337,7 @@ class QueryHandler:
                     order = 'Ascending'
                 slug_info = self._slug_map.get_info_for_column_slug(column)
                 assert slug_info
+                self._session_info.add_sort_slug(column, slug_info)
                 result.append(f'        "{slug_info.label}" ({order})')
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
