@@ -70,10 +70,41 @@ def populate_obs_general_CORSS_inst_host_id_OCC(**kwargs):
     return 'CO'
 
 def populate_obs_general_CORSS_time1_OCC(**kwargs):
-    return populate_time1_from_index(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    start_time = index_row['RING_EVENT_START_TIME']
+
+    try:
+        start_time_sec = julian.tai_from_iso(start_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad start time format "{start_time}": {e}')
+        return None
+
+    return start_time_sec
 
 def populate_obs_general_CORSS_time2_OCC(**kwargs):
-    return populate_time2_from_index(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    stop_time = index_row['RING_EVENT_STOP_TIME']
+
+    try:
+        stop_time_sec = julian.tai_from_iso(stop_time)
+    except Exception as e:
+        import_util.log_nonrepeating_error(
+            f'Bad stop time format "{stop_time}": {e}')
+        return None
+
+    general_row = metadata['obs_general_row']
+    start_time_sec = general_row['time1']
+
+    if start_time_sec is not None and stop_time_sec < start_time_sec:
+        start_time = import_util.safe_column(index_row, 'START_TIME')
+        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
+                                f'are in the wrong order - setting to time1')
+        stop_time_sec = start_time_sec
+
+    return stop_time_sec
 
 def populate_obs_general_CORSS_target_name_OCC(**kwargs):
     target_name = 'S RINGS'
@@ -232,16 +263,15 @@ def populate_obs_occultation_CORSS_occ_type_OCC(**kwargs):
     return 'RAD'
 
 def populate_obs_occultation_CORSS_occ_dir_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    occ_dir = index_row['RING_OCCULTATION_DIRECTION']
+    filespec = _CORSS_file_spec_helper(**kwargs)
 
-    if occ_dir not in ('I', 'E', 'B'):
-        import_util.log_nonrepeating_error(
-            f'Unknown RING_OCCULTATION_DIRECTIN "{occ_dir}"')
-        return None
-
-    return occ_dir
+    if '_I_' in filespec:
+        return 'I'
+    if '_E_' in filespec:
+        return 'E'
+    import_util.log_nonrepeating_error(
+        f'Unknown ring occultation direction in filespec "{filespec}"')
+    return None
 
 def populate_obs_occultation_CORSS_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']

@@ -65,7 +65,7 @@
     },
     {
         "field_name": "category",
-        "field_type": "char20",
+        "field_type": "char32",
         "field_key": true,
         "field_notnull": true
     },

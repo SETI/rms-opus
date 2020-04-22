@@ -127,6 +127,8 @@ def populate_obs_general_preview_images(**kwargs):
         file_spec = file_spec.replace('.LBL', '.DAT')
     elif file_spec.startswith('VGISS'):
         file_spec = file_spec.replace('.LBL', '.IMG')
+    elif file_spec.startswith('CORSS'):
+        file_spec = file_spec.replace('.LBL', '.TAB')
 
     pdsf = pdsfile.PdsFile.from_filespec(file_spec)
     try:
