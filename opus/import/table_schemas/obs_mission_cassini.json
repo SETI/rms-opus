@@ -204,7 +204,7 @@
     {
         "field_name": "spacecraft_clock_count1",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
               "FUNCTION",
@@ -237,7 +237,7 @@
     {
         "field_name": "spacecraft_clock_count2",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
               "FUNCTION",
@@ -271,7 +271,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_ert1_OBS"
+            "obs_mission_cassini_<INST>_ert1_<TYPE>"
         ],
         "data_source_order": 10,
         "val_min": -94607970.0,
@@ -304,7 +304,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_ert2_OBS"
+            "obs_mission_cassini_<INST>_ert2_<TYPE>"
         ],
         "data_source_order": 11,
         "val_min": -94607970.0,

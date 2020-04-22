@@ -898,7 +898,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                 break
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
-                    elif instrument_name == 'VGISS' or mission_abbrev == 'GB':
+                    elif (instrument_name == 'VGISS' or
+                          mission_abbrev == 'GB' or
+                          instrument_name == 'CORSS'):
                         # The VGISS and ground-based supplemental indexes are
                         # keyed by FILE_SPECIFICATION_NAME
                         # (DATA/C13854XX/C1385455_RAW.LBL)
@@ -1019,7 +1021,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif ('supp_index' in metadata and
-              (instrument_name == 'VGISS' or mission_abbrev == 'GB')):
+              (instrument_name == 'VGISS' or
+               mission_abbrev == 'GB' or
+               instrument_name == 'CORSS')):
             # Match up the FILENAME
             filename = index_row['FILE_SPECIFICATION_NAME']
             supp_index = metadata['supp_index']

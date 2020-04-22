@@ -139,7 +139,7 @@ def helper_cassini_obs_name(**kwargs):
         supp_index_row = metadata.get('supp_index_row', None) # COUVIS & CORSS
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
-    if obs_id is None:
+    if obs_id is None or obs_id == '':
         import_util.log_nonrepeating_error('No OBSERVATION_ID found')
 
     return obs_id
@@ -334,6 +334,8 @@ def populate_obs_general_CO_planet_id_OBS(**kwargs):
         return 'OTH'
     return planet_id
 
+def populate_obs_general_CO_planet_id_OCC(**kwargs):
+    return 'SAT'
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_MISSION_CASSINI
@@ -410,6 +412,9 @@ def populate_obs_mission_cassini_cassini_target_code(**kwargs):
 def populate_obs_mission_cassini_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
+
+    if 'TARGET_NAME' not in index_row: # RSS
+        return None
 
     target_name = index_row['TARGET_NAME'].title()
 
