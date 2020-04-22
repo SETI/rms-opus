@@ -3,28 +3,21 @@ import datetime
 import itertools
 import re
 import textwrap
+import statistics
 import urllib.parse
-from enum import auto, Flag
+from enum import Flag
 from ipaddress import IPv4Address
-from operator import attrgetter
-from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence
+from operator import attrgetter, itemgetter, methodcaller
+from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence, Set, TypeVar, Iterable, Callable
 
 from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import Session, HostInfo
 from opus import slug
-from opus.info_flags import InfoFlags
+from opus.configuration_flags import InfoFlags, ActionFlags
 from opus.query_handler import QueryHandler, ColumnSlugInfo
 from opus.slug import Info
-
-
-class ActionFlags(Flag):
-    HAS_SEARCH = auto()
-    FETCHED_GALLERY = auto()
-    HAS_METADATA = auto()
-    HAS_DOWNLOAD = auto()
-    HAS_OBSOLETE_SLUG = auto()
 
 
 class Configuration(AbstractConfiguration):
@@ -35,6 +28,7 @@ class Configuration(AbstractConfiguration):
     _default_column_slug_info: ColumnSlugInfo
     _api_host_url: str
     _debug_show_all: bool
+    _no_sessions: bool
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
@@ -51,6 +45,14 @@ class Configuration(AbstractConfiguration):
 
     def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> 'TemplateInfo':
         return TemplateInfo(self, host_infos_by_ip)
+
+    @property
+    def api_host_url(self) -> str:
+        return self._api_host_url
+
+    @property
+    def no_sessions(self) -> bool:
+        return self._no_sessions
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
         all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
@@ -84,7 +86,9 @@ class SessionInfo(AbstractSessionInfo):
     """
     _session_search_slugs: Dict[str, slug.Info]
     _session_column_slugs: Dict[str, slug.Info]
-    _session_sort_slugs: Dict[str, slug.Info]
+    _session_sort_slugs_list: Set[Tuple[slug.Info, ...]]
+    _help_files: Set[str]
+    _downloads: List[Tuple[str, int]]
     _action_flags: ActionFlags
     _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
@@ -97,7 +101,9 @@ class SessionInfo(AbstractSessionInfo):
                  show_all: bool, uses_html: bool):
         self._session_search_slugs = dict()
         self._session_column_slugs = dict()
-        self._session_sort_slugs = dict()
+        self._session_sort_slugs_list = set()
+        self._help_files = set()
+        self._downloads = []
         self._action_flags = ActionFlags(0)
         self._info_flags = InfoFlags(0)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
@@ -119,11 +125,8 @@ class SessionInfo(AbstractSessionInfo):
             self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
             self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
 
-    def add_sort_slug(self, slug: str, slug_info: slug.Info) -> None:
-        self._session_sort_slugs[slug] = slug_info
-        if slug_info.flags.is_obsolete():
-            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
+    def add_sort_slugs_list(self, slugs_list: Sequence[slug.Info]) -> None:
+        self._session_sort_slugs_list.add(tuple(slugs_list))
 
     def changed_search_slugs(self) -> None:
         self._action_flags |= ActionFlags.HAS_SEARCH
@@ -141,6 +144,9 @@ class SessionInfo(AbstractSessionInfo):
 
     def update_info_flags(self, flags: InfoFlags) -> None:
         self._info_flags |= flags
+
+    def register_download(self, filename: str, size: int) -> None:
+        self._downloads.append((filename, size))
 
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
@@ -162,14 +168,27 @@ class SessionInfo(AbstractSessionInfo):
         column_slug_list = fixit(self._session_column_slugs)
         return search_slug_list, column_slug_list
 
-    def get_slug_names(self) -> Sequence[List[str]]:
-        def get_names(slug_dict: Dict[str, slug.Info]) -> List[str]:
-            return list({value.family.label for value in slug_dict.values()})
-        return [get_names(x)
-                for x in (self._session_search_slugs, self._session_column_slugs, self._session_sort_slugs)]
+    def get_search_names(self) -> List[str]:
+        return list({value.family.label for value in self._session_search_slugs.values()})
+
+    def get_metadata_names(self) -> List[str]:
+        return list({value.family.label for value in self._session_column_slugs.values()})
+
+    def get_sort_list_names(self) -> List[Tuple[str, ...]]:
+        return [tuple(value.family.label for value in sort_list)
+                for sort_list in self._session_sort_slugs_list]
 
     def get_session_flags(self) -> ActionFlags:
         return self._action_flags
+
+    def get_info_flags(self) -> InfoFlags:
+        return self._info_flags
+
+    def get_help_files(self) -> Set[str]:
+        return self._help_files
+
+    def get_downloads(self) -> List[Tuple[str, int]]:
+        return self._downloads
 
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
@@ -200,7 +219,7 @@ class SessionInfo(AbstractSessionInfo):
         method_and_match = self.pattern_registry.find_matching_pattern(path)
         if method_and_match:
             method, match = method_and_match
-            info, reference = method(self, query, match)
+            info, reference = method(self, entry, query, match)
         else:
             info, reference = [], None
         if self._show_all and not info:
@@ -219,27 +238,28 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
-    def __api_data(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __api_data(self, _log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return self._query_handler.handle_query(query, match.group(1))
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
     @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
-    def __view_metadata(self, _: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __view_metadata(self,  _log_entry: LogEntry, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.update_info_flags(InfoFlags.VIEWED_SLIDE_SHOW)
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
 
     @pattern_registry.register(r'/__api/data\.csv')
-    def __download_results_csv(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __download_results_csv(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_ALL_RESULTS)
         return ["Download CSV of Search Results"], None
 
     @pattern_registry.register(r'/__api/metadata_v2/(.*)\.csv')
-    def __download_metadata_csv(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_metadata_csv(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_ONE_OBSERVATION)
         opus_id = match.group(1)
+        self.register_download(opus_id + '.csv', log_entry.size)
         extra = 'Selected' if query.get('cols') else 'All'
         text = f'Download CSV of {extra} Metadata for OPUSID'
         if self._uses_html:
@@ -248,10 +268,11 @@ class SessionInfo(AbstractSessionInfo):
             return [f'{text}: { opus_id }'], None
 
     @pattern_registry.register(r'/__api/download/(.*)\.zip')
-    def __download_archive(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_archive(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
         opus_id = match.group(1)
+        self.register_download(opus_id + '.zip', log_entry.size)
         extra = 'URL' if query.get('urlonly') not in (None, "0") else 'Data'
         text = f'Download {extra} Archive for OPUSID'
         if self._uses_html:
@@ -265,12 +286,12 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__collections/view\.html')
     @pattern_registry.register(r'/__cart/view\.html')
-    def __collections_view_cart(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __collections_view_cart(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         return ['View Cart'], None
 
     @pattern_registry.register(r'/__collections/data\.csv')
     @pattern_registry.register(r'/__cart/data\.csv')
-    def __download_cart_metadata_csv(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __download_cart_metadata_csv(self, _: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_CART)
         return ["Download CSV of Selected Metadata for Cart"], None
@@ -278,7 +299,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/download\.(json|zip)')
     @pattern_registry.register(r'/__collections/download/default\.zip')
     @pattern_registry.register(r'/__cart/download\.json')
-    def __create_archive(self, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __create_archive(self, _log_entry: LogEntry, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_FILE_FOR_CART)
         has_url = query.get('urlonly') not in [None, '0']
@@ -292,7 +313,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/(view)\.json')
     @pattern_registry.register(r'/__collections/default/(view)\.json')
     @pattern_registry.register(r'/__cart/(status)\.json')
-    def __download_product_types(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __download_product_types(self, _log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         if match.group(1) == 'status' and query.get('download') != '1':
             # The __cart/status version requires &download=1
             return [], None
@@ -325,13 +346,13 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/reset\.(html|json)')
     @pattern_registry.register(r'/__collections/default/reset\.(html|json)')
     @pattern_registry.register(r'/__cart/reset\.(html|json)')
-    def __reset_cart(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __reset_cart(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         return ['Empty Cart'], None
 
     @pattern_registry.register(r'/__collections/(add|remove)\.json')
     @pattern_registry.register(r'/__collections/default/(add|remove)\.json')
     @pattern_registry.register(r'/__cart/(add|remove)\.json')
-    def __add_remove_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __add_remove_cart(self, _log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         opus_id = query.get('opusid') or query.get('opus_id')  # opusid is new name, opus_id is old
         selection = match.group(1).title()
         if self._uses_html and opus_id:
@@ -342,7 +363,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/(add|remove)range\.json')
     @pattern_registry.register(r'/__collections/default/(add|remove)range\.json')
     @pattern_registry.register(r'/__cart/(add|remove)range\.json')
-    def __add_remove_range_to_cart(self, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __add_remove_range_to_cart(self, _log: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         selection = match.group(1).title()
         query_range = query.get('range', '???').replace(',', ', ')
         return [f'Cart {selection} Range: {query_range}'], None
@@ -350,7 +371,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__collections/addall\.json')
     @pattern_registry.register(r'/__collections/default/addall\.json')
     @pattern_registry.register(r'/__cart/addall\.json')
-    def __add_all_to_cart(self, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __add_all_to_cart(self, _log_entry: LogEntry, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         query_range = query.get('range', None)
         if query_range:
             query_range = query_range.replace(',', ', ')
@@ -364,7 +385,7 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__forms/column_chooser\.html')
     @pattern_registry.register(r'/__selectmetadatamodal\.json')
-    def __column_chooser(self, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+    def __column_chooser(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.update_info_flags(InfoFlags.VIEWED_SELECT_METADATA)
         return ['Metadata Selector'], None
 
@@ -373,7 +394,7 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__initdetail/(.*)\.html')
-    def __initialize_detail(self, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __initialize_detail(self, _log_entry: LogEntry, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.update_info_flags(InfoFlags.VIEWED_DETAIL_TAB)
         opus_id = match.group(1)
         if self._uses_html:
@@ -386,11 +407,12 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__help/(\w+)\.(html|pdf)')
-    def __read_help_information(self, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+    def __read_help_information(self, _log_entry: LogEntry, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         help_type, file_type = match.group(1, 2)
-        help_name = help_type.upper() if help_type == 'faq' else help_type.title()
+        help_name = help_type.upper() if help_type == 'faq' else help_type
         flag = InfoFlags.VIEWED_HELP_FILE if file_type == 'html' else InfoFlags.VIEWED_HELP_FILE_AS_PDF
         self.update_info_flags(flag)
+        self._help_files.add(help_name + '.' + file_type)
         return [f'Help {help_name}'], None
 
     #
@@ -399,6 +421,9 @@ class SessionInfo(AbstractSessionInfo):
 
     def __create_opus_url(self, opus_id: str) -> str:
         return self.safe_format('/opus/#/view=detail&amp;detail={0}', opus_id)
+
+
+T = TypeVar('T')
 
 
 class TemplateInfo:
@@ -426,7 +451,7 @@ class TemplateInfo:
 
     @property
     def api_host_url(self) -> str:
-        return self._configuration._api_host_url
+        return self._configuration.api_host_url
 
     @property
     def ip_to_host_name(self) -> Dict[IPv4Address, str]:
@@ -434,7 +459,7 @@ class TemplateInfo:
 
     @property
     def no_sessions(self) -> bool:
-        return self._configuration._no_sessions
+        return self._configuration.no_sessions
 
     @property
     def session_count(self) -> int:
@@ -442,8 +467,15 @@ class TemplateInfo:
 
     @property
     def total_duration(self) -> datetime.timedelta:
-        total = sum((session.total_time for session in self._sessions), datetime.timedelta(0))
-        return total
+        return sum((session.total_time for session in self._sessions), datetime.timedelta(0))
+
+    @property
+    def median_duration(self) -> datetime.timedelta:
+        return statistics.median(session.total_time for session in self._sessions)
+
+    @property
+    def mean_duration(self) -> datetime.timedelta:
+        return statistics.mean(session.total_time for session in self._sessions)
 
     def flag_name_to_flag(self, name: str) -> Flag:
         return self._flag_name_to_flag[name]
@@ -455,33 +487,52 @@ class TemplateInfo:
                                                                     lambda host_info: host_info.start_time().date())]
         return host_infos_by_date
 
-    def generate_ordered_slugs(self) -> Sequence[List[Tuple[str, int, List[List[Session]]]]]:
-        search_name_info: List[Tuple[str, Session]] = []
-        column_name_info: List[Tuple[str, Session]] = []
-        sort_name_info: List[Tuple[str, Session]] = []
-        for session in self._sessions:
-            search_names, column_names, sort_names = session.session_info.get_slug_names()
-            search_name_info.extend((name, session) for name in search_names)
-            column_name_info.extend((name, session) for name in column_names)
-            sort_name_info.extend((name, session) for name in sort_names)
+    def generate_ordered_search(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(lambda si: si.get_search_names())
 
-        def order_name_info(name_info: List[Tuple[str, Session]]) -> List[Tuple[str, int, List[List[Session]]]]:
-            name_info_dict: Dict[str, List[Session]] = collections.defaultdict(list)
-            for name, session in name_info:
-                name_info_dict[name].append(session)
-            info_by_name = sorted(name_info_dict.items(), key=lambda x: (-len(x[1]), x[0].lower()))
-            temp = [(name, len(sessions), self.group_sessions_by_host_id(sessions))
-                    for name, sessions in info_by_name]
-            return temp
-        return list(map(order_name_info, (search_name_info, column_name_info, sort_name_info)))
+    def generate_ordered_metadata(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(lambda si: si.get_metadata_names())
 
     def generate_ordered_info_flags(self) -> Sequence[Tuple[Flag, int, List[List[Session]]]]:
-        result = []
-        for flag in InfoFlags:
-            flagged_sessions = [session for session in self._sessions
-                                if flag in cast(SessionInfo, session.session_info)._info_flags]
-            grouped_sessions = self.group_sessions_by_host_id(flagged_sessions)
-            result.append((flag, len(flagged_sessions), grouped_sessions))
+        temp = cast(Iterable[InfoFlags], InfoFlags)
+        return self._collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), temp)
+
+    def generate_ordered_sort_lists(self) -> Sequence[Tuple[Tuple[str], int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(methodcaller("get_sort_list_names"))
+
+    def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
+        temp = self._collect_sessions_by_info(methodcaller("get_help_files"))
+        return temp
+
+    def generate_ordered_download_files(self) -> Sequence[Tuple[str, int, List[Tuple[Session, int]]]]:
+        info_dict: Dict[str, List[Tuple[Session, int]]] = collections.defaultdict(list)
+        for session in self._sessions:
+            session_info = cast(SessionInfo, session.session_info)
+            for filename, size in session_info.get_downloads():
+                info_dict[filename].append((session, size))
+        result: List[Tuple[str, int, List[Tuple[Session, int]]]] = []
+        for filename, sessions_and_sizes in info_dict.items():
+            sessions_and_sizes.sort(key=itemgetter(1), reverse=True)
+            total_size = sum(size for _, size in sessions_and_sizes)
+            result.append((filename, total_size, sessions_and_sizes))
+        result.sort(key=itemgetter(1), reverse=True)
+        return result
+
+    def _collect_sessions_by_info(self,
+                                  func: Callable[[SessionInfo], Iterable[T]],
+                                  fixed: Optional[Iterable[T]] = None) -> Sequence[Tuple[T, int, List[List[Session]]]]:
+        info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
+        for session in self._sessions:
+            for item in func(cast(SessionInfo, session.session_info)):
+                info_dict[item].append(session)
+        if fixed:
+            result = [(item, len(info_dict[item]), self.group_sessions_by_host_id(info_dict[item]))
+                      for item in fixed]
+        else:
+            result = [(item, len(sessions), self.group_sessions_by_host_id(sessions))
+                      for item, sessions in info_dict.items()]
+            result.sort(key=itemgetter(0))
+            result.sort(key=itemgetter(1), reverse=True)
         return result
 
     def group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
@@ -505,4 +556,3 @@ class TemplateInfo:
             return 1, tuple(reversed(name.lower().split('.')))
         else:
             return 2, ip
-

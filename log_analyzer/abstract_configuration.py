@@ -1,7 +1,7 @@
 import abc
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, Sequence
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
 
 from markupsafe import Markup
 
@@ -30,7 +30,6 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
 
-
 class AbstractSessionInfo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
@@ -38,10 +37,6 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_session_flags(self) -> Flag:
-        raise Exception()
-
-    @abc.abstractmethod
-    def get_slug_names(self) -> Sequence[List[str]]:
         raise Exception()
 
     @staticmethod
@@ -59,7 +54,7 @@ class PatternRegistry:
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
 
-    METHOD = Callable[[Any, Dict[str, str], Match[str]], SESSION_INFO]
+    METHOD = Callable[[Any, LogEntry, Dict[str, str], Match[str]], SESSION_INFO]
 
     patterns: List[Tuple[Pattern[str], METHOD]]
 

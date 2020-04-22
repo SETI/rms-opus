@@ -43,7 +43,7 @@ def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -
 
 
 def __parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
-    '''Figure out the date to use, based on the --cronjob_date argument.'''
+    """Figure out the date to use, based on the --cronjob_date argument."""
     cronjob_date = args.cronjob_date
     # if the argument isn't present, use today
     if not cronjob_date:

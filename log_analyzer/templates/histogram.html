@@ -9,13 +9,13 @@
 <script>
 $(function()
 {
-    let ip_data = [
+    const ip_data = [
         {% for host_info in host_infos_by_ip %}
             {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
         {% endfor %}
     ];
 
-    let session_data = [
+    const session_data = [
         {% for host_info in host_infos_by_ip %}
             {% for session in host_info.sessions %}
                 {{ [session.duration().total_seconds() / 60, 480.0]|min }},
@@ -23,7 +23,7 @@ $(function()
         {% endfor %}
     ];
 
-    var layout = {
+    let layout = {
         xaxis: {
             title: "Minutes",
             tickangle: -90,

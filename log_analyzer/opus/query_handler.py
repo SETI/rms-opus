@@ -9,8 +9,8 @@ from typing import Dict, Tuple, List, Optional, Any, cast, NamedTuple, Sequence
 from markupsafe import Markup
 
 from opus import slug as slug
-from opus.info_flags import InfoFlags
-from opus.slug import FamilyType
+from opus.configuration_flags import InfoFlags
+from opus.slug import FamilyType, Info
 
 
 class SearchClause(NamedTuple):
@@ -327,6 +327,7 @@ class QueryHandler:
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
+            sort_list: List[Info] = []
             columns = new_sort_order.split(',')
             result.append(f'Change Sort Order:')
             for column in columns:
@@ -335,10 +336,12 @@ class QueryHandler:
                     column = column[1:]
                 else:
                     order = 'Ascending'
-                slug_info = self._slug_map.get_info_for_column_slug(column)
+                slug_info: Optional[Info] = self._slug_map.get_info_for_column_slug(column)
                 assert slug_info
-                self._session_info.add_sort_slug(column, slug_info)
+                sort_list.append(slug_info)
                 result.append(f'        "{slug_info.label}" ({order})')
+
+            self._session_info.add_sort_slugs_list(sort_list)
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
