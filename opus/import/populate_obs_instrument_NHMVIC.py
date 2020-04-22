@@ -92,7 +92,10 @@ def populate_obs_general_NHMVIC_observation_type_OBS(**kwargs):
 def populate_obs_pds_NHMVIC_note_OBS(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    return supp_index_row['OBSERVATION_DESC']
+    note = supp_index_row['OBSERVATION_DESC']
+    if note == 'NULL':
+        note = None
+    return note
 
 def populate_obs_general_NHMVIC_primary_file_spec_OBS(**kwargs):
     return _NHMVIC_file_spec_helper(**kwargs)
