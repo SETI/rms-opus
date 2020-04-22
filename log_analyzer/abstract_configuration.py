@@ -40,10 +40,6 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
     def get_session_flags(self) -> Flag:
         raise Exception()
 
-    @abc.abstractmethod
-    def get_slug_names(self) -> Sequence[List[str]]:
-        raise Exception()
-
     @staticmethod
     def quote_and_join_list(string_list: List[str]) -> str:
         return ', '.join(f'"{string}"' for string in string_list)

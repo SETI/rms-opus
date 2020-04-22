@@ -4,27 +4,19 @@ import itertools
 import re
 import textwrap
 import urllib.parse
-from enum import auto, Flag
+from enum import Flag
 from ipaddress import IPv4Address
-from operator import attrgetter
-from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence
+from operator import attrgetter, itemgetter
+from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence, Set, TypeVar, Iterable, Callable
 
 from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import Session, HostInfo
 from opus import slug
-from opus.info_flags import InfoFlags
+from opus.configuration_flags import InfoFlags, ActionFlags
 from opus.query_handler import QueryHandler, ColumnSlugInfo
 from opus.slug import Info
-
-
-class ActionFlags(Flag):
-    HAS_SEARCH = auto()
-    FETCHED_GALLERY = auto()
-    HAS_METADATA = auto()
-    HAS_DOWNLOAD = auto()
-    HAS_OBSOLETE_SLUG = auto()
 
 
 class Configuration(AbstractConfiguration):
@@ -84,7 +76,8 @@ class SessionInfo(AbstractSessionInfo):
     """
     _session_search_slugs: Dict[str, slug.Info]
     _session_column_slugs: Dict[str, slug.Info]
-    _session_sort_slugs: Dict[str, slug.Info]
+    _session_sort_slugs_list: Set[Tuple[slug.Info,...]]
+    _help_files: Set[str]
     _action_flags: ActionFlags
     _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
@@ -97,7 +90,8 @@ class SessionInfo(AbstractSessionInfo):
                  show_all: bool, uses_html: bool):
         self._session_search_slugs = dict()
         self._session_column_slugs = dict()
-        self._session_sort_slugs = dict()
+        self._session_sort_slugs_list = set()
+        self._help_files = set()
         self._action_flags = ActionFlags(0)
         self._info_flags = InfoFlags(0)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
@@ -119,11 +113,8 @@ class SessionInfo(AbstractSessionInfo):
             self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
             self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
 
-    def add_sort_slug(self, slug: str, slug_info: slug.Info) -> None:
-        self._session_sort_slugs[slug] = slug_info
-        if slug_info.flags.is_obsolete():
-            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
+    def add_sort_slugs_list(self, slugs_list: Sequence[slug.Info]) -> None:
+        self._session_sort_slugs_list.add(tuple(slugs_list))
 
     def changed_search_slugs(self) -> None:
         self._action_flags |= ActionFlags.HAS_SEARCH
@@ -162,11 +153,15 @@ class SessionInfo(AbstractSessionInfo):
         column_slug_list = fixit(self._session_column_slugs)
         return search_slug_list, column_slug_list
 
-    def get_slug_names(self) -> Sequence[List[str]]:
-        def get_names(slug_dict: Dict[str, slug.Info]) -> List[str]:
-            return list({value.family.label for value in slug_dict.values()})
-        return [get_names(x)
-                for x in (self._session_search_slugs, self._session_column_slugs, self._session_sort_slugs)]
+    def get_search_names(self) -> List[str]:
+        return list({value.family.label for value in self._session_search_slugs.values()})
+
+    def get_metadata_names(self) -> List[str]:
+        return list({value.family.label for value in self._session_column_slugs.values()})
+
+    def get_sort_list_names(self) -> List[Tuple[str]]:
+        return [tuple(value.family.label for value in sort_list)
+                for sort_list in self._session_sort_slugs_list]
 
     def get_session_flags(self) -> ActionFlags:
         return self._action_flags
@@ -391,6 +386,7 @@ class SessionInfo(AbstractSessionInfo):
         help_name = help_type.upper() if help_type == 'faq' else help_type.title()
         flag = InfoFlags.VIEWED_HELP_FILE if file_type == 'html' else InfoFlags.VIEWED_HELP_FILE_AS_PDF
         self.update_info_flags(flag)
+        self._help_files.add(help_name + '.' + file_type)
         return [f'Help {help_name}'], None
 
     #
@@ -399,6 +395,8 @@ class SessionInfo(AbstractSessionInfo):
 
     def __create_opus_url(self, opus_id: str) -> str:
         return self.safe_format('/opus/#/view=detail&amp;detail={0}', opus_id)
+
+T = TypeVar('T')
 
 
 class TemplateInfo:
@@ -456,24 +454,15 @@ class TemplateInfo:
         return host_infos_by_date
 
     def generate_ordered_slugs(self) -> Sequence[List[Tuple[str, int, List[List[Session]]]]]:
-        search_name_info: List[Tuple[str, Session]] = []
-        column_name_info: List[Tuple[str, Session]] = []
-        sort_name_info: List[Tuple[str, Session]] = []
-        for session in self._sessions:
-            search_names, column_names, sort_names = session.session_info.get_slug_names()
-            search_name_info.extend((name, session) for name in search_names)
-            column_name_info.extend((name, session) for name in column_names)
-            sort_name_info.extend((name, session) for name in sort_names)
+        temp1 = self._collect_sessions_by_info(lambda si:si.get_search_names())
+        temp2 = self._collect_sessions_by_info(lambda si:si.get_metadata_names())
+        return [temp1, temp2]
 
-        def order_name_info(name_info: List[Tuple[str, Session]]) -> List[Tuple[str, int, List[List[Session]]]]:
-            name_info_dict: Dict[str, List[Session]] = collections.defaultdict(list)
-            for name, session in name_info:
-                name_info_dict[name].append(session)
-            info_by_name = sorted(name_info_dict.items(), key=lambda x: (-len(x[1]), x[0].lower()))
-            temp = [(name, len(sessions), self.group_sessions_by_host_id(sessions))
-                    for name, sessions in info_by_name]
-            return temp
-        return list(map(order_name_info, (search_name_info, column_name_info, sort_name_info)))
+    def generate_ordered_search(self) -> List[Tuple[str, int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(lambda si:si.get_search_names())
+
+    def generate_ordered_metadata(self) -> List[Tuple[str, int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(lambda si:si.get_metadata_names())
 
     def generate_ordered_info_flags(self) -> Sequence[Tuple[Flag, int, List[List[Session]]]]:
         result = []
@@ -483,6 +472,26 @@ class TemplateInfo:
             grouped_sessions = self.group_sessions_by_host_id(flagged_sessions)
             result.append((flag, len(flagged_sessions), grouped_sessions))
         return result
+
+    def generate_ordered_sort_lists(self) -> Sequence[Tuple[Tuple[str], int, List[List[Session]]]]:
+        return self._collect_sessions_by_info(lambda si: si.get_sort_list_names())
+
+    def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
+        temp = self._collect_sessions_by_info(lambda si: si._help_files)
+        return temp
+
+    def _collect_sessions_by_info(self, func: Callable[[SessionInfo], Iterable[T]]) -> \
+            Sequence[Tuple[T, int, List[List[Session]]]]:
+        info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
+        for session in self._sessions:
+            for item in func(cast(SessionInfo, session.session_info)):
+                info_dict[item].append(session)
+        result = [(item, len(sessions), self.group_sessions_by_host_id(sessions))
+                  for item, sessions in info_dict.items()]
+        result.sort(key=itemgetter(0))
+        result.sort(key=itemgetter(1), reverse=True)
+        return result
+
 
     def group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
         sessions.sort(key=lambda session: session.start_time())

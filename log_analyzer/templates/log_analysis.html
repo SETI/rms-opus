@@ -227,17 +227,26 @@ because it requires that all the navigation tabs be within a single unordered li
 {% endmacro %}
 
 {% with %}
-    {% set (ordered_search_slugs, ordered_column_slugs, ordered_sort_slugs) = configuration.generate_ordered_slugs() %}
+    {% set ordered_search_slugs = configuration.generate_ordered_search() %}
+    {% set ordered_metadata_slugs = configuration.generate_ordered_metadata() %}
     {% set ordered_action_flags = configuration.generate_ordered_info_flags() %}
+    {% set ordered_search_lists = configuration.generate_ordered_sort_lists() %}
+    {% set ordered_help_files = configuration.generate_ordered_help_files() %}
     <hr/>
     {{ summarize_slugs('Search Terms', ordered_search_slugs) }}
     <hr/>
-    {{ summarize_slugs('Metadata', ordered_column_slugs) }}
+    {{ summarize_slugs('Metadata', ordered_metadata_slugs) }}
     <hr/>
-    {{ summarize_slugs('Sort', ordered_sort_slugs) }}
+    {% call(search_list) summarize_info('Sort Lists', ordered_search_lists) %}
+        {{  search_list|join(', ') if search_list else '<empty>' }}
+    {% endcall %}
     <hr/>
     {% call(flag) summarize_info('Actions', ordered_action_flags) %}
         {{  flag.get_fancy_name() }}
+    {% endcall %}
+    <hr/>
+    {% call(file_name) summarize_info('Help Files', ordered_help_files) %}
+        <samp>{{  file_name }}</samp>
     {% endcall %}
 {%  endwith %}
 </div>  ## #Summary
