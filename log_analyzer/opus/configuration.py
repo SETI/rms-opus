@@ -95,6 +95,7 @@ class SessionInfo(AbstractSessionInfo):
     _session_sort_slugs_list: Set[Tuple[slug.Info, ...]]
     _help_files: Set[str]
     _downloads: List[Tuple[str, int]]
+    _product_types: Set[str]
     _action_flags: ActionFlags
     _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
@@ -111,6 +112,7 @@ class SessionInfo(AbstractSessionInfo):
         self._session_sort_slugs_list = set()
         self._help_files = set()
         self._downloads = []
+        self._product_types = set()
         self._action_flags = ActionFlags(0)
         self._info_flags = InfoFlags(0)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
@@ -155,6 +157,9 @@ class SessionInfo(AbstractSessionInfo):
     def register_download(self, filename: str, size: int) -> None:
         self._downloads.append((filename, size))
 
+    def register_product_types(self, product_types: Sequence[str]) -> None:
+        self._product_types.update(product_types)
+
     def register_sessionless_download(self, path: str, entry: LogEntry) -> None:
         match = re.fullmatch(r"/downloads/([^/]+)", path)
         if match:
@@ -198,6 +203,9 @@ class SessionInfo(AbstractSessionInfo):
 
     def get_help_files(self) -> Set[str]:
         return self._help_files
+
+    def get_product_types(self) -> Set[str]:
+        return self._product_types
 
     def get_downloads(self) -> List[Tuple[str, int]]:
         return self._downloads
@@ -327,6 +335,7 @@ class SessionInfo(AbstractSessionInfo):
         has_url = query.get('urlonly') not in [None, '0']
         ptypes_field = query.get('types', None)
         ptypes = ptypes_field.split(',') if ptypes_field else []
+        self.register_product_types(ptypes)
         joined_ptypes = self.quote_and_join_list(sorted(ptypes))
         text = f'Download {"URL" if has_url else "Data"} Archive for Cart: {joined_ptypes}'
         return [text], None
@@ -342,6 +351,7 @@ class SessionInfo(AbstractSessionInfo):
         self.performed_download()
         ptypes_field = query.get('types', None)
         new_ptypes = ptypes_field.split(',') if ptypes_field else []
+        self.register_product_types(new_ptypes)
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
 
@@ -436,7 +446,10 @@ class SessionInfo(AbstractSessionInfo):
             flag = InfoFlags.VIEWED_HELP_FILE if file_type == 'html' else InfoFlags.VIEWED_HELP_FILE_AS_PDF
             self.update_info_flags(flag)
         self._help_files.add(help_name + '.' + file_type)
-        return [f'Help {help_name}'], None
+        if self._uses_html:
+            return [self.safe_format('Help <samp>{}</samp>', help_name)], None
+        else:
+            return [f'Help {help_name}'], None
 
     #
     # Various utilities
@@ -508,7 +521,10 @@ class TemplateInfo:
         return self.__collect_sessions_by_info(methodcaller("get_sort_list_names"))
 
     def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        temp = self.__collect_sessions_by_info(methodcaller("get_help_files"))
+        return self.__collect_sessions_by_info(methodcaller("get_help_files"))
+
+    def generate_ordered_product_types(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
+        temp = self.__collect_sessions_by_info(methodcaller("get_product_types"))
         return temp
 
     def generate_ordered_download_files(self) -> \
