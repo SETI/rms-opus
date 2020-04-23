@@ -85,9 +85,9 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <nav class="navbar navbar-light bg-light">
 <ul class="nav nav-tabs">
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#Summary">Summary</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByIP">By IP</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByTime">By Time</a></li>
-    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#Summary">Summary</a></li>
 </ul>
 </nav>
 
@@ -135,6 +135,13 @@ because it requires that all the navigation tabs be within a single unordered li
     {% endif %}
 {% endmacro %}
 
+{% macro log_entry_ip_or_name(log_entry) %}
+    {% if log_entry.host_ip in ip_to_host_name %}
+        <a data-toggle="tooltip" title="{{ log_entry.host_ip }}">{{ ip_to_host_name[log_entry.host_ip] }}</a>
+    {% else %}
+        {{ log_entry.host_ip }}
+    {% endif %}
+{% endmacro %}
 
 <div id="ByIP" class="tab-pane">
 {% for host_info in host_infos_by_ip %}
@@ -169,10 +176,10 @@ because it requires that all the navigation tabs be within a single unordered li
 </div>  ## #ByTime
 
 <div id="Summary" class="tab-pane show active">
-{{ configuration.session_count }} total sessions<br>
-{{ configuration.total_duration }} total duration<br>
-{{ configuration.mean_duration}} mean duration<br>
-{{ configuration.median_duration}} median duration<br>
+Total sessions: {{ configuration.session_count }}<br>
+Total duration: {{ configuration.total_duration }}<br>
+Mean duration: {{ configuration.mean_duration}}<br>
+Median duration: {{ configuration.median_duration}}<br>
 <hr/>
 <details class="Summary1"><summary>Usage by IP</summary>
     <a href="#" class="SessionLink Summary2" data-target="#Histogram">Histogram</a>
@@ -264,11 +271,17 @@ because it requires that all the navigation tabs be within a single unordered li
                 <span class="badge">({{ sessions_and_sizes|length }})</span> {{ total_size|filesizeformat }}
             </summary>
             <div class="Summary3">
-            {% for session, size in sessions_and_sizes %}
-                {{- session_ip_or_name(session) -}}
-                <a href="#" class="SessionLink" data-target="#{{ session.id }}">
-                    {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} {{ size|filesizeformat -}}
-                </a>
+            {% for session, log_entry, size in sessions_and_sizes %}
+                {%  if session %}
+                    {{- session_ip_or_name(session) -}}
+                    <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                        {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }}
+                    </a>
+                {%  else %}
+                    {{- log_entry_ip_or_name(log_entry) -}}
+                    {{  log_entry.time.strftime("%Y %b %d %H:%M:%S") }}
+                {% endif %}
+                {{ size|filesizeformat -}}
                 <br/>
             {% endfor %}
             </div>

@@ -34,7 +34,6 @@ $(function()
         },
         yaxis: {title: ""},
         bargap: 0.05,
-
     };
 
     layout.yaxis.title = '# Host IPs';
@@ -45,5 +44,7 @@ $(function()
     layout.xaxis.autorange=false;
     Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
 });
+
+
 </script>
 
