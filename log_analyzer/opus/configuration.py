@@ -160,7 +160,6 @@ class SessionInfo(AbstractSessionInfo):
         if match:
             self._downloads_sessionless.append((match.group(1), entry))
 
-
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
             return [(slug, info[slug].flags.is_obsolete())
@@ -202,6 +201,10 @@ class SessionInfo(AbstractSessionInfo):
 
     def get_downloads(self) -> List[Tuple[str, int]]:
         return self._downloads
+
+    @classmethod
+    def get_downloads_sessionless(cls) -> List[Tuple[str, LogEntry]]:
+        return cls._downloads_sessionless
 
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
@@ -481,24 +484,6 @@ class TemplateInfo:
     def no_sessions(self) -> bool:
         return self._configuration.no_sessions
 
-    @property
-    def session_count(self) -> int:
-        return len(self._sessions)
-
-    @property
-    def total_duration(self) -> datetime.timedelta:
-        return sum((session.total_time for session in self._sessions), datetime.timedelta(0))
-
-    @property
-    def median_duration(self) -> datetime.timedelta:
-        median = statistics.median(session.total_time.total_seconds() for session in self._sessions)
-        return datetime.timedelta(seconds=round(median))
-
-    @property
-    def mean_duration(self) -> datetime.timedelta:
-        mean = statistics.mean(session.total_time.total_seconds() for session in self._sessions)
-        return datetime.timedelta(seconds=round(mean))
-
     def flag_name_to_flag(self, name: str) -> Flag:
         return self._flag_name_to_flag[name]
 
@@ -510,29 +495,30 @@ class TemplateInfo:
         return host_infos_by_date
 
     def generate_ordered_search(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        return self._collect_sessions_by_info(lambda si: si.get_search_names())
+        return self.__collect_sessions_by_info(lambda si: si.get_search_names())
 
     def generate_ordered_metadata(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        return self._collect_sessions_by_info(lambda si: si.get_metadata_names())
+        return self.__collect_sessions_by_info(lambda si: si.get_metadata_names())
 
     def generate_ordered_info_flags(self) -> Sequence[Tuple[Flag, int, List[List[Session]]]]:
         temp = cast(Iterable[InfoFlags], InfoFlags)
-        return self._collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), temp)
+        return self.__collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), temp)
 
     def generate_ordered_sort_lists(self) -> Sequence[Tuple[Tuple[str], int, List[List[Session]]]]:
-        return self._collect_sessions_by_info(methodcaller("get_sort_list_names"))
+        return self.__collect_sessions_by_info(methodcaller("get_sort_list_names"))
 
     def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        temp = self._collect_sessions_by_info(methodcaller("get_help_files"))
+        temp = self.__collect_sessions_by_info(methodcaller("get_help_files"))
         return temp
 
-    def generate_ordered_download_files(self) -> Sequence[Tuple[str, int, List[Tuple[Optional[Session], Optional[LogEntry], int]]]]:
+    def generate_ordered_download_files(self) -> \
+            Sequence[Tuple[str, int, List[Tuple[Optional[Session], Optional[LogEntry], int]]]]:
         info_dict: Dict[str, List[Tuple[Optional[Session], Optional[LogEntry], int]]] = collections.defaultdict(list)
         for session in self._sessions:
             session_info = cast(SessionInfo, session.session_info)
             for filename, size in session_info.get_downloads():
                 info_dict[filename].append((session, None, size))
-        for filename, entry in SessionInfo._downloads_sessionless:
+        for filename, entry in SessionInfo.get_downloads_sessionless():
             info_dict[filename].append((None, entry, entry.size))
 
         result: List[Tuple[str, int, List[Tuple[Optional[Session], Optional[LogEntry], int]]]] = []
@@ -543,34 +529,44 @@ class TemplateInfo:
         result.sort(key=itemgetter(1), reverse=True)
         return result
 
-    def get_download_sizes(self) -> List[int]:
-        result: List[int] = []
-        for session in self._sessions:
-            result.extend(size for _, size in cast(SessionInfo, session.session_info).get_downloads())
-        result.extend(entry.size for _, entry in SessionInfo._downloads_sessionless)
-        return result
+    def get_download_statistics(self) -> Dict[str, Any]:
+        data = [size for _, size, _ in self.generate_ordered_download_files()]
+        mean = int(statistics.mean(data))
+        median = int(statistics.median(data))
+        return dict(data=data, count=len(data), sum=sum(data), mean=mean, median=median)
 
-    def ip_to_host_converter(self, ip: IPv4Address) -> Optional[str]:
-        return self._configuration._ip_to_host_converter.convert(ip)
+    def get_session_statistics(self) -> Dict[str, Any]:
+        data = [session.total_time for session in self._sessions]
+        mean = statistics.mean(x.total_seconds() for x in data)
+        median = statistics.median(x.total_seconds() for x in data)
+        return dict(data=data,
+                    count=len(data),
+                    sum=sum(data, datetime.timedelta(0)),
+                    mean=datetime.timedelta(round(mean)),
+                    median=datetime.timedelta(round(median)))
 
-    def _collect_sessions_by_info(self,
-                                  func: Callable[[SessionInfo], Iterable[T]],
-                                  fixed: Optional[Iterable[T]] = None) -> Sequence[Tuple[T, int, List[List[Session]]]]:
+    @property
+    def session_count(self) -> int:
+        return len(self._sessions)
+
+    def __collect_sessions_by_info(self,
+                                   func: Callable[[SessionInfo], Iterable[T]],
+                                   fixed: Optional[Iterable[T]] = None) -> Sequence[Tuple[T, int, List[List[Session]]]]:
         info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
         for session in self._sessions:
             for item in func(cast(SessionInfo, session.session_info)):
                 info_dict[item].append(session)
         if fixed:
-            result = [(item, len(info_dict[item]), self.group_sessions_by_host_id(info_dict[item]))
+            result = [(item, len(info_dict[item]), self.__group_sessions_by_host_id(info_dict[item]))
                       for item in fixed]
         else:
-            result = [(item, len(sessions), self.group_sessions_by_host_id(sessions))
+            result = [(item, len(sessions), self.__group_sessions_by_host_id(sessions))
                       for item, sessions in info_dict.items()]
             result.sort(key=itemgetter(0))
             result.sort(key=itemgetter(1), reverse=True)
         return result
 
-    def group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
+    def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
         sessions.sort(key=lambda session: session.start_time())
         sessions.sort(key=lambda session: session.host_ip)
         grouped_sessions = [list(sessions) for _, sessions in itertools.groupby(sessions, attrgetter("host_ip"))]
