@@ -1183,7 +1183,7 @@
         "field_key": true,
         "data_source": [
             "TAB:ring_geo||FUNCTION",
-            "MAXIMUM_NORTH_BASED_EMISSION_ANGLE||FUNCTION",
+            "MAXIMUM_NORTH_BASED_EMISSION_ANGLE",
             "~obs_ring_geometry_<INST>_north_based_emission2_<TYPE>"
         ],
         "val_min": 0,
