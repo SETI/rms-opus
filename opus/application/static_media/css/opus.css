@@ -742,6 +742,10 @@ th.sticky-header {
     bottom: 1px;
 }
 
+.op-data-table-view .ui-sortable-placeholder {
+    display: none;
+}
+
 .op-sort-position-indicator {
     border-radius: 0.6em;
     -moz-border-radius: 0.6em;
