@@ -4,11 +4,10 @@ import itertools
 import sys
 from collections import deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
-from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 
 
@@ -46,6 +45,10 @@ class Session(NamedTuple):
     def duration(self) -> datetime.timedelta:
         return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
 
+    @property
+    def total_time(self) -> datetime.timedelta:
+        return self.duration()
+
 
 class HostInfo(NamedTuple):
     ip: IPv4Address
@@ -55,6 +58,7 @@ class HostInfo(NamedTuple):
     def hostname(self) -> str:
         return f'{self.name} ({self.ip})' if self.name else str(self.ip)
 
+    @property
     def total_time(self) -> datetime.timedelta:
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
 
@@ -99,19 +103,13 @@ class LogParser:
                 sessions_list = [list(group)
                                  for _, group in itertools.groupby(all_sessions, lambda session: session.host_ip)]
             else:
-                # Rob wants the .html output to be in reverse order
-                all_sessions.sort(key=lambda session: session.start_time(), reverse=self._uses_html)
+                all_sessions.sort(key=lambda session: session.start_time())
                 sessions_list = [[session] for session in all_sessions]
             host_infos = [HostInfo(ip=ip, name=self._ip_to_host_converter.convert(ip), sessions=sessions)
                           for sessions in sessions_list
                           for ip in [sessions[0].host_ip]]
             if by_ip:
-                def sort_key(host_info: HostInfo) -> Tuple[int, Any]:
-                    if host_info.name:
-                        return 1, tuple(reversed(host_info.name.split('.')))
-                    else:
-                        return 2, host_info.ip
-                host_infos.sort(key=sort_key)
+                host_infos.sort(key=lambda host_info: self.__sort_key_from_ip_and_name(host_info.ip, host_info.name))
             return host_infos
 
         output = self._output
@@ -120,8 +118,8 @@ class LogParser:
             host_infos = do_grouping(self._by_ip)
             self.__generate_batch_text_output(host_infos)
         else:
-            self.__generate_batch_html_output(host_infos_by_ip=do_grouping(by_ip=True),
-                                              host_infos_by_time=do_grouping(by_ip=False))
+            host_infos = do_grouping(by_ip=True)
+            self.__generate_batch_html_output(host_infos)
 
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
@@ -249,16 +247,9 @@ class LogParser:
                 for entry in entries:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
-    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
-                                     host_infos_by_time: List[HostInfo]) -> None:
-        host_infos_by_date = [(date, list(values))
-                              for date, values in itertools.groupby(host_infos_by_time,
-                                                                    lambda host_info: host_info.start_time().date())]
-        template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
-        for result in template.generate(host_infos_by_ip=host_infos_by_ip,
-                                        host_infos_by_date=host_infos_by_date,
-                                        **self._configuration.additional_template_info()):
-            self._output.write(result)
+    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo]) -> None:
+        batch_html_generator = self._configuration.create_batch_html_generator(host_infos_by_ip)
+        batch_html_generator.generate_output(self._output)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
@@ -275,6 +266,9 @@ class LogParser:
         else:
             return f'{ip}'
 
-
-
-
+    @staticmethod
+    def __sort_key_from_ip_and_name(ip: IPv4Address, name: Optional[str]) -> Any:
+        if name:
+            return 1, tuple(reversed(name.lower().split('.')))
+        else:
+            return 2, ip

@@ -18,10 +18,9 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         """
         raise Exception()
 
-    @abc.abstractmethod
-    def additional_template_info(self) -> Dict[str, Any]:
+    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> Any:
         """
-        Returns configuration-specific information that must be passed to the Jinja template.
+        Creates a blackbox capable of giving the Jinja template whatever information it needs
         """
         raise Exception()
 
@@ -55,7 +54,7 @@ class PatternRegistry:
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
 
-    METHOD = Callable[[Any, Dict[str, str], Match[str]], SESSION_INFO]
+    METHOD = Callable[[Any, LogEntry, Dict[str, str], Match[str]], SESSION_INFO]
 
     patterns: List[Tuple[Pattern[str], METHOD]]
 

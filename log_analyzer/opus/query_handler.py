@@ -9,7 +9,8 @@ from typing import Dict, Tuple, List, Optional, Any, cast, NamedTuple, Sequence
 from markupsafe import Markup
 
 from opus import slug as slug
-from opus.slug import FamilyType
+from opus.configuration_flags import InfoFlags
+from opus.slug import FamilyType, Info
 
 
 class SearchClause(NamedTuple):
@@ -37,7 +38,7 @@ class SearchClause(NamedTuple):
 
 
 SearchSlugInfo = Dict[slug.Family, Dict[int, SearchClause]]
-ColumnSlugInfo = Dict[slug.Family, slug.Info]
+MetadataSlugInfo = Dict[slug.Family, slug.Info]
 
 
 class State(Enum):
@@ -50,27 +51,27 @@ class QueryHandler:
     DEFAULT_SORT_ORDER = 'time1,opusid'
     _session_info: Any  # can't handle circular imports.  :-(
     _slug_map: slug.ToInfoMap
-    _default_column_slug_info: ColumnSlugInfo
+    _default_metadata_slug_info: MetadataSlugInfo
     _uses_html: bool
 
     _previous_search_slug_info: SearchSlugInfo  # map from family to List[(Slug.Info, Value)]
-    _previous_column_slug_info: Optional[ColumnSlugInfo]  # map from raw slug to Slug.Info
+    _previous_metadata_slug_info: Optional[MetadataSlugInfo]  # map from raw slug to Slug.Info
     _previous_pages: List[str]  # previous page.  Two entries for browse and cart
     _previous_startobss: List[str]  # previous start observation.  Two entries for browse and cart
     _previous_sort_order: str  # sort order
     _previous_state: State
 
-    def __init__(self, session_info: Any, slug_map: slug.ToInfoMap, default_column_slug_info: ColumnSlugInfo,
+    def __init__(self, session_info: Any, slug_map: slug.ToInfoMap, default_metadata_slug_info: MetadataSlugInfo,
                  uses_html: bool):
         self._session_info = session_info
         self._slug_map = slug_map
-        self._default_column_slug_info = default_column_slug_info
+        self._default_metadata_slug_info = default_metadata_slug_info
         self._uses_html = uses_html
         self.__reset()
 
     def __reset(self) -> None:
         self._previous_search_slug_info = {}
-        self._previous_column_slug_info = None  # handled specially by get_column_slug_info
+        self._previous_metadata_slug_info = None  # handled specially by get_metadata_slug_info
         self._previous_sort_order = self.DEFAULT_SORT_ORDER
         self._previous_pages = ['', '']
         self._previous_startobss = ['', '']
@@ -83,11 +84,11 @@ class QueryHandler:
         result: List[str] = []
 
         if query_type == 'result_count':
-            uses_columns, uses_pages, uses_sort, current_state = False, False, False, State.SEARCHING
+            uses_metadata, uses_pages, uses_sort, current_state = False, False, False, State.SEARCHING
         elif query_type == 'data' or query_type == 'dataimages':
-            uses_columns, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
+            uses_metadata, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
         else:  # images
-            uses_columns, uses_pages, uses_sort, current_state = False, True, True, State.FETCHING
+            uses_metadata, uses_pages, uses_sort, current_state = False, True, True, State.FETCHING
 
         previous_state = self._previous_state
         if current_state != previous_state:
@@ -98,22 +99,22 @@ class QueryHandler:
 
         search_slug_info = self.__get_search_slug_info(query)
 
-        if uses_columns:
-            columns_query = query.get('cols')
-            if columns_query:
-                column_slug_info = self.get_column_slug_info(columns_query.split(','),
-                                                             self._slug_map, self._session_info)
+        if uses_metadata:
+            metadata_query = query.get('cols')
+            if metadata_query:
+                metadata_slug_info = self.get_metadata_slug_info(metadata_query.split(','),
+                                                                 self._slug_map, self._session_info)
             else:
-                column_slug_info = self._default_column_slug_info
+                metadata_slug_info = self._default_metadata_slug_info
         else:
-            column_slug_info = {}
+            metadata_slug_info = {}
 
         self.__handle_search_info(self._previous_search_slug_info, search_slug_info, result)
         self._previous_search_slug_info = search_slug_info
 
-        if uses_columns:
-            self.__get_column_info(self._previous_column_slug_info, column_slug_info, result)
-            self._previous_column_slug_info = column_slug_info
+        if uses_metadata:
+            self.__get_metadata_info(self._previous_metadata_slug_info, metadata_slug_info, result)
+            self._previous_metadata_slug_info = metadata_slug_info
 
         if uses_sort:
             sort_order = query.get('order', self.DEFAULT_SORT_ORDER)
@@ -136,6 +137,13 @@ class QueryHandler:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
             viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
+            tentative_flag = {
+                ("Browse", "Table"): InfoFlags.VIEWED_BROWSE_TAB_AS_TABLE,
+                ("Browse", "Gallery"): InfoFlags.VIEWED_BROWSE_TAB_AS_GALLERY,
+                ("Cart", "Table"): InfoFlags.VIEWED_CART_TAB_AS_TABLE,
+                ("Cart", "Gallery"): InfoFlags.VIEWED_CART_TAB_AS_GALLERY,
+            }[browse_or_cart, viewed]
+
             if current_state != previous_state or browse[is_browsing] != previous_browse:
                 result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
             elif info:
@@ -145,6 +153,8 @@ class QueryHandler:
 
             previous_info[is_browsing] = info
             self._previous_browses[is_browsing] = browse[is_browsing]
+        else:
+            tentative_flag = InfoFlags(0)
 
         self._previous_state = current_state
 
@@ -155,6 +165,9 @@ class QueryHandler:
 
         if result and query_type != 'result_count':
             self._session_info.fetched_gallery()
+
+        if result and query_type == 'dataimages':
+            self._session_info.update_info_flags(tentative_flag)
 
         return result, url
 
@@ -275,45 +288,46 @@ class QueryHandler:
                 joined_info = ', '.join(maybe_mark(tag, old, new) for (tag, old, new) in fields)
                 result.append(f'Change Search: "{label}" = ({joined_info})')
 
-    def __get_column_info(self, old_info: Optional[ColumnSlugInfo], new_info: ColumnSlugInfo,
-                          result: List[str]) -> None:
+    def __get_metadata_info(self, old_info: Optional[MetadataSlugInfo], new_info: MetadataSlugInfo,
+                            result: List[str]) -> None:
         if old_info is None:
-            new_column_families = set(new_info.keys())
-            if new_column_families == set(self._default_column_slug_info.keys()):
+            new_metadata_families = set(new_info.keys())
+            if new_metadata_families == set(self._default_metadata_slug_info.keys()):
                 return
-            column_labels = [new_info[family].label for family in sorted(new_column_families)]
-            quoted_column_labels = self._session_info.quote_and_join_list(sorted(column_labels))
-            result.append(f'Starting with Selected Metadata: {quoted_column_labels}')
+            metadata_labels = [new_info[family].label for family in sorted(new_metadata_families)]
+            quoted_metadata_labels = self._session_info.quote_and_join_list(sorted(metadata_labels))
+            result.append(f'Starting with Selected Metadata: {quoted_metadata_labels}')
             return
 
-        old_column_families = set(old_info.keys())
-        new_column_families = set(new_info.keys())
-        if new_column_families == old_column_families:
+        old_metadata_families = set(old_info.keys())
+        new_metadata_families = set(new_info.keys())
+        if new_metadata_families == old_metadata_families:
             return
-        if new_column_families == set(self._default_column_slug_info.keys()):
+        if new_metadata_families == set(self._default_metadata_slug_info.keys()):
             result.append('Reset Selected Metadata')
             return
-        self._session_info.changed_column_slugs()
-        all_column_families = old_column_families.union(new_column_families)
-        added_columns, removed_columns = [], []
-        for family in sorted(all_column_families):
+        self._session_info.changed_metadata_slugs()
+        all_metadata_families = old_metadata_families.union(new_metadata_families)
+        added_metadata, removed_metadata = [], []
+        for family in sorted(all_metadata_families):
             old_slug_info = old_info.get(family)
             new_slug_info = new_info.get(family)
             if old_slug_info and not new_slug_info:
-                removed_columns.append(f'Remove Selected Metadata: "{old_slug_info.label}"')
+                removed_metadata.append(f'Remove Selected Metadata: "{old_slug_info.label}"')
             elif new_slug_info and not old_slug_info:
                 postscript = self.__get_postscript(new_slug_info.flags)
                 if not self._uses_html:
-                    added_columns.append(f'Add Selected Metadata:    "{new_slug_info.label}"{postscript}')
+                    added_metadata.append(f'Add Selected Metadata:    "{new_slug_info.label}"{postscript}')
                 else:
-                    added_columns.append(
+                    added_metadata.append(
                         self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
 
-        result.extend(removed_columns)
-        result.extend(added_columns)
+        result.extend(removed_metadata)
+        result.extend(added_metadata)
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
+            sort_list: List[Info] = []
             columns = new_sort_order.split(',')
             result.append(f'Change Sort Order:')
             for column in columns:
@@ -322,9 +336,12 @@ class QueryHandler:
                     column = column[1:]
                 else:
                     order = 'Ascending'
-                slug_info = self._slug_map.get_info_for_column_slug(column)
+                slug_info: Optional[Info] = self._slug_map.get_info_for_column_slug(column)
                 assert slug_info
+                sort_list.append(slug_info)
                 result.append(f'        "{slug_info.label}" ({order})')
+
+            self._session_info.add_sort_slugs_list(sort_list)
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
@@ -378,20 +395,20 @@ class QueryHandler:
         return result
 
     @staticmethod
-    def get_column_slug_info(slugs: List[str], slug_map: slug.ToInfoMap,
-                             session_info: Optional[Any] = None) -> ColumnSlugInfo:
+    def get_metadata_slug_info(slugs: List[str], slug_map: slug.ToInfoMap,
+                               session_info: Optional[Any] = None) -> MetadataSlugInfo:
         """
         This returns a map from the slugs that appear in the list of strings to the Info for that slug,
         provided that the info exists.
         """
-        result: ColumnSlugInfo = {}
+        result: MetadataSlugInfo = {}
         for slug in slugs:
             slug_info = slug_map.get_info_for_column_slug(slug)
             if slug_info:
                 assert slug_info.family
                 result[slug_info.family] = slug_info
                 if session_info:
-                    session_info.add_column_slug(slug, slug_info)
+                    session_info.add_metadata_slug(slug, slug_info)
 
         return result
 
