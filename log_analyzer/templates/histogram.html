@@ -1,6 +1,6 @@
 <script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
-{% set session_statistics = configuration.get_session_statistics() %}
+{% set session_statistics = context.get_session_statistics() %}
 
 <div id="Histogram-IP" class="SessionInfo tab-pane">
     Number of sessions: {{ session_statistics.count }}<br>
@@ -15,12 +15,13 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-{% set download_statistics = configuration.get_download_statistics() %}
+{% set download_statistics = context.get_download_statistics() %}
 
 <div id="Histogram-Downloads" class="SessionInfo tab-pane">
     Number of downloads: {{ download_statistics.count }}<br>
     Total size: {{ download_statistics.sum|filesizeformat }}<br>
     Mean size: {{ download_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ download_statistics.gmean|filesizeformat }}<br>
     Median size: {{ download_statistics.median|filesizeformat }}<br>
     <hr/>
     <div id="file_downloads"></div>

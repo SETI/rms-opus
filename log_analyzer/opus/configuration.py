@@ -1,6 +1,7 @@
 import collections
 import datetime
 import itertools
+import math
 import re
 import textwrap
 import statistics
@@ -30,7 +31,7 @@ class Configuration(AbstractConfiguration):
     _default_column_slug_info: MetadataSlugInfo
     _api_host_url: str
     _debug_show_all: bool
-    _no_sessions: bool
+    _elide_session_info: bool
     _ip_to_host_converter: IpToHostConverter
 
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
@@ -42,23 +43,23 @@ class Configuration(AbstractConfiguration):
         self._default_column_slug_info = QueryHandler.get_metadata_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
         self._api_host_url = api_host_url
         self._debug_show_all = debug_show_all
-        self._no_sessions = no_sessions
+        self._elide_session_info = no_sessions
         self._ip_to_host_converter = ip_to_host_converter
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
         return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html)
 
-    def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> 'TemplateInfo':
-        return TemplateInfo(self, host_infos_by_ip)
+    def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> 'HtmlGenerator':
+        return HtmlGenerator(self, host_infos_by_ip)
 
     @property
     def api_host_url(self) -> str:
         return self._api_host_url
 
     @property
-    def no_sessions(self) -> bool:
-        return self._no_sessions
+    def elide_session_info(self) -> bool:
+        return self._elide_session_info
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
         all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
@@ -300,11 +301,12 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/download/(.*)\.zip')
     def __download_archive(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
         opus_id = match.group(1)
         self.register_download(opus_id + '.zip', log_entry.size)
-        extra = 'URL' if query.get('urlonly') not in (None, "0") else 'Data'
-        text = f'Download {extra} Archive for OPUSID'
+        url_only = query.get('urlonly') not in (None, "0")
+        text = f'Download {"URL" if url_only else "Data"} Archive for OPUSID'
+        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_URL_FILE_FOR_ONE_OBSERVATION if url_only else
+                               InfoFlags.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
         if self._uses_html:
             return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
@@ -331,13 +333,14 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__cart/download\.json')
     def __create_archive(self, _log_entry: LogEntry, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_FILE_FOR_CART)
-        has_url = query.get('urlonly') not in [None, '0']
+        url_only = query.get('urlonly') not in [None, '0']
+        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_URL_FILE_FOR_CART if url_only else
+                               InfoFlags.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART)
         ptypes_field = query.get('types', None)
         ptypes = ptypes_field.split(',') if ptypes_field else []
         self.register_product_types(ptypes)
         joined_ptypes = self.quote_and_join_list(sorted(ptypes))
-        text = f'Download {"URL" if has_url else "Data"} Archive for Cart: {joined_ptypes}'
+        text = f'Download {"URL" if url_only else "Data"} Archive for Cart: {joined_ptypes}'
         return [text], None
 
     # Note that the __collections/ and the __cart/ are different.
@@ -462,7 +465,7 @@ class SessionInfo(AbstractSessionInfo):
 T = TypeVar('T')
 
 
-class TemplateInfo:
+class HtmlGenerator:
     _configuration: Configuration
     _host_infos_by_ip:  List[HostInfo]
     _sessions: List[Session]
@@ -479,7 +482,7 @@ class TemplateInfo:
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         lines = (line.strip()
-                 for chunks in template.generate(configuration=self, host_infos_by_ip=self._host_infos_by_ip)
+                 for chunks in template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
                  for line in chunks.split('\n') if line)
         for line in lines:
             output.write(line)
@@ -494,8 +497,8 @@ class TemplateInfo:
         return self._ip_to_host_name
 
     @property
-    def no_sessions(self) -> bool:
-        return self._configuration.no_sessions
+    def elide_session_details(self) -> bool:
+        return self._configuration.elide_session_info
 
     def flag_name_to_flag(self, name: str) -> Flag:
         return self._flag_name_to_flag[name]
@@ -548,8 +551,9 @@ class TemplateInfo:
     def get_download_statistics(self) -> Dict[str, Any]:
         data = [size for _, size, _ in self.generate_ordered_download_files()]
         mean = int(statistics.mean(data))
+        gmean = int(math.exp(statistics.mean(map(math.log, data))))
         median = int(statistics.median(data))
-        return dict(data=data, count=len(data), sum=sum(data), mean=mean, median=median)
+        return dict(data=data, count=len(data), sum=sum(data), mean=mean, gmean=gmean, median=median)
 
     def get_session_statistics(self) -> Dict[str, Any]:
         data = [session.total_time for session in self._sessions]
