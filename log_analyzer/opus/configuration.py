@@ -9,8 +9,8 @@ import urllib.parse
 from enum import Flag
 from ipaddress import IPv4Address
 from operator import attrgetter, itemgetter, methodcaller
-from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence, Set, TypeVar, Iterable, Callable, \
-    ClassVar
+from typing import List, Dict, Optional, Match, Any, Tuple, TextIO, cast, Sequence, Set
+from typing import TypeVar, Iterable, Callable, Type
 
 from abstract_configuration import SESSION_INFO, AbstractSessionInfo, AbstractConfiguration, PatternRegistry
 from ip_to_host_converter import IpToHostConverter
@@ -18,9 +18,9 @@ from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import Session, HostInfo
 from opus import slug
-from opus.configuration_flags import InfoFlags, ActionFlags
+from opus.configuration_flags import InfoFlags, IconFlags
 from opus.query_handler import QueryHandler, MetadataSlugInfo
-from opus.slug import Info
+from opus.slug import Info, FamilyType
 
 
 class Configuration(AbstractConfiguration):
@@ -34,6 +34,8 @@ class Configuration(AbstractConfiguration):
     _elide_session_info: bool
     _ip_to_host_converter: IpToHostConverter
 
+    _sessionless_downloads: List[Tuple[str, LogEntry]]
+
     DEFAULT_COLUMN_INFO = 'opusid,instrument,planet,target,time1,observationduration'.split(',')
 
     def __init__(self, *, api_host_url: str, debug_show_all: bool, no_sessions: bool,
@@ -45,10 +47,12 @@ class Configuration(AbstractConfiguration):
         self._debug_show_all = debug_show_all
         self._elide_session_info = no_sessions
         self._ip_to_host_converter = ip_to_host_converter
+        self._sessionless_downloads = []
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
-        return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html)
+        return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html,
+                           self._sessionless_downloads)
 
     def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> 'HtmlGenerator':
         return HtmlGenerator(self, host_infos_by_ip)
@@ -60,6 +64,10 @@ class Configuration(AbstractConfiguration):
     @property
     def elide_session_info(self) -> bool:
         return self._elide_session_info
+
+    @property
+    def sessionless_downloads(self) -> List[Tuple[str, LogEntry]]:
+        return self._sessionless_downloads
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
         all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)
@@ -96,61 +104,67 @@ class SessionInfo(AbstractSessionInfo):
     _session_sort_slugs_list: Set[Tuple[slug.Info, ...]]
     _help_files: Set[str]
     _downloads: List[Tuple[str, int]]
-    _product_types: Set[str]
-    _action_flags: ActionFlags
+    _product_types: List[str]
+    _product_types_count: int
+    _icon_flags: IconFlags
     _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
     _show_all: bool
+    _sessionless_downloads: List[Tuple[str, LogEntry]]
 
     pattern_registry = PatternRegistry()
-    _downloads_sessionless: ClassVar[List[Tuple[str, LogEntry]]] = []
 
     def __init__(self, slug_map: slug.ToInfoMap, default_column_slug_info: MetadataSlugInfo,
-                 show_all: bool, uses_html: bool):
+                 show_all: bool, uses_html: bool, sessionless_downloads: List[Tuple[str, LogEntry]]):
         self._session_search_slugs = dict()
         self._session_metadata_slugs = dict()
         self._session_sort_slugs_list = set()
         self._help_files = set()
         self._downloads = []
-        self._product_types = set()
-        self._action_flags = ActionFlags(0)
-        self._info_flags = InfoFlags(0)
+        self._product_types = []
+        self._product_types_count = 0
+        self._icon_flags = IconFlags(0)
+        self._info_flags = InfoFlags(InfoFlags.DID_NOT_PERFORM_SEARCH)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
         self._uses_html = uses_html
         self._show_all = show_all
+        self._sessionless_downloads = sessionless_downloads
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
 
+        # Debugging information.  Maybe delete me
+
     def add_search_slug(self, slug_name: str, slug_info: slug.Info) -> None:
         self._session_search_slugs[slug_name] = slug_info
         if slug_info.flags.is_obsolete():
-            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
+            self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
             self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
 
     def add_metadata_slug(self, slug: str, slug_info: slug.Info) -> None:
         self._session_metadata_slugs[slug] = slug_info
         if slug_info.flags.is_obsolete():
-            self._action_flags |= ActionFlags.HAS_OBSOLETE_SLUG
+            self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
             self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
 
     def add_sort_slugs_list(self, slugs_list: Sequence[slug.Info]) -> None:
         self._session_sort_slugs_list.add(tuple(slugs_list))
 
     def changed_search_slugs(self) -> None:
-        self._action_flags |= ActionFlags.HAS_SEARCH
+        self._icon_flags |= IconFlags.HAS_SEARCH
         self._info_flags |= InfoFlags.PERFORMED_SEARCH
+        self._info_flags &=  ~InfoFlags.DID_NOT_PERFORM_SEARCH
 
     def changed_metadata_slugs(self) -> None:
-        self._action_flags |= ActionFlags.HAS_METADATA
+        self._icon_flags |= IconFlags.HAS_METADATA
         self._info_flags |= InfoFlags.CHANGED_SELECTED_METADATA
 
     def performed_download(self) -> None:
-        self._action_flags |= ActionFlags.HAS_DOWNLOAD
+        self._icon_flags |= IconFlags.HAS_DOWNLOAD
 
     def fetched_gallery(self) -> None:
-        self._action_flags |= ActionFlags.FETCHED_GALLERY
+        self._icon_flags |= IconFlags.FETCHED_GALLERY
 
     def update_info_flags(self, flags: InfoFlags) -> None:
         self._info_flags |= flags
@@ -159,12 +173,13 @@ class SessionInfo(AbstractSessionInfo):
         self._downloads.append((filename, size))
 
     def register_product_types(self, product_types: Sequence[str]) -> None:
-        self._product_types.update(product_types)
+        self._product_types.extend(product_types)
+        self._product_types_count += 1
 
     def register_sessionless_download(self, path: str, entry: LogEntry) -> None:
         match = re.fullmatch(r"/downloads/([^/]+)", path)
         if match:
-            self._downloads_sessionless.append((match.group(1), entry))
+            self._sessionless_downloads.append((match.group(1), entry))
 
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
@@ -187,7 +202,9 @@ class SessionInfo(AbstractSessionInfo):
         return search_slug_list, column_slug_list
 
     def get_search_names(self) -> List[str]:
-        return list({value.family.label for value in self._session_search_slugs.values()})
+        return list({value.family.label for value in self._session_search_slugs.values()
+                     if value.family_type != FamilyType.QTYPE
+                     if value.family_type != FamilyType.UNIT})
 
     def get_metadata_names(self) -> List[str]:
         return list({value.family.label for value in self._session_metadata_slugs.values()})
@@ -196,8 +213,8 @@ class SessionInfo(AbstractSessionInfo):
         return [tuple(value.family.label for value in sort_list)
                 for sort_list in self._session_sort_slugs_list]
 
-    def get_session_flags(self) -> ActionFlags:
-        return self._action_flags
+    def get_icon_flags(self) -> IconFlags:
+        return self._icon_flags
 
     def get_info_flags(self) -> InfoFlags:
         return self._info_flags
@@ -205,24 +222,23 @@ class SessionInfo(AbstractSessionInfo):
     def get_help_files(self) -> Set[str]:
         return self._help_files
 
-    def get_product_types(self) -> Set[str]:
+    def get_product_types(self) -> List[str]:
         return self._product_types
+
+    def get_product_types_count(self) -> int:
+        return self._product_types_count
 
     def get_downloads(self) -> List[Tuple[str, int]]:
         return self._downloads
 
-    @classmethod
-    def get_downloads_sessionless(cls) -> List[Tuple[str, LogEntry]]:
-        return cls._downloads_sessionless
-
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
-
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
             return [], None
         if entry.agent and ("bot" in entry.agent.lower() or "spider" in entry.agent.lower()):
             return [], None
+
         path = entry.url.path
 
         if path.startswith('/opus/__'):
@@ -269,8 +285,8 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
-    def __api_data(self, _log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        return self._query_handler.handle_query(query, match.group(1))
+    def __api_data(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        return self._query_handler.handle_query(log_entry, query, match.group(1))
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
     @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
@@ -477,7 +493,7 @@ class HtmlGenerator:
         self._host_infos_by_ip = host_infos_by_ip
         self._sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
         self._ip_to_host_name = {host_info.ip: host_info.name for host_info in host_infos_by_ip if host_info.name}
-        self._flag_name_to_flag = {x.name: x for x in ActionFlags}
+        self._flag_name_to_flag = {x.name: x for x in IconFlags}
 
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
@@ -511,14 +527,13 @@ class HtmlGenerator:
         return host_infos_by_date
 
     def generate_ordered_search(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        return self.__collect_sessions_by_info(lambda si: si.get_search_names())
+        return  self.__collect_sessions_by_info(lambda si: si.get_search_names())
 
     def generate_ordered_metadata(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(lambda si: si.get_metadata_names())
 
     def generate_ordered_info_flags(self) -> Sequence[Tuple[Flag, int, List[List[Session]]]]:
-        temp = cast(Iterable[InfoFlags], InfoFlags)
-        return self.__collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), temp)
+        return self.__collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), InfoFlags)
 
     def generate_ordered_sort_lists(self) -> Sequence[Tuple[Tuple[str], int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(methodcaller("get_sort_list_names"))
@@ -526,18 +541,20 @@ class HtmlGenerator:
     def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(methodcaller("get_help_files"))
 
-    def generate_ordered_product_types(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        temp = self.__collect_sessions_by_info(methodcaller("get_product_types"))
-        return temp
+    def generate_ordered_product_types(self) -> Sequence[Tuple[str, int, List[List[Tuple[Session, int]]]]]:
+        return self.__collect_sessions_by_info(methodcaller("get_product_types"))
+
+    def get_product_types_count(self) -> int:
+        return sum(self.__to_session_info(session).get_product_types_count() for session in self._sessions)
 
     def generate_ordered_download_files(self) -> \
             Sequence[Tuple[str, int, List[Tuple[Optional[Session], Optional[LogEntry], int]]]]:
         info_dict: Dict[str, List[Tuple[Optional[Session], Optional[LogEntry], int]]] = collections.defaultdict(list)
         for session in self._sessions:
-            session_info = cast(SessionInfo, session.session_info)
+            session_info = self.__to_session_info(session)
             for filename, size in session_info.get_downloads():
                 info_dict[filename].append((session, None, size))
-        for filename, entry in SessionInfo.get_downloads_sessionless():
+        for filename, entry in self._configuration.sessionless_downloads:
             info_dict[filename].append((None, entry, entry.size))
 
         result: List[Tuple[str, int, List[Tuple[Optional[Session], Optional[LogEntry], int]]]] = []
@@ -562,8 +579,8 @@ class HtmlGenerator:
         return dict(data=data,
                     count=len(data),
                     sum=sum(data, datetime.timedelta(0)),
-                    mean=datetime.timedelta(round(mean)),
-                    median=datetime.timedelta(round(median)))
+                    mean=datetime.timedelta(seconds=round(mean)),
+                    median=datetime.timedelta(seconds=round(median)))
 
     @property
     def session_count(self) -> int:
@@ -571,10 +588,11 @@ class HtmlGenerator:
 
     def __collect_sessions_by_info(self,
                                    func: Callable[[SessionInfo], Iterable[T]],
-                                   fixed: Optional[Iterable[T]] = None) -> Sequence[Tuple[T, int, List[List[Session]]]]:
+                                   fixed: Optional[Type[Flag]] = None) -> List[Tuple[T, int, List[List[Session]]]]:
         info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
         for session in self._sessions:
-            for item in func(cast(SessionInfo, session.session_info)):
+            session_info = self.__to_session_info(session)
+            for item in func(session_info):
                 info_dict[item].append(session)
         if fixed:
             result = [(item, len(info_dict[item]), self.__group_sessions_by_host_id(info_dict[item]))
@@ -582,6 +600,7 @@ class HtmlGenerator:
         else:
             result = [(item, len(sessions), self.__group_sessions_by_host_id(sessions))
                       for item, sessions in info_dict.items()]
+            # Sort the outer list secondarily by whatever item we're looking at, and primarily by the count of that item
             result.sort(key=itemgetter(0))
             result.sort(key=itemgetter(1), reverse=True)
         return result
@@ -600,6 +619,15 @@ class HtmlGenerator:
 
         grouped_sessions.sort(key=group_session_sorter)
         return grouped_sessions
+
+    @staticmethod
+    def __to_session_info(session: Session) -> SessionInfo:
+        return cast(SessionInfo, session.session_info)
+
+    @staticmethod
+    def run_length_encode(values: Sequence[T]) -> List[Tuple[T, int]]:
+        temp = [(value, len(list(iterable))) for value, iterable in itertools.groupby(values)]
+        return temp
 
     def debug(self, arg):
         print(arg)

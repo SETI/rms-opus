@@ -36,7 +36,7 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def get_session_flags(self) -> Flag:
+    def get_icon_flags(self) -> Flag:
         raise Exception()
 
     @staticmethod

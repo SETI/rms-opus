@@ -1,0 +1,130 @@
+<details class="Summary1"><summary>Usage by IP</summary>
+    <a href="#" class="SessionLink Summary2" data-target="#Histogram-IP">Histogram</a>
+    {% for host_info in host_infos_by_ip|sort(attribute="total_time", reverse=True) %}
+        <details class="Summary2">
+            {% set this_count = host_info.sessions|length %}
+            <summary>{{ host_info_ip_or_name(host_info) }} ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
+            <ul class="SummarySession">
+                {% for session in host_info.sessions|sort(attribute="total_time", reverse=True) %}
+                    <li>
+                        <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                            {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </details>
+    {% endfor %}
+</details>
+
+{% macro summarize_info(header_name, summary_info) %}
+    {%  set session_count = context.session_count %}
+    <details class="Summary1"><summary>{{ header_name }}</summary>
+        {% for name, count, grouped_sessions in summary_info %}
+            <details class="Summary2">
+                <summary>{{ caller(name) }}
+                    <span class="badge">{{ count }} ({{ "{:.1%}".format(count / session_count) }})</span>
+                </summary>
+                {% for sessions in grouped_sessions %}
+                    <details class="Summary3">
+                        {% set this_count = sessions|length  %}
+                        <summary>{{ session_ip_or_name(sessions[0]) }}
+                            <span class="badge">{{ this_count }} ({{ "{:.1%}".format(this_count / session_count) }})</span>
+                        </summary>
+                        <ul class="SummarySession">
+                            {% for session in sessions %}
+                                <li>
+                                    <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                                        {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                {% endfor %}
+            </details>
+        {% endfor %}
+    </details>
+{% endmacro %}
+
+{% macro summarize_slugs(summary_name, summary_slug_info) %}
+    {% call(slug_name) summarize_info(summary_name, summary_slug_info) %}
+        <span class="text-dark">{{ slug_name }}</span>
+    {% endcall %}
+{% endmacro %}
+<hr/>
+
+{% call(flag) summarize_info('Actions', context.generate_ordered_info_flags()) %}
+    {{  flag.get_fancy_name() }}
+{% endcall %}
+<hr/>
+
+{{ summarize_slugs('Search Terms', context.generate_ordered_search()) }}
+<hr/>
+
+{{ summarize_slugs('Selected Metadata', context.generate_ordered_metadata()) }}
+<hr/>
+
+{% call(search_list) summarize_info('Sort Order', context.generate_ordered_sort_lists()) %}
+    {{  search_list|join(', ') if search_list else '<empty>' }}
+{% endcall %}
+<hr/>
+
+{% call(file_name) summarize_info('Help Files', context.generate_ordered_help_files()) %}
+    <samp>{{  file_name }}</samp>
+{% endcall %}
+<hr/>
+
+<details class="Summary1 open"><summary>Downloads</summary>
+    <a href="#" class="SessionLink Summary2" data-target="#Histogram-Downloads">Histogram</a>
+    {% for name, total_size, sessions_and_sizes in context.generate_ordered_download_files() %}
+        <details class="Summary2">
+            <summary>{{ name }}
+                <span class="badge">({{ sessions_and_sizes|length }})</span> {{ total_size|filesizeformat }}
+            </summary>
+            <div class="Summary3">
+                {% for session, log_entry, size in sessions_and_sizes %}
+                    {%  if session %}
+                        {{- session_ip_or_name(session) -}}
+                        <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                            {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }}
+                        </a>
+                    {%  else %}
+                        {{- log_entry_ip_or_name(log_entry) -}}
+                        {{  log_entry.time.strftime("%Y %b %d %H:%M:%S") }}
+                    {% endif %}
+                    {{ size|filesizeformat -}}
+                    <br/>
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+</details>
+<hr/>
+
+{%  set product_types_count = context.get_product_types_count() %}
+<details class="Summary1"><summary>Product Types</summary>
+    Total calls: {{  product_types_count }}
+    {% for name, count, grouped_sessions in context.generate_ordered_product_types() %}
+        <details class="Summary2">
+            <summary>{{ name }}
+                <span class="badge">{{ count }} ({{ "{:.1%}".format(count / product_types_count) }})</span>
+            </summary>
+            {% for sessions in grouped_sessions %}
+                <details class="Summary3">
+                    {% set this_count = sessions|length  %}
+                    <summary>{{ session_ip_or_name(sessions[0]) }}
+                        <span class="badge">{{ this_count }} ({{ "{:.1%}".format(this_count / product_types_count) }})</span>
+                    </summary>
+                    <ul class="SummarySession">
+                        {% for session, count in context.run_length_encode(sessions) %}
+                            <li>
+                                <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                                    {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                                <span class="badge">{{ count }} ({{ "{:.1%}".format(count / product_types_count) }})</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </details>
+            {% endfor %}
+        </details>
+    {% endfor %}
+</details>

@@ -4,6 +4,7 @@ from typing import Sequence
 
 class InfoFlags(Flag):
     PERFORMED_SEARCH = auto()
+    DID_NOT_PERFORM_SEARCH = auto()
     VIEWED_BROWSE_TAB_AS_GALLERY = auto()
     VIEWED_BROWSE_TAB_AS_TABLE = auto()
     VIEWED_CART_TAB_AS_GALLERY = auto()
@@ -32,7 +33,7 @@ class InfoFlags(Flag):
         return [flag for flag in InfoFlags if flag in self]
 
 
-class ActionFlags(Flag):
+class IconFlags(Flag):
     HAS_SEARCH = auto()
     FETCHED_GALLERY = auto()
     HAS_METADATA = auto()

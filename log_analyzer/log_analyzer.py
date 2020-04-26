@@ -2,6 +2,7 @@ import argparse
 import importlib
 import ipaddress
 import operator
+import glob
 
 from typing import List, Optional, cast
 
@@ -58,13 +59,18 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
-    parser.add_argument('--configuration', dest='"opus.configuration"',
+    parser.add_argument('--configuration', dest= 'configuration_file', default='opus.configuration',
                         help="location of python configuration file")
 
     # TODO(fy): Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
+    # TODO(fy): Temporary hack for when I don't have internet access
+    parser.add_argument('--xxdns-cache', action="store_true", dest="dns_cache", help=argparse.SUPPRESS)
+    # TODO(fy): Temporary hack for when I don't have internet access
+    parser.add_argument('--xxglob', action="store_true", dest="glob", help=argparse.SUPPRESS)
     # TODO(fy): Debugging hack that shows all URLs.
     parser.add_argument('--xxshowall', action='store_true', dest='debug_show_all', help=argparse.SUPPRESS)
+    parser.add_argument('--cached_log_entry', action='store_true', dest='cached_log_entries', help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
@@ -75,13 +81,16 @@ def main(arguments: Optional[List[str]] = None) -> None:
         if not args.log_files:
             print("No log files found.")
             return
+    elif args.glob:
+        args.log_files = [result for file in args.log_files for result in glob.glob(file)]
+
 
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
-    # Another fake argument we need
-    args.ip_to_host_converter = IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local)
+    args.ip_to_host_converter = \
+        IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local, args.dns_cache)
 
-    module = importlib.import_module("opus.configuration")
+    module = importlib.import_module(args.configuration_file)
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
     log_parser = LogParser(configuration, **vars(args))
 
@@ -93,7 +102,10 @@ def main(arguments: Optional[List[str]] = None) -> None:
     else:
         if len(args.log_files) < 1:
             raise Exception("Must specify at least one log file.")
-        log_entries_list = LogReader.read_logs(args.log_files)
+        if args.cached_log_entries or True:
+            log_entries_list = handle_cached_log_entries(args)
+        else:
+            log_entries_list = LogReader.read_logs(args.log_files)
         if args.batch:
             log_parser.run_batch(log_entries_list)
         elif args.summary:
@@ -103,13 +115,18 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_realtime(iter(log_entries_list))
 
 
+def handle_cached_log_entries(args: argparse.Namespace):
+    import pickle
+    try:
+        with open("log_entries.db", "rb") as input:
+            return pickle.load(input)
+    except FileNotFoundError as e:
+        pass
+
+    result = LogReader.read_logs(args.log_files)
+    with open("log_entries.db", "wb") as output:
+        pickle.dump(result, output)
+    return result
+
 if __name__ == '__main__':
-    # import glob
-    # files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/logs-2020-02/*2020-02-*")
-    # args = ["--output", "/Users/fy/www/save.html",
-    #         "--batch", "--html",
-    #         "--xxlocal", "--dns",
-    #         # "--no-sessions",
-    #         *files]
-    # main(args)
     main()
