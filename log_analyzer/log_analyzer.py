@@ -8,7 +8,7 @@ from typing import List, Optional, cast
 
 from abstract_configuration import AbstractConfiguration
 from cronjob_utils import convert_cronjob_to_batchjob
-from log_entry import LogReader
+from log_entry import LogReader, LogEntry
 from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
 
@@ -115,11 +115,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_parser.run_realtime(iter(log_entries_list))
 
 
-def handle_cached_log_entries(args: argparse.Namespace):
+def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
     import pickle
     try:
         with open("log_entries.db", "rb") as input:
-            return pickle.load(input)
+            return cast(List[LogEntry], pickle.load(input))
     except FileNotFoundError as e:
         pass
 

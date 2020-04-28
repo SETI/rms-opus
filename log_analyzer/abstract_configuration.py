@@ -18,7 +18,8 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         """
         raise Exception()
 
-    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> Any:
+    @abc.abstractmethod
+    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> 'AbstractBatchHtmlGenerator':
         """
         Creates a blackbox capable of giving the Jinja template whatever information it needs
         """
@@ -46,6 +47,11 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
     @staticmethod
     def safe_format(format_string: str, *args: Any) -> str:
         return Markup(format_string).format(*args)
+
+
+class AbstractBatchHtmlGenerator(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def generate_output(self, output: TextIO) -> None: ...
 
 
 class PatternRegistry:

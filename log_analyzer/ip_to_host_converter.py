@@ -6,7 +6,7 @@ import shelve
 import socket
 from ipaddress import IPv4Address
 from random import seed, randrange, choice
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 
 class IpToHostConverter(metaclass=abc.ABCMeta):
@@ -69,7 +69,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         atexit.register(self._close)
 
     def _convert(self, ip: IPv4Address) -> Optional[str]:
-        value = self._database.get(str(ip))
+        value: Optional[Tuple[Optional[str], datetime.timedelta]] = self._database.get(str(ip))
         if value:
             name, _timeout = value
             self._cached += 1
@@ -79,7 +79,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         self._database[str(ip)] = (name, datetime.datetime.now())
         return name
 
-    def _purge_old_database_entries(self):
+    def _purge_old_database_entries(self) -> None:
         now = datetime.datetime.now()
         thirty_days_ago = now - datetime.timedelta(days=30)
         expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < thirty_days_ago]
@@ -87,7 +87,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
             del self._database[key]
         self._expired = len(expired_keys)
 
-    def _close(self):
+    def _close(self) -> None:
         self._database.close()
         print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}. ")
 

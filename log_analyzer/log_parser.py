@@ -49,13 +49,13 @@ class Session(NamedTuple):
     def total_time(self) -> datetime.timedelta:
         return self.duration()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.id)
 
-    def __eq__(self, other: Any):
-        return isinstance(other, Session) and self.id == cast(Session, other).id
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, Session) and self.id == id
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
 
 
