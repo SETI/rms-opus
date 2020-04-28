@@ -62,15 +62,16 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--configuration', dest= 'configuration_file', default='opus.configuration',
                         help="location of python configuration file")
 
-    # TODO(fy): Temporary hack for when I don't have internet access
+    # Temporary hack for when I don't have internet access
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
-    # TODO(fy): Temporary hack for when I don't have internet access
+    # Stores DNS entries in a persistent database
     parser.add_argument('--xxdns-cache', action="store_true", dest="dns_cache", help=argparse.SUPPRESS)
-    # TODO(fy): Temporary hack for when I don't have internet access
+    # Performs a glob() on filename arguments.  Useful when calling program from within an IDE that doesn't glob
     parser.add_argument('--xxglob', action="store_true", dest="glob", help=argparse.SUPPRESS)
-    # TODO(fy): Debugging hack that shows all URLs.
+    # Debugging hack that shows all log entries
     parser.add_argument('--xxshowall', action='store_true', dest='debug_show_all', help=argparse.SUPPRESS)
-    parser.add_argument('--cached_log_entry', action='store_true', dest='cached_log_entries', help=argparse.SUPPRESS)
+    # Caches the read entries into a database, rather than reading the log files anew each time.
+    parser.add_argument('--xxcached_log_entry', action='store_true', dest='cached_log_entries', help=argparse.SUPPRESS)
 
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
@@ -102,7 +103,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     else:
         if len(args.log_files) < 1:
             raise Exception("Must specify at least one log file.")
-        if args.cached_log_entries or True:
+        if args.cached_log_entries:
             log_entries_list = handle_cached_log_entries(args)
         else:
             log_entries_list = LogReader.read_logs(args.log_files)
