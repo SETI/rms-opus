@@ -358,5 +358,35 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_geoma",
         "definition": "Files describing the nominal and measured reseau mark locations used to geometrically correct the image. Locations are provided in VICAR format (*_GEOMA.DAT) and text format (*_GEOMA.TAB). An associated label (*_GEOMA.LBL) is a text file that contains information about the *.DAT and *.TAB files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "gb_occ_profile",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_01",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_10",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_dlp",
+        "definition": "Text files (*.TAB) that tabulate a calibrated but diffraction-limited optical depth and phase shift profile with 500m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_cal",
+        "definition": "Text files (*.TAB) that tabulate calibration parameters needed to convert raw ring data into optical depth profiles. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_geo",
+        "definition": "Text files (*.TAB) that tabulate observation geometry parameters needed for the reconstruction of diffraction-limited profiles. Associated labels (*.LBL) describe the contents of the text files."
     }
 ]

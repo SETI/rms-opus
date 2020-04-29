@@ -69,10 +69,12 @@ def populate_obs_general_CORSS_ring_obs_id_OCC(**kwargs):
 def populate_obs_general_CORSS_inst_host_id_OCC(**kwargs):
     return 'CO'
 
+# CORSS time span is from when the photon first leaves the spacecraft to when
+# it is received on Earth.
 def populate_obs_general_CORSS_time1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['RING_EVENT_START_TIME']
+    supp_index_row = metadata['supp_index_row']
+    start_time = supp_index_row['SPACECRAFT_EVENT_START_TIME']
 
     try:
         start_time_sec = julian.tai_from_iso(start_time)
@@ -85,8 +87,8 @@ def populate_obs_general_CORSS_time1_OCC(**kwargs):
 
 def populate_obs_general_CORSS_time2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = index_row['RING_EVENT_STOP_TIME']
+    supp_index_row = metadata['supp_index_row']
+    stop_time = supp_index_row['EARTH_RECEIVED_STOP_TIME']
 
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
@@ -99,7 +101,7 @@ def populate_obs_general_CORSS_time2_OCC(**kwargs):
     start_time_sec = general_row['time1']
 
     if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
+        start_time = supp_index_row['SPACECRAFT_EVENT_START_TIME']
         import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
                                 f'are in the wrong order - setting to time1')
         stop_time_sec = start_time_sec
