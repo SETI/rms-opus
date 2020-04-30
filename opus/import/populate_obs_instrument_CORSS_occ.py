@@ -4,10 +4,6 @@
 # Routines to populate fields specific to CORSS.
 ################################################################################
 
-# Ordering:
-#   time1/2 must come before planet_id
-#   planet_id must come before opus_id
-
 import pdsfile
 
 from config_data import *
@@ -51,12 +47,10 @@ def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
     file_spec = _CORSS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
@@ -171,9 +165,6 @@ def populate_obs_type_image_CORSS_duration_OCC(**kwargs):
 def populate_obs_type_image_CORSS_levels_OCC(**kwargs):
     return None
 
-def _pixel_size_helper(**kwargs):
-    return None
-
 def populate_obs_type_image_CORSS_lesser_pixel_size_OCC(**kwargs):
     return None
 
@@ -183,30 +174,6 @@ def populate_obs_type_image_CORSS_greater_pixel_size_OCC(**kwargs):
 
 ### OBS_WAVELENGTH TABLE ###
 
-# See additional notes under _CORSS_FILTER_WAVELENGTHS
-def _CORSS_wavelength_helper(inst, filter1, filter2):
-    key = (inst, filter1, filter2)
-    if key in _CORSS_FILTER_WAVELENGTHS:
-        return _CORSS_FILTER_WAVELENGTHS[key]
-
-    # If we don't have the exact key combination, try to set polarization equal
-    # to CLEAR for lack of anything better to do.
-    nfilter1 = filter1 if filter1.find('P') == -1 else 'CL1'
-    nfilter2 = filter2 if filter2.find('P') == -1 else 'CL2'
-    key2 = (inst, nfilter1, nfilter2)
-    if key2 in _CORSS_FILTER_WAVELENGTHS:
-        import_util.log_nonrepeating_warning(
-            'Using CLEAR instead of polarized filter for unknown CORSS '+
-            f'filter combination {key[0]}/{key[1]}/{key[2]}')
-        return _CORSS_FILTER_WAVELENGTHS[key2]
-
-    import_util.log_nonrepeating_warning(
-        'Ignoring unknown CORSS filter combination '+
-        f'{key[0]}/{key[1]}/{key[2]}')
-
-    return None, None, None
-
-# These are the center wavelength +/- FWHM/2
 def populate_obs_wavelength_CORSS_wavelength1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -576,8 +543,8 @@ def populate_obs_mission_cassini_CORSS_ert2_OCC(**kwargs):
 
 def populate_obs_mission_cassini_CORSS_spacecraft_clock_count1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['supp_index_row']
-    count = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    supp_index_row = metadata['supp_index_row']
+    count = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
     if count == 'UNK':
         return None
 
@@ -592,8 +559,8 @@ def populate_obs_mission_cassini_CORSS_spacecraft_clock_count1_OCC(**kwargs):
 
 def populate_obs_mission_cassini_CORSS_spacecraft_clock_count2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['supp_index_row']
-    count = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    supp_index_row = metadata['supp_index_row']
+    count = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
     if count == 'UNK':
         return None
 

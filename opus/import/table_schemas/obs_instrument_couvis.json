@@ -83,8 +83,9 @@
         "field_defalut": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "INTEGRATION_DURATION"
+            "TAB:index||FUNCTION",
+            "INTEGRATION_DURATION",
+            "obs_instrument_couvis_integration_duration_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 10000,
@@ -113,8 +114,9 @@
         "field_enum_options": "'8_BIT','SQRT_8','SQRT_9','NONE'",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "COMPRESSION_TYPE"
+            "TAB:index||FUNCTION",
+            "COMPRESSION_TYPE",
+            "obs_instrument_couvis_compress_type_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -178,8 +180,9 @@
         "field_enum_options": "'HIGH_RESOLUTION','LOW_RESOLUTION','OCCULTATION','NULL'",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "SLIT_STATE"
+            "TAB:index||FUNCTION",
+            "SLIT_STATE",
+            "obs_instrument_couvis_slit_state_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -210,8 +213,9 @@
         "field_type": "flag_onoff",
         "field_default": null,
         "data_source": [
-            "TAB:index",
-            "TEST_PULSE_STATE"
+            "TAB:index||FUNCTION",
+            "TEST_PULSE_STATE",
+            "obs_instrument_couvis_test_pulse_state_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -236,8 +240,9 @@
         "field_type": "int4",
         "field_default": null,
         "data_source": [
-            "TAB:index",
-            "DWELL_TIME"
+            "TAB:index||FUNCTION",
+            "DWELL_TIME",
+            "obs_instrument_couvis_dwell_time_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 100,
@@ -299,8 +304,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "MINIMUM_BAND_NUMBER"
+            "TAB:supp_index||FUNCTION",
+            "MINIMUM_BAND_NUMBER",
+            "obs_instrument_couvis_band1_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -329,8 +335,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "MAXIMUM_BAND_NUMBER"
+            "TAB:supp_index||FUNCTION",
+            "MAXIMUM_BAND_NUMBER",
+            "obs_instrument_couvis_band2_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -359,8 +366,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "BAND_BINNING_FACTOR"
+            "TAB:supp_index||FUNCTION",
+            "BAND_BINNING_FACTOR",
+            "obs_instrument_couvis_band_bin_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -389,8 +397,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "WINDOW_MINIMUM_LINE_NUMBER"
+            "TAB:supp_index||FUNCTION",
+            "WINDOW_MINIMUM_LINE_NUMBER",
+            "obs_instrument_couvis_line1_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -422,8 +431,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "WINDOW_MAXIMUM_LINE_NUMBER"
+            "TAB:supp_index||FUNCTION",
+            "WINDOW_MAXIMUM_LINE_NUMBER",
+            "obs_instrument_couvis_line2_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -452,8 +462,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "LINE_BINNING_FACTOR"
+            "TAB:supp_index||FUNCTION",
+            "LINE_BINNING_FACTOR",
+            "obs_instrument_couvis_line_bin_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,
@@ -482,8 +493,9 @@
         "field_notnull": true,
         "field_key": true,
         "data_source": [
-            "TAB:supp_index",
-            "LINE_SAMPLES"
+            "TAB:supp_index||FUNCTION",
+            "LINE_SAMPLES",
+            "obs_instrument_couvis_samples_<TYPE>"
         ],
         "val_sentinel": -1,
         "val_min": 0,

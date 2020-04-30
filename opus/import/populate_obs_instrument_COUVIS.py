@@ -56,12 +56,10 @@ def populate_obs_general_COUVIS_opus_id_OBS(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
@@ -391,7 +389,7 @@ def populate_obs_wavelength_COUVIS_wave_no1_OBS(**kwargs):
 def populate_obs_wavelength_COUVIS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
-    wl1 = wl_row['wavelength2']
+    wl1 = wl_row['wavelength1']
 
     if wl1 is None:
         return None

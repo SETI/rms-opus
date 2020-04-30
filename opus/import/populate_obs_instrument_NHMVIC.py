@@ -32,7 +32,7 @@ def populate_obs_general_NHMVIC_opus_id_OBS(**kwargs):
     file_spec = _NHMVIC_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:

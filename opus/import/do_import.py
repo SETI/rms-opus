@@ -26,6 +26,7 @@ from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
 from populate_obs_instrument_CORSS_occ import *
 from populate_obs_instrument_COUVIS import *
+from populate_obs_instrument_COUVIS_occ import *
 from populate_obs_instrument_COVIMS import *
 
 from populate_obs_mission_galileo import *
@@ -1347,14 +1348,17 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[data_source_cmd_param+'_row']
                 if ref_index_row is not None:
                     if data_source_first not in ref_index_row:
-                        import_util.log_nonrepeating_error(
-                            f'Unknown referenced column "{data_source_first}" '+
-                            f'while processing column "{field_name}" in '+
-                            f'table "{table_name}"')
-                        continue
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_first)
-                    force_function = False
+                        if not force_function:
+                            import_util.log_nonrepeating_error(
+                                f'Unknown referenced column '+
+                                f'"{data_source_first}" '+
+                                f'while processing column "{field_name}" in '+
+                                f'table "{table_name}"')
+                            continue
+                    else:
+                        column_val = import_util.safe_column(ref_index_row,
+                                                             data_source_first)
+                        force_function = False
             elif data_source_cmd_prefix.startswith('ARRAY'):
                 processed = True
                 ref_index_name, array_index = data_source_cmd_param.split('.')
@@ -1374,20 +1378,23 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[ref_index_name+'_row']
                 if ref_index_row is not None:
                     if data_source_first not in ref_index_row:
-                        import_util.log_nonrepeating_error(
-                            f'Unknown PDS column "{data_source_first}" while '+
-                            f'processing table "{table_name}"')
-                        continue
-                    if (array_index < 0 or
-                        array_index >= len(ref_index_row[data_source_first])):
-                        import_util.log_nonrepeating_error(
-                            f'Bad array index "{array_index}" for column '+
-                            f'"{field_name}" in table "{table_name}"')
-                        continue
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_first,
-                                                         array_index)
-                    force_function = False
+                        if not force_function:
+                            import_util.log_nonrepeating_error(
+                                f'Unknown PDS column "{data_source_first}" '+
+                                f'while processing table "{table_name}"')
+                            continue
+                    else:
+                        if (array_index < 0 or
+                            array_index >=
+                                len(ref_index_row[data_source_first])):
+                            import_util.log_nonrepeating_error(
+                                f'Bad array index "{array_index}" for column '+
+                                f'"{field_name}" in table "{table_name}"')
+                            continue
+                        column_val = import_util.safe_column(ref_index_row,
+                                                             data_source_first,
+                                                             array_index)
+                        force_function = False
 
             if data_source_cmd_prefix == 'FUNCTION' or force_function:
                 processed = True

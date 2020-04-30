@@ -40,8 +40,6 @@ def populate_obs_general_GB_opus_id_OCC(**kwargs):
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
@@ -213,7 +211,7 @@ def populate_obs_occultation_GB_occ_dir_OCC(**kwargs):
         return 'B'
 
     import_util.log_nonrepeating_error(
-        f'Unknown OCCULTATION_DIRECTIN "{occ_dir}"')
+        f'Unknown OCCULTATION_DIRECTION "{occ_dir}"')
     return None
 
 def populate_obs_occultation_GB_body_occ_flag_OCC(**kwargs):
