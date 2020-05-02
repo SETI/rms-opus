@@ -116,7 +116,7 @@
         "data_source": [
             "TAB:index||FUNCTION",
             "COMPRESSION_TYPE",
-            "obs_instrument_couvis_compress_type_<TYPE>"
+            "obs_instrument_couvis_compression_type_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
@@ -290,7 +290,6 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "pi_units": null,
-        "comments": "XXX Needs definition",
         "mult_options": [
               [   0, "EUV",   "EUV",   10, "Y", null],
               [   1, "FUV",   "FUV",   20, "Y", null],
@@ -490,7 +489,7 @@
     {
         "field_name": "samples",
         "field_type": "int4",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "TAB:supp_index||FUNCTION",

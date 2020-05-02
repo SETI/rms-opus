@@ -116,8 +116,6 @@ def populate_product_id_from_index(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
-    if product_id.endswith('.LBL'):
-        product_id = product_id[:-4]
 
     return product_id
 

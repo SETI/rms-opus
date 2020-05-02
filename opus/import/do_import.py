@@ -731,6 +731,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
 
+    volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
+
 
     ######################################
     ### FIND ASSOCIATED METADATA FILES ###
@@ -878,8 +880,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             assoc_dict[key][key2] = row
                 else:
                     assert assoc_type == 'supp_index'
-                    if instrument_name == 'COUVIS':
-                        # The COUVIS supplemental index is keyed by a
+                    if instrument_name == 'COUVIS' and volume_type == 'OBS':
+                        # The COUVIS_0xxx supplemental index is keyed by a
                         # combination of VOLUME_ID (COUVIS_0001) and
                         # FILE_SPECIFICATION_NAME
                         # (DATA/D2000_153/EUV2000_153_15_52.LBL)
@@ -901,8 +903,11 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             assoc_dict[key] = row
                     elif (instrument_name == 'VGISS' or
                           mission_abbrev == 'GB' or
-                          instrument_name == 'CORSS'):
-                        # The VGISS and ground-based supplemental indexes are
+                          instrument_name == 'CORSS' or
+                          (instrument_name == 'COUVIS' and
+                           volume_type == 'OCC')):
+                        # The VGISS and ground-based and other occultation
+                        # supplemental indexes are
                         # keyed by FILE_SPECIFICATION_NAME
                         # (DATA/C13854XX/C1385455_RAW.LBL)
                         # that maps to the FILE_SPECIFICATION_NAME field in the
@@ -1001,8 +1006,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
     ##############################################
 
-    volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
-
     for index_row_num, index_row in enumerate(obs_rows):
         metadata['index_row'] = index_row
         metadata['index_row_num'] = index_row_num+1
@@ -1010,7 +1013,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
-        if 'supp_index' in metadata and instrument_name == 'COUVIS':
+        if ('supp_index' in metadata and
+            instrument_name == 'COUVIS' and volume_type == 'OBS'):
             # Match up the FILENAME with the key we generated earlier
             couvis_filename = index_row['FILE_NAME'].upper()
             supp_index = metadata['supp_index']
@@ -1024,7 +1028,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         elif ('supp_index' in metadata and
               (instrument_name == 'VGISS' or
                mission_abbrev == 'GB' or
-               instrument_name == 'CORSS')):
+               instrument_name == 'CORSS' or
+               (instrument_name == 'COUVIS' and volume_type == 'OCC'))):
             # Match up the FILENAME
             filename = index_row['FILE_SPECIFICATION_NAME']
             supp_index = metadata['supp_index']

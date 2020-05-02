@@ -107,7 +107,7 @@
     },
     {
         "field_name": "product_id",
-        "field_type": "char30",
+        "field_type": "char40",
         "field_notnull": true,
         "field_key": true,
         "data_source": [

@@ -54,6 +54,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('NHxxMV_xxxx')
                     volume_descs.append('EBROCC_xxxx')
                     volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'ALLBUTNH':
                     # This is useful because NH has duplicate opus_id that require
                     # checking while the others don't.
@@ -75,6 +77,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('HSTUx_xxxx')
                     volume_descs.append('EBROCC_xxxx')
                     volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CASSINI':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
@@ -83,6 +87,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COUVIS_0xxx')
                     volume_descs.append('COVIMS_0xxx')
                     volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'COISS':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
@@ -91,8 +97,10 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COCIRS_6xxx')
                 elif desc.upper() == 'COUVIS':
                     volume_descs.append('COUVIS_0xxx')
+                    volume_descs.append('COUVIS_8xxx')
                 elif desc.upper() == 'COVIMS':
                     volume_descs.append('COVIMS_0xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CORSS':
                     volume_descs.append('CORSS_8xxx')
                 elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
