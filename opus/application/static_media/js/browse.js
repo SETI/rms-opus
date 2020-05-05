@@ -1457,14 +1457,23 @@ var o_browse = {
     },
 
     initDraggableColumn: function(tab) {
-        // Return a helper with preserved width of cells
-        let fixHelper =
+        function dragColumn(ui, action) {
+            let element = ui.item;
+            let slug = element.attr("id");
+            let func = (action === "sortstart" ? "addClass" : "removeClass");
+            $(`${tab} .op-data-table-colun-move-bar`)[func]("op-column-move");
+            $(`${tab} .op-data-table td[data-slug="${slug}"]`).each(function(column, td) {
+                $(td)[func]("op-column-move");
+            });
+        }
+
         $(`${tab} .op-data-table thead`).sortable({
             items: "th:not(.op-table-first-col)",
             axis: "x",
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
+            placeholder: "op-sortable-placeholder",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
                 let td = $("tbody tr").find(`[data-slug="${slug}"]`);
@@ -1474,9 +1483,11 @@ var o_browse = {
                 return ui;
             },
             start: function(e, ui) {
+                //dragColumn(ui, e.type);
                 $("tbody").animate({opacity: '0.4'});
             },
-            stop: function(event, ui) {;
+            stop: function(e, ui) {
+                dragColumn(ui, e.type);
                 let columnOrder = $.map($(this).find("th").not(".op-table-first-col"), function(n, i) {
                     return n.id;
                 });

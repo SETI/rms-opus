@@ -715,6 +715,7 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
+
 .op-data-table-view {
     width: 100%;
     position: relative;
@@ -744,6 +745,14 @@ th.sticky-header {
 
 .op-data-table-view .ui-sortable-placeholder {
     display: none;
+}
+
+.op-data-table-column-move-bar {
+    display: none
+}
+
+.op-data-table-column-move-bar .op-moving {
+    border-left: 4px solid blue;
 }
 
 .op-sort-position-indicator {
