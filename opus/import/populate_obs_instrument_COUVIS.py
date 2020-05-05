@@ -122,7 +122,7 @@ def populate_obs_general_COUVIS_observation_type_OBS(**kwargs):
     assert channel == 'EUV' or channel == 'FUV'
     return 'SCU' # Spectral Cube
 
-def populate_obs_general_COUVIS_time1(**kwargs):
+def populate_obs_general_COUVIS_time1_OBS(**kwargs):
     return populate_time1_from_index(**kwargs)
 
 def populate_obs_general_COUVIS_time2_OBS(**kwargs):
@@ -267,6 +267,9 @@ def populate_obs_type_image_COUVIS_duration_OBS(**kwargs):
     index_row = metadata['index_row']
     integration_duration = import_util.safe_column(index_row,
                                                    'INTEGRATION_DURATION')
+    if integration_duration is None:
+        return None
+
     return integration_duration/1000
 
 def populate_obs_type_image_COUVIS_levels_OBS(**kwargs):
@@ -600,3 +603,13 @@ def populate_obs_instrument_couvis_occultation_port_state_OBS(**kwargs):
     if occ_state == 'NULL':
         occ_state = 'N/A'
     return occ_state.upper()
+
+def populate_obs_instrument_couvis_integration_duration_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    dur = import_util.safe_column(index_row, 'INTEGRATION_DURATION')
+
+    if dur is None:
+        return None
+
+    return dur/1000

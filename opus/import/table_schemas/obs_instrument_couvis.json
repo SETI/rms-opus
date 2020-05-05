@@ -83,8 +83,7 @@
         "field_defalut": null,
         "field_key": true,
         "data_source": [
-            "TAB:index||FUNCTION",
-            "INTEGRATION_DURATION",
+            "FUNCTION",
             "obs_instrument_couvis_integration_duration_<TYPE>"
         ],
         "val_min": 0,

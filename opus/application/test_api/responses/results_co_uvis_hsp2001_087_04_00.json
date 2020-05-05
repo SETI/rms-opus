@@ -8,8 +8,8 @@
         "instrument": "Cassini UVIS",
         "observationtype": "Time Series",
         "time1": "2001-03-28T04:00:21.133",
-        "time2": "2001-03-28T04:15:13.213",
-        "observationduration": "892.08",
+        "time2": "2001-03-28T04:30:05.293",
+        "observationduration": "1784.16",
         "quantity": "Emission",
         "rightasc1": null,
         "rightasc2": null,
@@ -113,7 +113,7 @@
         "CASSINIisprime": "No",
         "CASSINIsequenceid": null,
         "CASSINIspacecraftclockcount1": "1364443971.096",
-        "CASSINIspacecraftclockcount2": "1364444863.116",
+        "CASSINIspacecraftclockcount2": "1364445755.137",
         "CASSINIert1": null,
         "CASSINIert2": null
     },
@@ -130,7 +130,7 @@
         "COUVISbandbin": null,
         "COUVISsamples": "223020",
         "COUVIScompressiontype": "SQRT_9",
-        "COUVISintegrationduration": "8",
+        "COUVISintegrationduration": "0.008",
         "COUVISdwelltime": null,
         "COUVIStestpulsestate": null
     },

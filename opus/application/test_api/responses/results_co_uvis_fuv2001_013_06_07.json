@@ -26,7 +26,7 @@
         "note": "to measure the EUV and FUV spectra of Jupiter from phase angles between 100 and 130 deg in coordination with HST in Earth orbit."
     },
     "Image Constraints": {
-        "duration": "240",
+        "duration": "0.24",
         "greaterpixelsize": "56",
         "lesserpixelsize": "5",
         "levels": "65536",
@@ -39,8 +39,8 @@
         "waveres2": "0.000078",
         "waveno1": "90844.6",
         "waveno2": "90909.1",
-        "wavenores1": "64.52",
-        "wavenores2": "64.52",
+        "wavenores1": "64.475",
+        "wavenores2": "64.566",
         "specflag": "Yes",
         "specsize": "1024",
         "polarizationtype": "None"
@@ -130,7 +130,7 @@
         "COUVISbandbin": "1",
         "COUVISsamples": "5",
         "COUVIScompressiontype": "SQRT_9",
-        "COUVISintegrationduration": "240",
+        "COUVISintegrationduration": "0.24",
         "COUVISdwelltime": null,
         "COUVIStestpulsestate": "Off"
     },

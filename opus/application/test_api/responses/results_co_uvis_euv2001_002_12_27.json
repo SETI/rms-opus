@@ -39,8 +39,8 @@
         "waveres2": "0.000061",
         "waveno1": "179016.6",
         "waveno2": "179211.5",
-        "wavenores1": "194.872",
-        "wavenores2": "194.872",
+        "wavenores1": "194.66",
+        "wavenores2": "195.084",
         "specflag": "Yes",
         "specsize": "1024",
         "polarizationtype": "None"
@@ -130,7 +130,7 @@
         "COUVISbandbin": "1",
         "COUVISsamples": "2",
         "COUVIScompressiontype": "SQRT_9",
-        "COUVISintegrationduration": "1635",
+        "COUVISintegrationduration": "1.635",
         "COUVISdwelltime": null,
         "COUVIStestpulsestate": "Off"
     },

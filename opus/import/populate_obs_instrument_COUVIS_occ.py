@@ -50,8 +50,10 @@ def populate_obs_general_COUVIS_inst_host_id_OCC(**kwargs):
 # COUVIS time span is the duration of the observation at the spacecraft
 def populate_obs_general_COUVIS_time1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = index_row['START_TIME']
+    # We use the supp_index version instead of the index version because
+    # the index version is sometimes wrong
+    supp_index_row = metadata['supp_index_row']
+    start_time = supp_index_row['START_TIME']
 
     try:
         start_time_sec = julian.tai_from_iso(start_time)
@@ -64,8 +66,8 @@ def populate_obs_general_COUVIS_time1_OCC(**kwargs):
 
 def populate_obs_general_COUVIS_time2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = index_row['STOP_TIME']
+    supp_index_row = metadata['supp_index_row']
+    stop_time = supp_index_row['STOP_TIME']
 
     try:
         stop_time_sec = julian.tai_from_iso(stop_time)
@@ -130,7 +132,7 @@ def _ra_dec_helper(**kwargs):
     index_row = metadata['index_row']
     star_name = index_row['STAR_NAME']
     if star_name not in import_util.STAR_RA_DEC:
-        import_util.log_nonrepeating_error(
+        import_util.log_nonrepeating_warning(
             f'Star "{star_name}" missing RA and DEC information'
         )
         return None, None
@@ -247,15 +249,17 @@ def populate_obs_occultation_COUVIS_occ_type_OCC(**kwargs):
     return 'STE' # There are no SUN occultations
 
 def populate_obs_occultation_COUVIS_occ_dir_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    occ_dir = index_row['RING_OCCULTATION_DIRECTION']
+    filespec = _COUVIS_file_spec_helper(**kwargs)
 
-    if occ_dir not in ('I', 'E', 'B'):
-        import_util.log_nonrepeating_error(
-            f'Unknown OCCULTATION_DIRECTION "{occ_dir}"')
-        return None
-    return occ_dir
+    # We don't allow "Both" as a direction since these are always split into
+    # separate files.
+    if '_I_' in filespec:
+        return 'I'
+    if '_E_' in filespec:
+        return 'E'
+    import_util.log_nonrepeating_error(
+        f'Unknown ring occultation direction in filespec "{filespec}"')
+    return None
 
 def populate_obs_occultation_COUVIS_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -289,7 +293,7 @@ def populate_obs_occultation_COUVIS_temporal_sampling_OCC(**kwargs):
     supp_index_row = metadata['supp_index_row']
     dur = supp_index_row['INTEGRATION_DURATION']
 
-    return dur
+    return dur/1000
 
 def populate_obs_occultation_COUVIS_quality_score_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -581,7 +585,7 @@ def populate_obs_instrument_couvis_integration_duration_OCC(**kwargs):
     supp_index_row = metadata['supp_index_row']
     dur = supp_index_row['INTEGRATION_DURATION']
 
-    return dur
+    return dur/1000
 
 def populate_obs_instrument_couvis_compression_type_OCC(**kwargs):
     metadata = kwargs['metadata']

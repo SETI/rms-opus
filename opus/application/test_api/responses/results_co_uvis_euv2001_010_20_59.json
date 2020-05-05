@@ -26,7 +26,7 @@
         "note": "to measure the HeI 584A and HI Lyman Series emissions from the interplanetary/local interstellar medium, while S/C is downlinking."
     },
     "Image Constraints": {
-        "duration": "6660",
+        "duration": "6.66",
         "greaterpixelsize": "32",
         "lesserpixelsize": "1",
         "levels": "65536",
@@ -39,8 +39,8 @@
         "waveres2": "0.000061",
         "waveno1": "179016.6",
         "waveno2": "179211.5",
-        "wavenores1": "194.872",
-        "wavenores2": "194.872",
+        "wavenores1": "194.66",
+        "wavenores2": "195.084",
         "specflag": "Yes",
         "specsize": "1024",
         "polarizationtype": "None"
@@ -130,7 +130,7 @@
         "COUVISbandbin": "1",
         "COUVISsamples": "1",
         "COUVIScompressiontype": "SQRT_9",
-        "COUVISintegrationduration": "6660",
+        "COUVISintegrationduration": "6.66",
         "COUVISdwelltime": null,
         "COUVIStestpulsestate": "Off"
     },

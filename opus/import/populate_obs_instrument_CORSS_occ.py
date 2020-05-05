@@ -234,6 +234,8 @@ def populate_obs_occultation_CORSS_occ_type_OCC(**kwargs):
 def populate_obs_occultation_CORSS_occ_dir_OCC(**kwargs):
     filespec = _CORSS_file_spec_helper(**kwargs)
 
+    # We don't allow "Both" as a direction since these are always split into
+    # separate files.
     if '_I_' in filespec:
         return 'I'
     if '_E_' in filespec:
