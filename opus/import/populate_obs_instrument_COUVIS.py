@@ -122,11 +122,33 @@ def populate_obs_general_COUVIS_observation_type_OBS(**kwargs):
     assert channel == 'EUV' or channel == 'FUV'
     return 'SCU' # Spectral Cube
 
-def populate_obs_general_COUVIS_time1_OBS(**kwargs):
+def populate_obs_general_COUVIS_time1(**kwargs):
     return populate_time1_from_index(**kwargs)
 
 def populate_obs_general_COUVIS_time2_OBS(**kwargs):
-    return populate_time2_from_index(**kwargs)
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    if channel != 'HSP':
+        return populate_time2_from_index(**kwargs)
+
+    # The HSP stop times are wrong by a factor of the integration duration.
+    # So we use the normal start time but then compute the stop time by taking
+    # the start time and adding the number of samples * integration duration.
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    start_time_sec = general_row['time1']
+
+    if start_time_sec is None:
+        return None
+
+    index_row = metadata['index_row']
+    supp_index_row = metadata['supp_index_row']
+    samples = import_util.safe_column(supp_index_row, 'LINE_SAMPLES')
+    integration_duration = import_util.safe_column(index_row,
+                                                   'INTEGRATION_DURATION')
+    if samples is None or integration_duration is None:
+        return None
+
+    return start_time_sec + samples*integration_duration/1000
 
 def populate_obs_general_COUVIS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
@@ -245,7 +267,7 @@ def populate_obs_type_image_COUVIS_duration_OBS(**kwargs):
     index_row = metadata['index_row']
     integration_duration = import_util.safe_column(index_row,
                                                    'INTEGRATION_DURATION')
-    return integration_duration
+    return integration_duration/1000
 
 def populate_obs_type_image_COUVIS_levels_OBS(**kwargs):
     if not _COUVIS_is_image(**kwargs):
