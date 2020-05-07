@@ -1683,12 +1683,12 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_left_side(self):
         "[test_search.py] range_query: single column range with min only"
-        selections = {'obs_ring_geometry.ring_center_phase1': [20.0],
-                      'obs_ring_geometry.ring_center_phase2': [None]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', [], [])
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [None]}
+        sql, params = get_range_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`ring_center_phase` >= %s'
+        expected = '`obs_type_image`.`duration` >= %s'
         expected_params = [20.0]
         print(expected)
         print(expected_params)
@@ -1697,12 +1697,12 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_right_side(self):
         "[test_search.py] range_query: single column range with max only"
-        selections = {'obs_ring_geometry.ring_center_phase1': [None],
-                      'obs_ring_geometry.ring_center_phase2': [180.0]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', [], [])
+        selections = {'obs_type_image.duration1': [None],
+                      'obs_type_image.duration2': [180.0]}
+        sql, params = get_range_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`ring_center_phase` <= %s'
+        expected = '`obs_type_image`.`duration` <= %s'
         expected_params = [180.0]
         print(expected)
         print(expected_params)
@@ -1711,12 +1711,12 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_both_side(self):
         "[test_search.py] range_query: single column range with both min and max"
-        selections = {'obs_ring_geometry.ring_center_phase2': [180.0],
-                      'obs_ring_geometry.ring_center_phase1': [20.0]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', ['any'], [])
+        selections = {'obs_type_image.duration2': [180.0],
+                      'obs_type_image.duration1': [20.0]}
+        sql, params = get_range_query(selections, 'obs_type_image.duration1', ['any'], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s'
+        expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -1725,9 +1725,9 @@ class searchTests(TestCase):
 
     def test__range_query_single_col_range_all(self):
         "[test_search.py] range_query: single column range with bogus qtype=all"
-        selections = {'obs_ring_geometry.ring_center_phase2': [180.0],
-                      'obs_ring_geometry.ring_center_phase1': [20.0]}
-        sql, params = get_range_query(selections, 'obs_ring_geometry.ring_center_phase1', ['all'], [])
+        selections = {'obs_type_image.duration2': [180.0],
+                      'obs_type_image.duration1': [20.0]}
+        sql, params = get_range_query(selections, 'obs_type_image.duration1', ['all'], [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2204,8 +2204,8 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_left_side_no_right(self):
         "[test_search.py] longitude_query: single column long range with min only"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], [])
+        selections = {'obs_type_image.duration1': [20.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
         expected = None # Can't have one-sided longitude queries
@@ -2217,12 +2217,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_left_side(self):
         "[test_search.py] longitude_query: single column long range with min only"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], [])
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [None]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s'
+        expected = '`obs_type_image`.`duration` >= %s'
         expected_params = [20.0]
         print(expected)
         print(expected_params)
@@ -2231,12 +2231,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_right_side(self):
         "[test_search.py] longitude_query: single column long range with max only"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [None],
-                      'obs_ring_geometry.sub_solar_ring_long2': [180.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], [])
+        selections = {'obs_type_image.duration1': [None],
+                      'obs_type_image.duration2': [180.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` <= %s'
         expected_params = [180.0]
         print(expected)
         print(expected_params)
@@ -2245,12 +2245,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side(self):
         "[test_search.py] longitude_query: single column long range with both min and max"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], [])
+        selections = {'obs_type_image.duration2': [180.0],
+                      'obs_type_image.duration1': [20.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -2259,9 +2259,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_all(self):
         "[test_search.py] longitude_query: single column long range with bogus qtype=all"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['all'], [])
+        selections = {'obs_type_image.duration2': [180.0],
+                      'obs_type_image.duration1': [20.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['all'], [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2269,12 +2269,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_1(self):
         "[test_search.py] longitude_query: single column long range clause 1 second both None"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, None],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'any'], [])
+        selections = {'obs_type_image.duration2': [180.0, None],
+                      'obs_type_image.duration1': [20.0, None]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -2283,12 +2283,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_2(self):
         "[test_search.py] longitude_query: single column long range clause 2 second one None"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, None],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, 30.]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'any'], [])
+        selections = {'obs_type_image.duration2': [180.0, None],
+                      'obs_type_image.duration1': [20.0, 30.]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s) OR (`obs_ring_geometry`.`sub_solar_ring_long` >= %s)'
+        expected = '(`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s) OR (`obs_type_image`.`duration` >= %s)'
         expected_params = [20.0, 180.0, 30.0]
         print(expected)
         print(expected_params)
@@ -2297,12 +2297,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_clause_3(self):
         "[test_search.py] longitude_query: single column long range clause 3 second both OK"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0, 280.0],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0, 220.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'any'], [])
+        selections = {'obs_type_image.duration2': [180.0, 280.0],
+                      'obs_type_image.duration1': [20.0, 220.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any'], [])
         print(sql)
         print(params)
-        expected = '(`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s) OR (`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s)'
+        expected = '(`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s) OR (`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s)'
         expected_params = [20.0,180.0,220.0,280.0]
         print(expected)
         print(expected_params)
@@ -2453,12 +2453,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side_wrap(self):
         "[test_search.py] longitude_query: single column long range with both min and max"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [180.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [20.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any'], [])
+        selections = {'obs_type_image.duration1': [180.0],
+                      'obs_type_image.duration2': [20.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any'], [])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s OR `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` >= %s OR `obs_type_image`.`duration` <= %s'
         expected_params = [180.0,20.0]
         print(expected)
         print(expected_params)
@@ -2571,12 +2571,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_left_side_units_default(self):
         "[test_search.py] longitude_query: single column long range with min only units default"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], ['degrees'])
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [None]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s'
+        expected = '`obs_type_image`.`duration` >= %s'
         expected_params = [20.0]
         print(expected)
         print(expected_params)
@@ -2585,12 +2585,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_right_side_units_default(self):
         "[test_search.py] longitude_query: single column long range with max only units default"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [None],
-                      'obs_ring_geometry.sub_solar_ring_long2': [180.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], ['degrees'])
+        selections = {'obs_type_image.duration1': [None],
+                      'obs_type_image.duration2': [180.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` <= %s'
         expected_params = [180.0]
         print(expected)
         print(expected_params)
@@ -2599,12 +2599,12 @@ class searchTests(TestCase):
 
     def test__longitude_query_single_col_range_both_side_units_default(self):
         "[test_search.py] longitude_query: single column long range with both min and max units default"
-        selections = {'obs_ring_geometry.sub_solar_ring_long2': [180.0],
-                      'obs_ring_geometry.sub_solar_ring_long1': [20.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], ['degrees'])
+        selections = {'obs_type_image.duration2': [180.0],
+                      'obs_type_image.duration1': [20.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], ['seconds'])
         print(sql)
         print(params)
-        expected = '`obs_ring_geometry`.`sub_solar_ring_long` >= %s AND `obs_ring_geometry`.`sub_solar_ring_long` <= %s'
+        expected = '`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
         expected_params = [20.0,180.0]
         print(expected)
         print(expected_params)
@@ -2614,7 +2614,7 @@ class searchTests(TestCase):
     def test__longitude_query_bad_none_single(self):
         "[test_search.py] longitude_query: no selections single column"
         selections = None
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', [], [])
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', [], [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2622,9 +2622,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_bad_param_single(self):
         "[test_search.py] longitude_query: bad param single column"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [30.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long3', [], [])
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [30.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration3', [], [])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2632,9 +2632,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_bad_qtype_single(self):
         "[test_search.py] longitude_query: bad qtype single column"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0, 30.0, 40.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [25.0, 35.0, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'only', 'any'], ['degrees', 'degrees', 'degrees'])
+        selections = {'obs_type_image.duration1': [20.0, 30.0, 40.0],
+                      'obs_type_image.duration2': [25.0, 35.0, 45.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'only', 'any'], ['degrees', 'degrees', 'degrees'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2642,9 +2642,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_bad_qtype_single_min(self):
         "[test_search.py] longitude_query: bad qtype single column"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [20.0, 30.0, 40.0],
-                      'obs_ring_geometry.sub_solar_ring_long2': [25.0, None, 45.0]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'only', 'any'], ['degrees', 'degrees', 'degrees'])
+        selections = {'obs_type_image.duration1': [20.0, 30.0, 40.0],
+                      'obs_type_image.duration2': [25.0, None, 45.0]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'only', 'any'], ['seconds', 'seconds', 'seconds'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2652,9 +2652,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_bad_unit_single(self):
         "[test_search.py] longitude_query: bad unit single column"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [10000000., 40000., 8000000000.],
-                      'obs_ring_geometry.sub_solar_ring_long2': [40000000., 50000., None]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'any', 'any'], ['degrees', 'km', 'degrees'])
+        selections = {'obs_type_image.duration1': [10000000., 40000., 8000000000.],
+                      'obs_type_image.duration2': [40000000., 50000., None]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any', 'any'], ['seconds', 'km', 'seconds'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -2662,9 +2662,9 @@ class searchTests(TestCase):
 
     def test__longitude_query_bad_unit_single_min(self):
         "[test_search.py] longitude_query: bad unit single column min"
-        selections = {'obs_ring_geometry.sub_solar_ring_long1': [10000000., 40000., 8000000000.],
-                      'obs_ring_geometry.sub_solar_ring_long2': [40000000., None,   9000000000.]}
-        sql, params = get_longitude_query(selections, 'obs_ring_geometry.sub_solar_ring_long1', ['any', 'any', 'any'], ['degrees', 'km', 'degrees'])
+        selections = {'obs_type_image.duration1': [10000000., 40000., 8000000000.],
+                      'obs_type_image.duration2': [40000000., None,   9000000000.]}
+        sql, params = get_longitude_query(selections, 'obs_type_image.duration1', ['any', 'any', 'any'], ['seconds', 'km', 'seconds'])
         print(sql)
         print(params)
         self.assertIsNone(sql)
@@ -3052,13 +3052,13 @@ class searchTests(TestCase):
 
     def test__construct_query_string_single_column_range(self):
         "[test_search.py] construct_query_string: a single column range"
-        selections = {'obs_ring_geometry.ring_center_phase1': [20.0],
-                      'obs_ring_geometry.ring_center_phase2': [180.0]}
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [180.0]}
         extras = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE `obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_type_image` ON `obs_general`.`id`=`obs_type_image`.`obs_general_id` WHERE `obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s'
         expected_params = [20.0, 180.0]
         print(expected)
         print(expected_params)
@@ -3067,9 +3067,9 @@ class searchTests(TestCase):
 
     def test__construct_query_string_single_column_range_unit_overflow(self):
         "[test_search.py] construct_query_string: a single column range, unit overflow"
-        selections = {'obs_ring_geometry.ring_center_phase1': [20.0],
-                      'obs_ring_geometry.ring_center_phase2': [1e307]}
-        extras = {'units': {'obs_ring_geometry.ring_center_phase': 'radians'}}
+        selections = {'obs_type_image.duration1': [20.0],
+                      'obs_type_image.duration2': [1e307]}
+        extras = {'units': {'obs_type_image.duration': 'msecs'}}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
@@ -3116,13 +3116,13 @@ class searchTests(TestCase):
 
     def test__construct_query_string_single_column_range_clause(self):
         "[test_search.py] construct_query_string: a single column range clause"
-        selections = {'obs_ring_geometry.ring_center_phase1': [20.0, 200.0],
-                      'obs_ring_geometry.ring_center_phase2': [180.0, 300.0]}
+        selections = {'obs_type_image.duration1': [20.0, 200.0],
+                      'obs_type_image.duration2': [180.0, 300.0]}
         extras = {}
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_ring_geometry` ON `obs_general`.`id`=`obs_ring_geometry`.`obs_general_id` WHERE (`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s) OR (`obs_ring_geometry`.`ring_center_phase` >= %s AND `obs_ring_geometry`.`ring_center_phase` <= %s)'
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_type_image` ON `obs_general`.`id`=`obs_type_image`.`obs_general_id` WHERE (`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s) OR (`obs_type_image`.`duration` >= %s AND `obs_type_image`.`duration` <= %s)'
         expected_params = [20.0, 180.0, 200.0, 300.0]
         print(expected)
         print(expected_params)

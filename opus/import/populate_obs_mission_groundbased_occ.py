@@ -16,7 +16,7 @@ import import_util
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
 
-def helper_earthbased_target_name(**kwargs):
+def helper_groundbased_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     target_name = index_label['TARGET_NAME']
@@ -40,13 +40,13 @@ def helper_earthbased_target_name(**kwargs):
 
     return (target_name, import_util.cleanup_target_name(target_name))
 
-def helper_earthbased_planet_id(**kwargs):
+def helper_groundbased_planet_id(**kwargs):
     return 'SAT'
 
 def populate_obs_general_GB_planet_id_OCC(**kwargs):
-    return helper_earthbased_planet_id(**kwargs)
+    return helper_groundbased_planet_id(**kwargs)
 
 
 ################################################################################
-# THESE ARE SPECIFIC TO OBS_MISSION_EARTHBASED
+# THESE ARE SPECIFIC TO OBS_MISSION_GROUNDBASED
 ################################################################################

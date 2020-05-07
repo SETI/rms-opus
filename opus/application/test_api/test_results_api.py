@@ -21,6 +21,7 @@ import settings
 class ApiResultsTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        self.UPDATE_FILES = False
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0

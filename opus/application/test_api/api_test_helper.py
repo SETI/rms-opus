@@ -7,6 +7,11 @@ import settings
 _RESPONSES_FILE_ROOT = 'test_api/responses/'
 
 class ApiTestHelper:
+    # If this is set to true, then instead of comparing responses to files
+    # we overwrite the files with the response to update the test results.
+    # Use with extreme caution!
+    UPDATE_FILES = False
+
     def _get_response(self, url):
         if (not settings.TEST_GO_LIVE or
             settings.TEST_GO_LIVE == "production"): # pragma: no cover
@@ -57,12 +62,16 @@ class ApiTestHelper:
         self.assertEqual(expected, jdata)
 
     def _run_json_equal_file(self, url, exp_file):
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
-            expected = json.loads(fp.read())
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
         jdata = json.loads(response.content)
+        if self.UPDATE_FILES:
+            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+                fp.write(json.dumps(jdata, indent=2)+'\n')
+            return
+        with open(_RESPONSES_FILE_ROOT+exp_file, 'r') as fp:
+            expected = json.loads(fp.read())
         print('Got:')
         print(jdata)
         print('Expected:')
@@ -85,11 +94,15 @@ class ApiTestHelper:
         self.assertEqual(expected, resp)
 
     def _run_html_equal_file(self, url, exp_file):
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
-            expected = fp.read()
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        if self.UPDATE_FILES:
+            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+                fp.write(response.content.decode())
+            return
+        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
+            expected = fp.read()
         expected = str(expected)[2:-1]
         expected = (expected.replace('\\\\r', '').replace('\\r', '')
                     .replace('\r', ''))
@@ -137,11 +150,15 @@ class ApiTestHelper:
         self.assertEqual(expected, resp)
 
     def _run_csv_equal_file(self, url, exp_file):
-        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
-            expected = fp.read()
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        if self.UPDATE_FILES:
+            with open(_RESPONSES_FILE_ROOT+exp_file, 'w') as fp:
+                fp.write(response.content.decode())
+            return
+        with open(_RESPONSES_FILE_ROOT+exp_file, 'rb') as fp:
+            expected = fp.read()
         expected = self._cleanup_csv(expected)
         resp = self._cleanup_csv(response.content)
         print('Got:')

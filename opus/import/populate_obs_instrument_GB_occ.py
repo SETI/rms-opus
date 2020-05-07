@@ -61,7 +61,7 @@ def populate_obs_general_GB_time2_OCC(**kwargs):
     return populate_time2_from_index(**kwargs)
 
 def populate_obs_general_GB_target_name_OCC(**kwargs):
-    return helper_earthbased_target_name(**kwargs)
+    return helper_groundbased_target_name(**kwargs)
 
 def populate_obs_general_GB_observation_duration_OCC(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
@@ -275,33 +275,24 @@ def populate_obs_ring_geometry_GB_ring_radius2_OCC(**kwargs):
 
     return radius2
 
-def populate_obs_ring_geometry_GB_resolution1_OCC(**kwargs):
+def _radial_resolution_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
 
     return res
+
+def populate_obs_ring_geometry_GB_resolution1_OCC(**kwargs):
+    return _radial_resolution_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_resolution2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
-
-    return res
+    return _radial_resolution_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_proj_resolution1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
-
-    return res
+    return _radial_resolution_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_proj_resolution2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    res = import_util.safe_column(supp_index_row, 'RADIAL_RESOLUTION')
-
-    return res
+    return _radial_resolution_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_phase1_OCC(**kwargs):
     return 180.
@@ -309,29 +300,36 @@ def populate_obs_ring_geometry_GB_phase1_OCC(**kwargs):
 def populate_obs_ring_geometry_GB_phase2_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_GB_incidence1_OCC(**kwargs):
+def _incidence_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
 
     return inc
+
+def populate_obs_ring_geometry_GB_incidence1_OCC(**kwargs):
+    return _incidence_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_incidence2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+    return _incidence_helper(**kwargs)
 
-    return inc
-
-def populate_obs_ring_geometry_GB_center_phase_OCC(**kwargs):
+def populate_obs_ring_geometry_GB_center_phase1_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_GB_center_incidence_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+def populate_obs_ring_geometry_GB_center_phase2_OCC(**kwargs):
+    return 180.
 
-    return inc
+def populate_obs_ring_geometry_GB_center_incidence1_OCC(**kwargs):
+    return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_incidence2_OCC(**kwargs):
+    return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_ring_intercept_time1_OCC(**kwargs):
+    return populate_time1_from_index(column='RING_EVENT_START', **kwargs)
+
+def populate_obs_ring_geometry_GB_ring_intercept_time2_OCC(**kwargs):
+    return populate_time1_from_index(column='RING_EVENT_STOP', **kwargs)
 
 
 ################################################################################
@@ -341,5 +339,5 @@ def populate_obs_ring_geometry_GB_center_incidence_OCC(**kwargs):
 
 
 ################################################################################
-# THESE ARE SPECIFIC TO OBS_INSTRUMENT_EB
+# THESE ARE SPECIFIC TO OBS_INSTRUMENT_GB
 ################################################################################

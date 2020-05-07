@@ -394,96 +394,66 @@ def populate_obs_ring_geometry_COUVIS_phase1_OCC(**kwargs):
 def populate_obs_ring_geometry_COUVIS_phase2_OCC(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_COUVIS_incidence1_OCC(**kwargs):
+def _incidence_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
 
     return inc
+
+def populate_obs_ring_geometry_COUVIS_incidence1_OCC(**kwargs):
+    return _incidence_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_incidence2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return inc
+    return _incidence_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_north_based_incidence1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return inc
+    return _incidence_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_north_based_incidence2_OCC(**kwargs):
+    return _incidence_helper(**kwargs)
+
+def _emission_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
+    em = 90+abs(import_util.safe_column(index_row,
+                                         'OBSERVED_RING_ELEVATION'))
 
-    return inc
+    return em
 
 def populate_obs_ring_geometry_COUVIS_emission1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row,
-                                         'OBSERVED_RING_ELEVATION'))
-
-    return em
+    return _emission_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_emission2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row,
-                                         'OBSERVED_RING_ELEVATION'))
-
-    return em
+    return _emission_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_north_based_emission1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row,
-                                         'OBSERVED_RING_ELEVATION'))
-
-    return em
+    return _emission_helper(**kwargs)
 
 def populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row,
-                                         'OBSERVED_RING_ELEVATION'))
+    return _emission_helper(**kwargs)
 
-    return em
-
-def populate_obs_ring_geometry_COUVIS_center_phase_OCC(**kwargs):
-    return 180.
-
-def populate_obs_ring_geometry_COUVIS_center_incidence_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return inc
-
-def populate_obs_ring_geometry_COUVIS_center_emission_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return em
-
-def populate_obs_ring_geometry_COUVIS_center_north_based_incidence_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return inc
-
-def populate_obs_ring_geometry_COUVIS_center_north_based_emission_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
-
-    return em
+# We set the center versions to be the same as the normal versions
+populate_obs_ring_geometry_COUVIS_center_phase1_OCC = \
+    populate_obs_ring_geometry_COUVIS_phase1_OCC
+populate_obs_ring_geometry_COUVIS_center_phase2_OCC = \
+    populate_obs_ring_geometry_COUVIS_phase2_OCC
+populate_obs_ring_geometry_COUVIS_center_incidence1_OCC = \
+    populate_obs_ring_geometry_COUVIS_incidence1_OCC
+populate_obs_ring_geometry_COUVIS_center_incidence2_OCC = \
+    populate_obs_ring_geometry_COUVIS_incidence2_OCC
+populate_obs_ring_geometry_COUVIS_center_emission1_OCC = \
+    populate_obs_ring_geometry_COUVIS_emission1_OCC
+populate_obs_ring_geometry_COUVIS_center_emission2_OCC = \
+    populate_obs_ring_geometry_COUVIS_emission2_OCC
+populate_obs_ring_geometry_COUVIS_center_north_based_incidence1_OCC = \
+    populate_obs_ring_geometry_COUVIS_north_based_incidence1_OCC
+populate_obs_ring_geometry_COUVIS_center_north_based_incidence2_OCC = \
+    populate_obs_ring_geometry_COUVIS_north_based_incidence2_OCC
+populate_obs_ring_geometry_COUVIS_center_north_based_emission1_OCC = \
+    populate_obs_ring_geometry_COUVIS_north_based_emission1_OCC
+populate_obs_ring_geometry_COUVIS_center_north_based_emission2_OCC = \
+    populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC
 
 def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -505,6 +475,12 @@ def populate_obs_ring_geometry_COUVIS_observer_ring_elevation2_OCC(**kwargs):
     el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
 
     return el
+
+def populate_obs_ring_geometry_COUVIS_ring_intercept_time1_OCC(**kwargs):
+    return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
+
+def populate_obs_ring_geometry_COUVIS_ring_intercept_time2_OCC(**kwargs):
+    return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
 
 ################################################################################
