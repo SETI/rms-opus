@@ -26,7 +26,7 @@
     "note": "to obtain EUV and FUV spectral images of Jupiter while ISS performs a N-S meridional scan."
   },
   "Image Constraints": {
-    "duration": "0.067",
+    "duration": "67",
     "greaterpixelsize": "64",
     "lesserpixelsize": "1",
     "levels": "65536",
@@ -154,7 +154,7 @@
     "COUVISbandbin": "2",
     "COUVISsamples": "1",
     "COUVIScompressiontype": "SQRT_9",
-    "COUVISintegrationduration": "0.067",
+    "COUVISintegrationduration": "67",
     "COUVISdwelltime": null,
     "COUVIStestpulsestate": "Off"
   }

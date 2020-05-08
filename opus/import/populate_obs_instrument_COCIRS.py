@@ -76,11 +76,7 @@ def populate_obs_general_COCIRS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
 
 def populate_obs_general_COCIRS_observation_duration_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    # This is the MEAN duration in SECONDS
-    exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
-    return exposure
+    return populate_observation_duration_from_time(**kwargs)
 
 def populate_obs_general_COCIRS_quantity_OBS(**kwargs):
     return 'THERMAL'
@@ -128,12 +124,10 @@ def populate_obs_general_COCIRS_declination2_OBS(**kwargs):
 ### OBS_TYPE_IMAGE TABLE ###
 
 def populate_obs_type_image_COCIRS_image_type_id_OBS(**kwargs):
-    return 'FRAM'
+    return None
 
 def populate_obs_type_image_COCIRS_duration_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    return obs_general_row['observation_duration']
+    return None
 
 def populate_obs_type_image_COCIRS_levels_OBS(**kwargs):
     return None

@@ -224,7 +224,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "IR Exposure",
         "pi_label_results": "IR Exposure",
@@ -232,7 +232,7 @@
         "pi_slug": "COVIMSirexposure",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "milliseconds",
+        "pi_units": "seconds",
         "comments": "Definition from COVIMS label. For units format, use milliseconds as describled in COVIMS_*_index.lbl, and since observation derived from ir_exposure in seconds has .4f, we set .1f for ir_exposure."
     },
     {
@@ -286,7 +286,7 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "VIS Exposure",
         "pi_label_results": "VIS Exposure",
@@ -294,7 +294,7 @@
         "pi_slug": "COVIMSvisexposure",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "milliseconds",
+        "pi_units": "seconds",
         "comments": "Definition from COVIMS label. For units format, similar to ir_exposure."
     },
     {

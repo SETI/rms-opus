@@ -154,7 +154,7 @@
     "COUVISbandbin": "1",
     "COUVISsamples": "2",
     "COUVIScompressiontype": "SQRT_9",
-    "COUVISintegrationduration": "1.635",
+    "COUVISintegrationduration": "1635",
     "COUVISdwelltime": null,
     "COUVIStestpulsestate": "Off"
   }

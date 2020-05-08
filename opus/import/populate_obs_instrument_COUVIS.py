@@ -143,8 +143,8 @@ def populate_obs_general_COUVIS_time2_OBS(**kwargs):
     index_row = metadata['index_row']
     supp_index_row = metadata['supp_index_row']
     samples = import_util.safe_column(supp_index_row, 'LINE_SAMPLES')
-    integration_duration = import_util.safe_column(index_row,
-                                                   'INTEGRATION_DURATION')
+    integration_duration = _integration_duration_helper(**kwargs)
+
     if samples is None or integration_duration is None:
         return None
 
@@ -259,18 +259,26 @@ def populate_obs_type_image_COUVIS_image_type_id_OBS(**kwargs):
         return 'PUSH'
     return None
 
+def _integration_duration_helper(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    dur = import_util.safe_column(index_row, 'INTEGRATION_DURATION')
+
+    if dur is None:
+        return None
+
+    channel, image_time = _COUVIS_channel_time_helper(**kwargs)
+    if channel == 'HSP':
+        # HSP integration_duration is in milliseconds!
+        return dur/1000
+    # EUV and FUV are in seconds! What were they thinking?
+    return dur
+
 def populate_obs_type_image_COUVIS_duration_OBS(**kwargs):
     if not _COUVIS_is_image(**kwargs):
         return None
 
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    integration_duration = import_util.safe_column(index_row,
-                                                   'INTEGRATION_DURATION')
-    if integration_duration is None:
-        return None
-
-    return integration_duration/1000
+    return _integration_duration_helper(**kwargs)
 
 def populate_obs_type_image_COUVIS_levels_OBS(**kwargs):
     if not _COUVIS_is_image(**kwargs):
@@ -605,11 +613,4 @@ def populate_obs_instrument_couvis_occultation_port_state_OBS(**kwargs):
     return occ_state.upper()
 
 def populate_obs_instrument_couvis_integration_duration_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    dur = import_util.safe_column(index_row, 'INTEGRATION_DURATION')
-
-    if dur is None:
-        return None
-
-    return dur/1000
+    return _integration_duration_helper(**kwargs)

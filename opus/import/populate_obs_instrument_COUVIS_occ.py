@@ -39,6 +39,15 @@ def populate_obs_general_COUVIS_opus_id_OCC(**kwargs):
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
+
+    # We do this because the filenames are wrong in the archive
+    if opus_id == 'co-uvis-occ-2005-139-psicen-e':
+        opus_id = 'co-uvis-occ-2007-038-psicen-e'
+    elif opus_id == 'co-uvis-occ-2005-139-thehya-e':
+        opus_id = 'co-uvis-occ-2009-062-thehya-e'
+    elif opus_id == 'co-uvis-occ-2007-038-sao205839-i':
+        opus_id = 'co-uvis-occ-2008-026-sao205839-i'
+
     return opus_id
 
 def populate_obs_general_COUVIS_ring_obs_id_OCC(**kwargs):
@@ -49,43 +58,10 @@ def populate_obs_general_COUVIS_inst_host_id_OCC(**kwargs):
 
 # COUVIS time span is the duration of the observation at the spacecraft
 def populate_obs_general_COUVIS_time1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    # We use the supp_index version instead of the index version because
-    # the index version is sometimes wrong
-    supp_index_row = metadata['supp_index_row']
-    start_time = supp_index_row['START_TIME']
-
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
+    return populate_time1_from_supp_index(**kwargs)
 
 def populate_obs_general_COUVIS_time2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    stop_time = supp_index_row['STOP_TIME']
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = index_row['START_TIME']
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
+    return populate_time2_from_supp_index(**kwargs)
 
 def populate_obs_general_COUVIS_target_name_OCC(**kwargs):
     target_name = 'S RINGS'
@@ -271,29 +247,27 @@ def populate_obs_occultation_COUVIS_body_occ_flag_OCC(**kwargs):
 def populate_obs_occultation_COUVIS_optical_depth_min_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    opac = supp_index_row['LOWEST_DETECTABLE_OPACITY']
-
-    if opac == -1:
-        return None
+    opac = import_util.safe_column(supp_index_row, 'LOWEST_DETECTABLE_OPACITY')
 
     return opac
 
 def populate_obs_occultation_COUVIS_optical_depth_max_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    opac = supp_index_row['HIGHEST_DETECTABLE_OPACITY']
-
-    if opac == -1:
-        return None
+    opac = import_util.safe_column(supp_index_row, 'HIGHEST_DETECTABLE_OPACITY')
 
     return opac
 
-def populate_obs_occultation_COUVIS_temporal_sampling_OCC(**kwargs):
+def _integration_duration_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     dur = supp_index_row['INTEGRATION_DURATION']
 
+    # HSP integration_duration is in milliseconds!
     return dur/1000
+
+def populate_obs_occultation_COUVIS_temporal_sampling_OCC(**kwargs):
+    return _integration_duration_helper(**kwargs)
 
 def populate_obs_occultation_COUVIS_quality_score_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -557,11 +531,7 @@ def populate_obs_instrument_couvis_occultation_port_state_OCC(**kwargs):
     return 'N/A'
 
 def populate_obs_instrument_couvis_integration_duration_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    dur = supp_index_row['INTEGRATION_DURATION']
-
-    return dur/1000
+    return _integration_duration_helper(**kwargs)
 
 def populate_obs_instrument_couvis_compression_type_OCC(**kwargs):
     metadata = kwargs['metadata']

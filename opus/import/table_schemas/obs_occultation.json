@@ -167,7 +167,7 @@
         "pi_slug": "occtimesampling",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null
+        "pi_units": "seconds"
     },
     {
         "field_name": "quality_score",

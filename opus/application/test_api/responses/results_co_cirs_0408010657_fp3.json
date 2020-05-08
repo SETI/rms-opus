@@ -9,7 +9,7 @@
     "observationtype": "Spectral Time Series",
     "time1": "2004-08-01T06:57:35.000",
     "time2": "2004-08-01T10:20:48.000",
-    "observationduration": "12",
+    "observationduration": "12193",
     "quantity": "Thermal Emission",
     "rightasc1": null,
     "rightasc2": null,
@@ -26,7 +26,7 @@
     "note": null
   },
   "Image Constraints": {
-    "duration": "12",
+    "duration": "12193",
     "greaterpixelsize": null,
     "lesserpixelsize": null,
     "levels": null,

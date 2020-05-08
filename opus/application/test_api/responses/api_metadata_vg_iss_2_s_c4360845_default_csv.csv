@@ -11,7 +11,7 @@ Wavelength Constraints
 Wavelength (Min) (microns),Wavelength (Max) (microns),Wavelength Resolution (Min) (microns/pixel),Wavelength Resolution (Max) (microns/pixel),Wavenumber (Min) (cm^-1),Wavenumber (Max) (cm^-1),Wavenumber Resolution (Min) (cm^-1/pixel),Wavenumber Resolution (Max) (cm^-1/pixel),Spectral Information Flag,Spectrum Size,Polarization Type
 0.35,0.45,0.1,0.1,22222.2,28571.4,6349.206,6349.206,No,N/A,NONE
 Occultation Constraints
-Occultation Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval,Data Quality Score,Detected Optical Depth (Min),Detected Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name
+Occultation Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detected Optical Depth (Min),Detected Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name
 N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A
 Surface Geometry Constraints
 Multiple Target List
