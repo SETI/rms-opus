@@ -26,11 +26,11 @@
     "note": null
   },
   "Image Constraints": {
-    "duration": "37697",
+    "duration": null,
     "greaterpixelsize": null,
     "lesserpixelsize": null,
     "levels": null,
-    "imagetype": "Frame"
+    "imagetype": null
   },
   "Wavelength Constraints": {
     "wavelength1": "6.689",

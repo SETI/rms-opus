@@ -28,6 +28,7 @@ from populate_obs_instrument_CORSS_occ import *
 from populate_obs_instrument_COUVIS import *
 from populate_obs_instrument_COUVIS_occ import *
 from populate_obs_instrument_COVIMS import *
+from populate_obs_instrument_COVIMS_occ import *
 
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
@@ -904,7 +905,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     elif (instrument_name == 'VGISS' or
                           mission_abbrev == 'GB' or
                           instrument_name == 'CORSS' or
-                          (instrument_name == 'COUVIS' and
+                          ((instrument_name == 'COUVIS' or
+                            instrument_name == 'COVIMS') and
                            volume_type == 'OCC')):
                         # The VGISS and ground-based and other occultation
                         # supplemental indexes are
@@ -1029,7 +1031,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
               (instrument_name == 'VGISS' or
                mission_abbrev == 'GB' or
                instrument_name == 'CORSS' or
-               (instrument_name == 'COUVIS' and volume_type == 'OCC'))):
+               ((instrument_name == 'COUVIS' or
+                 instrument_name == 'COVIMS') and volume_type == 'OCC'))):
             # Match up the FILENAME
             filename = index_row['FILE_SPECIFICATION_NAME']
             supp_index = metadata['supp_index']
@@ -1061,7 +1064,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
 
-        if instrument_name == 'COVIMS':
+        if instrument_name == 'COVIMS' and volume_type == 'OBS':
             phase_names = []
             if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
                 phase_names.append('VIS')
@@ -1319,120 +1322,155 @@ def import_observation_table(volume_id,
             mult_label = None
             mult_label_set = False
 
-            data_source_cmd = data_source_tuple[0]
-            data_source_first = data_source_tuple[1]
-            data_source_last = data_source_tuple[-1] # Same as first if only 2
-            force_function = False
-            if data_source_cmd.endswith('||FUNCTION'):
-                data_source_cmd = data_source_cmd.replace('||FUNCTION', '')
-                force_function = True
-            if data_source_cmd.find(':') != -1:
-                (data_source_cmd_prefix,
-                 data_source_cmd_param) = data_source_cmd.split(':')
-            else:
-                data_source_cmd_prefix = data_source_cmd
-                data_source_cmd_param = None
+            # Collect all the error messages in case we never find a valid
+            # data source, in which case we display all of them
+            error_list = []
 
-            if data_source_cmd_prefix == 'IGNORE':
-                processed = True
-                continue
-            elif data_source_cmd_prefix.startswith('TAB'):
-                processed = True
-                ref_index_row = None
-                if data_source_cmd_param+'_row' not in metadata:
-                    if (not force_function and
-                        data_source_cmd_param != 'ring_geo'):
-                        # If we don't have ring_geo for this volume, don't
-                        # bitch about it because we already did earlier.
-                        import_util.log_nonrepeating_error(
-                    f'Unknown internal metadata name "{data_source_cmd_param}"'+
-                    f' while processing column "{field_name}" in '+
-                    f'table "{table_name}"')
-                        continue
+            data_source_offset = 0
+            while data_source_offset < len(data_source_tuple):
+                data_source_cmd = data_source_tuple[data_source_offset]
+                if data_source_cmd.find(':') != -1:
+                    (data_source_cmd_prefix,
+                     data_source_cmd_param) = data_source_cmd.split(':')
                 else:
+                    data_source_cmd_prefix = data_source_cmd
+                    data_source_cmd_param = None
+
+                if data_source_cmd_prefix == 'IGNORE':
+                    processed = True
+                    break
+
+                data_source_data = data_source_tuple[data_source_offset+1]
+
+                if data_source_cmd_prefix.startswith('TAB'):
+                    data_source_offset += 2
+                    ref_index_row = None
+                    if data_source_cmd_param+'_row' not in metadata:
+                        if data_source_cmd_param != 'ring_geo':
+                            # If we don't have ring_geo for this volume, don't
+                            # bitch about it because we already did earlier.
+                            error_list.append(
+                                f'Unknown internal metadata name '+
+                                f'"{data_source_cmd_param}"'+
+                                f' while processing column "{field_name}" in '+
+                                f'table "{table_name}"')
+                        continue
                     ref_index_row = metadata[data_source_cmd_param+'_row']
-                if ref_index_row is not None:
-                    if data_source_first not in ref_index_row:
-                        if not force_function:
-                            import_util.log_nonrepeating_error(
+                    if ref_index_row is None:
+                        import_util.log_nonrepeating_warning(
+                            f'Missing row in metadata file '+
+                            f'"{data_source_cmd_param}"')
+                        processed = True
+                        break
+                    if data_source_data not in ref_index_row:
+                        error_list.append(
                                 f'Unknown referenced column '+
-                                f'"{data_source_first}" '+
+                                f'"{data_source_data}" '+
                                 f'while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
-                            continue
-                    else:
-                        column_val = import_util.safe_column(ref_index_row,
-                                                             data_source_first)
-                        force_function = False
-            elif data_source_cmd_prefix.startswith('ARRAY'):
-                processed = True
-                ref_index_name, array_index = data_source_cmd_param.split('.')
-                array_index = int(array_index)
-                ref_index_row = None
-                if ref_index_name+'_row' not in metadata:
-                    if (not force_function and
-                        data_source_cmd_param != 'ring_geo'):
-                        # If we don't have ring_geo for this volume, don't
-                        # bitch about it because we already did earlier.
-                        import_util.log_nonrepeating_error(
-                    f'Unknown internal metadata name "{ref_index_name}"'+
-                    f' while processing column "{field_name}" in '+
-                    f'table "{table_name}"')
                         continue
-                else:
+                    column_val = import_util.safe_column(ref_index_row,
+                                                         data_source_data)
+                    processed = True
+                    break
+
+                if data_source_cmd_prefix.startswith('ARRAY'):
+                    data_source_offset += 2
+                    (ref_index_name,
+                     array_index) = data_source_cmd_param.split('.')
+                    array_index = int(array_index)
+                    ref_index_row = None
+                    if ref_index_name+'_row' not in metadata:
+                        if data_source_cmd_param != 'ring_geo':
+                            # If we don't have ring_geo for this volume, don't
+                            # bitch about it because we already did earlier.
+                            error_list.append(
+                                f'Unknown internal metadata name '+
+                                f'"{ref_index_name}"'+
+                                f' while processing column "{field_name}" in '+
+                                f'table "{table_name}"')
+                        continue
                     ref_index_row = metadata[ref_index_name+'_row']
-                if ref_index_row is not None:
-                    if data_source_first not in ref_index_row:
-                        if not force_function:
-                            import_util.log_nonrepeating_error(
-                                f'Unknown PDS column "{data_source_first}" '+
+                    if ref_index_row is None:
+                        import_util.log_nonrepeating_warning(
+                            f'Missing row in metadata file '+
+                            f'"{data_source_cmd_param}"')
+                        processed = True
+                        break
+                    if data_source_data not in ref_index_row:
+                        error_list.append(
+                                f'Unknown referenced column '+
+                                f'"{data_source_data}" '+
                                 f'while processing table "{table_name}"')
-                            continue
+                        continue
+                    if (array_index < 0 or
+                        array_index >=
+                            len(ref_index_row[data_source_data])):
+                        import_util.log_nonrepeating_error(
+                            f'Bad array index "{array_index}" for column '+
+                            f'"{field_name}" in table "{table_name}"')
+                        processed = True
+                        break
+                    column_val = import_util.safe_column(ref_index_row,
+                                                         data_source_data,
+                                                         array_index)
+                    processed = True
+                    break
+
+                if data_source_cmd_prefix == 'FUNCTION':
+                    data_source_offset += 2
+                    ret = import_run_field_function(data_source_data,
+                                                    volume_id,
+                                                    instrument_name,
+                                                    func_instrument_name,
+                                                    mission_abbrev,
+                                                    volume_type,
+                                                    table_name,
+                                                    table_schema,
+                                                    metadata,
+                                                    field_name)
+                    if isinstance(ret, tuple) or isinstance(ret, list):
+                        column_val, mult_label = ret
+                        mult_label_set = True
                     else:
-                        if (array_index < 0 or
-                            array_index >=
-                                len(ref_index_row[data_source_first])):
-                            import_util.log_nonrepeating_error(
-                                f'Bad array index "{array_index}" for column '+
-                                f'"{field_name}" in table "{table_name}"')
-                            continue
-                        column_val = import_util.safe_column(ref_index_row,
-                                                             data_source_first,
-                                                             array_index)
-                        force_function = False
+                        column_val = ret
+                    processed = True
+                    break
 
-            if data_source_cmd_prefix == 'FUNCTION' or force_function:
-                processed = True
-                ret = import_run_field_function(data_source_last,
-                                                volume_id,
-                                                instrument_name,
-                                                func_instrument_name,
-                                                mission_abbrev,
-                                                volume_type,
-                                                table_name,
-                                                table_schema,
-                                                metadata,
-                                                field_name)
-                if isinstance(ret, tuple) or isinstance(ret, list):
-                    column_val, mult_label = ret
-                    mult_label_set = True
-                else:
-                    column_val = ret
-
-            if data_source_cmd_prefix == 'MAX_ID':
-                processed = True
-                if table_name not in impglobals.MAX_TABLE_ID_CACHE:
+                if data_source_cmd_prefix == 'MAX_ID':
+                    if table_name not in impglobals.MAX_TABLE_ID_CACHE:
+                        impglobals.MAX_TABLE_ID_CACHE[table_name] = (
+                            import_util.find_max_table_id(table_name))
                     impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                        import_util.find_max_table_id(table_name))
-                impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                    impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
-                column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
+                        impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
+                    column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
+                    processed = True
+                    break
 
-            if not processed:
+                if data_source_cmd_prefix == 'VALUESTR':
+                    column_val = data_source_data
+                    processed = True
+                    break
+
+                if data_source_cmd_prefix == 'VALUEREAL':
+                    column_val = float(data_source_data)
+                    processed = True
+                    break
+
+                if data_source_cmd_prefix == 'VALUEINT':
+                    column_val = int(data_source_data)
+                    processed = True
+                    break
+
                 import_util.log_nonrepeating_error(
                     f'Unknown data_source type "{data_source_cmd}" for'+
                     f'"{field_name}" in table "{table_name}"')
-                continue
+                processed = True
+                break
+
+            if not processed:
+                for error_str in error_list:
+                    import_util.log_nonrepeating_error(error_str)
 
         ### VALIDATE THE COLUMN VALUE ###
 

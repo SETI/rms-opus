@@ -23,6 +23,7 @@ python main_opus_import.py --do-all-import NHPELO_2001,NHLAMV_2001
 python main_opus_import.py --do-all-import EBROCC_0001
 python main_opus_import.py --do-all-import CORSS_8001
 python main_opus_import.py --do-all-import COUVIS_8001
+python main_opus_import.py --do-all-import COVIMS_8001
 python main_opus_import.py --cleanup-aux-tables
 python main_opus_import.py --import-dictionary
 (cd ../application; python manage.py migrate)
