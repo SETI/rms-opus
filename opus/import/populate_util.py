@@ -6,6 +6,7 @@
 
 import julian
 
+from config_data import *
 import import_util
 
 def _time1_helper(index, column, **kwargs):
@@ -131,3 +132,49 @@ def populate_product_id_from_supp_index(**kwargs):
     product_id = supp_index_row['PRODUCT_ID']
 
     return product_id
+
+def _star_name_helper(index, **kwargs):
+    metadata = kwargs['metadata']
+    index_label = metadata[index]
+    target_name = index_label['STAR_NAME'].replace(' ', '').upper()
+
+    if target_name in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None, None
+
+    target_name_info = TARGET_NAME_INFO[target_name]
+    return target_name, target_name_info
+
+def populate_star_name_helper_index(**kwargs):
+    return _star_name_helper('index_row', **kwargs)
+
+def populate_star_name_helper_index_label(**kwargs):
+    return _star_name_helper('index_label', **kwargs)
+
+_OCC_RA_DEC_SLOP = 0.
+
+def _occ_ra_dec_helper(index, **kwargs):
+    target_name, target_name_info = _star_name_helper(index, **kwargs)
+    if target_name is None:
+        return None, None, None, None
+    if target_name not in import_util.STAR_RA_DEC:
+        import_util.log_nonrepeating_warning(
+            f'Star "{target_name}" missing RA and DEC information'
+        )
+        return None, None, None, None
+
+    return (STAR_RA_DEC[target_name][0]-_OCC_RA_DEC_SLOP,
+            STAR_RA_DEC[target_name][0]+_OCC_RA_DEC_SLOP,
+            STAR_RA_DEC[target_name][1]-_OCC_RA_DEC_SLOP,
+            STAR_RA_DEC[target_name][1]+_OCC_RA_DEC_SLOP)
+
+def populate_occ_ra_dec_helper_index(**kwargs):
+    return _occ_ra_dec_helper('index_row', **kwargs)
+
+def populate_occ_ra_dec_helper_index_label(**kwargs):
+    return _occ_ra_dec_helper('index_label', **kwargs)

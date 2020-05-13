@@ -92,29 +92,17 @@ def populate_obs_pds_COVIMS_data_set_id_OCC(**kwargs):
 def populate_obs_pds_COVIMS_product_id_OCC(**kwargs):
     return populate_product_id_from_index(**kwargs)
 
-def _ra_dec_helper(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    star_name = index_row['STAR_NAME']
-    if star_name not in import_util.STAR_RA_DEC:
-        import_util.log_nonrepeating_warning(
-            f'Star "{star_name}" missing RA and DEC information'
-        )
-        return None, None
-
-    return STAR_RA_DEC[star_name]
-
 def populate_obs_general_COVIMS_right_asc1_OCC(**kwargs):
-    return _ra_dec_helper(**kwargs)[0]
+    return populate_occ_ra_dec_helper_index(**kwargs)[0]
 
 def populate_obs_general_COVIMS_right_asc2_OCC(**kwargs):
-    return _ra_dec_helper(**kwargs)[0]
+    return populate_occ_ra_dec_helper_index(**kwargs)[1]
 
 def populate_obs_general_COVIMS_declination1_OCC(**kwargs):
-    return _ra_dec_helper(**kwargs)[1]
+    return populate_occ_ra_dec_helper_index(**kwargs)[2]
 
 def populate_obs_general_COVIMS_declination2_OCC(**kwargs):
-    return _ra_dec_helper(**kwargs)[1]
+    return populate_occ_ra_dec_helper_index(**kwargs)[3]
 
 
 ### OBS_TYPE_IMAGE TABLE ###
@@ -260,20 +248,9 @@ def populate_obs_occultation_COVIMS_wl_band_OCC(**kwargs):
     return 'IR'
 
 def populate_obs_occultation_COVIMS_source_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    target_name = index_row['STAR_NAME'].replace(' ', '')
-
-    if target_name in TARGET_NAME_MAPPING:
-        target_name = TARGET_NAME_MAPPING[target_name]
-
-    if target_name not in TARGET_NAME_INFO:
-        import_util.announce_unknown_target_name(target_name)
-        if impglobals.ARGUMENTS.import_ignore_errors:
-            return 'None'
+    target_name, target_name_info = populate_star_name_helper_index(**kwargs)
+    if target_name_info is None:
         return None
-
-    target_name_info = TARGET_NAME_INFO[target_name]
     return target_name, target_name_info[2]
 
 def populate_obs_occultation_COVIMS_host_OCC(**kwargs):

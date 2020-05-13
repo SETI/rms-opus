@@ -428,6 +428,8 @@ def update_mult_table(table_name, field_name, table_column, val, label,
             f'"{mult_table_name}"')
         return 0
 
+    label = str(label)
+
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
@@ -475,21 +477,22 @@ def update_mult_table(table_name, field_name, table_column, val, label,
                 disp_order = 'zzx' + str(label)
         elif range_func:
             try:
-                disp_order = str(range_func(str(val)))
+                disp_order = '%030.9f' % range_func(str(val))
             except Exception as e:
-                label = str(label)
                 import_util.log_nonrepeating_error(
 f'Unable to parse "{label}" for type "range_func_name": {e}')
-                disp_order = str(label)
+                disp_order = label
         elif all_numeric:
-            disp_order = ('%20.9f' % float(label))
+            disp_order = '%20.9f' % float(label)
         elif label in ('Yes', 'On'):
             disp_order = 'zzAYes'
         elif label in ('No', 'Off'):
             disp_order = 'zzBNo'
         else:
-            disp_order = str(label)
+            disp_order = label
 
+    if type(disp_order) == int or type(disp_order) == float:
+        disp_order = '%030.9f' % disp_order
     if len(mult_table) == 0:
         next_id = 0
     else:
@@ -499,8 +502,8 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
     new_entry = {
         'id': next_id,
         'value': val,
-        'label': str(label),
-        'disp_order': str(disp_order),
+        'label': label,
+        'disp_order': disp_order,
         'display': 'Y' # if label is not None else 'N'
     }
     if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
