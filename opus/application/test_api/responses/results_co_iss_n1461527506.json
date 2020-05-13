@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "CALYPSO,DIONE,METHONE,MIMAS,POLYDEUCES,TELESTO,TETHYS"
+    "surfacegeometrytargetlist": "Calypso,Dione,Methone,Mimas,Polydeuces,Telesto,Tethys"
   },
   "Calypso Surface Geometry Constraints": {
     "SURFACEGEOcalypso_planetographiclatitude1": null,

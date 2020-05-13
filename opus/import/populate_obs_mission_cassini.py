@@ -264,7 +264,8 @@ def helper_cassini_intended_target_name(**kwargs):
     # override TARGET_NAME
     if (target_name == 'SKY' and target_code == 'SK' and
         target_desc is not None and target_desc in TARGET_NAME_INFO):
-        return (target_desc.upper(), import_util.cleanup_target_name(target_desc))
+        target_name_info = TARGET_NAME_INFO[target_desc]
+        return target_desc, target_name_info[2]
 
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
@@ -272,10 +273,7 @@ def helper_cassini_intended_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 # This is used for COUVIS and COVIMS because they don't include the
 # MISSION_PHASE_NAME in the label files. We deduce it from the observation

@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "SATURN"
+    "surfacegeometrytargetlist": "Saturn"
   },
   "Saturn Surface Geometry Constraints": {
     "SURFACEGEOsaturn_planetographiclatitude1": null,

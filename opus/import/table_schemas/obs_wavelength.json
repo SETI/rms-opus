@@ -360,8 +360,8 @@
         "pi_tooltip": "",
         "pi_units": null,
         "mult_options": [
-              [   0,   "LINEAR",   "Linear",   10, "Y", null],
-              [   1,     "NONE",     "None",   20, "Y", null]
+              [   0,   "LINEAR",   "Linear",   "010", "Y", null],
+              [   1,     "NONE",     "None",   "020", "Y", null]
           ]
     },
     {

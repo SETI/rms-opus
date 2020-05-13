@@ -105,10 +105,7 @@ def populate_obs_general_CORSS_time2_OCC(**kwargs):
 def populate_obs_general_CORSS_target_name_OCC(**kwargs):
     target_name = 'S RINGS'
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def populate_obs_general_CORSS_observation_duration_OCC(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
@@ -282,7 +279,7 @@ def populate_obs_occultation_CORSS_wl_band_OCC(**kwargs):
     return band
 
 def populate_obs_occultation_CORSS_source_OCC(**kwargs):
-    return ('CASSINI', 'Cassini')
+    return ('CASSINI', 'Cassini', '!Cassini')
 
 def populate_obs_occultation_CORSS_host_OCC(**kwargs):
     metadata = kwargs['metadata']

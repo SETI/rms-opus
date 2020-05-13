@@ -66,9 +66,9 @@
         "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
-              [   0,  "LOSSLESS",       "Lossless",   10, "Y", null],
-              [   1,     "LOSSY",          "Lossy",   20, "Y", null],
-              [   2,   "NOTCOMP", "Not Compressed",   30, "Y", null]
+              [   0,  "LOSSLESS",       "Lossless", "010", "Y", null],
+              [   1,     "LOSSY",          "Lossy", "020", "Y", null],
+              [   2,   "NOTCOMP", "Not Compressed", "030", "Y", null]
           ]
     },
     {
@@ -98,8 +98,8 @@
         "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
-              [   0, "1x1", "1x1",  10, "Y", null],
-              [   1, "4x4", "4x4",  20, "Y", null]
+              [   0, "1x1", "1x1", "010", "Y", null],
+              [   1, "4x4", "4x4", "020", "Y", null]
           ]
     },
     {

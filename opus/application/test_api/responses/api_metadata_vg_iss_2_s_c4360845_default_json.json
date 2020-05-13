@@ -58,7 +58,7 @@
     "host": null
   },
   "Surface Geometry Constraints": {
-    "target_list": "SATURN,TETHYS"
+    "target_list": "Saturn,Tethys"
   },
   "Saturn Surface Geometry Constraints": {
     "planetographic_latitude1": "-63.471",

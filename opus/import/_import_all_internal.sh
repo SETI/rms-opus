@@ -4,7 +4,7 @@
 python main_opus_import.py --drop-permanent-tables --scorched-earth --override-db-schema $1
 python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 GALILEO
 python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 HST
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 NEWHORIZONS
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 NEWHORIZONS --exclude-volumes NHKCLO1001,NHKCLO_2001,NHKELO_1001,NHKELO_2001,NHKCMV1001,NHKCMV_2001,NHKEMV_1001,NHKEMV_2001
 python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 COVIMS
 python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 COUVIS
 python main_opus_import.py --do-all-import --override-db-schema $1 VOYAGER

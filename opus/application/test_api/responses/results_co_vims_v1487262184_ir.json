@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "ENCELADUS,TELESTO"
+    "surfacegeometrytargetlist": "Enceladus,Telesto"
   },
   "Enceladus Surface Geometry Constraints": {
     "SURFACEGEOenceladus_planetographiclatitude1": "-62.357",

@@ -247,9 +247,19 @@ def populate_obs_occultation_GB_wl_band_OCC(**kwargs):
 def populate_obs_occultation_GB_source_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
-    star_name = index_label['STAR_NAME']
+    target_name = index_label['STAR_NAME'].replace(' ', '')
 
-    return star_name
+    if target_name in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+
+    target_name_info = TARGET_NAME_INFO[target_name]
+    return target_name, target_name_info[2]
 
 def populate_obs_occultation_GB_host_OCC(**kwargs):
     metadata = kwargs['metadata']

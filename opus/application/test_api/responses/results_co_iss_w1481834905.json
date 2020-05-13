@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "PANDORA"
+    "surfacegeometrytargetlist": "Pandora"
   },
   "Pandora Surface Geometry Constraints": {
     "SURFACEGEOpandora_planetographiclatitude1": null,

@@ -409,7 +409,8 @@ def read_or_create_mult_table(mult_table_name, table_column):
     return rows
 
 
-def update_mult_table(table_name, field_name, table_column, val, label):
+def update_mult_table(table_name, field_name, table_column, val, label,
+                      disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -427,19 +428,79 @@ def update_mult_table(table_name, field_name, table_column, val, label):
             f'"{mult_table_name}"')
         return 0
 
+    if disp_order is None:
+        # No disp_order specified, so make one up
+        # Update the display_order
+        form_type = table_column['pi_form_type']
+        range_func = None
+        if form_type is not None and form_type.startswith('GROUP:'):
+            range_func_name = form_type.replace('GROUP:', '')
+            if range_func_name in opus_support.RANGE_FUNCTIONS:
+                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
+
+        # See if all values in the mult table are numeric
+        all_numeric = True
+        for row in mult_table:
+            if (row['label'] is None or
+                str(row['label']).upper() == 'NONE' or
+                str(row['label']).upper() == 'NULL'):
+                continue
+            try:
+                float(row['label'])
+            except ValueError:
+                all_numeric = False
+                break
+        try:
+            float(label)
+        except ValueError:
+            all_numeric = False
+
+        # Null always comes last. N/A always comes before that.
+        # None always comes before that.
+        # Yes comes before No. On comes before Off.
+        if label in [None, 'NULL', 'Null']:
+            if range_func is not None:
+                disp_order = label
+            else:
+                disp_order = 'zzz' + str(label)
+        elif label == 'N/A':
+            if range_func is not None:
+                disp_order = label
+            else:
+                disp_order = 'zzy' + str(label)
+        elif label in ['NONE', 'None']:
+            if range_func is not None:
+                disp_order = label
+            else:
+                disp_order = 'zzx' + str(label)
+        elif range_func:
+            try:
+                disp_order = str(range_func(str(val)))
+            except Exception as e:
+                label = str(label)
+                import_util.log_nonrepeating_error(
+f'Unable to parse "{label}" for type "range_func_name": {e}')
+                disp_order = str(label)
+        elif all_numeric:
+            disp_order = ('%20.9f' % float(label))
+        elif label in ('Yes', 'On'):
+            disp_order = 'zzAYes'
+        elif label in ('No', 'Off'):
+            disp_order = 'zzBNo'
+        else:
+            disp_order = str(label)
+
     if len(mult_table) == 0:
         next_id = 0
-        next_disp_order = 10
     else:
         next_id = max([x['id'] for x in mult_table])+1
-        next_disp_order = max([x['disp_order'] for x in mult_table])+10
     if label is None:
         label = 'N/A'
     new_entry = {
         'id': next_id,
         'value': val,
         'label': str(label),
-        'disp_order': 0,
+        'disp_order': str(disp_order),
         'display': 'Y' # if label is not None else 'N'
     }
     if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
@@ -465,67 +526,7 @@ def dump_import_mult_tables():
     """Dump all of the cached import mult tables into the database."""
 
     for mult_table_name in sorted(_MODIFIED_MULT_TABLES):
-        table_column = _MODIFIED_MULT_TABLES[mult_table_name]
         rows = _MULT_TABLE_CACHE[mult_table_name]
-        # Update the display_order
-        form_type = table_column['pi_form_type']
-        range_func = None
-        if form_type is not None and form_type.startswith('GROUP:'):
-            range_func_name = form_type.replace('GROUP:', '')
-            if range_func_name in opus_support.RANGE_FUNCTIONS:
-                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
-        if 'mult_options' not in table_column:
-            all_numeric = True
-            for row in rows:
-                if (row['label'] is None or
-                    str(row['label']).upper() == 'NONE' or
-                    str(row['label']).upper() == 'NULL'):
-                    continue
-                try:
-                    float(row['label'])
-                except ValueError:
-                    all_numeric = False
-                    break
-            for row in rows:
-                # Null always comes last. N/A always comes before that.
-                # None always comes before that.
-                # Yes comes before No. On comes before Off.
-                if row['label'] in [None, 'NULL', 'Null']:
-                    if range_func is not None:
-                        row['sort_label'] = 1e38
-                    else:
-                        row['sort_label'] = 'ZZZ' + str(row['label'])
-                elif row['label'] == 'N/A':
-                    if range_func is not None:
-                        row['sort_label'] = 1e37
-                    else:
-                        row['sort_label'] = 'ZZY' + str(row['label'])
-                elif row['label'] in ['NONE', 'None']:
-                    if range_func is not None:
-                        row['sort_label'] = 1e37
-                    else:
-                        row['sort_label'] = 'ZZX' + str(row['label'])
-                elif range_func:
-                    try:
-                        row['sort_label'] = range_func(str(row['value']))
-                    except Exception as e:
-                        label = str(row['label'])
-                        import_util.log_nonrepeating_error(
-    f'Unable to parse "{label}" for type "range_func_name": {e}')
-                        row['sort_label'] = str(row['label'])
-                elif all_numeric:
-                    row['sort_label'] = ('%20.9f' % float(row['label']))
-                elif row['label'] in ('Yes', 'On'):
-                    row['sort_label'] = 'ZZAYes'
-                elif row['label'] in ('No', 'Off'):
-                    row['sort_label'] = 'ZZBNo'
-                else:
-                    row['sort_label'] = str(row['label'])
-            rows.sort(key=lambda x: x['sort_label'])
-            for row in rows:
-                del row['sort_label']
-            for i, row in enumerate(rows):
-                row['disp_order'] = (i+1)*10
         # Insert or update all the rows
         imp_mult_table_name = impglobals.DATABASE.convert_raw_to_namespace(
                 'import', mult_table_name)
@@ -1321,6 +1322,7 @@ def import_observation_table(volume_id,
             column_val = None
             mult_label = None
             mult_label_set = False
+            disp_order = None # Might be set with mult_label but not otherwise
 
             # Collect all the error messages in case we never find a valid
             # data source, in which case we display all of them
@@ -1430,7 +1432,10 @@ def import_observation_table(volume_id,
                                                     metadata,
                                                     field_name)
                     if isinstance(ret, tuple) or isinstance(ret, list):
-                        column_val, mult_label = ret
+                        column_val = ret[0]
+                        mult_label = ret[1]
+                        if len(ret) == 3:
+                            disp_order = ret[2]
                         mult_label_set = True
                     else:
                         column_val = ret
@@ -1600,7 +1605,7 @@ def import_observation_table(volume_id,
                         # in all caps
                         mult_label = mult_label.title()
             id_num = update_mult_table(table_name, field_name, table_column,
-                                       column_val, mult_label)
+                                       column_val, mult_label, disp_order)
             new_row[mult_column_name] = id_num
 
         ### A BIT OF TRICKERY - WE CAN'T RETRIEVE THE RING OR SURFACE GEO

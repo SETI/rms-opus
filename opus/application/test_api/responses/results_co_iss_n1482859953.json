@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "IAPETUS"
+    "surfacegeometrytargetlist": "Iapetus"
   },
   "Iapetus Surface Geometry Constraints": {
     "SURFACEGEOiapetus_planetographiclatitude1": "-83.163",

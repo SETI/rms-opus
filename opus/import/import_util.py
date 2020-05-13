@@ -288,22 +288,6 @@ def slug_name_for_sfc_target(target_name):
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
 
-def cleanup_target_name(target):
-    target = target.upper()
-    make_title = True
-    if target[:4].isdigit() and target[4] == ' ':
-        # This is things like 1999 HG12 or 2014 MU69
-        make_title = False
-    if (target.startswith('NGC ') or
-        target.startswith('HD ')):
-        make_title = False
-    if make_title:
-        target = target.title()
-    if target.endswith(' Cma'):
-        # Like Beta CMa (Cygnus Major)
-        target = target.replace(' Cma', 'CMa')
-    return target
-
 def read_schema_for_table(table_name, replace=[]):
     table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
     if table_name.startswith('obs_surface_geometry__'):

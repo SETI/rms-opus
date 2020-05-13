@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "AEGAEON,ATLAS,CALYPSO,METHONE,MIMAS,PALLENE,TELESTO"
+    "surfacegeometrytargetlist": "Aegaeon,Atlas,Calypso,Methone,Mimas,Pallene,Telesto"
   },
   "Aegaeon Surface Geometry Constraints": {
     "SURFACEGEOaegaeon_planetographiclatitude1": null,

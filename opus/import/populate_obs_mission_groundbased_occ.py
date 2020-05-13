@@ -35,10 +35,7 @@ def helper_groundbased_target_name(**kwargs):
         return None
 
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def helper_groundbased_planet_id(**kwargs):
     return 'SAT'

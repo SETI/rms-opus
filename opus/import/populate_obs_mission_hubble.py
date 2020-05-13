@@ -224,10 +224,7 @@ def populate_obs_general_HSTx_target_name_OBS(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 populate_obs_general_HSTACS_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
 populate_obs_general_HSTNICMOS_target_name_OBS = populate_obs_general_HSTx_target_name_OBS

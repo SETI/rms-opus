@@ -77,10 +77,10 @@
         "pi_tooltip": "",
         "pi_units": null,
         "mult_options": [
-              [   0, "RAD",   "Radio",   10, "Y", null],
-              [   1, "STE", "Stellar",   20, "Y", null],
-              [   2, "SOL",   "Solar",   30, "Y", null],
-              [   3,  null,     "N/A",   40, "Y", null]
+              [   0, "RAD",   "Radio",   "010", "Y", null],
+              [   1, "STE", "Stellar",   "020", "Y", null],
+              [   2, "SOL",   "Solar",   "030", "Y", null],
+              [   3,  null,     "N/A",   "040", "Y", null]
         ]
     },
     {
@@ -109,10 +109,10 @@
         "pi_tooltip": "",
         "pi_units": null,
         "mult_options": [
-              [   0, "I", "Ingress",   10, "Y", null],
-              [   1, "E",  "Egress",   20, "Y", null],
-              [   2, "B",    "Both",   30, "Y", null],
-              [   3,  null,   "N/A",   40, "Y", null]
+              [   0, "I", "Ingress",   "010", "Y", null],
+              [   1, "E",  "Egress",   "020", "Y", null],
+              [   2, "B",    "Both",   "030", "Y", null],
+              [   3,  null,   "N/A",   "040", "Y", null]
         ]
     },
     {
@@ -208,18 +208,18 @@
         "val_max": 1e32,
         "pi_category_name": "obs_occultation",
         "pi_dict_context": "OPUS_OCCULTATION",
-        "pi_dict_name": "DETECTED_OPTICAL_DEPTH",
-        "definition": "The range of optical depths occurring within the observation. Both the minimum and maximum optical depth are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "pi_dict_name": "DETECTABLE_OPTICAL_DEPTH",
+        "definition": "The range of optical depths detectable within the observation. Both the minimum and maximum optical depth are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
         "pi_dict_context_results": "OPUS_OCCULTATION",
-        "pi_dict_name_results": "MINIMUM_DETECTED_OPTICAL_DEPTH",
-        "definition_results": "The minimum optical depth occurring within the observation.",
+        "pi_dict_name_results": "MINIMUM_DETECTABLE_OPTICAL_DEPTH",
+        "definition_results": "The minimum optical depth detectable within the observation.",
         "pi_disp_order": 60,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "RANGE%.10f",
         "pi_intro": null,
-        "pi_label": "Detected Optical Depth",
-        "pi_label_results": "Detected Optical Depth (Min)",
+        "pi_label": "Detectable Optical Depth",
+        "pi_label_results": "Detectable Optical Depth (Min)",
         "pi_old_slug": null,
         "pi_slug": "occdepth1",
         "pi_sub_heading": null,
@@ -239,15 +239,15 @@
         "val_max": 1e32,
         "pi_category_name": "obs_occultation",
         "pi_dict_context_results": "OPUS_OCCULTATION",
-        "pi_dict_name_results": "MAXIMUM_DETECTED_OPTICAL_DEPTH",
-        "definition_results": "The maximum optical depth occurring within the observation.",
+        "pi_dict_name_results": "MAXIMUM_DETECTABLE_OPTICAL_DEPTH",
+        "definition_results": "The maximum optical depth detectable within the observation.",
         "pi_disp_order": 61,
         "pi_display": 0,
         "pi_display_results": 1,
         "pi_form_type": "RANGE%.10f",
         "pi_intro": null,
-        "pi_label": "Detected Optical Depth",
-        "pi_label_results": "Detected Optical Depth (Max)",
+        "pi_label": "Detectable Optical Depth",
+        "pi_label_results": "Detectable Optical Depth (Max)",
         "pi_old_slug": null,
         "pi_slug": "occdepth2",
         "pi_sub_heading": null,
@@ -280,13 +280,13 @@
         "pi_tooltip": "",
         "pi_units": null,
         "mult_options": [
-              [   0, "S",        "S",   10, "Y", null],
-              [   1, "X",        "X",   20, "Y", null],
-              [   2, "KA",      "Ka",   30, "Y", null],
-              [   3, "IR",      "IR",   40, "Y", null],
-              [   4, "VI", "Visible",   50, "Y", null],
-              [   5, "UV",      "UV",   60, "Y", null],
-              [   6,  null,    "N/A",   70, "Y", null]
+              [   0, "S",        "S",   "010", "Y", null],
+              [   1, "X",        "X",   "020", "Y", null],
+              [   2, "KA",      "Ka",   "030", "Y", null],
+              [   3, "IR",      "IR",   "040", "Y", null],
+              [   4, "VI", "Visible",   "050", "Y", null],
+              [   5, "UV",      "UV",   "060", "Y", null],
+              [   6,  null,    "N/A",   "070", "Y", null]
         ]
     },
     {

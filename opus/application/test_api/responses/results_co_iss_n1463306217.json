@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "CALYPSO,METHONE,PAN,SATURN"
+    "surfacegeometrytargetlist": "Calypso,Methone,Pan,Saturn"
   },
   "Calypso Surface Geometry Constraints": {
     "SURFACEGEOcalypso_planetographiclatitude1": null,

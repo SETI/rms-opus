@@ -165,7 +165,7 @@ class ZZDjangoSite(models.Model):
 class ZZGroupingTargetName(models.Model):
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30, blank=True, null=True)
-    disp_order = models.IntegerField()
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -177,8 +177,8 @@ class ZZGroupingTargetName(models.Model):
 class MultObsGeneralInstHostId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -190,8 +190,8 @@ class MultObsGeneralInstHostId(models.Model):
 class MultObsGeneralInstrumentId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -203,8 +203,8 @@ class MultObsGeneralInstrumentId(models.Model):
 class MultObsGeneralMissionId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -216,8 +216,8 @@ class MultObsGeneralMissionId(models.Model):
 class MultObsGeneralObservationType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -229,8 +229,8 @@ class MultObsGeneralObservationType(models.Model):
 class MultObsGeneralPlanetId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -242,8 +242,8 @@ class MultObsGeneralPlanetId(models.Model):
 class MultObsGeneralQuantity(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -255,8 +255,8 @@ class MultObsGeneralQuantity(models.Model):
 class MultObsGeneralTargetClass(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -269,7 +269,7 @@ class MultObsGeneralTargetName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30)
-    disp_order = models.IntegerField()
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=7, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
@@ -282,8 +282,8 @@ class MultObsGeneralTargetName(models.Model):
 class MultObsInstrumentCocirsDetectorId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -295,8 +295,8 @@ class MultObsInstrumentCocirsDetectorId(models.Model):
 class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -308,8 +308,8 @@ class MultObsInstrumentCocirsInstrumentModeAllFlag(models.Model):
 class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -321,8 +321,8 @@ class MultObsInstrumentCocirsInstrumentModeBlinkingFlag(models.Model):
 class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -334,8 +334,8 @@ class MultObsInstrumentCocirsInstrumentModeCentersFlag(models.Model):
 class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -347,8 +347,8 @@ class MultObsInstrumentCocirsInstrumentModeEvenFlag(models.Model):
 class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -360,8 +360,8 @@ class MultObsInstrumentCocirsInstrumentModeOddFlag(models.Model):
 class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -373,8 +373,8 @@ class MultObsInstrumentCocirsInstrumentModePairsFlag(models.Model):
 class MultObsInstrumentCoissCamera(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -386,8 +386,8 @@ class MultObsInstrumentCoissCamera(models.Model):
 class MultObsInstrumentCoissCombinedFilter(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -399,8 +399,8 @@ class MultObsInstrumentCoissCombinedFilter(models.Model):
 class MultObsInstrumentCoissCompressionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -412,8 +412,8 @@ class MultObsInstrumentCoissCompressionType(models.Model):
 class MultObsInstrumentCoissDataConversionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -425,8 +425,8 @@ class MultObsInstrumentCoissDataConversionType(models.Model):
 class MultObsInstrumentCoissGainModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -438,8 +438,8 @@ class MultObsInstrumentCoissGainModeId(models.Model):
 class MultObsInstrumentCoissImageObservationType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -451,8 +451,8 @@ class MultObsInstrumentCoissImageObservationType(models.Model):
 class MultObsInstrumentCoissInstrumentModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -464,8 +464,8 @@ class MultObsInstrumentCoissInstrumentModeId(models.Model):
 class MultObsInstrumentCoissShutterModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -477,8 +477,8 @@ class MultObsInstrumentCoissShutterModeId(models.Model):
 class MultObsInstrumentCoissShutterStateId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -490,8 +490,8 @@ class MultObsInstrumentCoissShutterStateId(models.Model):
 class MultObsInstrumentCoissTargetDesc(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -503,8 +503,8 @@ class MultObsInstrumentCoissTargetDesc(models.Model):
 class MultObsInstrumentCouvisChannel(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -516,8 +516,8 @@ class MultObsInstrumentCouvisChannel(models.Model):
 class MultObsInstrumentCouvisCompressionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -529,8 +529,8 @@ class MultObsInstrumentCouvisCompressionType(models.Model):
 class MultObsInstrumentCouvisDwellTime(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -542,8 +542,8 @@ class MultObsInstrumentCouvisDwellTime(models.Model):
 class MultObsInstrumentCouvisObservationType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -555,8 +555,8 @@ class MultObsInstrumentCouvisObservationType(models.Model):
 class MultObsInstrumentCouvisOccultationPortState(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -568,8 +568,8 @@ class MultObsInstrumentCouvisOccultationPortState(models.Model):
 class MultObsInstrumentCouvisSlitState(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -581,8 +581,8 @@ class MultObsInstrumentCouvisSlitState(models.Model):
 class MultObsInstrumentCouvisTestPulseState(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -594,8 +594,8 @@ class MultObsInstrumentCouvisTestPulseState(models.Model):
 class MultObsInstrumentCovimsChannel(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -607,8 +607,8 @@ class MultObsInstrumentCovimsChannel(models.Model):
 class MultObsInstrumentCovimsInstrumentModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -620,8 +620,8 @@ class MultObsInstrumentCovimsInstrumentModeId(models.Model):
 class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -633,8 +633,8 @@ class MultObsInstrumentCovimsIrSamplingModeId(models.Model):
 class MultObsInstrumentCovimsSpectralEditing(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -646,8 +646,8 @@ class MultObsInstrumentCovimsSpectralEditing(models.Model):
 class MultObsInstrumentCovimsSpectralSumming(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -659,8 +659,8 @@ class MultObsInstrumentCovimsSpectralSumming(models.Model):
 class MultObsInstrumentCovimsStarTracking(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -672,8 +672,8 @@ class MultObsInstrumentCovimsStarTracking(models.Model):
 class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -685,8 +685,8 @@ class MultObsInstrumentCovimsVisSamplingModeId(models.Model):
 class MultObsInstrumentGossiCompressionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -698,8 +698,8 @@ class MultObsInstrumentGossiCompressionType(models.Model):
 class MultObsInstrumentGossiFilterName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -711,8 +711,8 @@ class MultObsInstrumentGossiFilterName(models.Model):
 class MultObsInstrumentGossiFilterNumber(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -724,8 +724,8 @@ class MultObsInstrumentGossiFilterNumber(models.Model):
 class MultObsInstrumentGossiFrameDuration(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -737,8 +737,8 @@ class MultObsInstrumentGossiFrameDuration(models.Model):
 class MultObsInstrumentGossiGainModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -750,8 +750,8 @@ class MultObsInstrumentGossiGainModeId(models.Model):
 class MultObsInstrumentGossiObstructionId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -763,8 +763,8 @@ class MultObsInstrumentGossiObstructionId(models.Model):
 class MultObsInstrumentNhlorriBinningMode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -776,8 +776,8 @@ class MultObsInstrumentNhlorriBinningMode(models.Model):
 class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -789,8 +789,8 @@ class MultObsInstrumentNhlorriInstrumentCompressionType(models.Model):
 class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -802,8 +802,8 @@ class MultObsInstrumentNhmvicInstrumentCompressionType(models.Model):
 class MultObsInstrumentVgissCamera(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -815,8 +815,8 @@ class MultObsInstrumentVgissCamera(models.Model):
 class MultObsInstrumentVgissEditMode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -828,8 +828,8 @@ class MultObsInstrumentVgissEditMode(models.Model):
 class MultObsInstrumentVgissFilterName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -841,8 +841,8 @@ class MultObsInstrumentVgissFilterName(models.Model):
 class MultObsInstrumentVgissFilterNumber(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -854,8 +854,8 @@ class MultObsInstrumentVgissFilterNumber(models.Model):
 class MultObsInstrumentVgissGainMode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -867,8 +867,8 @@ class MultObsInstrumentVgissGainMode(models.Model):
 class MultObsInstrumentVgissScanMode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -880,8 +880,8 @@ class MultObsInstrumentVgissScanMode(models.Model):
 class MultObsInstrumentVgissShutterMode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -893,8 +893,8 @@ class MultObsInstrumentVgissShutterMode(models.Model):
 class MultObsMissionCassiniCassiniTargetCode(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -906,8 +906,8 @@ class MultObsMissionCassiniCassiniTargetCode(models.Model):
 class MultObsMissionCassiniCassiniTargetName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -919,8 +919,8 @@ class MultObsMissionCassiniCassiniTargetName(models.Model):
 class MultObsMissionCassiniIsPrime(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -932,8 +932,8 @@ class MultObsMissionCassiniIsPrime(models.Model):
 class MultObsMissionCassiniMissionPhaseName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -945,8 +945,8 @@ class MultObsMissionCassiniMissionPhaseName(models.Model):
 class MultObsMissionCassiniPrimeInstId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -958,8 +958,8 @@ class MultObsMissionCassiniPrimeInstId(models.Model):
 class MultObsMissionCassiniRevNo(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -971,8 +971,8 @@ class MultObsMissionCassiniRevNo(models.Model):
 class MultObsMissionGalileoOrbitNumber(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -984,8 +984,8 @@ class MultObsMissionGalileoOrbitNumber(models.Model):
 class MultObsMissionHubbleApertureType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -997,8 +997,8 @@ class MultObsMissionHubbleApertureType(models.Model):
 class MultObsMissionHubbleDetectorId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1010,8 +1010,8 @@ class MultObsMissionHubbleDetectorId(models.Model):
 class MultObsMissionHubbleExposureType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1023,8 +1023,8 @@ class MultObsMissionHubbleExposureType(models.Model):
 class MultObsMissionHubbleFilterName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1036,8 +1036,8 @@ class MultObsMissionHubbleFilterName(models.Model):
 class MultObsMissionHubbleFilterType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1049,8 +1049,8 @@ class MultObsMissionHubbleFilterType(models.Model):
 class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1062,8 +1062,8 @@ class MultObsMissionHubbleFineGuidanceSystemLockType(models.Model):
 class MultObsMissionHubbleGainModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1075,8 +1075,8 @@ class MultObsMissionHubbleGainModeId(models.Model):
 class MultObsMissionHubbleInstrumentModeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1088,8 +1088,8 @@ class MultObsMissionHubbleInstrumentModeId(models.Model):
 class MultObsMissionHubbleOpticalElement(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1101,8 +1101,8 @@ class MultObsMissionHubbleOpticalElement(models.Model):
 class MultObsMissionHubblePc1Flag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1114,8 +1114,8 @@ class MultObsMissionHubblePc1Flag(models.Model):
 class MultObsMissionHubbleTargetedDetectorId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1127,8 +1127,8 @@ class MultObsMissionHubbleTargetedDetectorId(models.Model):
 class MultObsMissionHubbleWf2Flag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1140,8 +1140,8 @@ class MultObsMissionHubbleWf2Flag(models.Model):
 class MultObsMissionHubbleWf3Flag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1153,8 +1153,8 @@ class MultObsMissionHubbleWf3Flag(models.Model):
 class MultObsMissionHubbleWf4Flag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1166,8 +1166,8 @@ class MultObsMissionHubbleWf4Flag(models.Model):
 class MultObsMissionNewHorizonsMissionPhase(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1179,8 +1179,8 @@ class MultObsMissionNewHorizonsMissionPhase(models.Model):
 class MultObsMissionVoyagerMissionPhaseName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1192,8 +1192,8 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
 class MultObsOccultationBodyOccFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1205,8 +1205,8 @@ class MultObsOccultationBodyOccFlag(models.Model):
 class MultObsOccultationHost(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1218,8 +1218,8 @@ class MultObsOccultationHost(models.Model):
 class MultObsOccultationOccDir(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1231,8 +1231,8 @@ class MultObsOccultationOccDir(models.Model):
 class MultObsOccultationOccType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1244,8 +1244,8 @@ class MultObsOccultationOccType(models.Model):
 class MultObsOccultationQualityScore(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1257,8 +1257,8 @@ class MultObsOccultationQualityScore(models.Model):
 class MultObsOccultationSource(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1270,8 +1270,8 @@ class MultObsOccultationSource(models.Model):
 class MultObsOccultationWlBand(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1284,7 +1284,7 @@ class MultObsSurfaceGeometryNameTargetName(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=30)
-    disp_order = models.IntegerField()
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     grouping = models.CharField(max_length=7, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
@@ -1297,8 +1297,8 @@ class MultObsSurfaceGeometryNameTargetName(models.Model):
 class MultObsTypeImageImageTypeId(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1310,8 +1310,8 @@ class MultObsTypeImageImageTypeId(models.Model):
 class MultObsWavelengthPolarizationType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -1323,8 +1323,8 @@ class MultObsWavelengthPolarizationType(models.Model):
 class MultObsWavelengthSpecFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
-    label = models.CharField(max_length=60)
-    disp_order = models.IntegerField()
+    label = models.CharField(max_length=100)
+    disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
     timestamp = models.DateTimeField(blank=True, null=True)
 
@@ -6954,7 +6954,7 @@ class ZZParamInfo(models.Model):
     form_type = models.CharField(max_length=100, blank=True, null=True)
     display = models.IntegerField()
     display_results = models.IntegerField()
-    disp_order = models.IntegerField()
+    disp_order = models.CharField(max_length=100)
     label = models.CharField(max_length=240, blank=True, null=True)
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
@@ -6988,9 +6988,9 @@ class Partables(models.Model):
 
 class TableNames(models.Model):
     table_name = models.CharField(max_length=60)
-    label = models.CharField(max_length=60)
+    label = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
-    disp_order = models.IntegerField()
+    disp_order = models.CharField(max_length=100)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:

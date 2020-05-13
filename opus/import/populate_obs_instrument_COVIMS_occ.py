@@ -58,10 +58,7 @@ def populate_obs_general_COVIMS_time2_OCC(**kwargs):
 def populate_obs_general_COVIMS_target_name_OCC(**kwargs):
     target_name = 'S RINGS'
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def populate_obs_general_COVIMS_observation_duration_OCC(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
@@ -265,9 +262,19 @@ def populate_obs_occultation_COVIMS_wl_band_OCC(**kwargs):
 def populate_obs_occultation_COVIMS_source_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    star_name = index_row['STAR_NAME']
+    target_name = index_row['STAR_NAME'].replace(' ', '')
 
-    return star_name
+    if target_name in TARGET_NAME_MAPPING:
+        target_name = TARGET_NAME_MAPPING[target_name]
+
+    if target_name not in TARGET_NAME_INFO:
+        import_util.announce_unknown_target_name(target_name)
+        if impglobals.ARGUMENTS.import_ignore_errors:
+            return 'None'
+        return None
+
+    target_name_info = TARGET_NAME_INFO[target_name]
+    return target_name, target_name_info[2]
 
 def populate_obs_occultation_COVIMS_host_OCC(**kwargs):
     return 'Cassini'

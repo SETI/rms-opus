@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "MIMAS"
+    "surfacegeometrytargetlist": "Mimas"
   },
   "Mimas Surface Geometry Constraints": {
     "SURFACEGEOmimas_planetographiclatitude1": "-65.53",

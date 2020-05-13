@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "AEGAEON,ANTHE,CALYPSO,DIONE,ENCELADUS,JANUS,METHONE,PAN,PROMETHEUS,SATURN,TELESTO"
+    "surfacegeometrytargetlist": "Aegaeon,Anthe,Calypso,Dione,Enceladus,Janus,Methone,Pan,Prometheus,Saturn,Telesto"
   },
   "Aegaeon Surface Geometry Constraints": {
     "SURFACEGEOaegaeon_planetographiclatitude1": null,

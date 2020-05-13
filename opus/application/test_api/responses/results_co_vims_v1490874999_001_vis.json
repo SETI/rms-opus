@@ -58,7 +58,7 @@
     "occreceiverhost": null
   },
   "Surface Geometry Constraints": {
-    "surfacegeometrytargetlist": "RHEA"
+    "surfacegeometrytargetlist": "Rhea"
   },
   "Rhea Surface Geometry Constraints": {
     "SURFACEGEOrhea_planetographiclatitude1": "-64.21",
