@@ -139,8 +139,10 @@ def helper_cassini_obs_name(**kwargs):
         supp_index_row = metadata.get('supp_index_row', None) # COUVIS & CORSS
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
-    if obs_id is None or obs_id == '':
+    if obs_id is None:
         import_util.log_nonrepeating_error('No OBSERVATION_ID found')
+    if obs_id == '':
+        obs_id = 'N/A'
 
     return obs_id
 
