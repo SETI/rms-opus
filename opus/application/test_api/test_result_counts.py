@@ -127,7 +127,7 @@ class ApiForResultCounts:
     def __init__(self, target="production"):
         self.target = target
         if not self.target or self.target == "production":
-            self.result_counts_api = self.api_base_url.format("https", "tools")
+            self.result_counts_api = self.api_base_url.format("https", "opus")
         elif self.target == "dev":
             self.result_counts_api = self.api_base_url.format("https", "dev")
         else:

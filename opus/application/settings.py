@@ -356,7 +356,7 @@ STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500 # ms
 # Timeout for SELECT When not joined with cache table
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500 # ms
 
-THUMBNAIL_NOT_FOUND = 'https://tools.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
+THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'
 
 MAX_SELECTIONS_ALLOWED = 10000
 MAX_SELECTIONS_FOR_DATA_DOWNLOAD = 10000

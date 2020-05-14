@@ -15,7 +15,7 @@ class ApiTestHelper:
     def _get_response(self, url):
         if (not settings.TEST_GO_LIVE or
             settings.TEST_GO_LIVE == "production"): # pragma: no cover
-            url = "https://tools.pds-rings.seti.org" + url
+            url = "https://opus.pds-rings.seti.org" + url
         else: # pragma: no cover
             url = "http://dev.pds-rings.seti.org" + url
         return self.client.get(url)
