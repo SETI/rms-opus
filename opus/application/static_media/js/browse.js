@@ -1484,7 +1484,7 @@ var o_browse = {
             },
             start: function(e, ui) {
                 //dragColumn(ui, e.type);
-                $("tbody").animate({opacity: '0.4'});
+                $("tbody").animate({opacity: '0.1'});
             },
             stop: function(e, ui) {
                 dragColumn(ui, e.type);
