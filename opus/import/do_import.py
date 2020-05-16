@@ -711,6 +711,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
+    volset = volume_pdsfile.volset
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
     if not obs_rows:
@@ -885,7 +886,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             assoc_dict[key][key2] = row
                 else:
                     assert assoc_type == 'supp_index'
-                    if instrument_name == 'COUVIS' and volume_type == 'OBS':
+                    if volset == 'COUVIS_0xxx':
                         # The COUVIS_0xxx supplemental index is keyed by a
                         # combination of VOLUME_ID (COUVIS_0001) and
                         # FILE_SPECIFICATION_NAME
@@ -906,49 +907,20 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                 break
                             key = f'/{key1}/{key2}'
                             assoc_dict[key] = row
-                    elif (instrument_name == 'VGISS' or
-                          mission_abbrev == 'GB' or
-                          instrument_name == 'CORSS' or
-                          ((instrument_name == 'COUVIS' or
-                            instrument_name == 'COVIMS') and
-                           volume_type == 'OCC')):
-                        # The VGISS and ground-based and other occultation
-                        # supplemental indexes are
+                    else:
+                        # All other supplemental indexes are
                         # keyed by FILE_SPECIFICATION_NAME
                         # (DATA/C13854XX/C1385455_RAW.LBL)
                         # that maps to the FILE_SPECIFICATION_NAME field in the
                         # main index.
-                        # It's too much of a pain to calculate the opus_id
-                        # here to use that as a key, so we just stick with the
-                        # filename.
                         for row in assoc_rows:
                             key = row.get('FILE_SPECIFICATION_NAME', None)
                             if key is None:
                                 import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                                 break
-                            assoc_dict[key] = row
-                    elif instrument_name in ['NHLORRI', 'NHMVIC']:
-                        # The NHLORRI/NHMVIC supplemental index is keyed by
-                        # FILE_SPECIFICATION_NAME
-                        # (data/20070108_003059/lor_0030598439_0x630_eng.lbl)
-                        # that maps to the PATH_NAME and FILE_NAME fields in the
-                        # main index.
-                        # It's too much of a pain to calculate the opus_id
-                        # here to use that as a key, so we just stick with the
-                        # filename.
-                        for row in assoc_rows:
-                            key = row.get('FILE_SPECIFICATION_NAME', None)
                             key = key.upper()
-                            if key is None:
-                                import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                                break
                             assoc_dict[key] = row
-                    else:
-                        # Something else uses a supplemental index that we
-                        # haven't prepared for!
-                        assert False
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
 
@@ -956,13 +928,21 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     # supports it - but it isn't a fatal error if we don't because sometimes
     # the geo files are generated later
     if ('ring_geo' not in metadata and
-        instrument_name in INSTRUMENTS_WITH_RING_GEO):
+        volset in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing ring geometry files')
+    elif ('ring_geo' in metadata and
+        volset not in VOLSETS_WITH_RING_GEO):
+        impglobals.LOGGER.log('warning',
+            f'Volume "{volume_id}" has unexpected ring geometry files')
     if ('body_surface_geo' not in metadata and
-        instrument_name in INSTRUMENTS_WITH_SURFACE_GEO):
+        volset in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing body surface geometry files')
+    elif ('body_surface_geo' in metadata and
+        volset not in VOLSETS_WITH_SURFACE_GEO):
+        impglobals.LOGGER.log('warning',
+            f'Volume "{volume_id}" has unexpected body surface geometry files')
 
     if 'ring_geo' in metadata:
         li = len(metadata['index'])
@@ -1019,8 +999,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
-        if ('supp_index' in metadata and
-            instrument_name == 'COUVIS' and volume_type == 'OBS'):
+        if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
             # Match up the FILENAME with the key we generated earlier
             couvis_filename = index_row['FILE_NAME'].upper()
             supp_index = metadata['supp_index']
@@ -1029,22 +1008,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             else:
                 import_util.log_nonrepeating_error(
                     f'File "{couvis_filename}" is missing supplemental data')
-                metadata['supp_index_row'] = None
-                continue # We don't process entries without supp_index
-        elif ('supp_index' in metadata and
-              (instrument_name == 'VGISS' or
-               mission_abbrev == 'GB' or
-               instrument_name == 'CORSS' or
-               ((instrument_name == 'COUVIS' or
-                 instrument_name == 'COVIMS') and volume_type == 'OCC'))):
-            # Match up the FILENAME
-            filename = index_row['FILE_SPECIFICATION_NAME']
-            supp_index = metadata['supp_index']
-            if filename in supp_index:
-                metadata['supp_index_row'] = supp_index[filename]
-            else:
-                import_util.log_nonrepeating_error(
-                    f'File "{filename}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif ('supp_index' in metadata and
@@ -1062,13 +1025,24 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     f'File "{file_spec_name}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
+        elif 'supp_index' in metadata:
+            # Match up the FILENAME
+            filename = index_row['FILE_SPECIFICATION_NAME'].upper()
+            supp_index = metadata['supp_index']
+            if filename in supp_index:
+                metadata['supp_index_row'] = supp_index[filename]
+            else:
+                import_util.log_nonrepeating_error(
+                    f'File "{filename}" is missing supplemental data')
+                metadata['supp_index_row'] = None
+                continue # We don't process entries without supp_index
 
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
 
-        if instrument_name == 'COVIMS' and volume_type == 'OBS':
+        if volset == 'COVIMS_0xxx':
             phase_names = []
             if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
                 phase_names.append('VIS')
@@ -1094,6 +1068,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     # Table not relevant for this product
                     continue
                 row = import_observation_table(volume_id,
+                                               volset,
                                                instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
@@ -1165,6 +1140,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                                                 target_name]
 
                         row = import_observation_table(volume_id,
+                                                       volset,
                                                        instrument_name,
                                                        func_instrument_name,
                                                        mission_abbrev,
@@ -1197,6 +1173,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 # field
 
                 row = import_observation_table(volume_id,
+                                               volset,
                                                instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
@@ -1269,6 +1246,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
 
 def import_observation_table(volume_id,
+                             volset,
                              instrument_name,
                              func_instrument_name,
                              mission_abbrev,
@@ -1426,6 +1404,7 @@ def import_observation_table(volume_id,
                     data_source_offset += 2
                     ret = import_run_field_function(data_source_data,
                                                     volume_id,
+                                                    volset,
                                                     instrument_name,
                                                     func_instrument_name,
                                                     mission_abbrev,
@@ -1632,6 +1611,7 @@ def import_observation_table(volume_id,
     return new_row
 
 def import_run_field_function(func_name_suffix, volume_id,
+                              volset,
                               instrument_name,
                               func_instrument_name,
                               mission_abbrev,
@@ -1655,7 +1635,8 @@ def import_run_field_function(func_name_suffix, volume_id,
                 f'"{field_name}" in table "{table_name}"')
         return None
     func = globals()[func_name]
-    return func(volume_id=volume_id, instrument_name=instrument_name,
+    return func(volume_id=volume_id, volset=volset,
+                instrument_name=instrument_name,
                 mission_abbrev=mission_abbrev,
                 table_name=table_name, table_schema=table_schema,
                 metadata=metadata)

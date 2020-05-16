@@ -116,6 +116,7 @@ def populate_obs_general_target_class(**kwargs):
 
 def populate_obs_general_preview_images(**kwargs):
     metadata = kwargs['metadata']
+    volset = kwargs['volset']
     general_row = metadata['obs_general_row']
     file_spec = general_row['primary_file_spec']
 
@@ -188,7 +189,8 @@ def populate_obs_general_preview_images(**kwargs):
             }
         else:
             browse_data = {'viewables': []}
-            if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            if (volset in VOLSETS_WITH_PREVIEWS and
+                not impglobals.ARGUMENTS.import_ignore_missing_images):
                 import_util.log_nonrepeating_warning(
                     f'Missing all browse/diagram images for "{file_spec}"')
 

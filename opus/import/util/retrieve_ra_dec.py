@@ -48,7 +48,7 @@ STARS = {
     'BET_PEG':              (None,  'OTHER',      'Bet Peg'),
     'BET_PER':              (None,  'OTHER',      'Bet Per (Algol)'),
     'BET_PSA':              (None,  'OTHER',      'Bet PsA'),
-    'BET1_SGR':              (None,  'OTHER',      'Bet Sgr'),
+    'BET01_SGR':            (None,  'OTHER',      'Bet1 Sgr'),
     'BET_UMI':              (None,  'OTHER',      'Bet UMi'),
     'KAP01_CET':            (None,  'OTHER',      'Kap1 Cet'),
     'ALF_CAR':              (None,  'OTHER',      'Alp Car (Canopus)'),
@@ -152,8 +152,8 @@ STARS = {
     'VY_CMA':               (None,  'OTHER',      'VY CMa'),
     'W_AQL':                (None,  'OTHER',      'W Aql'),
     'W_HYA':                (None,  'OTHER',      'W Hya'),
-    'XI1_CET':              (None,  'OTHER',      'Xi Cet'),
-    'XI2_CET':              (None,  'OTHER',      'Xi2 Cet'),
+    'KSI01_CET':            (None,  'OTHER',      'Xi Cet'),
+    'KSI02_CET':            (None,  'OTHER',      'Xi2 Cet'),
     'X_OPH':                (None,  'OTHER',      'X Oph'),
     'ZET_CEN':              (None,  'OTHER',      'Zet Cen'),
     'ZET_CMA':              (None,  'OTHER',      'Zet CMa'),
@@ -166,6 +166,7 @@ STARS = {
 session = requests.Session()
 
 radec_pat = re.compile(r'Coordinates.ICRS,ep=J2000,eq=2000.: (\d+) (\d+) (\d+.\d+|\d+) +(\+|-)(\d+) (\d+) (\d+.\d+|\d+)')
+name_pat = re.compile(r'Object ([\*\+\. a-zA-Z0-9]+) ---')
 
 for key in STARS:
     id = key.replace('_', ' ')
@@ -189,8 +190,26 @@ for key in STARS:
     dec_m = int(match.group(6))
     dec_s = float(match.group(7))
 
+    name_match = name_pat.search(r.text)
+    if name_match is None:
+        print('FAIL', key)
+        print(r.text[:200])
+        continue
+    name = name_match.group(1)
+    if name.startswith('V*'):
+        name = name[2:]
+    if name.startswith('*'):
+        name = name[1:]
+    name = name.strip().strip(' ').replace(' ', '_')
+    name = name.upper()
+    if name[2:4] == '._':
+        name = name.replace('.', '')
+    if name != key:
+        print(name_match.group(1))
+        print('OFFICIAL', name, 'US', key)
+
     ra = (ra_h + ra_m/60. + ra_s/60./60.) * 360. / 24.
     dec = dec_d + dec_m/60. + dec_s/60./60.
     if dec_sign == '-':
         dec = -dec
-    print('    %-24s(%13.9f, %13.9f),' % (f"'{key}':", ra, dec))
+    # print('    %-24s(%13.9f, %13.9f),' % (f"'{key}':", ra, dec))

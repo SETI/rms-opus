@@ -54,7 +54,6 @@ def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
-    print(opus_id)
     return opus_id
 
 def populate_obs_general_CORSS_ring_obs_id_OCC(**kwargs):
