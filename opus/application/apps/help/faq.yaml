@@ -261,16 +261,16 @@ Using Search:
             is available.</li>
             <li>If you want to find observations that have <b>only</b> two
             particular bodies and no others, select <b>matches</b> from the
-            query type dropdown and enter "BODY1,BODY2" in the search
+            query type dropdown and enter "Body1,Body2" in the search
             field. Make sure the bodies are in alphabetical order
-            (e.g. "DIONE,TETHYS" not "TETHYS,DIONE"). The result set will now
+            (e.g. "Dione,Tethys" not "Tethys,Dione"). The result set will now
             contain only observations that have those two, and only those two,
             bodies in the field of view.</li>
             <li>If you want to find observations that have two particular bodies
             in the field of view, but other bodies are OK too, we need to use a
             regular expression. Select <b>regex</b> in the query type dropdown
-            and enter "BODY1.*BODY2" in the search field. Again make sure that
-            BODY1 is alphabetically before BODY2.</li>
+            and enter "Body1.*Body2" in the search field. Again make sure that
+            "Body1" is alphabetically before "Body2".</li>
             </ol>
 
 

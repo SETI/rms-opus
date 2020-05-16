@@ -396,7 +396,14 @@ populate_obs_ring_geometry_COVIMS_center_north_based_emission1_OCC = \
 populate_obs_ring_geometry_COVIMS_center_north_based_emission2_OCC = \
     populate_obs_ring_geometry_COVIMS_north_based_emission2_OCC
 
-def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle_OCC(**kwargs):
+def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+
+    return el
+
+def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
@@ -441,6 +448,10 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count1_OCC(**kwargs):
     if sc == 'UNK':
         return None
 
+    # COVIMS_8001 SCLKs are in some weird units where the number to the right
+    # of the decimal can be > 255, so we just round down
+    if '.' in sc:
+        sc = sc.split('.')[0] + '.000'
     try:
         sc_cvt = opus_support.parse_cassini_sclk(sc)
     except Exception as e:
@@ -456,8 +467,12 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2_OCC(**kwargs):
     if sc == 'UNK':
         return None
 
+    # COVIMS_8001 SCLKs are in some weird units where the number to the right
+    # of the decimal can be > 255, so we just round up
+    if '.' in sc:
+        sc = sc.split('.')[0] + '.000'
     try:
-        sc_cvt = opus_support.parse_cassini_sclk(sc)
+        sc_cvt = opus_support.parse_cassini_sclk(sc)+1 # Round up
     except Exception as e:
         import_util.log_nonrepeating_warning(
             f'Unable to parse Cassini SCLK "{sc}": {e}')

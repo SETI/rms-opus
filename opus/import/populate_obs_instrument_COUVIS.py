@@ -148,7 +148,7 @@ def populate_obs_general_COUVIS_time2_OBS(**kwargs):
     if samples is None or integration_duration is None:
         return None
 
-    return start_time_sec + samples*integration_duration/1000
+    return start_time_sec + samples*integration_duration
 
 def populate_obs_general_COUVIS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)

@@ -310,3 +310,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] co-uvis-occ-2009-015-gamcas-e"
         url = "/api/metadata_v2/co-uvis-occ-2009-015-gamcas-e.json"
         self._run_json_equal_file(url, "results_co_uvis_occ_2009_015_gamcas_e.json")
+
+    def test__results_contents_co_vims_occ_2006_204_alpori_i(self):
+        "[test_results_contents.py] co-vims-occ-2006-204-alpori-i"
+        url = "/api/metadata_v2/co-vims-occ-2006-204-alpori-i.json"
+        self._run_json_equal_file(url, "results_co_vims_occ_2006_204_alpori_i.json")
+
+    def test__results_contents_co_vims_occ_2014_175_l2pup_e(self):
+        "[test_results_contents.py] co-vims-occ-2014-175-l2pup-e"
+        url = "/api/metadata_v2/co-vims-occ-2014-175-l2pup-e.json"
+        self._run_json_equal_file(url, "results_co_vims_occ_2014_175_l2pup_e.json")

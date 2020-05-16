@@ -18,8 +18,8 @@
         "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMED.LBL"
       ],
       "vgiss_resloc": [
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
         "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.DAT",
+        "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
         "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL"
       ],
       "vgiss_geoma": [
@@ -77,8 +77,8 @@
           "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMED.LBL"
         ],
         "vgiss_resloc": [
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
           "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.DAT",
+          "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.TAB",
           "https://pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_RESLOC.LBL"
         ],
         "vgiss_geoma": [

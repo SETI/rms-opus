@@ -413,7 +413,14 @@ populate_obs_ring_geometry_COUVIS_center_north_based_emission1_OCC = \
 populate_obs_ring_geometry_COUVIS_center_north_based_emission2_OCC = \
     populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC
 
-def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+
+    return el
+
+def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')

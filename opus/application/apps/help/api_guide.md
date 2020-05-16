@@ -184,7 +184,7 @@ datasetid=CO-E&qtype-datasetid=begins
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
 %CODE%
-volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+volumeid_1=COISS_2001&qtype-volumeid_1=matches&volumeid_2=COISS_2002&qtype-volumeid_2=matches
 %ENDCODE%
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):

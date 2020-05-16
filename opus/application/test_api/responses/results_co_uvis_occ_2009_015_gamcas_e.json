@@ -11,10 +11,10 @@
         "time2": "2009-01-15T13:59:58.181",
         "observationduration": "9610.426",
         "quantity": "Optical Depth",
-        "rightasc1": null,
-        "rightasc2": null,
-        "declination1": null,
-        "declination2": null
+        "rightasc1": "14.177215",
+        "rightasc2": "14.177215",
+        "declination1": "60.71674",
+        "declination2": "60.71674"
     },
     "PDS Constraints": {
         "volumeid": "COUVIS_8001",
@@ -109,8 +109,8 @@
         "RINGGEOringcenternorthbasedemission2": "156.3",
         "RINGGEOsolarringopeningangle1": null,
         "RINGGEOsolarringopeningangle2": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": "-66.3",
+        "RINGGEOobserverringopeningangle2": "-66.3",
         "RINGGEOedgeonradius1": null,
         "RINGGEOedgeonradius2": null,
         "RINGGEOedgeonJ2000longitude1": null,
