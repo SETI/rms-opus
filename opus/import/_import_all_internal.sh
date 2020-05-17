@@ -28,7 +28,7 @@ python main_opus_import.py --import-dictionary --override-db-schema $1
 python main_opus_import.py --validate-perm --override-db-schema $1
 
 echo "Import is complete!"
-sqldump=/home/django/database_backups/$1.sql
+sqldump=/Volumes/opus/databases/$1.sql
 echo "Making backup of database - Dumping $1 to $sqldump"
 mysqldump $1 $2 > $sqldump
 echo "Making dev_$1 version of database"
