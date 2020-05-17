@@ -882,7 +882,7 @@ TARGET_NAME_INFO = {
     'IK_TAU':               (None,  'OTHER',      'NML Tau'),
     'IO_CEN':               (None,  'OTHER',      'Iot Cen'),
     'IO_ORI':               (None,  'OTHER',      'Iot Ori'),
-    'IRC_+10216':           (None,  'OTHER',      'IRC +10216 (CW Leo)'),
+    'IRC_+10216':           (None,  'OTHER',      'CW Leo (IRC +10216)'),
     'KAP_CEN':              (None,  'OTHER',      'Kap Cen'),
     'KAP01_CET':            (None,  'OTHER',      'Kap1 Cet'),
     'KAP_CMA':              (None,  'OTHER',      'Kap CMa'),

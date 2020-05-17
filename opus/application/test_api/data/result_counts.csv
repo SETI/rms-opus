@@ -31,7 +31,7 @@
 
 "https://opus.pds-rings.seti.org/#/insthost=Cassini",1411270,Instrument Host Cassini
 "https://opus.pds-rings.seti.org/#/insthost=Galileo",3846,Instrument Host Galileo
-"https://opus.pds-rings.seti.org/#/insthost=Hubble",20963,Instrument Host Hubble
+"https://opus.pds-rings.seti.org/#/insthost=Hubble",21751,Instrument Host Hubble
 "https://opus.pds-rings.seti.org/#/insthost=New+Horizons",11663,Instrument Host New Horizons
 "https://opus.pds-rings.seti.org/#/insthost=Voyager+1",34575,Instrument Host Voyager 1
 "https://opus.pds-rings.seti.org/#/insthost=voyager+2",42077,Instrument Host Voyager 2
@@ -40,7 +40,7 @@
 
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+CIRS",24950,Instrument Cassini CIRS
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS",443177,Instrument Cassini ISS
-"https://opus.pds-rings.seti.org/#/instrument=Cassini+ISS",197,Instrument Cassini RSS
+"https://opus.pds-rings.seti.org/#/instrument=Cassini+RSS",197,Instrument Cassini RSS
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+UVIS",203522,Instrument Cassini UVIS
 "https://opus.pds-rings.seti.org/#/instrument=Cassini+VIMS",740146,Instrument Cassini VIMS
 "https://opus.pds-rings.seti.org/#/instrument=Galileo+SSI",3846,Instrument Galileo SSI
@@ -52,12 +52,12 @@
 "https://opus.pds-rings.seti.org/#/instrument=Hubble+WFPC2",5617,Instrument Hubble WFPC2
 "https://opus.pds-rings.seti.org/#/instrument=New+Horizons+LORRI",10106,Instrument New Horizons LORRI
 "https://opus.pds-rings.seti.org/#/instrument=New+Horizons+MVIC",1557,Instrument New Horizons MVIC
-"https://opus.pds-rings.seti.org/#/instrument=New+Horizons+MVIC",1557,Instrument New Horizons MVIC
 "https://opus.pds-rings.seti.org/#/instrument=ESO+1-m+ApPhot",2,Instrument ESO 1 m ApPhot
 "https://opus.pds-rings.seti.org/#/instrument=ESO+2.2-m+ApPhot",2,Instrument ESO 2.2 m ApPhot
-"https://opus.pds-rings.seti.org/#/instrument=NASA+IRTF+URAC",2,Instrument NASA IRTF URAC
 "https://opus.pds-rings.seti.org/#/instrument=Lick+1-m+CCD",2,Instrument Lick 1 m CCD
 "https://opus.pds-rings.seti.org/#/instrument=McDonald+2.7-m+INSB",2,Instrument McDonald 2.7 m INSB
+"https://opus.pds-rings.seti.org/#/instrument=NASA+IRTF+URAC",2,Instrument NASA IRTF URAC
+"https://opus.pds-rings.seti.org/#/instrument=Palomar+Observatory+200-in+Hale+Telescope",2,Instrument Palomar Observatory 200-in Hale Telescope
 
 "https://opus.pds-rings.seti.org/#/observationtype=Image",555936,Observation Type Image
 "https://opus.pds-rings.seti.org/#/observationtype=Spectrum",0,Observation Type Spectrum
