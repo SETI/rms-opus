@@ -1419,7 +1419,7 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div class="op-column-header">${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div class="op-column-header">${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
@@ -1468,12 +1468,11 @@ var o_browse = {
         }
 
         $(`${tab} .op-data-table thead`).sortable({
-            items: "th:not(.op-table-first-col)",
+            items: "th.op-draggable",
             axis: "x",
             cursor: "grab",
             containment: "parent",
             tolerance: "intersect",
-            placeholder: "op-sortable-placeholder",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
                 let td = $("tbody tr").find(`[data-slug="${slug}"]`);
@@ -1488,7 +1487,7 @@ var o_browse = {
             },
             stop: function(e, ui) {
                 dragColumn(ui, e.type);
-                let columnOrder = $.map($(this).find("th").not(".op-table-first-col"), function(n, i) {
+                let columnOrder = $.map($(this).find("th.op-draggable"), function(n, i) {
                     return n.id;
                 });
                 // only bother if something actually changed...
