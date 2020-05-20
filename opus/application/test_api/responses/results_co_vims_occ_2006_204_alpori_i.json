@@ -146,7 +146,7 @@
         "COVIMSvissamplingmode": "N/A",
         "COVIMSvisexposure": null,
         "COVIMSirsamplingmode": "Hi-Res",
-        "COVIMSirexposure": "20",
+        "COVIMSirexposure": "0.02",
         "COVIMSswathwidth": "1",
         "COVIMSswathlength": "1",
         "COVIMSspectralsumming": "No",

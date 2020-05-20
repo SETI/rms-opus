@@ -223,10 +223,8 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "IR_EXPOSURE",
-            "TAB:supp_index",
-            "IR_EXPOSURE"
+            "FUNCTION",
+            "obs_instrument_covims_ir_exposure_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e5,
@@ -289,8 +287,8 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "VIS_EXPOSURE",
+            "FUNCTION",
+            "~obs_instrument_covims_vis_exposure_<TYPE>",
             "IGNORE"
         ],
         "val_min": 0,

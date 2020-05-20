@@ -177,9 +177,9 @@
   "Cassini VIMS Constraints": {
     "COVIMSchannel": "IR",
     "COVIMSvissamplingmode": "Normal",
-    "COVIMSvisexposure": "10000",
+    "COVIMSvisexposure": "10",
     "COVIMSirsamplingmode": "Normal",
-    "COVIMSirexposure": "640",
+    "COVIMSirexposure": "0.64",
     "COVIMSswathwidth": "16",
     "COVIMSswathlength": "64",
     "COVIMSspectralsumming": "No",

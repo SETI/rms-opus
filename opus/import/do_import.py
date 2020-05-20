@@ -1402,17 +1402,21 @@ def import_observation_table(volume_id,
 
                 if data_source_cmd_prefix == 'FUNCTION':
                     data_source_offset += 2
-                    ret = import_run_field_function(data_source_data,
-                                                    volume_id,
-                                                    volset,
-                                                    instrument_name,
-                                                    func_instrument_name,
-                                                    mission_abbrev,
-                                                    volume_type,
-                                                    table_name,
-                                                    table_schema,
-                                                    metadata,
-                                                    field_name)
+                    ok, ret = import_run_field_function(data_source_data,
+                                                        volume_id,
+                                                        volset,
+                                                        instrument_name,
+                                                        func_instrument_name,
+                                                        mission_abbrev,
+                                                        volume_type,
+                                                        table_name,
+                                                        table_schema,
+                                                        metadata,
+                                                        field_name)
+                    if not ok:
+                        # Function doesn't exist
+                        # An error will already have been logged
+                        continue
                     if isinstance(ret, tuple) or isinstance(ret, list):
                         column_val = ret[0]
                         mult_label = ret[1]
@@ -1633,13 +1637,13 @@ def import_run_field_function(func_name_suffix, volume_id,
             import_util.log_nonrepeating_error(
                 f'Unknown table populate function "{func_name}" for '+
                 f'"{field_name}" in table "{table_name}"')
-        return None
+        return (False, None)
     func = globals()[func_name]
-    return func(volume_id=volume_id, volset=volset,
-                instrument_name=instrument_name,
-                mission_abbrev=mission_abbrev,
-                table_name=table_name, table_schema=table_schema,
-                metadata=metadata)
+    return (True, func(volume_id=volume_id, volset=volset,
+                       instrument_name=instrument_name,
+                       mission_abbrev=mission_abbrev,
+                       table_name=table_name, table_schema=table_schema,
+                       metadata=metadata))
 
 def _check_for_pdsfile_exception():
     if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):

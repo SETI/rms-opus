@@ -412,3 +412,23 @@ def populate_obs_instrument_covims_channel_OBS(**kwargs):
     phase_name = metadata['phase_name']
 
     return (phase_name, phase_name)
+
+def populate_obs_instrument_covims_vis_exposure_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    vis_exp = import_util.safe_column(index_row, 'VIS_EXPOSURE')
+
+    if vis_exp is None:
+        return None
+
+    return vis_exp / 1000.
+
+def populate_obs_instrument_covims_ir_exposure_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    ir_exp = import_util.safe_column(index_row, 'IR_EXPOSURE')
+
+    if ir_exp is None:
+        return None
+
+    return ir_exp / 1000.

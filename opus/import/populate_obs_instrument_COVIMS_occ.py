@@ -505,3 +505,13 @@ def populate_obs_mission_cassini_COVIMS_sequence_id_OCC(**kwargs):
 
 def populate_obs_instrument_covims_channel_OCC(**kwargs):
     return 'IR'
+
+def populate_obs_instrument_covims_ir_exposure_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['supp_index_row']
+    ir_exp = import_util.safe_column(index_row, 'IR_EXPOSURE')
+
+    if ir_exp is None:
+        return None
+
+    return ir_exp / 1000.
