@@ -55,6 +55,7 @@ For an obs_XXX table, information about how to populate the field MUST be
 included:
 
 'data_source'            A tuple (source, data). Source can be one of:
+
       'IGNORE'
       'TAB:<TABLE_NAME>' in which case the data is the field name in the
                          referenced PDS or internal table, which must have
@@ -65,13 +66,17 @@ included:
                         ':', then the number of the array element.
       'FUNCTION'         in which case the data is the name of the function
                          to execute. <INST> and <MISSION> are substituted.
+                         If the function name starts with "~" then it is
+                         not an error if the function doesn't exist.
       'MAX_ID'           in which case the data is ignored. The value used
                          is the largest id used for that table so far + 1.
-    These can also be combined like 'TAB:<TABLE_NAME>||FUNCTION' in which case
-    data_source has three elements; the second is the table specifier and the
-    last is the function. If the first table is not found at all, then the
-    function is tried instead.
+      'VALUEINT'         in which case the value is the explicitly given int.
+      'VALUEREAL'        in which case the value is the explicitly given float.
+      'VALUESTR'         in which case the value is the explicitly given string.
 
+    There can also be more than one pair of items in the tuple, in which case
+    they are tried in order. If the first one fails because the field or
+    function doesn't exist, then the next pair is tried, and so on.
 
 Optional fields include:
 
