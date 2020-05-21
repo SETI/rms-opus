@@ -744,7 +744,12 @@ th.sticky-header {
 }
 
 .op-data-table-view .ui-sortable-placeholder {
-    display: none;
+    display: inline-block;
+}
+
+.op-data-table-view .ui-sortable-placeholder th {
+    background: red;
+    visibility: visible;
 }
 
 .op-data-table-column-move-bar {

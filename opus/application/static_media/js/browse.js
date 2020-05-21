@@ -1472,7 +1472,7 @@ var o_browse = {
             axis: "x",
             cursor: "grab",
             containment: "parent",
-            tolerance: "intersect",
+            tolerance: "pointer",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
                 let td = $("tbody tr").find(`[data-slug="${slug}"]`);
@@ -1484,6 +1484,19 @@ var o_browse = {
             start: function(e, ui) {
                 //dragColumn(ui, e.type);
                 $("tbody").animate({opacity: '0.1'});
+                $("thead th.op-draggable").each(function(index, th) {
+                    $(th).width($(th).width());
+                });
+                return ui;
+            },
+            sort: function(e, ui) {
+                // if the tr is moving left, look at next
+                if (ui.item.next().attr("id") === ui.placeholder.prev().attr("id")) {
+                    let itemSlug = ui.item.attr("id");
+                    let movingItemCol = $("tbody tr").find(`[data-slug="${itemSlug}"]`);
+                }
+                console.log(`item:   ${ui.item.attr("id")}, item.prev: ${ui.item.prev().attr("id")}, item.next: ${ui.item.next().attr("id")}`)
+                console.log(`placeholder: prev: ${ui.placeholder.prev().attr("id") }, next: ${ui.placeholder.next().attr("id")}`);
             },
             stop: function(e, ui) {
                 dragColumn(ui, e.type);
