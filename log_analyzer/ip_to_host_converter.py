@@ -5,7 +5,7 @@ import functools
 import shelve
 import socket
 from ipaddress import IPv4Address
-from random import seed, randrange, choice
+from random import seed, randrange, choice, uniform
 from typing import Optional, Callable, Tuple
 
 
@@ -76,13 +76,13 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
             return name
         self._created += 1
         name = super()._convert(ip)
-        self._database[str(ip)] = (name, datetime.datetime.now())
+        expiration = datetime.datetime.now() + datetime.timedelta(days=uniform(25.0, 30.0))
+        self._database[str(ip)] = (name, expiration)
         return name
 
     def _purge_old_database_entries(self) -> None:
         now = datetime.datetime.now()
-        thirty_days_ago = now - datetime.timedelta(days=30)
-        expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < thirty_days_ago]
+        expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
         for key in expired_keys:
             del self._database[key]
         self._expired = len(expired_keys)

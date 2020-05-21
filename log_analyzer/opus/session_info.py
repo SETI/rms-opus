@@ -24,6 +24,7 @@ class SessionInfo(AbstractSessionInfo):
     _downloads: List[Tuple[str, int]]
     _product_types: List[str]
     _product_types_count: int
+    _widgets: Set[slug.Family]
     _icon_flags: IconFlags
     _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
@@ -42,6 +43,7 @@ class SessionInfo(AbstractSessionInfo):
         self._downloads = []
         self._product_types = []
         self._product_types_count = 0
+        self._widgets = set()
         self._icon_flags = IconFlags(0)
         self._info_flags = InfoFlags(InfoFlags.DID_NOT_PERFORM_SEARCH)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
@@ -99,6 +101,9 @@ class SessionInfo(AbstractSessionInfo):
         if match:
             self._sessionless_downloads.append((match.group(1), entry))
 
+    def register_widget(self, family: slug.Family) -> None:
+        self._widgets.add(family)
+
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
             return [(slug, info[slug].flags.is_obsolete())
@@ -148,6 +153,11 @@ class SessionInfo(AbstractSessionInfo):
 
     def get_downloads(self) -> List[Tuple[str, int]]:
         return self._downloads
+
+    def get_unmatched_widgets(self) -> Set[slug.Family]:
+        widgets = self._widgets
+        used = {x.family for x in self._session_search_slugs.values()}
+        return widgets - used
 
     def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
@@ -205,6 +215,14 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
     def __api_data(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return self._query_handler.handle_query(log_entry, query, match.group(1))
+
+    #
+    # CREATE WIDGET
+    #
+
+    @pattern_registry.register(r'/__widget/(.*).html')
+    def __initialize_widget(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
+        return self._query_handler.create_widget(log_entry, query, match.group(1))
 
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
     @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')

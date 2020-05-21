@@ -12,6 +12,7 @@ from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import HostInfo, Session
+from . import slug
 from .configuration_flags import IconFlags, InfoFlags
 
 from typing import TYPE_CHECKING
@@ -98,6 +99,10 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
 
     def generate_ordered_product_types(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(methodcaller("get_product_types"))
+
+    def generate_ordered_unmatched_widgets(self) -> Sequence[Tuple[slug.Family, int, List[List[Session]]]]:
+        temp = self.__collect_sessions_by_info(methodcaller("get_unmatched_widgets"))
+        return temp
 
     def get_product_types_count(self) -> int:
         return sum(self.__to_session_info(session).get_product_types_count() for session in self._sessions)

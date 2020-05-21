@@ -57,7 +57,12 @@
 {% endcall %}
 <hr/>
 
-{{ summarize_slugs('Search Terms', context.generate_ordered_search()) }}
+{{ summarize_slugs('Constrained Search Terms', context.generate_ordered_search()) }}
+<hr/>
+
+{% call(slug_family) summarize_info('Unconstrained Search Terms', context.generate_ordered_unmatched_widgets()) %}
+    {{  slug_family.label }}
+{% endcall %}
 <hr/>
 
 {{ summarize_slugs('Selected Metadata', context.generate_ordered_metadata()) }}
@@ -128,3 +133,5 @@
         </details>
     {% endfor %}
 </details>
+<hr/>
+

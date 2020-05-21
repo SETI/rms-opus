@@ -79,7 +79,15 @@ class QueryHandler:
         self._previous_browses = ['', '']
         self._previous_state = State.RESET
 
-    def handle_query(self, log_entry: LogEntry, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
+    def create_widget(self, _entry: LogEntry, _query: Dict[str, str], widget: str) -> Tuple[List[str], Optional[str]]:
+        family_info = self._slug_map.get_family_info_for_widget(widget)
+        if family_info:
+            self._session_info.register_widget(family_info)
+            return [f'Create Widget "{family_info.label}"'], None
+        else:
+            return [], None
+
+    def handle_query(self, _entry: LogEntry, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
         assert query_type in ['data', 'images', 'result_count', 'dataimages']
 
         result: List[str] = []
@@ -432,3 +440,4 @@ class QueryHandler:
 
     def safe_format(self, format_string: str, *args: Any) -> str:
         return cast(str, self._session_info.safe_format(format_string, *args))
+
