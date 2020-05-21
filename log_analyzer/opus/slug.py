@@ -121,6 +121,19 @@ class ToInfoMap:
             self._column_map[slug] = None
             self._search_map[slug] = None
 
+    def get_family_info_for_widget(self, widget: str) -> Optional[Family]:
+        widget = widget.lower()
+        result = self._search_map.get(widget)
+        if not result:
+            result = self._search_map.get(widget + "1")
+        if not result:
+            result = self._search_map.get(widget + "2")
+
+        if result:
+            return result.family
+        else:
+            return None
+
     def get_info_for_search_slug(self, slug: str, value: str) -> Optional[Info]:
         return self._get_info_for_search_slug(slug, True, value)
 

@@ -1,9 +1,12 @@
 import abc
+import atexit
+import datetime
 import functools
+import shelve
 import socket
 from ipaddress import IPv4Address
-from random import seed, randrange, choice
-from typing import Optional, Callable
+from random import seed, randrange, choice, uniform
+from typing import Optional, Callable, Tuple
 
 
 class IpToHostConverter(metaclass=abc.ABCMeta):
@@ -14,7 +17,7 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
     RESULT_TYPE = Callable[[IPv4Address], Optional[str]]
 
     @staticmethod
-    def get_ip_to_host_converter(uses_reverse_dns: bool, uses_local: bool) -> 'IpToHostConverter':
+    def get_ip_to_host_converter(uses_reverse_dns: bool, uses_local: bool, dns_cache: bool) -> 'IpToHostConverter':
         """
         Returns the appropriate IpToHostConvert, given the arguments.
         """
@@ -22,36 +25,71 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
             return NullIpToHostConverter()
         elif uses_local:
             return FakeIpToHostConverter()
+        elif dns_cache:
+            return ShelvedIPToHostConverter("ReverseDns")
         else:
             return NormalIpToHostConverter()
 
-    @classmethod
     @functools.lru_cache(maxsize=None)
-    def convert(cls, ip: IPv4Address) -> Optional[str]:
-        return cls._convert(ip)
+    def convert(self, ip: IPv4Address) -> Optional[str]:
+        return self._convert(ip)
 
-    @classmethod
     @abc.abstractmethod
-    def _convert(cls, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> Optional[str]:
         raise Exception()
 
 
 class NullIpToHostConverter(IpToHostConverter):
     """An IpToHostConverter that just doesn't even bother trying."""
-    @classmethod
-    def _convert(cls, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> Optional[str]:
         return None
 
 
 class NormalIpToHostConverter(IpToHostConverter):
     """An IpToHostConverter that calls gethostbyaddr to attempt to parse its value"""
-    @classmethod
-    def _convert(cls, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> Optional[str]:
         try:
             name, _, _ = socket.gethostbyaddr(str(ip))
             return name
         except OSError:
             return None
+
+
+class ShelvedIPToHostConverter(NormalIpToHostConverter):
+    _database: shelve.Shelf
+    _cached: int
+    _created: int
+    _expired: int
+
+    def __init__(self, file_name: str):
+        super().__init__()
+        self._database = shelve.open(file_name)
+        self._purge_old_database_entries()
+        self._cached = self._created = self._expired = 0
+        atexit.register(self._close)
+
+    def _convert(self, ip: IPv4Address) -> Optional[str]:
+        value: Optional[Tuple[Optional[str], datetime.timedelta]] = self._database.get(str(ip))
+        if value:
+            name, _timeout = value
+            self._cached += 1
+            return name
+        self._created += 1
+        name = super()._convert(ip)
+        expiration = datetime.datetime.now() + datetime.timedelta(days=uniform(25.0, 30.0))
+        self._database[str(ip)] = (name, expiration)
+        return name
+
+    def _purge_old_database_entries(self) -> None:
+        now = datetime.datetime.now()
+        expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
+        for key in expired_keys:
+            del self._database[key]
+        self._expired = len(expired_keys)
+
+    def _close(self) -> None:
+        self._database.close()
+        print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}. ")
 
 
 class FakeIpToHostConverter(IpToHostConverter):
@@ -60,14 +98,13 @@ class FakeIpToHostConverter(IpToHostConverter):
     ISPS = ('comcast', 'verizon', 'warner')
     TLDS = ('gov', 'mil', 'us', 'fr', 'uk', 'edu', 'es', 'eu')
 
-    @classmethod
-    def _convert(cls, ip: IPv4Address) -> Optional[str]:
+    def _convert(self, ip: IPv4Address) -> Optional[str]:
         seed(str(ip))  # seemingly random, but deterministic, so we'll get the same result between runs.
         i = randrange(5)
         if i == 0:
             ip_str = str(ip).replace('.', '-')
-            return f'{choice(cls.ISPS)}.{ip_str}.{choice(cls.TLDS)}'
+            return f'{choice(self.ISPS)}.{ip_str}.{choice(self.TLDS)}'
         elif i == 1:
             return None
         else:
-            return f'{choice(cls.COMPANIES)}.{randrange(256)}.{choice(cls.TLDS)}'
+            return f'{choice(self.COMPANIES)}.{randrange(256)}.{choice(self.TLDS)}'

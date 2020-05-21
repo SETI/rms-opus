@@ -4,7 +4,7 @@ import itertools
 import sys
 from collections import deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, cast
 
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
@@ -48,6 +48,15 @@ class Session(NamedTuple):
     @property
     def total_time(self) -> datetime.timedelta:
         return self.duration()
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, Session) and self.id == id
+
+    def __repr__(self) -> str:
+        return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
 
 
 class HostInfo(NamedTuple):
@@ -223,7 +232,7 @@ class LogParser:
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
 
-                if session_info.get_session_flags():
+                if session_info.get_icon_flags():
                     # We ignore sessions that don't actually do anything.
                     sessions.append(Session(host_ip=session_host_ip,
                                             entries=current_session_entries,

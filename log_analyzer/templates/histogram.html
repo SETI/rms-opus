@@ -1,9 +1,32 @@
 <script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
-<div id="Histogram" class="SessionInfo tab-pane">
+{% set session_statistics = context.get_session_statistics() %}
+
+<div id="Histogram-IP" class="SessionInfo tab-pane">
+    Number of sessions: {{ session_statistics.count }}<br>
+    Total duration: {{ session_statistics.sum }}<br>
+    Mean duration: {{ session_statistics.mean }}<br>
+    Median duration: {{ session_statistics.median }}<br>
+    <hr/>
     <div id="chart_ips"></div>
     <hr/>
     <div id="chart_sessions"></div>
+    <hr/>
+    <div id="chart_sessions_cumulative"></div>
+</div>
+
+{% set download_statistics = context.get_download_statistics() %}
+
+<div id="Histogram-Downloads" class="SessionInfo tab-pane">
+    Number of downloads: {{ download_statistics.count }}<br>
+    Total size: {{ download_statistics.sum|filesizeformat }}<br>
+    Mean size: {{ download_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ download_statistics.gmean|filesizeformat }}<br>
+    Median size: {{ download_statistics.median|filesizeformat }}<br>
+    <hr/>
+    <div id="file_downloads"></div>
+    <hr/>
+    <div id="file_downloads_log"></div>
 </div>
 
 <script>
@@ -40,10 +63,49 @@ $(function()
     Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout);
 
     layout.yaxis.title = '# Sessions';
-    layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
-    layout.xaxis.autorange=false;
+    // layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
+    // layout.xaxis.autorange=false;
     Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
+
+    layout.yaxis.title = '# Sessions > ';
+    cumulative = {
+        enabled: true,
+        direction: "decreasing",
+    };
+    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout);
+
 });
+
+$(function()
+{
+    const ip_data = [
+        {% for host_info in host_infos_by_ip %}
+            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
+        {% endfor %}
+    ];
+
+    const sizes = {{ download_statistics.data }};
+
+    const layout = {
+        xaxis: {
+            title: "Size in bytes",
+            tickangle: -90,
+        },
+        yaxis: {
+            title: "# Downloads"
+        },
+        bargap: 0.05,
+    };
+
+    Plotly.newPlot('file_downloads', [{x: sizes, type: 'histogram'}], layout);
+
+
+    layout.xaxis.tickprefix = "10^";
+    const log10_sizes = sizes.map(value => Math.log10(value));
+    Plotly.newPlot('file_downloads_log', [{x: log10_sizes, type: 'histogram'}], layout);
+
+});
+
 
 
 </script>

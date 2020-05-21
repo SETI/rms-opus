@@ -57,7 +57,7 @@ parse_log_entry(self, entry: LogEntry) ->  Tuple[List[str], Optional[str]]
 is called repeatedly for each log entry that is part of this session.  
 Once the session has ended, the method
 ```
-def get_session_flags(self) -> ActionFlags
+def get_session_flags(self) -> IconFlags
 ```
 is called once, both to get the list of actions performed by this session, and to mark that the session is complete.
 
