@@ -15,6 +15,7 @@ import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
+from populate_util import *
 
 
 # Wavelength information for combinations of filters
@@ -194,22 +195,20 @@ def _COISS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_COISS_opus_id(**kwargs):
+def populate_obs_general_COISS_opus_id_OBS(**kwargs):
     file_spec = _COISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_COISS_ring_obs_id(**kwargs):
+def populate_obs_general_COISS_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID']
@@ -225,62 +224,25 @@ def populate_obs_general_COISS_ring_obs_id(**kwargs):
 
     return pl_str + '_IMG_CO_ISS_' + image_num + '_' + camera
 
-def populate_obs_general_COISS_inst_host_id(**kwargs):
+def populate_obs_general_COISS_inst_host_id_OBS(**kwargs):
     return 'CO'
 
-def populate_obs_general_COISS_time1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
+def populate_obs_general_COISS_time1_OBS(**kwargs):
+    return populate_time1_from_index(**kwargs)
 
-    if start_time is None:
-        return None
+def populate_obs_general_COISS_time2_OBS(**kwargs):
+    return populate_time2_from_index(**kwargs)
 
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
-
-def populate_obs_general_COISS_time2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
-
-def populate_obs_general_COISS_target_name(**kwargs):
+def populate_obs_general_COISS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
 
-def populate_obs_general_COISS_observation_duration(**kwargs):
+def populate_obs_general_COISS_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
     return exposure / 1000
 
-def populate_obs_general_COISS_quantity(**kwargs):
+def populate_obs_general_COISS_quantity_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filter1, filter2 = index_row['FILTER_NAME']
@@ -289,53 +251,35 @@ def populate_obs_general_COISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_COISS_observation_type(**kwargs):
+def populate_obs_general_COISS_observation_type_OBS(**kwargs):
     return 'IMG' # Image
 
-def populate_obs_pds_COISS_note(**kwargs):
+def populate_obs_pds_COISS_note_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['DESCRIPTION']
 
-def populate_obs_general_COISS_primary_file_spec(**kwargs):
+def populate_obs_general_COISS_primary_file_spec_OBS(**kwargs):
     return _COISS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COISS_primary_file_spec(**kwargs):
+def populate_obs_pds_COISS_primary_file_spec_OBS(**kwargs):
     return _COISS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COISS_product_creation_time(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    pct = index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+def populate_obs_pds_COISS_product_creation_time_OBS(**kwargs):
+    return populate_product_creation_time_from_index(**kwargs)
 
 # Format: "CO-E/V/J-ISSNA/ISSWA-2-EDR-V1.0"
-def populate_obs_pds_COISS_data_set_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    dsi = index_row['DATA_SET_ID']
-    return (dsi, dsi)
+def populate_obs_pds_COISS_data_set_id_OBS(**kwargs):
+    return populate_data_set_id_from_index(**kwargs)
 
 # Format: 1_W1294561143.000
-def populate_obs_pds_COISS_product_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    product_id = index_row['PRODUCT_ID']
-
-    return product_id
+def populate_obs_pds_COISS_product_id_OBS(**kwargs):
+    return populate_product_id_from_index(**kwargs)
 
 # We occasionally don't bother to generate ring_geo data for COISS, like during
 # cruise, so just use the given RA/DEC from the label if needed. We don't make
 # any effort to figure out the min/max values.
-def populate_obs_general_COISS_right_asc1(**kwargs):
+def populate_obs_general_COISS_right_asc1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -345,7 +289,7 @@ def populate_obs_general_COISS_right_asc1(**kwargs):
     ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_COISS_right_asc2(**kwargs):
+def populate_obs_general_COISS_right_asc2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -355,7 +299,7 @@ def populate_obs_general_COISS_right_asc2(**kwargs):
     ra = import_util.safe_column(index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_COISS_declination1(**kwargs):
+def populate_obs_general_COISS_declination1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -365,7 +309,7 @@ def populate_obs_general_COISS_declination1(**kwargs):
     dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
-def populate_obs_general_COISS_declination2(**kwargs):
+def populate_obs_general_COISS_declination2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -375,35 +319,20 @@ def populate_obs_general_COISS_declination2(**kwargs):
     dec = import_util.safe_column(index_row, 'DECLINATION')
     return dec
 
-# Format: "SCIENCE_CRUISE"
-def populate_obs_mission_cassini_COISS_mission_phase_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
-    if mp.upper() == 'NULL':
-        return None
-    return mp.replace('_', ' ')
-
-def populate_obs_mission_cassini_COISS_sequence_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    seqid = index_row['SEQUENCE_ID']
-    return seqid
-
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COISS_image_type_id(**kwargs):
+def populate_obs_type_image_COISS_image_type_id_OBS(**kwargs):
     return 'FRAM'
 
-def populate_obs_type_image_COISS_duration(**kwargs):
+def populate_obs_type_image_COISS_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
 # COISS is 12 bits and always has a square FOV
 
-def populate_obs_type_image_COISS_levels(**kwargs):
+def populate_obs_type_image_COISS_levels_OBS(**kwargs):
     return 4096
 
 def _pixel_size_helper(**kwargs):
@@ -421,10 +350,10 @@ def _pixel_size_helper(**kwargs):
         f'Unknown INSTRUMENT_MODE_ID "{exposure}"')
     return None
 
-def populate_obs_type_image_COISS_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_COISS_lesser_pixel_size_OBS(**kwargs):
     return _pixel_size_helper(**kwargs)
 
-def populate_obs_type_image_COISS_greater_pixel_size(**kwargs):
+def populate_obs_type_image_COISS_greater_pixel_size_OBS(**kwargs):
     return _pixel_size_helper(**kwargs)
 
 
@@ -454,7 +383,7 @@ def _COISS_wavelength_helper(inst, filter1, filter2):
     return None, None, None
 
 # These are the center wavelength +/- FWHM/2
-def populate_obs_wavelength_COISS_wavelength1(**kwargs):
+def populate_obs_wavelength_COISS_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID'][3]
@@ -466,7 +395,7 @@ def populate_obs_wavelength_COISS_wavelength1(**kwargs):
         return None
     return (central_wl - fwhm/2) / 1000 # microns
 
-def populate_obs_wavelength_COISS_wavelength2(**kwargs):
+def populate_obs_wavelength_COISS_wavelength2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID'][3]
@@ -489,13 +418,13 @@ def _wave_res_helper(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_COISS_wave_res1(**kwargs):
+def populate_obs_wavelength_COISS_wave_res1_OBS(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COISS_wave_res2(**kwargs):
+def populate_obs_wavelength_COISS_wave_res2_OBS(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COISS_wave_no1(**kwargs):
+def populate_obs_wavelength_COISS_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl2 = wavelength_row['wavelength2']
@@ -503,7 +432,7 @@ def populate_obs_wavelength_COISS_wave_no1(**kwargs):
         return None
     return 10000 / wl2 # cm^-1
 
-def populate_obs_wavelength_COISS_wave_no2(**kwargs):
+def populate_obs_wavelength_COISS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl1 = wavelength_row['wavelength1']
@@ -521,19 +450,19 @@ def _wave_no_res_helper(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_COISS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_COISS_wave_no_res1_OBS(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_COISS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_COISS_wave_no_res2_OBS(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_COISS_spec_flag(**kwargs):
+def populate_obs_wavelength_COISS_spec_flag_OBS(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_COISS_spec_size(**kwargs):
+def populate_obs_wavelength_COISS_spec_size_OBS(**kwargs):
     return None
 
-def populate_obs_wavelength_COISS_polarization_type(**kwargs):
+def populate_obs_wavelength_COISS_polarization_type_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['obs_instrument_coiss_row']
     the_filter = index_row['combined_filter']
@@ -542,11 +471,89 @@ def populate_obs_wavelength_COISS_polarization_type(**kwargs):
     return 'NONE'
 
 
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_COISS_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_quality_score_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COISS_host_OBS(**kwargs):
+    return None
+
+
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_COISS_spacecraft_clock_count1(**kwargs):
+def populate_obs_mission_cassini_COISS_ert1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    # START_TIME isn't available for COUVIS
+    start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
+    if start_time is None or start_time == 'UNK':
+        return None
+
+    try:
+        ert_sec = julian.tai_from_iso(start_time)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Bad earth received start time format "{start_time}": {e}')
+        return None
+
+    return ert_sec
+
+def populate_obs_mission_cassini_COISS_ert2_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    # STOP_TIME isn't available for COUVIS
+    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
+    if stop_time is None or stop_time == 'UNK':
+        return None
+
+    try:
+        ert_sec = julian.tai_from_iso(stop_time)
+    except Exception as e:
+        import_util.log_nonrepeating_warning(
+            f'Bad earth received stop time format "{stop_time}": {e}')
+        return None
+
+    cassini_row = metadata['obs_mission_cassini_row']
+    start_time_sec = cassini_row['ert1']
+
+    if start_time_sec is not None and ert_sec < start_time_sec:
+        import_util.log_warning(
+            f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
+            +f'are in the wrong order - setting to ert1')
+        ert_sec = start_time_sec
+
+    return ert_sec
+
+def populate_obs_mission_cassini_COISS_spacecraft_clock_count1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
@@ -561,7 +568,7 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count1(**kwargs):
         return None
     return sc_cvt
 
-def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
+def populate_obs_mission_cassini_COISS_spacecraft_clock_count2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     partition = index_row['SPACECRAFT_CLOCK_CNT_PARTITION']
@@ -593,19 +600,34 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2(**kwargs):
 
     return sc_cvt
 
+# Format: "SCIENCE_CRUISE"
+def populate_obs_mission_cassini_COISS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME']
+    if mp.upper() == 'NULL':
+        return None
+    return mp.replace('_', ' ')
+
+def populate_obs_mission_cassini_COISS_sequence_id_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    seqid = index_row['SEQUENCE_ID']
+    return seqid
+
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COISS
 ################################################################################
 
-def populate_obs_instrument_COISS_camera(**kwargs):
+def populate_obs_instrument_coiss_camera(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID']
     assert instrument_id[3] in ('N', 'W')
     return instrument_id[3]
 
-def populate_obs_instrument_COISS_combined_filter(**kwargs):
+def populate_obs_instrument_coiss_combined_filter(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID'][3]
@@ -652,7 +674,7 @@ def populate_obs_instrument_COISS_combined_filter(**kwargs):
 
     return (new_filter, new_filter)
 
-def populate_obs_instrument_COISS_image_observation_type(**kwargs):
+def populate_obs_instrument_coiss_image_observation_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_type = index_row['IMAGE_OBSERVATION_TYPE']
@@ -691,7 +713,7 @@ def populate_obs_instrument_COISS_image_observation_type(**kwargs):
 
     return ret
 
-def populate_obs_instrument_COISS_target_desc(**kwargs):
+def populate_obs_instrument_coiss_target_desc(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     target_desc = index_row['TARGET_DESC'].upper()

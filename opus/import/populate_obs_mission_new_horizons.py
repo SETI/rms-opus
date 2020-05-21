@@ -32,10 +32,7 @@ def helper_new_horizons_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def helper_new_horizons_planet_id(**kwargs):
     metadata = kwargs['metadata']
@@ -58,7 +55,7 @@ def helper_new_horizons_planet_id(**kwargs):
         f'Unknown MISSION_PHASE_NAME "{mp}"')
     return None
 
-def populate_obs_general_NH_planet_id(**kwargs):
+def populate_obs_general_NH_planet_id_OBS(**kwargs):
     pl = helper_new_horizons_planet_id(**kwargs)
     if pl is None:
         return 'OTH'

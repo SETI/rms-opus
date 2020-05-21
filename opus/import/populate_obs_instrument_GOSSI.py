@@ -12,6 +12,8 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_galileo import *
+from populate_util import *
+
 
 # Data from:
 #   Title: The Galileo Solid-State Imaging experiment
@@ -48,22 +50,20 @@ def _GOSSI_file_spec_helper(**kwargs):
     file_spec = index_row['FILE_SPECIFICATION_NAME']
     return file_spec
 
-def populate_obs_general_GOSSI_opus_id(**kwargs):
+def populate_obs_general_GOSSI_opus_id_OBS(**kwargs):
     file_spec = _GOSSI_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_GOSSI_ring_obs_id(**kwargs):
+def populate_obs_general_GOSSI_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     image_num = index_row['SPACECRAFT_CLOCK_START_COUNT'].replace('.', '')
@@ -75,10 +75,10 @@ def populate_obs_general_GOSSI_ring_obs_id(**kwargs):
 
     return pl_str + '_IMG_GO_SSI_' + image_num
 
-def populate_obs_general_GOSSI_inst_host_id(**kwargs):
+def populate_obs_general_GOSSI_inst_host_id_OBS(**kwargs):
     return 'GO'
 
-def populate_obs_general_GOSSI_data_type(**kwargs):
+def populate_obs_general_GOSSI_data_type_OBS(**kwargs):
     return 'IMG'
 
 # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
@@ -87,7 +87,7 @@ def populate_obs_general_GOSSI_data_type(**kwargs):
 # So we compute start time by taking IMAGE_TIME and subtracting exposure.
 # If we don't have exposure, we just set them equal so we can still search
 # cleanly.
-def populate_obs_general_GOSSI_time1(**kwargs):
+def populate_obs_general_GOSSI_time1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = import_util.safe_column(index_row, 'IMAGE_TIME')
@@ -105,7 +105,7 @@ def populate_obs_general_GOSSI_time1(**kwargs):
 
     return stop_time_sec-exposure/1000
 
-def populate_obs_general_GOSSI_time2(**kwargs):
+def populate_obs_general_GOSSI_time2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = import_util.safe_column(index_row, 'IMAGE_TIME')
@@ -131,13 +131,13 @@ def populate_obs_general_GOSSI_time2(**kwargs):
 
     return stop_time_sec
 
-def populate_obs_general_GOSSI_target_name(**kwargs):
+def populate_obs_general_GOSSI_target_name_OBS(**kwargs):
     target_name = helper_galileo_target_name(**kwargs)
     if target_name is None:
         target_name = 'NONE'
     return target_name
 
-def populate_obs_general_GOSSI_observation_duration(**kwargs):
+def populate_obs_general_GOSSI_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
@@ -147,44 +147,28 @@ def populate_obs_general_GOSSI_observation_duration(**kwargs):
 
     return exposure / 1000
 
-def populate_obs_general_GOSSI_quantity(**kwargs):
+def populate_obs_general_GOSSI_quantity_OBS(**kwargs):
     return 'REFLECT'
 
-def populate_obs_general_GOSSI_observation_type(**kwargs):
+def populate_obs_general_GOSSI_observation_type_OBS(**kwargs):
     return 'IMG' # Image
 
-def populate_obs_pds_GOSSI_note(**kwargs):
+def populate_obs_pds_GOSSI_note_OBS(**kwargs):
     return None
 
-def populate_obs_general_GOSSI_primary_file_spec(**kwargs):
+def populate_obs_general_GOSSI_primary_file_spec_OBS(**kwargs):
     return _GOSSI_file_spec_helper(**kwargs)
 
-def populate_obs_pds_GOSSI_primary_file_spec(**kwargs):
+def populate_obs_pds_GOSSI_primary_file_spec_OBS(**kwargs):
     return _GOSSI_file_spec_helper(**kwargs)
 
-def populate_obs_pds_GOSSI_product_creation_time(**kwargs):
-    # For GOSSI the PRODUCT_CREATION_TIME is provided in the volume label file,
-    # not the individual observation rows
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    pct = index_label['PRODUCT_CREATION_TIME']
+def populate_obs_pds_GOSSI_product_creation_time_OBS(**kwargs):
+    return populate_product_creation_time_from_index_label(**kwargs)
 
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
+def populate_obs_pds_GOSSI_data_set_id_OBS(**kwargs):
+    return populate_data_set_id_from_index(**kwargs)
 
-    return pct_sec
-
-def populate_obs_pds_GOSSI_data_set_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    dsi = index_row['DATA_SET_ID']
-    return dsi
-
-def populate_obs_pds_GOSSI_product_id(**kwargs):
+def populate_obs_pds_GOSSI_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     file_spec = index_row['FILE_SPECIFICATION_NAME']
@@ -222,15 +206,15 @@ def _GOSSI_ra_helper(**kwargs):
         ra1, ra2 = ra2, ra1
     return ra1, ra2
 
-def populate_obs_general_GOSSI_right_asc1(**kwargs):
+def populate_obs_general_GOSSI_right_asc1_OBS(**kwargs):
     ra1, ra2 = _GOSSI_ra_helper(**kwargs)
     return ra1
 
-def populate_obs_general_GOSSI_right_asc2(**kwargs):
+def populate_obs_general_GOSSI_right_asc2_OBS(**kwargs):
     ra1, ra2 = _GOSSI_ra_helper(**kwargs)
     return ra2
 
-def populate_obs_general_GOSSI_declination1(**kwargs):
+def populate_obs_general_GOSSI_declination1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -242,7 +226,7 @@ def populate_obs_general_GOSSI_declination1(**kwargs):
         return None
     return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
-def populate_obs_general_GOSSI_declination2(**kwargs):
+def populate_obs_general_GOSSI_declination2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -257,21 +241,21 @@ def populate_obs_general_GOSSI_declination2(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_GOSSI_image_type_id(**kwargs):
+def populate_obs_type_image_GOSSI_image_type_id_OBS(**kwargs):
     return 'FRAM'
 
-def populate_obs_type_image_GOSSI_duration(**kwargs):
+def populate_obs_type_image_GOSSI_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
-def populate_obs_type_image_GOSSI_levels(**kwargs):
+def populate_obs_type_image_GOSSI_levels_OBS(**kwargs):
     return 256
 
-def populate_obs_type_image_GOSSI_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_GOSSI_lesser_pixel_size_OBS(**kwargs):
     return 800
 
-def populate_obs_type_image_GOSSI_greater_pixel_size(**kwargs):
+def populate_obs_type_image_GOSSI_greater_pixel_size_OBS(**kwargs):
     return 800
 
 
@@ -293,13 +277,13 @@ def _wavelength_helper(**kwargs):
 
     return _GOSSI_FILTER_WAVELENGTHS[filter_name]
 
-def populate_obs_wavelength_GOSSI_wavelength1(**kwargs):
+def populate_obs_wavelength_GOSSI_wavelength1_OBS(**kwargs):
     return _wavelength_helper(**kwargs)[0] / 1000 # microns
 
-def populate_obs_wavelength_GOSSI_wavelength2(**kwargs):
+def populate_obs_wavelength_GOSSI_wavelength2_OBS(**kwargs):
     return _wavelength_helper(**kwargs)[1] / 1000 # microns
 
-def populate_obs_wavelength_GOSSI_wave_res1(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl1 = wl_row['wavelength1']
@@ -308,7 +292,7 @@ def populate_obs_wavelength_GOSSI_wave_res1(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_GOSSI_wave_res2(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl1 = wl_row['wavelength1']
@@ -317,17 +301,17 @@ def populate_obs_wavelength_GOSSI_wave_res2(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_GOSSI_wave_no1(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength2'] # cm^-1
 
-def populate_obs_wavelength_GOSSI_wave_no2(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
-def populate_obs_wavelength_GOSSI_wave_no_res1(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -336,7 +320,7 @@ def populate_obs_wavelength_GOSSI_wave_no_res1(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_GOSSI_wave_no_res2(**kwargs):
+def populate_obs_wavelength_GOSSI_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -345,14 +329,47 @@ def populate_obs_wavelength_GOSSI_wave_no_res2(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_GOSSI_spec_flag(**kwargs):
+def populate_obs_wavelength_GOSSI_spec_flag_OBS(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_GOSSI_spec_size(**kwargs):
+def populate_obs_wavelength_GOSSI_spec_size_OBS(**kwargs):
     return None
 
-def populate_obs_wavelength_GOSSI_polarization_type(**kwargs):
+def populate_obs_wavelength_GOSSI_polarization_type_OBS(**kwargs):
     return 'NONE'
+
+
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_GOSSI_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_quality_score_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_GOSSI_host_OBS(**kwargs):
+    return None
 
 
 ################################################################################

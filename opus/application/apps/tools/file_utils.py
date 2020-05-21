@@ -205,8 +205,8 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
                 else:
                     log.error('Unknown image size "%s"', size)
             if not preview_json or not viewset:
-                log.error('No preview image size "%s" found for '
-                          +'opus_id "%s"', size, opus_id)
+                # log.error('No preview image size "%s" found for '
+                #           +'opus_id "%s"', size, opus_id)
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0

@@ -226,7 +226,7 @@ class ApiForVimsDownlinks:
         """
         if (not self.target or self.target == "production"
             or self.target == "internal"): # pragma: no cover
-            return "https://tools.pds-rings.seti.org/opus/api/"
+            return "https://opus.pds-rings.seti.org/opus/api/"
         elif self.target == "dev": # pragma: no cover
             return "http://dev.pds-rings.seti.org/opus/api/"
         else: # pragma: no cover
@@ -247,7 +247,7 @@ class ApiForVimsDownlinks:
                                          'co-vims-v1490874598_001_vis',
                                          'co-vims-v1490874598_002_ir',
                                          'co-vims-v1490874598_002_vis'],
-                 'url': 'https://tools.pds-rings.seti.org/opus/api/files.'
+                 'url': 'https://opus.pds-rings.seti.org/opus/api/files.'
                 }
             }
         """

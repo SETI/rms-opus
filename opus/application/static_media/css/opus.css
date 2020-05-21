@@ -1892,7 +1892,7 @@ even when screen is narrow */
 
 /* small spinner */
 .spinner {
-    background-image: url('https://tools.pds-rings.seti.org/static_media/img/spinner.gif');
+    background-image: url('https://opus.pds-rings.seti.org/static_media/img/spinner.gif');
     width: 30px;
     display: inline-block;
     background-repeat: no-repeat;

@@ -136,11 +136,13 @@ def helper_cassini_obs_name(**kwargs):
     index_row = metadata['index_row']
     obs_id = index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
-        supp_index_row = metadata.get('supp_index_row', None) # COUVIS
+        supp_index_row = metadata.get('supp_index_row', None) # COUVIS & CORSS
         if supp_index_row is not None:
             obs_id = supp_index_row.get('OBSERVATION_ID', None)
     if obs_id is None:
         import_util.log_nonrepeating_error('No OBSERVATION_ID found')
+    if obs_id == '':
+        obs_id = 'N/A'
 
     return obs_id
 
@@ -264,7 +266,8 @@ def helper_cassini_intended_target_name(**kwargs):
     # override TARGET_NAME
     if (target_name == 'SKY' and target_code == 'SK' and
         target_desc is not None and target_desc in TARGET_NAME_INFO):
-        return (target_desc.upper(), import_util.cleanup_target_name(target_desc))
+        target_name_info = TARGET_NAME_INFO[target_desc]
+        return target_desc, target_name_info[2]
 
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
@@ -272,10 +275,7 @@ def helper_cassini_intended_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 # This is used for COUVIS and COVIMS because they don't include the
 # MISSION_PHASE_NAME in the label files. We deduce it from the observation
@@ -328,12 +328,14 @@ def helper_fix_cassini_sclk(count):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
 
-def populate_obs_general_CO_planet_id(**kwargs):
+def populate_obs_general_CO_planet_id_OBS(**kwargs):
     planet_id = helper_cassini_planet_id(**kwargs)
     if planet_id is None:
         return 'OTH'
     return planet_id
 
+def populate_obs_general_CO_planet_id_OCC(**kwargs):
+    return 'SAT'
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_MISSION_CASSINI
@@ -345,10 +347,10 @@ def populate_obs_mission_cassini_obs_name(**kwargs):
 def populate_obs_mission_cassini_prime_inst_id(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
     if obs_name is None:
-        return None
+        return 'UNK'
 
     if not helper_cassini_valid_obs_name(obs_name):
-        return None
+        return 'UNK'
 
     obs_parts = obs_name.split('_')
     first = obs_parts[0]
@@ -375,7 +377,7 @@ def populate_obs_mission_cassini_prime_inst_id(**kwargs):
         else:
             prime_inst_id = last
 
-    if prime_inst_id not in ['CIRS', 'ISS', 'UVIS', 'VIMS']:
+    if prime_inst_id not in ['CIRS', 'ISS', 'RSS', 'UVIS', 'VIMS']:
         prime_inst_id = 'OTHER'
 
     return prime_inst_id
@@ -411,6 +413,9 @@ def populate_obs_mission_cassini_cassini_target_name(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
+    if 'TARGET_NAME' not in index_row: # RSS
+        return None
+
     target_name = index_row['TARGET_NAME'].title()
 
     return (target_name, target_name)
@@ -432,51 +437,6 @@ def populate_obs_mission_cassini_rev_no(**kwargs):
     if rev_no[0] == 'C':
         return None
     return (rev_no, rev_no)
-
-def populate_obs_mission_cassini_ert1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    # START_TIME isn't available for COUVIS
-    start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time is None or start_time == 'UNK':
-        return None
-
-    try:
-        ert_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad earth received start time format "{start_time}": {e}')
-        return None
-
-    return ert_sec
-
-def populate_obs_mission_cassini_ert2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    # STOP_TIME isn't available for COUVIS
-    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time is None or stop_time == 'UNK':
-        return None
-
-    try:
-        ert_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad earth received stop time format "{stop_time}": {e}')
-        return None
-
-    cassini_row = metadata['obs_mission_cassini_row']
-    start_time_sec = cassini_row['ert1']
-
-    if start_time_sec is not None and ert_sec < start_time_sec:
-        import_util.log_warning(
-            f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-            +f'are in the wrong order - setting to ert1')
-        ert_sec = start_time_sec
-
-    return ert_sec
 
 def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     metadata = kwargs['metadata']

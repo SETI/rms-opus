@@ -11,7 +11,7 @@
 #
 # admin.site.site_header = 'Welcome to OPUS Dictionary DB Admin'
 # admin.site.site_title = 'OPUS Dictionary DB Admin'
-# admin.site.site_url = 'https://tools.pds-rings.seti.org/'
+# admin.site.site_url = 'https://opus.pds-rings.seti.org/'
 # admin.site.index_title = 'OPUS Dictionary Administration'
 # admin.empty_value_display = '**Empty**'
 #

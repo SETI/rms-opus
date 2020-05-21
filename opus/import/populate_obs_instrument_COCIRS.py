@@ -15,6 +15,7 @@ import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
+from populate_util import *
 
 
 ################################################################################
@@ -31,22 +32,20 @@ def _COCIRS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_COCIRS_opus_id(**kwargs):
+def populate_obs_general_COCIRS_opus_id_OBS(**kwargs):
     file_spec = _COCIRS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_COCIRS_ring_obs_id(**kwargs):
+def populate_obs_general_COCIRS_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['DETECTOR_ID']
@@ -64,103 +63,44 @@ def populate_obs_general_COCIRS_ring_obs_id(**kwargs):
 
     return pl_str + '_SPEC_CO_CIRS_' + image_num + '_' + instrument_id
 
-def popular_obs_general_COCIRS_pdsfile_path(**kwargs):
-    file_spec = _COCIRS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-
-def populate_obs_general_COCIRS_inst_host_id(**kwargs):
+def populate_obs_general_COCIRS_inst_host_id_OBS(**kwargs):
     return 'CO'
 
-def populate_obs_general_COCIRS_time1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
+def populate_obs_general_COCIRS_time1_OBS(**kwargs):
+    return populate_time1_from_index(**kwargs)
 
-    if start_time is None:
-        return None
+def populate_obs_general_COCIRS_time2_OBS(**kwargs):
+    return populate_time2_from_index(**kwargs)
 
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
-
-def populate_obs_general_COCIRS_time2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad stop time format "{stop_time}": {e} Exception as e')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
-
-def populate_obs_general_COCIRS_target_name(**kwargs):
+def populate_obs_general_COCIRS_target_name_OBS(**kwargs):
     return helper_cassini_intended_target_name(**kwargs)
 
-def populate_obs_general_COCIRS_observation_duration(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    # This is the MEAN duration in SECONDS
-    exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
-    return exposure
+def populate_obs_general_COCIRS_observation_duration_OBS(**kwargs):
+    return populate_observation_duration_from_time(**kwargs)
 
-def populate_obs_general_COCIRS_quantity(**kwargs):
+def populate_obs_general_COCIRS_quantity_OBS(**kwargs):
     return 'THERMAL'
 
-def populate_obs_general_COCIRS_observation_type(**kwargs):
+def populate_obs_general_COCIRS_observation_type_OBS(**kwargs):
     return 'STS' # Spectral Time Series
 
-def populate_obs_pds_COCIRS_note(**kwargs):
+def populate_obs_pds_COCIRS_note_OBS(**kwargs):
     return None
 
-def populate_obs_general_COCIRS_primary_file_spec(**kwargs):
+def populate_obs_general_COCIRS_primary_file_spec_OBS(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COCIRS_primary_file_spec(**kwargs):
+def populate_obs_pds_COCIRS_primary_file_spec_OBS(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COCIRS_product_creation_time(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    pct = index_label['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+def populate_obs_pds_COCIRS_product_creation_time_OBS(**kwargs):
+    return populate_product_creation_time_from_index_label(**kwargs)
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
-def populate_obs_pds_COCIRS_data_set_id(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    dsi = index_label['DATA_SET_ID']
-    return (dsi, dsi)
+def populate_obs_pds_COCIRS_data_set_id_OBS(**kwargs):
+    return populate_data_set_id_from_index_label(**kwargs)
 
-def populate_obs_pds_COCIRS_product_id(**kwargs):
+def populate_obs_pds_COCIRS_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
@@ -168,54 +108,40 @@ def populate_obs_pds_COCIRS_product_id(**kwargs):
     return filename
 
 # We don't have ring geometry or other such info for CIRS
-def populate_obs_general_COCIRS_right_asc1(**kwargs):
+def populate_obs_general_COCIRS_right_asc1_OBS(**kwargs):
     return None
 
-def populate_obs_general_COCIRS_right_asc2(**kwargs):
+def populate_obs_general_COCIRS_right_asc2_OBS(**kwargs):
     return None
 
-def populate_obs_general_COCIRS_declination1(**kwargs):
+def populate_obs_general_COCIRS_declination1_OBS(**kwargs):
     return None
 
-def populate_obs_general_COCIRS_declination2(**kwargs):
-    return None
-
-# Format: "SCIENCE_CRUISE"
-def populate_obs_mission_cassini_COCIRS_mission_phase_name(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
-    if mp.upper() == 'NULL':
-        return None
-    return mp.replace('_', ' ')
-
-def populate_obs_mission_cassini_COCIRS_sequence_id(**kwargs):
+def populate_obs_general_COCIRS_declination2_OBS(**kwargs):
     return None
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COCIRS_image_type_id(**kwargs):
-    return 'FRAM'
-
-def populate_obs_type_image_COCIRS_duration(**kwargs):
-    metadata = kwargs['metadata']
-    obs_general_row = metadata['obs_general_row']
-    return obs_general_row['observation_duration']
-
-def populate_obs_type_image_COCIRS_levels(**kwargs):
+def populate_obs_type_image_COCIRS_image_type_id_OBS(**kwargs):
     return None
 
-def populate_obs_type_image_COCIRS_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_COCIRS_duration_OBS(**kwargs):
     return None
 
-def populate_obs_type_image_COCIRS_greater_pixel_size(**kwargs):
+def populate_obs_type_image_COCIRS_levels_OBS(**kwargs):
+    return None
+
+def populate_obs_type_image_COCIRS_lesser_pixel_size_OBS(**kwargs):
+    return None
+
+def populate_obs_type_image_COCIRS_greater_pixel_size_OBS(**kwargs):
     return None
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_COCIRS_wavelength1(**kwargs):
+def populate_obs_wavelength_COCIRS_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no2 = index_row['MAXIMUM_WAVENUMBER']
@@ -225,7 +151,7 @@ def populate_obs_wavelength_COCIRS_wavelength1(**kwargs):
 
     return 10000. / wave_no2
 
-def populate_obs_wavelength_COCIRS_wavelength2(**kwargs):
+def populate_obs_wavelength_COCIRS_wavelength2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no1 = index_row['MINIMUM_WAVENUMBER']
@@ -235,7 +161,7 @@ def populate_obs_wavelength_COCIRS_wavelength2(**kwargs):
 
     return 10000. / wave_no1
 
-def populate_obs_wavelength_COCIRS_wave_res1(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
@@ -246,7 +172,7 @@ def populate_obs_wavelength_COCIRS_wave_res1(**kwargs):
 
     return 10000.*wave_no_res2/(wave_no2 * wave_no2)
 
-def populate_obs_wavelength_COCIRS_wave_res2(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
@@ -257,48 +183,87 @@ def populate_obs_wavelength_COCIRS_wave_res2(**kwargs):
 
     return 10000.*wave_no_res1/(wave_no1 * wave_no1)
 
-def populate_obs_wavelength_COCIRS_wave_no1(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no2 = index_row['MINIMUM_WAVENUMBER']
     return wave_no2
 
-def populate_obs_wavelength_COCIRS_wave_no2(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no2 = index_row['MAXIMUM_WAVENUMBER']
     return wave_no2
 
-def populate_obs_wavelength_COCIRS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
     return wave_no_res1
 
-def populate_obs_wavelength_COCIRS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_COCIRS_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
     return wave_no_res2
 
-def populate_obs_wavelength_COCIRS_spec_flag(**kwargs):
+def populate_obs_wavelength_COCIRS_spec_flag_OBS(**kwargs):
     return 'Y'
 
-def populate_obs_wavelength_COCIRS_spec_size(**kwargs):
+def populate_obs_wavelength_COCIRS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wave_no_res1 = index_row['SPECTRUM_SAMPLES']
     return wave_no_res1
 
-def populate_obs_wavelength_COCIRS_polarization_type(**kwargs):
+def populate_obs_wavelength_COCIRS_polarization_type_OBS(**kwargs):
     return 'NONE'
+
+
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_COCIRS_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_quality_score_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_COCIRS_host_OBS(**kwargs):
+    return None
 
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
+def populate_obs_mission_cassini_COCIRS_ert1_OBS(**kwargs):
+    return None
+
+def populate_obs_mission_cassini_COCIRS_ert2_OBS(**kwargs):
+    return None
+
+def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
@@ -315,7 +280,7 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count1(**kwargs):
         return None
     return sc_cvt
 
-def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
+def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     sc = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
@@ -342,6 +307,18 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2(**kwargs):
         sc_cvt = sc1
 
     return sc_cvt
+
+# Format: "SCIENCE_CRUISE"
+def populate_obs_mission_cassini_COCIRS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME']
+    if mp.upper() == 'NULL':
+        return None
+    return mp.replace('_', ' ')
+
+def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
+    return None
 
 
 ################################################################################

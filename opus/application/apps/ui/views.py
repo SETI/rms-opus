@@ -590,7 +590,7 @@ def api_normalize_url(request):
     original_slugs = dict(list(request.GET.items())) # Make it mutable
 
     # When we are given a URL, this is the user just selecting something like
-    # tools.pds-rings.seti.org/opus
+    # opus.pds-rings.seti.org/opus
     # We don't want to give error messages in that case, but instead use all
     # the defaults.
     url_was_empty = len(original_slugs) == 0
