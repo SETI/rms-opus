@@ -3,7 +3,7 @@
     {% for host_info in host_infos_by_ip|sort(attribute="total_time", reverse=True) %}
         <details class="Summary2">
             {% set this_count = host_info.sessions|length %}
-            <summary>{{ host_info_ip_or_name(host_info) }} ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
+            <summary>{{ session_ip_or_name(host_info.sessions[0]) }} ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
             <ul class="SummarySession">
                 {% for session in host_info.sessions|sort(attribute="total_time", reverse=True) %}
                     <li>

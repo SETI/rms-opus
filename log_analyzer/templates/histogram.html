@@ -2,7 +2,7 @@
 
 {% set session_statistics = context.get_session_statistics() %}
 
-<div id="Histogram-IP" class="SessionInfo tab-pane">
+<div id="Histogram-IP" class="SessionInfo SessionInfoLoaded tab-pane">
     Number of sessions: {{ session_statistics.count }}<br>
     Total duration: {{ session_statistics.sum }}<br>
     Mean duration: {{ session_statistics.mean }}<br>
@@ -17,7 +17,7 @@
 
 {% set download_statistics = context.get_download_statistics() %}
 
-<div id="Histogram-Downloads" class="SessionInfo tab-pane">
+<div id="Histogram-Downloads" class="SessionInfo SessionInfoLoaded tab-pane">
     Number of downloads: {{ download_statistics.count }}<br>
     Total size: {{ download_statistics.sum|filesizeformat }}<br>
     Mean size: {{ download_statistics.mean|filesizeformat }}<br>
@@ -84,7 +84,7 @@ $(function()
         {% endfor %}
     ];
 
-    const sizes = {{ download_statistics.data }};
+    const sizes = [{{ download_statistics.data | join(',') }}]
 
     const layout = {
         xaxis: {

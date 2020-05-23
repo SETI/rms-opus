@@ -1,6 +1,6 @@
 import collections
 import textwrap
-from typing import List, Dict, Any, Tuple, TextIO, cast
+from typing import List, Dict, Any, Tuple, TextIO, cast, Optional
 
 from abstract_configuration import AbstractConfiguration
 from ip_to_host_converter import IpToHostConverter
@@ -22,6 +22,7 @@ class Configuration(AbstractConfiguration):
     _debug_show_all: bool
     _elide_session_info: bool
     _ip_to_host_converter: IpToHostConverter
+    _sessions_directory: Optional[str]
 
     _sessionless_downloads: List[Tuple[str, LogEntry]]
 
@@ -29,6 +30,7 @@ class Configuration(AbstractConfiguration):
 
     def __init__(self, *, api_host_url: str, debug_show_all: bool, no_sessions: bool,
                  ip_to_host_converter: IpToHostConverter,
+                 sessions_directory: Optional[str],
                  **_: Any):
         self._slug_map = slug.ToInfoMap(api_host_url)
         self._default_column_slug_info = QueryHandler.get_metadata_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
@@ -36,6 +38,7 @@ class Configuration(AbstractConfiguration):
         self._debug_show_all = debug_show_all
         self._elide_session_info = no_sessions
         self._ip_to_host_converter = ip_to_host_converter
+        self._sessions_directory = sessions_directory
         self._sessionless_downloads = []
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
@@ -53,6 +56,10 @@ class Configuration(AbstractConfiguration):
     @property
     def elide_session_info(self) -> bool:
         return self._elide_session_info
+
+    @property
+    def sessions_directory(self) -> Optional[str]:
+        return self._sessions_directory
 
     @property
     def sessionless_downloads(self) -> List[Tuple[str, LogEntry]]:

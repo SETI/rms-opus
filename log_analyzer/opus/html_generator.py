@@ -2,11 +2,14 @@ import collections
 import datetime
 import itertools
 import math
+import re
 import statistics
 from enum import Flag
 from ipaddress import IPv4Address
 from operator import methodcaller, itemgetter, attrgetter
+from pathlib import Path
 from typing import List, Dict, TextIO, Tuple, Sequence, Optional, Any, Callable, Iterable, cast,  TypeVar
+from os.path import dirname
 
 from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
@@ -29,6 +32,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     _sessions: List[Session]
     _ip_to_host_name: Dict[IPv4Address, str]
     _flag_name_to_flag: Dict[str, IconFlags]
+    _sessions_directory: Optional[str]
 
     def __init__(self, configuration: 'Configuration', host_infos_by_ip: List[HostInfo]):
         self._configuration = configuration
@@ -36,20 +40,47 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         self._sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
         self._ip_to_host_name = {host_info.ip: host_info.name for host_info in host_infos_by_ip if host_info.name}
         self._flag_name_to_flag = {x.name: x for x in IconFlags}
+        self._sessions_directory = self._configuration.sessions_directory
 
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
-        output_generator = template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
-        lines = (line.strip()
-                 for chunks in output_generator
-                 for line in chunks.split('\n') if line)
+        output_generator: Iterable[str] = template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
+        lines  = (line.strip()
+                  for chunks in output_generator
+                  for line in chunks.split('\n') if line)
+        directory = f'{dirname(output.name)}/{self._sessions_directory}' if self._sessions_directory else None
+        current_output = output
+        file_output = None
         for line in lines:
-            output.write(line)
-            output.write("\n")
+            if line.startswith("<<<<"):
+                match = re.match(r"[<]+ ([\w\d]+) (.*)", line)
+                if directory:
+                    assert file_output == None or file_output.closed
+                    file_name = directory + match.group(1) + ".html"
+                    Path(file_name).parent.mkdir(parents=True, exist_ok=True)
+                    current_output = file_output = open(file_name, "w")
+                    continue
+                else:
+                    line = match.group(2)
+            elif line.startswith(">>>>"):
+                match = re.match(r"[>]+ ([\w\d]+) (.*)", line)
+                if directory:
+                    assert current_output == file_output and not file_output.closed
+                    file_output.close()
+                    current_output = output
+                    continue
+                else:
+                    line = match.group(2)
+            current_output.write(line)
+            current_output.write("\n")
 
     #
     #  All public methods beyond this point are callbacks made by the Jinga2 template.
     #
+
+    @property
+    def sessions_directory(self) -> Optional[str]:
+        return self._sessions_directory
 
     @property
     def api_host_url(self) -> str:
@@ -67,6 +98,11 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return self._configuration.elide_session_info
 
     @property
+    def sessions(self) -> Sequence[Session]:
+        """Returns the list of all sessions"""
+        return self._sessions
+
+    @property
     def session_count(self) -> int:
         """Returns the number of sessions"""
         return len(self._sessions)
@@ -77,10 +113,8 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
 
     def get_host_infos_by_date(self) -> List[Tuple[datetime.date, List[Session]]]:
         host_infos_by_time = sorted(self._sessions, key=lambda session: session.start_time(), reverse=True)
-        host_infos_by_date = [(date, list(values))
-                              for date, values in itertools.groupby(host_infos_by_time,
-                                                                    lambda host_info: host_info.start_time().date())]
-        return host_infos_by_date
+        date_iterator = itertools.groupby(host_infos_by_time, lambda host_info: host_info.start_time().date())
+        return [(date, list(values)) for date, values in date_iterator]
 
     def generate_ordered_search(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(lambda si: si.get_search_names())

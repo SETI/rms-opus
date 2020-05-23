@@ -59,6 +59,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
+    parser.add_argument('--sessions-directory', dest="sessions_directory")
     parser.add_argument('--configuration', dest= 'configuration_file', default='opus.configuration',
                         help="location of python configuration file")
 
