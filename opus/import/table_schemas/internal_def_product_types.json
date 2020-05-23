@@ -91,6 +91,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "couvis_calib_corr",
+        "definition": "Calibration files (*.DAT) for Cassini UVIS containing matricies that can be used to calibrate UVIS raw observations. Associated labels (*.LBL) are text files that contain information about the calibration matrix and how to apply it."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "covims_raw",
         "definition": "Raw data files (*.qub) for Cassini VIMS. Observations are in binary format, uncalibrated, and contain raw data numbers from both the VIS and IR detectors. Associated labels (*.lbl) are text files that contain information about the observation, including how to interpret the binary data."
     },
