@@ -27,7 +27,8 @@
                 {% for sessions in grouped_sessions %}
                     <details class="Summary3">
                         {% set this_count = sessions|length  %}
-                        <summary>{{ session_ip_or_name(sessions[0]) }}
+                        <summary>
+                            {{ session_ip_or_name(sessions[0]) }}
                             <span class="badge">{{ this_count }} ({{ "{:.1%}".format(this_count / session_count) }})</span>
                         </summary>
                         <ul class="SummarySession">
