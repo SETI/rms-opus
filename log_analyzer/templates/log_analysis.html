@@ -125,7 +125,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro session_ip_or_name(session_info) %}
     {% if session_info.host_ip in ip_to_host_name %}
-        <a data-toggle="tooltip" title="{{ session_info.host_ip }}">{{ ip_to_host_name[session_info.host_ip] }}</a>
+        <span data-toggle="tooltip" title="{{ session_info.host_ip }}">{{ ip_to_host_name[session_info.host_ip] }}</span>
     {% else %}
         {{ session_info.host_ip }}
     {% endif %}
@@ -133,7 +133,7 @@ because it requires that all the navigation tabs be within a single unordered li
 
 {% macro log_entry_ip_or_name(log_entry) %}
     {% if log_entry.host_ip in ip_to_host_name %}
-        <a data-toggle="tooltip" title="{{ log_entry.host_ip }}">{{ ip_to_host_name[log_entry.host_ip] }}</a>
+        <span data-toggle="tooltip" title="{{ log_entry.host_ip }}">{{ ip_to_host_name[log_entry.host_ip] }}</span>
     {% else %}
         {{ log_entry.host_ip }}
     {% endif %}
@@ -222,6 +222,9 @@ because it requires that all the navigation tabs be within a single unordered li
 {% endmacro %}
 
 <div id="right">
+{#  The following node is the parent of all SessionInfo nodes constructed on the fly.
+    We give it an id so that we can easily find it.
+#}
 <div id="session-info-parent" class="tab-content">
 
 {#
@@ -275,20 +278,20 @@ $(function() {
 
         // Mark as active all of the Session Links that point to this target so that they will be highlighted.
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
-{% if context.sessions_directory %}
+{% if context.sessions_relative_directory %}
         if ($(target).length == 0) {
-            let node_id = target.substr(1)
-            // The appropriate div node does not exist.  We need to create it and load its contents.
-            let node = $(`<div id="${node_id}" class="SessionInfo tab-pane"></div>`)
+            // The DOM node that we want to create doesn't exist.  Create and load it on the fly.
+            let node_id = target.substr(1);
+            let node = $('<div>', {id:node_id, class:"SessionInfo tab-pane"});
             // Insert this node into the tree
-            $('#session-info-parent').append(node)
+            $('#session-info-parent').append(node);
             // Asynchronously fill in the contents of the node from a file
-            let session_location = `{{ context.sessions_directory }}${node_id}.html`
-            $(target).load(session_location)
+            let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
+            $(target).load(session_location);
         }
 {% endif %}
         // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        $(target).addClass('active')
+        $(target).addClass('active');
         $('#right').scrollTop(0);
         return false;
     })
@@ -309,7 +312,7 @@ document.addEventListener('mousedown', function(e) {
 });
 
 document.addEventListener('mousemove', function(e) {
-  // Don't do anything if dragging flag is false
+  // Don't do anything if dragging flag is falsex
   if (!isHandlerDragging) {
     return false;
   }
@@ -330,7 +333,7 @@ document.addEventListener('mousemove', function(e) {
   boxRight.style.width = ((containerOffsetWidth - 4 - leftWidth) * widthToPercentMultiplier) + '%';
 });
 
-document.addEventListener('mouseup', function(e) {
+document.addEventListener('mouseup', function(_e) {
   // Turn off dragging flag when user mouse is up
   isHandlerDragging = false;
 });

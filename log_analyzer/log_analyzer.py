@@ -59,8 +59,9 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
-    parser.add_argument('--sessions-directory', dest="sessions_directory")
-    parser.add_argument('--configuration', dest= 'configuration_file', default='opus.configuration',
+    parser.add_argument('--sessions-relative-directory', dest="sessions_relative_directory",
+                        help="relative directory into which to store the sessions information")
+    parser.add_argument('--configuration', dest='configuration_file', default='opus.configuration',
                         help="location of python configuration file")
 
     # Temporary hack for when I don't have internet access
@@ -85,7 +86,6 @@ def main(arguments: Optional[List[str]] = None) -> None:
             return
     elif args.glob:
         args.log_files = [result for file in args.log_files for result in glob.glob(file)]
-
 
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]

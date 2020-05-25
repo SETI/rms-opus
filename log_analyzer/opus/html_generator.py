@@ -32,7 +32,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     _sessions: List[Session]
     _ip_to_host_name: Dict[IPv4Address, str]
     _flag_name_to_flag: Dict[str, IconFlags]
-    _sessions_directory: Optional[str]
+    _sessions_relative_directory: Optional[str]
 
     def __init__(self, configuration: 'Configuration', host_infos_by_ip: List[HostInfo]):
         self._configuration = configuration
@@ -40,7 +40,13 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         self._sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
         self._ip_to_host_name = {host_info.ip: host_info.name for host_info in host_infos_by_ip if host_info.name}
         self._flag_name_to_flag = {x.name: x for x in IconFlags}
-        self._sessions_directory = self._configuration.sessions_directory
+        sessions_relative_directory = self._configuration.sessions_relative_directory
+        if sessions_relative_directory:
+            if sessions_relative_directory.startswith('/'):
+                raise Exception('Sessions directory must not be an absolute path')
+            if not sessions_relative_directory.endswith('/'):
+                sessions_relative_directory += '/'
+        self._sessions_relative_directory = sessions_relative_directory
 
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
@@ -48,7 +54,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         lines  = (line.strip()
                   for chunks in output_generator
                   for line in chunks.split('\n') if line)
-        directory = f'{dirname(output.name)}/{self._sessions_directory}' if self._sessions_directory else None
+        directory = f'{dirname(output.name)}/{self._sessions_relative_directory}' if self._sessions_relative_directory else None
         current_output = output
         file_output = None
         for line in lines:
@@ -79,8 +85,8 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     #
 
     @property
-    def sessions_directory(self) -> Optional[str]:
-        return self._sessions_directory
+    def sessions_relative_directory(self) -> Optional[str]:
+        return self._sessions_relative_directory
 
     @property
     def api_host_url(self) -> str:

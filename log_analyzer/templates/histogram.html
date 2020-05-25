@@ -68,7 +68,7 @@ $(function()
     Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
 
     layout.yaxis.title = '# Sessions > ';
-    cumulative = {
+    let cumulative = {
         enabled: true,
         direction: "decreasing",
     };
@@ -78,13 +78,7 @@ $(function()
 
 $(function()
 {
-    const ip_data = [
-        {% for host_info in host_infos_by_ip %}
-            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
-        {% endfor %}
-    ];
-
-    const sizes = [{{ download_statistics.data | join(',') }}]
+    const sizes = [{{ download_statistics.data | join(',') }}];
 
     const layout = {
         xaxis: {
