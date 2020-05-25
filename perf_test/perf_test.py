@@ -10,7 +10,7 @@ import time
 # URL_PREFIX = 'http://127.0.0.1:8000/opus'
 # DEFAULT_URL_PARAMS = {'ignorelog': 1}
 
-# URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
+# URL_PREFIX = 'https://opus.pds-rings.seti.org/opus'
 DEFAULT_URL_PARAMS = {}
 
 MIN_PROCS = int(sys.argv[1])
@@ -22,7 +22,7 @@ if URL_PREFIX == 'localhost':
 elif URL_PREFIX == 'dev':
     URL_PREFIX = 'https://dev.pds-rings.seti.org/opus'
 elif URL_PREFIX == 'tools':
-    URL_PREFIX = 'https://tools.pds-rings.seti.org/opus'
+    URL_PREFIX = 'https://opus.pds-rings.seti.org/opus'
 
 # MAX_TIME = 10.
 # MIN_ITERS = 2

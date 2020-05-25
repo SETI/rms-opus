@@ -21,6 +21,7 @@ import settings
 class ApiResultsTests(TestCase, ApiTestHelper):
 
     def setUp(self):
+        self.UPDATE_FILES = False
         self.maxDiff = None
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -329,7 +330,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_metadata2_vg_iss_2_s_c4360845_cols_opusid_html_private(self):
         "[test_results_api.py] /api/metadata_v2: vg-iss-2-s-c4360845 cols opusid html private"
         url = '/__api/metadata_v2/vg-iss-2-s-c4360845.html?cols=opusid'
-        expected = b'<ul class="op-detail-list">\n<li class="op-detail-entry">\n<i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"\ntitle="A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS. The OPUS ID is useful for referencing specific observations in a mission-independent manner but should never be used outside of OPUS. To reference an observation outside of OPUS, use the Volume ID, Product ID, and/or Primary File Spec. Note: The format of the OPUS ID is not guaranteed to remain the same over time."></i>&nbsp;\n<div>\nOPUS ID:&nbsp;\n<span class="op-detail-entry-values">vg-iss-2-s-c4360845\n<a href="/opus/#' 
+        expected = b'<ul class="op-detail-list">\n<li class="op-detail-entry">\n<i class="fas fa-info-circle op-detail-entry-icon" data-toggle="tooltip"\ntitle="A unique ID assigned to an observation by the Ring-Moon Systems Node of the PDS. The OPUS ID is useful for referencing specific observations in a mission-independent manner but should never be used outside of OPUS. To reference an observation outside of OPUS, use the Volume ID, Product ID, and/or Primary File Spec. Note: The format of the OPUS ID is not guaranteed to remain the same over time."></i>&nbsp;\n<div>\nOPUS ID:&nbsp;\n<span class="op-detail-entry-values">vg-iss-2-s-c4360845\n<a href="/opus/#'
         self._run_html_startswith(url, expected)
 
     def test__api_metadata_vg_iss_2_s_c4360845_cols_opusid_csv(self):
@@ -725,13 +726,13 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_categories_vg_iss_2_s_c4360004(self):
         "[test_results_api.py] /api/categories: vg-iss-2-s-c4360004"
         url = '/api/categories/vg-iss-2-s-c4360004.json'
-        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__saturn", "label": "Saturn Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__titan", "label": "Titan Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_voyager", "label": "Voyager Mission Constraints"}, {"table_name": "obs_instrument_vgiss", "label": "Voyager ISS Constraints"}]
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_occultation", "label": "Occultation Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__saturn", "label": "Saturn Surface Geometry Constraints"}, {"table_name": "obs_surface_geometry__titan", "label": "Titan Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_voyager", "label": "Voyager Mission Constraints"}, {"table_name": "obs_instrument_vgiss", "label": "Voyager ISS Constraints"}]
         self._run_json_equal(url, expected)
 
     def test__api_categories_COISS_2002(self):
         "[test_results_api.py] /api/categories: COISS_2002"
         url = '/api/categories.json?volumeid=COISS_2002'
-        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_cassini", "label": "Cassini Mission Constraints"}, {"table_name": "obs_instrument_coiss", "label": "Cassini ISS Constraints"}]
+        expected = [{"table_name": "obs_general", "label": "General Constraints"}, {"table_name": "obs_pds", "label": "PDS Constraints"}, {"table_name": "obs_type_image", "label": "Image Constraints"}, {"table_name": "obs_wavelength", "label": "Wavelength Constraints"}, {"table_name": "obs_occultation", "label": "Occultation Constraints"}, {"table_name": "obs_surface_geometry", "label": "Surface Geometry Constraints"}, {"table_name": "obs_ring_geometry", "label": "Ring Geometry Constraints"}, {"table_name": "obs_mission_cassini", "label": "Cassini Mission Constraints"}, {"table_name": "obs_instrument_coiss", "label": "Cassini ISS Constraints"}]
         self._run_json_equal(url, expected)
 
 

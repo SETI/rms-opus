@@ -12,6 +12,8 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_voyager import *
+from populate_util import *
+
 
 # Data from: https://pds-rings.seti.org/voyager/iss/inst_cat_wa1.html#inst_info
 # (WL MIN, WL MAX)
@@ -42,22 +44,20 @@ def _VGISS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_VGISS_opus_id(**kwargs):
+def populate_obs_general_VGISS_opus_id_OBS(**kwargs):
     file_spec = _VGISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_VGISS_ring_obs_id(**kwargs):
+def populate_obs_general_VGISS_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filename = index_row['PRODUCT_ID']
@@ -74,7 +74,7 @@ def populate_obs_general_VGISS_ring_obs_id(**kwargs):
             + camera)
 
 # Format: "VOYAGER 1" or "VOYAGER 2"
-def populate_obs_general_VGISS_inst_host_id(**kwargs):
+def populate_obs_general_VGISS_inst_host_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_host = index_row['INSTRUMENT_HOST_NAME']
@@ -83,57 +83,16 @@ def populate_obs_general_VGISS_inst_host_id(**kwargs):
 
     return 'VG'+inst_host[-1]
 
-def populate_obs_general_VGISS_time1(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    start_time = import_util.safe_column(supp_index_row, 'START_TIME')
+def populate_obs_general_VGISS_time1_OBS(**kwargs):
+    return populate_time1_from_supp_index(**kwargs)
 
-    if start_time is None:
-        return None
+def populate_obs_general_VGISS_time2_OBS(**kwargs):
+    return populate_time2_from_supp_index(**kwargs)
 
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
-
-def populate_obs_general_VGISS_time2(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    stop_time = import_util.safe_column(supp_index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
-
-def populate_obs_general_VGISS_target_name(**kwargs):
+def populate_obs_general_VGISS_target_name_OBS(**kwargs):
     return helper_voyager_target_name(**kwargs)
 
-def populate_obs_general_VGISS_observation_duration(**kwargs):
+def populate_obs_general_VGISS_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
@@ -144,7 +103,7 @@ def populate_obs_general_VGISS_observation_duration(**kwargs):
 
     return exposure
 
-def populate_obs_general_VGISS_quantity(**kwargs):
+def populate_obs_general_VGISS_quantity_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filter_name = index_row['FILTER_NAME']
@@ -153,54 +112,36 @@ def populate_obs_general_VGISS_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-def populate_obs_general_VGISS_observation_type(**kwargs):
+def populate_obs_general_VGISS_observation_type_OBS(**kwargs):
     return 'IMG' # Image
 
-def populate_obs_pds_VGISS_note(**kwargs):
+def populate_obs_pds_VGISS_note_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     return index_row['NOTE']
 
-def populate_obs_general_VGISS_primary_file_spec(**kwargs):
+def populate_obs_general_VGISS_primary_file_spec_OBS(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_VGISS_primary_file_spec(**kwargs):
+def populate_obs_pds_VGISS_primary_file_spec_OBS(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
-def populate_obs_pds_VGISS_data_set_id(**kwargs):
-    # For VGISS the DATA_SET_ID is provided in the volume label file,
-    # not the individual observation rows
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    dsi = index_label['DATA_SET_ID']
-    return (dsi, dsi)
+def populate_obs_pds_VGISS_data_set_id_OBS(**kwargs):
+    return populate_data_set_id_from_index_label(**kwargs)
 
-def populate_obs_pds_VGISS_product_creation_time(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    pct = supp_index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+def populate_obs_pds_VGISS_product_creation_time_OBS(**kwargs):
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "C1385455_CALIB.IMG"
-def populate_obs_pds_VGISS_product_id(**kwargs):
+def populate_obs_pds_VGISS_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
 
     return product_id
 
-def populate_obs_general_VGISS_right_asc1(**kwargs):
+def populate_obs_general_VGISS_right_asc1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -208,7 +149,7 @@ def populate_obs_general_VGISS_right_asc1(**kwargs):
 
     return None
 
-def populate_obs_general_VGISS_right_asc2(**kwargs):
+def populate_obs_general_VGISS_right_asc2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -216,7 +157,7 @@ def populate_obs_general_VGISS_right_asc2(**kwargs):
 
     return None
 
-def populate_obs_general_VGISS_declination1(**kwargs):
+def populate_obs_general_VGISS_declination1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -224,7 +165,7 @@ def populate_obs_general_VGISS_declination1(**kwargs):
 
     return None
 
-def populate_obs_general_VGISS_declination2(**kwargs):
+def populate_obs_general_VGISS_declination2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -235,15 +176,15 @@ def populate_obs_general_VGISS_declination2(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_VGISS_image_type_id(**kwargs):
+def populate_obs_type_image_VGISS_image_type_id_OBS(**kwargs):
     return 'FRAM'
 
-def populate_obs_type_image_VGISS_duration(**kwargs):
+def populate_obs_type_image_VGISS_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
-def populate_obs_type_image_VGISS_levels(**kwargs):
+def populate_obs_type_image_VGISS_levels_OBS(**kwargs):
     return 256
 
 def _VGISS_pixel_size_helper(**kwargs):
@@ -258,13 +199,13 @@ def _VGISS_pixel_size_helper(**kwargs):
 
     return line2-line1+1, sample2-sample1+1
 
-def populate_obs_type_image_VGISS_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_VGISS_lesser_pixel_size_OBS(**kwargs):
     pix1, pix2 = _VGISS_pixel_size_helper(**kwargs)
     if pix1 is None or pix2 is None:
         return None
     return min(pix1, pix2)
 
-def populate_obs_type_image_VGISS_greater_pixel_size(**kwargs):
+def populate_obs_type_image_VGISS_greater_pixel_size_OBS(**kwargs):
     pix1, pix2 = _VGISS_pixel_size_helper(**kwargs)
     if pix1 is None or pix2 is None:
         return None
@@ -286,13 +227,13 @@ def _wavelength_helper(**kwargs):
 
     return _VGISS_FILTER_WAVELENGTHS[filter_name]
 
-def populate_obs_wavelength_VGISS_wavelength1(**kwargs):
+def populate_obs_wavelength_VGISS_wavelength1_OBS(**kwargs):
     return _wavelength_helper(**kwargs)[0] / 1000 # microns
 
-def populate_obs_wavelength_VGISS_wavelength2(**kwargs):
+def populate_obs_wavelength_VGISS_wavelength2_OBS(**kwargs):
     return _wavelength_helper(**kwargs)[1] / 1000 # microns
 
-def populate_obs_wavelength_VGISS_wave_res1(**kwargs):
+def populate_obs_wavelength_VGISS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl1 = wl_row['wavelength1']
@@ -301,7 +242,7 @@ def populate_obs_wavelength_VGISS_wave_res1(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_VGISS_wave_res2(**kwargs):
+def populate_obs_wavelength_VGISS_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wl1 = wl_row['wavelength1']
@@ -310,17 +251,17 @@ def populate_obs_wavelength_VGISS_wave_res2(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_VGISS_wave_no1(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength2'] # cm^-1
 
-def populate_obs_wavelength_VGISS_wave_no2(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
-def populate_obs_wavelength_VGISS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -329,7 +270,7 @@ def populate_obs_wavelength_VGISS_wave_no_res1(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_VGISS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -338,14 +279,47 @@ def populate_obs_wavelength_VGISS_wave_no_res2(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_VGISS_spec_flag(**kwargs):
+def populate_obs_wavelength_VGISS_spec_flag_OBS(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_VGISS_spec_size(**kwargs):
+def populate_obs_wavelength_VGISS_spec_size_OBS(**kwargs):
     return None
 
-def populate_obs_wavelength_VGISS_polarization_type(**kwargs):
+def populate_obs_wavelength_VGISS_polarization_type_OBS(**kwargs):
     return 'NONE'
+
+
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_VGISS_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_quality_score_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_VGISS_host_OBS(**kwargs):
+    return None
 
 
 ################################################################################
@@ -359,7 +333,7 @@ def populate_obs_wavelength_VGISS_polarization_type(**kwargs):
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_VGISS
 ################################################################################
 
-def populate_obs_instrument_VGISS_camera(**kwargs):
+def populate_obs_instrument_vgiss_camera(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
@@ -369,7 +343,7 @@ def populate_obs_instrument_VGISS_camera(**kwargs):
 
     return camera[0]
 
-def populate_obs_instrument_VGISS_usable_lines(**kwargs):
+def populate_obs_instrument_vgiss_usable_lines(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -379,7 +353,7 @@ def populate_obs_instrument_VGISS_usable_lines(**kwargs):
 
     return line2-line1+1
 
-def populate_obs_instrument_VGISS_usable_samples(**kwargs):
+def populate_obs_instrument_vgiss_usable_samples(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:

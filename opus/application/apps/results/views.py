@@ -614,13 +614,19 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     not return_db_names):
                     mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
-                    result = lookup_pretty_value_for_mult(param_info, mult_val)
+                    result = lookup_pretty_value_for_mult(param_info,
+                                                          mult_val,
+                                                         cvt_null=(fmt!='json'))
                 else:
                     result = result_vals[param_info.name]
-                    # Format result depending on its form_type_format
-                    result = format_metadata_number_or_func(result,
-                                                            form_type_func,
-                                                            form_type_format)
+                    if (result is None and fmt != 'json' and
+                        form_type != 'STRING'):
+                        result = 'N/A'
+                    else:
+                        # Format result depending on its form_type_format
+                        result = format_metadata_number_or_func(result,
+                                                                form_type_func,
+                                                                form_type_format)
 
                 if fmt == 'csv':
                     index = param_info.fully_qualified_label_results()
@@ -650,9 +656,11 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                    'all_info': all_info,
                    'url_cols': url_cols}
         if internal:
-            ret = render(request, 'results/detail_metadata_internal.html', context)
+            ret = render(request, 'results/detail_metadata_internal.html',
+                         context)
         else:
-            ret = render(request, 'results/detail_metadata.html', context)
+            ret = render(request, 'results/detail_metadata.html',
+                         context)
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover

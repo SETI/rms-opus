@@ -30,10 +30,7 @@ def helper_galileo_target_name(**kwargs):
         return None
 
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def helper_galileo_planet_id(**kwargs):
     # WARNING: This will need to be changed if we ever get additional volumes
@@ -42,7 +39,7 @@ def helper_galileo_planet_id(**kwargs):
     # was in Jupiter orbit (GO_0017 to GO_0023).
     return 'JUP'
 
-def populate_obs_general_GO_planet_id(**kwargs):
+def populate_obs_general_GO_planet_id_OBS(**kwargs):
     return helper_galileo_planet_id(**kwargs)
 
 

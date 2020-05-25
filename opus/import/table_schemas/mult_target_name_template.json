@@ -12,12 +12,12 @@
     },
     {
         "field_name": "label",
-        "field_type": "char30",
+        "field_type": "char100",
         "field_notnull": true
     },
     {
         "field_name": "disp_order",
-        "field_type": "int4",
+        "field_type": "char100",
         "field_notnull": true
     },
     {

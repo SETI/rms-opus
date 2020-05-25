@@ -42,7 +42,7 @@
     },
     {
         "field_name": "instrument_id",
-        "field_type": "char9",
+        "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
         "data_source": [
@@ -169,6 +169,7 @@
         "field_name": "prime_inst_id",
         "field_type": "char6",
         "field_key": true,
+        "field_notnull": true,
         "data_source": [
             "FUNCTION",
             "obs_mission_cassini_prime_inst_id"
@@ -191,22 +192,23 @@
         "pi_units": null,
         "comments": "",
         "mult_options": [
-              [   0,  "CIRS",  "CIRS",   10, "Y", null],
-              [   1,   "ISS",   "ISS",   20, "Y", null],
-              [   2,  "UVIS",  "UVIS",   30, "Y", null],
-              [   3,  "VIMS",  "VIMS",   40, "Y", null],
-              [   4, "OTHER", "Other",   50, "Y", null],
-              [   5,    null,  "Null",   60, "Y", null]
+              [   0,  "CIRS",    "CIRS", "010", "Y", null],
+              [   1,   "ISS",     "ISS", "020", "Y", null],
+              [   2,   "RSS",     "RSS", "030", "Y", null],
+              [   3,  "UVIS",    "UVIS", "040", "Y", null],
+              [   4,  "VIMS",    "VIMS", "050", "Y", null],
+              [   5, "OTHER",   "Other", "060", "Y", null],
+              [   6,   "UNK", "Unknown", "070", "Y", null]
           ]
     },
     {
         "field_name": "spacecraft_clock_count1",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
               "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count1"
+              "obs_mission_cassini_<INST>_spacecraft_clock_count1_<TYPE>"
         ],
         "data_source_order": 10,
         "val_min": 1.28e9,
@@ -235,11 +237,11 @@
     {
         "field_name": "spacecraft_clock_count2",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
               "FUNCTION",
-              "obs_mission_cassini_<INST>_spacecraft_clock_count2"
+              "obs_mission_cassini_<INST>_spacecraft_clock_count2_<TYPE>"
         ],
         "data_source_order": 20,
         "val_min": 1.28e9,
@@ -269,7 +271,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_ert1"
+            "obs_mission_cassini_<INST>_ert1_<TYPE>"
         ],
         "data_source_order": 10,
         "val_min": -94607970.0,
@@ -302,7 +304,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_ert2"
+            "obs_mission_cassini_<INST>_ert2_<TYPE>"
         ],
         "data_source_order": 11,
         "val_min": -94607970.0,
@@ -409,7 +411,7 @@
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_mission_phase_name"
+            "obs_mission_cassini_<INST>_mission_phase_name_<TYPE>"
         ],
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -434,7 +436,7 @@
         "field_default": null,
         "data_source": [
             "FUNCTION",
-            "obs_mission_cassini_<INST>_sequence_id"
+            "obs_mission_cassini_<INST>_sequence_id_<TYPE>"
         ],
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",

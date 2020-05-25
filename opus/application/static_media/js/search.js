@@ -961,7 +961,7 @@ var o_search = {
                                   <span class="${rangeHintsTextClass}">?</span></span>
                                   <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
                                   <span class="${rangeHintsTextClass}">?</span></span>
-                                  <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                  <span><span class="${rangeHintsDescription}">N/A:&nbsp;</span>
                                   <span class="${rangeHintsTextClass}">?</span></span>`);
                 }
             });
@@ -1154,7 +1154,7 @@ var o_search = {
                                           <span class="${rangeHintsTextClass}">${multdata.min}</span></span>
                                           <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
                                           <span class="${rangeHintsTextClass}">${multdata.max}</span></span>
-                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                          <span><span class="${rangeHintsDescription}">N/A:&nbsp;</span>
                                           <span class="${rangeHintsTextClass}">${multdata.nulls}</span></span>`);
             }
         }); // end mults ajax

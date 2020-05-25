@@ -11,6 +11,7 @@ import pdsfile
 import import_util
 
 from populate_obs_mission_new_horizons import *
+from populate_util import *
 
 
 ################################################################################
@@ -27,11 +28,11 @@ def _NHMVIC_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_NHMVIC_opus_id(**kwargs):
+def populate_obs_general_NHMVIC_opus_id_OBS(**kwargs):
     file_spec = _NHMVIC_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
-        opus_id = pds_file.opus_id.replace('.', '-')
+        opus_id = pds_file.opus_id
     except:
         opus_id = None
     if not opus_id:
@@ -42,7 +43,7 @@ def populate_obs_general_NHMVIC_opus_id(**kwargs):
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_NHMVIC_ring_obs_id(**kwargs):
+def populate_obs_general_NHMVIC_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     image_num = index_row['FILE_NAME'][4:14]
@@ -57,59 +58,22 @@ def populate_obs_general_NHMVIC_ring_obs_id(**kwargs):
 
     return pl_str + '_IMG_NH_MVIC_' + image_num + '_' + camera
 
-def populate_obs_general_NHMVIC_inst_host_id(**kwargs):
+def populate_obs_general_NHMVIC_inst_host_id_OBS(**kwargs):
     return 'NH'
 
-def populate_obs_general_NHMVIC_time1(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    start_time = import_util.safe_column(index_row, 'START_TIME')
+def populate_obs_general_NHMVIC_time1_OBS(**kwargs):
+    return populate_time1_from_index(**kwargs)
 
-    if start_time is None:
-        return None
+def populate_obs_general_NHMVIC_time2_OBS(**kwargs):
+    return populate_time2_from_index(**kwargs)
 
-    try:
-        start_time_sec = julian.tai_from_iso(start_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad start time format "{start_time}": {e}')
-        return None
-
-    return start_time_sec
-
-def populate_obs_general_NHMVIC_time2(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    stop_time = import_util.safe_column(index_row, 'STOP_TIME')
-
-    if stop_time is None:
-        return None
-
-    try:
-        stop_time_sec = julian.tai_from_iso(stop_time)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad stop time format "{stop_time}": {e}')
-        return None
-
-    general_row = metadata['obs_general_row']
-    start_time_sec = general_row['time1']
-
-    if start_time_sec is not None and stop_time_sec < start_time_sec:
-        start_time = import_util.safe_column(index_row, 'START_TIME')
-        import_util.log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                                f'are in the wrong order - setting to time1')
-        stop_time_sec = start_time_sec
-
-    return stop_time_sec
-
-def populate_obs_general_NHMVIC_target_name(**kwargs):
+def populate_obs_general_NHMVIC_target_name_OBS(**kwargs):
     target_name = helper_new_horizons_target_name(**kwargs)
     if target_name is None:
         target_name = 'NONE'
     return target_name
 
-def populate_obs_general_NHMVIC_observation_duration(**kwargs):
+def populate_obs_general_NHMVIC_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     exposure = import_util.safe_column(supp_index_row, 'EXPOSURE_DURATION')
@@ -119,55 +83,41 @@ def populate_obs_general_NHMVIC_observation_duration(**kwargs):
 
     return exposure
 
-def populate_obs_general_NHMVIC_quantity(**kwargs):
+def populate_obs_general_NHMVIC_quantity_OBS(**kwargs):
     return 'REFLECT'
 
-def populate_obs_general_NHMVIC_observation_type(**kwargs):
+def populate_obs_general_NHMVIC_observation_type_OBS(**kwargs):
     return 'IMG' # Image
 
-def populate_obs_pds_NHMVIC_note(**kwargs):
+def populate_obs_pds_NHMVIC_note_OBS(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    return supp_index_row['OBSERVATION_DESC']
+    note = supp_index_row['OBSERVATION_DESC']
+    if note == 'NULL':
+        note = None
+    return note
 
-def populate_obs_general_NHMVIC_primary_file_spec(**kwargs):
+def populate_obs_general_NHMVIC_primary_file_spec_OBS(**kwargs):
     return _NHMVIC_file_spec_helper(**kwargs)
 
-def populate_obs_pds_NHMVIC_primary_file_spec(**kwargs):
+def populate_obs_pds_NHMVIC_primary_file_spec_OBS(**kwargs):
     return _NHMVIC_file_spec_helper(**kwargs)
 
-def populate_obs_pds_NHMVIC_product_creation_time(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
-        return None
-    pct = supp_index_row['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+def populate_obs_pds_NHMVIC_product_creation_time_OBS(**kwargs):
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "NH-J-MVIC-2-JUPITER-V2.0"
-def populate_obs_pds_NHMVIC_data_set_id(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    return supp_index_row['DATA_SET_ID']
+def populate_obs_pds_NHMVIC_data_set_id_OBS(**kwargs):
+    return populate_data_set_id_from_supp_index(**kwargs)
 
 # Format: "MC0_0032528036_0X536_ENG_1"
-def populate_obs_pds_NHMVIC_product_id(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    return supp_index_row['PRODUCT_ID']
+def populate_obs_pds_NHMVIC_product_id_OBS(**kwargs):
+    return populate_product_id_from_supp_index(**kwargs)
 
 # We occasionally don't bother to generate ring_geo data for NHMVIC, like during
 # cruise, so just use the given RA/DEC from the label if needed. We don't make
 # any effort to figure out the min/max values.
-def populate_obs_general_NHMVIC_right_asc1(**kwargs):
+def populate_obs_general_NHMVIC_right_asc1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -177,7 +127,7 @@ def populate_obs_general_NHMVIC_right_asc1(**kwargs):
     ra = import_util.safe_column(supp_index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_NHMVIC_right_asc2(**kwargs):
+def populate_obs_general_NHMVIC_right_asc2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -187,7 +137,7 @@ def populate_obs_general_NHMVIC_right_asc2(**kwargs):
     ra = import_util.safe_column(supp_index_row, 'RIGHT_ASCENSION')
     return ra
 
-def populate_obs_general_NHMVIC_declination1(**kwargs):
+def populate_obs_general_NHMVIC_declination1_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -197,7 +147,7 @@ def populate_obs_general_NHMVIC_declination1(**kwargs):
     dec = import_util.safe_column(supp_index_row, 'DECLINATION')
     return dec
 
-def populate_obs_general_NHMVIC_declination2(**kwargs):
+def populate_obs_general_NHMVIC_declination2_OBS(**kwargs):
     metadata = kwargs['metadata']
     ring_geo_row = metadata.get('ring_geo_row', None)
     if ring_geo_row is not None:
@@ -210,49 +160,49 @@ def populate_obs_general_NHMVIC_declination2(**kwargs):
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_NHMVIC_image_type_id(**kwargs):
+def populate_obs_type_image_NHMVIC_image_type_id_OBS(**kwargs):
     return 'PUSH'
 
-def populate_obs_type_image_NHMVIC_duration(**kwargs):
+def populate_obs_type_image_NHMVIC_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
-def populate_obs_type_image_NHMVIC_levels(**kwargs):
+def populate_obs_type_image_NHMVIC_levels_OBS(**kwargs):
     return 4096
 
-def populate_obs_type_image_NHMVIC_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_NHMVIC_lesser_pixel_size_OBS(**kwargs):
     return 128
 
-def populate_obs_type_image_NHMVIC_greater_pixel_size(**kwargs):
+def populate_obs_type_image_NHMVIC_greater_pixel_size_OBS(**kwargs):
     return 5024
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_NHMVIC_wavelength1(**kwargs):
+def populate_obs_wavelength_NHMVIC_wavelength1_OBS(**kwargs):
     return 0.4
 
-def populate_obs_wavelength_NHMVIC_wavelength2(**kwargs):
+def populate_obs_wavelength_NHMVIC_wavelength2_OBS(**kwargs):
     return 0.975
 
-def populate_obs_wavelength_NHMVIC_wave_res1(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_res1_OBS(**kwargs):
     return 0.575
 
-def populate_obs_wavelength_NHMVIC_wave_res2(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_res2_OBS(**kwargs):
     return 0.575
 
-def populate_obs_wavelength_NHMVIC_wave_no1(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength2'] # cm^-1
 
-def populate_obs_wavelength_NHMVIC_wave_no2(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     return 10000 / wavelength_row['wavelength1'] # cm^-1
 
-def populate_obs_wavelength_NHMVIC_wave_no_res1(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -261,7 +211,7 @@ def populate_obs_wavelength_NHMVIC_wave_no_res1(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_NHMVIC_wave_no_res2(**kwargs):
+def populate_obs_wavelength_NHMVIC_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -270,14 +220,47 @@ def populate_obs_wavelength_NHMVIC_wave_no_res2(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_NHMVIC_spec_flag(**kwargs):
+def populate_obs_wavelength_NHMVIC_spec_flag_OBS(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_NHMVIC_spec_size(**kwargs):
+def populate_obs_wavelength_NHMVIC_spec_size_OBS(**kwargs):
     return None
 
-def populate_obs_wavelength_NHMVIC_polarization_type(**kwargs):
+def populate_obs_wavelength_NHMVIC_polarization_type_OBS(**kwargs):
     return 'NONE'
+
+
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_NHMVIC_occ_type_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_occ_dir_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_body_occ_flag_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_optical_depth_min_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_optical_depth_max_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_temporal_sampling_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_quality_score_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_wl_band_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_source_OBS(**kwargs):
+    return None
+
+def populate_obs_occultation_NHMVIC_host_OBS(**kwargs):
+    return None
 
 
 ################################################################################

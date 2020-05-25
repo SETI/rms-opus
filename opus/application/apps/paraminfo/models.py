@@ -92,7 +92,8 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name in ['General', 'PDS', 'Wavelength', 'Image', 'Surface']:
+        if pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
+                           'Occultation', 'Surface']:
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 

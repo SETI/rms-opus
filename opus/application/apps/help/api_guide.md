@@ -47,7 +47,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally  `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
+The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally  `https://opus.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
 
 Examples:
 
@@ -184,7 +184,7 @@ datasetid=CO-E&qtype-datasetid=begins
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
 %CODE%
-volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+volumeid_1=COISS_2001&qtype-volumeid_1=matches&volumeid_2=COISS_2002&qtype-volumeid_2=matches
 %ENDCODE%
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):
@@ -1521,6 +1521,10 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
+    "table_name": "obs_occultation",
+    "label": "Occultation Constraints"
+  },
+  {
     "table_name": "obs_surface_geometry__methone",
     "label": "Methone Surface Geometry Constraints"
   },
@@ -1579,6 +1583,10 @@ Example:
   {
     "table_name": "obs_wavelength",
     "label": "Wavelength Constraints"
+  },
+  {
+    "table_name": "obs_occultation",
+    "label": "Occultation Constraints"
   },
   {
     "table_name": "obs_surface_geometry__daphnis",
