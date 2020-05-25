@@ -4,7 +4,8 @@ import itertools
 import sys
 from collections import deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, cast
+from pathlib import Path
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
 from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
 from ip_to_host_converter import IpToHostConverter
@@ -64,9 +65,6 @@ class HostInfo(NamedTuple):
     name: Optional[str]
     sessions: List[Session]
 
-    def hostname(self) -> str:
-        return f'{self.name} ({self.ip})' if self.name else str(self.ip)
-
     @property
     def total_time(self) -> datetime.timedelta:
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
@@ -95,12 +93,14 @@ class LogParser:
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
+        if output:
+            Path(output).parent.mkdir(parents=True, exist_ok=True)
         self._output = open(output, "w") if output else sys.stdout
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
         self._ip_to_host_converter = ip_to_host_converter
-        self._id_generator = (f'{value:X}' for value in itertools.count(100))
+        self._id_generator = (f'{value:06X}' for value in itertools.count(100))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
         print(f'Parsing input')

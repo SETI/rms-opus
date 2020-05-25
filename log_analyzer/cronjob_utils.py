@@ -37,6 +37,8 @@ def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -
     if log_files:
         # Create all necessary intermediate directories
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    if args.sessions_relative_directory:
+        args.sessions_relative_directory = run_date.strftime(args.sessions_relative_directory)
     args.log_files = log_files
     args.output = output_file
     args.batch = True
