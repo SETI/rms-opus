@@ -282,7 +282,7 @@ $(function() {
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
 {% if context.sessions_relative_directory %}
         if ($(target).length === 0) {
-            // The DOM node that we want to show doesn't exist.  Create it and loads its content.
+            // The DOM node that we want to show doesn't exist.  Create it and load its content.
             let node_id = target.substr(1);
             $('<div/>', {id:node_id, "class":"{{ session_info_classes }}"}).appendTo('#session-info-parent')
             // Asynchronously fill in the contents of the node from a file
