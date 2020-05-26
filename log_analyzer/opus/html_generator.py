@@ -60,8 +60,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         for line in lines:
             if line.startswith("<<<<"):
                 match = re.match(r"[<]+ ([\w\d]+) (.*)", line)
+                assert match
                 if directory:
-                    assert file_output == None or file_output.closed
+                    assert file_output is None or  file_output.closed
                     file_name = directory + match.group(1) + ".html"
                     Path(file_name).parent.mkdir(parents=True, exist_ok=True)
                     current_output = file_output = open(file_name, "w")
@@ -70,8 +71,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     line = match.group(2)
             elif line.startswith(">>>>"):
                 match = re.match(r"[>]+ ([\w\d]+) (.*)", line)
+                assert match
                 if directory:
-                    assert current_output == file_output and not file_output.closed
+                    assert current_output == file_output and file_output and not file_output.closed
                     file_output.close()
                     current_output = output
                     continue

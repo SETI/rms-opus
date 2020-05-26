@@ -216,11 +216,17 @@ class SessionInfo(AbstractSessionInfo):
     def __api_data(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return self._query_handler.handle_query(log_entry, query, match.group(1))
 
+    @pattern_registry.register(r'/__api/data\.json')
+    def __api_data_old(self, log_entry: LogEntry, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
+        # data.json was the old name for dataimages.json.  Treat it like dataimages, rather than like data.html.
+        return self._query_handler.handle_query(log_entry, query, "dataimages")
+
     #
     # CREATE WIDGET
     #
 
     @pattern_registry.register(r'/__widget/(.*).html')
+    @pattern_registry.register(r'/__forms/widget/(.*).html')
     def __initialize_widget(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         return self._query_handler.create_widget(log_entry, query, match.group(1))
 
