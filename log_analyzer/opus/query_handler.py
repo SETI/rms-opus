@@ -135,8 +135,11 @@ class QueryHandler:
             is_browsing = query.get('view') == 'browse'
             page = query.get('page', '')
             startobs = query.get('cart_startobs', ''), query.get('startobs', '')
-            browse = query.get('cart_browse', ''), query.get('browse', '')
             previous_browse = self._previous_browses[is_browsing]
+            if is_browsing:
+                current_browse = query.get('browse', '')
+            else:
+                current_browse = query.get('cart_browse') or query.get('colls_browse') or ''
 
             if startobs[is_browsing]:
                 page_type, info, previous_info = 'Starting Observation', startobs[is_browsing], self._previous_startobss
@@ -145,7 +148,7 @@ class QueryHandler:
             else:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
-            viewed = 'Table' if browse[is_browsing] == 'data' else 'Gallery'
+            viewed = 'Table' if current_browse == 'data' else 'Gallery'
             tentative_flag = {
                 ("Browse", "Table"): InfoFlags.VIEWED_BROWSE_TAB_AS_TABLE,
                 ("Browse", "Gallery"): InfoFlags.VIEWED_BROWSE_TAB_AS_GALLERY,
@@ -153,7 +156,7 @@ class QueryHandler:
                 ("Cart", "Gallery"): InfoFlags.VIEWED_CART_TAB_AS_GALLERY,
             }[browse_or_cart, viewed]
 
-            if current_state != previous_state or browse[is_browsing] != previous_browse:
+            if current_state != previous_state or current_browse != previous_browse:
                 result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
             elif info:
                 what = f'{browse_or_cart} {viewed} {page_type}'
@@ -161,7 +164,7 @@ class QueryHandler:
                 result.append(f'Fetch {what.title()} {info} Limit {limit}')
 
             previous_info[is_browsing] = info
-            self._previous_browses[is_browsing] = browse[is_browsing]
+            self._previous_browses[is_browsing] = current_browse
         else:
             tentative_flag = InfoFlags(0)
 
