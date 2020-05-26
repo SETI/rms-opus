@@ -208,7 +208,6 @@ class SessionInfo(AbstractSessionInfo):
     # API
     #
 
-    @pattern_registry.register(r'/__api/(data)\.json')
     @pattern_registry.register(r'/__api/(data)\.html')
     @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')

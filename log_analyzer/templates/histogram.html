@@ -32,19 +32,21 @@
 <script>
 $(function()
 {
-    const ip_data = [
-        {% for host_info in host_infos_by_ip %}
-            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
-        {% endfor %}
-    ];
-
-    const session_data = [
-        {% for host_info in host_infos_by_ip %}
-            {% for session in host_info.sessions %}
+    {% with %}
+        {% set ip_data %}
+            {% for host_info in host_infos_by_ip %}
+                {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
+            {% endfor %}
+        {% endset %}
+        {% set session_data %}
+            {% for session in context.sessions %}
                 {{ [session.duration().total_seconds() / 60, 480.0]|min }},
-            {%-  endfor %}
-        {% endfor %}
-    ];
+            {% endfor %}
+        {% endset %}
+
+        const ip_data = [ {{ ip_data | replace('\n', '') | replace(' ', '') }} ];
+        const session_data = [ {{ session_data | replace('\n', '') | replace(' ', '') }} ];
+    {% endwith %}
 
     let layout = {
         xaxis: {
