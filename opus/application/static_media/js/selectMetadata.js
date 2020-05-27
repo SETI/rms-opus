@@ -307,7 +307,7 @@ var o_selectMetadata = {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-        o_browse.loadData(opus.prefs.view);
+        o_browse.loadData(opus.prefs.view, false);
     },
 
     adjustHeight: function() {

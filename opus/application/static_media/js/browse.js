@@ -582,7 +582,7 @@ var o_browse = {
             // else we render 2 * o_browse.getLimit() items.
             let customizedLimitNum = obsNum === 1 ? galleryValue - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             viewNamespace.reloadObservationData = true;
-            o_browse.loadData(view, obsNum, customizedLimitNum);
+            o_browse.loadData(view, true, obsNum, customizedLimitNum);
         }
     },
 
@@ -1457,6 +1457,7 @@ var o_browse = {
     },
 
     initDraggableColumn: function(tab) {
+        let positionArray = [];
         function dragColumn(ui, action) {
             let element = ui.item;
             let slug = element.attr("id");
@@ -1484,8 +1485,11 @@ var o_browse = {
             start: function(e, ui) {
                 //dragColumn(ui, e.type);
                 $("tbody").animate({opacity: '0.1'});
+                positionArray = [];
                 $("thead th.op-draggable").each(function(index, th) {
                     $(th).width($(th).width());
+                    let slug = $(th).attr("id");
+                    positionArray[`${slug}`] = $(th).offset().left;
                 });
                 return ui;
             },
@@ -1493,16 +1497,20 @@ var o_browse = {
                 // if the tr is moving left, look at next
                 if (ui.item.next().attr("id") === ui.placeholder.prev().attr("id")) {
                     let itemSlug = ui.item.attr("id");
-                    let movingItemCol = $("tbody tr").find(`[data-slug="${itemSlug}"]`);
+                    let nextSlug = ui.placeholder.prev().attr("id");
+                    let movingItemCol = $("tbody tr").find(`[data-slug="${itemSlug}"]`).index();
+                    let nextCol = $("tbody tr").find(`[data-slug="${nextSlug}"]`).index();
                 }
                 console.log(`item:   ${ui.item.attr("id")}, item.prev: ${ui.item.prev().attr("id")}, item.next: ${ui.item.next().attr("id")}`)
                 console.log(`placeholder: prev: ${ui.placeholder.prev().attr("id") }, next: ${ui.placeholder.next().attr("id")}`);
             },
-            stop: function(e, ui) {
-                dragColumn(ui, e.type);
+            update: function(e, ui) {
                 let columnOrder = $.map($(this).find("th.op-draggable"), function(n, i) {
                     return n.id;
                 });
+                let initialCol = $("tbody tr").find(`[data-slug="${ui.item.attr("id")}"]`).index();
+                let finalCol = columnOrder.indexOf(ui.item.attr("id")) + 2;
+                $.moveColumn(".op-data-table", initialCol, finalCol);
                 // only bother if something actually changed...
                 if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
                     opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
@@ -1738,7 +1746,7 @@ var o_browse = {
         }
     },
 
-    loadData: function(view, startObs, customizedLimitNum=undefined) {
+    loadData: function(view, closeGalleryView=true, startObs, customizedLimitNum=undefined) {
         /**
          * Fetch initial data when reloading page, changing sort order,
          * or switching to browse tab after search is changed.
@@ -1799,9 +1807,6 @@ var o_browse = {
         }
 
         o_browse.showPageLoaderSpinner();
-        // if the selectedMetadata columns were updated while the galleryView slide was open,
-        // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
-        let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
 
         // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also uses
         // getDataURL, and we don't want to increment the reqno for the infiniteScroll URL.
@@ -1826,7 +1831,7 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
 
-            if (!updateMetadataBox) {
+            if (closeGalleryView) {
                 o_browse.hideGalleryViewModal();
             }
             o_browse.renderGalleryAndTable(data, this.url, view);
@@ -2113,6 +2118,27 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
+    initDraggableMetadataDetails: function() {
+        $(`#galleryViewContents .op-metadata-details .contents`).sortable({
+            items: "div.op-metadata-details-sortable",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "pointer",
+            update: function(e, ui) {
+                let columnOrder = $.map($(this).find("div.op-metadata-details-sortable"), function(n, i) {
+                    return $(n).data("slug");
+                });
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    // passing in false indicates to not close the gallery view on loadData
+                    o_sortMetadata.renderSortedDataFromBeginning(false);
+                }
+            },
+        });
+    },
+
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
@@ -2124,12 +2150,14 @@ var o_browse = {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
+                let slug = opus.prefs.cols[index];
                 let value = viewNamespace.observationData[opusId][index];
-                html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
+                html += `<div class="op-metadata-details-sortable" data-slug="${slug}"><dt>${columnLabel}:</dt><dd>${value}</dd></div>`;
             }
         });
         html += "</dl>";
         $("#galleryViewContents .contents").html(html);
+        o_browse.initDraggableMetadataDetails(tab);
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
         let action = o_cart.isIn(opusId) ? "" : "remove";

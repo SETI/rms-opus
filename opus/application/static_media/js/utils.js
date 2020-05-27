@@ -147,3 +147,12 @@ $.fn.isOnScreen = function(scope, slop) {
 
     return (elementTop + offset <= bottom) && (elementTop >= top);
 };
+
+$.moveColumn = function (table, from, to) {
+    let rows = $('tr', table);
+    let cols;
+    rows.each(function() {
+        cols = $(this).children('th, td');
+        cols.eq(from).detach().insertBefore(cols.eq(to));
+    });
+}

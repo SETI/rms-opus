@@ -294,8 +294,8 @@ let o_sortMetadata = {
         o_sortMetadata.renderSortedDataFromBeginning();
     },
 
-    renderSortedDataFromBeginning: function() {
+    renderSortedDataFromBeginning: function(closeGalleryView=true) {
         o_browse.clearObservationData();
-        o_browse.loadData(opus.prefs.view);
+        o_browse.loadData(opus.prefs.view, closeGalleryView);
     },
 };
