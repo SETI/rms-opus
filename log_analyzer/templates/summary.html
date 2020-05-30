@@ -46,6 +46,38 @@
     </details>
 {% endmacro %}
 
+{% macro summarize_info_extended(header_name, summary_info_x) %}
+    {%  set summary_info, log_info = summary_info_x %}
+    {%  set session_count = context.session_count %}
+    <details class="Summary1"><summary>{{ header_name }}</summary>
+        {% for name, count, grouped_sessions in summary_info %}
+            <details class="Summary2">
+                <summary>{{ caller(name) }}
+                    <span class="badge">{{ count }} ({{ "{:.1%}".format(count / session_count) }})</span>
+                </summary>
+                {% for sessions in grouped_sessions %}
+                    <details class="Summary3">
+                        {% set this_count = sessions|length  %}
+                        <summary>
+                            {{ session_ip_or_name(sessions[0]) }}
+                            <span class="badge">{{ this_count }} ({{ "{:.1%}".format(this_count / session_count) }})</span>
+                        </summary>
+                        <ul class="SummarySession">
+                            {% for session in sessions %}
+                                <li>
+                                    <a href="#" class="SessionLink" data-target="#{{ session.id }}" data-logs="{{ log_info[(name, session)] | join(',') }}">
+                                        {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                {% endfor %}
+            </details>
+        {% endfor %}
+    </details>
+{% endmacro %}
+
+
 {% macro summarize_slugs(summary_name, summary_slug_info) %}
     {% call(slug_name) summarize_info(summary_name, summary_slug_info) %}
         <span class="text-dark">{{ slug_name }}</span>
@@ -53,7 +85,7 @@
 {% endmacro %}
 <hr/>
 
-{% call(flag) summarize_info('Actions', context.generate_ordered_info_flags()) %}
+{% call(flag) summarize_info_extended('Actions', context.generate_ordered_info_flags()) %}
     {{  flag.get_fancy_name() }}
 {% endcall %}
 <hr/>
@@ -74,7 +106,7 @@
 {% endcall %}
 <hr/>
 
-{% call(file_name) summarize_info('Help Files', context.generate_ordered_help_files()) %}
+{% call(file_name) summarize_info_extended('Help Files', context.generate_ordered_help_files()) %}
     <samp>{{  file_name }}</samp>
 {% endcall %}
 <hr/>

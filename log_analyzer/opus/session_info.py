@@ -1,6 +1,7 @@
+import collections
 import re
 import urllib.parse
-from typing import Dict, Set, Tuple, List, Optional, Sequence, Match
+from typing import Dict, Set, Tuple, List, Optional, Sequence, Match, Mapping
 
 from abstract_configuration import AbstractSessionInfo, PatternRegistry, SESSION_INFO
 from log_entry import LogEntry
@@ -20,17 +21,19 @@ class SessionInfo(AbstractSessionInfo):
     _session_search_slugs: Dict[str, slug.Info]
     _session_metadata_slugs: Dict[str, slug.Info]
     _session_sort_slugs_list: Set[Tuple[slug.Info, ...]]
-    _help_files: Set[str]
+    _help_files: Dict[str, Set[int]]
     _downloads: List[Tuple[str, int]]
     _product_types: List[str]
     _product_types_count: int
-    _widgets: Set[slug.Family]
+    _widgets: Dict[slug.Family]
     _icon_flags: IconFlags
-    _info_flags: InfoFlags
+    _info_flags: Dict[InfoFlags, Set[int]]
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
     _show_all: bool
     _sessionless_downloads: List[Tuple[str, LogEntry]]
+
+    _current_id: int
 
     pattern_registry = PatternRegistry()
 
@@ -39,13 +42,13 @@ class SessionInfo(AbstractSessionInfo):
         self._session_search_slugs = dict()
         self._session_metadata_slugs = dict()
         self._session_sort_slugs_list = set()
-        self._help_files = set()
+        self._help_files = collections.defaultdict(set)
         self._downloads = []
         self._product_types = []
         self._product_types_count = 0
         self._widgets = set()
         self._icon_flags = IconFlags(0)
-        self._info_flags = InfoFlags(InfoFlags.DID_NOT_PERFORM_SEARCH)
+        self._info_flags = collections.defaultdict(set)
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
         self._uses_html = uses_html
         self._show_all = show_all
@@ -53,6 +56,7 @@ class SessionInfo(AbstractSessionInfo):
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
+        self._current_id = -1
 
         # Debugging information.  Maybe delete me
 
@@ -60,25 +64,24 @@ class SessionInfo(AbstractSessionInfo):
         self._session_search_slugs[slug_name] = slug_info
         if slug_info.flags.is_obsolete():
             self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
+            self.update_info_flags(InfoFlags.HAS_OBSOLETE_SLUG)
 
     def add_metadata_slug(self, slug: str, slug_info: slug.Info) -> None:
         self._session_metadata_slugs[slug] = slug_info
         if slug_info.flags.is_obsolete():
             self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
+            self.update_info_flags(InfoFlags.HAS_OBSOLETE_SLUG)
 
     def add_sort_slugs_list(self, slugs_list: Sequence[slug.Info]) -> None:
         self._session_sort_slugs_list.add(tuple(slugs_list))
 
     def changed_search_slugs(self) -> None:
         self._icon_flags |= IconFlags.HAS_SEARCH
-        self._info_flags |= InfoFlags.PERFORMED_SEARCH
-        self._info_flags &= ~InfoFlags.DID_NOT_PERFORM_SEARCH
+        self.update_info_flags(InfoFlags.PERFORMED_SEARCH)
 
     def changed_metadata_slugs(self) -> None:
         self._icon_flags |= IconFlags.HAS_METADATA
-        self._info_flags |= InfoFlags.CHANGED_SELECTED_METADATA
+        self.update_info_flags(InfoFlags.CHANGED_SELECTED_METADATA)
 
     def performed_download(self) -> None:
         self._icon_flags |= IconFlags.HAS_DOWNLOAD
@@ -87,7 +90,7 @@ class SessionInfo(AbstractSessionInfo):
         self._icon_flags |= IconFlags.FETCHED_GALLERY
 
     def update_info_flags(self, flags: InfoFlags) -> None:
-        self._info_flags |= flags
+        self._info_flags[flags].add(self._current_id)
 
     def register_download(self, filename: str, size: Optional[int]) -> None:
         self._downloads.append((filename, size or 0))
@@ -103,6 +106,9 @@ class SessionInfo(AbstractSessionInfo):
 
     def register_widget(self, family: slug.Family) -> None:
         self._widgets.add(family)
+
+    def register_help_file(self, file_name: str) -> None:
+        self._help_files[file_name].add(self._current_id)
 
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
@@ -139,10 +145,10 @@ class SessionInfo(AbstractSessionInfo):
     def get_icon_flags(self) -> IconFlags:
         return self._icon_flags
 
-    def get_info_flags(self) -> InfoFlags:
+    def get_info_flags(self) -> Mapping[InfoFlags, Set[int]]:
         return self._info_flags
 
-    def get_help_files(self) -> Set[str]:
+    def get_help_files(self) -> Mapping[str, Set[int]]:
         return self._help_files
 
     def get_product_types(self) -> List[str]:
@@ -159,7 +165,7 @@ class SessionInfo(AbstractSessionInfo):
         used = {x.family for x in self._session_search_slugs.values()}
         return widgets - used
 
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
+    def parse_log_entry(self, entry: LogEntry, id: int) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
@@ -194,7 +200,12 @@ class SessionInfo(AbstractSessionInfo):
         method_and_match = self.pattern_registry.find_matching_pattern(path)
         if method_and_match:
             method, match = method_and_match
-            info, reference = method(self, entry, query, match)
+            try:
+                self._current_id = id
+                info, reference = method(self, entry, query, match)
+            finally:
+                self._current_id = -1
+
         else:
             info, reference = [], None
         if self._show_all and not info:
@@ -405,7 +416,7 @@ class SessionInfo(AbstractSessionInfo):
         if help_name != 'splash':
             flag = InfoFlags.VIEWED_HELP_FILE if file_type == 'html' else InfoFlags.VIEWED_HELP_FILE_AS_PDF
             self.update_info_flags(flag)
-        self._help_files.add(help_name + '.' + file_type)
+        self.register_help_file(help_name + '.' + file_type)
         if self._uses_html:
             return [self.safe_format('Help <samp>{}</samp>', help_name)], None
         else:

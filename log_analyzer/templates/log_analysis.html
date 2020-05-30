@@ -49,6 +49,9 @@
   vertical-align:top;
   padding: 0 5px;
 }
+#session-info-parent tr.HighlightedLogEntry > td {
+    background-color: #CFF5FF;
+}
 .tab-pane {
     padding-bottom: 10pt;
     padding-top: 10pt;
@@ -203,7 +206,7 @@ because it requires that all the navigation tabs be within a single unordered li
     <table>
     {% for entry in session.entries %}
         {% for line in entry.data %}
-        <tr>
+        <tr data-id="{{ entry.id }}">
             {% if loop.first %}
                 {% if entry.opus_url %}
                     <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
@@ -273,29 +276,50 @@ $(function() {
 
     $('.SessionLink').click(function() {
         let target = $(this).data('target');
+        let data_log = $(this).data('logs') || '';
+        let log_entries = data_log.toString().split(',');
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
         $('.SessionInfo.active').removeClass('active');
+        $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
 
         // Mark as active all of the Session Links that point to this target so that they will be highlighted.
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
+        session_info = $(target);
 {% if context.sessions_relative_directory %}
-        if ($(target).length === 0) {
+        if (session_info.length === 0) {
             // The DOM node that we want to show doesn't exist.  Create it and load its content.
             let node_id = target.substr(1);
-            $('<div/>', {id:node_id, "class":"{{ session_info_classes }}"}).appendTo('#session-info-parent')
-            // Asynchronously fill in the contents of the node from a file
             let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
-            $(target).load(session_location);
+            function callback() {
+                // Note.  This cannot be replaced by => function because we need to bind "this"
+	            highlight_and_scroll_session_info($(this), log_entries);
+            }
+            $('<div/>', {id: node_id, "class": "{{ session_info_classes }} active"})
+                // Add the node to the DOM
+                .appendTo('#session-info-parent')
+                // And load its content.  Call the callback once the dom is loaded.
+                .load(session_location, callback);
+            return false;
         }
 {% endif %}
         // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        $(target).addClass('active');
-        $('#right').scrollTop(0);
+        session_info.addClass('active');
+        highlight_and_scroll_session_info(session_info, log_entries);
         return false;
     })
 });
+
+
+function highlight_and_scroll_session_info(session_info, ids) {
+    $('#right').scrollTop(0);
+    if (ids) {
+        let query = ids.map(id => `tr[data-id="${id}"]`).join(',');
+        session_info.find(query).addClass("HighlightedLogEntry")
+            .first().scrollTop(0);
+    }
+}
 
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');

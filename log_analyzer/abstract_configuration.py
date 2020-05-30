@@ -33,7 +33,7 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
 
 class AbstractSessionInfo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
+    def parse_log_entry(self, entry: LogEntry, id: int) -> SESSION_INFO:
         raise Exception()
 
     @abc.abstractmethod

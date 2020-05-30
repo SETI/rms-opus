@@ -4,11 +4,10 @@ import itertools
 import math
 import re
 import statistics
-from enum import Flag
 from ipaddress import IPv4Address
 from operator import methodcaller, itemgetter, attrgetter
 from pathlib import Path
-from typing import List, Dict, TextIO, Tuple, Sequence, Optional, Any, Callable, Iterable, cast,  TypeVar
+from typing import List, Dict, TextIO, Tuple, Sequence, Optional, Any, Callable, Iterable, cast, TypeVar, Mapping, Set
 from os.path import dirname
 
 from abstract_configuration import AbstractBatchHtmlGenerator
@@ -25,6 +24,8 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
+ExtendedOrderedOutput = Tuple[List[Tuple[T, int, List[List[Session]]]],
+                              Mapping[Tuple[T, Session], Set[int]]]
 
 class HtmlGenerator(AbstractBatchHtmlGenerator):
     _configuration: 'Configuration'
@@ -51,10 +52,11 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
         output_generator: Iterable[str] = template.generate(context=self, host_infos_by_ip=self._host_infos_by_ip)
-        lines  = (line.strip()
-                  for chunks in output_generator
-                  for line in chunks.split('\n') if line)
-        directory = f'{dirname(output.name)}/{self._sessions_relative_directory}' if self._sessions_relative_directory else None
+        lines = (line.strip()
+                 for chunks in output_generator
+                 for line in chunks.split('\n') if line)
+        directory = (f'{dirname(output.name)}/{self._sessions_relative_directory}'
+                     if self._sessions_relative_directory else None)
         current_output = output
         file_output = None
         for line in lines:
@@ -62,7 +64,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                 match = re.match(r"[<]+ ([\w\d]+) (.*)", line)
                 assert match
                 if directory:
-                    assert file_output is None or  file_output.closed
+                    assert file_output is None or file_output.closed
                     file_name = directory + match.group(1) + ".html"
                     Path(file_name).parent.mkdir(parents=True, exist_ok=True)
                     current_output = file_output = open(file_name, "w")
@@ -130,20 +132,25 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     def generate_ordered_metadata(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(lambda si: si.get_metadata_names())
 
-    def generate_ordered_info_flags(self) -> Sequence[Tuple[Flag, int, List[List[Session]]]]:
-        return self.__collect_sessions_by_info(lambda si: si.get_info_flags().as_list(), InfoFlags)
+    def generate_ordered_info_flags(self) -> ExtendedOrderedOutput[InfoFlags]:
+        def get_info_flags(si: 'SessionInfo') -> Iterable[Tuple[InfoFlags, Set[int]]]:
+            info_flags = si.get_info_flags()
+            yield from info_flags.items()
+            if InfoFlags.PERFORMED_SEARCH not in info_flags:
+                yield InfoFlags.DID_NOT_PERFORM_SEARCH, set()
+        return self.__collect_sessions_by_info_extended(get_info_flags, InfoFlags)
 
     def generate_ordered_sort_lists(self) -> Sequence[Tuple[Tuple[str], int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(methodcaller("get_sort_list_names"))
 
-    def generate_ordered_help_files(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
-        return self.__collect_sessions_by_info(methodcaller("get_help_files"))
+    def generate_ordered_help_files(self) -> ExtendedOrderedOutput[str]:
+        return self.__collect_sessions_by_info_extended(lambda si:si.get_help_files().items())
 
     def generate_ordered_product_types(self) -> Sequence[Tuple[str, int, List[List[Session]]]]:
         return self.__collect_sessions_by_info(methodcaller("get_product_types"))
 
     def generate_ordered_unmatched_widgets(self) -> Sequence[Tuple[slug.Family, int, List[List[Session]]]]:
-        temp = self.__collect_sessions_by_info(methodcaller("get_unmatched_widgets"))
+        temp = self.__collect_sessions_by_info(lambda si: si.get_unmatched_widgets())
         return temp
 
     def get_product_types_count(self) -> int:
@@ -212,6 +219,29 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             result.sort(key=itemgetter(0))
             result.sort(key=itemgetter(1), reverse=True)
         return result
+
+    def __collect_sessions_by_info_extended(self,
+            func: Callable[['SessionInfo'], Iterable[Tuple[T, Set[int]]]],
+            fixed: Optional[Iterable[T]] = None) -> ExtendedOrderedOutput[T]:
+        info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
+        mapping_dict: Dict[Tuple[T, Session], Set[int]] = collections.defaultdict(set)
+        for session in self._sessions:
+
+            session_info = self.__to_session_info(session)
+            for item, ids in func(session_info):
+                info_dict[item].append(session)
+                mapping_dict[item, session] = ids
+
+        if fixed:
+            result = [(item, len(info_dict[item]), self.__group_sessions_by_host_id(info_dict[item]))
+                      for item in fixed]
+        else:
+            result = [(item, len(sessions), self.__group_sessions_by_host_id(sessions))
+                      for item, sessions in info_dict.items()]
+            # Sort the outer list secondarily by whatever item we're looking at, and primarily by the count of that item
+            result.sort(key=itemgetter(0))
+            result.sort(key=itemgetter(1), reverse=True)
+        return result, mapping_dict
 
     def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
         sessions.sort(key=lambda session: session.start_time())
