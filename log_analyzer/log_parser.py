@@ -8,7 +8,7 @@ from ipaddress import IPv4Address
 from pathlib import Path
 from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
-from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
+from abstract_configuration import AbstractConfiguration, AbstractSessionInfo, LogId
 from ip_to_host_converter import IpToHostConverter
 from log_entry import LogEntry
 
@@ -170,13 +170,13 @@ class LogParser:
                 current_session = live_sessions[entry.host_ip].with_timeout(next_timeout)
                 live_sessions[entry.host_ip] = current_session
                 session_info = current_session.session_info
-                entry_info, _ = session_info.parse_log_entry(entry, 0)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
             else:
                 is_just_created_session = True
                 session_info = self._configuration.create_session_info()
-                entry_info, _ = session_info.parse_log_entry(entry, 0)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
                 current_session = LiveSession(host_ip=entry.host_ip, session_info=session_info,
@@ -212,7 +212,7 @@ class LogParser:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
                 session_info = self._configuration.create_session_info(uses_html=uses_html)
-                entry_id = 1
+                entry_id = LogId(1)
                 entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                 if not entry_info:
                     continue
@@ -231,7 +231,7 @@ class LogParser:
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()
                     session_end_time = entry.time + self._session_timeout
-                    entry_id += 1
+                    entry_id = LogId(entry_id + 1)
                     entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                     if entry_info:
                         current_session_entries.append(create_session_entry(entry, entry_info, opus_url, entry_id))

@@ -179,7 +179,7 @@ class QueryHandler:
             self._session_info.fetched_gallery()
 
         if result and query_type == 'dataimages':
-            self._session_info.update_info_flags(tentative_flag)
+            self._session_info.register_info_flags(tentative_flag)
 
         return result, url
 
@@ -194,10 +194,13 @@ class QueryHandler:
 
         self._session_info.changed_search_slugs()
         for family in sorted(all_search_families):
+            current_result_length = len(result)
             if family not in new_info:
                 result.append(f'Remove Search: "{family.label}"')
             else:
                 self.__handle_search_info_for_family(family, old_info, new_info, result)
+            if current_result_length != len(result):
+                self._session_info.register_search_slug(family)
 
     def __handle_search_info_for_family(self, family: slug.Family, old_info: SearchSlugInfo, new_info: SearchSlugInfo,
                                         result: List[str]) -> None:
@@ -302,17 +305,20 @@ class QueryHandler:
 
     def __get_metadata_info(self, old_info: Optional[MetadataSlugInfo], new_info: MetadataSlugInfo,
                             result: List[str]) -> None:
+
+        new_metadata_families = set(new_info.keys())
+        old_metadata_families = set(new_info.keys()) if old_info is not None else {}
+
         if old_info is None:
-            new_metadata_families = set(new_info.keys())
             if new_metadata_families == set(self._default_metadata_slug_info.keys()):
                 return
             metadata_labels = [new_info[family].label for family in sorted(new_metadata_families)]
             quoted_metadata_labels = self._session_info.quote_and_join_list(sorted(metadata_labels))
+            for family in new_metadata_families:
+                self._session_info.register_metadata_slug(family)
             result.append(f'Starting with Selected Metadata: {quoted_metadata_labels}')
             return
 
-        old_metadata_families = set(old_info.keys())
-        new_metadata_families = set(new_info.keys())
         if new_metadata_families == old_metadata_families:
             return
         if new_metadata_families == set(self._default_metadata_slug_info.keys()):
@@ -320,8 +326,9 @@ class QueryHandler:
             return
         self._session_info.changed_metadata_slugs()
         all_metadata_families = old_metadata_families.union(new_metadata_families)
-        added_metadata, removed_metadata = [], []
+        added_metadata, removed_metadata =  [], []
         for family in sorted(all_metadata_families):
+            old_length = len(removed_metadata) + len(added_metadata)
             old_slug_info = old_info.get(family)
             new_slug_info = new_info.get(family)
             if old_slug_info and not new_slug_info:
@@ -333,6 +340,8 @@ class QueryHandler:
                 else:
                     added_metadata.append(
                         self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
+            if old_length != len(removed_metadata) + len(added_metadata):
+                self._session_info.register_metadata_slug(family)
 
         result.extend(removed_metadata)
         result.extend(added_metadata)
@@ -353,7 +362,8 @@ class QueryHandler:
                 sort_list.append(slug_info)
                 result.append(f'        "{slug_info.label}" ({order})')
 
-            self._session_info.add_sort_slugs_list(sort_list)
+            self._session_info.register_sort_slugs_changed(sort_list)
+            self._session_info.register_info_flags(InfoFlags.CHANGED_SORT_ORDER)
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
