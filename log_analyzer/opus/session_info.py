@@ -32,7 +32,7 @@ class SessionInfo(AbstractSessionInfo):
     _help_files_usage: Dict[str, Set[LogId]]
     _product_types_usage: Dict[str, Set[LogId]]
     _product_types_count: int
-    _widgets_usage: Dict[slug.Family, Set[LogId]]
+    _widgets_usage: Dict[str, Set[LogId]]
     _info_flags_usage: Dict[InfoFlags, Set[LogId]]
     _sessioned_downloads_usage: Dict[str, Tuple[List[int], Set[LogId]]]
     _sessionless_downloads_usage: List[Tuple[str, LogEntry]]
@@ -121,7 +121,7 @@ class SessionInfo(AbstractSessionInfo):
     def register_info_flags(self, flags: InfoFlags) -> None:
         self._info_flags_usage[flags].add(self._current_id)
 
-    def register_search_slug(self, family: slug.Family) -> None:
+    def register_search_slug(self, family: slug.Family) -> None :
         self._search_slugs_usage[family.label].add(self._current_id)
 
     def register_metadata_slug(self, family: slug.Family) -> None:
@@ -143,7 +143,7 @@ class SessionInfo(AbstractSessionInfo):
         self._product_types_count += 1
 
     def register_widget(self, family: slug.Family) -> None:
-        self._widgets_usage[family].add(self._current_id)
+        self._widgets_usage[family.label].add(self._current_id)
 
     def register_help_file(self, file_name: str) -> None:
         self._help_files_usage[file_name].add(self._current_id)
@@ -161,10 +161,10 @@ class SessionInfo(AbstractSessionInfo):
     def get_metadata_names_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
         for name, log_ids in self._metadata_slugs_usage.items():
             if name in self._widgets_usage:
-                log_ids = log_ids + self._widgets_usage[name]
+                log_ids = log_ids.union(self._widgets_usage[name])
             yield name, log_ids
 
-    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[slug.Family, Set[LogId]]]:
+    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
         for widget, ids in self._widgets_usage.items():
             if widget not in self._metadata_slugs_usage:
                 yield widget, ids
@@ -188,12 +188,6 @@ class SessionInfo(AbstractSessionInfo):
 
     def get_sessioned_downloads_usage(self) -> Mapping[str, Tuple[List[int], Set[LogId]]]:
         return self._sessioned_downloads_usage
-
-    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[slug.Family, Set[LogId]]]:
-        used = {x.family for x in self._session_search_slugs.values()}
-        for widget, ids in self._widgets_usage.items():
-            if widget not in used:
-                yield widget, ids
 
     def parse_log_entry(self, entry: LogEntry, log_id: LogId) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""

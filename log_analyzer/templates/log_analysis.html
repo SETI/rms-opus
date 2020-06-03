@@ -98,7 +98,7 @@ because it requires that all the navigation tabs be within a single unordered li
 </ul>
 </nav>
 
-<div class="tab-content">
+<div class="tab-content" id="all-session-infos">
 
 {% set name_and_glyph = (
     ("HAS_SEARCH", "search"),
@@ -198,7 +198,7 @@ because it requires that all the navigation tabs be within a single unordered li
     <table>
     {% for entry in session.entries %}
         {% for line in entry.data %}
-        <tr data-id="{{ entry.id }}">
+        <tr class="{{ context.log_entry_to_classes(session, entry) | join(' ') }}">
             {% if loop.first %}
                 {% if entry.opus_url %}
                     <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
@@ -267,9 +267,10 @@ $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
     $('.SessionLink').click(function() {
+        // The id of the session we want to display
         let target = $(this).data('target');
-        let data_log = $(this).data('logs') || '';
-        let log_entries = data_log.toString().split(',');
+        // The class of all the lines in that session that we want highlighted
+        let target_class = $(this).closest("[data-target-class]", $("all-session_infos")).data("target-class")
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
@@ -286,7 +287,7 @@ $(function() {
             let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
             function callback() {
                 // Note.  This cannot be replaced by => function because we need to bind "this"
-	            highlight_and_scroll_session_info($(this), log_entries);
+	            highlight_and_scroll_session_info($(this), target_class);
             }
             $('<div/>', {id: node_id, "class": "{{ session_info_classes }} active"})
                 // Add the node to the DOM
@@ -298,17 +299,16 @@ $(function() {
 {% endif %}
         // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
         session_info.addClass('active');
-        highlight_and_scroll_session_info(session_info, log_entries);
+        highlight_and_scroll_session_info(session_info, target_class);
         return false;
     })
 });
 
 
-function highlight_and_scroll_session_info(session_info, ids) {
+function highlight_and_scroll_session_info(session_info, target_class) {
     $('#right').scrollTop(0);
-    if (ids) {
-        let query = ids.map(id => `tr[data-id="${id}"]`).join(',');
-        let lines = session_info.find(query);
+    if (target_class) {
+        let lines = session_info.find(`.${target_class}`);
         lines.addClass("HighlightedLogEntry");
         if (lines.length > 0) {
             lines[0].scrollIntoView();

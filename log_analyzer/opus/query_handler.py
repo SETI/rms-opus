@@ -4,14 +4,14 @@ import urllib.parse
 from collections import defaultdict
 from enum import Enum, auto
 from functools import reduce
-from typing import Dict, Tuple, List, Optional, Any, cast, NamedTuple, Sequence
+from typing import Dict, Tuple, List, Optional, Any, cast, NamedTuple, Sequence, Set, Union
 
 from markupsafe import Markup
 
 from log_entry import LogEntry
 from opus import slug as slug
 from opus.configuration_flags import InfoFlags
-from opus.slug import FamilyType, Info
+from opus.slug import FamilyType, Info, Family
 
 
 class SearchClause(NamedTuple):
@@ -307,7 +307,7 @@ class QueryHandler:
                             result: List[str]) -> None:
 
         new_metadata_families = set(new_info.keys())
-        old_metadata_families = set(new_info.keys()) if old_info is not None else {}
+        old_metadata_families = set(new_info.keys()) if old_info is not None else set()
 
         if old_info is None:
             if new_metadata_families == set(self._default_metadata_slug_info.keys()):
@@ -326,7 +326,8 @@ class QueryHandler:
             return
         self._session_info.changed_metadata_slugs()
         all_metadata_families = old_metadata_families.union(new_metadata_families)
-        added_metadata, removed_metadata =  [], []
+        added_metadata: List[str] = []
+        removed_metadata: List[str] = []
         for family in sorted(all_metadata_families):
             old_length = len(removed_metadata) + len(added_metadata)
             old_slug_info = old_info.get(family)

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from abstract_configuration import AbstractBatchHtmlGenerator, LogId
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
-from log_parser import HostInfo, Session
+from log_parser import HostInfo, Session, Entry
 from . import slug
 from .configuration_flags import IconFlags, InfoFlags
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
-HtmlStatisticsOutput = Tuple[List[Tuple[T, int, List[List[Session]]]], Mapping[Tuple[T, Session], Set['LogId']]]
+HtmlStatisticsOutput = Tuple[List[Tuple[T, int, List[List[Session]]]], Mapping[T, str]]
 
 
 class HtmlGenerator(AbstractBatchHtmlGenerator):
@@ -36,6 +36,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     _ip_to_host_name: Dict[IPv4Address, str]
     _flag_name_to_flag: Dict[str, IconFlags]
     _sessions_relative_directory: Optional[str]
+
+    _counter: int
+    _log_entry_to_classes: Dict[Tuple[Session, LogId], Set[str]]
 
     def __init__(self, configuration: 'Configuration', host_infos_by_ip: List[HostInfo]):
         self._configuration = configuration
@@ -50,6 +53,8 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             if not sessions_relative_directory.endswith('/'):
                 sessions_relative_directory += '/'
         self._sessions_relative_directory = sessions_relative_directory
+        self._counter = 0
+        self._log_entry_to_classes = collections.defaultdict(set)
 
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
@@ -119,6 +124,10 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         """Returns the number of sessions"""
         return len(self._sessions)
 
+    def log_entry_to_classes(self, session: Session, log_entry: Entry) -> Sequence[str]:
+        # They don't need to be sorted, but it looks nicer.
+        return sorted(self._log_entry_to_classes[session, log_entry.id])
+
     def flag_name_to_flag(self, name: str) -> IconFlags:
         """Convert a flag name into the actual icon flag with that name """
         return self._flag_name_to_flag[name]
@@ -159,7 +168,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
 
         return self.__collect_sessions_by_info(get_info)
 
-    def generate_ordered_unmatched_widgets(self) -> HtmlStatisticsOutput[slug.Family]:
+    def generate_ordered_unmatched_widgets(self) -> HtmlStatisticsOutput[str]:
         return self.__collect_sessions_by_info(lambda si: si.get_unmatched_widgets_usage())
 
     def get_product_types_count(self) -> int:
@@ -176,36 +185,42 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         def start_time(self) -> datetime.datetime:
             return self.log_entry.time
 
-    def generate_ordered_download_files(self) -> Tuple[List[Tuple[str, int, List[Tuple[Session, int]]]], Dict[Tuple[str, Session], Set['LogId']]]:
-        info_dict: Dict[str, List[Session]] = collections.defaultdict(list)
-        mapping_dict: Dict[Tuple[str, Session], Set['LogId']] = collections.defaultdict(set)
-        sizing_dict: Dict[Any, int] = collections.defaultdict(int)
+    def generate_ordered_download_files(self) -> Tuple[List[Tuple[str, int, List[Tuple[Session, int]]]],
+                                                       Dict[str, str]]:
+        value_to_sessions: Dict[str, List[Session]] = collections.defaultdict(list)
+        sizing_dict: Dict[Tuple[str, Session], int] = collections.defaultdict(int)
+        value_to_class: Dict[str, str] = {}
 
         for session in self._sessions:
             session_info = self.__to_session_info(session)
 
-            for filename, ([size], ids) in session_info.get_sessioned_downloads_usage().items():
-                info_dict[filename].append(session)
-                mapping_dict[filename, session].update(ids)
+            for filename, ([size], log_ids) in session_info.get_sessioned_downloads_usage().items():
+                value_to_sessions[filename].append(session)
                 sizing_dict[filename, session] += size
+                if filename not in value_to_class:
+                    value_to_class[filename] = self.__get_next_class_name()
+                for log_id in log_ids:
+                    self._log_entry_to_classes[session, log_id].add(value_to_class[filename])
 
         for filename, entry in self._configuration.sessionless_downloads:
             session = cast(Session, HtmlGenerator.FakeSession(entry))
-            info_dict[filename].append(session)
+            value_to_sessions[filename].append(session)
             sizing_dict[filename, session] += (entry.size or 0)
+            if filename not in value_to_class:
+                value_to_class[filename] = self.__get_next_class_name()
 
         def get_sessions_for_filename(filename: str) -> Tuple[str, int, List[Tuple[Session, int]]]:
-            sessions = info_dict[filename]
+            sessions = value_to_sessions[filename]
             sessions_and_sizes = [(session, sizing_dict[filename, session]) for session in sessions]
             total_size = sum(size for _, size in sessions_and_sizes)
             sessions_and_sizes.sort(key=lambda ss: ss[0].start_time())
             return filename, total_size, sessions_and_sizes
         
-        result: List[Tuple[str, int, List[Tuple[Session, int]]]] = [get_sessions_for_filename(filename) for filename in info_dict.keys()]
-        return result, mapping_dict
+        result = [get_sessions_for_filename(filename) for filename in value_to_sessions.keys()]
+        return result, value_to_class
 
     def get_download_statistics(self) -> Dict[str, Any]:
-        result, _ = self.generate_ordered_download_files()
+        result, *_ = self.generate_ordered_download_files()
         data = [size for _, size, _ in result]
         mean = int(statistics.mean(data))
         gmean = int(math.exp(statistics.mean(map(math.log, data))))
@@ -232,26 +247,36 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         """Useful for debugging.  The Jinga template can print out information."""
         print(arg)
 
+    def __get_next_class_name(self) -> str:
+        self._counter += 1
+        return "Opus" + str(self._counter)
+
     def __collect_sessions_by_info(self, func: Callable[['SessionInfo'], Iterable[Tuple[T, Iterable['LogId']]]],
                                    fixed: Optional[Iterable[T]] = None) -> HtmlStatisticsOutput[T]:
-        info_dict: Dict[T, List[Session]] = collections.defaultdict(list)
-        mapping_dict: Dict[Tuple[T, Session], Set['LogId']] = collections.defaultdict(set)
+        value_to_sessions: Dict[T, List[Session]] = collections.defaultdict(list)
+        value_to_class: Dict[T, str] = {}
         for session in self._sessions:
             session_info = self.__to_session_info(session)
-            for item, ids in func(session_info):
-                info_dict[item].append(session)
-                mapping_dict[item, session].update(ids)
+            for item, log_ids in func(session_info):
+                if item not in value_to_class:
+                    value_to_class[item] = self.__get_next_class_name()
+                value_to_sessions[item].append(session)
+                for log_id in log_ids:
+                    self._log_entry_to_classes[session, log_id].add(value_to_class[item])
 
         if fixed:
-            result = [(item, len(info_dict[item]), self.__group_sessions_by_host_id(info_dict[item]))
+            for item in fixed:
+                if item not in value_to_class:
+                    value_to_class[item] = self.__get_next_class_name()
+            result = [(item, len(value_to_sessions[item]), self.__group_sessions_by_host_id(value_to_sessions[item]))
                       for item in fixed]
         else:
             result = [(item, len(sessions), self.__group_sessions_by_host_id(sessions))
-                      for item, sessions in info_dict.items()]
+                      for item, sessions in value_to_sessions.items()]
             # Sort the outer list secondarily by whatever item we're looking at, and primarily by the count of that item
             result.sort(key=itemgetter(0))
             result.sort(key=itemgetter(1), reverse=True)
-        return result, mapping_dict
+        return result, value_to_class
 
     def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
         sessions.sort(key=lambda session: session.start_time())

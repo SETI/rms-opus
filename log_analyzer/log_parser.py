@@ -30,7 +30,7 @@ class Entry(NamedTuple):
     relative_start_time: datetime.timedelta
     data: List[str]
     opus_url: Optional[str]
-    id: int
+    id: LogId
 
     def target_url(self) -> str:
         return self.log_entry.url.geturl()
@@ -219,7 +219,8 @@ class LogParser:
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: List[str], opus_url: Optional[str], id:int) -> Entry:
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str],
+                                         opus_url: Optional[str], id:LogId) -> Entry:
                     return Entry(log_entry=log_entry,
                                  relative_start_time=entry.time - session_start_time,
                                  data=entry_info, opus_url=opus_url, id=id)

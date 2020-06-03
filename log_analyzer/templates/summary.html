@@ -18,11 +18,11 @@
 
 {% macro summarize_info(header_name, summary_info_x) %}
 {% with %}
-    {%  set summary_info, log_info = summary_info_x %}
+    {%  set summary_info, value_to_class = summary_info_x %}
     {%  set session_count = context.session_count %}
     <details class="Summary1"><summary>{{ header_name }}</summary>
         {% for name, count, grouped_sessions in summary_info %}
-            <details class="Summary2">
+            <details class="Summary2" data-target-class="{{ value_to_class[name] }}">
                 <summary>{{ caller(name) }}
                     <span class="badge">{{ count }} ({{ "{:.1%}".format(count / session_count) }})</span>
                 </summary>
@@ -36,7 +36,7 @@
                         <ul class="SummarySession">
                             {% for session in sessions %}
                                 <li>
-                                    <a href="#" class="SessionLink" data-target="#{{ session.id }}" data-logs="{{ log_info[(name, session)] | join(',') }}">
+                                    <a href="#" class="SessionLink" data-target="#{{ session.id }}">
                                         {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
                                 </li>
                             {% endfor %}
@@ -65,8 +65,8 @@
 {{ summarize_slugs('Constrained Search Terms', context.generate_ordered_search()) }}
 <hr/>
 
-{% call(slug_family) summarize_info('Unconstrained Search Terms', context.generate_ordered_unmatched_widgets()) %}
-    {{  slug_family.label }}
+{% call(name) summarize_info('Unconstrained Search Terms', context.generate_ordered_unmatched_widgets()) %}
+    {{  name }}
 {% endcall %}
 <hr/>
 
@@ -86,16 +86,16 @@
 {% with %}
 <details class="Summary1 open"><summary>Downloads</summary>
     <a href="#" class="SessionLink Summary2" data-target="#Histogram-Downloads">Histogram</a>
-    {% set summary_info, log_info = context.generate_ordered_download_files() %}
+    {% set summary_info, value_to_class = context.generate_ordered_download_files() %}
     {% for name, total_size, sessions_and_sizes in summary_info %}
-        <details class="Summary2">
+        <details class="Summary2" data-target-class="{{ value_to_class[name] }}">
             <summary>{{ name }}<span class="badge">({{ sessions_and_sizes|length }})</span> {{ total_size|filesizeformat }}
             </summary>
             <div class="Summary3">
                 {% for session, size in sessions_and_sizes %}
                     {{- session_ip_or_name(session) -}}
                     {%  if session.id %}
-                        <a href="#" class="SessionLink" data-target="#{{ session.id }}" data-logs="{{ log_info[(name, session)] | join(',') }}">
+                        <a href="#" class="SessionLink" data-target="#{{ session.id }}">
                             {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }}
                         </a>
                     {%  else %}
@@ -120,9 +120,9 @@
 
 <details class="Summary1"><summary>Product Types</summary>
     Total calls: {{  product_types_count }}
-    {%  set summary_info, log_info =  context.generate_ordered_product_types()%}
+    {%  set summary_info, value_to_class =  context.generate_ordered_product_types()%}
     {% for name, group_count, grouped_sessions in summary_info %}
-        <details class="Summary2">
+        <details class="Summary2" data-target-class="{{ value_to_class[name] }}">
             <summary>{{ name }} {{ count_percent(group_count) }} </summary>
             {% for sessions in grouped_sessions %}
                 <details class="Summary3">
@@ -131,7 +131,7 @@
                     <ul class="SummarySession">
                         {% for session, session_count in context.run_length_encode(sessions) %}
                             <li>
-                                <a href="#" class="SessionLink" data-target="#{{ session.id }}" data-logs="{{  log_info[(name, session)] | join(',') }}">
+                                <a href="#" class="SessionLink" data-target="#{{ session.id }}">
                                     {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
                                 {{ count_percent(session_count) }}
                             </li>
