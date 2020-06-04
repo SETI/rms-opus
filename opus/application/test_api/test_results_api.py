@@ -749,11 +749,9 @@ class ApiResultsTests(TestCase, ApiTestHelper):
     def test__api_product_types_vg_iss_2_s_c4360004(self):
         "[test_results_api.py] /api/product_types: vg-iss-2-s-c4360004"
         url = '/api/product_types/vg-iss-2-s-c4360004.json'
-        expected = [{"product_type": "vgiss_raw", "description": "Raw Image"}, {"product_type": "vgiss_cleaned", "description": "Cleaned Image"}, {"product_type": "vgiss_calib", "description": "Calibrated Image"}, {"product_type": "vgiss_geomed", "description": "Geometrically Corrected Image"}, {"product_type": "vgiss_resloc", "description": "Reseau Table"}, {"product_type": "vgiss_geoma", "description": "Geometric Tiepoint Table"}, {"product_type": "inventory", "description": "Target Body Inventory"}, {"product_type": "planet_geometry", "description": "Planet Geometry Index"}, {"product_type": "moon_geometry", "description": "Moon Geometry Index"}, {"product_type": "ring_geometry", "description": "Ring Geometry Index"}, {"product_type": "browse_thumb", "description": "Browse Image (thumbnail)"}, {"product_type": "browse_small", "description": "Browse Image (small)"}, {"product_type": "browse_medium", "description": "Browse Image (medium)"}, {"product_type": "browse_full", "description": "Browse Image (full)"}]
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_product_types_vg_iss_2_s_c4360004.json')
 
     def test__api_product_types_COISS_2002(self):
         "[test_results_api.py] /api/product_types: COISS_2002"
         url = '/api/product_types.json?volumeid=COISS_2002'
-        expected = [{"product_type": "coiss_raw", "description": "Raw image"}, {"product_type": "coiss_calib", "description": "Calibrated image"}, {"product_type": "coiss_thumb", "description": "Extra preview (thumbnail)"}, {"product_type": "coiss_medium", "description": "Extra preview (medium)"}, {"product_type": "coiss_full", "description": "Extra preview (full)"}, {"product_type": "inventory", "description": "Target Body Inventory"}, {"product_type": "planet_geometry", "description": "Planet Geometry Index"}, {"product_type": "moon_geometry", "description": "Moon Geometry Index"}, {"product_type": "ring_geometry", "description": "Ring Geometry Index"}, {"product_type": "browse_thumb", "description": "Browse Image (thumbnail)"}, {"product_type": "browse_small", "description": "Browse Image (small)"}, {"product_type": "browse_medium", "description": "Browse Image (medium)"}, {"product_type": "browse_full", "description": "Browse Image (full)"}]
-        self._run_json_equal(url, expected)
+        self._run_json_equal_file(url, 'api_product_types_COISS_2002.json')
