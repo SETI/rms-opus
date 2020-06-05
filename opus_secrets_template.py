@@ -86,9 +86,10 @@ OPUS_STATIC_ROOT = '<OPUS_STATIC_ROOT>'
 # same server without causing memcached cache key conflicts.
 CACHE_SERVER_PREFIX = '<CACHE_SERVER_PREFIX>'
 
-# Where to put zipped cart files for downloading
+# Where to put zipped cart files for downloading and the manifest file
 # Needs a TRAILING SLASH
 TAR_FILE_PATH = '<TAR_FILE_PATH>/'
+MANIFEST_FILE_PATH = '<MANIFEST_FILE_PATH>/'
 
 # The root URL used to retrieve zipped collections files
 # Needs a TRAILING SLASH
