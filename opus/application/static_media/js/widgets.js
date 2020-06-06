@@ -1366,14 +1366,18 @@ var o_widgets = {
                 o_search.getHinting(slug);
             }
 
-            // if a RANGE widget that has no qtype & unit inputs just got open, we need to
-            // update opus.selections to make sure input slugs exist.
-            if (widgetInputs.hasClass("RANGE") && !qtypeInputs.length && !unitInput.length) {
+            // if an input widget just got opened and input slugs are not in opus.selections, 
+            // we need to update opus.selections to make sure input slugs exist.
+            if (widgetInputs.hasClass("RANGE")) {
                 if (!opus.selections[`${slug}1`]) {
                     opus.selections[`${slug}1`] = [null];
                 }
                 if (!opus.selections[`${slug}2`]) {
                     opus.selections[`${slug}2`] = [null];
+                }
+            } else if (widgetInputs.hasClass("STRING")) {
+                if (!opus.selections[`${slug}`]) {
+                    opus.selections[`${slug}`] = [null];
                 }
             }
 
