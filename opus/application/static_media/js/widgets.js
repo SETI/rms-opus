@@ -1582,9 +1582,9 @@ var o_widgets = {
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
 
                 let newHash = o_hash.getHashStrFromSelections();
-                // // Make sure the existing STRING input value is not passed to stringsearchchoices
-                // // API call. This will make sure each autocomplete dropdown results for individual
-                // // input will not be affected by others.
+                // Make sure the existing STRING input value is not passed to stringsearchchoices
+                // API call. This will make sure each autocomplete dropdown results for individual
+                // input will not be affected by others.
                 let hashArray = newHash.split("&");
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
@@ -1594,7 +1594,9 @@ var o_widgets = {
                         newHashArray.push(slugValuePair);
                     }
                 }
-                newHashArray.push(`${slugWithCounter}=${currentValue}`);
+
+                let encodedValue = o_hash.encodeSlugValue(currentValue);
+                newHashArray.push(`${slugWithCounter}=${encodedValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
