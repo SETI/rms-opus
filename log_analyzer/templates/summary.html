@@ -3,7 +3,9 @@
     {% for host_info in host_infos_by_ip|sort(attribute="total_time", reverse=True) %}
         <details class="Summary2">
             {% set this_count = host_info.sessions|length %}
-            <summary>{{ session_ip_or_name(host_info.sessions[0]) }} ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
+            <summary>
+                {{ session_ip_or_name(host_info.sessions[0]) }}
+                ({{ host_info.total_time }}) <span class="badge">{{ this_count }}</span></summary>
             <ul class="SummarySession">
                 {% for session in host_info.sessions|sort(attribute="total_time", reverse=True) %}
                     <li>
@@ -57,7 +59,7 @@
 {% endmacro %}
 <hr/>
 
-{% call(flag) summarize_info('Actions', context.generate_ordered_info_flags()) %}
+{% call(flag) summarize_info('Action', context.generate_ordered_info_flags()) %}
     {{  flag.get_fancy_name() }}
 {% endcall %}
 <hr/>
@@ -93,7 +95,7 @@
             </summary>
             <div class="Summary3">
                 {% for session, size in sessions_and_sizes %}
-                    {{- session_ip_or_name(session) -}}
+                    {{ session_ip_or_name(session) }}
                     {%  if session.id %}
                         <a href="#" class="SessionLink" data-target="#{{ session.id }}">
                             {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }}

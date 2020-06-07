@@ -220,10 +220,10 @@ class LogParser:
                 session_start_time = entry.time
 
                 def create_session_entry(log_entry: LogEntry, entry_info: List[str],
-                                         opus_url: Optional[str], id:LogId) -> Entry:
+                                         opus_url: Optional[str], log_id: LogId) -> Entry:
                     return Entry(log_entry=log_entry,
                                  relative_start_time=entry.time - session_start_time,
-                                 data=entry_info, opus_url=opus_url, id=id)
+                                 data=entry_info, opus_url=opus_url, id=log_id)
 
                 current_session_entries = [create_session_entry(entry, entry_info, opus_url, entry_id)]
 

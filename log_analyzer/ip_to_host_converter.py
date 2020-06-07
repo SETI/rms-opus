@@ -64,8 +64,8 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
     def __init__(self, file_name: str):
         super().__init__()
         self._database = shelve.open(file_name)
-        self._purge_old_database_entries()
-        self._cached = self._created = self._expired = 0
+        self._expired = self._purge_old_database_entries()
+        self._cached = self._created = 0
         atexit.register(self._close)
 
     def _convert(self, ip: IPv4Address) -> Optional[str]:
@@ -80,16 +80,20 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         self._database[str(ip)] = (name, expiration)
         return name
 
-    def _purge_old_database_entries(self) -> None:
+    def _purge_old_database_entries(self) -> int:
         now = datetime.datetime.now()
         expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
+        print(f"There are {len(expired_keys)} expired keys")
         for key in expired_keys:
+            print(f"Deleting expired key '{key}'")
             del self._database[key]
-        self._expired = len(expired_keys)
+        print(f"There are {len(expired_keys)} expired keys")
+        return len(expired_keys)
 
     def _close(self) -> None:
+        oldest = min(expiration for (_, expiration) in self._database.values())
         self._database.close()
-        print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}. ")
+        print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}; oldest {oldest}.")
 
 
 class FakeIpToHostConverter(IpToHostConverter):

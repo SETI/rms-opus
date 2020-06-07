@@ -11,7 +11,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
 
-<style>
+<!--suppress CssUnusedSymbol -->
+    <style>
 #left, #right, #gutter {
   position: absolute;
   top: 0;
@@ -65,6 +66,7 @@ table.SessionLinkTable {
 }
 .Summary3 {
   margin-left: 10pt
+
 }
 .show_all {   /* Used by --xxshowall for URLs that would ordinarily be ignored. */
   white-space: nowrap;
@@ -269,43 +271,45 @@ $(function() {
     $('.SessionLink').click(function() {
         // The id of the session we want to display
         let target = $(this).data('target');
-        // The class of all the lines in that session that we want highlighted
-        let target_class = $(this).closest("[data-target-class]", $("all-session_infos")).data("target-class")
+        // To find the class within the session that we want highlighted, we search up the hierarchy until we find
+        // an item marked data-target-class
+        let target_class = $(this).closest("[data-target-class]", $("#all-session-infos")).data("target-class");
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
         $('.SessionInfo.active').removeClass('active');
+        // Turn off all highlighting of log entries.
         $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
 
         // Mark as active all of the Session Links that point to this target so that they will be highlighted.
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
-        session_info = $(target);
+        let session_info = $(target);
 {% if context.sessions_relative_directory %}
         if (session_info.length === 0) {
             // The DOM node that we want to show doesn't exist.  Create it and load its content.
             let node_id = target.substr(1);
             let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
-            function callback() {
-                // Note.  This cannot be replaced by => function because we need to bind "this"
+            function load_callback() {
+                // Note.  This cannot be replaced by anonymous => function because they don't bind "this".
 	            highlight_and_scroll_session_info($(this), target_class);
             }
-            $('<div/>', {id: node_id, "class": "{{ session_info_classes }} active"})
+            $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
                 // Add the node to the DOM
                 .appendTo('#session-info-parent')
                 // And load its content.  Call the callback once the dom is loaded.
-                .load(session_location, callback);
+                .load(session_location, load_callback);
             return false;
         }
 {% endif %}
         // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        session_info.addClass('active');
         highlight_and_scroll_session_info(session_info, target_class);
         return false;
     })
 });
 
-
 function highlight_and_scroll_session_info(session_info, target_class) {
+    // Make it behave, it terms of events, like the tab pane that it was supposed to be
+    session_info.trigger('show.bs.tab').addClass("active").trigger("shown.bs.tab");
     $('#right').scrollTop(0);
     if (target_class) {
         let lines = session_info.find(`.${target_class}`);
