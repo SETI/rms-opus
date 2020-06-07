@@ -1,13 +1,14 @@
 import abc
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, NewType
 
 from markupsafe import Markup
 
 from log_entry import LogEntry
 
 SESSION_INFO = Tuple[List[str], Optional[str]]
+LogId = NewType('LogId', int)
 
 
 class AbstractConfiguration(metaclass=abc.ABCMeta):
@@ -33,7 +34,7 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
 
 class AbstractSessionInfo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
+    def parse_log_entry(self, entry: LogEntry, log_id: LogId) -> SESSION_INFO:
         raise Exception()
 
     @abc.abstractmethod

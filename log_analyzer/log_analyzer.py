@@ -119,16 +119,26 @@ def main(arguments: Optional[List[str]] = None) -> None:
 
 def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
     import pickle
+    import hashlib
+
+    log_files = sorted(args.log_files)
+    hash = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
+    filename = f'.logs/log-{hash[:8]}.db'
+
     try:
-        with open("log_entries.db", "rb") as input:
-            return cast(List[LogEntry], pickle.load(input))
-    except FileNotFoundError as e:
+        with open(filename, "rb") as data:
+            print(f"Reading logs from {filename}")
+            return cast(List[LogEntry], pickle.load(data))
+    except FileNotFoundError as _e:
         pass
 
     result = LogReader.read_logs(args.log_files)
-    with open("log_entries.db", "wb") as output:
+    with open(filename, "wb") as output:
         pickle.dump(result, output)
+        print(f"Caching logs as {filename}")
+
     return result
+
 
 if __name__ == '__main__':
     main()

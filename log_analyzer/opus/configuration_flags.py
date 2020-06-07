@@ -1,8 +1,7 @@
-from enum import Flag, auto
-from typing import Sequence
+from enum import Flag, auto, Enum
 
 
-class InfoFlags(Flag):
+class Action(Enum):
     PERFORMED_SEARCH = auto()
     DID_NOT_PERFORM_SEARCH = auto()
     VIEWED_BROWSE_TAB_AS_GALLERY = auto()
@@ -13,6 +12,7 @@ class InfoFlags(Flag):
     VIEWED_SLIDE_SHOW = auto()
     VIEWED_SELECT_METADATA = auto()
     CHANGED_SELECTED_METADATA = auto()
+    CHANGED_SORT_ORDER = auto()
     DOWNLOADED_CSV_FILE_FOR_ALL_RESULTS = auto()
     DOWNLOADED_CSV_FILE_FOR_ONE_OBSERVATION = auto()
     DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION = auto()
@@ -28,9 +28,6 @@ class InfoFlags(Flag):
         name = self.name.lower().replace("_", " ")\
             .replace("csv", "CSV").replace("zip", "ZIP").replace('pdf', "PDF").replace('url', 'URL')
         return name[0].upper() + name[1:]
-
-    def as_list(self) -> Sequence['InfoFlags']:
-        return [flag for flag in InfoFlags if flag in self]
 
 
 class IconFlags(Flag):

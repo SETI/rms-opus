@@ -30,22 +30,21 @@
 </div>
 
 <script>
-$(function()
-{
+function graph_ip_statistics() {
     {% with %}
-        {% set ip_data %}
-            {% for host_info in host_infos_by_ip %}
-                {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
-            {% endfor %}
-        {% endset %}
-        {% set session_data %}
-            {% for session in context.sessions %}
-                {{ [session.duration().total_seconds() / 60, 480.0]|min }},
-            {% endfor %}
-        {% endset %}
+    {% set ip_data %}
+    {% for host_info in host_infos_by_ip %}
+        {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
+    {% endfor %}
+    {% endset %}
+    {% set session_data %}
+    {% for session in context.sessions %}
+        {{ [session.duration().total_seconds() / 60, 480.0]|min }},
+    {% endfor %}
+    {% endset %}
 
-        const ip_data = [ {{ ip_data | replace('\n', '') | replace(' ', '') }} ];
-        const session_data = [ {{ session_data | replace('\n', '') | replace(' ', '') }} ];
+    const ip_data = [{{ ip_data | replace('\n', '') | replace(' ', '') }}];
+    const session_data = [{{ session_data | replace('\n', '') | replace(' ', '') }}];
     {% endwith %}
 
     let layout = {
@@ -75,11 +74,9 @@ $(function()
         direction: "decreasing",
     };
     Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout);
+}
 
-});
-
-$(function()
-{
+function graph_download_statistics() {
     const sizes = [{{ download_statistics.data | join(',') }}];
 
     const layout = {
@@ -99,9 +96,12 @@ $(function()
     layout.xaxis.tickprefix = "10^";
     const log10_sizes = sizes.map(value => Math.log10(value));
     Plotly.newPlot('file_downloads_log', [{x: log10_sizes, type: 'histogram'}], layout);
+}
 
+$(function() {
+    $('#Histogram-IP').one('show.bs.tab', graph_ip_statistics);
+    $('#Histogram-Downloads').one('show.bs.tab', graph_download_statistics);
 });
-
 
 
 </script>
