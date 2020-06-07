@@ -87,7 +87,6 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         for key in expired_keys:
             print(f"Deleting expired key '{key}'")
             del self._database[key]
-        print(f"There are {len(expired_keys)} expired keys")
         return len(expired_keys)
 
     def _close(self) -> None:

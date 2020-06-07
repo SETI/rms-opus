@@ -268,12 +268,17 @@ These markers are never nested.
 $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
-    $('.SessionLink').click(function() {
+    let session_info_root = $("#all-session-infos");
+
+    session_info_root.on('click', '.SessionLink', function (event)  {
+        // This event handler is atttached to an ancestore.
+        // $(clicked) is the node that was clicked, while $(this) is the ancestor node
+        let clicked = $(event.target)
         // The id of the session we want to display
-        let target = $(this).data('target');
+        let target = clicked.data('target');
         // To find the class within the session that we want highlighted, we search up the hierarchy until we find
-        // an item marked data-target-class
-        let target_class = $(this).closest("[data-target-class]", $("#all-session-infos")).data("target-class");
+        // an item marked with the attribute data-target-class
+        let target_class = clicked.closest("[data-target-class]", $(this)).data("target-class");
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
