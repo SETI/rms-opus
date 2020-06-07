@@ -123,7 +123,7 @@ def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
 
     log_files = sorted(args.log_files)
     hash = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
-    filename = f'log-{hash[:8]}.db'
+    filename = f'.logs/log-{hash[:8]}.db'
 
     try:
         with open(filename, "rb") as data:

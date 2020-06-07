@@ -26,7 +26,7 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
         elif uses_local:
             return FakeIpToHostConverter()
         elif dns_cache:
-            return ShelvedIPToHostConverter("ReverseDns")
+            return ShelvedIPToHostConverter(".logs/reverse-dns")
         else:
             return NormalIpToHostConverter()
 
@@ -85,7 +85,6 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
         print(f"There are {len(expired_keys)} expired keys")
         for key in expired_keys:
-            print(f"Deleting expired key '{key}'")
             del self._database[key]
         return len(expired_keys)
 

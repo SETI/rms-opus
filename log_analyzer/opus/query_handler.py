@@ -307,11 +307,17 @@ class QueryHandler:
                             result: List[str]) -> None:
 
         new_metadata_families = set(new_info.keys())
-        old_metadata_families = set(new_info.keys()) if old_info is not None else set()
+        if old_info is None:
+            old_metadata_families = set(self._default_metadata_slug_info.keys())
+        else:
+            old_metadata_families = set(old_info.keys())
+
+        if new_metadata_families == old_metadata_families:
+            return
+
+        self._session_info.changed_metadata_slugs()
 
         if old_info is None:
-            if new_metadata_families == set(self._default_metadata_slug_info.keys()):
-                return
             metadata_labels = [new_info[family].label for family in sorted(new_metadata_families)]
             quoted_metadata_labels = self._session_info.quote_and_join_list(sorted(metadata_labels))
             for family in new_metadata_families:
@@ -319,11 +325,10 @@ class QueryHandler:
             result.append(f'Starting with Selected Metadata: {quoted_metadata_labels}')
             return
 
-        if new_metadata_families == old_metadata_families:
-            return
         if new_metadata_families == set(self._default_metadata_slug_info.keys()):
             result.append('Reset Selected Metadata')
             return
+
         all_metadata_families = old_metadata_families.union(new_metadata_families)
         added_metadata: List[str] = []
         removed_metadata: List[str] = []
@@ -342,7 +347,6 @@ class QueryHandler:
                         self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
             if old_length != len(removed_metadata) + len(added_metadata):
                 self._session_info.register_metadata_slug(family)
-                self._session_info.changed_metadata_slugs()
 
         result.extend(removed_metadata)
         result.extend(added_metadata)
