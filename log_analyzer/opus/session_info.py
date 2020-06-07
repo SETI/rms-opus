@@ -329,7 +329,7 @@ class SessionInfo(AbstractSessionInfo):
         self.register_info_flags(Action.DOWNLOADED_ZIP_URL_FILE_FOR_CART if url_only else
                                  Action.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART)
         ptypes_field = query.get('types', None)
-        ptypes = ptypes_field.split(',') if ptypes_field else []
+        ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
         self.register_product_types(ptypes)
         joined_ptypes = self.quote_and_join_list(sorted(ptypes))
         text = f'Download {"URL" if url_only else "Data"} Archive for Cart: {joined_ptypes}'
@@ -345,7 +345,8 @@ class SessionInfo(AbstractSessionInfo):
             return [], None
         self.performed_download()
         ptypes_field = query.get('types', None)
-        new_ptypes = ptypes_field.split(',') if ptypes_field else []
+        new_ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
+
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
 
