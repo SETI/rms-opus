@@ -138,6 +138,7 @@ Strings can be searched using the following query types:
 * **ends**: the search string occurs at the end of the metadata string.
 * **matches**: the search string is exactly equal to the metadata string.
 * **excludes**: the search string does _not_ appear anywhere in the metadata string.
+* **regex**: the metadata string matches the given [regular expression](http://userguide.icu-project.org/strings/regexp).
 
 #### Range Fields
 
@@ -1621,7 +1622,7 @@ Example:
 
 <h3 id="producttypesfmt"><code>api/product_types.json</code> - Return Product Types from a Search</h3>
 
-Return all download product types available from the results of a particular search.
+Return all download product types and associated product versions available from the results of a particular search.
 
 Supported return formats: `json`
 
@@ -1635,16 +1636,19 @@ Specifying a sort order will not change the results, but will be used to cache t
 
 #### JSON Return Format
 
-The return value is a JSON list of objects each containing information about one product type that is available for at least one observation returned by the given search. Each product type is described by:
+The return value is a JSON list of objects each containing information about one product type and version that is available for at least one observation returned by the given search. Each product type and version is described by:
 
 | Field Name | Description |
 |---|---|
+| `category` | The category of the product type (e.g. `Cassini ISS`)|
 | `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
 | `description` | A brief description of the product type (e.g. `Raw Image`)|
+| `version_number` | A numerical representation of the version number suitable for sorting (999999 means Current)|
+| `version_name` | A string representation of the version number |
 
 Example:
 
-* Retrieve the product types for all observations that have surface geometry information about Methone in JSON format.
+* Retrieve the product types and versions for all observations that have surface geometry information about Methone in JSON format.
 
     %EXTLINK%%HOST%/opus/api/product_types.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
 
@@ -1653,20 +1657,25 @@ Example:
 %CODE%
 [
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image"
+    "description": "Raw image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image"
+    "description": "Calibrated image",
+    "version_number": 10000,
+    "version_name": "1.0"
   },
   {
-    "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)"
-  },
-  {
-    "product_type": "coiss_medium",
-    "description": "Extra preview (medium)"
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   [...]
 ]
@@ -1678,7 +1687,7 @@ Example:
 
 <h3 id="producttypesopusidfmt"><code>api/product_types/[opusid].json</code> - Return Product Types for an OPUS ID</h3>
 
-Return a list of all download product types available for an OPUS ID.
+Return a list of all download product types and associated product versions available for an OPUS ID.
 
 Supported return formats: `json`
 
@@ -1688,16 +1697,19 @@ There are no parameters.
 
 #### JSON Return Format
 
-The return value is a JSON list of objects each containing information about one product type that is available for the given OPUS ID. Each product type is described by:
+The return value is a JSON list of objects each containing information about one product type and version that is available for the given OPUS ID. Each product type is described by:
 
 | Field Name | Description |
 |---|---|
+| `category` | The category of the product type (e.g. `Cassini ISS`)|
 | `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
 | `description` | A brief description of the product type (e.g. `Raw Image`)|
+| `version_number` | A numerical representation of the version number suitable for sorting (999999 means Current)|
+| `version_name` | A string representation of the version number |
 
 Example:
 
-* Retrieve the categories for a Cassini ISS observation in JSON format.
+* Retrieve the product types and versions for a Cassini ISS observation in JSON format.
 
     %EXTLINK%%HOST%/opus/api/product_types/co-iss-w1866600688.json%ENDEXTLINK%
 
@@ -1706,57 +1718,27 @@ Example:
 %CODE%
 [
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image"
+    "description": "Raw image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image"
+    "description": "Calibrated image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)"
+    "description": "Extra preview (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
   },
-  {
-    "product_type": "coiss_medium",
-    "description": "Extra preview (medium)"
-  },
-  {
-    "product_type": "coiss_full",
-    "description": "Extra preview (full)"
-  },
-  {
-    "product_type": "inventory",
-    "description": "Target Body Inventory"
-  },
-  {
-    "product_type": "planet_geometry",
-    "description": "Planet Geometry Index"
-  },
-  {
-    "product_type": "moon_geometry",
-    "description": "Moon Geometry Index"
-  },
-  {
-    "product_type": "ring_geometry",
-    "description": "Ring Geometry Index"
-  },
-  {
-    "product_type": "browse_thumb",
-    "description": "Browse Image (thumbnail)"
-  },
-  {
-    "product_type": "browse_small",
-    "description": "Browse Image (small)"
-  },
-  {
-    "product_type": "browse_medium",
-    "description": "Browse Image (medium)"
-  },
-  {
-    "product_type": "browse_full",
-    "description": "Browse Image (full)"
-  }
+  [...]
 ]
 %ENDCODE%
 

@@ -169,8 +169,9 @@ def api_get_metadata_selector(request):
         search_slugs = cols_to_slug_list(search_slugs)
         search_slugs = filter(None, search_slugs) # Eliminate empty slugs
         for search_slug in search_slugs:
-            search_slugs_info.append(get_param_info_by_slug(search_slug,
-                                                            'widget'))
+            pi = get_param_info_by_slug(search_slug, 'widget')
+            if pi.display_results:
+                search_slugs_info.append(pi)
 
     reqno = get_reqno(request)
     if reqno is None or throw_random_http404_error():

@@ -93,12 +93,13 @@ def get_pds_products(opus_id_list,
     sql += q('obs_files')+'.'+q('opus_id')+', '
     sql += q('obs_files')+'.'+q('version_number')+' DESC, '
     sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('product_order')
+    sql += q('obs_files')+'.'+q('product_order')+', '
+    sql += q('obs_files')+'.'+q('id') # Keep individual files in original order
 
     log.debug('get_pds_products SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
-    # We do this here so if there aren't any product, there's still an empty
+    # We do this here so if there aren't any products, there's still an empty
     # dictionary returned
     for opus_id in opus_id_list:
         results[opus_id] = OrderedDict() # Dict of versions

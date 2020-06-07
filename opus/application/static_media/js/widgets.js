@@ -1365,6 +1365,22 @@ var o_widgets = {
             } else {
                 o_search.getHinting(slug);
             }
+
+            // If an input widget just got opened and input slugs are not in opus.selections, 
+            // we need to update opus.selections to make sure input slugs exist.
+            if (widgetInputs.hasClass("RANGE")) {
+                if (!opus.selections[`${slug}1`]) {
+                    opus.selections[`${slug}1`] = [null];
+                }
+                if (!opus.selections[`${slug}2`]) {
+                    opus.selections[`${slug}2`] = [null];
+                }
+            } else if (widgetInputs.hasClass("STRING")) {
+                if (!opus.selections[`${slug}`]) {
+                    opus.selections[`${slug}`] = [null];
+                }
+            }
+
             // Align data in opus.selections and opus.extras to make sure empty
             // inputs will also have null in opus.selections
             [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
@@ -1570,9 +1586,9 @@ var o_widgets = {
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
 
                 let newHash = o_hash.getHashStrFromSelections();
-                // // Make sure the existing STRING input value is not passed to stringsearchchoices
-                // // API call. This will make sure each autocomplete dropdown results for individual
-                // // input will not be affected by others.
+                // Make sure the existing STRING input value is not passed to stringsearchchoices
+                // API call. This will make sure each autocomplete dropdown results for individual
+                // input will not be affected by others.
                 let hashArray = newHash.split("&");
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
@@ -1582,7 +1598,9 @@ var o_widgets = {
                         newHashArray.push(slugValuePair);
                     }
                 }
-                newHashArray.push(`${slugWithCounter}=${currentValue}`);
+
+                let encodedValue = o_hash.encodeSlugValue(currentValue);
+                newHashArray.push(`${slugWithCounter}=${encodedValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid
