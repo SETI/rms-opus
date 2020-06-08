@@ -1,13 +1,14 @@
+import collections
 import re
 import urllib.parse
-from typing import Dict, Set, Tuple, List, Optional, Sequence, Match
+from typing import Dict, Set, Tuple, List, Optional, Sequence, Match, Mapping, Iterator, Iterable
 
-from abstract_configuration import AbstractSessionInfo, PatternRegistry, SESSION_INFO
+from abstract_configuration import AbstractSessionInfo, PatternRegistry, SESSION_INFO, LogId
 from log_entry import LogEntry
 from opus import slug
-from .configuration_flags import IconFlags, InfoFlags
+from .configuration_flags import IconFlags, Action
 from .query_handler import QueryHandler, MetadataSlugInfo
-from .slug import Info, FamilyType
+from .slug import Info
 
 
 class SessionInfo(AbstractSessionInfo):
@@ -19,18 +20,22 @@ class SessionInfo(AbstractSessionInfo):
     """
     _session_search_slugs: Dict[str, slug.Info]
     _session_metadata_slugs: Dict[str, slug.Info]
-    _session_sort_slugs_list: Set[Tuple[slug.Info, ...]]
-    _help_files: Set[str]
-    _downloads: List[Tuple[str, int]]
-    _product_types: List[str]
-    _product_types_count: int
-    _widgets: Set[slug.Family]
     _icon_flags: IconFlags
-    _info_flags: InfoFlags
     _previous_product_info_type: Optional[List[str]]
     _query_handler: QueryHandler
     _show_all: bool
-    _sessionless_downloads: List[Tuple[str, LogEntry]]
+    _current_id: LogId
+
+    _search_slugs_usage: Dict[str, Set[LogId]]
+    _metadata_slugs_usage: Dict[str, Set[LogId]]
+    _session_sort_slugs_usage: Dict[Tuple[slug.Info, ...], Set[LogId]]
+    _help_files_usage: Dict[str, Set[LogId]]
+    _product_types_usage: Dict[str, Set[LogId]]
+    _product_types_count: int
+    _widgets_usage: Dict[str, Set[LogId]]
+    _info_flags_usage: Dict[Action, Set[LogId]]
+    _sessioned_downloads_usage: Dict[str, Tuple[List[int], Set[LogId]]]
+    _sessionless_downloads_usage: List[Tuple[str, LogEntry]]
 
     pattern_registry = PatternRegistry()
 
@@ -38,21 +43,25 @@ class SessionInfo(AbstractSessionInfo):
                  show_all: bool, uses_html: bool, sessionless_downloads: List[Tuple[str, LogEntry]]):
         self._session_search_slugs = dict()
         self._session_metadata_slugs = dict()
-        self._session_sort_slugs_list = set()
-        self._help_files = set()
-        self._downloads = []
-        self._product_types = []
+        self._session_sort_slugs_usage = collections.defaultdict(set)
+        self._help_files_usage = collections.defaultdict(set)
+        self._sessioned_downloads_usage = collections.defaultdict(lambda: ([0], set()))
+        self._sessionless_downloads_usage = sessionless_downloads
+        self._product_types_usage = collections.defaultdict(set)
         self._product_types_count = 0
-        self._widgets = set()
+        self._widgets_usage = collections.defaultdict(set)
         self._icon_flags = IconFlags(0)
-        self._info_flags = InfoFlags(InfoFlags.DID_NOT_PERFORM_SEARCH)
+        self._info_flags_usage = collections.defaultdict(set)
+        self._search_slugs_usage = collections.defaultdict(set)
+        self._metadata_slugs_usage = collections.defaultdict(set)
+
         self._query_handler = QueryHandler(self, slug_map, default_column_slug_info, uses_html)
         self._uses_html = uses_html
         self._show_all = show_all
-        self._sessionless_downloads = sessionless_downloads
 
         # The previous value of types when downloading a collection
         self._previous_product_info_type = None
+        self._current_id = LogId(-1)
 
         # Debugging information.  Maybe delete me
 
@@ -60,49 +69,27 @@ class SessionInfo(AbstractSessionInfo):
         self._session_search_slugs[slug_name] = slug_info
         if slug_info.flags.is_obsolete():
             self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
+            self.register_info_flags(Action.HAS_OBSOLETE_SLUG)
 
     def add_metadata_slug(self, slug: str, slug_info: slug.Info) -> None:
         self._session_metadata_slugs[slug] = slug_info
         if slug_info.flags.is_obsolete():
             self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
-            self._info_flags |= InfoFlags.HAS_OBSOLETE_SLUG
-
-    def add_sort_slugs_list(self, slugs_list: Sequence[slug.Info]) -> None:
-        self._session_sort_slugs_list.add(tuple(slugs_list))
+            self.register_info_flags(Action.HAS_OBSOLETE_SLUG)
 
     def changed_search_slugs(self) -> None:
         self._icon_flags |= IconFlags.HAS_SEARCH
-        self._info_flags |= InfoFlags.PERFORMED_SEARCH
-        self._info_flags &= ~InfoFlags.DID_NOT_PERFORM_SEARCH
+        self.register_info_flags(Action.PERFORMED_SEARCH)
 
     def changed_metadata_slugs(self) -> None:
         self._icon_flags |= IconFlags.HAS_METADATA
-        self._info_flags |= InfoFlags.CHANGED_SELECTED_METADATA
+        self.register_info_flags(Action.CHANGED_SELECTED_METADATA)
 
     def performed_download(self) -> None:
         self._icon_flags |= IconFlags.HAS_DOWNLOAD
 
     def fetched_gallery(self) -> None:
         self._icon_flags |= IconFlags.FETCHED_GALLERY
-
-    def update_info_flags(self, flags: InfoFlags) -> None:
-        self._info_flags |= flags
-
-    def register_download(self, filename: str, size: Optional[int]) -> None:
-        self._downloads.append((filename, size or 0))
-
-    def register_product_types(self, product_types: Sequence[str]) -> None:
-        self._product_types.extend(product_types)
-        self._product_types_count += 1
-
-    def register_sessionless_download(self, path: str, entry: LogEntry) -> None:
-        match = re.fullmatch(r"/downloads/([^/]+)", path)
-        if match:
-            self._sessionless_downloads.append((match.group(1), entry))
-
-    def register_widget(self, family: slug.Family) -> None:
-        self._widgets.add(family)
 
     def get_slug_info(self) -> Sequence[List[Tuple[str, bool]]]:
         def fixit(info: Dict[str, Info]) -> List[Tuple[str, bool]]:
@@ -124,42 +111,85 @@ class SessionInfo(AbstractSessionInfo):
         column_slug_list = fixit(self._session_metadata_slugs)
         return search_slug_list, column_slug_list
 
-    def get_search_names(self) -> List[str]:
-        return list({value.family.label for value in self._session_search_slugs.values()
-                     if value.family_type != FamilyType.QTYPE
-                     if value.family_type != FamilyType.UNIT})
-
-    def get_metadata_names(self) -> List[str]:
-        return list({value.family.label for value in self._session_metadata_slugs.values()})
-
-    def get_sort_list_names(self) -> List[Tuple[str, ...]]:
-        return [tuple(value.family.label for value in sort_list)
-                for sort_list in self._session_sort_slugs_list]
-
     def get_icon_flags(self) -> IconFlags:
         return self._icon_flags
 
-    def get_info_flags(self) -> InfoFlags:
-        return self._info_flags
+    #
+    # Mark events that we eventually want to summarize
+    #
 
-    def get_help_files(self) -> Set[str]:
-        return self._help_files
+    def register_info_flags(self, flags: Action) -> None:
+        self._info_flags_usage[flags].add(self._current_id)
 
-    def get_product_types(self) -> List[str]:
-        return self._product_types
+    def register_search_slug(self, family: slug.Family) -> None:
+        self._search_slugs_usage[family.label].add(self._current_id)
 
-    def get_product_types_count(self) -> int:
+    def register_metadata_slug(self, family: slug.Family) -> None:
+        self._metadata_slugs_usage[family.label].add(self._current_id)
+
+    def register_sessioned_download(self, filename: str, entry: LogEntry) -> None:
+        (size, log_ids) = self._sessioned_downloads_usage[filename]
+        size[0] += entry.size or 0
+        log_ids.add(self._current_id)
+
+    def register_sessionless_download(self, path: str, entry: LogEntry) -> None:
+        match = re.fullmatch(r"/downloads/([^/]+)", path)
+        if match:
+            self._sessionless_downloads_usage.append((match.group(1), entry))
+
+    def register_product_types(self, product_types: Iterable[str]) -> None:
+        for product in product_types:
+            self._product_types_usage[product].add(self._current_id)
+        self._product_types_count += 1
+
+    def register_widget(self, family: slug.Family) -> None:
+        self._widgets_usage[family.label].add(self._current_id)
+
+    def register_help_file(self, file_name: str) -> None:
+        self._help_files_usage[file_name].add(self._current_id)
+
+    def register_sort_slugs_changed(self, slugs_list: Sequence[slug.Info]) -> None:
+        self._session_sort_slugs_usage[tuple(slugs_list)].add(self._current_id)
+
+    #
+    # The following are used by the summary pages.
+    #
+
+    def get_search_names_usage(self) -> Mapping[str, Set[LogId]]:
+        return self._search_slugs_usage
+
+    def get_metadata_names_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
+        for name, log_ids in self._metadata_slugs_usage.items():
+            if name in self._widgets_usage:
+                log_ids = log_ids.union(self._widgets_usage[name])
+            yield name, log_ids
+
+    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
+        for widget, ids in self._widgets_usage.items():
+            if widget not in self._metadata_slugs_usage:
+                yield widget, ids
+
+    def get_sort_list_names_usage(self) -> Iterator[Tuple[Tuple[str, ...], Set[LogId]]]:
+        for sort_list, ids in self._session_sort_slugs_usage.items():
+            names = tuple(value.family.label for value in sort_list)
+            yield names, ids
+
+    def get_info_flags_usage(self) -> Mapping[Action, Set[LogId]]:
+        return self._info_flags_usage
+
+    def get_help_files_usage(self) -> Mapping[str, Set[LogId]]:
+        return self._help_files_usage
+
+    def get_product_types_usage(self) -> Mapping[str, Set[LogId]]:
+        return self._product_types_usage
+
+    def get_product_types_usage_count(self) -> int:
         return self._product_types_count
 
-    def get_downloads(self) -> List[Tuple[str, int]]:
-        return self._downloads
+    def get_sessioned_downloads_usage(self) -> Mapping[str, Tuple[List[int], Set[LogId]]]:
+        return self._sessioned_downloads_usage
 
-    def get_unmatched_widgets(self) -> Set[slug.Family]:
-        widgets = self._widgets
-        used = {x.family for x in self._session_search_slugs.values()}
-        return widgets - used
-
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
+    def parse_log_entry(self, entry: LogEntry, log_id: LogId) -> SESSION_INFO:
         """Parses a log record within the context of the current session."""
         # We ignore all sorts of log entries.
         if entry.method != 'GET' or entry.status != 200:
@@ -194,7 +224,12 @@ class SessionInfo(AbstractSessionInfo):
         method_and_match = self.pattern_registry.find_matching_pattern(path)
         if method_and_match:
             method, match = method_and_match
-            info, reference = method(self, entry, query, match)
+            try:
+                self._current_id = log_id
+                info, reference = method(self, entry, query, match)
+            finally:
+                self._current_id = LogId(-1)
+
         else:
             info, reference = [], None
         if self._show_all and not info:
@@ -232,22 +267,22 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__api/image/med/(.*)\.json')
     @pattern_registry.register(r'/__viewmetadatamodal/(.*)\.json')
     def __view_metadata(self,  _log_entry: LogEntry, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        self.update_info_flags(InfoFlags.VIEWED_SLIDE_SHOW)
+        self.register_info_flags(Action.VIEWED_SLIDE_SHOW)
         metadata = match.group(1)
         return [f'View Metadata: {metadata}'], self.__create_opus_url(metadata)
 
     @pattern_registry.register(r'/__api/data\.csv')
     def __download_results_csv(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_ALL_RESULTS)
+        self.register_info_flags(Action.DOWNLOADED_CSV_FILE_FOR_ALL_RESULTS)
         return ["Download CSV of Search Results"], None
 
     @pattern_registry.register(r'/__api/metadata_v2/(.*)\.csv')
     def __download_metadata_csv(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_ONE_OBSERVATION)
+        self.register_info_flags(Action.DOWNLOADED_CSV_FILE_FOR_ONE_OBSERVATION)
         opus_id = match.group(1)
-        self.register_download(opus_id + '.csv', log_entry.size)
+        self.register_sessioned_download(opus_id + '.csv', log_entry)
         extra = 'Selected' if query.get('cols') else 'All'
         text = f'Download CSV of {extra} Metadata for OPUSID'
         if self._uses_html:
@@ -259,11 +294,11 @@ class SessionInfo(AbstractSessionInfo):
     def __download_archive(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         opus_id = match.group(1)
-        self.register_download(opus_id + '.zip', log_entry.size)
+        self.register_sessioned_download(opus_id + '.zip', log_entry)
         url_only = query.get('urlonly') not in (None, "0")
         text = f'Download {"URL" if url_only else "Data"} Archive for OPUSID'
-        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_URL_FILE_FOR_ONE_OBSERVATION if url_only else
-                               InfoFlags.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
+        self.register_info_flags(Action.DOWNLOADED_ZIP_URL_FILE_FOR_ONE_OBSERVATION if url_only else
+                                 Action.DOWNLOADED_ZIP_FILE_FOR_ONE_OBSERVATION)
         if self._uses_html:
             return [self.safe_format('{}: {}', text, opus_id)], self.__create_opus_url(opus_id)
         else:
@@ -282,7 +317,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__cart/data\.csv')
     def __download_cart_metadata_csv(self, _: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
-        self.update_info_flags(InfoFlags.DOWNLOADED_CSV_FILE_FOR_CART)
+        self.register_info_flags(Action.DOWNLOADED_CSV_FILE_FOR_CART)
         return ["Download CSV of Selected Metadata for Cart"], None
 
     @pattern_registry.register(r'/__collections/download\.(json|zip)')
@@ -291,10 +326,10 @@ class SessionInfo(AbstractSessionInfo):
     def __create_archive(self, _log_entry: LogEntry, query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
         self.performed_download()
         url_only = query.get('urlonly') not in [None, '0']
-        self.update_info_flags(InfoFlags.DOWNLOADED_ZIP_URL_FILE_FOR_CART if url_only else
-                               InfoFlags.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART)
+        self.register_info_flags(Action.DOWNLOADED_ZIP_URL_FILE_FOR_CART if url_only else
+                                 Action.DOWNLOADED_ZIP_ARCHIVE_FILE_FOR_CART)
         ptypes_field = query.get('types', None)
-        ptypes = ptypes_field.split(',') if ptypes_field else []
+        ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
         self.register_product_types(ptypes)
         joined_ptypes = self.quote_and_join_list(sorted(ptypes))
         text = f'Download {"URL" if url_only else "Data"} Archive for Cart: {joined_ptypes}'
@@ -310,13 +345,14 @@ class SessionInfo(AbstractSessionInfo):
             return [], None
         self.performed_download()
         ptypes_field = query.get('types', None)
-        new_ptypes = ptypes_field.split(',') if ptypes_field else []
-        self.register_product_types(new_ptypes)
+        new_ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
+
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
             joined_new_ptypes = self.quote_and_join_list(new_ptypes)
+            self.register_product_types(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}'], None
 
@@ -330,6 +366,7 @@ class SessionInfo(AbstractSessionInfo):
 
         show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
         show('remove', [ptype for ptype in old_ptypes if ptype not in new_ptypes])
+        self.register_product_types(set(new_ptypes).difference(set(old_ptypes)))
 
         if not result:
             result.append('Product Types are unchanged')
@@ -378,7 +415,7 @@ class SessionInfo(AbstractSessionInfo):
     @pattern_registry.register(r'/__forms/column_chooser\.html')
     @pattern_registry.register(r'/__selectmetadatamodal\.json')
     def __column_chooser(self, _log_entry: LogEntry, _query: Dict[str, str], _match: Match[str]) -> SESSION_INFO:
-        self.update_info_flags(InfoFlags.VIEWED_SELECT_METADATA)
+        self.register_info_flags(Action.VIEWED_SELECT_METADATA)
         return ['Metadata Selector'], None
 
     #
@@ -387,7 +424,7 @@ class SessionInfo(AbstractSessionInfo):
 
     @pattern_registry.register(r'/__initdetail/(.*)\.html')
     def __initialize_detail(self, _log_entry: LogEntry, _query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
-        self.update_info_flags(InfoFlags.VIEWED_DETAIL_TAB)
+        self.register_info_flags(Action.VIEWED_DETAIL_TAB)
         opus_id = match.group(1)
         if self._uses_html:
             return [self.safe_format('View Detail: {}', opus_id)], self.__create_opus_url(opus_id)
@@ -403,13 +440,13 @@ class SessionInfo(AbstractSessionInfo):
         help_type, file_type = match.group(1, 2)
         help_name = help_type.upper() if help_type == 'faq' else help_type
         if help_name != 'splash':
-            flag = InfoFlags.VIEWED_HELP_FILE if file_type == 'html' else InfoFlags.VIEWED_HELP_FILE_AS_PDF
-            self.update_info_flags(flag)
-        self._help_files.add(help_name + '.' + file_type)
+            flag = Action.VIEWED_HELP_FILE if file_type == 'html' else Action.VIEWED_HELP_FILE_AS_PDF
+            self.register_info_flags(flag)
+        self.register_help_file(help_name + '.' + file_type)
         if self._uses_html:
-            return [self.safe_format('Help <samp>{}</samp>', help_name)], None
+            return [self.safe_format('Help {} <samp>{}</samp>', file_type.upper(), help_name)], None
         else:
-            return [f'Help {help_name}'], None
+            return [f'Help {file_type.upper()} {help_name}'], None
 
     #
     # Various utilities

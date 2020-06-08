@@ -1,13 +1,14 @@
 import datetime
 import ipaddress
 import itertools
+import string
 import sys
 from collections import deque
 from ipaddress import IPv4Address
 from pathlib import Path
 from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
-from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
+from abstract_configuration import AbstractConfiguration, AbstractSessionInfo, LogId
 from ip_to_host_converter import IpToHostConverter
 from log_entry import LogEntry
 
@@ -29,6 +30,7 @@ class Entry(NamedTuple):
     relative_start_time: datetime.timedelta
     data: List[str]
     opus_url: Optional[str]
+    id: LogId
 
     def target_url(self) -> str:
         return self.log_entry.url.geturl()
@@ -100,7 +102,7 @@ class LogParser:
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
         self._ip_to_host_converter = ip_to_host_converter
-        self._id_generator = (f'{value:06X}' for value in itertools.count(100))
+        self._id_generator = (f'{self.__base36(value):>04}' for value in itertools.count(1))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
         print(f'Parsing input')
@@ -168,13 +170,13 @@ class LogParser:
                 current_session = live_sessions[entry.host_ip].with_timeout(next_timeout)
                 live_sessions[entry.host_ip] = current_session
                 session_info = current_session.session_info
-                entry_info, _ = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
             else:
                 is_just_created_session = True
                 session_info = self._configuration.create_session_info()
-                entry_info, _ = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
                 current_session = LiveSession(host_ip=entry.host_ip, session_info=session_info,
@@ -210,27 +212,30 @@ class LogParser:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
                 session_info = self._configuration.create_session_info(uses_html=uses_html)
-                entry_info, opus_url = session_info.parse_log_entry(entry)
+                entry_id = LogId(1)
+                entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                 if not entry_info:
                     continue
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: List[str], opus_url: Optional[str]) -> Entry:
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str],
+                                         opus_url: Optional[str], log_id: LogId) -> Entry:
                     return Entry(log_entry=log_entry,
                                  relative_start_time=entry.time - session_start_time,
-                                 data=entry_info, opus_url=opus_url)
+                                 data=entry_info, opus_url=opus_url, id=log_id)
 
-                current_session_entries = [create_session_entry(entry, entry_info, opus_url)]
+                current_session_entries = [create_session_entry(entry, entry_info, opus_url, entry_id)]
 
                 # Keep on grabbing entries for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()
                     session_end_time = entry.time + self._session_timeout
-                    entry_info, opus_url = session_info.parse_log_entry(entry)
+                    entry_id = LogId(entry_id + 1)
+                    entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                     if entry_info:
-                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
+                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url, entry_id))
 
                 if session_info.get_icon_flags():
                     # We ignore sessions that don't actually do anything.
@@ -281,3 +286,16 @@ class LogParser:
             return 1, tuple(reversed(name.lower().split('.')))
         else:
             return 2, ip
+
+    ALPHABET36 = string.digits + string.ascii_lowercase
+
+    @classmethod
+    def __base36(cls, value: int) -> str:
+        result: List[str] = []
+        assert value > 0
+        while value > 0:
+            value, modulus = divmod(value, 36)
+            result.append(cls.ALPHABET36[modulus])
+        return ''.join(reversed(result))
+
+

@@ -11,7 +11,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
 
-<style>
+<!--suppress CssUnusedSymbol -->
+    <style>
 #left, #right, #gutter {
   position: absolute;
   top: 0;
@@ -49,6 +50,9 @@
   vertical-align:top;
   padding: 0 5px;
 }
+#all-session-infos tr.HighlightedLogEntry > td {
+    background-color: #CFF5FF;
+}
 .tab-pane {
     padding-bottom: 10pt;
     padding-top: 10pt;
@@ -62,6 +66,7 @@ table.SessionLinkTable {
 }
 .Summary3 {
   margin-left: 10pt
+
 }
 .show_all {   /* Used by --xxshowall for URLs that would ordinarily be ignored. */
   white-space: nowrap;
@@ -95,7 +100,7 @@ because it requires that all the navigation tabs be within a single unordered li
 </ul>
 </nav>
 
-<div class="tab-content">
+<div class="tab-content" id="all-session-links">
 
 {% set name_and_glyph = (
     ("HAS_SEARCH", "search"),
@@ -128,14 +133,6 @@ because it requires that all the navigation tabs be within a single unordered li
         <span data-toggle="tooltip" title="{{ session_info.host_ip }}">{{ ip_to_host_name[session_info.host_ip] }}</span>
     {% else %}
         {{ session_info.host_ip }}
-    {% endif %}
-{% endmacro %}
-
-{% macro log_entry_ip_or_name(log_entry) %}
-    {% if log_entry.host_ip in ip_to_host_name %}
-        <span data-toggle="tooltip" title="{{ log_entry.host_ip }}">{{ ip_to_host_name[log_entry.host_ip] }}</span>
-    {% else %}
-        {{ log_entry.host_ip }}
     {% endif %}
 {% endmacro %}
 
@@ -203,7 +200,7 @@ because it requires that all the navigation tabs be within a single unordered li
     <table>
     {% for entry in session.entries %}
         {% for line in entry.data %}
-        <tr>
+        <tr class="{{ context.log_entry_to_classes(session, entry) | join(' ') }}">
             {% if loop.first %}
                 {% if entry.opus_url %}
                     <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
@@ -225,7 +222,7 @@ because it requires that all the navigation tabs be within a single unordered li
 {#  The following node is the parent of all SessionInfo nodes constructed on the fly.
     We give it an id so that we can easily find it.
 #}
-<div id="session-info-parent" class="tab-content">
+<div id="all-session-infos" class="tab-content">
 
 {#
 The lines marked <<<< and >>>> are special markers for the code that reads the Jinja generated output and then writes
@@ -271,31 +268,61 @@ These markers are never nested.
 $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
-    $('.SessionLink').click(function() {
-        let target = $(this).data('target');
+    // Attach a handler to #all-session-links, which is the ancestor of all the .SessionLink objects that we can
+    // click on
+    $("#all-session-links").on('click', '.SessionLink', function (event)  {
+        // session_link is the node that was clicked, while $(this) is node this handler is attached to.
+        let session_link = $(event.target);
+        // The data-target field of the session_link contains #id of the .SessionInfo we want to display
+        let target = session_link.data('target');
+        // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
+        // the tree to see if there is a node with the field data-target-class.
+        let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
         $('.SessionInfo.active').removeClass('active');
+        // Turn off all highlighting of log entries.
+        $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
 
         // Mark as active all of the Session Links that point to this target so that they will be highlighted.
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
+
+        let session_info = $(target);
 {% if context.sessions_relative_directory %}
-        if ($(target).length === 0) {
-            // The DOM node that we want to show doesn't exist.  Create it and load its content.
+        if (session_info.length === 0) {
+            // DOM node doesn't exist.  Create it and load its contents.
             let node_id = target.substr(1);
-            $('<div/>', {id:node_id, "class":"{{ session_info_classes }}"}).appendTo('#session-info-parent')
-            // Asynchronously fill in the contents of the node from a file
             let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
-            $(target).load(session_location);
+            $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
+                // Add the node to the DOM
+                .appendTo('#all-session-infos')
+                // And load its content.  Call the callback once the dom is loaded.
+                .load(session_location, function () {
+                    // $this gets rebound to <div> we just loaded a file into
+	                highlight_and_scroll_session_info($(this), target_class);
+                });
+            return false;
         }
 {% endif %}
         // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        $(target).addClass('active');
-        $('#right').scrollTop(0);
+        highlight_and_scroll_session_info(session_info, target_class);
         return false;
     })
 });
+
+function highlight_and_scroll_session_info(session_info, target_class) {
+    // Make it behave, it terms of events, like the tab pane that it was supposed to be
+    session_info.trigger('show.bs.tab').addClass("active").trigger("shown.bs.tab");
+    $('#right').scrollTop(0);
+    if (target_class) {
+        let lines = session_info.find(`.${target_class}`);
+        lines.addClass("HighlightedLogEntry");
+        if (lines.length > 0) {
+            lines[0].scrollIntoView();
+        }
+    }
+}
 
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');
