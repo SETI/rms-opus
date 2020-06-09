@@ -198,7 +198,7 @@ let o_sortMetadata = {
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
 
-        let menu = {"height":$("#op-add-sort-metadata").innerHeight(), "width":$(contextMenu).innerWidth()};
+        let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
         let top =  e.pageY;
         let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
 
