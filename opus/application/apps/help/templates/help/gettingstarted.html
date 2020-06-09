@@ -275,15 +275,17 @@ data OPUS has to offer.</p>
         The <i class="fas fa-bars fa-xs"></i> menu may also be used to create
         a metadata CSV file for a single observation.</li>
     <li>A <b>Data Archive</b> includes all of the selected data products in
-        a single zip file. Also included are a metadata CSV file, a file of
-        product checksums, a manifest showing which files are included, and
-        a file containing the URLs for each data product. On the <b>Cart</b>
-        tab, the <i class="fas fa-download"></i> <b>Data Archive</b> button will
-        produce a zip file containing all observations in the cart. You may also
-        download a data archive of all relevant products for a single
-        observation using the <i class="fas fa-bars fa-xs"></i> menu.</li>
+        a single zip file. Also included are a metadata CSV file (data.csv),
+        a manifest file (manifest.csv) showing which files are included along
+        with their details (including checksums and sizes), and a file
+        containing the URLs for each data product (urls.txt). On the
+        <b>Cart</b> tab, the <i class="fas fa-download"></i>
+        <b>Data Archive</b> button will produce a zip file containing all
+        observations in the cart. You may also download a data archive of all
+        relevant products for a single observation using the
+        <i class="fas fa-bars fa-xs"></i> menu.</li>
     <li>A <b>URL Archive</b> is similar to a data archive, but includes only
-        the non-product files (metadata CSV, checksum, manifest, and URL) in a
+        the non-product files (metadata, manifest, and URLs) in a
         single zip file. This results in a very small download. The actual data
         products can then be retrieved using a command-line utility such as
         <b>wget</b>:

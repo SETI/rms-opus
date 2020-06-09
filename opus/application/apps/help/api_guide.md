@@ -635,9 +635,8 @@ C4360022_RESLOC.LBL
 C4360022_RESLOC.TAB
 C4360022_small.jpg
 C4360022_thumb.jpg
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 urls.txt
 VGISS_6210_inventory.lbl
 VGISS_6210_inventory.tab
@@ -656,9 +655,8 @@ VGISS_6210_saturn_summary.tab
     Return value is a zip archive containing the files:
 
 %CODE%
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 urls.txt
 %ENDCODE%
 
@@ -671,9 +669,8 @@ urls.txt
 %CODE%
 C0349632000R.IMG
 C0349632000R.LBL
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 RLINEPRX.FMT
 RTLMTAB.FMT
 urls.txt

@@ -74,7 +74,8 @@ def get_pds_products(opus_id_list,
     sql += q('obs_files')+'.'+q('category')+', '
     sql += q('obs_files')+'.'+q('sort_order')+', '
     sql += q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('full_name')
+    sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('size')
     if loc_type == 'path' or loc_type == 'raw':
         sql += ', '+q('obs_files')+'.'+q('logical_path')
     if loc_type == 'url' or loc_type == 'raw':
@@ -109,13 +110,13 @@ def get_pds_products(opus_id_list,
         url = None
         if loc_type == 'path':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, path) = row
+             full_name, size, path) = row
         elif loc_type == 'url':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, url) = row
+             full_name, size, url) = row
         else:
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, path, url, checksum) = row
+             full_name, size, path, url, checksum) = row
 
         # sort_order is the format CASISSxxx where xxx is the original numeric
         # sort order
@@ -139,7 +140,12 @@ def get_pds_products(opus_id_list,
         else:
             res = {'path': path,
                    'url': url,
-                   'checksum': checksum}
+                   'checksum': checksum,
+                   'category': category,
+                   'version_name': version_name,
+                   'full_name': full_name,
+                   'short_name': short_name,
+                   'size': size}
         if res not in results[opus_id][version_name][product_type]:
             results[opus_id][version_name][product_type].append(res)
 

@@ -582,7 +582,7 @@ def api_create_download(request, opus_id=None):
             return ret
 
     # Fetch the full file info of the files we'll be zipping up
-    # We want the raw objects so we can get the checksum as well as the
+    # We want the raw objects so we can get the file metadata as well as the
     # abspath
     files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)
@@ -590,8 +590,8 @@ def api_create_download(request, opus_id=None):
     zip_base_file_name = _zip_filename(opus_id, url_file_only)
     zip_root = zip_base_file_name.split('.')[0]
     zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
-    manifest_file_name = settings.TAR_FILE_PATH + f'manifest_{zip_root}.txt'
+    # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
+    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{zip_root}.csv'
     csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
     url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
 
@@ -634,8 +634,11 @@ def api_create_download(request, opus_id=None):
         zip_file = zipfile.ZipFile(response, mode='w')
     else:
         zip_file = zipfile.ZipFile(zip_file_name, mode='w')
-    chksum_fp = open(chksum_file_name, 'w')
+    # chksum_fp = open(chksum_file_name, 'w')
     manifest_fp = open(manifest_file_name, 'w')
+    manifest_fp.write('OPUS ID,Product Category,Product Type,'
+                      +'Product Type Abbrev,'
+                      +'Version,File Path,Checksum,Size\n')
     url_fp = open(url_file_name, 'w')
 
     errors = []
@@ -648,14 +651,22 @@ def api_create_download(request, opus_id=None):
             for file_data in files_version[product_type]:
                 path = file_data['path']
                 url = file_data['url']
+                category = file_data['category']
+                product_type = file_data['full_name']
+                product_abbrev = file_data['short_name']
+                version_name = file_data['version_name']
                 checksum = file_data['checksum']
+                size = file_data['size']
                 pretty_name = path.split('/')[-1]
+                logical_path = path[path.index('/holdings')+9:]
                 digest = f'{pretty_name}:{checksum}'
-                mdigest = f'{f_opus_id}:{pretty_name}'
+                mdigest = (f'{f_opus_id},{category},{product_type},'
+                          +f'{product_abbrev},{version_name},{logical_path},'
+                          +f'{checksum},{size}')
+                manifest_fp.write(mdigest+'\n')
 
                 if pretty_name not in added:
-                    chksum_fp.write(digest+'\n')
-                    manifest_fp.write(mdigest+'\n')
+                    # chksum_fp.write(digest+'\n')
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
                     if not url_file_only:
@@ -677,16 +688,15 @@ def api_create_download(request, opus_id=None):
 
     # Add manifests and checksum files to tarball and close everything up
     manifest_fp.close()
-    chksum_fp.close()
+    # chksum_fp.close()
     url_fp.close()
-    zip_file.write(chksum_file_name, arcname='checksum.txt')
-    zip_file.write(manifest_file_name, arcname='manifest.txt')
+    # zip_file.write(chksum_file_name, arcname='checksum.txt')
+    zip_file.write(manifest_file_name, arcname='manifest.csv')
     zip_file.write(csv_file_name, arcname='data.csv')
     zip_file.write(url_file_name, arcname='urls.txt')
     zip_file.close()
 
-    os.remove(chksum_file_name)
-    os.remove(manifest_file_name)
+    # os.remove(chksum_file_name)
     os.remove(csv_file_name)
     os.remove(url_file_name)
 
@@ -1370,10 +1380,13 @@ def _zip_filename(opus_id, url_file_only):
     timestamp = "T".join(str(datetime.datetime.now()).split(' '))
     # Windows doesn't like ':' in filenames
     timestamp = timestamp.replace(':', '-')
+    # And we don't want a period to confuse the suffix later
+    timestamp = timestamp.replace('.', '-')
     data_url = 'url' if url_file_only else 'data'
+    root = f'pdsrms-{timestamp}-{data_url}-{random_ascii}'
     if opus_id:
-        return f'pdsrms-{data_url}-{random_ascii}-{timestamp}_{opus_id}.zip'
-    return f'pdsrms-{data_url}-{random_ascii}-{timestamp}.zip'
+        root += f'_{opus_id}'
+    return root + '.zip'
 
 
 def _csv_helper(request, opus_id, api_code=None):
