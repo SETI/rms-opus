@@ -97,9 +97,11 @@ var o_menu = {
             // We use find() here instead of just adding to the selector because
             // selector might be a string or it might be an actual DOM object
             $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
+            $(selector).addClass("op-mark");
         } else {
             $(selector).children().css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
+            $(selector).removeClass("op-mark");
         }
     },
 
