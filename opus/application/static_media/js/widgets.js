@@ -817,15 +817,27 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
-
+        // Reset the flag before checking all inputs
+        o_widgets.isRemovingEmptyWidget = true;
         // Check if the widget to be removed has empty values on all inputs.
         for (const input of inputs) {
-            if ($(input).val() && $(input).val().trim()) {
+            if ($(input).attr("type") === "text" && $(input).val() && $(input).val().trim()) {
+                o_widgets.isRemovingEmptyWidget = false;
+            } else if ($(input).is(":checked")) {
                 o_widgets.isRemovingEmptyWidget = false;
             }
         }
 
         o_widgets.removeInputsValidationInfo(inputs);
+
+        // If the closing widget has empty values, don't perform a normalize input api call & search.
+        if (o_widgets.isRemovingEmptyWidget) {
+            opus.updateOPUSLastSelectionsWithOPUSSelections();
+            if (opus.areInputsValid()) {
+                o_hash.updateURLFromCurrentHash();
+            }
+            return;
+        }
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
@@ -845,11 +857,6 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-            }
-
-            // If the closing widget has empty values, don't perform a search.
-            if (o_widgets.isRemovingEmptyWidget) {
-                opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
             if (opus.areInputsValid()) {
