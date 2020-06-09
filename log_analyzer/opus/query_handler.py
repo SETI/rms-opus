@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import operator
 import urllib
 import urllib.parse
@@ -11,7 +13,7 @@ from markupsafe import Markup
 from log_entry import LogEntry
 from opus import slug as slug
 from opus.configuration_flags import Action
-from opus.slug import FamilyType, Info
+from opus.slug import FamilyType, Info, Family
 
 
 class SearchClause(NamedTuple):
@@ -23,7 +25,7 @@ class SearchClause(NamedTuple):
     flags: slug.Flags
 
     @staticmethod
-    def from_slug_list(pairs: List[Tuple[slug.Info, str]]) -> 'SearchClause':
+    def from_slug_list(pairs: List[Tuple[slug.Info, str]]) -> SearchClause:
         mapping = {slug_info.family_type: value for slug_info, value in pairs}  # family_type to value
         return SearchClause(
             min_value=mapping.get(slug.FamilyType.MIN),
@@ -130,7 +132,6 @@ class QueryHandler:
             self.__get_sort_order_info(self._previous_sort_order, sort_order, result)
             self._previous_sort_order = sort_order
 
-        tentative_flag: Optional[Action] = None
         if uses_pages:
             assert current_state == State.FETCHING
             is_browsing = query.get('view') == 'browse'
@@ -150,12 +151,16 @@ class QueryHandler:
                 page_type, info, previous_info = 'Page', '???', ['???', '???']
             browse_or_cart = 'Browse' if is_browsing else 'Cart'
             viewed = 'Table' if current_browse == 'data' else 'Gallery'
-            tentative_flag = {
-                ("Browse", "Table"): Action.VIEWED_BROWSE_TAB_AS_TABLE,
-                ("Browse", "Gallery"): Action.VIEWED_BROWSE_TAB_AS_GALLERY,
-                ("Cart", "Table"): Action.VIEWED_CART_TAB_AS_TABLE,
-                ("Cart", "Gallery"): Action.VIEWED_CART_TAB_AS_GALLERY,
-            }[browse_or_cart, viewed]
+
+            if query_type == 'dataimages':
+                action_flag = {
+                    ("Browse", "Table"): Action.VIEWED_BROWSE_TAB_AS_TABLE,
+                    ("Browse", "Gallery"): Action.VIEWED_BROWSE_TAB_AS_GALLERY,
+                    ("Cart", "Table"): Action.VIEWED_CART_TAB_AS_TABLE,
+                    ("Cart", "Gallery"): Action.VIEWED_CART_TAB_AS_GALLERY,
+                }[browse_or_cart, viewed]
+                # Attach the flag to the line we're about to add.
+                self._session_info.register_info_flags(action_flag, line_number=len(result))
 
             if current_state != previous_state or current_browse != previous_browse:
                 result.append(f'View {browse_or_cart} {viewed}: {page_type} {info}')
@@ -177,15 +182,13 @@ class QueryHandler:
         if result and query_type != 'result_count':
             self._session_info.fetched_gallery()
 
-        if result and query_type == 'dataimages' and tentative_flag:
-            self._session_info.register_info_flags(tentative_flag)
-
         return result, url
 
     def __handle_search_info(self, old_info: SearchSlugInfo, new_info: SearchSlugInfo, result: List[str]) -> None:
         """Handles info for the contents of search slugs"""
         if not new_info:
             if old_info:
+                self._session_info.changed_search_slugs(line_number=len(result))
                 result.append('Reset Search')
             return
 
@@ -193,15 +196,14 @@ class QueryHandler:
 
         result_length = len(result)
         for family in sorted(all_search_families):
-            family_result_length = len(result)
+            old_result_length = len(result)
             if family not in new_info:
                 result.append(f'Remove Search: "{family.label}"')
             else:
                 self.__handle_search_info_for_family(family, old_info, new_info, result)
-            if family_result_length != len(result):
-                self._session_info.register_search_slug(family)
-        if result_length != len(result):
-            self._session_info.changed_search_slugs()
+            for line_number in range(old_result_length, len(result)):
+                self._session_info.register_search_slug(family, line_number=line_number)
+                self._session_info.changed_search_slugs(line_number=line_number)
 
     def __handle_search_info_for_family(self, family: slug.Family, old_info: SearchSlugInfo, new_info: SearchSlugInfo,
                                         result: List[str]) -> None:
@@ -315,44 +317,49 @@ class QueryHandler:
         if new_metadata_families == old_metadata_families:
             return
 
-        self._session_info.changed_metadata_slugs()
-
         if old_info is None:
             metadata_labels = [new_info[family].label for family in sorted(new_metadata_families)]
             quoted_metadata_labels = self._session_info.quote_and_join_list(sorted(metadata_labels))
             for family in new_metadata_families:
-                self._session_info.register_metadata_slug(family)
+                self._session_info.register_metadata_slug(family, line_number=len(result))
+            self._session_info.changed_metadata_slugs(line_number=len(result))
             result.append(f'Starting with Selected Metadata: {quoted_metadata_labels}')
             return
 
         if new_metadata_families == set(self._default_metadata_slug_info.keys()):
+            self._session_info.changed_metadata_slugs(line_number=len(result))
             result.append('Reset Selected Metadata')
             return
 
         all_metadata_families = old_metadata_families.union(new_metadata_families)
-        added_metadata: List[str] = []
-        removed_metadata: List[str] = []
+        added_metadata: List[Tuple[Family, Info]] = []
+        removed_metadata: List[Tuple[Family, Info]] = []
         for family in sorted(all_metadata_families):
-            old_length = len(removed_metadata) + len(added_metadata)
             old_slug_info = old_info.get(family)
             new_slug_info = new_info.get(family)
             if old_slug_info and not new_slug_info:
-                removed_metadata.append(f'Remove Selected Metadata: "{old_slug_info.label}"')
+                removed_metadata.append((family, old_slug_info))
             elif new_slug_info and not old_slug_info:
-                postscript = self.__get_postscript(new_slug_info.flags)
-                if not self._uses_html:
-                    added_metadata.append(f'Add Selected Metadata:    "{new_slug_info.label}"{postscript}')
-                else:
-                    added_metadata.append(
-                        self.safe_format('Add Selected Metadata: "{}"{}', new_slug_info.label, postscript))
-            if old_length != len(removed_metadata) + len(added_metadata):
-                self._session_info.register_metadata_slug(family)
+                added_metadata.append((family, new_slug_info))
 
-        result.extend(removed_metadata)
-        result.extend(added_metadata)
+        for family, slug_info in removed_metadata:
+            self._session_info.register_metadata_slug(family, line_number=len(result))
+            self._session_info.changed_metadata_slugs(line_number=len(result))
+            result.append(f'Remove Selected Metadata: "{slug_info.label}"')
+
+        for family, slug_info in added_metadata:
+            postscript = self.__get_postscript(slug_info.flags)
+            self._session_info.register_metadata_slug(family, line_number=len(result))
+            self._session_info.changed_metadata_slugs(line_number=len(result))
+            if not self._uses_html:
+                result.append(f'Add Selected Metadata:    "{slug_info.label}"{postscript}')
+            else:
+                result.append(
+                    self.safe_format('Add Selected Metadata: "{}"{}', slug_info.label, postscript))
 
     def __get_sort_order_info(self, old_sort_order: str, new_sort_order: str, result: List[str]) -> None:
         if old_sort_order != new_sort_order:
+            start_result_length = len(result)
             sort_list: List[Info] = []
             columns = new_sort_order.split(',')
             result.append(f'Change Sort Order:')
@@ -366,9 +373,9 @@ class QueryHandler:
                 assert slug_info
                 sort_list.append(slug_info)
                 result.append(f'        "{slug_info.label}" ({order})')
-
-            self._session_info.register_sort_slugs_changed(sort_list)
-            self._session_info.register_info_flags(Action.CHANGED_SORT_ORDER)
+            for line_number in range(start_result_length, len(result)):
+                self._session_info.register_sort_slugs_changed(sort_list, line_number=line_number)
+                self._session_info.register_info_flags(Action.CHANGED_SORT_ORDER, line_number=line_number)
 
     def __slug_value_change(self, name: str, old_value: str, new_value: str, result: List[str]) -> None:
         old_value_set = set(old_value.split(','))
