@@ -859,11 +859,6 @@ var o_widgets = {
                 }
             }
 
-            // If the closing widget has empty values, don't perform a search.
-            // if (o_widgets.isRemovingEmptyWidget) {
-            //     opus.updateOPUSLastSelectionsWithOPUSSelections();
-            // }
-
             if (opus.areInputsValid()) {
                 // User may have changed input, so trigger search with delay
                 o_hash.updateURLFromCurrentHash(true, true);
