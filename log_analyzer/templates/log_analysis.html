@@ -200,19 +200,20 @@ because it requires that all the navigation tabs be within a single unordered li
     <table>
     {% for entry in session.entries %}
         {% for line in entry.data %}
-        <tr class="{{ context.log_entry_to_classes(session, entry, loop.index0) | join(' ') }}">
-            {% if loop.first %}
-                {% if entry.opus_url %}
-                    <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
+            {%  set classes = context.log_entry_to_classes(session, entry, loop.index0) %}
+            <tr{% if classes %} vclass="{{ classes | join(' ') }}"{% endif %}>
+                {% if loop.first %}
+                    {% if entry.opus_url %}
+                        <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
+                    {% else %}
+                        <td>{{ entry.relative_start_time }}</td>
+                    {% endif %}
+                    <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
                 {% else %}
-                    <td>{{ entry.relative_start_time }}</td>
+                    <td></td><td></td>
                 {% endif %}
-                <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
-            {% else %}
-                <td></td><td></td>
-            {% endif %}
-            <td>{{ line }}</td>
-        </tr>
+                <td>{{ line }}</td>
+            </tr>
         {% endfor %}
      {% endfor %}
      </table>
