@@ -93,10 +93,24 @@ var o_widgets = {
         });
 
         // open/close mult groupings in widgets
-        $('#search').on('click', '.mult_group_label_container', function() {
-            $(this).find('.indicator').toggleClass('fa-plus');
-            $(this).find('.indicator').toggleClass('fa-minus');
-            $(this).next().slideToggle("fast");
+        $("#search").on("click", ".mult_group_label_container", function() {
+            $(this).find(".indicator").toggleClass("fa-plus");
+            $(this).find(".indicator").toggleClass("fa-minus");
+            let multGroupContents = $(this).next();
+            multGroupContents.slideToggle("fast", function() {
+                let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
+                                                    $("#search #widget-container").height();
+                let targetBottomPosition = $(this).offset().top + $(this).height();
+                // When mult group contents are expanded and covered by the bottom of the window
+                // (footer), scroll the scrollbar so that all checkboxes in the group are visible.
+                if (targetBottomPosition > widgetContainerBottomPosition) {
+                    let offset = $(this).is(":visible") ? $(this).outerHeight() : -$(this).outerHeight();
+                    let currentScrollbarPosition = $("#search #widget-container").scrollTop();
+                    let newScrollbarPosition = currentScrollbarPosition + offset;
+                    $("#search #widget-container").scrollTop(newScrollbarPosition);
+                }
+
+            });
         });
 
         // close a card
@@ -803,15 +817,27 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
-
+        // Reset the flag before checking all inputs
+        o_widgets.isRemovingEmptyWidget = true;
         // Check if the widget to be removed has empty values on all inputs.
         for (const input of inputs) {
-            if ($(input).val() && $(input).val().trim()) {
+            if ($(input).attr("type") === "text" && $(input).val() && $(input).val().trim()) {
+                o_widgets.isRemovingEmptyWidget = false;
+            } else if ($(input).is(":checked")) {
                 o_widgets.isRemovingEmptyWidget = false;
             }
         }
 
         o_widgets.removeInputsValidationInfo(inputs);
+
+        // If the closing widget has empty values, don't perform a normalize input api call & search.
+        if (o_widgets.isRemovingEmptyWidget) {
+            opus.updateOPUSLastSelectionsWithOPUSSelections();
+            if (opus.areInputsValid()) {
+                o_hash.updateURLFromCurrentHash();
+            }
+            return;
+        }
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
@@ -831,11 +857,6 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-            }
-
-            // If the closing widget has empty values, don't perform a search.
-            if (o_widgets.isRemovingEmptyWidget) {
-                opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
             if (opus.areInputsValid()) {
@@ -1359,14 +1380,19 @@ var o_widgets = {
 
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
-            o_widgets.scrollToWidget(widget);
+
+            // Make sure when a new widget is open at the top, scrollbar always scrolls to the top.
+            $("#search #widget-container").animate({
+                scrollTop: 0
+            }, 500);
+
             if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
                 o_search.getValidMults(slug, true);
             } else {
                 o_search.getHinting(slug);
             }
 
-            // If an input widget just got opened and input slugs are not in opus.selections, 
+            // If an input widget just got opened and input slugs are not in opus.selections,
             // we need to update opus.selections to make sure input slugs exist.
             if (widgetInputs.hasClass("RANGE")) {
                 if (!opus.selections[`${slug}1`]) {
@@ -1535,12 +1561,19 @@ var o_widgets = {
     },
 
     scrollToWidget: function(widget) {
-        // scrolls window to a widget
-        // widget is like: "widget__" + slug
-        //  scroll the widget panel to top
-        $('#search').animate({
-            scrollTop: $("#"+ widget).offset().top
-        }, 1000);
+        /**
+         * Scroll to the target widget when users click on an opened widget slug
+         * name in the search sidebar.
+         */
+        let widgetTargetTopPosition = $(`#${widget}`).offset().top;
+        let widgetContainerTopPosition = $("#search #widget-container").offset().top;
+        let widgetScrollbarPosition = $("#search #widget-container").scrollTop();
+
+        let widgetTargetFinalPosition = (widgetTargetTopPosition - widgetContainerTopPosition +
+                                        widgetScrollbarPosition);
+        $("#search #widget-container").animate({
+            scrollTop: widgetTargetFinalPosition
+        }, 500);
     },
 
     attachStringDropdownToInput: function() {
