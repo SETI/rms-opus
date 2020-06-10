@@ -46,7 +46,7 @@ class Configuration(AbstractConfiguration):
         return SessionInfo(self._slug_map, self._default_column_slug_info, self._debug_show_all, uses_html,
                            self._sessionless_downloads)
 
-    def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> 'HtmlGenerator':
+    def create_batch_html_generator(self, host_infos_by_ip: List[HostInfo]) -> HtmlGenerator:
         return HtmlGenerator(self, host_infos_by_ip)
 
     @property

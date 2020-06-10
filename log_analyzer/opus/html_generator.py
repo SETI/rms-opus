@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import collections
 import datetime
 import itertools
 import math
 import re
 import statistics
+import string
 from ipaddress import IPv4Address
 from operator import itemgetter, attrgetter
 from os.path import dirname
@@ -13,7 +16,7 @@ from typing import List, Dict, TextIO, Tuple, Sequence, Optional, Any, Callable,
 from typing import Iterable, cast, TypeVar, Mapping, Set, Iterator
 from typing import TYPE_CHECKING
 
-from abstract_configuration import AbstractBatchHtmlGenerator, LogId
+from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import HostInfo, Session, Entry
@@ -21,7 +24,7 @@ from .configuration_flags import IconFlags, Action
 
 if TYPE_CHECKING:
     from .configuration import Configuration
-    from .session_info import SessionInfo
+    from .session_info import SessionInfo, LogMarker
 
 T = TypeVar('T')
 
@@ -29,17 +32,18 @@ HtmlStatisticsOutput = Tuple[List[Tuple[T, int, List[List[Session]]]], Mapping[T
 
 
 class HtmlGenerator(AbstractBatchHtmlGenerator):
-    _configuration: 'Configuration'
+    _configuration: Configuration
     _host_infos_by_ip: List[HostInfo]
     _sessions: List[Session]
     _ip_to_host_name: Dict[IPv4Address, str]
     _flag_name_to_flag: Dict[str, IconFlags]
     _sessions_relative_directory: Optional[str]
 
-    _class_name_counter: Iterator[int]
-    _log_entry_to_classes: Dict[Tuple[Session, LogId], Set[str]]
+    _log_entry_to_classes: Dict[Tuple[Session, LogMarker], Set[str]]
 
-    def __init__(self, configuration: 'Configuration', host_infos_by_ip: List[HostInfo]):
+    _class_name_generator: Iterator[str]
+
+    def __init__(self, configuration: Configuration, host_infos_by_ip: List[HostInfo]):
         self._configuration = configuration
         self._host_infos_by_ip = host_infos_by_ip
         self._sessions = [session for host_info in host_infos_by_ip for session in host_info.sessions]
@@ -52,8 +56,8 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             if not sessions_relative_directory.endswith('/'):
                 sessions_relative_directory += '/'
         self._sessions_relative_directory = sessions_relative_directory
-        self._class_name_counter = itertools.count(1)
         self._log_entry_to_classes = collections.defaultdict(set)
+        self._class_name_generator = self.__generate_class_names()
 
     def generate_output(self, output: TextIO) -> None:
         template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
@@ -125,9 +129,11 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         """Returns the number of sessions"""
         return len(self._sessions)
 
-    def log_entry_to_classes(self, session: Session, log_entry: Entry) -> Sequence[str]:
+    def log_entry_to_classes(self, session: Session, log_entry: Entry, line_number: int) -> Sequence[str]:
         # They don't need to be sorted, but it looks nicer.
-        return sorted(self._log_entry_to_classes[session, log_entry.id])
+        log_entries = self._log_entry_to_classes[session, log_entry.id]
+        line_entries = self._log_entry_to_classes[session, (log_entry.id, line_number)]
+        return sorted(log_entries.union(line_entries))
 
     def flag_name_to_flag(self, name: str) -> IconFlags:
         """Convert a flag name into the actual icon flag with that name """
@@ -145,7 +151,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return self.__collect_sessions_by_info(lambda si: si.get_metadata_names_usage())
 
     def generate_ordered_info_flags(self) -> HtmlStatisticsOutput[Action]:
-        def get_info_flags(si: 'SessionInfo') -> Iterable[Tuple[Action, Set['LogId']]]:
+        def get_info_flags(si: SessionInfo) -> Iterable[Tuple[Action, Set[LogMarker]]]:
             info_flags = si.get_info_flags_usage()
             yield from info_flags.items()
             if Action.PERFORMED_SEARCH not in info_flags:
@@ -162,7 +168,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
     def generate_ordered_product_types(self) -> HtmlStatisticsOutput[str]:
         # Counts work a little bit different for product types.  So if there are n different log entries for
         # a specific product type, we want that session to appear n times.
-        def get_info(si: 'SessionInfo') -> Iterator[Tuple[str, Set['LogId']]]:
+        def get_info(si: SessionInfo) -> Iterator[Tuple[str, Set[LogMarker]]]:
             return ((name, ids)
                     for name, ids in si.get_product_types_usage().items()
                     for _ in range(len(ids)))
@@ -176,6 +182,11 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return sum(self.__to_session_info(session).get_product_types_usage_count() for session in self._sessions)
 
     class FakeSession(NamedTuple):
+        """
+        A Fake session has just enough methods and properties to pretend to be a session.  It has enough information
+        to be used by downloads, and then passed to the Jinja code generator.  It is recognized as being fake by
+        not having an actual id.
+        """
         log_entry: LogEntry
         id: str = ''
 
@@ -190,7 +201,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                                                        Dict[str, str]]:
         value_to_sessions: Dict[str, List[Session]] = collections.defaultdict(list)
         sizing_dict: Dict[Tuple[str, Session], int] = collections.defaultdict(int)
-        value_to_class: Dict[T, str] = collections.defaultdict(lambda: self.__get_next_class_name())
+        value_to_class: Dict[str, str] = collections.defaultdict(lambda: next(self._class_name_generator))
 
         for session in self._sessions:
             session_info = self.__to_session_info(session)
@@ -203,6 +214,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     self._log_entry_to_classes[session, log_id].add(class_for_file)
 
         for filename, entry in self._configuration.sessionless_downloads:
+            # The following statement is a bald-faced lie.  Fortunately Python doesn't actually do type checking.
             session = cast(Session, self.FakeSession(entry))
             value_to_sessions[filename].append(session)
             sizing_dict[filename, session] += (entry.size or 0)
@@ -246,13 +258,10 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         """Useful for debugging.  The Jinga template can print out information."""
         print(arg)
 
-    def __get_next_class_name(self) -> str:
-        return f'opus{next(self._class_name_counter):>04}'
-
-    def __collect_sessions_by_info(self, func: Callable[['SessionInfo'], Iterable[Tuple[T, Iterable['LogId']]]],
+    def __collect_sessions_by_info(self, func: Callable[[SessionInfo], Iterable[Tuple[T, Iterable[LogMarker]]]],
                                    fixed: Optional[Iterable[T]] = None) -> HtmlStatisticsOutput[T]:
         value_to_sessions: Dict[T, List[Session]] = collections.defaultdict(list)
-        value_to_class: Dict[T, str] = collections.defaultdict(lambda: self.__get_next_class_name())
+        value_to_class: Dict[T, str] = collections.defaultdict(lambda: next(self._class_name_generator))
         for session in self._sessions:
             session_info = self.__to_session_info(session)
             for item, log_ids in func(session_info):
@@ -269,12 +278,14 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             # Sort the outer list secondarily by whatever we're looking at, and primarily by the count of that item.
             result.sort(key=itemgetter(0))
             result.sort(key=itemgetter(1), reverse=True)
+        # Bug in pycharm.  The following return result is exactly the type it's supposed to be.
+        # noinspection PyTypeChecker
         return result, value_to_class
 
     def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:
         sessions.sort(key=lambda session: session.start_time())
         sessions.sort(key=lambda session: session.host_ip)
-        grouped_sessions = [list(sessions) for _, sessions in itertools.groupby(sessions, attrgetter("host_ip"))]
+        grouped_sessions = [list(sessions) for _, sessions in itertools.groupby(sessions, attrgetter('host_ip'))]
 
         # At this point, groups are sorted by host_ip, and within each group, they are sorted by start time
         # But we want the groups sorted by length, and within length, we want them in our standard sort order
@@ -287,7 +298,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return grouped_sessions
 
     @staticmethod
-    def __to_session_info(session: Session) -> 'SessionInfo':
+    def __to_session_info(session: Session) -> SessionInfo:
         """Helper function that casts session.session_info from AbstractSession to SessionInfo"""
         return cast('SessionInfo', session.session_info)
 
@@ -297,3 +308,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             return 1, tuple(reversed(name.lower().split('.')))
         else:
             return 2, ip
+
+    def __generate_class_names(self) -> Iterator[str]:
+        alphabet = string.digits + string.ascii_lowercase
+        for length in itertools.count(2):
+            for letters in itertools.product(alphabet, repeat=length):
+                yield 'op-' + ''.join(letters)

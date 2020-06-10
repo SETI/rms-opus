@@ -1,7 +1,7 @@
 import collections
 import re
 import urllib.parse
-from typing import Dict, Set, Tuple, List, Optional, Sequence, Match, Mapping, Iterator, Iterable
+from typing import Dict, Set, Tuple, List, Optional, Sequence, Match, Mapping, Iterator, Iterable, Union
 
 from abstract_configuration import AbstractSessionInfo, PatternRegistry, SESSION_INFO, LogId
 from log_entry import LogEntry
@@ -9,6 +9,8 @@ from opus import slug
 from .configuration_flags import IconFlags, Action
 from .query_handler import QueryHandler, MetadataSlugInfo
 from .slug import Info
+
+LogMarker = Union[LogId, Tuple[LogId, int]]
 
 
 class SessionInfo(AbstractSessionInfo):
@@ -21,20 +23,20 @@ class SessionInfo(AbstractSessionInfo):
     _session_search_slugs: Dict[str, slug.Info]
     _session_metadata_slugs: Dict[str, slug.Info]
     _icon_flags: IconFlags
-    _previous_product_info_type: Optional[List[str]]
+    _previous_product_info_type: Optional[Set[str]]
     _query_handler: QueryHandler
     _show_all: bool
     _current_id: LogId
 
-    _search_slugs_usage: Dict[str, Set[LogId]]
-    _metadata_slugs_usage: Dict[str, Set[LogId]]
-    _session_sort_slugs_usage: Dict[Tuple[slug.Info, ...], Set[LogId]]
-    _help_files_usage: Dict[str, Set[LogId]]
-    _product_types_usage: Dict[str, Set[LogId]]
+    _search_slugs_usage: Dict[str, Set[LogMarker]]
+    _metadata_slugs_usage: Dict[str, Set[LogMarker]]
+    _session_sort_slugs_usage: Dict[Tuple[slug.Info, ...], Set[LogMarker]]
+    _help_files_usage: Dict[str, Set[LogMarker]]
+    _product_types_usage: Dict[str, Set[LogMarker]]
     _product_types_count: int
-    _widgets_usage: Dict[str, Set[LogId]]
-    _info_flags_usage: Dict[Action, Set[LogId]]
-    _sessioned_downloads_usage: Dict[str, Tuple[List[int], Set[LogId]]]
+    _widgets_usage: Dict[str, Set[LogMarker]]
+    _info_flags_usage: Dict[Action, Set[LogMarker]]
+    _sessioned_downloads_usage: Dict[str, Tuple[List[int], Set[LogMarker]]]
     _sessionless_downloads_usage: List[Tuple[str, LogEntry]]
 
     pattern_registry = PatternRegistry()
@@ -77,13 +79,13 @@ class SessionInfo(AbstractSessionInfo):
             self._icon_flags |= IconFlags.HAS_OBSOLETE_SLUG
             self.register_info_flags(Action.HAS_OBSOLETE_SLUG)
 
-    def changed_search_slugs(self) -> None:
+    def changed_search_slugs(self, *, line_number: int) -> None:
         self._icon_flags |= IconFlags.HAS_SEARCH
-        self.register_info_flags(Action.PERFORMED_SEARCH)
+        self.register_info_flags(Action.PERFORMED_SEARCH, line_number=line_number)
 
-    def changed_metadata_slugs(self) -> None:
+    def changed_metadata_slugs(self, *, line_number: int) -> None:
         self._icon_flags |= IconFlags.HAS_METADATA
-        self.register_info_flags(Action.CHANGED_SELECTED_METADATA)
+        self.register_info_flags(Action.CHANGED_SELECTED_METADATA, line_number=line_number)
 
     def performed_download(self) -> None:
         self._icon_flags |= IconFlags.HAS_DOWNLOAD
@@ -118,14 +120,15 @@ class SessionInfo(AbstractSessionInfo):
     # Mark events that we eventually want to summarize
     #
 
-    def register_info_flags(self, flags: Action) -> None:
-        self._info_flags_usage[flags].add(self._current_id)
+    def register_info_flags(self, flags: Action, *, line_number: Optional[int] = None) -> None:
+        marker: LogMarker = (self._current_id, line_number) if line_number else self._current_id
+        self._info_flags_usage[flags].add(marker)
 
-    def register_search_slug(self, family: slug.Family) -> None:
-        self._search_slugs_usage[family.label].add(self._current_id)
+    def register_search_slug(self, family: slug.Family, *, line_number: int) -> None:
+        self._search_slugs_usage[family.label].add((self._current_id, line_number))
 
-    def register_metadata_slug(self, family: slug.Family) -> None:
-        self._metadata_slugs_usage[family.label].add(self._current_id)
+    def register_metadata_slug(self, family: slug.Family, *, line_number: int) -> None:
+        self._metadata_slugs_usage[family.label].add((self._current_id, line_number))
 
     def register_sessioned_download(self, filename: str, entry: LogEntry) -> None:
         (size, log_ids) = self._sessioned_downloads_usage[filename]
@@ -148,45 +151,45 @@ class SessionInfo(AbstractSessionInfo):
     def register_help_file(self, file_name: str) -> None:
         self._help_files_usage[file_name].add(self._current_id)
 
-    def register_sort_slugs_changed(self, slugs_list: Sequence[slug.Info]) -> None:
-        self._session_sort_slugs_usage[tuple(slugs_list)].add(self._current_id)
+    def register_sort_slugs_changed(self, slugs_list: Sequence[slug.Info], *, line_number: int) -> None:
+        self._session_sort_slugs_usage[tuple(slugs_list)].add((self._current_id, line_number))
 
     #
     # The following are used by the summary pages.
     #
 
-    def get_search_names_usage(self) -> Mapping[str, Set[LogId]]:
+    def get_search_names_usage(self) -> Mapping[str, Set[LogMarker]]:
         return self._search_slugs_usage
 
-    def get_metadata_names_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
+    def get_metadata_names_usage(self) -> Iterator[Tuple[str, Set[LogMarker]]]:
         for name, log_ids in self._metadata_slugs_usage.items():
             if name in self._widgets_usage:
                 log_ids = log_ids.union(self._widgets_usage[name])
             yield name, log_ids
 
-    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[str, Set[LogId]]]:
+    def get_unmatched_widgets_usage(self) -> Iterator[Tuple[str, Set[LogMarker]]]:
         for widget, ids in self._widgets_usage.items():
             if widget not in self._metadata_slugs_usage:
                 yield widget, ids
 
-    def get_sort_list_names_usage(self) -> Iterator[Tuple[Tuple[str, ...], Set[LogId]]]:
+    def get_sort_list_names_usage(self) -> Iterator[Tuple[Tuple[str, ...], Set[LogMarker]]]:
         for sort_list, ids in self._session_sort_slugs_usage.items():
             names = tuple(value.family.label for value in sort_list)
             yield names, ids
 
-    def get_info_flags_usage(self) -> Mapping[Action, Set[LogId]]:
+    def get_info_flags_usage(self) -> Mapping[Action, Set[LogMarker]]:
         return self._info_flags_usage
 
-    def get_help_files_usage(self) -> Mapping[str, Set[LogId]]:
+    def get_help_files_usage(self) -> Mapping[str, Set[LogMarker]]:
         return self._help_files_usage
 
-    def get_product_types_usage(self) -> Mapping[str, Set[LogId]]:
+    def get_product_types_usage(self) -> Mapping[str, Set[LogMarker]]:
         return self._product_types_usage
 
     def get_product_types_usage_count(self) -> int:
         return self._product_types_count
 
-    def get_sessioned_downloads_usage(self) -> Mapping[str, Tuple[List[int], Set[LogId]]]:
+    def get_sessioned_downloads_usage(self) -> Mapping[str, Tuple[List[int], Set[LogMarker]]]:
         return self._sessioned_downloads_usage
 
     def parse_log_entry(self, entry: LogEntry, log_id: LogId) -> SESSION_INFO:
@@ -244,7 +247,6 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__api/(data)\.html')
-    @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
     def __api_data(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
@@ -345,28 +347,30 @@ class SessionInfo(AbstractSessionInfo):
             return [], None
         self.performed_download()
         ptypes_field = query.get('types', None)
-        new_ptypes = [x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])]
+        new_ptypes = {x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])}
 
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
 
         if old_ptypes is None:
-            joined_new_ptypes = self.quote_and_join_list(new_ptypes)
+            joined_new_ptypes = self.quote_and_join_list(sorted(new_ptypes))
             self.register_product_types(new_ptypes)
             plural = '' if len(new_ptypes) == 1 else 's'
             return [f'Download Product Type{plural}: {joined_new_ptypes}'], None
 
         result = []
 
-        def show(verb: str, items: List[str]) -> None:
+        def show(verb: str, items: Set[str]) -> None:
             if items:
                 plural = 's' if len(items) > 1 else ''
-                joined_items = self.quote_and_join_list(items)
+                joined_items = self.quote_and_join_list(sorted(items))
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
-        show('add', [ptype for ptype in new_ptypes if ptype not in old_ptypes])
-        show('remove', [ptype for ptype in old_ptypes if ptype not in new_ptypes])
-        self.register_product_types(set(new_ptypes).difference(set(old_ptypes)))
+        added = new_ptypes - old_ptypes
+        deleted = old_ptypes - new_ptypes
+
+        show('add', added)
+        show('remove', deleted)
 
         if not result:
             result.append('Product Types are unchanged')

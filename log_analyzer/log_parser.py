@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import ipaddress
 import itertools
@@ -21,7 +23,7 @@ class LiveSession(NamedTuple):
     start_time: datetime.datetime
     timeout: datetime.datetime
 
-    def with_timeout(self, timeout: datetime.datetime) -> 'LiveSession':
+    def with_timeout(self, timeout: datetime.datetime) -> LiveSession:
         return self._replace(timeout=timeout)
 
 
