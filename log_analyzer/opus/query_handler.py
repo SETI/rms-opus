@@ -90,7 +90,7 @@ class QueryHandler:
             return [], None
 
     def handle_query(self, _entry: LogEntry, query: Dict[str, str], query_type: str) -> Tuple[List[str], Optional[str]]:
-        assert query_type in ['data', 'images', 'result_count', 'dataimages']
+        assert query_type in ['data', 'result_count', 'dataimages']
 
         result: List[str] = []
 
@@ -98,8 +98,8 @@ class QueryHandler:
             uses_metadata, uses_pages, uses_sort, current_state = False, False, False, State.SEARCHING
         elif query_type == 'data' or query_type == 'dataimages':
             uses_metadata, uses_pages, uses_sort, current_state = True, True, True, State.FETCHING
-        else:  # images
-            uses_metadata, uses_pages, uses_sort, current_state = False, True, True, State.FETCHING
+        else:
+            assert False
 
         previous_state = self._previous_state
         if current_state != previous_state:

@@ -247,7 +247,6 @@ class SessionInfo(AbstractSessionInfo):
     #
 
     @pattern_registry.register(r'/__api/(data)\.html')
-    @pattern_registry.register(r'/__api/(images)\.html')
     @pattern_registry.register(r'/__api/(dataimages)\.json')
     @pattern_registry.register(r'/__api/meta/(result_count)\.json')
     def __api_data(self, log_entry: LogEntry, query: Dict[str, str], match: Match[str]) -> SESSION_INFO:
