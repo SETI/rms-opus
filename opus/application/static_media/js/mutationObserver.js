@@ -17,6 +17,14 @@ var o_mutationObserver = {
             attributeFilter: ["class"], // detect action of switching tabs
         };
 
+        // detect if mult group contents are expended/collapsed, use data-status attribute
+        // as the flag to determine if the animation is done.
+        let multGroupObserverConfig = {
+            attributeFilter: ["data-status"],
+            childList: true,
+            subtree: true,
+        };
+
         // select metadata, widgets and sidebar menu items can be collapsed, so we need to detect attribute changes
         // set attributes to true
         let generalObserverConfig = {
@@ -120,10 +128,27 @@ var o_mutationObserver = {
                         } else if (mutation.target.classList.value.match(/spinner/)) {
                             // If new widget is added but spinner is still spinning, we update ps after spinner is done
                             searchWidgetHeightChanged();
-                        } else if (mutation.target.classList.value.match(/mult_group/)) {
-                            // If new mult_group is open inside widgets, we update ps
-                            searchWidgetHeightChanged();
                         }
+                    }
+                }
+            });
+        });
+
+        let searchWidgetMultGroupObserver = new MutationObserver(function(mutationsList) {
+            let lastMutationIdx = mutationsList.length - 1;
+            mutationsList.forEach((mutation, idx) => {
+                if (mutation.type === "attributes" && idx === lastMutationIdx) {
+                    if (mutation.target.classList.value.match(/mult_group/)) {
+                        // If new mult_group is open inside widgets, we update ps
+                        let multGroupContentsHeight = mutation.target.clientHeight;
+                        let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
+                                                            $("#search #widget-container").height();
+                        let targetBottomPosition = $(mutation.target).offset().top + multGroupContentsHeight;
+                        // If the clicked mult group contents is covered, scroll the scrollbar so that all
+                        // contents can be displayed.
+                        let offset = (targetBottomPosition > widgetContainerBottomPosition) ?
+                                     multGroupContentsHeight : 0;
+                        searchWidgetHeightChanged(offset);
                     }
                 }
             });
@@ -290,6 +315,7 @@ var o_mutationObserver = {
         // update ps in search page
         searchSidebarObserver.observe(searchSidebar, generalObserverConfig);
         searchWidgetObserver.observe(searchWidget, generalObserverConfig);
+        searchWidgetMultGroupObserver.observe(searchWidget, multGroupObserverConfig);
         // update ps in cart page, including both o_cart.cartGalleryScrollbar and o_cart.downloadOptionsScrollbar
         cartObserver.observe(cartTab, childListObserverConfig);
         // update ps in help panel
