@@ -1082,7 +1082,7 @@ var o_search = {
         }
 
         o_search.widgetScrollbar.update();
-        // If offset is not 0, properly scroll the scrollabr so that all the expanded mult
+        // If offset is not 0, properly scroll the scrollbar so that all the expanded mult
         // group contents can be displayed on the screen.
         if (offset) {
             let currentScrollbarPosition = $("#search #widget-container").scrollTop();
