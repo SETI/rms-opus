@@ -137,19 +137,18 @@ var o_mutationObserver = {
         let searchWidgetMultGroupObserver = new MutationObserver(function(mutationsList) {
             let lastMutationIdx = mutationsList.length - 1;
             mutationsList.forEach((mutation, idx) => {
-                if (mutation.type === "attributes" && idx === lastMutationIdx) {
-                    if (mutation.target.classList.value.match(/mult_group/)) {
-                        // If new mult_group is open inside widgets, we update ps
-                        let multGroupContentsHeight = mutation.target.clientHeight;
-                        let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
-                                                            $("#search #widget-container").height();
-                        let targetBottomPosition = $(mutation.target).offset().top + multGroupContentsHeight;
-                        // If the clicked mult group contents is covered, scroll the scrollbar so that all
-                        // contents can be displayed.
-                        let offset = (targetBottomPosition > widgetContainerBottomPosition) ?
-                                     multGroupContentsHeight : 0;
-                        searchWidgetHeightChanged(offset);
-                    }
+                if (mutation.type === "attributes" && idx === lastMutationIdx &&
+                    mutation.target.classList.value.match(/mult_group/)) {
+                    // If new mult_group is open inside widgets, we update ps
+                    let multGroupContentsHeight = mutation.target.clientHeight;
+                    let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
+                                                        $("#search #widget-container").height();
+                    let targetBottomPosition = $(mutation.target).offset().top + multGroupContentsHeight;
+                    // If the clicked mult group contents is covered, scroll the scrollbar so that all
+                    // contents can be displayed.
+                    let offset = (targetBottomPosition > widgetContainerBottomPosition) ?
+                                 multGroupContentsHeight : 0;
+                    searchWidgetHeightChanged(offset);
                 }
             });
         });
