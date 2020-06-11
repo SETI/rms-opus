@@ -97,19 +97,13 @@ var o_widgets = {
             $(this).find(".indicator").toggleClass("fa-plus");
             $(this).find(".indicator").toggleClass("fa-minus");
             let multGroupContents = $(this).next();
+            let currentExpandedStatus = $(this).find(".indicator").hasClass("fa-plus") ?
+                                        "expanded" : "collapsed";
             multGroupContents.slideToggle("fast", function() {
-                let widgetContainerBottomPosition = $("#search #widget-container").offset().top +
-                                                    $("#search #widget-container").height();
-                let targetBottomPosition = $(this).offset().top + $(this).height();
-                // When mult group contents are expanded and covered by the bottom of the window
-                // (footer), scroll the scrollbar so that all checkboxes in the group are visible.
-                if (targetBottomPosition > widgetContainerBottomPosition) {
-                    let offset = $(this).is(":visible") ? $(this).outerHeight() : -$(this).outerHeight();
-                    let currentScrollbarPosition = $("#search #widget-container").scrollTop();
-                    let newScrollbarPosition = currentScrollbarPosition + offset;
-                    $("#search #widget-container").scrollTop(newScrollbarPosition);
-                }
-
+                // Toggle the data-status after the animation is done. MutationObserver is set
+                // to detect the change of data-status, so we can always make sure ps gets
+                // updated and scrolled after the animation is done.
+                $(this).attr("data-status", currentExpandedStatus);
             });
         });
 
