@@ -147,7 +147,7 @@ var o_mutationObserver = {
                     // If the clicked mult group contents is covered, scroll the scrollbar so that all
                     // contents can be displayed.
                     let offset = (targetBottomPosition > widgetContainerBottomPosition) ?
-                                 multGroupContentsHeight : 0;
+                                 (targetBottomPosition - widgetContainerBottomPosition) : 0;
                     searchWidgetHeightChanged(offset);
                 }
             });
