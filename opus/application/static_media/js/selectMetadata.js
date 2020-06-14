@@ -151,6 +151,7 @@ var o_selectMetadata = {
                     return;
                 }
                 $(".op-select-metadata-details").html(data.html);
+                $("#op-add-metadata-fields .op-select-list").html(data.listhtml);
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 

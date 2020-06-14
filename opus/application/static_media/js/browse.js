@@ -145,7 +145,7 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenus();
 
-            let opusId = $(this).parent().data("id");
+            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -181,7 +181,7 @@ var o_browse = {
         });
 
         $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
-            let opusId = $(this).parent().data("id");
+            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
             e.preventDefault();
             o_browse.hideMenus();
 
@@ -214,7 +214,7 @@ var o_browse = {
         $(".gallery, .op-data-table").on("click contextmenu", ".op-tools a", function(e) {
             let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
-            let opusId = $(this).parent().data("id");
+            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
             let iconAction = $(this).data("icon");
             if (e.which === 3) {    // right mouse click
                 // on any right click w/in the op-tools, display context menu and allow 'open in new tab'
@@ -301,6 +301,48 @@ var o_browse = {
             return false;
         });
 
+        $("#galleryView").on("click", "a.op-edit-metadata-button", function(e) {
+            let action = $(this).attr("action");
+            let editText;
+            if (action === "edit") {
+                editText = `<i class="fas fa-pencil-alt"></i> Done`;
+                action = "done";
+                o_browse.initEditMetadataDetails();
+            } else {
+                editText = `<i class="fas fa-pencil-alt"></i> Edit`;
+                action = "edit";
+                o_browse.removeEditMetadataDetails();
+                o_browse.onDoneUpdateMetadataDetails();
+            }
+            $(".op-edit-metadata-button").attr("action", action).html(editText);
+            return false;
+        });
+
+        $(".op-select-list").on("click", ".dropdown-item", function(e) {
+            o_browse.hideMenus();
+            //o_sortMetadata.onClickSortOrder($(this).data("slug"));
+            return false;
+        });
+
+        $("#galleryView").on("click", "a.op-metadata-detail-add", function(e) {
+            // allow the hover to work but the click appear to be disabled
+            if ($(".op-metadata-detail-add").hasClass("op-add-disabled")) {
+                return false;
+            }
+            let slug = $(this).{{ which }}-mini-{{ div.table_name }}().{{ which }}-mini-{{ div.table_name }}().data("slug");
+            if ($("#op-add-metadata-fields").hasClass("show")) {
+                o_browse.hideMetadataList(e);
+            } else {
+                o_browse.showMetadataList(e);
+            }
+            return false;
+        });
+
+        $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
+            $(this).{{ which }}-mini-{{ div.table_name }}().{{ which }}-mini-{{ div.table_name }}().remove();
+            return false;
+        });
+
         // Click add all to cart icon in the first column of the browse table header
         $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
             o_browse.confirmationBeforeAddAll();
@@ -313,7 +355,7 @@ var o_browse = {
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
-            let opusId = $(this).parent().attr("data-id");
+            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().attr("data-id");
             o_browse.hideMenus();
 
             switch ($(this).data("action")) {
@@ -985,6 +1027,7 @@ var o_browse = {
 
     hideMenus: function() {
         o_browse.hideMenu();
+        o_browse.hideMetadataList();
         o_sortMetadata.hideMenu();
     },
 
@@ -1051,7 +1094,7 @@ var o_browse = {
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            $(e.target).parent().attr("href", url);
+            $(e.target).{{ which }}-mini-{{ div.table_name }}().attr("href", url);
         } else if (e.ctrlKey || e.metaKey) {
             // open detail view in new browser tab
             e.preventDefault();
@@ -1069,7 +1112,7 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`.op-data-table div[data-id=${opusId}]`).parent();
+        return $(`.op-data-table div[data-id=${opusId}]`).{{ which }}-mini-{{ div.table_name }}();
     },
 
     highlightStartOfRange: function(opusId) {
@@ -1432,7 +1475,7 @@ var o_browse = {
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
-                let resizableContainerWidth = $(event.target).parent().width();
+                let resizableContainerWidth = $(event.target).{{ which }}-mini-{{ div.table_name }}().width();
                 let columnTextWidth = $(event.target).find("a span:first").width();
                 let sortLabelWidth = $(event.target).find("a span:last").width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
@@ -1441,14 +1484,14 @@ var o_browse = {
 
                 if (ui.size.width > columnWidthUptoEndContent) {
                     $(event.target).width(ui.size.width);
-                    $(event.target).parent().width(ui.size.width);
-                    $(event.target).parent().height(ui.size.height);
-                    $(event.target).find("div").height($(event.target).parent().height());
+                    $(event.target).{{ which }}-mini-{{ div.table_name }}().width(ui.size.width);
+                    $(event.target).{{ which }}-mini-{{ div.table_name }}().height(ui.size.height);
+                    $(event.target).find("div").height($(event.target).{{ which }}-mini-{{ div.table_name }}().height());
                 } else {
-                    let tableCellWidth = $(event.target).parent().width();
+                    let tableCellWidth = $(event.target).{{ which }}-mini-{{ div.table_name }}().width();
                     let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
                     $(event.target).width(resizableElementWidth);
-                    $(event.target).find("div").height($(event.target).parent().height());
+                    $(event.target).find("div").height($(event.target).{{ which }}-mini-{{ div.table_name }}().height());
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
@@ -1472,7 +1515,7 @@ var o_browse = {
             items: "th.op-draggable",
             axis: "x",
             cursor: "grab",
-            containment: "parent",
+            containment: "{{ which }}-mini-{{ div.table_name }}",
             tolerance: "pointer",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
@@ -1703,7 +1746,7 @@ var o_browse = {
                         let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
                         return path;
                     //}
-                    // returning no value indicates end of infinite scroll... but apparently doesn't work at moment.
+                    // returning no value indicates end of infinite scroll... but ap{{ which }}-mini-{{ div.table_name }}ly doesn't work at moment.
                     // NOTE: leaving this commented out code in place with the hope that we will find a solution.
                     //return null;
                 },
@@ -2118,25 +2161,58 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
-    initDraggableMetadataDetails: function() {
+    hideMetadataList: function(e) {
+        $("#op-add-metadata-fields").removeClass("show").hide();
+    },
+
+    showMetadataList: function(e) {
+        let tab = opus.getViewTab();
+        let contextMenu = "#op-add-metadata-fields";
+
+        let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
+        let top =  e.pageY;
+        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
+
+        $(contextMenu).css({
+            display: "block",
+            top: top,
+            left: left,
+        }).addClass("show");
+    },
+
+    onDoneUpdateMetadataDetails: function(e) {
+        let columnOrder = $.map($("ul.op-metadata-details-sortable"), function(n, i) {
+            return $(n).data("slug");
+        });
+        // only bother if something actually changed...
+        if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+            opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+            o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+            // passing in false indicates to not close the gallery view on loadData
+            o_selectMetadata.saveChanges();
+        }
+        o_browse.hideMetadataList();
+    },
+
+    initEditMetadataDetails: function() {
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
-            items: "div.op-metadata-details-sortable",
+            items: "ul.op-metadata-details-sortable",
             cursor: "grab",
-            containment: "parent",
+            containment: "{{ which }}-mini-{{ div.table_name }}",
             tolerance: "pointer",
             update: function(e, ui) {
-                let columnOrder = $.map($(this).find("div.op-metadata-details-sortable"), function(n, i) {
-                    return $(n).data("slug");
-                });
-                // only bother if something actually changed...
-                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
-                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
-                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-                    // passing in false indicates to not close the gallery view on loadData
-                    o_sortMetadata.renderSortedDataFromBeginning(false);
-                }
             },
         });
+        $(".op-metadata-details-tools").show();
+        $(".op-metadata-detail-edit-message").show();
+    },
+
+    removeEditMetadataDetails: function() {
+        $(".op-metadata-details-tools").hide();
+        $(".op-metadata-detail-edit-message").hide();
+        if ($(`#galleryViewContents .op-metadata-details .contents`).sortable("instance") !== undefined) {
+            $(`#galleryViewContents .op-metadata-details .contents`).sortable("destroy");
+        }
     },
 
     metadataboxHtml: function(opusId, view) {
@@ -2145,19 +2221,26 @@ var o_browse = {
         opus.metadataDetailOpusId = opusId;
 
         // list columns + values
-        let html = "<dl>";
+        let editLine = `<div class="op-metatdata-detail-edit">` +
+                       `<a href="#" class="op-edit-metadata-button" action="edit"><i class="fas fa-pencil-alt"></i> Edit</a>` +
+                       `<div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div></div>`;
+        let html = `<dl>`;
+        let selectMetadataTitle = $(".op-metadata-modal").attr("title");
+        let tools = `<li class="op-metadata-details-tools list-inline-item">` +
+                    `<a href="#" class="op-metadata-detail-add" title="${selectMetadataTitle}"><i class="fas fa-plus pr-1"></i></a>` +
+                    `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
                 let slug = opus.prefs.cols[index];
                 let value = viewNamespace.observationData[opusId][index];
-                html += `<div class="op-metadata-details-sortable" data-slug="${slug}"><dt>${columnLabel}:</dt><dd>${value}</dd></div>`;
+                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${tools}<li class="op-metatdata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}</dd></li></ul>`;
             }
         });
-        html += "</dl>";
+        html = `${editLine}${html}</dl>`;
         $("#galleryViewContents .contents").html(html);
-        o_browse.initDraggableMetadataDetails(tab);
+        o_browse.removeEditMetadataDetails();
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
         let action = o_cart.isIn(opusId) ? "" : "remove";

@@ -204,6 +204,16 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     background-color: transparent !important;
 }
 
+.op-metadata-detail-edit-message {
+    display: inline-flex;
+    float: right;
+    padding-right: 7em;
+}
+
+.op-metadata-details-sortable {
+    margin-bottom: 0;
+}
+
 .op-browse-view[data-view] {
     width: 8em;
 }
@@ -360,6 +370,16 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+}
+
+
+/* for selected metadata items */
+.op-mark .op-menu-item {
+    background: gainsboro;
+}
+
+.op-mark .op-search-param-checkmark {
+    opacity: 1;
 }
 
 /* Css styling for triangle arrow pointing right */
@@ -744,20 +764,7 @@ th.sticky-header {
 }
 
 .op-data-table-view .ui-sortable-placeholder {
-    display: inline-block;
-}
-
-.op-data-table-view .ui-sortable-placeholder th {
-    background: red;
-    visibility: visible;
-}
-
-.op-data-table-column-move-bar {
-    display: none
-}
-
-.op-data-table-column-move-bar .op-moving {
-    border-left: 4px solid blue;
+    display: none;
 }
 
 .op-sort-position-indicator {
@@ -1154,6 +1161,15 @@ a:-webkit-any-link, a::any-link {
 
 #galleryViewContents a.menu {
     width: 0px;
+}
+
+#op-add-metadata-fields {
+    z-index: 9999;
+}
+
+#op-add-metadata-fields .op-select-list {
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
 /* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
