@@ -20,6 +20,7 @@ from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import HostInfo, Session, Entry
+from manifest import ManifestStatus, Summary
 from .configuration_flags import IconFlags, Action
 
 if TYPE_CHECKING:
@@ -247,6 +248,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     sum=sum(data, datetime.timedelta(0)),
                     mean=datetime.timedelta(seconds=round(mean)),
                     median=datetime.timedelta(seconds=round(median)))
+
+    def get_manifest_statistics(self) -> Sequence[Summary]:
+        return ManifestStatus.get_temporary_results()
 
     @staticmethod
     def run_length_encode(values: Sequence[T]) -> List[Tuple[T, int]]:

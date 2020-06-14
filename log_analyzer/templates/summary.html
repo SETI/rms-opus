@@ -88,6 +88,7 @@
 {% with %}
 <details class="Summary1 open"><summary>Downloads</summary>
     <a href="#" class="SessionLink Summary2" data-target="#Histogram-Downloads">Histogram</a>
+    <a href="#" class="SessionLink Summary2" data-target="#Manifests">Manifests</a>
     {% set summary_info, value_to_class = context.generate_ordered_download_files() %}
     {% for name, total_size, sessions_and_sizes in summary_info %}
         <details class="Summary2" data-target-class="{{ value_to_class[name] }}">

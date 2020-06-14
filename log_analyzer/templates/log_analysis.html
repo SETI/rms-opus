@@ -299,7 +299,10 @@ $(function() {
                 // Add the node to the DOM
                 .appendTo('#all-session-infos')
                 // And load its content.  Call the callback once the dom is loaded.
-                .load(session_location, function () {
+                .load(session_location, function (response, status, xhr) {
+                    if (status === "error") {
+                        $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
+                    }
                     // $this gets rebound to <div> we just loaded a file into
                     highlight_and_scroll_session_info($(this), target_class);
                 });

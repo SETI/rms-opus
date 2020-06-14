@@ -1,6 +1,7 @@
 <script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
-{% set session_statistics = context.get_session_statistics() %}
+{% with session_statistics = context.get_session_statistics(),
+        download_statistics = context.get_download_statistics() %}
 
 <div id="Histogram-IP" class="SessionInfo SessionInfoLoaded tab-pane">
     Number of sessions: {{ session_statistics.count }}<br>
@@ -15,7 +16,6 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-{% set download_statistics = context.get_download_statistics() %}
 
 <div id="Histogram-Downloads" class="SessionInfo SessionInfoLoaded tab-pane">
     Number of downloads: {{ download_statistics.count }}<br>
@@ -27,6 +27,48 @@
     <div id="file_downloads"></div>
     <hr/>
     <div id="file_downloads_log"></div>
+</div>
+
+<div id="Manifests" class="SessionInfo SessionInfoLoaded tab-pane">
+    {% for summary in context.get_manifest_statistics() %}
+    {% set headers = summary.headers %}
+    {% set lines = summary.lines %}
+    <table class="table table-sm table-bordered table-striped" id="Manifest{{ loop.index }}">
+        <thead>
+            <tr>
+                <th class="text-center" colspan="{{ headers | length }}">Key</th>
+                <th class="text-center">Manifest</th>
+                <th class="text-center">Opus Id</th>
+                <th class="text-center" colspan="2">File Path</th>
+            </tr>
+            <tr>
+                {% for header in headers %}
+                    <th class="text-center">{{ header }}</th>
+                {% endfor %}
+                <th class="text-center">Count</th>
+                <th class="text-center">Count</th>
+                <th class="text-center">Count</th>
+                <th class="text-center">Bytes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in lines %}
+                <tr>
+                    {% for key in row.key %}
+                        <td>{{ key }}</td>
+                    {% endfor %}
+                    <td class="text-right">{{ row.manifest_count }}</td>
+                    <td class="text-right">{{ row.opus_id_count }}</td>
+                    <td class="text-right">{{ row.file_path_count }}</td>
+                    <td class="text-right">{{ row.file_path_bytes | filesizeformat}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not loop.last %}
+        <hr/>
+    {% endif %}
+    {% endfor %}
 </div>
 
 <script>
@@ -105,4 +147,5 @@ $(function() {
 
 
 </script>
+{% endwith %}
 
