@@ -145,7 +145,7 @@ var o_browse = {
             e.preventDefault();
             o_browse.hideMenus();
 
-            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
+            let opusId = $(this).parent().data("id");
 
             // Detecting ctrl (windows) / meta (mac) key.
             if (e.ctrlKey || e.metaKey) {
@@ -181,7 +181,7 @@ var o_browse = {
         });
 
         $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
-            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
+            let opusId = $(this).parent().data("id");
             e.preventDefault();
             o_browse.hideMenus();
 
@@ -214,7 +214,7 @@ var o_browse = {
         $(".gallery, .op-data-table").on("click contextmenu", ".op-tools a", function(e) {
             let retValue = false;   // do not use the default handler
             //snipe the id off of the image..
-            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().data("id");
+            let opusId = $(this).parent().data("id");
             let iconAction = $(this).data("icon");
             if (e.which === 3) {    // right mouse click
                 // on any right click w/in the op-tools, display context menu and allow 'open in new tab'
@@ -329,7 +329,7 @@ var o_browse = {
             if ($(".op-metadata-detail-add").hasClass("op-add-disabled")) {
                 return false;
             }
-            let slug = $(this).{{ which }}-mini-{{ div.table_name }}().{{ which }}-mini-{{ div.table_name }}().data("slug");
+            let slug = $(this).parent().parent().data("slug");
             if ($("#op-add-metadata-fields").hasClass("show")) {
                 o_browse.hideMetadataList(e);
             } else {
@@ -339,7 +339,22 @@ var o_browse = {
         });
 
         $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
-            $(this).{{ which }}-mini-{{ div.table_name }}().{{ which }}-mini-{{ div.table_name }}().remove();
+            $(this).parent().parent().remove();
+            return false;
+        });
+
+        $("#op-select-metadata .op-all-metadata-column").on("click", '.submenu li a', function() {
+            let slug = $(this).data('slug');
+            if (!slug) { return; }
+
+            let chosenSlugSelector = `#cchoose__${slug}`;
+            if ($(chosenSlugSelector).length === 0) {
+                // this slug was previously unselected, add to cols
+                o_selectMetadata.addColumn(slug);
+            } else {
+                // slug had been checked, remove from the chosen
+                o_selectMetadata.removeColumn(slug);
+            }
             return false;
         });
 
@@ -355,7 +370,7 @@ var o_browse = {
 
         $("#op-obs-menu").on("click", '.dropdown-item',  function(e) {
             let retValue = false;
-            let opusId = $(this).{{ which }}-mini-{{ div.table_name }}().attr("data-id");
+            let opusId = $(this).parent().attr("data-id");
             o_browse.hideMenus();
 
             switch ($(this).data("action")) {
@@ -1094,7 +1109,7 @@ var o_browse = {
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
-            $(e.target).{{ which }}-mini-{{ div.table_name }}().attr("href", url);
+            $(e.target).parent().attr("href", url);
         } else if (e.ctrlKey || e.metaKey) {
             // open detail view in new browser tab
             e.preventDefault();
@@ -1112,7 +1127,7 @@ var o_browse = {
     },
 
     getDataTableInputElement: function(opusId) {
-        return $(`.op-data-table div[data-id=${opusId}]`).{{ which }}-mini-{{ div.table_name }}();
+        return $(`.op-data-table div[data-id=${opusId}]`).parent();
     },
 
     highlightStartOfRange: function(opusId) {
@@ -1475,7 +1490,7 @@ var o_browse = {
             handles: "e",
             minWidth: 40,
             resize: function(event, ui) {
-                let resizableContainerWidth = $(event.target).{{ which }}-mini-{{ div.table_name }}().width();
+                let resizableContainerWidth = $(event.target).parent().width();
                 let columnTextWidth = $(event.target).find("a span:first").width();
                 let sortLabelWidth = $(event.target).find("a span:last").width();
                 let columnContentWidth = columnTextWidth + sortLabelWidth;
@@ -1484,14 +1499,14 @@ var o_browse = {
 
                 if (ui.size.width > columnWidthUptoEndContent) {
                     $(event.target).width(ui.size.width);
-                    $(event.target).{{ which }}-mini-{{ div.table_name }}().width(ui.size.width);
-                    $(event.target).{{ which }}-mini-{{ div.table_name }}().height(ui.size.height);
-                    $(event.target).find("div").height($(event.target).{{ which }}-mini-{{ div.table_name }}().height());
+                    $(event.target).parent().width(ui.size.width);
+                    $(event.target).parent().height(ui.size.height);
+                    $(event.target).find("div").height($(event.target).parent().height());
                 } else {
-                    let tableCellWidth = $(event.target).{{ which }}-mini-{{ div.table_name }}().width();
+                    let tableCellWidth = $(event.target).parent().width();
                     let resizableElementWidth = tableCellWidth > columnContentWidth ? tableCellWidth : columnContentWidth;
                     $(event.target).width(resizableElementWidth);
-                    $(event.target).find("div").height($(event.target).{{ which }}-mini-{{ div.table_name }}().height());
+                    $(event.target).find("div").height($(event.target).parent().height());
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
