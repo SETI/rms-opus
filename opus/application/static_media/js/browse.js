@@ -334,6 +334,7 @@ var o_browse = {
                 o_browse.hideMetadataList(e);
             } else {
                 o_browse.showMetadataList(e);
+                $("#op-add-metadata-fields").data("slug", slug);
             }
             return false;
         });
@@ -343,17 +344,15 @@ var o_browse = {
             return false;
         });
 
-        $("#op-select-metadata .op-all-metadata-column").on("click", '.submenu li a', function() {
+        $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
-            let chosenSlugSelector = `#cchoose__${slug}`;
-            if ($(chosenSlugSelector).length === 0) {
-                // this slug was previously unselected, add to cols
-                o_selectMetadata.addColumn(slug);
-            } else {
-                // slug had been checked, remove from the chosen
-                o_selectMetadata.removeColumn(slug);
+            let parentSlug = $("#op-add-metadata-fields").data("slug");
+            let index = $.inArray(parentSlug, opus.prefs.cols);
+            if (index >= 0) {
+                index++;
+                opus.prefs.cols.splice(index, 0, slug);
             }
             return false;
         });
@@ -2213,7 +2212,7 @@ var o_browse = {
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
             items: "ul.op-metadata-details-sortable",
             cursor: "grab",
-            containment: "{{ which }}-mini-{{ div.table_name }}",
+            containment: "parent",
             tolerance: "pointer",
             update: function(e, ui) {
             },
