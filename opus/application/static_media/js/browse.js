@@ -340,22 +340,18 @@ var o_browse = {
         });
 
         $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
+            let slug = $(this).parent().parent().data('slug');
+            o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
             $(this).parent().parent().remove();
             return false;
         });
 
         // Toggle the submenu category and avoid dropdown menu #op-add-metadata-fields from closing
         // When clicking inside #op-add-metadata-fields.
-        $(".app-body").on("click", "#op-add-metadata-fields", function(e) {
-            if ($(e.target).hasClass("title")) {
-                e.stopPropagation();
-                let collapsibleID = $(e.target).parent().attr("href");
-                $(`${collapsibleID}`).collapse("toggle");
-            } else if ($(e.target).hasClass("op-submenu-category")) {
-                e.stopPropagation();
-                let collapsibleID = $(e.target).attr("href");
-                $(`${collapsibleID}`).collapse("toggle");
-            }
+        $("#op-add-metadata-fields").on("click", ".op-submenu-category", function(e) {
+            e.stopPropagation();
+            let collapsibleID = $(this).attr("href");
+            $(`${collapsibleID}`).collapse("toggle");
         });
 
         $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function() {
@@ -367,6 +363,8 @@ var o_browse = {
             if (index >= 0) {
                 index++;
                 opus.prefs.cols.splice(index, 0, slug);
+                o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
+                o_selectMetadata.saveChanges();
             }
             return false;
         });
