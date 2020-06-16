@@ -201,7 +201,7 @@ because it requires that all the navigation tabs be within a single unordered li
     {% for entry in session.entries %}
         {% for line in entry.data %}
             {%  set classes = context.log_entry_to_classes(session, entry, loop.index0) %}
-            <tr{% if classes %} vclass="{{ classes | join(' ') }}"{% endif %}>
+            <tr{% if classes %} class="{{ classes | join(' ') }}"{% endif %}>
                 {% if loop.first %}
                     {% if entry.opus_url %}
                         <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
@@ -238,6 +238,11 @@ name is generated from the session.id.  The additional text at the end of the li
 
 These markers are never nested.
 #}
+
+<div class="float-right">
+    <button class="btn btn-primary btn-sm pull-right" onclick="clickPrintButton()">Print</button>
+    <br><br>
+</div>
 
 {% set session_info_classes = "SessionInfo tab-pane" %}
 
@@ -303,7 +308,7 @@ $(function() {
                     if (status === "error") {
                         $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
                     }
-                    // $this gets rebound to <div> we just loaded a file into
+                    // $this gets rebound to <div/> we just loaded a file into
                     highlight_and_scroll_session_info($(this), target_class);
                 });
             return false;
@@ -367,6 +372,27 @@ document.addEventListener('mousemove', function(e) {
 document.addEventListener('mouseup', function(_e) {
   // Turn off dragging flag when user mouse is up
   isHandlerDragging = false;
+});
+
+function clickPrintButton() {
+    let win = window.open();
+    let printable = $('.SessionInfo.active');
+    win.document.write('<html>');
+    win.document.write('<head>');
+    win.document.write('<title>Print Log Analyzer</title>');
+    win.document.write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">');
+    win.document.write('</head>');
+    win.document.write('<body>');
+    win.document.write(printable.html());
+    win.document.write('</body>');
+    win.document.write('</html>');
+    win.print();
+}
+
+$(function(){
+    // Find the "Manifests" button and click it.
+    // DO NOT SUBMIT.  This line is a temporary hack!
+    $('.SessionLink[data-target="#Manifests"]').trigger('click');
 });
 
 </script>

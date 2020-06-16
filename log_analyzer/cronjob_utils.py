@@ -1,7 +1,9 @@
 import datetime
+import glob
 import re
 from argparse import Namespace
 from pathlib import Path
+from typing import Sequence
 
 import pytz
 
@@ -18,21 +20,31 @@ def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -
     log_file_patterns = args.log_files
     if not all('%' in log_file_pattern for log_file_pattern in log_file_patterns):
         raise Exception("Must specify a log file pattern, rather than a log file")
+    manifest_file_patterns = args.manifests
+    if not all('%' in manifest_pattern for manifest_pattern in manifest_file_patterns):
+        raise Exception("Must specify a manifest file pattern, rather than a manifest file")
 
     output_file_pattern = args.output
     if not output_file_pattern:
         raise Exception("Must specify the output file pattern for cronjob mode")
     run_date = __parse_cronjob_date_arg(args)
     if from_first_of_month:
-        log_files = [datetime.datetime(year=run_date.year, month=run_date.month, day=day).strftime(log_file_pattern)
-                     for log_file_pattern in log_file_patterns
-                     for day in range(1, run_date.day + 1)]
+        dates = [datetime.datetime(year=run_date.year, month=run_date.month, day=day)
+                 for day in range(1, run_date.day + 1)]
     else:
-        log_files = [datetime.datetime(
-            year=run_date.year, month=run_date.month, day=run_date.day).strftime(log_file_pattern)
-                     for log_file_pattern in log_file_patterns]
+        dates = [run_date]
 
-    log_files = [file for file in log_files if Path(file).exists()]
+    def expand_pattern(file_patterns: Sequence[str]) -> Sequence[str]:
+        return [file for date in dates
+                for file_pattern in file_patterns
+                for file in glob.glob(date.strftime(file_pattern))]
+
+    log_files = expand_pattern(log_file_patterns)
+    manifest_files = expand_pattern(manifest_file_patterns)
+
+    if args.manifests and not manifest_files:
+        print("Did not find any matching manifest files")
+
     output_file = run_date.strftime(output_file_pattern)
     if log_files:
         # Create all necessary intermediate directories
@@ -40,9 +52,9 @@ def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -
     if args.sessions_relative_directory:
         args.sessions_relative_directory = run_date.strftime(args.sessions_relative_directory)
     args.log_files = log_files
+    args.manifests = manifest_files
     args.output = output_file
     args.batch = True
-
 
 def __parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
     """Figure out the date to use, based on the --cronjob_date argument."""

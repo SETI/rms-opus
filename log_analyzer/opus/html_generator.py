@@ -214,9 +214,15 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     class_for_file = value_to_class[filename]
                     self._log_entry_to_classes[session, log_id].add(class_for_file)
 
+        host_ip_to_fake_session: Dict[Tuple[IPv4Address, str], Session] = {}
+        for filename, entry in self._configuration.sessionless_downloads:
+            opt_session = host_ip_to_fake_session.get((entry.host_ip, filename))
+            if opt_session is None or opt_session.start_time() > entry.time:
+                host_ip_to_fake_session[entry.host_ip, filename] = cast(Session, self.FakeSession(entry))
+
         for filename, entry in self._configuration.sessionless_downloads:
             # The following statement is a bald-faced lie.  Fortunately Python doesn't actually do type checking.
-            session = cast(Session, self.FakeSession(entry))
+            session = host_ip_to_fake_session[entry.host_ip, filename]
             value_to_sessions[filename].append(session)
             sizing_dict[filename, session] += (entry.size or 0)
             value_to_class.get(filename)  # creates a entry, if one doesn't already exit
@@ -249,8 +255,8 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     mean=datetime.timedelta(seconds=round(mean)),
                     median=datetime.timedelta(seconds=round(median)))
 
-    def get_manifest_statistics(self) -> Sequence[Summary]:
-        return ManifestStatus.get_temporary_results()
+    def get_manifest_statistics(self) -> Dict[str, Any]:
+        return ManifestStatus.get_statistics(self._configuration.manifests)
 
     @staticmethod
     def run_length_encode(values: Sequence[T]) -> List[Tuple[T, int]]:

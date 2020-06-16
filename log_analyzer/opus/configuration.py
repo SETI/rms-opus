@@ -1,6 +1,6 @@
 import collections
 import textwrap
-from typing import List, Dict, Any, Tuple, TextIO, cast, Optional
+from typing import List, Dict, Any, Tuple, TextIO, cast, Optional, Sequence
 
 from abstract_configuration import AbstractConfiguration
 from ip_to_host_converter import IpToHostConverter
@@ -23,6 +23,7 @@ class Configuration(AbstractConfiguration):
     _elide_session_info: bool
     _ip_to_host_converter: IpToHostConverter
     _sessions_relative_directory: Optional[str]
+    _manifests: Sequence[str]
 
     _sessionless_downloads: List[Tuple[str, LogEntry]]
 
@@ -31,6 +32,7 @@ class Configuration(AbstractConfiguration):
     def __init__(self, *, api_host_url: str, debug_show_all: bool, no_sessions: bool,
                  ip_to_host_converter: IpToHostConverter,
                  sessions_relative_directory: Optional[str],
+                 manifests: Sequence[str],
                  **_: Any):
         self._slug_map = slug.ToInfoMap(api_host_url)
         self._default_column_slug_info = QueryHandler.get_metadata_slug_info(self.DEFAULT_COLUMN_INFO, self._slug_map)
@@ -40,6 +42,7 @@ class Configuration(AbstractConfiguration):
         self._ip_to_host_converter = ip_to_host_converter
         self._sessions_relative_directory = sessions_relative_directory
         self._sessionless_downloads = []
+        self._manifests = manifests
 
     def create_session_info(self, uses_html: bool = False) -> 'SessionInfo':
         """Create a new SessionInfo"""
@@ -64,6 +67,10 @@ class Configuration(AbstractConfiguration):
     @property
     def sessionless_downloads(self) -> List[Tuple[str, LogEntry]]:
         return self._sessionless_downloads
+
+    @property
+    def manifests(self) -> Sequence[str]:
+        return self._manifests
 
     def show_summary(self, sessions: List[Session], output: TextIO) -> None:
         all_info: Dict[str, Dict[str, bool]] = collections.defaultdict(dict)

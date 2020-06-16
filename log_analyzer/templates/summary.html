@@ -115,7 +115,6 @@
 <hr/>
 
 
-
 {% set product_types_count = context.get_product_types_count() %}
 {% macro count_percent(count) %}
     <span class="badge">{{ count }} ({{ "{:.1%}".format(count / product_types_count) }})</span>
