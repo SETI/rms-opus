@@ -347,8 +347,6 @@ var o_browse = {
         // Toggle the submenu category and avoid dropdown menu #op-add-metadata-fields from closing
         // When clicking inside #op-add-metadata-fields.
         $(".app-body").on("click", "#op-add-metadata-fields", function(e) {
-            console.log("Click inside op-add-metadata-fields");
-            console.log(e.target);
             if ($(e.target).hasClass("title")) {
                 e.stopPropagation();
                 let collapsibleID = $(e.target).parent().attr("href");
