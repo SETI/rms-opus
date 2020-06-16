@@ -204,14 +204,27 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     background-color: transparent !important;
 }
 
+.op-metatdata-detail-edit {
+    margin-bottom: 0.5em;
+}
+
 .op-metadata-detail-edit-message {
     display: inline-flex;
     float: right;
-    padding-right: 7em;
+    padding-right: 12em;
+}
+
+.op-metadata-details-edit-enabled li:hover {
+    cursor: -webkit-grab;
+    cursor: grab;
 }
 
 .op-metadata-details-sortable {
     margin-bottom: 0;
+}
+
+div.op-metadata-details-tools {
+    margin-top: -0.5em;
 }
 
 .op-browse-view[data-view] {
