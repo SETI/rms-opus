@@ -344,6 +344,20 @@ var o_browse = {
             return false;
         });
 
+        // Toggle the submenu category and avoid dropdown menu #op-add-metadata-fields from closing
+        // When clicking inside #op-add-metadata-fields.
+        $(".app-body").on("click", "#op-add-metadata-fields", function(e) {
+            if ($(e.target).hasClass("title")) {
+                e.stopPropagation();
+                let collapsibleID = $(e.target).parent().attr("href");
+                $(`${collapsibleID}`).collapse("toggle");
+            } else if ($(e.target).hasClass("op-submenu-category")) {
+                e.stopPropagation();
+                let collapsibleID = $(e.target).attr("href");
+                $(`${collapsibleID}`).collapse("toggle");
+            }
+        });
+
         $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
@@ -2241,7 +2255,7 @@ var o_browse = {
         let html = `<dl>`;
         let selectMetadataTitle = $(".op-metadata-modal").attr("title");
         let tools = `<li class="op-metadata-details-tools list-inline-item">` +
-                    `<a href="#" class="op-metadata-detail-add" title="${selectMetadataTitle}"><i class="fas fa-plus pr-1"></i></a>` +
+                    `<a href="#" class="op-metadata-detail-add" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="${selectMetadataTitle}"><i class="fas fa-plus pr-1"></i></a>` +
                     `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
