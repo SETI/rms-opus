@@ -3,7 +3,7 @@
 {% with session_statistics = context.get_session_statistics(),
         download_statistics = context.get_download_statistics() %}
 
-<div id="Histogram-IP" class="SessionInfo SessionInfoLoaded tab-pane">
+<div id="Histogram-IP" class="{{ session_info_classes }}">
     Number of sessions: {{ session_statistics.count }}<br>
     Total duration: {{ session_statistics.sum }}<br>
     Mean duration: {{ session_statistics.mean }}<br>
@@ -16,8 +16,7 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-
-<div id="Histogram-Downloads" class="SessionInfo SessionInfoLoaded tab-pane">
+<div id="Histogram-Downloads" class="{{ session_info_classes }}">
     Number of downloads: {{ download_statistics.count }}<br>
     Total size: {{ download_statistics.sum|filesizeformat }}<br>
     Mean size: {{ download_statistics.mean|filesizeformat }}<br>
@@ -28,6 +27,13 @@
     <hr/>
     <div id="file_downloads_log"></div>
 </div>
+
+{# This forces all digits to have the same width.  I think it stands for "tabular numbers". #}
+<style>
+#Manifests {
+  font-feature-settings: "tnum";
+}
+</style>
 
 <div id="Manifests" class="SessionInfo SessionInfoLoaded tab-pane">
 {% with manifest_information = context.get_manifest_statistics() %}

@@ -20,7 +20,7 @@ from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import HostInfo, Session, Entry
-from manifest import ManifestStatus, Summary
+from manifest import ManifestStatus
 from .configuration_flags import IconFlags, Action
 
 if TYPE_CHECKING:
@@ -238,8 +238,17 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return result, value_to_class
 
     def get_download_statistics(self) -> Dict[str, Any]:
-        result, *_ = self.generate_ordered_download_files()
-        data = [size for _, size, _ in result]
+        sizing_dict: Dict[Tuple[str, IPv4Address], int] = collections.defaultdict(int)
+
+        for session in self._sessions:
+            session_info = self.__to_session_info(session)
+            for filename, ([size], log_ids) in session_info.get_sessioned_downloads_usage().items():
+                sizing_dict[filename, session.host_ip] += size
+
+        for filename, entry in self._configuration.sessionless_downloads:
+            sizing_dict[filename, entry.host_ip] += (entry.size or 0)
+
+        data = list(sizing_dict.values())
         mean = int(statistics.mean(data))
         gmean = int(math.exp(statistics.mean(map(math.log, data))))
         median = int(statistics.median(data))
@@ -290,6 +299,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             result.sort(key=itemgetter(1), reverse=True)
         # Bug in pycharm.  The following return result is exactly the type it's supposed to be.
         # noinspection PyTypeChecker
+
         return result, value_to_class
 
     def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:

@@ -240,11 +240,17 @@ These markers are never nested.
 #}
 
 <div class="float-right">
-    <button class="btn btn-primary btn-sm pull-right" onclick="clickPrintButton()">Print</button>
+    <button class="btn btn-primary pull-right" onclick="clickPrintButton()">
+        <span class="fa fa-print"></span>
+    </button>
     <br><br>
 </div>
 
 {% set session_info_classes = "SessionInfo tab-pane" %}
+
+<div id="SplashScreen" class="{{ session_info_classes }} active">
+    Welcome to the OPUS log Analyzer
+</div>
 
 {% for session in context.sessions %}
     {# session_info_classes is a variable because it is also used in the JS below. #}
@@ -377,22 +383,22 @@ document.addEventListener('mouseup', function(_e) {
 function clickPrintButton() {
     let win = window.open();
     let printable = $('.SessionInfo.active');
-    win.document.write('<html>');
-    win.document.write('<head>');
-    win.document.write('<title>Print Log Analyzer</title>');
+    win.document.write('<html lang="en">');
+    win.document.write('<head><title>Log Analyzer</title>');
     win.document.write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">');
     win.document.write('</head>');
     win.document.write('<body>');
     win.document.write(printable.html());
     win.document.write('</body>');
     win.document.write('</html>');
-    win.print();
+    // For now, just create a separate document.  Think later about printing it.
+    // win.print();
 }
 
 $(function(){
     // Find the "Manifests" button and click it.
     // DO NOT SUBMIT.  This line is a temporary hack!
-    $('.SessionLink[data-target="#Manifests"]').trigger('click');
+    // $('.SessionLink[data-target="#Manifests"]').trigger('click');
 });
 
 </script>
