@@ -343,6 +343,9 @@ var o_browse = {
             let slug = $(this).parent().parent().data('slug');
             o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
             $(this).parent().parent().remove();
+            if ($("a.op-metadata-detail-remove").length <= 1) {
+                $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+            }
             return false;
         });
 
@@ -366,6 +369,9 @@ var o_browse = {
                 o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
                 o_selectMetadata.saveChanges();
             }
+            // remove the disable in case there was only one field to start with...
+            $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
+            o_browse.hideMetadataList();
             return false;
         });
 
@@ -2187,7 +2193,7 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
-    hideMetadataList: function(e) {
+    hideMetadataList: function() {
         $("#op-add-metadata-fields").removeClass("show").hide();
     },
 
@@ -2223,7 +2229,7 @@ var o_browse = {
     initEditMetadataDetails: function() {
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
             items: "ul.op-metadata-details-sortable",
-            cursor: "grab",
+            cursor: "grabbing",
             containment: "parent",
             tolerance: "pointer",
             update: function(e, ui) {
@@ -2231,9 +2237,14 @@ var o_browse = {
         });
         $(".op-metadata-details-tools").show();
         $(".op-metadata-detail-edit-message").show();
+        $(".op-metadata-details").addClass("op-metadata-details-edit-enabled")
+        if ($("a.op-metadata-detail-remove").length <= 1) {
+            $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+        }
     },
 
     removeEditMetadataDetails: function() {
+        $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled")
         $(".op-metadata-details-tools").hide();
         $(".op-metadata-detail-edit-message").hide();
         if ($(`#galleryViewContents .op-metadata-details .contents`).sortable("instance") !== undefined) {
@@ -2251,17 +2262,17 @@ var o_browse = {
                        `<a href="#" class="op-edit-metadata-button" action="edit"><i class="fas fa-pencil-alt"></i> Edit</a>` +
                        `<div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div></div>`;
         let html = `<dl>`;
-        let selectMetadataTitle = $(".op-metadata-modal").attr("title");
-        let tools = `<li class="op-metadata-details-tools list-inline-item">` +
-                    `<a href="#" class="op-metadata-detail-add" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="${selectMetadataTitle}"><i class="fas fa-plus pr-1"></i></a>` +
-                    `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let selectMetadataTitle = "Add metadata field after the current field";
+        let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
+                         `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" "><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
                 let slug = opus.prefs.cols[index];
                 let value = viewNamespace.observationData[opusId][index];
-                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${tools}<li class="op-metatdata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}</dd></li></ul>`;
+                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metatdata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}</dd>${addTool}</li></ul>`;
             }
         });
         html = `${editLine}${html}</dl>`;
