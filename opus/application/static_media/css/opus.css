@@ -219,12 +219,12 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     cursor: grab;
 }
 
-.op-metadata-details-sortable {
-    margin-bottom: 0;
+.op-metadata-detail-add {
+    float: left;
 }
 
-div.op-metadata-details-tools {
-    margin-top: -0.5em;
+.op-metadata-details-sortable {
+    margin-bottom: 0;
 }
 
 .op-browse-view[data-view] {
