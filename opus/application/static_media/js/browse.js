@@ -329,7 +329,7 @@ var o_browse = {
             if ($(".op-metadata-detail-add").hasClass("op-add-disabled")) {
                 return false;
             }
-            let slug = $(this).parent().parent().data("slug");
+            let slug = $(this).closest("ul").data("slug");
             if ($("#op-add-metadata-fields").hasClass("show")) {
                 o_browse.hideMetadataList(e);
             } else {

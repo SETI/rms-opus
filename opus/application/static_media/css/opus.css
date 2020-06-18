@@ -220,7 +220,8 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 }
 
 .op-metadata-detail-add {
-    float: left;
+    left: 1em;
+    position: absolute;
 }
 
 .op-metadata-details-sortable {
