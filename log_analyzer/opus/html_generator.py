@@ -20,6 +20,7 @@ from abstract_configuration import AbstractBatchHtmlGenerator
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 from log_parser import HostInfo, Session, Entry
+from manifest import ManifestStatus
 from .configuration_flags import IconFlags, Action
 
 if TYPE_CHECKING:
@@ -213,9 +214,15 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     class_for_file = value_to_class[filename]
                     self._log_entry_to_classes[session, log_id].add(class_for_file)
 
+        host_ip_to_fake_session: Dict[Tuple[IPv4Address, str], Session] = {}
+        for filename, entry in self._configuration.sessionless_downloads:
+            opt_session = host_ip_to_fake_session.get((entry.host_ip, filename))
+            if opt_session is None or opt_session.start_time() > entry.time:
+                host_ip_to_fake_session[entry.host_ip, filename] = cast(Session, self.FakeSession(entry))
+
         for filename, entry in self._configuration.sessionless_downloads:
             # The following statement is a bald-faced lie.  Fortunately Python doesn't actually do type checking.
-            session = cast(Session, self.FakeSession(entry))
+            session = host_ip_to_fake_session[entry.host_ip, filename]
             value_to_sessions[filename].append(session)
             sizing_dict[filename, session] += (entry.size or 0)
             value_to_class.get(filename)  # creates a entry, if one doesn't already exit
@@ -231,8 +238,17 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         return result, value_to_class
 
     def get_download_statistics(self) -> Dict[str, Any]:
-        result, *_ = self.generate_ordered_download_files()
-        data = [size for _, size, _ in result]
+        sizing_dict: Dict[Tuple[str, IPv4Address], int] = collections.defaultdict(int)
+
+        for session in self._sessions:
+            session_info = self.__to_session_info(session)
+            for filename, ([size], log_ids) in session_info.get_sessioned_downloads_usage().items():
+                sizing_dict[filename, session.host_ip] += size
+
+        for filename, entry in self._configuration.sessionless_downloads:
+            sizing_dict[filename, entry.host_ip] += (entry.size or 0)
+
+        data = list(sizing_dict.values())
         mean = int(statistics.mean(data))
         gmean = int(math.exp(statistics.mean(map(math.log, data))))
         median = int(statistics.median(data))
@@ -247,6 +263,9 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
                     sum=sum(data, datetime.timedelta(0)),
                     mean=datetime.timedelta(seconds=round(mean)),
                     median=datetime.timedelta(seconds=round(median)))
+
+    def get_manifest_statistics(self) -> Dict[str, Any]:
+        return ManifestStatus.get_statistics(self._configuration.manifests)
 
     @staticmethod
     def run_length_encode(values: Sequence[T]) -> List[Tuple[T, int]]:
@@ -280,6 +299,7 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             result.sort(key=itemgetter(1), reverse=True)
         # Bug in pycharm.  The following return result is exactly the type it's supposed to be.
         # noinspection PyTypeChecker
+
         return result, value_to_class
 
     def __group_sessions_by_host_id(self, sessions: List[Session]) -> List[List[Session]]:

@@ -56,6 +56,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='list of ips to ignore.  May be specified multiple times')
     parser.add_argument('--session-timeout', default=60, type=int, metavar="minutes", dest='session_timeout_minutes',
                         help='a session ends after this period (minutes) of inactivity')
+    parser.add_argument('--manifest', default=[], action='append', dest='manifests')
 
     parser.add_argument('--output', '-o', dest='output',
                         help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
@@ -85,7 +86,8 @@ def main(arguments: Optional[List[str]] = None) -> None:
             print("No log files found.")
             return
     elif args.glob:
-        args.log_files = [result for file in args.log_files for result in glob.glob(file)]
+        args.log_files = [file for pattern in args.log_files for file in glob.glob(pattern)]
+        args.manifests = [file for pattern in args.manifests for file in glob.glob(pattern)]
 
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
@@ -122,8 +124,8 @@ def handle_cached_log_entries(args: argparse.Namespace) -> List[LogEntry]:
     import hashlib
 
     log_files = sorted(args.log_files)
-    hash = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
-    filename = f'.logs/log-{hash[:8]}.db'
+    hash_key = hashlib.sha256(':'.join(log_files).encode()).hexdigest()
+    filename = f'.logs/log-{hash_key[:8]}.db'
 
     try:
         with open(filename, "rb") as data:

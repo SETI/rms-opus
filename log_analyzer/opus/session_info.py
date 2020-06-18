@@ -345,18 +345,11 @@ class SessionInfo(AbstractSessionInfo):
         if match.group(1) == 'status' and query.get('download') != '1':
             # The __cart/status version requires &download=1
             return [], None
-        self.performed_download()
         ptypes_field = query.get('types', None)
         new_ptypes = {x.replace('-', '_') for x in (ptypes_field.split(',') if ptypes_field else [])}
 
         old_ptypes = self._previous_product_info_type
         self._previous_product_info_type = new_ptypes
-
-        if old_ptypes is None:
-            joined_new_ptypes = self.quote_and_join_list(sorted(new_ptypes))
-            self.register_product_types(new_ptypes)
-            plural = '' if len(new_ptypes) == 1 else 's'
-            return [f'Download Product Type{plural}: {joined_new_ptypes}'], None
 
         result = []
 
@@ -366,11 +359,11 @@ class SessionInfo(AbstractSessionInfo):
                 joined_items = self.quote_and_join_list(sorted(items))
                 result.append(f'{verb.title()} Product Type{plural}: {joined_items}')
 
-        added = new_ptypes - old_ptypes
-        deleted = old_ptypes - new_ptypes
-
-        show('add', added)
-        show('remove', deleted)
+        if old_ptypes is None:
+            show('set', new_ptypes)
+        else:
+            show('add', new_ptypes - old_ptypes)
+            show('remove', old_ptypes - new_ptypes)
 
         if not result:
             result.append('Product Types are unchanged')
