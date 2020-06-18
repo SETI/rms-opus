@@ -366,6 +366,7 @@ var o_browse = {
             if (index >= 0) {
                 index++;
                 opus.prefs.cols.splice(index, 0, slug);
+                $(`.op-metadata-details > .loader`).show();
                 o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
                 o_selectMetadata.saveChanges();
             }
@@ -2235,6 +2236,7 @@ var o_browse = {
             update: function(e, ui) {
             },
         });
+        $(".op-detail-data").fadeTo("fast", 0.15);
         $(".op-metadata-details-tools").show();
         $(".op-metadata-detail-edit-message").show();
         $(".op-metadata-details").addClass("op-metadata-details-edit-enabled")
@@ -2250,12 +2252,14 @@ var o_browse = {
         if ($(`#galleryViewContents .op-metadata-details .contents`).sortable("instance") !== undefined) {
             $(`#galleryViewContents .op-metadata-details .contents`).sortable("destroy");
         }
+        $(".op-detail-data").fadeTo("fast", 1);
     },
 
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
         opus.metadataDetailOpusId = opusId;
+        $(`.op-metadata-details > .loader`).hide();
 
         // list columns + values
         let editLine = `<div class="op-metatdata-detail-edit">` +
@@ -2271,8 +2275,8 @@ var o_browse = {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
                 let slug = opus.prefs.cols[index];
-                let value = viewNamespace.observationData[opusId][index];
-                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metatdata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}</dd>${addTool}</li></ul>`;
+                let value = `<span class="op-detail-data">${viewNamespace.observationData[opusId][index]}</span>`;
+                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metadata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}${addTool}</dd></li></ul>`;
             }
         });
         html = `${editLine}${html}</dl>`;
