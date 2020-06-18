@@ -15,6 +15,12 @@ DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
 
 
 def convert_cronjob_to_batchjob(args: Namespace, *, from_first_of_month: bool) -> None:
+    # Make this code run with both log_analyzer and error_analyzer
+    if not 'manifests' in args:
+        args.manifests = []
+    if not 'sessions_relative_directory' in args:
+        args.sessions_relative_directory = None
+
     if len(args.log_files) == 0:
         raise Exception("Must specify at least one file pattern for cronjob mode")
     log_file_patterns = args.log_files
