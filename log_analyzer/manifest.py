@@ -140,9 +140,3 @@ class ManifestStatus:
         manifests = Manifest.read_manifests(manifest_files)
         status = ManifestStatus(manifests)
         return status.__get_statistics()
-
-if __name__ == '__main__':
-    import glob
-    files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/manifests/*")
-    result = ManifestStatus.get_statistics(files)
-    print(result)

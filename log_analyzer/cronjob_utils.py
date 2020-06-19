@@ -19,13 +19,13 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
     if not error_analysis:
         # From the beginning of the month to the specified date
         dates = [datetime.datetime(year=run_date.year, month=run_date.month, day=day)
-                for day in range(1, run_date.day + 1)]
+                 for day in range(1, run_date.day + 1)]
     else:
         # Just the date
         dates = [run_date]
 
     def expand_and_glob_filenames(file_patterns: Sequence[str]) -> Sequence[str]:
-        all_patterns = { date.strftime(file_pattern) for file_pattern in file_patterns for date in dates}
+        all_patterns = {date.strftime(file_pattern) for file_pattern in file_patterns for date in dates}
         all_files = sorted(file for pattern in all_patterns for file in glob.glob(pattern))
         return all_files
 

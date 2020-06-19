@@ -1,10 +1,8 @@
-<script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-
 {% with session_statistics = context.get_session_statistics(),
         logged_download_statistics = context.get_logged_download_statistics(),
         manifest_information = context.get_manifest_download_statistics() %}
 
-<div id="Histogram-IP" class="{{ session_info_classes }}">
+<div id="Histogram-IP" class="{{ session_info_classes }} OPUS-uses-plotly">
     Number of sessions: {{ session_statistics.count }}<br>
     Total duration: {{ session_statistics.sum }}<br>
     Mean duration: {{ session_statistics.mean }}<br>
@@ -17,7 +15,7 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }}">
+<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
     Number of downloads: {{ logged_download_statistics.count }}<br>
     Total size: {{ logged_download_statistics.sum|filesizeformat }}<br>
     Mean size: {{ logged_download_statistics.mean|filesizeformat }}<br>
@@ -30,7 +28,7 @@
 </div>
 
 {% set manifest_statistics = manifest_information.statistics %}
-<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }}">
+<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
     Number of downloads: {{ manifest_statistics.count }}<br>
     Total size: {{ manifest_statistics.sum|filesizeformat }}<br>
     Mean size: {{ manifest_statistics.mean|filesizeformat }}<br>
@@ -131,20 +129,24 @@ function graph_ip_statistics() {
         bargap: 0.05,
     };
 
+    let config = {
+    };
+
+
     layout.yaxis.title = '# Host IPs';
-    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout);
+    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout, config);
 
     layout.yaxis.title = '# Sessions';
     // layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
     // layout.xaxis.autorange=false;
-    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
+    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout, config);
 
     layout.yaxis.title = '# Sessions > ';
     let cumulative = {
         enabled: true,
         direction: "decreasing",
     };
-    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout);
+    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout, config);
 }
 
 function graph_download_statistics(sizes, id) {
@@ -159,11 +161,14 @@ function graph_download_statistics(sizes, id) {
         bargap: 0.05,
     };
 
-    Plotly.newPlot(id, [{x: sizes, type: 'histogram'}], layout);
+    let config = {
+    };
+
+    Plotly.newPlot(id, [{x: sizes, type: 'histogram'}], layout, config);
 
     layout.xaxis.tickprefix = "10^";
     const log10_sizes = sizes.map(value => Math.log10(value));
-    Plotly.newPlot(id + '_log', [{x: log10_sizes, type: 'histogram'}], layout);
+    Plotly.newPlot(id + '_log', [{x: log10_sizes, type: 'histogram'}], layout, config);
 }
 
 $(function() {
