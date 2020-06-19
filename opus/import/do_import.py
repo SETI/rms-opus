@@ -1734,6 +1734,9 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                        'height': height
                       }
                 rows.append(row)
+                if size == 0:
+                    import_util.log_nonrepeating_warning(
+                        f'File has zero size: {opus_id} {logical_path}')
                 _check_for_pdsfile_exception()
 
     return rows

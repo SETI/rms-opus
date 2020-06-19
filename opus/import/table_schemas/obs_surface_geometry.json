@@ -60,7 +60,7 @@
             "FUNCTION",
             "obs_surface_geo_target_list"
         ],
-        "definition": "An alphabetical, comma-separated list of all targets in the field of view for which surface geometry information is available. It is most useful for searching for observations that contain two or more specific bodies. See the FAQ for more information.",
+        "definition": "An alphabetical, comma-separated list of targets in the field of view. The list is generated on a best-effort basis and is not guaranteed to be complete in all cases. For most targets in this list, surface geometry information will be available. This field is most useful for searching for observations that contain two or more specific bodies. See the FAQ for more information.",
         "pi_category_name": "obs_surface_geometry",
         "pi_dict_context": "SURFACE_GEO",
         "pi_dict_name": "TARGET_LIST",

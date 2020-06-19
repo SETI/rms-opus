@@ -560,7 +560,7 @@
         "pi_category_name": "obs_general",
         "pi_dict_context": "OPUS_GENERAL",
         "pi_dict_name": "OBSERVATION_TYPE",
-        "definition": "The type of data provided by this observation. Possible values include Image (2-D array of intensity), Spectrum (1-D array of spectral data), Spectral Image (2-D array of spectral data), Spectral Cube (3-D array of spectral data), Time Series (1-D array of non-spectral data such as intensity vs. time), and Spectral Time Series (1-D array of spectral data vs. time).",
+        "definition": "The type of data provided by this observation. Possible values include Image (2-D array of intensity), Spectrum (1-D array of spectral data), Spectral Image (2-D array of spectral data), Spectral Cube (3-D array of spectral data), Time Series (1-D array of non-spectral data such as intensity vs. time), Spectral Time Series (1-D array of spectral data vs. time), and Occultation Profile (1-D of optical depth vs. position).",
         "pi_disp_order": 95,
         "pi_display": 1,
         "pi_display_results": 1,
