@@ -3,11 +3,12 @@ import importlib
 import ipaddress
 import operator
 import glob
+from enum import Enum, auto
 
 from typing import List, Optional, cast
 
 from abstract_configuration import AbstractConfiguration
-from cronjob_utils import convert_cronjob_to_batchjob
+from cronjob_utils import expand_globs_and_dates
 from log_entry import LogReader, LogEntry
 from log_parser import LogParser
 from ip_to_host_converter import IpToHostConverter
@@ -16,22 +17,36 @@ from ip_to_host_converter import IpToHostConverter
 DEFAULT_FIELDS_PREFIX = 'https://opus.pds-rings.seti.org'
 
 
+class RunType(Enum):
+    BATCH = auto(),
+    SUMMARY = auto(),
+    REALTIME = auto(),
+    FAKE_REALTIME = auto()
+
+
 def main(arguments: Optional[List[str]] = None) -> None:
     def parse_ignored_ips(x: str) -> List[ipaddress.IPv4Network]:
         return [ipaddress.ip_network(address, strict=False) for address in x.split(',')]
 
     parser = argparse.ArgumentParser(description='Process log files.')
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--realtime', '--interactive', '-i', '-r', action='store_true',
-                       help='Watch a single log file in realtime')
-    group.add_argument('--batch', '-b', action='store_true',
-                       help='Print a report on one or more completed log files')
-    group.add_argument('--summary', action='store_true', dest='summary',
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument('--batch', '-b',
+                       action='store_const', dest="run_type", const=RunType.BATCH,
+                       help='Print a report on one or more completed log files.  The default.')
+    group.add_argument('--summary',
+                       action='store_const', dest="run_type", const=RunType.SUMMARY,
                        help="Show the slugs that have been used in a log file")
-    group.add_argument('--cronjob', action='store_true', dest='cronjob',
-                       help="Used by the chron job to generate a daily summary")
-    group.add_argument('--xxfake-realtime', action='store_true', help=argparse.SUPPRESS, dest='fake_realtime')
+    group.add_argument('--cronjob',
+                       action='store_const', dest="run_type", const=RunType.BATCH,
+                       help="Deprecated.  Use --batch instead")
+    group.add_argument('--realtime', '--interactive', '-i', '-r',
+                       action='store_const', dest="run_type", const=RunType.REALTIME,
+                       help='Watch a single log file in realtime')
+    group.add_argument('--xxfake-realtime',
+                       action='store_const', dest="run_type", const=RunType.FAKE_REALTIME,
+                       help=argparse.SUPPRESS,)
+    parser.set_defaults(run_type=RunType.BATCH)
 
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument('--by-ip', action='store_true', dest='by_ip',
@@ -45,7 +60,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help="Don't generate detailed session information")
 
     parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
-                        help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
+                        help='Date for --batch.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
                         help='base url to access the information')
@@ -59,7 +74,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--manifest', default=[], action='append', dest='manifests')
 
     parser.add_argument('--output', '-o', dest='output',
-                        help="output file.  default is stdout.  For --cronjob, specifies the output pattern")
+                        help="output file.  default is stdout.  For --batch, specifies the output pattern")
     parser.add_argument('--sessions-relative-directory', dest="sessions_relative_directory",
                         help="relative directory into which to store the sessions information")
     parser.add_argument('--configuration', dest='configuration_file', default='opus.configuration',
@@ -69,8 +84,6 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
     # Stores DNS entries in a persistent database
     parser.add_argument('--xxdns-cache', action="store_true", dest="dns_cache", help=argparse.SUPPRESS)
-    # Performs a glob() on filename arguments.  Useful when calling program from within an IDE that doesn't glob
-    parser.add_argument('--xxglob', action="store_true", dest="glob", help=argparse.SUPPRESS)
     # Debugging hack that shows all log entries
     parser.add_argument('--xxshowall', action='store_true', dest='debug_show_all', help=argparse.SUPPRESS)
     # Caches the read entries into a database, rather than reading the log files anew each time.
@@ -79,12 +92,11 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('log_files', nargs=argparse.REMAINDER, help='log files')
     args = parser.parse_args(arguments)
 
-    if args.cronjob:
+    run_type = cast(RunType, args.run_type)
+
+    if run_type == RunType.BATCH:
         # Fix up the arguments to match what everyone else wants
-        convert_cronjob_to_batchjob(args, from_first_of_month=True)
-        if not args.log_files:
-            print("No log files found.")
-            return
+        expand_globs_and_dates(args)
     elif args.glob:
         args.log_files = [file for pattern in args.log_files for file in glob.glob(pattern)]
         args.manifests = [file for pattern in args.manifests for file in glob.glob(pattern)]
@@ -98,7 +110,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore
     log_parser = LogParser(configuration, **vars(args))
 
-    if args.realtime:
+    if run_type == RunType.REALTIME:
         if len(args.log_files) != 1:
             raise Exception("Must specify exactly one file for real-time mode.")
         log_entries_realtime = LogReader.read_logs_from_tailed_file(args.log_files[0])
@@ -110,11 +122,12 @@ def main(arguments: Optional[List[str]] = None) -> None:
             log_entries_list = handle_cached_log_entries(args)
         else:
             log_entries_list = LogReader.read_logs(args.log_files)
-        if args.batch:
+
+        if run_type == RunType.BATCH:
             log_parser.run_batch(log_entries_list)
-        elif args.summary:
+        elif run_type == RunType.SUMMARY:
             log_parser.run_summary(log_entries_list)
-        elif args.fake_realtime:
+        elif run_type == RunType.FAKE_REALTIME:
             log_entries_list.sort(key=operator.attrgetter('time'))
             log_parser.run_realtime(iter(log_entries_list))
 

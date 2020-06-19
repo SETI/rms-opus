@@ -237,7 +237,17 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         result = [get_sessions_for_filename(filename) for filename in value_to_sessions.keys()]
         return result, value_to_class
 
-    def get_download_statistics(self) -> Dict[str, Any]:
+    def get_session_statistics(self) -> Dict[str, Any]:
+        data = [session.total_time for session in self._sessions]
+        mean = statistics.mean(x.total_seconds() for x in data)
+        median = statistics.median(x.total_seconds() for x in data)
+        return dict(data=data,
+                    count=len(data),
+                    sum=sum(data, datetime.timedelta(0)),
+                    mean=datetime.timedelta(seconds=round(mean)),
+                    median=datetime.timedelta(seconds=round(median)))
+
+    def get_logged_download_statistics(self) -> Dict[str, Any]:
         sizing_dict: Dict[Tuple[str, IPv4Address], int] = collections.defaultdict(int)
 
         for session in self._sessions:
@@ -249,23 +259,24 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
             sizing_dict[filename, entry.host_ip] += (entry.size or 0)
 
         data = list(sizing_dict.values())
-        mean = int(statistics.mean(data))
-        gmean = int(math.exp(statistics.mean(map(math.log, data))))
-        median = int(statistics.median(data))
-        return dict(data=data, count=len(data), sum=sum(data), mean=mean, gmean=gmean, median=median)
+        return self.__create_statistics(data)
 
-    def get_session_statistics(self) -> Dict[str, Any]:
-        data = [session.total_time for session in self._sessions]
-        mean = statistics.mean(x.total_seconds() for x in data)
-        median = statistics.median(x.total_seconds() for x in data)
-        return dict(data=data,
-                    count=len(data),
-                    sum=sum(data, datetime.timedelta(0)),
-                    mean=datetime.timedelta(seconds=round(mean)),
-                    median=datetime.timedelta(seconds=round(median)))
+    def get_manifest_download_statistics(self) -> Dict[str, Any]:
+        result = ManifestStatus.get_statistics(self._configuration.manifests)
+        result['statistics'] = self.__create_statistics(result['data'])
+        return result
 
-    def get_manifest_statistics(self) -> Dict[str, Any]:
-        return ManifestStatus.get_statistics(self._configuration.manifests)
+    @staticmethod
+    def __create_statistics(data:Sequence[int]) -> Dict[str, Any]:
+        if data:
+            mean = int(statistics.mean(data))
+            gmean = int(math.exp(statistics.mean(map(math.log, filter(None, data)))))
+            median = int(statistics.median(data))
+        else:
+            mean = gmean = median = 0
+        result = dict(data=data, count=len(data), sum=sum(data), zeros = data.count(0),
+                      mean=mean, gmean=gmean, median=median)
+        return result
 
     @staticmethod
     def run_length_encode(values: Sequence[T]) -> List[Tuple[T, int]]:

@@ -75,6 +75,7 @@
 {{ summarize_slugs('Selected Metadata', context.generate_ordered_metadata()) }}
 <hr/>
 
+
 {% call(search_list) summarize_info('Sort Order', context.generate_ordered_sort_lists()) %}
     {{  search_list|join(', ') if search_list else '<empty>' }}
 {% endcall %}
@@ -87,7 +88,8 @@
 
 {% with %}
 <details class="Summary1 open"><summary>Downloads</summary>
-    <a href="#" class="SessionLink Summary2" data-target="#Histogram-Downloads">Histogram</a>
+    <a href="#" class="SessionLink Summary2" data-target="#Histogram-Logged-Downloads">Logged Download Histogram</a><br>
+    <a href="#" class="SessionLink Summary2" data-target="#Histogram-Manifest-Downloads">Manifest Download Histogram</a><br>
     <a href="#" class="SessionLink Summary2" data-target="#Manifests">Manifests</a>
     {% set summary_info, value_to_class = context.generate_ordered_download_files() %}
     {% for name, total_size, sessions_and_sizes in summary_info %}
