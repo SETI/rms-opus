@@ -110,6 +110,11 @@ class ManifestStatus:
                             file_path_bytes=sum(x.file_path_bytes for x in result))
         return result, total
 
+    def __get_histogram_data(self) -> Sequence[int]:
+        all_items = {(manifest, entry.file_path): entry.size
+                     for manifest in self._manifests for entry in manifest.entries}
+        return tuple(all_items.values())
+
     def __get_statistics(self) -> Dict[str, Any]:
         result1, total1 = self.__get_one_table(lambda entry: (entry.product_category, entry.product_type))
         result2, total2 = self.__get_one_table(lambda entry: (entry.volume_set,))
@@ -123,11 +128,11 @@ class ManifestStatus:
         opus_id_count = len({entry.opus_id
                              for manifest in self._manifests
                              for entry in manifest.entries})
-
         return {
             "tables": (summary1, summary2, summary3),
             "manifest_count": manifest_count,
             "opus_id_count": opus_id_count,
+            "data": self.__get_histogram_data()
         }
 
     @staticmethod
@@ -135,9 +140,3 @@ class ManifestStatus:
         manifests = Manifest.read_manifests(manifest_files)
         status = ManifestStatus(manifests)
         return status.__get_statistics()
-
-if __name__ == '__main__':
-    import glob
-    files = glob.glob("/users/fy/Dropbox/Shared-Frank-Yellin/manifests/*")
-    result = ManifestStatus.get_statistics(files)
-    print(result)

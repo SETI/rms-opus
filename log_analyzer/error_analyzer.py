@@ -9,7 +9,7 @@ from collections import deque, defaultdict
 from operator import attrgetter
 from typing import List, Optional, NamedTuple, Iterable, TextIO, Tuple, Dict, cast
 
-from cronjob_utils import convert_cronjob_to_batchjob
+from cronjob_utils import expand_globs_and_dates
 from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogReader, LogEntry
 
@@ -173,6 +173,8 @@ class ErrorReader(object):
             count = len(seen_errors[key])
             results.append((key, count, min_time, all_sorted_log_entries))
 
+        print(f'Writing output to {self._output.name}')
+
         if not self._uses_html:
             self.__generate_text_output(results)
         else:
@@ -234,11 +236,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
 
-    if args.cronjob:
-        convert_cronjob_to_batchjob(args, from_first_of_month=False)
-        if not args.log_files:
-            print("No log files found.")
-            return
+    expand_globs_and_dates(args, error_analysis=True)
 
     if args.ignore_errors_file:
         lines = cast(TextIO, args.ignore_errors_file).readlines()

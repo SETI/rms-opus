@@ -1,9 +1,8 @@
-<script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-
 {% with session_statistics = context.get_session_statistics(),
-        download_statistics = context.get_download_statistics() %}
+        logged_download_statistics = context.get_logged_download_statistics(),
+        manifest_information = context.get_manifest_download_statistics() %}
 
-<div id="Histogram-IP" class="{{ session_info_classes }}">
+<div id="Histogram-IP" class="{{ session_info_classes }} OPUS-uses-plotly">
     Number of sessions: {{ session_statistics.count }}<br>
     Total duration: {{ session_statistics.sum }}<br>
     Mean duration: {{ session_statistics.mean }}<br>
@@ -16,16 +15,29 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-<div id="Histogram-Downloads" class="{{ session_info_classes }}">
-    Number of downloads: {{ download_statistics.count }}<br>
-    Total size: {{ download_statistics.sum|filesizeformat }}<br>
-    Mean size: {{ download_statistics.mean|filesizeformat }}<br>
-    Geometric mean size: {{ download_statistics.gmean|filesizeformat }}<br>
-    Median size: {{ download_statistics.median|filesizeformat }}<br>
+<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+    Number of downloads: {{ logged_download_statistics.count }}<br>
+    Total size: {{ logged_download_statistics.sum|filesizeformat }}<br>
+    Mean size: {{ logged_download_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ logged_download_statistics.gmean|filesizeformat }}<br>
+    Median size: {{ logged_download_statistics.median|filesizeformat }}<br>
     <hr/>
-    <div id="file_downloads"></div>
+    <div id="logged_downloads"></div>
     <hr/>
-    <div id="file_downloads_log"></div>
+    <div id="logged_downloads_log"></div>
+</div>
+
+{% set manifest_statistics = manifest_information.statistics %}
+<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+    Number of downloads: {{ manifest_statistics.count }}<br>
+    Total size: {{ manifest_statistics.sum|filesizeformat }}<br>
+    Mean size: {{ manifest_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ manifest_statistics.gmean|filesizeformat }}<br>
+    Median size: {{ manifest_statistics.median|filesizeformat }}<br>
+    <hr/>
+    <div id="manifest_downloads"></div>
+    <hr/>
+    <div id="manifest_downloads_log"></div>
 </div>
 
 {# This forces all digits to have the same width.  I think it stands for "tabular numbers". #}
@@ -36,7 +48,6 @@
 </style>
 
 <div id="Manifests" class="SessionInfo SessionInfoLoaded tab-pane">
-{% with manifest_information = context.get_manifest_statistics() %}
     <table class="table w-auto table-sm table-bordered table-striped">
     {% for table in manifest_information['tables'] %}
         {% set key_count = table.headers | length %}
@@ -85,7 +96,6 @@
     </table>
     Number of manifest files: {{ "{:,d}".format(manifest_information['manifest_count']) }}<br>
     Number of distinct OPUS IDs: {{ "{:,d}".format(manifest_information['opus_id_count']) }}<br>
-{% endwith %}
 </div>
 
 <script>
@@ -119,25 +129,27 @@ function graph_ip_statistics() {
         bargap: 0.05,
     };
 
+    let config = {
+    };
+
+
     layout.yaxis.title = '# Host IPs';
-    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout);
+    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout, config);
 
     layout.yaxis.title = '# Sessions';
     // layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
     // layout.xaxis.autorange=false;
-    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout);
+    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout, config);
 
     layout.yaxis.title = '# Sessions > ';
     let cumulative = {
         enabled: true,
         direction: "decreasing",
     };
-    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout);
+    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout, config);
 }
 
-function graph_download_statistics() {
-    const sizes = [{{ download_statistics.data | join(',') }}];
-
+function graph_download_statistics(sizes, id) {
     const layout = {
         xaxis: {
             title: "Size in bytes",
@@ -149,17 +161,23 @@ function graph_download_statistics() {
         bargap: 0.05,
     };
 
-    Plotly.newPlot('file_downloads', [{x: sizes, type: 'histogram'}], layout);
+    let config = {
+    };
 
+    Plotly.newPlot(id, [{x: sizes, type: 'histogram'}], layout, config);
 
     layout.xaxis.tickprefix = "10^";
     const log10_sizes = sizes.map(value => Math.log10(value));
-    Plotly.newPlot('file_downloads_log', [{x: log10_sizes, type: 'histogram'}], layout);
+    Plotly.newPlot(id + '_log', [{x: log10_sizes, type: 'histogram'}], layout, config);
 }
 
 $(function() {
+    const download_sizes = [{{ logged_download_statistics.data | join(',') }}];
+    const manifest_sizes = [{{ manifest_statistics.data | join(',') }}];
+
     $('#Histogram-IP').one('show.bs.tab', graph_ip_statistics);
-    $('#Histogram-Downloads').one('show.bs.tab', graph_download_statistics);
+    $('#Histogram-Logged-Downloads').one('show.bs.tab', () => graph_download_statistics(download_sizes, 'logged_downloads'));
+    $('#Histogram-Manifest-Downloads').one('show.bs.tab', () => graph_download_statistics(manifest_sizes, 'manifest_downloads'));
 });
 
 
