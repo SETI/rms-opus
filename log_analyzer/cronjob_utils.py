@@ -15,7 +15,7 @@ DEFAULT_TIMEZONE = pytz.timezone('US/Pacific')
 
 
 def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> None:
-    run_date = __parse_cronjob_date_arg(args)
+    run_date = __parse_date_argument(args)
     if not error_analysis:
         # From the beginning of the month to the specified date
         dates = [datetime.datetime(year=run_date.year, month=run_date.month, day=day)
@@ -51,28 +51,27 @@ def expand_globs_and_dates(args: Namespace, *, error_analysis: bool = False) -> 
     args.batch = True
 
 
-def __parse_cronjob_date_arg(args: Namespace) -> datetime.datetime:
-    """Figure out the date to use, based on the --cronjob_date argument."""
-    cronjob_date = args.cronjob_date
+def __parse_date_argument(args: Namespace) -> datetime.datetime:
+    """Figure out the date to use, based on the --date argument."""
+    date = args.date
+    today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
     # if the argument isn't present, use today
-    if not cronjob_date:
-        today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
+    if not date:
         return today
     # if the argument is -<number>, then it means that many days ago
-    match = re.fullmatch(r'-(\d+)', cronjob_date)
+    match = re.fullmatch(r'-(\d+)', date)
     if match:
-        today = datetime.datetime.now(tz=DEFAULT_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
         return today - datetime.timedelta(days=int(match.group(1)))
     # if the argument is dddd-dd, then it is a year and month, and indicates the last day of that month
-    match = re.fullmatch(r'(\d\d\d\d)-(\d\d)', cronjob_date)
+    match = re.fullmatch(r'(\d\d\d\d)-(\d\d)', date)
     if match:
         year_month = datetime.datetime(
             tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=1)
         sometime_following_month = year_month + datetime.timedelta(days=31)
         return sometime_following_month - datetime.timedelta(days=sometime_following_month.day)
     # if the argument is dddd-dd-dd, then treat it as year-month-day
-    match = re.fullmatch(r'(\d\d\d\d)-(\d\d)-(\d\d)', cronjob_date)
+    match = re.fullmatch(r'(\d\d\d\d)-(\d\d)-(\d\d)', date)
     if match:
         return datetime.datetime(
             tzinfo=DEFAULT_TIMEZONE, year=int(match.group(1)), month=int(match.group(2)), day=int(match.group(3)))
-    raise Exception('cronjob_date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')
+    raise Exception('date must be one of -<int>, yyyy-mm, or yyyy-mm-dd')

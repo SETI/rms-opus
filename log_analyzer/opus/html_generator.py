@@ -344,4 +344,4 @@ class HtmlGenerator(AbstractBatchHtmlGenerator):
         alphabet = string.digits + string.ascii_lowercase
         for length in itertools.count(2):
             for letters in itertools.product(alphabet, repeat=length):
-                yield 'op-' + ''.join(letters)
+                yield '.opus-' + ''.join(letters)
