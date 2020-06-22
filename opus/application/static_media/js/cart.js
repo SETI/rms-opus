@@ -57,6 +57,7 @@ var o_cart = {
 
     // these vars are common w/o_browse
     reloadObservationData: true, // start over by reloading all data
+    metadataDetailEdit: false, // is the metadata detail view currently in edit mode?
     observationData: {},  // holds observation column data
     totalObsCount : undefined,
     recycledCount : undefined,

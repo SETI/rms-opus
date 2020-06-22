@@ -29,6 +29,7 @@ var o_browse = {
 
     // these vars are common w/o_cart
     reloadObservationData: true, // start over by reloading all data
+    metadataDetailEdit: false, // is the metadata detail view currently in edit mode?
     observationData: {},  // holds observation column data
     totalObsCount: undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
@@ -303,18 +304,11 @@ var o_browse = {
 
         $("#galleryView").on("click", "a.op-edit-metadata-button", function(e) {
             let action = $(this).attr("action");
-            let editText;
             if (action === "edit") {
-                editText = `<i class="fas fa-pencil-alt"></i> Done`;
-                action = "done";
                 o_browse.initEditMetadataDetails();
             } else {
-                editText = `<i class="fas fa-pencil-alt"></i> Edit`;
-                action = "edit";
                 o_browse.removeEditMetadataDetails();
-                o_browse.onDoneUpdateMetadataDetails();
             }
-            $(".op-edit-metadata-button").attr("action", action).html(editText);
             return false;
         });
 
@@ -333,6 +327,8 @@ var o_browse = {
             if ($("#op-add-metadata-fields").hasClass("show")) {
                 o_browse.hideMetadataList(e);
             } else {
+                // save anything that was changed via sort/trash before the dropdown is displayed
+                o_browse.onDoneUpdateMetadataDetails();
                 o_browse.showMetadataList(e);
                 $("#op-add-metadata-fields").data("slug", slug);
             }
@@ -367,7 +363,8 @@ var o_browse = {
                 index++;
                 opus.prefs.cols.splice(index, 0, slug);
                 $(`.op-metadata-details > .loader`).show();
-                o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
+                $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
+                //o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
                 o_selectMetadata.saveChanges();
             }
             // remove the disable in case there was only one field to start with...
@@ -1500,7 +1497,7 @@ var o_browse = {
 
         o_browse.initResizableColumn(tab);
         o_browse.initDraggableColumn(tab);
-        $("body").removeClass("op-prevent-pointer-events");
+        o_utils.enableUserInteraction();
     },
 
     initResizableColumn: function(tab) {
@@ -2219,6 +2216,7 @@ var o_browse = {
         });
         // only bother if something actually changed...
         if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+            o_utils.disableUserInteraction();
             opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
             o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
             // passing in false indicates to not close the gallery view on loadData
@@ -2228,12 +2226,15 @@ var o_browse = {
     },
 
     initEditMetadataDetails: function() {
+        let viewNamespace = opus.getViewNamespace();
+        $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
             items: "ul.op-metadata-details-sortable",
             cursor: "grabbing",
             containment: "parent",
             tolerance: "pointer",
             update: function(e, ui) {
+                o_browse.onDoneUpdateMetadataDetails();
             },
         });
         $(".op-detail-data").fadeTo("fast", 0.15);
@@ -2243,9 +2244,13 @@ var o_browse = {
         if ($("a.op-metadata-detail-remove").length <= 1) {
             $("a.op-metadata-detail-remove").addClass("op-button-disabled");
         }
+        viewNamespace.metadataDetailEdit = true;
     },
 
     removeEditMetadataDetails: function() {
+        let viewNamespace = opus.getViewNamespace();
+        o_browse.onDoneUpdateMetadataDetails();
+        $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled")
         $(".op-metadata-details-tools").hide();
         $(".op-metadata-detail-edit-message").hide();
@@ -2253,6 +2258,7 @@ var o_browse = {
             $(`#galleryViewContents .op-metadata-details .contents`).sortable("destroy");
         }
         $(".op-detail-data").fadeTo("fast", 1);
+        viewNamespace.metadataDetailEdit = false;
     },
 
     metadataboxHtml: function(opusId, view) {
@@ -2281,7 +2287,13 @@ var o_browse = {
         });
         html = `${editLine}${html}</dl>`;
         $("#galleryViewContents .contents").html(html);
-        o_browse.removeEditMetadataDetails();
+
+        // if it was last in edit mode, open in edit mode...
+        if (viewNamespace.metadataDetailEdit) {
+            o_browse.initEditMetadataDetails();
+        } else {
+            o_browse.removeEditMetadataDetails();
+        }
 
         let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
         let action = o_cart.isIn(opusId) ? "" : "remove";
