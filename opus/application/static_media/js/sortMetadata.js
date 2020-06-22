@@ -31,7 +31,8 @@ let o_sortMetadata = {
                 let newOrder = [];
                 $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
                     let slug = $(obj).data("slug");
-                    newOrder.push(slug);
+                    let descending = ($(obj).data("descending") === true ? "-" : "");
+                    newOrder.push(`${descending}${slug}`);
                 });
                 // only bother if something actually changed...
                 if (!o_utils.areObjectsEqual(opus.prefs.order, newOrder)) {
