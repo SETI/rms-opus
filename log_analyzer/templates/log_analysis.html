@@ -279,54 +279,49 @@ These markers are never nested.
 
 <script>
 
-$(function() {
-    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
+function click_session_link(event) {
+    // Note $(this) is node this handler is attached to.
+    // Set session_link to the node that was clicked.
+    let session_link = $(event.target);
+    // The data-target field of the session_link contains the #id of the .SessionInfo we want to display
+    let target = session_link.data('target');
+    // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
+    // the tree to find a node with the field data-target-class.
+    let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
 
-    // Attach a handler to #all-session-links, which is the ancestor of all the .SessionLink objects that we can
-    // click on
-    $("#all-session-links").on('click', '.SessionLink', function (event)  {
-        // session_link is the node that was clicked, while $(this) is node this handler is attached to.
-        let session_link = $(event.target);
-        // The data-target field of the session_link contains #id of the .SessionInfo we want to display
-        let target = session_link.data('target');
-        // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
-        // the tree to see if there is a node with the field data-target-class.
-        let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
+    // Deactivate the session links and session infos that are currently active.
+    $('.SessionLink.active').removeClass('active');
+    $('.SessionInfo.active').removeClass('active');
+    // Turn off all highlighting of log entries.
+    $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
 
-        // Deactivate the session links and session infos that are currently active.
-        $('.SessionLink.active').removeClass('active');
-        $('.SessionInfo.active').removeClass('active');
-        // Turn off all highlighting of log entries.
-        $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
+    // Mark as active all of the Session Links that point to this target so that they will be highlighted.
+    $(`a.SessionLink[data-target="${target}"]`).addClass('active');
 
-        // Mark as active all of the Session Links that point to this target so that they will be highlighted.
-        $(`a.SessionLink[data-target="${target}"]`).addClass('active');
-
-        let session_info = $(target);
+    let session_info = $(target);
 {% if context.sessions_relative_directory %}
-        if (session_info.length === 0) {
-            // DOM node doesn't exist.  Create it and load its contents.
-            let node_id = target.substr(1);
-            let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
-            $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
-                // Add the node to the DOM
-                .appendTo('#all-session-infos')
-                // And load its content.  Call the callback once the dom is loaded.
-                .load(session_location, function (response, status, xhr) {
-                    if (status === "error") {
-                        $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
-                    }
-                    // $this gets rebound to <div/> we just loaded a file into
-                    highlight_and_scroll_session_info($(this), target_class);
-                });
-            return false;
-        }
-{% endif %}
-        // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        highlight_and_scroll_session_info(session_info, target_class);
+    if (session_info.length === 0) {
+        // DOM node doesn't exist.  Create it and load its contents.
+        let node_id = target.substr(1);
+        let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
+        $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
+            // Add the node to the DOM
+            .appendTo('#all-session-infos')
+            // And load its content.  Call the callback once the dom is loaded.
+            .load(session_location, function (response, status, xhr) {
+                if (status === "error") {
+                    $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
+                }
+                // $this gets rebound to <div/> we just loaded a file into
+                highlight_and_scroll_session_info($(this), target_class);
+            });
         return false;
-    })
-});
+    }
+{% endif %}
+    // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
+    highlight_and_scroll_session_info(session_info, target_class);
+    return false;
+}
 
 function highlight_and_scroll_session_info(session_info, target_class) {
     // Make it behave, it terms of events, like the tab pane that it was supposed to be
@@ -340,6 +335,14 @@ function highlight_and_scroll_session_info(session_info, target_class) {
         }
     }
 }
+
+$(function() {
+    // Turn on all tooltips
+    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
+
+    // Attach a handler to #all-session-links, which is the ancestor of all clickable .SessionLink objects.
+    $("#all-session-links").on('click', '.SessionLink', click_session_link)
+});
 
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');
@@ -382,29 +385,89 @@ document.addEventListener('mouseup', function(_e) {
   isHandlerDragging = false;
 });
 
+// https://stackoverflow.com/questions/6209161/extract-the-current-dom-and-print-it-as-a-string-with-styles-intact
+Element.prototype.serializeWithStyles = (function () {
+
+    // Mapping between tag names and css default values lookup tables. This allows to exclude default values in the result.
+    var defaultStylesByTagName = {};
+
+    // Styles inherited from style sheets will not be rendered for elements with these tag names
+    var noStyleTags = {"BASE":true,"HEAD":true,"HTML":true,"META":true,"NOFRAME":true,"NOSCRIPT":true,"PARAM":true,"SCRIPT":true,"STYLE":true,"TITLE":true};
+
+    // This list determines which css default values lookup tables are precomputed at load time
+    // Lookup tables for other tag names will be automatically built at runtime if needed
+    var tagNames = ["A","ABBR","ADDRESS","AREA","ARTICLE","ASIDE","AUDIO","B","BASE","BDI","BDO","BLOCKQUOTE","BODY","BR","BUTTON","CANVAS","CAPTION","CENTER","CITE","CODE","COL","COLGROUP","COMMAND","DATALIST","DD","DEL","DETAILS","DFN","DIV","DL","DT","EM","EMBED","FIELDSET","FIGCAPTION","FIGURE","FONT","FOOTER","FORM","H1","H2","H3","H4","H5","H6","HEAD","HEADER","HGROUP","HR","HTML","I","IFRAME","IMG","INPUT","INS","KBD","KEYGEN","LABEL","LEGEND","LI","LINK","MAP","MARK","MATH","MENU","META","METER","NAV","NOBR","NOSCRIPT","OBJECT","OL","OPTION","OPTGROUP","OUTPUT","P","PARAM","PRE","PROGRESS","Q","RP","RT","RUBY","S","SAMP","SCRIPT","SECTION","SELECT","SMALL","SOURCE","SPAN","STRONG","STYLE","SUB","SUMMARY","SUP","SVG","TABLE","TBODY","TD","TEXTAREA","TFOOT","TH","THEAD","TIME","TITLE","TR","TRACK","U","UL","VAR","VIDEO","WBR"];
+
+    // Precompute the lookup tables.
+    for (var i = 0; i < tagNames.length; i++) {
+        if(!noStyleTags[tagNames[i]]) {
+            defaultStylesByTagName[tagNames[i]] = computeDefaultStyleByTagName(tagNames[i]);
+        }
+    }
+
+    function computeDefaultStyleByTagName(tagName) {
+        var defaultStyle = {};
+        var element = document.body.appendChild(document.createElement(tagName));
+        var computedStyle = getComputedStyle(element);
+        for (var i = 0; i < computedStyle.length; i++) {
+            defaultStyle[computedStyle[i]] = computedStyle[computedStyle[i]];
+        }
+        document.body.removeChild(element);
+        return defaultStyle;
+    }
+
+    function getDefaultStyleByTagName(tagName) {
+        tagName = tagName.toUpperCase();
+        if (!defaultStylesByTagName[tagName]) {
+            defaultStylesByTagName[tagName] = computeDefaultStyleByTagName(tagName);
+        }
+        return defaultStylesByTagName[tagName];
+    }
+
+    return function serializeWithStyles() {
+        if (this.nodeType !== Node.ELEMENT_NODE) { throw new TypeError(); }
+        var cssTexts = [];
+        var elements = this.querySelectorAll("*");
+        for ( var i = 0; i < elements.length; i++ ) {
+            var e = elements[i];
+            if (!noStyleTags[e.tagName]) {
+                var computedStyle = getComputedStyle(e);
+                var defaultStyle = getDefaultStyleByTagName(e.tagName);
+                cssTexts[i] = e.style.cssText;
+                for (var ii = 0; ii < computedStyle.length; ii++) {
+                    var cssPropName = computedStyle[ii];
+                    if (computedStyle[cssPropName] !== defaultStyle[cssPropName]) {
+                        e.style[cssPropName] = computedStyle[cssPropName];
+                    }
+                }
+            }
+        }
+        var result = this.outerHTML;
+        for ( var i = 0; i < elements.length; i++ ) {
+            elements[i].style.cssText = cssTexts[i];
+        }
+        return result;
+    }
+})();
+
+
 function clickPrintButton() {
     let win = window.open();
     let printable = $('.SessionInfo.active');
     win.document.write('<html lang="en">\n' +
                        '<head><title>Log Analyzer</title>\n' +
                        '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">\n');
-    if (printable.hasClass('OPUS-uses-plotly')) {
+    if (printable.find('svg').length) {
         win.document.write('<' + 'script type="text/javascript" src=\'https://cdn.plot.ly/plotly-latest.min.js\'><' + '/script>\n');
     }
     win.document.write('</head>' +
                        '<body>\n');
-    win.document.write(printable.html());
+    win.document.write(printable[0].serializeWithStyles());
     win.document.write('</body>\n' +
                        '</html>\n');
     // For now, just create a separate document.  Think later about printing it.
     // win.print();
 }
-
-$(function(){
-    // Find the "Manifests" button and click it.
-    // DO NOT SUBMIT.  This line is a temporary hack!
-    // $('.SessionLink[data-target="#Manifests"]').trigger('click');
-});
 
 </script>
 </body>
