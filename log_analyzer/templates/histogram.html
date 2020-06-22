@@ -2,7 +2,7 @@
         logged_download_statistics = context.get_logged_download_statistics(),
         manifest_information = context.get_manifest_download_statistics() %}
 
-<div id="Histogram-IP" class="{{ session_info_classes }} OPUS-uses-plotly">
+<div id="Histogram-IP" class="{{ session_info_classes }}">
     Number of sessions: {{ session_statistics.count }}<br>
     Total duration: {{ session_statistics.sum }}<br>
     Mean duration: {{ session_statistics.mean }}<br>
@@ -15,7 +15,7 @@
     <div id="chart_sessions_cumulative"></div>
 </div>
 
-<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }}">
     Number of downloads: {{ logged_download_statistics.count }}<br>
     Total size: {{ logged_download_statistics.sum|filesizeformat }}<br>
     Mean size: {{ logged_download_statistics.mean|filesizeformat }}<br>
@@ -28,7 +28,7 @@
 </div>
 
 {% set manifest_statistics = manifest_information.statistics %}
-<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }}">
     Number of downloads: {{ manifest_statistics.count }}<br>
     Total size: {{ manifest_statistics.sum|filesizeformat }}<br>
     Mean size: {{ manifest_statistics.mean|filesizeformat }}<br>
