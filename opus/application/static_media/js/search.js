@@ -961,7 +961,7 @@ var o_search = {
                                   <span class="${rangeHintsTextClass}">?</span></span>
                                   <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
                                   <span class="${rangeHintsTextClass}">?</span></span>
-                                  <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                  <span><span class="${rangeHintsDescription}">N/A:&nbsp;</span>
                                   <span class="${rangeHintsTextClass}">?</span></span>`);
                 }
             });
@@ -1064,7 +1064,7 @@ var o_search = {
         o_search.searchScrollbar.update();
     },
 
-    searchWidgetHeightChanged: function() {
+    searchWidgetHeightChanged: function(offset=0) {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $(".op-reset-opus").outerHeight() +
                             $("#op-main-nav").innerHeight() - $("#op-main-nav").height();
@@ -1082,6 +1082,13 @@ var o_search = {
         }
 
         o_search.widgetScrollbar.update();
+        // If offset is not 0, properly scroll the scrollbar so that all the expanded mult
+        // group contents can be displayed on the screen.
+        if (offset) {
+            let currentScrollbarPosition = $("#search #widget-container").scrollTop();
+            let newScrollbarPosition = currentScrollbarPosition + offset;
+            $("#search #widget-container").scrollTop(newScrollbarPosition);
+        }
     },
 
     activateSearchTab: function() {
@@ -1154,7 +1161,7 @@ var o_search = {
                                           <span class="${rangeHintsTextClass}">${multdata.min}</span></span>
                                           <span><span class="${rangeHintsDescription}">Max:&nbsp;</span>
                                           <span class="${rangeHintsTextClass}">${multdata.max}</span></span>
-                                          <span><span class="${rangeHintsDescription}">Nulls:&nbsp;</span>
+                                          <span><span class="${rangeHintsDescription}">N/A:&nbsp;</span>
                                           <span class="${rangeHintsTextClass}">${multdata.nulls}</span></span>`);
             }
         }); // end mults ajax

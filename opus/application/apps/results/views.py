@@ -66,6 +66,7 @@ from tools.app_utils import (cols_to_slug_list,
                              parse_form_type,
                              throw_random_http404_error,
                              throw_random_http500_error,
+                             HTTP404_BAD_LIMIT,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
@@ -614,13 +615,19 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     not return_db_names):
                     mult_name = get_mult_name(param_info.param_qualified_name())
                     mult_val = results.values(mult_name)[0][mult_name]
-                    result = lookup_pretty_value_for_mult(param_info, mult_val)
+                    result = lookup_pretty_value_for_mult(param_info,
+                                                          mult_val,
+                                                         cvt_null=(fmt!='json'))
                 else:
                     result = result_vals[param_info.name]
-                    # Format result depending on its form_type_format
-                    result = format_metadata_number_or_func(result,
-                                                            form_type_func,
-                                                            form_type_format)
+                    if (result is None and fmt != 'json' and
+                        form_type != 'STRING'):
+                        result = 'N/A'
+                    else:
+                        # Format result depending on its form_type_format
+                        result = format_metadata_number_or_func(result,
+                                                                form_type_func,
+                                                                form_type_format)
 
                 if fmt == 'csv':
                     index = param_info.fully_qualified_label_results()
@@ -650,9 +657,11 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                    'all_info': all_info,
                    'url_cols': url_cols}
         if internal:
-            ret = render(request, 'results/detail_metadata_internal.html', context)
+            ret = render(request, 'results/detail_metadata_internal.html',
+                         context)
         else:
-            ret = render(request, 'results/detail_metadata.html', context)
+            ret = render(request, 'results/detail_metadata.html',
+                         context)
     elif fmt == 'json':
         ret = json_response(data)
     else: # pragma: no cover
@@ -751,9 +760,11 @@ def _api_get_images(request, fmt, api_code, size, include_search):
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
     if size is None:
-        image_list = get_pds_preview_images(opus_ids, preview_jsons)
+        image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                            ignore_missing=True)
     else:
-        image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
+        image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                            sizes=[size], ignore_missing=True)
 
     if not image_list:
         log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
@@ -765,7 +776,6 @@ def _api_get_images(request, fmt, api_code, size, include_search):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
     for image in image_list:
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
         if size is not None:
             if size+'_alt_text' in image:
                 image['alt_text'] = image[size+'_alt_text']
@@ -784,19 +794,23 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                 del image[size+'_url']
 
             # Backwards compatibility
-            url = image['url']
-            if 'previews/' in url:
-                path, img = url.split('previews/')
-                path += 'previews/'
-            elif 'browse/' in url:
-                path, img = url.split('browse/')
-                path += 'browse/'
+            path = None
+            img = None
+            if 'url' in image:
+                url = image['url']
+                if 'previews/' in url:
+                    path, img = url.split('previews/')
+                    path += 'previews/'
+                elif 'browse/' in url:
+                    path, img = url.split('browse/')
+                    path += 'browse/'
             else:
-                path = None
-                img = None
+                image['url'] = ''
             image['path'] = path
             image['img'] = img
             image[size] = img
+
+        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
         if 'cart_state' in image:
             del image['cart_state']
@@ -830,7 +844,10 @@ def _api_get_images(request, fmt, api_code, size, include_search):
             if size is None:
                 row = [image['opus_id']]
                 for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
-                    row.append(image[img_size+'_url'])
+                    if img_size+'_url' not in image:
+                        row.append('')
+                    else:
+                        row.append(image[img_size+'_url'])
                 csv_data.append(row)
             else:
                 csv_data.append([image['opus_id'], image['url']])
@@ -1071,8 +1088,11 @@ def api_get_product_types_for_opus_id(request, opus_id):
 
     values = []
     sql = 'SELECT DISTINCT '
+    sql += q('obs_files')+'.'+q('category')+', '
     sql += q('obs_files')+'.'+q('short_name')+', '
     sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('version_number')+', '
+    sql += q('obs_files')+'.'+q('version_name')+', '
     sql += q('obs_files')+'.'+q('sort_order')
     sql += ' FROM '+q('obs_files')
     sql += ' WHERE '
@@ -1085,8 +1105,11 @@ def api_get_product_types_for_opus_id(request, opus_id):
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
-    product_types = [{'product_type': x[0],
-                      'description': x[1]} for x in results]
+    product_types = [{'category': x[0],
+                      'product_type': x[1],
+                      'description': x[2],
+                      'version_number': x[3],
+                      'version_name': x[4]} for x in results]
     ret = json_response(product_types)
 
     exit_api_call(api_code, ret)
@@ -1118,8 +1141,8 @@ def api_get_product_types_for_search(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    query_table = get_user_query_table(selections, extras, api_code)
-    if not query_table or throw_random_http500_error(): # pragma: no cover
+    user_query_table = get_user_query_table(selections, extras, api_code)
+    if not user_query_table or throw_random_http500_error(): # pragma: no cover
         log.error('api_get_product_types_for_search: get_user_query_table '
                   +'failed *** Selections %s *** Extras %s',
                   str(selections), str(extras))
@@ -1127,19 +1150,31 @@ def api_get_product_types_for_search(request):
         exit_api_call(api_code, ret)
         return ret
 
+    cache_key = None
+    if user_query_table:
+        cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
+                     + ':product_types:' + user_query_table)
+        cached_val = cache.get(cache_key)
+        if cached_val is not None:
+            exit_api_call(api_code, cached_val)
+            return cached_val
+
     cursor = connection.cursor()
     q = connection.ops.quote_name
 
     values = []
     sql = 'SELECT DISTINCT '
+    sql += q('obs_files')+'.'+q('category')+', '
     sql += q('obs_files')+'.'+q('short_name')+', '
     sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('version_number')+', '
+    sql += q('obs_files')+'.'+q('version_name')+', '
     sql += q('obs_files')+'.'+q('sort_order')
     sql += ' FROM '+q('obs_files')
     if selections:
-        sql += ' INNER JOIN '+q(query_table)
+        sql += ' INNER JOIN '+q(user_query_table)
         sql += ' ON '+q('obs_files')+'.'+q('obs_general_id')+'='
-        sql += q(query_table)+'.'+q('id')
+        sql += q(user_query_table)+'.'+q('id')
     sql += ' ORDER BY '
     sql += q('obs_files')+'.'+q('sort_order')
 
@@ -1147,9 +1182,14 @@ def api_get_product_types_for_search(request):
     cursor.execute(sql, values)
 
     results = cursor.fetchall()
-    product_types = [{'product_type': x[0],
-                      'description': x[1]} for x in results]
+    product_types = [{'category': x[0],
+                      'product_type': x[1],
+                      'description': x[2],
+                      'version_number': x[3],
+                      'version_name': x[4]} for x in results]
     ret = json_response(product_types)
+
+    cache.set(cache_key, ret)
 
     exit_api_call(api_code, ret)
     return ret

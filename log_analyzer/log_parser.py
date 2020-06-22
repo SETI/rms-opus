@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import datetime
 import ipaddress
 import itertools
+import string
 import sys
 from collections import deque
 from ipaddress import IPv4Address
-from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any, Tuple
+from pathlib import Path
+from typing import List, Iterator, Dict, NamedTuple, Optional, TextIO, Any
 
-from abstract_configuration import AbstractConfiguration, AbstractSessionInfo
+from abstract_configuration import AbstractConfiguration, AbstractSessionInfo, LogId
 from ip_to_host_converter import IpToHostConverter
-from jinga_environment import JINJA_ENVIRONMENT
 from log_entry import LogEntry
 
 
@@ -20,7 +23,7 @@ class LiveSession(NamedTuple):
     start_time: datetime.datetime
     timeout: datetime.datetime
 
-    def with_timeout(self, timeout: datetime.datetime) -> 'LiveSession':
+    def with_timeout(self, timeout: datetime.datetime) -> LiveSession:
         return self._replace(timeout=timeout)
 
 
@@ -29,6 +32,7 @@ class Entry(NamedTuple):
     relative_start_time: datetime.timedelta
     data: List[str]
     opus_url: Optional[str]
+    id: LogId
 
     def target_url(self) -> str:
         return self.log_entry.url.geturl()
@@ -46,15 +50,26 @@ class Session(NamedTuple):
     def duration(self) -> datetime.timedelta:
         return self.entries[-1].log_entry.time - self.entries[0].log_entry.time
 
+    @property
+    def total_time(self) -> datetime.timedelta:
+        return self.duration()
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, Session) and self.id == id
+
+    def __repr__(self) -> str:
+        return f"<Session#{self.id} {self.host_ip} @ {self.start_time()}>"
+
 
 class HostInfo(NamedTuple):
     ip: IPv4Address
     name: Optional[str]
     sessions: List[Session]
 
-    def hostname(self) -> str:
-        return f'{self.name} ({self.ip})' if self.name else str(self.ip)
-
+    @property
     def total_time(self) -> datetime.timedelta:
         return sum((session.duration() for session in self.sessions), datetime.timedelta(0))
 
@@ -82,12 +97,14 @@ class LogParser:
                  **_: Any):
         self._configuration = configuration
         self._session_timeout = datetime.timedelta(minutes=session_timeout_minutes)
+        if output:
+            Path(output).parent.mkdir(parents=True, exist_ok=True)
         self._output = open(output, "w") if output else sys.stdout
         self._uses_html = uses_html
         self._by_ip = by_ip
         self._ignored_ips = ignored_ips
         self._ip_to_host_converter = ip_to_host_converter
-        self._id_generator = (f'{value:X}' for value in itertools.count(100))
+        self._id_generator = (f'{self.__base36(value):>04}' for value in itertools.count(1))
 
     def run_batch(self, log_entries: List[LogEntry]) -> None:
         print(f'Parsing input')
@@ -99,19 +116,13 @@ class LogParser:
                 sessions_list = [list(group)
                                  for _, group in itertools.groupby(all_sessions, lambda session: session.host_ip)]
             else:
-                # Rob wants the .html output to be in reverse order
-                all_sessions.sort(key=lambda session: session.start_time(), reverse=self._uses_html)
+                all_sessions.sort(key=lambda session: session.start_time())
                 sessions_list = [[session] for session in all_sessions]
             host_infos = [HostInfo(ip=ip, name=self._ip_to_host_converter.convert(ip), sessions=sessions)
                           for sessions in sessions_list
                           for ip in [sessions[0].host_ip]]
             if by_ip:
-                def sort_key(host_info: HostInfo) -> Tuple[int, Any]:
-                    if host_info.name:
-                        return 1, tuple(reversed(host_info.name.split('.')))
-                    else:
-                        return 2, host_info.ip
-                host_infos.sort(key=sort_key)
+                host_infos.sort(key=lambda host_info: self.__sort_key_from_ip_and_name(host_info.ip, host_info.name))
             return host_infos
 
         output = self._output
@@ -120,8 +131,8 @@ class LogParser:
             host_infos = do_grouping(self._by_ip)
             self.__generate_batch_text_output(host_infos)
         else:
-            self.__generate_batch_html_output(host_infos_by_ip=do_grouping(by_ip=True),
-                                              host_infos_by_time=do_grouping(by_ip=False))
+            host_infos = do_grouping(by_ip=True)
+            self.__generate_batch_html_output(host_infos)
 
     def run_summary(self, log_entries: List[LogEntry]) -> None:
         """Print out all slugs that have appeared in the text."""
@@ -161,13 +172,13 @@ class LogParser:
                 current_session = live_sessions[entry.host_ip].with_timeout(next_timeout)
                 live_sessions[entry.host_ip] = current_session
                 session_info = current_session.session_info
-                entry_info, _ = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
             else:
                 is_just_created_session = True
                 session_info = self._configuration.create_session_info()
-                entry_info, _ = session_info.parse_log_entry(entry)
+                entry_info, _ = session_info.parse_log_entry(entry, LogId(0))
                 if not entry_info:
                     continue
                 current_session = LiveSession(host_ip=entry.host_ip, session_info=session_info,
@@ -203,29 +214,32 @@ class LogParser:
                 # If the first entry has no information, it doesn't start a session
                 entry = session_log_entries.popleft()
                 session_info = self._configuration.create_session_info(uses_html=uses_html)
-                entry_info, opus_url = session_info.parse_log_entry(entry)
+                entry_id = LogId(1)
+                entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                 if not entry_info:
                     continue
 
                 session_start_time = entry.time
 
-                def create_session_entry(log_entry: LogEntry, entry_info: List[str], opus_url: Optional[str]) -> Entry:
+                def create_session_entry(log_entry: LogEntry, entry_info: List[str],
+                                         opus_url: Optional[str], log_id: LogId) -> Entry:
                     return Entry(log_entry=log_entry,
                                  relative_start_time=entry.time - session_start_time,
-                                 data=entry_info, opus_url=opus_url)
+                                 data=entry_info, opus_url=opus_url, id=log_id)
 
-                current_session_entries = [create_session_entry(entry, entry_info, opus_url)]
+                current_session_entries = [create_session_entry(entry, entry_info, opus_url, entry_id)]
 
                 # Keep on grabbing entries for as long as we have not reached a timeout.
                 session_end_time = session_start_time + self._session_timeout
                 while session_log_entries and session_log_entries[0].time <= session_end_time:
                     entry = session_log_entries.popleft()
                     session_end_time = entry.time + self._session_timeout
-                    entry_info, opus_url = session_info.parse_log_entry(entry)
+                    entry_id = LogId(entry_id + 1)
+                    entry_info, opus_url = session_info.parse_log_entry(entry, entry_id)
                     if entry_info:
-                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url))
+                        current_session_entries.append(create_session_entry(entry, entry_info, opus_url, entry_id))
 
-                if session_info.get_session_flags():
+                if session_info.get_icon_flags():
                     # We ignore sessions that don't actually do anything.
                     sessions.append(Session(host_ip=session_host_ip,
                                             entries=current_session_entries,
@@ -249,16 +263,9 @@ class LogParser:
                 for entry in entries:
                     self.__print_entry_info(entry.log_entry, entry.data, session.start_time())
 
-    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo],
-                                     host_infos_by_time: List[HostInfo]) -> None:
-        host_infos_by_date = [(date, list(values))
-                              for date, values in itertools.groupby(host_infos_by_time,
-                                                                    lambda host_info: host_info.start_time().date())]
-        template = JINJA_ENVIRONMENT.get_template('log_analysis.html')
-        for result in template.generate(host_infos_by_ip=host_infos_by_ip,
-                                        host_infos_by_date=host_infos_by_date,
-                                        **self._configuration.additional_template_info()):
-            self._output.write(result)
+    def __generate_batch_html_output(self, host_infos_by_ip: List[HostInfo]) -> None:
+        batch_html_generator = self._configuration.create_batch_html_generator(host_infos_by_ip)
+        batch_html_generator.generate_output(self._output)
 
     def __print_entry_info(self, this_entry: LogEntry, this_entry_info: List[str],
                            session_start_time: datetime.datetime) -> None:
@@ -275,6 +282,22 @@ class LogParser:
         else:
             return f'{ip}'
 
+    @staticmethod
+    def __sort_key_from_ip_and_name(ip: IPv4Address, name: Optional[str]) -> Any:
+        if name:
+            return 1, tuple(reversed(name.lower().split('.')))
+        else:
+            return 2, ip
 
+    ALPHABET36 = string.digits + string.ascii_lowercase
+
+    @classmethod
+    def __base36(cls, value: int) -> str:
+        result: List[str] = []
+        assert value > 0
+        while value > 0:
+            value, modulus = divmod(value, 36)
+            result.append(cls.ALPHABET36[modulus])
+        return ''.join(reversed(result))
 
 

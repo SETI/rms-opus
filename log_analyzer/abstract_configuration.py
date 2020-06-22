@@ -1,13 +1,14 @@
 import abc
 import re
 from enum import Flag
-from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO
+from typing import List, Dict, Optional, Match, Tuple, Pattern, Callable, Any, TextIO, NewType
 
 from markupsafe import Markup
 
 from log_entry import LogEntry
 
 SESSION_INFO = Tuple[List[str], Optional[str]]
+LogId = NewType('LogId', int)
 
 
 class AbstractConfiguration(metaclass=abc.ABCMeta):
@@ -19,9 +20,9 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
         raise Exception()
 
     @abc.abstractmethod
-    def additional_template_info(self) -> Dict[str, Any]:
+    def create_batch_html_generator(self, host_infos_by_ip: List[Any]) -> 'AbstractBatchHtmlGenerator':
         """
-        Returns configuration-specific information that must be passed to the Jinja template.
+        Creates a blackbox capable of giving the Jinja template whatever information it needs
         """
         raise Exception()
 
@@ -33,11 +34,11 @@ class AbstractConfiguration(metaclass=abc.ABCMeta):
 
 class AbstractSessionInfo(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def parse_log_entry(self, entry: LogEntry) -> SESSION_INFO:
+    def parse_log_entry(self, entry: LogEntry, log_id: LogId) -> SESSION_INFO:
         raise Exception()
 
     @abc.abstractmethod
-    def get_session_flags(self) -> Flag:
+    def get_icon_flags(self) -> Flag:
         raise Exception()
 
     @staticmethod
@@ -49,13 +50,18 @@ class AbstractSessionInfo(metaclass=abc.ABCMeta):
         return Markup(format_string).format(*args)
 
 
+class AbstractBatchHtmlGenerator(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def generate_output(self, output: TextIO) -> None: ...
+
+
 class PatternRegistry:
     """
     A Decorator used by SessionInfo.
     A method is decorated with the regex of the URLs that it knows how to parse.
     """
 
-    METHOD = Callable[[Any, Dict[str, str], Match[str]], SESSION_INFO]
+    METHOD = Callable[[Any, LogEntry, Dict[str, str], Match[str]], SESSION_INFO]
 
     patterns: List[Tuple[Pattern[str], METHOD]]
 

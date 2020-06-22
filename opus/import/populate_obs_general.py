@@ -85,9 +85,7 @@ def populate_helper_d_longitude_field(**kwargs):
 ################################################################################
 
 def populate_obs_general_instrument_id(**kwargs):
-    volume_id = kwargs['volume_id']
-    volume_id_prefix = volume_id[:volume_id.find('_')]
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    instrument_name = kwargs['instrument_name']
     return instrument_name
 
 def populate_obs_general_volume_id(**kwargs):
@@ -118,6 +116,7 @@ def populate_obs_general_target_class(**kwargs):
 
 def populate_obs_general_preview_images(**kwargs):
     metadata = kwargs['metadata']
+    volset = kwargs['volset']
     general_row = metadata['obs_general_row']
     file_spec = general_row['primary_file_spec']
 
@@ -129,6 +128,8 @@ def populate_obs_general_preview_images(**kwargs):
         file_spec = file_spec.replace('.LBL', '.DAT')
     elif file_spec.startswith('VGISS'):
         file_spec = file_spec.replace('.LBL', '.IMG')
+    elif file_spec.startswith('CORSS'):
+        file_spec = file_spec.replace('.LBL', '.TAB')
 
     pdsf = pdsfile.PdsFile.from_filespec(file_spec)
     try:
@@ -188,7 +189,8 @@ def populate_obs_general_preview_images(**kwargs):
             }
         else:
             browse_data = {'viewables': []}
-            if not impglobals.ARGUMENTS.import_ignore_missing_images:
+            if (volset in VOLSETS_WITH_PREVIEWS and
+                not impglobals.ARGUMENTS.import_ignore_missing_images):
                 import_util.log_nonrepeating_warning(
                     f'Missing all browse/diagram images for "{file_spec}"')
 

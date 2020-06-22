@@ -21,7 +21,8 @@ def populate_obs_surface_geo_name_target_name(**kwargs):
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
         return None
-    return (target_name, import_util.cleanup_target_name(target_name))
+    target_name_info = TARGET_NAME_INFO[target_name]
+    return target_name, target_name_info[2]
 
 # These are fields in the normal obs_surface_geometry table that have the
 # standard one-to-one mapping with OPUS ID
@@ -39,5 +40,5 @@ def populate_obs_surface_geo_target_list(**kwargs):
         if target_name not in TARGET_NAME_INFO:
             import_util.announce_unknown_target_name(target_name)
             return None
-        new_target_list.append(target_name)
+        new_target_list.append(TARGET_NAME_INFO[target_name][2])
     return ','.join(sorted(new_target_list))

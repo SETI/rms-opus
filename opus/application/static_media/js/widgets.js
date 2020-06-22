@@ -93,10 +93,18 @@ var o_widgets = {
         });
 
         // open/close mult groupings in widgets
-        $('#search').on('click', '.mult_group_label_container', function() {
-            $(this).find('.indicator').toggleClass('fa-plus');
-            $(this).find('.indicator').toggleClass('fa-minus');
-            $(this).next().slideToggle("fast");
+        $("#search").on("click", ".mult_group_label_container", function() {
+            $(this).find(".indicator").toggleClass("fa-plus");
+            $(this).find(".indicator").toggleClass("fa-minus");
+            let multGroupContents = $(this).next();
+            let currentExpandedStatus = $(this).find(".indicator").hasClass("fa-plus") ?
+                                        "expanded" : "collapsed";
+            multGroupContents.slideToggle("fast", function() {
+                // Toggle the data-status after the animation is done. MutationObserver is set
+                // to detect the change of data-status, so we can always make sure ps gets
+                // updated and scrolled after the animation is done.
+                $(this).attr("data-status", currentExpandedStatus);
+            });
         });
 
         // close a card
@@ -803,15 +811,27 @@ var o_widgets = {
         o_menu.markMenuItem(selector, "unselect");
 
         let inputs = $(`#widget__${slugNoNum} input`);
-
+        // Reset the flag before checking all inputs
+        o_widgets.isRemovingEmptyWidget = true;
         // Check if the widget to be removed has empty values on all inputs.
         for (const input of inputs) {
-            if ($(input).val() && $(input).val().trim()) {
+            if ($(input).attr("type") === "text" && $(input).val() && $(input).val().trim()) {
+                o_widgets.isRemovingEmptyWidget = false;
+            } else if ($(input).is(":checked")) {
                 o_widgets.isRemovingEmptyWidget = false;
             }
         }
 
         o_widgets.removeInputsValidationInfo(inputs);
+
+        // If the closing widget has empty values, don't perform a normalize input api call & search.
+        if (o_widgets.isRemovingEmptyWidget) {
+            opus.updateOPUSLastSelectionsWithOPUSSelections();
+            if (opus.areInputsValid()) {
+                o_hash.updateURLFromCurrentHash();
+            }
+            return;
+        }
 
         o_search.allNormalizeInputApiCall().then(function(normalizedData) {
             if (normalizedData.reqno < o_search.lastSlugNormalizeRequestNo) {
@@ -831,11 +851,6 @@ var o_widgets = {
                         o_search.getHinting(eachSlug);
                     });
                 }
-            }
-
-            // If the closing widget has empty values, don't perform a search.
-            if (o_widgets.isRemovingEmptyWidget) {
-                opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
 
             if (opus.areInputsValid()) {
@@ -1359,12 +1374,33 @@ var o_widgets = {
 
             opus.widgetsDrawn.unshift(slug);
             o_widgets.customWidgetBehaviors(slug);
-            o_widgets.scrollToWidget(widget);
+
+            // Make sure when a new widget is open at the top, scrollbar always scrolls to the top.
+            $("#search #widget-container").animate({
+                scrollTop: 0
+            }, 500);
+
             if (slug === "surfacegeometrytargetname" && !o_search.areAllSURFACEGEOSelectionsEmpty()) {
                 o_search.getValidMults(slug, true);
             } else {
                 o_search.getHinting(slug);
             }
+
+            // If an input widget just got opened and input slugs are not in opus.selections,
+            // we need to update opus.selections to make sure input slugs exist.
+            if (widgetInputs.hasClass("RANGE")) {
+                if (!opus.selections[`${slug}1`]) {
+                    opus.selections[`${slug}1`] = [null];
+                }
+                if (!opus.selections[`${slug}2`]) {
+                    opus.selections[`${slug}2`] = [null];
+                }
+            } else if (widgetInputs.hasClass("STRING")) {
+                if (!opus.selections[`${slug}`]) {
+                    opus.selections[`${slug}`] = [null];
+                }
+            }
+
             // Align data in opus.selections and opus.extras to make sure empty
             // inputs will also have null in opus.selections
             [opus.selections, opus.extras] = o_hash.alignDataInSelectionsAndExtras(opus.selections,
@@ -1519,12 +1555,19 @@ var o_widgets = {
     },
 
     scrollToWidget: function(widget) {
-        // scrolls window to a widget
-        // widget is like: "widget__" + slug
-        //  scroll the widget panel to top
-        $('#search').animate({
-            scrollTop: $("#"+ widget).offset().top
-        }, 1000);
+        /**
+         * Scroll to the target widget when users click on an opened widget slug
+         * name in the search sidebar.
+         */
+        let widgetTargetTopPosition = $(`#${widget}`).offset().top;
+        let widgetContainerTopPosition = $("#search #widget-container").offset().top;
+        let widgetScrollbarPosition = $("#search #widget-container").scrollTop();
+
+        let widgetTargetFinalPosition = (widgetTargetTopPosition - widgetContainerTopPosition +
+                                        widgetScrollbarPosition);
+        $("#search #widget-container").animate({
+            scrollTop: widgetTargetFinalPosition
+        }, 500);
     },
 
     attachStringDropdownToInput: function() {
@@ -1570,9 +1613,9 @@ var o_widgets = {
                 o_search.slugStringSearchChoicesReqno[slugWithCounter] = o_widgets.lastStringSearchRequestNo;
 
                 let newHash = o_hash.getHashStrFromSelections();
-                // // Make sure the existing STRING input value is not passed to stringsearchchoices
-                // // API call. This will make sure each autocomplete dropdown results for individual
-                // // input will not be affected by others.
+                // Make sure the existing STRING input value is not passed to stringsearchchoices
+                // API call. This will make sure each autocomplete dropdown results for individual
+                // input will not be affected by others.
                 let hashArray = newHash.split("&");
                 let newHashArray = [];
                 for (const slugValuePair of hashArray) {
@@ -1582,7 +1625,9 @@ var o_widgets = {
                         newHashArray.push(slugValuePair);
                     }
                 }
-                newHashArray.push(`${slugWithCounter}=${currentValue}`);
+
+                let encodedValue = o_hash.encodeSlugValue(currentValue);
+                newHashArray.push(`${slugWithCounter}=${encodedValue}`);
                 newHash = newHashArray.join("&");
 
                 // Avoid calling api when some inputs are not valid

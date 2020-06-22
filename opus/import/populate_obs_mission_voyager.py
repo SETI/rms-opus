@@ -32,10 +32,7 @@ def helper_voyager_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
-
-    return (target_name, import_util.cleanup_target_name(target_name))
+    return target_name, target_name_info[2]
 
 def helper_voyager_planet_id(**kwargs):
     metadata = kwargs['metadata']
@@ -57,7 +54,7 @@ def helper_voyager_planet_id(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
 ################################################################################
 
-def populate_obs_general_VG_planet_id(**kwargs):
+def populate_obs_general_VG_planet_id_OBS(**kwargs):
     return helper_voyager_planet_id(**kwargs)
 
 

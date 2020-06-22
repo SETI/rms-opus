@@ -28,7 +28,7 @@ var o_menu = {
                 // widget is already showing do not fetch another
                 try {
                     // scroll to widget and highlight it
-                    o_widgets.scrollToWidget(`widget__#{slug}`);
+                    o_widgets.scrollToWidget(`widget__${slug}`);
                 } catch(e) {
                     return false;
                 }

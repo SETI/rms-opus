@@ -628,6 +628,19 @@ var o_browse = {
             "scrollbarOffset": 0
         });
 
+        // Properly set loadOnScroll. This will avoid loadOnScroll being false when the user
+        // drags the slider from the most right end to the middle.
+        if ($(`${tab} .op-gallery-view`).data("infiniteScroll") &&
+            $(`${tab} .op-data-table-view`).data("infiniteScroll")) {
+            if (value >  viewNamespace.totalObsCount) {
+                $(`${tab} .op-gallery-view`).infiniteScroll({"loadOnScroll": false});
+                $(`${tab} .op-data-table-view`).infiniteScroll({"loadOnScroll": false});
+            } else {
+                $(`${tab} .op-gallery-view`).infiniteScroll({"loadOnScroll": true});
+                $(`${tab} .op-data-table-view`).infiniteScroll({"loadOnScroll": true});
+            }
+        }
+
         opus.prefs[startObsLabel] = value;
 
         if (elem.length > 0) {
@@ -1771,14 +1784,20 @@ var o_browse = {
                         customizedLimitNum = 0;
                     }
 
-                    // if totalObsCount is not yet defined, we still need to init the infinite scroll...
-                    //if (viewNamespace.totalObsCount === undefined || obsNum <= viewNamespace.totalObsCount) {
-                        let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
-                        return path;
-                    //}
-                    // returning no value indicates end of infinite scroll... but ap{{ which }}-mini-{{ div.table_name }}ly doesn't work at moment.
-                    // NOTE: leaving this commented out code in place with the hope that we will find a solution.
-                    //return null;
+                    let path = o_browse.getDataURL(view, obsNum, customizedLimitNum);
+                    let totalObs = viewNamespace.totalObsCount;
+                    // When it reaches to the end of the search data, disable loadOnScroll so that it
+                    // will not keep calling dataimages.json api with startObs larger the search results.
+                    if (infiniteScrollData) {
+                        if (obsNum > totalObs ) {
+                            $(`${tab} .op-gallery-view`).infiniteScroll({"loadOnScroll": false});
+                            $(`${tab} .op-data-table-view`).infiniteScroll({"loadOnScroll": false});
+                        } else {
+                            $(`${tab} .op-gallery-view`).infiniteScroll({"loadOnScroll": true});
+                            $(`${tab} .op-data-table-view`).infiniteScroll({"loadOnScroll": true});
+                        }
+                    }
+                    return path;
                 },
                 responseType: "text",
                 status: `${tab} .op-page-load-status`,
@@ -1791,6 +1810,7 @@ var o_browse = {
                 // store the most top left obsNum in gallery or the most top obsNum in table
                 obsNum: 1,
                 debug: false,
+                loadOnScroll: true,
             });
 
             $(selector).on("request.infiniteScroll", function(event, path) {

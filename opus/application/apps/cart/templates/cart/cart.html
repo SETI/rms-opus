@@ -19,9 +19,6 @@
                     {% endif %}
                 ">
                 <li class="list-inline-item">
-                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
-                </li>
-                <li class="list-inline-item">
                     <div id="create_zip_data_file">
                         <a href="#" class="downloadData btn btn-outline-primary" title="Download a zipped data archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
                     </div>
@@ -30,6 +27,9 @@
                     <div id="create_zip_url_file">
                         <a href="#" class="downloadURL btn btn-outline-primary" title="Download a zipped URL archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
                     </div>
+                </li>
+                <li class="list-inline-item">
+                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                 </li>
             </div>
             <h1 class="op-download-options-title">Download Options</h1>
@@ -99,8 +99,7 @@
                     <ul>
                         <li>The metadata CSV (data.csv)</li>
                         <li>The URLs of all data products (urls.txt)</li>
-                        <li>The checksums of all data products (checksum.txt)</li>
-                        <li>The manifest listing each OPUS ID and the files associated with it (manifest.txt)</li>
+                        <li>The manifest listing each OPUS ID along with the details of each associated file (manifest.csv)</li>
                     </ul>
                 </div>
             </div>

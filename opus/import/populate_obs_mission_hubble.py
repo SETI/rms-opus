@@ -37,7 +37,7 @@ def _helper_hubble_planet_id(**kwargs):
         return None
     return planet_name[:3]
 
-def populate_obs_general_HST_planet_id(**kwargs):
+def populate_obs_general_HST_planet_id_OBS(**kwargs):
     planet = _helper_hubble_planet_id(**kwargs)
     if planet is None:
         return 'OTH'
@@ -59,7 +59,7 @@ def _HST_file_spec_helper(**kwargs):
 
     return volume_id + '/' + file_spec
 
-def populate_obs_general_HSTx_opus_id(**kwargs):
+def populate_obs_general_HSTx_opus_id_OBS(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec)
     try:
@@ -74,13 +74,13 @@ def populate_obs_general_HSTx_opus_id(**kwargs):
         return file_spec.split('/')[-1]
     return opus_id
 
-populate_obs_general_HSTACS_opus_id = populate_obs_general_HSTx_opus_id
-populate_obs_general_HSTNICMOS_opus_id = populate_obs_general_HSTx_opus_id
-populate_obs_general_HSTSTIS_opus_id = populate_obs_general_HSTx_opus_id
-populate_obs_general_HSTWFC3_opus_id = populate_obs_general_HSTx_opus_id
-populate_obs_general_HSTWFPC2_opus_id = populate_obs_general_HSTx_opus_id
+populate_obs_general_HSTACS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
+populate_obs_general_HSTNICMOS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
+populate_obs_general_HSTSTIS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
+populate_obs_general_HSTWFC3_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
+populate_obs_general_HSTWFPC2_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
 
-def populate_obs_general_HSTx_ring_obs_id(**kwargs):
+def populate_obs_general_HSTx_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     instrument_id = index_row['INSTRUMENT_ID']
@@ -96,22 +96,22 @@ def populate_obs_general_HSTx_ring_obs_id(**kwargs):
     return (pl_str + '_IMG_HST_' + instrument_id + '_' + image_date + '_'
             + filename)
 
-populate_obs_general_HSTACS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
-populate_obs_general_HSTNICMOS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
-populate_obs_general_HSTSTIS_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
-populate_obs_general_HSTWFC3_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
-populate_obs_general_HSTWFPC2_ring_obs_id = populate_obs_general_HSTx_ring_obs_id
+populate_obs_general_HSTACS_ring_obs_id_OBS = populate_obs_general_HSTx_ring_obs_id_OBS
+populate_obs_general_HSTNICMOS_ring_obs_id_OBS = populate_obs_general_HSTx_ring_obs_id_OBS
+populate_obs_general_HSTSTIS_ring_obs_id_OBS = populate_obs_general_HSTx_ring_obs_id_OBS
+populate_obs_general_HSTWFC3_ring_obs_id_OBS = populate_obs_general_HSTx_ring_obs_id_OBS
+populate_obs_general_HSTWFPC2_ring_obs_id_OBS = populate_obs_general_HSTx_ring_obs_id_OBS
 
-def populate_obs_general_HSTx_inst_host_id(**kwargs):
+def populate_obs_general_HSTx_inst_host_id_OBS(**kwargs):
     return 'HST'
 
-populate_obs_general_HSTACS_inst_host_id = populate_obs_general_HSTx_inst_host_id
-populate_obs_general_HSTNICMOS_inst_host_id = populate_obs_general_HSTx_inst_host_id
-populate_obs_general_HSTSTIS_inst_host_id = populate_obs_general_HSTx_inst_host_id
-populate_obs_general_HSTWFC3_inst_host_id = populate_obs_general_HSTx_inst_host_id
-populate_obs_general_HSTWFPC2_inst_host_id = populate_obs_general_HSTx_inst_host_id
+populate_obs_general_HSTACS_inst_host_id_OBS = populate_obs_general_HSTx_inst_host_id_OBS
+populate_obs_general_HSTNICMOS_inst_host_id_OBS = populate_obs_general_HSTx_inst_host_id_OBS
+populate_obs_general_HSTSTIS_inst_host_id_OBS = populate_obs_general_HSTx_inst_host_id_OBS
+populate_obs_general_HSTWFC3_inst_host_id_OBS = populate_obs_general_HSTx_inst_host_id_OBS
+populate_obs_general_HSTWFPC2_inst_host_id_OBS = populate_obs_general_HSTx_inst_host_id_OBS
 
-def populate_obs_general_HSTx_quantity(**kwargs):
+def populate_obs_general_HSTx_quantity_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
@@ -126,13 +126,13 @@ def populate_obs_general_HSTx_quantity(**kwargs):
         return 'EMISSION'
     return 'REFLECT'
 
-populate_obs_general_HSTACS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTNICMOS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTSTIS_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTWFC3_quantity = populate_obs_general_HSTx_quantity
-populate_obs_general_HSTWFPC2_quantity = populate_obs_general_HSTx_quantity
+populate_obs_general_HSTACS_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
+populate_obs_general_HSTNICMOS_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
+populate_obs_general_HSTSTIS_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
+populate_obs_general_HSTWFC3_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
+populate_obs_general_HSTWFPC2_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
 
-def populate_obs_general_HSTx_observation_type(**kwargs):
+def populate_obs_general_HSTx_observation_type_OBS(**kwargs):
     metadata = kwargs['metadata']
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
@@ -149,13 +149,13 @@ def populate_obs_general_HSTx_observation_type(**kwargs):
         return 'SPI' # Spectral Image (2-D with spectral information)
     return 'IMG' # Image
 
-populate_obs_general_HSTACS_observation_type = populate_obs_general_HSTx_observation_type
-populate_obs_general_HSTNICMOS_observation_type = populate_obs_general_HSTx_observation_type
-populate_obs_general_HSTSTIS_observation_type = populate_obs_general_HSTx_observation_type
-populate_obs_general_HSTWFC3_observation_type = populate_obs_general_HSTx_observation_type
-populate_obs_general_HSTWFPC2_observation_type = populate_obs_general_HSTx_observation_type
+populate_obs_general_HSTACS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
+populate_obs_general_HSTNICMOS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
+populate_obs_general_HSTSTIS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
+populate_obs_general_HSTWFC3_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
+populate_obs_general_HSTWFPC2_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
 
-def populate_obs_general_HSTx_time1(**kwargs):
+def populate_obs_general_HSTx_time1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     start_time = import_util.safe_column(index_row, 'START_TIME')
@@ -172,13 +172,13 @@ def populate_obs_general_HSTx_time1(**kwargs):
 
     return start_time_sec
 
-populate_obs_general_HSTACS_time1 = populate_obs_general_HSTx_time1
-populate_obs_general_HSTNICMOS_time1 = populate_obs_general_HSTx_time1
-populate_obs_general_HSTSTIS_time1 = populate_obs_general_HSTx_time1
-populate_obs_general_HSTWFC3_time1 = populate_obs_general_HSTx_time1
-populate_obs_general_HSTWFPC2_time1 = populate_obs_general_HSTx_time1
+populate_obs_general_HSTACS_time1_OBS = populate_obs_general_HSTx_time1_OBS
+populate_obs_general_HSTNICMOS_time1_OBS = populate_obs_general_HSTx_time1_OBS
+populate_obs_general_HSTSTIS_time1_OBS = populate_obs_general_HSTx_time1_OBS
+populate_obs_general_HSTWFC3_time1_OBS = populate_obs_general_HSTx_time1_OBS
+populate_obs_general_HSTWFPC2_time1_OBS = populate_obs_general_HSTx_time1_OBS
 
-def populate_obs_general_HSTx_time2(**kwargs):
+def populate_obs_general_HSTx_time2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     stop_time = import_util.safe_column(index_row, 'STOP_TIME')
@@ -204,13 +204,13 @@ def populate_obs_general_HSTx_time2(**kwargs):
 
     return stop_time_sec
 
-populate_obs_general_HSTACS_time2 = populate_obs_general_HSTx_time2
-populate_obs_general_HSTNICMOS_time2 = populate_obs_general_HSTx_time2
-populate_obs_general_HSTSTIS_time2 = populate_obs_general_HSTx_time2
-populate_obs_general_HSTWFC3_time2 = populate_obs_general_HSTx_time2
-populate_obs_general_HSTWFPC2_time2 = populate_obs_general_HSTx_time2
+populate_obs_general_HSTACS_time2_OBS = populate_obs_general_HSTx_time2_OBS
+populate_obs_general_HSTNICMOS_time2_OBS = populate_obs_general_HSTx_time2_OBS
+populate_obs_general_HSTSTIS_time2_OBS = populate_obs_general_HSTx_time2_OBS
+populate_obs_general_HSTWFC3_time2_OBS = populate_obs_general_HSTx_time2_OBS
+populate_obs_general_HSTWFPC2_time2_OBS = populate_obs_general_HSTx_time2_OBS
 
-def populate_obs_general_HSTx_target_name(**kwargs):
+def populate_obs_general_HSTx_target_name_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
@@ -224,18 +224,15 @@ def populate_obs_general_HSTx_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    if len(target_name_info) == 3:
-        return target_name, target_name_info[2]
+    return target_name, target_name_info[2]
 
-    return (target_name, import_util.cleanup_target_name(target_name))
+populate_obs_general_HSTACS_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
+populate_obs_general_HSTNICMOS_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
+populate_obs_general_HSTSTIS_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
+populate_obs_general_HSTWFC3_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
+populate_obs_general_HSTWFPC2_target_name_OBS = populate_obs_general_HSTx_target_name_OBS
 
-populate_obs_general_HSTACS_target_name = populate_obs_general_HSTx_target_name
-populate_obs_general_HSTNICMOS_target_name = populate_obs_general_HSTx_target_name
-populate_obs_general_HSTSTIS_target_name = populate_obs_general_HSTx_target_name
-populate_obs_general_HSTWFC3_target_name = populate_obs_general_HSTx_target_name
-populate_obs_general_HSTWFPC2_target_name = populate_obs_general_HSTx_target_name
-
-def populate_obs_general_HSTx_observation_duration(**kwargs):
+def populate_obs_general_HSTx_observation_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     exposure = import_util.safe_column(index_row, 'EXPOSURE_DURATION')
@@ -245,42 +242,42 @@ def populate_obs_general_HSTx_observation_duration(**kwargs):
 
     return exposure
 
-populate_obs_general_HSTACS_observation_duration = populate_obs_general_HSTx_observation_duration
-populate_obs_general_HSTNICMOS_observation_duration = populate_obs_general_HSTx_observation_duration
-populate_obs_general_HSTSTIS_observation_duration = populate_obs_general_HSTx_observation_duration
-populate_obs_general_HSTWFC3_observation_duration = populate_obs_general_HSTx_observation_duration
-populate_obs_general_HSTWFPC2_observation_duration = populate_obs_general_HSTx_observation_duration
+populate_obs_general_HSTACS_observation_duration_OBS = populate_obs_general_HSTx_observation_duration_OBS
+populate_obs_general_HSTNICMOS_observation_duration_OBS = populate_obs_general_HSTx_observation_duration_OBS
+populate_obs_general_HSTSTIS_observation_duration_OBS = populate_obs_general_HSTx_observation_duration_OBS
+populate_obs_general_HSTWFC3_observation_duration_OBS = populate_obs_general_HSTx_observation_duration_OBS
+populate_obs_general_HSTWFPC2_observation_duration_OBS = populate_obs_general_HSTx_observation_duration_OBS
 
-def populate_obs_pds_HSTx_note(**kwargs):
+def populate_obs_pds_HSTx_note_OBS(**kwargs):
     return None
 
-populate_obs_pds_HSTACS_note = populate_obs_pds_HSTx_note
-populate_obs_pds_HSTNICMOS_note = populate_obs_pds_HSTx_note
-populate_obs_pds_HSTSTIS_note = populate_obs_pds_HSTx_note
-populate_obs_pds_HSTWFC3_note = populate_obs_pds_HSTx_note
-populate_obs_pds_HSTWFPC2_note = populate_obs_pds_HSTx_note
+populate_obs_pds_HSTACS_note_OBS = populate_obs_pds_HSTx_note_OBS
+populate_obs_pds_HSTNICMOS_note_OBS = populate_obs_pds_HSTx_note_OBS
+populate_obs_pds_HSTSTIS_note_OBS = populate_obs_pds_HSTx_note_OBS
+populate_obs_pds_HSTWFC3_note_OBS = populate_obs_pds_HSTx_note_OBS
+populate_obs_pds_HSTWFPC2_note_OBS = populate_obs_pds_HSTx_note_OBS
 
-def populate_obs_general_HSTx_primary_file_spec(**kwargs):
+def populate_obs_general_HSTx_primary_file_spec_OBS(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     return file_spec
 
-populate_obs_general_HSTACS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
-populate_obs_general_HSTNICMOS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
-populate_obs_general_HSTSTIS_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
-populate_obs_general_HSTWFC3_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
-populate_obs_general_HSTWFPC2_primary_file_spec = populate_obs_general_HSTx_primary_file_spec
+populate_obs_general_HSTACS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
+populate_obs_general_HSTNICMOS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
+populate_obs_general_HSTSTIS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
+populate_obs_general_HSTWFC3_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
+populate_obs_general_HSTWFPC2_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
 
-def populate_obs_pds_HSTx_primary_file_spec(**kwargs):
+def populate_obs_pds_HSTx_primary_file_spec_OBS(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     return file_spec
 
-populate_obs_pds_HSTACS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
-populate_obs_pds_HSTNICMOS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
-populate_obs_pds_HSTSTIS_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
-populate_obs_pds_HSTWFC3_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
-populate_obs_pds_HSTWFPC2_primary_file_spec = populate_obs_pds_HSTx_primary_file_spec
+populate_obs_pds_HSTACS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
+populate_obs_pds_HSTNICMOS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
+populate_obs_pds_HSTSTIS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
+populate_obs_pds_HSTWFC3_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
+populate_obs_pds_HSTWFPC2_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
 
-def populate_obs_pds_HSTx_product_creation_time(**kwargs):
+def populate_obs_pds_HSTx_product_creation_time_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_label']
     pct = index_label['PRODUCT_CREATION_TIME']
@@ -294,113 +291,113 @@ def populate_obs_pds_HSTx_product_creation_time(**kwargs):
 
     return pct_sec
 
-populate_obs_pds_HSTACS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
-populate_obs_pds_HSTNICMOS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
-populate_obs_pds_HSTSTIS_product_creation_time = populate_obs_pds_HSTx_product_creation_time
-populate_obs_pds_HSTWFC3_product_creation_time = populate_obs_pds_HSTx_product_creation_time
-populate_obs_pds_HSTWFPC2_product_creation_time = populate_obs_pds_HSTx_product_creation_time
+populate_obs_pds_HSTACS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
+populate_obs_pds_HSTNICMOS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
+populate_obs_pds_HSTSTIS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
+populate_obs_pds_HSTWFC3_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
+populate_obs_pds_HSTWFPC2_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
 
-def populate_obs_pds_HSTx_data_set_id(**kwargs):
+def populate_obs_pds_HSTx_data_set_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     dsi = index_row['DATA_SET_ID']
     return (dsi, dsi)
 
-populate_obs_pds_HSTACS_data_set_id = populate_obs_pds_HSTx_data_set_id
-populate_obs_pds_HSTNICMOS_data_set_id = populate_obs_pds_HSTx_data_set_id
-populate_obs_pds_HSTSTIS_data_set_id = populate_obs_pds_HSTx_data_set_id
-populate_obs_pds_HSTWFC3_data_set_id = populate_obs_pds_HSTx_data_set_id
-populate_obs_pds_HSTWFPC2_data_set_id = populate_obs_pds_HSTx_data_set_id
+populate_obs_pds_HSTACS_data_set_id_OBS = populate_obs_pds_HSTx_data_set_id_OBS
+populate_obs_pds_HSTNICMOS_data_set_id_OBS = populate_obs_pds_HSTx_data_set_id_OBS
+populate_obs_pds_HSTSTIS_data_set_id_OBS = populate_obs_pds_HSTx_data_set_id_OBS
+populate_obs_pds_HSTWFC3_data_set_id_OBS = populate_obs_pds_HSTx_data_set_id_OBS
+populate_obs_pds_HSTWFPC2_data_set_id_OBS = populate_obs_pds_HSTx_data_set_id_OBS
 
-def populate_obs_pds_HSTx_product_id(**kwargs):
+def populate_obs_pds_HSTx_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     product_id = index_row['PRODUCT_ID']
 
     return product_id
 
-populate_obs_pds_HSTACS_product_id = populate_obs_pds_HSTx_product_id
-populate_obs_pds_HSTNICMOS_product_id = populate_obs_pds_HSTx_product_id
-populate_obs_pds_HSTSTIS_product_id = populate_obs_pds_HSTx_product_id
-populate_obs_pds_HSTWFC3_product_id = populate_obs_pds_HSTx_product_id
-populate_obs_pds_HSTWFPC2_product_id = populate_obs_pds_HSTx_product_id
+populate_obs_pds_HSTACS_product_id_OBS = populate_obs_pds_HSTx_product_id_OBS
+populate_obs_pds_HSTNICMOS_product_id_OBS = populate_obs_pds_HSTx_product_id_OBS
+populate_obs_pds_HSTSTIS_product_id_OBS = populate_obs_pds_HSTx_product_id_OBS
+populate_obs_pds_HSTWFC3_product_id_OBS = populate_obs_pds_HSTx_product_id_OBS
+populate_obs_pds_HSTWFPC2_product_id_OBS = populate_obs_pds_HSTx_product_id_OBS
 
-def populate_obs_general_HSTx_right_asc1(**kwargs):
+def populate_obs_general_HSTx_right_asc1_OBS(**kwargs):
     return None
 
-populate_obs_general_HSTACS_right_asc1 = populate_obs_general_HSTx_right_asc1
-populate_obs_general_HSTNICMOS_right_asc1 = populate_obs_general_HSTx_right_asc1
-populate_obs_general_HSTSTIS_right_asc1 = populate_obs_general_HSTx_right_asc1
-populate_obs_general_HSTWFC3_right_asc1 = populate_obs_general_HSTx_right_asc1
-populate_obs_general_HSTWFPC2_right_asc1 = populate_obs_general_HSTx_right_asc1
+populate_obs_general_HSTACS_right_asc1_OBS = populate_obs_general_HSTx_right_asc1_OBS
+populate_obs_general_HSTNICMOS_right_asc1_OBS = populate_obs_general_HSTx_right_asc1_OBS
+populate_obs_general_HSTSTIS_right_asc1_OBS = populate_obs_general_HSTx_right_asc1_OBS
+populate_obs_general_HSTWFC3_right_asc1_OBS = populate_obs_general_HSTx_right_asc1_OBS
+populate_obs_general_HSTWFPC2_right_asc1_OBS = populate_obs_general_HSTx_right_asc1_OBS
 
-def populate_obs_general_HSTx_right_asc2(**kwargs):
+def populate_obs_general_HSTx_right_asc2_OBS(**kwargs):
     return None
 
-populate_obs_general_HSTACS_right_asc2 = populate_obs_general_HSTx_right_asc2
-populate_obs_general_HSTNICMOS_right_asc2 = populate_obs_general_HSTx_right_asc2
-populate_obs_general_HSTSTIS_right_asc2 = populate_obs_general_HSTx_right_asc2
-populate_obs_general_HSTWFC3_right_asc2 = populate_obs_general_HSTx_right_asc2
-populate_obs_general_HSTWFPC2_right_asc2 = populate_obs_general_HSTx_right_asc2
+populate_obs_general_HSTACS_right_asc2_OBS = populate_obs_general_HSTx_right_asc2_OBS
+populate_obs_general_HSTNICMOS_right_asc2_OBS = populate_obs_general_HSTx_right_asc2_OBS
+populate_obs_general_HSTSTIS_right_asc2_OBS = populate_obs_general_HSTx_right_asc2_OBS
+populate_obs_general_HSTWFC3_right_asc2_OBS = populate_obs_general_HSTx_right_asc2_OBS
+populate_obs_general_HSTWFPC2_right_asc2_OBS = populate_obs_general_HSTx_right_asc2_OBS
 
-def populate_obs_general_HSTx_declination1(**kwargs):
+def populate_obs_general_HSTx_declination1_OBS(**kwargs):
     return None
 
-populate_obs_general_HSTACS_declination1 = populate_obs_general_HSTx_declination1
-populate_obs_general_HSTNICMOS_declination1 = populate_obs_general_HSTx_declination1
-populate_obs_general_HSTSTIS_declination1 = populate_obs_general_HSTx_declination1
-populate_obs_general_HSTWFC3_declination1 = populate_obs_general_HSTx_declination1
-populate_obs_general_HSTWFPC2_declination1 = populate_obs_general_HSTx_declination1
+populate_obs_general_HSTACS_declination1_OBS = populate_obs_general_HSTx_declination1_OBS
+populate_obs_general_HSTNICMOS_declination1_OBS = populate_obs_general_HSTx_declination1_OBS
+populate_obs_general_HSTSTIS_declination1_OBS = populate_obs_general_HSTx_declination1_OBS
+populate_obs_general_HSTWFC3_declination1_OBS = populate_obs_general_HSTx_declination1_OBS
+populate_obs_general_HSTWFPC2_declination1_OBS = populate_obs_general_HSTx_declination1_OBS
 
-def populate_obs_general_HSTx_declination2(**kwargs):
+def populate_obs_general_HSTx_declination2_OBS(**kwargs):
     return None
 
-populate_obs_general_HSTACS_declination2 = populate_obs_general_HSTx_declination2
-populate_obs_general_HSTNICMOS_declination2 = populate_obs_general_HSTx_declination2
-populate_obs_general_HSTSTIS_declination2 = populate_obs_general_HSTx_declination2
-populate_obs_general_HSTWFC3_declination2 = populate_obs_general_HSTx_declination2
-populate_obs_general_HSTWFPC2_declination2 = populate_obs_general_HSTx_declination2
+populate_obs_general_HSTACS_declination2_OBS = populate_obs_general_HSTx_declination2_OBS
+populate_obs_general_HSTNICMOS_declination2_OBS = populate_obs_general_HSTx_declination2_OBS
+populate_obs_general_HSTSTIS_declination2_OBS = populate_obs_general_HSTx_declination2_OBS
+populate_obs_general_HSTWFC3_declination2_OBS = populate_obs_general_HSTx_declination2_OBS
+populate_obs_general_HSTWFPC2_declination2_OBS = populate_obs_general_HSTx_declination2_OBS
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
 # XXX
-def populate_obs_type_image_HSTx_image_type_id(**kwargs):
+def populate_obs_type_image_HSTx_image_type_id_OBS(**kwargs):
     return 'FRAM'
 
-populate_obs_type_image_HSTACS_image_type_id = populate_obs_type_image_HSTx_image_type_id
-populate_obs_type_image_HSTNICMOS_image_type_id = populate_obs_type_image_HSTx_image_type_id
-populate_obs_type_image_HSTSTIS_image_type_id = populate_obs_type_image_HSTx_image_type_id
-populate_obs_type_image_HSTWFC3_image_type_id = populate_obs_type_image_HSTx_image_type_id
-populate_obs_type_image_HSTWFPC2_image_type_id = populate_obs_type_image_HSTx_image_type_id
+populate_obs_type_image_HSTACS_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
+populate_obs_type_image_HSTNICMOS_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
+populate_obs_type_image_HSTSTIS_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
+populate_obs_type_image_HSTWFC3_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
+populate_obs_type_image_HSTWFPC2_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
 
-def populate_obs_type_image_HSTx_duration(**kwargs):
+def populate_obs_type_image_HSTx_duration_OBS(**kwargs):
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
 
-populate_obs_type_image_HSTACS_duration = populate_obs_type_image_HSTx_duration
-populate_obs_type_image_HSTNICMOS_duration = populate_obs_type_image_HSTx_duration
-populate_obs_type_image_HSTSTIS_duration = populate_obs_type_image_HSTx_duration
-populate_obs_type_image_HSTWFC3_duration = populate_obs_type_image_HSTx_duration
-populate_obs_type_image_HSTWFPC2_duration = populate_obs_type_image_HSTx_duration
+populate_obs_type_image_HSTACS_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
+populate_obs_type_image_HSTNICMOS_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
+populate_obs_type_image_HSTSTIS_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
+populate_obs_type_image_HSTWFC3_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
+populate_obs_type_image_HSTWFPC2_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
 
-def populate_obs_type_image_HSTACS_levels(**kwargs):
+def populate_obs_type_image_HSTACS_levels_OBS(**kwargs):
     return 65536 # ACS Inst Handbook 25, Sec 3.4.3
 
-def populate_obs_type_image_HSTNICMOS_levels(**kwargs):
+def populate_obs_type_image_HSTNICMOS_levels_OBS(**kwargs):
     return 65536 # NICMOS Inst Handbook, Sec 7.2.1
 
-def populate_obs_type_image_HSTSTIS_levels(**kwargs):
+def populate_obs_type_image_HSTSTIS_levels_OBS(**kwargs):
     return 65536 # STIS Inst Handbook, Sec 7.5.1
 
-def populate_obs_type_image_HSTWFC3_levels(**kwargs):
+def populate_obs_type_image_HSTWFC3_levels_OBS(**kwargs):
     return 65536 # WFC3 Inst Handbook, Sec 2.2.3
 
-def populate_obs_type_image_HSTWFPC2_levels(**kwargs):
+def populate_obs_type_image_HSTWFPC2_levels_OBS(**kwargs):
     return 4096 # WFPC2 Inst Handbook, Sec 2.8
 
-def populate_obs_type_image_HSTx_lesser_pixel_size(**kwargs):
+def populate_obs_type_image_HSTx_lesser_pixel_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     lines = import_util.safe_column(index_row, 'LINES')
@@ -409,13 +406,13 @@ def populate_obs_type_image_HSTx_lesser_pixel_size(**kwargs):
         return None
     return min(lines, samples)
 
-populate_obs_type_image_HSTACS_lesser_pixel_size = populate_obs_type_image_HSTx_lesser_pixel_size
-populate_obs_type_image_HSTNICMOS_lesser_pixel_size = populate_obs_type_image_HSTx_lesser_pixel_size
-populate_obs_type_image_HSTSTIS_lesser_pixel_size = populate_obs_type_image_HSTx_lesser_pixel_size
-populate_obs_type_image_HSTWFC3_lesser_pixel_size = populate_obs_type_image_HSTx_lesser_pixel_size
-populate_obs_type_image_HSTWFPC2_lesser_pixel_size = populate_obs_type_image_HSTx_lesser_pixel_size
+populate_obs_type_image_HSTACS_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
+populate_obs_type_image_HSTNICMOS_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
+populate_obs_type_image_HSTSTIS_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
+populate_obs_type_image_HSTWFC3_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
+populate_obs_type_image_HSTWFPC2_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
 
-def populate_obs_type_image_HSTx_greater_pixel_size(**kwargs):
+def populate_obs_type_image_HSTx_greater_pixel_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     lines = import_util.safe_column(index_row, 'LINES')
@@ -424,16 +421,16 @@ def populate_obs_type_image_HSTx_greater_pixel_size(**kwargs):
         return None
     return max(lines, samples)
 
-populate_obs_type_image_HSTACS_greater_pixel_size = populate_obs_type_image_HSTx_greater_pixel_size
-populate_obs_type_image_HSTNICMOS_greater_pixel_size = populate_obs_type_image_HSTx_greater_pixel_size
-populate_obs_type_image_HSTSTIS_greater_pixel_size = populate_obs_type_image_HSTx_greater_pixel_size
-populate_obs_type_image_HSTWFC3_greater_pixel_size = populate_obs_type_image_HSTx_greater_pixel_size
-populate_obs_type_image_HSTWFPC2_greater_pixel_size = populate_obs_type_image_HSTx_greater_pixel_size
+populate_obs_type_image_HSTACS_greater_pixel_size_OBS = populate_obs_type_image_HSTx_greater_pixel_size_OBS
+populate_obs_type_image_HSTNICMOS_greater_pixel_size_OBS = populate_obs_type_image_HSTx_greater_pixel_size_OBS
+populate_obs_type_image_HSTSTIS_greater_pixel_size_OBS = populate_obs_type_image_HSTx_greater_pixel_size_OBS
+populate_obs_type_image_HSTWFC3_greater_pixel_size_OBS = populate_obs_type_image_HSTx_greater_pixel_size_OBS
+populate_obs_type_image_HSTWFPC2_greater_pixel_size_OBS = populate_obs_type_image_HSTx_greater_pixel_size_OBS
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_HSTx_wavelength1(**kwargs):
+def populate_obs_wavelength_HSTx_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
@@ -449,13 +446,13 @@ def populate_obs_wavelength_HSTx_wavelength1(**kwargs):
         return wl2
     return wl1
 
-populate_obs_wavelength_HSTACS_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
-populate_obs_wavelength_HSTNICMOS_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
-populate_obs_wavelength_HSTSTIS_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
-populate_obs_wavelength_HSTWFC3_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
-populate_obs_wavelength_HSTWFPC2_wavelength1 = populate_obs_wavelength_HSTx_wavelength1
+populate_obs_wavelength_HSTACS_wavelength1_OBS = populate_obs_wavelength_HSTx_wavelength1_OBS
+populate_obs_wavelength_HSTNICMOS_wavelength1_OBS = populate_obs_wavelength_HSTx_wavelength1_OBS
+populate_obs_wavelength_HSTSTIS_wavelength1_OBS = populate_obs_wavelength_HSTx_wavelength1_OBS
+populate_obs_wavelength_HSTWFC3_wavelength1_OBS = populate_obs_wavelength_HSTx_wavelength1_OBS
+populate_obs_wavelength_HSTWFPC2_wavelength1_OBS = populate_obs_wavelength_HSTx_wavelength1_OBS
 
-def populate_obs_wavelength_HSTx_wavelength2(**kwargs):
+def populate_obs_wavelength_HSTx_wavelength2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = import_util.safe_column(index_row, 'MINIMUM_WAVELENGTH')
@@ -469,37 +466,37 @@ def populate_obs_wavelength_HSTx_wavelength2(**kwargs):
         return wl1
     return wl2
 
-populate_obs_wavelength_HSTACS_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
-populate_obs_wavelength_HSTNICMOS_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
-populate_obs_wavelength_HSTSTIS_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
-populate_obs_wavelength_HSTWFC3_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
-populate_obs_wavelength_HSTWFPC2_wavelength2 = populate_obs_wavelength_HSTx_wavelength2
+populate_obs_wavelength_HSTACS_wavelength2_OBS = populate_obs_wavelength_HSTx_wavelength2_OBS
+populate_obs_wavelength_HSTNICMOS_wavelength2_OBS = populate_obs_wavelength_HSTx_wavelength2_OBS
+populate_obs_wavelength_HSTSTIS_wavelength2_OBS = populate_obs_wavelength_HSTx_wavelength2_OBS
+populate_obs_wavelength_HSTWFC3_wavelength2_OBS = populate_obs_wavelength_HSTx_wavelength2_OBS
+populate_obs_wavelength_HSTWFPC2_wavelength2_OBS = populate_obs_wavelength_HSTx_wavelength2_OBS
 
-def populate_obs_wavelength_HSTx_wave_res1(**kwargs):
+def populate_obs_wavelength_HSTx_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr = import_util.safe_column(index_row, 'WAVELENGTH_RESOLUTION')
 
     return wr
 
-populate_obs_wavelength_HSTACS_wave_res1 = populate_obs_wavelength_HSTx_wave_res1
-populate_obs_wavelength_HSTNICMOS_wave_res1 = populate_obs_wavelength_HSTx_wave_res1
-populate_obs_wavelength_HSTWFC3_wave_res1 = populate_obs_wavelength_HSTx_wave_res1
-populate_obs_wavelength_HSTWFPC2_wave_res1 = populate_obs_wavelength_HSTx_wave_res1
+populate_obs_wavelength_HSTACS_wave_res1_OBS = populate_obs_wavelength_HSTx_wave_res1_OBS
+populate_obs_wavelength_HSTNICMOS_wave_res1_OBS = populate_obs_wavelength_HSTx_wave_res1_OBS
+populate_obs_wavelength_HSTWFC3_wave_res1_OBS = populate_obs_wavelength_HSTx_wave_res1_OBS
+populate_obs_wavelength_HSTWFPC2_wave_res1_OBS = populate_obs_wavelength_HSTx_wave_res1_OBS
 
-def populate_obs_wavelength_HSTx_wave_res2(**kwargs):
+def populate_obs_wavelength_HSTx_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr = import_util.safe_column(index_row, 'WAVELENGTH_RESOLUTION')
 
     return wr
 
-populate_obs_wavelength_HSTACS_wave_res2 = populate_obs_wavelength_HSTx_wave_res2
-populate_obs_wavelength_HSTNICMOS_wave_res2 = populate_obs_wavelength_HSTx_wave_res2
-populate_obs_wavelength_HSTWFC3_wave_res2 = populate_obs_wavelength_HSTx_wave_res2
-populate_obs_wavelength_HSTWFPC2_wave_res2 = populate_obs_wavelength_HSTx_wave_res2
+populate_obs_wavelength_HSTACS_wave_res2_OBS = populate_obs_wavelength_HSTx_wave_res2_OBS
+populate_obs_wavelength_HSTNICMOS_wave_res2_OBS = populate_obs_wavelength_HSTx_wave_res2_OBS
+populate_obs_wavelength_HSTWFC3_wave_res2_OBS = populate_obs_wavelength_HSTx_wave_res2_OBS
+populate_obs_wavelength_HSTWFPC2_wave_res2_OBS = populate_obs_wavelength_HSTx_wave_res2_OBS
 
-def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
+def populate_obs_wavelength_HSTSTIS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
@@ -513,7 +510,7 @@ def populate_obs_wavelength_HSTSTIS_wave_res1(**kwargs):
         return wr2
     return wr1
 
-def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
+def populate_obs_wavelength_HSTSTIS_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wr1 = import_util.safe_column(index_row, 'MAXIMUM_WAVELENGTH_RESOLUTION')
@@ -524,7 +521,7 @@ def populate_obs_wavelength_HSTSTIS_wave_res2(**kwargs):
         return wr1
     return wr2
 
-def populate_obs_wavelength_HSTx_wave_no1(**kwargs):
+def populate_obs_wavelength_HSTx_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl2 = wavelength_row['wavelength2']
@@ -532,13 +529,13 @@ def populate_obs_wavelength_HSTx_wave_no1(**kwargs):
         return None
     return 10000 / wl2 # cm^-1
 
-populate_obs_wavelength_HSTACS_wave_no1 = populate_obs_wavelength_HSTx_wave_no1
-populate_obs_wavelength_HSTNICMOS_wave_no1 = populate_obs_wavelength_HSTx_wave_no1
-populate_obs_wavelength_HSTSTIS_wave_no1 = populate_obs_wavelength_HSTx_wave_no1
-populate_obs_wavelength_HSTWFC3_wave_no1 = populate_obs_wavelength_HSTx_wave_no1
-populate_obs_wavelength_HSTWFPC2_wave_no1 = populate_obs_wavelength_HSTx_wave_no1
+populate_obs_wavelength_HSTACS_wave_no1_OBS = populate_obs_wavelength_HSTx_wave_no1_OBS
+populate_obs_wavelength_HSTNICMOS_wave_no1_OBS = populate_obs_wavelength_HSTx_wave_no1_OBS
+populate_obs_wavelength_HSTSTIS_wave_no1_OBS = populate_obs_wavelength_HSTx_wave_no1_OBS
+populate_obs_wavelength_HSTWFC3_wave_no1_OBS = populate_obs_wavelength_HSTx_wave_no1_OBS
+populate_obs_wavelength_HSTWFPC2_wave_no1_OBS = populate_obs_wavelength_HSTx_wave_no1_OBS
 
-def populate_obs_wavelength_HSTx_wave_no2(**kwargs):
+def populate_obs_wavelength_HSTx_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl1 = wavelength_row['wavelength1']
@@ -546,13 +543,13 @@ def populate_obs_wavelength_HSTx_wave_no2(**kwargs):
         return None
     return 10000 / wl1 # cm^-1
 
-populate_obs_wavelength_HSTACS_wave_no2 = populate_obs_wavelength_HSTx_wave_no2
-populate_obs_wavelength_HSTNICMOS_wave_no2 = populate_obs_wavelength_HSTx_wave_no2
-populate_obs_wavelength_HSTSTIS_wave_no2 = populate_obs_wavelength_HSTx_wave_no2
-populate_obs_wavelength_HSTWFC3_wave_no2 = populate_obs_wavelength_HSTx_wave_no2
-populate_obs_wavelength_HSTWFPC2_wave_no2 = populate_obs_wavelength_HSTx_wave_no2
+populate_obs_wavelength_HSTACS_wave_no2_OBS = populate_obs_wavelength_HSTx_wave_no2_OBS
+populate_obs_wavelength_HSTNICMOS_wave_no2_OBS = populate_obs_wavelength_HSTx_wave_no2_OBS
+populate_obs_wavelength_HSTSTIS_wave_no2_OBS = populate_obs_wavelength_HSTx_wave_no2_OBS
+populate_obs_wavelength_HSTWFC3_wave_no2_OBS = populate_obs_wavelength_HSTx_wave_no2_OBS
+populate_obs_wavelength_HSTWFPC2_wave_no2_OBS = populate_obs_wavelength_HSTx_wave_no2_OBS
 
-def populate_obs_wavelength_HSTx_wave_no_res1(**kwargs):
+def populate_obs_wavelength_HSTx_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -561,12 +558,12 @@ def populate_obs_wavelength_HSTx_wave_no_res1(**kwargs):
         return None
     return wno2 - wno1
 
-populate_obs_wavelength_HSTACS_wave_no_res1 = populate_obs_wavelength_HSTx_wave_no_res1
-populate_obs_wavelength_HSTNICMOS_wave_no_res1 = populate_obs_wavelength_HSTx_wave_no_res1
-populate_obs_wavelength_HSTWFC3_wave_no_res1 = populate_obs_wavelength_HSTx_wave_no_res1
-populate_obs_wavelength_HSTWFPC2_wave_no_res1 = populate_obs_wavelength_HSTx_wave_no_res1
+populate_obs_wavelength_HSTACS_wave_no_res1_OBS = populate_obs_wavelength_HSTx_wave_no_res1_OBS
+populate_obs_wavelength_HSTNICMOS_wave_no_res1_OBS = populate_obs_wavelength_HSTx_wave_no_res1_OBS
+populate_obs_wavelength_HSTWFC3_wave_no_res1_OBS = populate_obs_wavelength_HSTx_wave_no_res1_OBS
+populate_obs_wavelength_HSTWFPC2_wave_no_res1_OBS = populate_obs_wavelength_HSTx_wave_no_res1_OBS
 
-def populate_obs_wavelength_HSTx_wave_no_res2(**kwargs):
+def populate_obs_wavelength_HSTx_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wno1 = wl_row['wave_no1']
@@ -575,12 +572,12 @@ def populate_obs_wavelength_HSTx_wave_no_res2(**kwargs):
         return None
     return wno2 - wno1
 
-populate_obs_wavelength_HSTACS_wave_no_res2 = populate_obs_wavelength_HSTx_wave_no_res2
-populate_obs_wavelength_HSTNICMOS_wave_no_res2 = populate_obs_wavelength_HSTx_wave_no_res2
-populate_obs_wavelength_HSTWFC3_wave_no_res2 = populate_obs_wavelength_HSTx_wave_no_res2
-populate_obs_wavelength_HSTWFPC2_wave_no_res2 = populate_obs_wavelength_HSTx_wave_no_res2
+populate_obs_wavelength_HSTACS_wave_no_res2_OBS = populate_obs_wavelength_HSTx_wave_no_res2_OBS
+populate_obs_wavelength_HSTNICMOS_wave_no_res2_OBS = populate_obs_wavelength_HSTx_wave_no_res2_OBS
+populate_obs_wavelength_HSTWFC3_wave_no_res2_OBS = populate_obs_wavelength_HSTx_wave_no_res2_OBS
+populate_obs_wavelength_HSTWFPC2_wave_no_res2_OBS = populate_obs_wavelength_HSTx_wave_no_res2_OBS
 
-def populate_obs_wavelength_HSTSTIS_wave_no_res1(**kwargs):
+def populate_obs_wavelength_HSTSTIS_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res2 = wl_row['wave_res2']
@@ -591,7 +588,7 @@ def populate_obs_wavelength_HSTSTIS_wave_no_res1(**kwargs):
 
     return wave_res2 * 10000. / (wl2*wl2)
 
-def populate_obs_wavelength_HSTSTIS_wave_no_res2(**kwargs):
+def populate_obs_wavelength_HSTSTIS_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     wl_row = metadata['obs_wavelength_row']
     wave_res1 = wl_row['wave_res1']
@@ -603,15 +600,108 @@ def populate_obs_wavelength_HSTSTIS_wave_no_res2(**kwargs):
     return wave_res1 * 10000. / (wl1*wl1)
 
 
+### populate_obs_occultation TABLE ###
+
+def populate_obs_occultation_HSTx_occ_type_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_occ_type_OBS = populate_obs_occultation_HSTx_occ_type_OBS
+populate_obs_occultation_HSTNICMOS_occ_type_OBS = populate_obs_occultation_HSTx_occ_type_OBS
+populate_obs_occultation_HSTSTIS_occ_type_OBS = populate_obs_occultation_HSTx_occ_type_OBS
+populate_obs_occultation_HSTWFC3_occ_type_OBS = populate_obs_occultation_HSTx_occ_type_OBS
+populate_obs_occultation_HSTWFPC2_occ_type_OBS = populate_obs_occultation_HSTx_occ_type_OBS
+
+def populate_obs_occultation_HSTx_occ_dir_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_occ_dir_OBS = populate_obs_occultation_HSTx_occ_dir_OBS
+populate_obs_occultation_HSTNICMOS_occ_dir_OBS = populate_obs_occultation_HSTx_occ_dir_OBS
+populate_obs_occultation_HSTSTIS_occ_dir_OBS = populate_obs_occultation_HSTx_occ_dir_OBS
+populate_obs_occultation_HSTWFC3_occ_dir_OBS = populate_obs_occultation_HSTx_occ_dir_OBS
+populate_obs_occultation_HSTWFPC2_occ_dir_OBS = populate_obs_occultation_HSTx_occ_dir_OBS
+
+def populate_obs_occultation_HSTx_body_occ_flag_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_body_occ_flag_OBS = populate_obs_occultation_HSTx_body_occ_flag_OBS
+populate_obs_occultation_HSTNICMOS_body_occ_flag_OBS = populate_obs_occultation_HSTx_body_occ_flag_OBS
+populate_obs_occultation_HSTSTIS_body_occ_flag_OBS = populate_obs_occultation_HSTx_body_occ_flag_OBS
+populate_obs_occultation_HSTWFC3_body_occ_flag_OBS = populate_obs_occultation_HSTx_body_occ_flag_OBS
+populate_obs_occultation_HSTWFPC2_body_occ_flag_OBS = populate_obs_occultation_HSTx_body_occ_flag_OBS
+
+def populate_obs_occultation_HSTx_optical_depth_min_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_optical_depth_min_OBS = populate_obs_occultation_HSTx_optical_depth_min_OBS
+populate_obs_occultation_HSTNICMOS_optical_depth_min_OBS = populate_obs_occultation_HSTx_optical_depth_min_OBS
+populate_obs_occultation_HSTSTIS_optical_depth_min_OBS = populate_obs_occultation_HSTx_optical_depth_min_OBS
+populate_obs_occultation_HSTWFC3_optical_depth_min_OBS = populate_obs_occultation_HSTx_optical_depth_min_OBS
+populate_obs_occultation_HSTWFPC2_optical_depth_min_OBS = populate_obs_occultation_HSTx_optical_depth_min_OBS
+
+def populate_obs_occultation_HSTx_optical_depth_max_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_optical_depth_max_OBS = populate_obs_occultation_HSTx_optical_depth_max_OBS
+populate_obs_occultation_HSTNICMOS_optical_depth_max_OBS = populate_obs_occultation_HSTx_optical_depth_max_OBS
+populate_obs_occultation_HSTSTIS_optical_depth_max_OBS = populate_obs_occultation_HSTx_optical_depth_max_OBS
+populate_obs_occultation_HSTWFC3_optical_depth_max_OBS = populate_obs_occultation_HSTx_optical_depth_max_OBS
+populate_obs_occultation_HSTWFPC2_optical_depth_max_OBS = populate_obs_occultation_HSTx_optical_depth_max_OBS
+
+def populate_obs_occultation_HSTx_temporal_sampling_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_temporal_sampling_OBS = populate_obs_occultation_HSTx_temporal_sampling_OBS
+populate_obs_occultation_HSTNICMOS_temporal_sampling_OBS = populate_obs_occultation_HSTx_temporal_sampling_OBS
+populate_obs_occultation_HSTSTIS_temporal_sampling_OBS = populate_obs_occultation_HSTx_temporal_sampling_OBS
+populate_obs_occultation_HSTWFC3_temporal_sampling_OBS = populate_obs_occultation_HSTx_temporal_sampling_OBS
+populate_obs_occultation_HSTWFPC2_temporal_sampling_OBS = populate_obs_occultation_HSTx_temporal_sampling_OBS
+
+def populate_obs_occultation_HSTx_quality_score_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_quality_score_OBS = populate_obs_occultation_HSTx_quality_score_OBS
+populate_obs_occultation_HSTNICMOS_quality_score_OBS = populate_obs_occultation_HSTx_quality_score_OBS
+populate_obs_occultation_HSTSTIS_quality_score_OBS = populate_obs_occultation_HSTx_quality_score_OBS
+populate_obs_occultation_HSTWFC3_quality_score_OBS = populate_obs_occultation_HSTx_quality_score_OBS
+populate_obs_occultation_HSTWFPC2_quality_score_OBS = populate_obs_occultation_HSTx_quality_score_OBS
+
+def populate_obs_occultation_HSTx_wl_band_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_wl_band_OBS = populate_obs_occultation_HSTx_wl_band_OBS
+populate_obs_occultation_HSTNICMOS_wl_band_OBS = populate_obs_occultation_HSTx_wl_band_OBS
+populate_obs_occultation_HSTSTIS_wl_band_OBS = populate_obs_occultation_HSTx_wl_band_OBS
+populate_obs_occultation_HSTWFC3_wl_band_OBS = populate_obs_occultation_HSTx_wl_band_OBS
+populate_obs_occultation_HSTWFPC2_wl_band_OBS = populate_obs_occultation_HSTx_wl_band_OBS
+
+def populate_obs_occultation_HSTx_source_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_source_OBS = populate_obs_occultation_HSTx_source_OBS
+populate_obs_occultation_HSTNICMOS_source_OBS = populate_obs_occultation_HSTx_source_OBS
+populate_obs_occultation_HSTSTIS_source_OBS = populate_obs_occultation_HSTx_source_OBS
+populate_obs_occultation_HSTWFC3_source_OBS = populate_obs_occultation_HSTx_source_OBS
+populate_obs_occultation_HSTWFPC2_source_OBS = populate_obs_occultation_HSTx_source_OBS
+
+def populate_obs_occultation_HSTx_host_OBS(**kwargs):
+    return None
+
+populate_obs_occultation_HSTACS_host_OBS = populate_obs_occultation_HSTx_host_OBS
+populate_obs_occultation_HSTNICMOS_host_OBS = populate_obs_occultation_HSTx_host_OBS
+populate_obs_occultation_HSTSTIS_host_OBS = populate_obs_occultation_HSTx_host_OBS
+populate_obs_occultation_HSTWFC3_host_OBS = populate_obs_occultation_HSTx_host_OBS
+populate_obs_occultation_HSTWFPC2_host_OBS = populate_obs_occultation_HSTx_host_OBS
+
+
 ### ACS ###
 
-def populate_obs_wavelength_HSTACS_spec_flag(**kwargs):
+def populate_obs_wavelength_HSTACS_spec_flag_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     if filter1.startswith('G') or filter1.startswith('PR'):
         return 'Y'
     return 'N'
 
-def populate_obs_wavelength_HSTACS_spec_size(**kwargs):
+def populate_obs_wavelength_HSTACS_spec_size_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     if not filter1.startswith('G') and not filter1.startswith('PR'):
         return None
@@ -642,7 +732,7 @@ def populate_obs_wavelength_HSTACS_spec_size(**kwargs):
 
     return bw // wr
 
-def populate_obs_wavelength_HSTACS_polarization_type(**kwargs):
+def populate_obs_wavelength_HSTACS_polarization_type_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     if filter2 is not None and filter2.startswith('POL'):
         return 'LINEAR'
@@ -687,13 +777,13 @@ def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
 
 ### NICMOS ###
 
-def populate_obs_wavelength_HSTNICMOS_spec_flag(**kwargs):
+def populate_obs_wavelength_HSTNICMOS_spec_flag_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     if filter1.startswith('G'):
         return 'Y'
     return 'N'
 
-def populate_obs_wavelength_HSTNICMOS_spec_size(**kwargs):
+def populate_obs_wavelength_HSTNICMOS_spec_size_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     assert filter2 is None
     if not filter1.startswith('G'):
@@ -717,7 +807,7 @@ def populate_obs_wavelength_HSTNICMOS_spec_size(**kwargs):
 
     return bw // wr
 
-def populate_obs_wavelength_HSTNICMOS_polarization_type(**kwargs):
+def populate_obs_wavelength_HSTNICMOS_polarization_type_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filter_name = index_row['FILTER_NAME']
@@ -756,7 +846,7 @@ def populate_obs_mission_hubble_HSTNICMOS_filter_type(**kwargs):
 
 ### STIS ###
 
-def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
+def populate_obs_wavelength_HSTSTIS_spec_flag_OBS(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     obs_type = general_row['observation_type']
@@ -765,7 +855,7 @@ def populate_obs_wavelength_HSTSTIS_spec_flag(**kwargs):
         return 'Y'
     return 'N'
 
-def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
+def populate_obs_wavelength_HSTSTIS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     obs_type = general_row['observation_type']
@@ -785,7 +875,7 @@ def populate_obs_wavelength_HSTSTIS_spec_size(**kwargs):
     #
     # return (wl2-wl1) / ((res1+res2)/2.)
 
-def populate_obs_wavelength_HSTSTIS_polarization_type(**kwargs):
+def populate_obs_wavelength_HSTSTIS_polarization_type_OBS(**kwargs):
     return 'NONE'
 
 def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
@@ -804,14 +894,14 @@ def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
 
 ### WFC3 ###
 
-def populate_obs_wavelength_HSTWFC3_spec_flag(**kwargs):
+def populate_obs_wavelength_HSTWFC3_spec_flag_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     assert filter2 is None
     if filter1.startswith('G'):
         return 'Y'
     return 'N'
 
-def populate_obs_wavelength_HSTWFC3_spec_size(**kwargs):
+def populate_obs_wavelength_HSTWFC3_spec_size_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     assert filter2 is None
     if not filter1.startswith('G'):
@@ -835,7 +925,7 @@ def populate_obs_wavelength_HSTWFC3_spec_size(**kwargs):
 
     return bw // wr
 
-def populate_obs_wavelength_HSTWFC3_polarization_type(**kwargs):
+def populate_obs_wavelength_HSTWFC3_polarization_type_OBS(**kwargs):
     return 'NONE'
 
 def populate_obs_mission_hubble_HSTWFC3_filter_type(**kwargs):
@@ -865,15 +955,15 @@ def populate_obs_mission_hubble_HSTWFC3_filter_type(**kwargs):
 
 ### WFPC2 ###
 
-def populate_obs_wavelength_HSTWFPC2_spec_flag(**kwargs):
+def populate_obs_wavelength_HSTWFPC2_spec_flag_OBS(**kwargs):
     # No prism or grism filters
     return 'N'
 
-def populate_obs_wavelength_HSTWFPC2_spec_size(**kwargs):
+def populate_obs_wavelength_HSTWFPC2_spec_size_OBS(**kwargs):
     # No prism or grism filters
     return None
 
-def populate_obs_wavelength_HSTWFPC2_polarization_type(**kwargs):
+def populate_obs_wavelength_HSTWFPC2_polarization_type_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     filter_name = index_row['FILTER_NAME']
@@ -922,7 +1012,7 @@ def populate_obs_mission_hubble_detector_id(**kwargs):
     index_row = metadata['index_row']
     detector_id = index_row['DETECTOR_ID']
     if detector_id == '':
-        return None
+        return 'UNKNOWN'
     ret = instrument[3:] + '-' + detector_id
     return (ret, ret)
 
@@ -982,7 +1072,8 @@ def populate_obs_mission_hubble_HSTWFPC2_targeted_detector_id(**kwargs):
     index_row = metadata['index_row']
     targeted_detector_id = index_row['TARGETED_DETECTOR_ID']
     if targeted_detector_id == '':
-        return 'NONE'
+        import_util.log_nonrepeating_error(
+            f'Empty targeted detector ID')
     return targeted_detector_id
 
 def populate_obs_mission_hubble_HSTx_optical_element(**kwargs):

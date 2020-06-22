@@ -74,7 +74,8 @@ def get_pds_products(opus_id_list,
     sql += q('obs_files')+'.'+q('category')+', '
     sql += q('obs_files')+'.'+q('sort_order')+', '
     sql += q('obs_files')+'.'+q('short_name')+', '
-    sql += q('obs_files')+'.'+q('full_name')
+    sql += q('obs_files')+'.'+q('full_name')+', '
+    sql += q('obs_files')+'.'+q('size')
     if loc_type == 'path' or loc_type == 'raw':
         sql += ', '+q('obs_files')+'.'+q('logical_path')
     if loc_type == 'url' or loc_type == 'raw':
@@ -93,12 +94,13 @@ def get_pds_products(opus_id_list,
     sql += q('obs_files')+'.'+q('opus_id')+', '
     sql += q('obs_files')+'.'+q('version_number')+' DESC, '
     sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('product_order')
+    sql += q('obs_files')+'.'+q('product_order')+', '
+    sql += q('obs_files')+'.'+q('id') # Keep individual files in original order
 
     log.debug('get_pds_products SQL: %s %s', sql, values)
     cursor.execute(sql, values)
 
-    # We do this here so if there aren't any product, there's still an empty
+    # We do this here so if there aren't any products, there's still an empty
     # dictionary returned
     for opus_id in opus_id_list:
         results[opus_id] = OrderedDict() # Dict of versions
@@ -108,13 +110,13 @@ def get_pds_products(opus_id_list,
         url = None
         if loc_type == 'path':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, path) = row
+             full_name, size, path) = row
         elif loc_type == 'url':
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, url) = row
+             full_name, size, url) = row
         else:
             (opus_id, version_name, category, sort_order, short_name,
-             full_name, path, url, checksum) = row
+             full_name, size, path, url, checksum) = row
 
         # sort_order is the format CASISSxxx where xxx is the original numeric
         # sort order
@@ -138,14 +140,20 @@ def get_pds_products(opus_id_list,
         else:
             res = {'path': path,
                    'url': url,
-                   'checksum': checksum}
+                   'checksum': checksum,
+                   'category': category,
+                   'version_name': version_name,
+                   'full_name': full_name,
+                   'short_name': short_name,
+                   'size': size}
         if res not in results[opus_id][version_name][product_type]:
             results[opus_id][version_name][product_type].append(res)
 
     return results
 
 
-def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
+def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
+                           ignore_missing=False):
     """Given a list of opus_ids, return a list of image info for a size.
 
         opus_id_list can be a string or a list.
@@ -205,8 +213,10 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
                 else:
                     log.error('Unknown image size "%s"', size)
             if not preview_json or not viewset:
-                log.error('No preview image size "%s" found for '
-                          +'opus_id "%s"', size, opus_id)
+                # log.error('No preview image size "%s" found for '
+                #           +'opus_id "%s"', size, opus_id)
+                if ignore_missing:
+                    continue
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0

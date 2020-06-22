@@ -1,6 +1,12 @@
 {
   "data": {
     "go-ssi-c0368388622": {
+      "gossi_raw": [
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.IMG",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.LBL",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+      ],
       "browse_thumb": [
         "https://pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R_thumb.jpg"
       ],
@@ -12,38 +18,18 @@
       ],
       "browse_full": [
         "https://pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R_full.jpg"
-      ],
-      "gossi_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
       ]
     }
   },
   "versions": {
     "go-ssi-c0368388622": {
-      "1": {
-        "browse_thumb": [
-          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_thumb.jpg"
-        ],
-        "browse_small": [
-          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_small.jpg"
-        ],
-        "browse_medium": [
-          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_med.jpg"
-        ],
-        "browse_full": [
-          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_full.jpg"
-        ],
-        "gossi_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R.LBL",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
-        ]
-      },
       "Current": {
+        "gossi_raw": [
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.LBL",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+        ],
         "browse_thumb": [
           "https://pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R_thumb.jpg"
         ],
@@ -55,12 +41,26 @@
         ],
         "browse_full": [
           "https://pds-rings.seti.org/holdings/previews/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R_full.jpg"
-        ],
+        ]
+      },
+      "1": {
         "gossi_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/C3/JUPITER/C0368388622R.LBL",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R.IMG",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R.LBL",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+        ],
+        "browse_thumb": [
+          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_thumb.jpg"
+        ],
+        "browse_small": [
+          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_small.jpg"
+        ],
+        "browse_medium": [
+          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_med.jpg"
+        ],
+        "browse_full": [
+          "https://pds-rings.seti.org/holdings/previews/GO_0xxx_v1/GO_0017/C3/JUPITER/C036838/8622R_full.jpg"
         ]
       }
     }

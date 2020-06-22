@@ -47,7 +47,7 @@ This guide describes the public API for the Outer Planets Unified Search (OPUS) 
 
 <h2 id="apiformat">API Format</h2>
 
-The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally  `https://tools.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
+The OPUS API is accessed by encoding requests in individual URLs passed to the OPUS server (normally  `https://opus.pds-rings.seti.org`). Each request is independent and no state is saved between requests. A URL consists of the prefix components `/opus/api/` followed by the API entry point desired. The entry point name is suffixed by the desired format of the returned data (see [Return Formats](#returnformats)). API calls may take parameters provided after a single `?`. Each parameter is of the form `<name>=<value>`. If there is more than one parameter, they are separated by `&`. Parameters may be encoded using the standard octet encoding detailed in [RFC3986](https://tools.ietf.org/html/rfc3986), although only `&`, `=`, and `+` are required to be encoded as octets if used as a parameter's value. Spaces in search values may also be encoded as `+`.
 
 Examples:
 
@@ -138,6 +138,7 @@ Strings can be searched using the following query types:
 * **ends**: the search string occurs at the end of the metadata string.
 * **matches**: the search string is exactly equal to the metadata string.
 * **excludes**: the search string does _not_ appear anywhere in the metadata string.
+* **regex**: the metadata string matches the given [regular expression](http://userguide.icu-project.org/strings/regexp).
 
 #### Range Fields
 
@@ -184,7 +185,7 @@ datasetid=CO-E&qtype-datasetid=begins
 * To search for Volume IDs "COISS_2001" or "COISS_2002":
 
 %CODE%
-volumeid_1=COISS_2001&qtype-volumeid_01=matches&volumeid_2=COISS_2002&qtype-volumeid_02=matches
+volumeid_1=COISS_2001&qtype-volumeid_1=matches&volumeid_2=COISS_2002&qtype-volumeid_2=matches
 %ENDCODE%
 
 * To search for ring radii between 110,000 and 130,000 km using the "any" qtype (the qtype is optional):
@@ -385,7 +386,7 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `cols=<field list>` | Metadata fields to return | All columns |
 | `cats=<categories>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored | All categories |
 
 `categories` is a list of category names separated by commas. Category names can either be full names ending in "Constraints" (e.g. `PDS Constraints` or `Cassini ISS Constraints`) or abbreviated names representing internal database tables (`obs_pds`, `obs_mission_cassini`, or `obs_instrument_coiss`). Full category names must replace spaces with `+` or another appropriate encoding. The list of categories available for an `opusid` can be retrieved with [`api/categories/[opusid].json`](#categoriesopusidfmt).
@@ -634,9 +635,8 @@ C4360022_RESLOC.LBL
 C4360022_RESLOC.TAB
 C4360022_small.jpg
 C4360022_thumb.jpg
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 urls.txt
 VGISS_6210_inventory.lbl
 VGISS_6210_inventory.tab
@@ -655,9 +655,8 @@ VGISS_6210_saturn_summary.tab
     Return value is a zip archive containing the files:
 
 %CODE%
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 urls.txt
 %ENDCODE%
 
@@ -670,9 +669,8 @@ urls.txt
 %CODE%
 C0349632000R.IMG
 C0349632000R.LBL
-checksum.txt
 data.csv
-manifest.txt
+manifest.csv
 RLINEPRX.FMT
 RTLMTAB.FMT
 urls.txt
@@ -693,7 +691,6 @@ Supported return formats: `json`.
 | Parameter | Description | Default |
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<fieldid_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 | `types=<types>` | List of product types to return | All product types |
@@ -949,7 +946,7 @@ Get the URLs of images of all sizes (or a given size) based on search criteria a
 
 If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
-Supported return formats: `json`, `csv`, `html` is also supported when a specified size is requested.
+Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
 
 #### Parameters
 
@@ -987,7 +984,7 @@ When all sizes are requested, `data` is an object containing a series of entries
 | `<size>_size_bytes` | Size of the image file in bytes |
 | `<size>_width` | Width of the image in pixels |
 | `<size>_height` | Height of the image in pixels |
-| `<size>_url` | Relative path to the image |
+| `<size>_url` | Full URL path to the image |
 
 When one size is requested, `data` an object containing a single entry with these fields:
 
@@ -998,7 +995,7 @@ When one size is requested, `data` an object containing a single entry with thes
 | `size_bytes` | Size of the image file in bytes |
 | `width` | Width of the image in pixels |
 | `height` | Height of the image in pixels |
-| `url` | Relative path to the image |
+| `url` | Full URL path to the image |
 
 Examples:
 
@@ -1521,6 +1518,10 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
+    "table_name": "obs_occultation",
+    "label": "Occultation Constraints"
+  },
+  {
     "table_name": "obs_surface_geometry__methone",
     "label": "Methone Surface Geometry Constraints"
   },
@@ -1581,6 +1582,10 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
+    "table_name": "obs_occultation",
+    "label": "Occultation Constraints"
+  },
+  {
     "table_name": "obs_surface_geometry__daphnis",
     "label": "Daphnis Surface Geometry Constraints"
   },
@@ -1613,7 +1618,7 @@ Example:
 
 <h3 id="producttypesfmt"><code>api/product_types.json</code> - Return Product Types from a Search</h3>
 
-Return all download product types available from the results of a particular search.
+Return all download product types and associated product versions available from the results of a particular search.
 
 Supported return formats: `json`
 
@@ -1627,16 +1632,19 @@ Specifying a sort order will not change the results, but will be used to cache t
 
 #### JSON Return Format
 
-The return value is a JSON list of objects each containing information about one product type that is available for at least one observation returned by the given search. Each product type is described by:
+The return value is a JSON list of objects each containing information about one product type and version that is available for at least one observation returned by the given search. Each product type and version is described by:
 
 | Field Name | Description |
 |---|---|
+| `category` | The category of the product type (e.g. `Cassini ISS`)|
 | `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
 | `description` | A brief description of the product type (e.g. `Raw Image`)|
+| `version_number` | A numerical representation of the version number suitable for sorting (999999 means Current)|
+| `version_name` | A string representation of the version number |
 
 Example:
 
-* Retrieve the product types for all observations that have surface geometry information about Methone in JSON format.
+* Retrieve the product types and versions for all observations that have surface geometry information about Methone in JSON format.
 
     %EXTLINK%%HOST%/opus/api/product_types.json?surfacegeometrytargetname=Methone%ENDEXTLINK%
 
@@ -1645,20 +1653,25 @@ Example:
 %CODE%
 [
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image"
+    "description": "Raw image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image"
+    "description": "Calibrated image",
+    "version_number": 10000,
+    "version_name": "1.0"
   },
   {
-    "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)"
-  },
-  {
-    "product_type": "coiss_medium",
-    "description": "Extra preview (medium)"
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   [...]
 ]
@@ -1670,7 +1683,7 @@ Example:
 
 <h3 id="producttypesopusidfmt"><code>api/product_types/[opusid].json</code> - Return Product Types for an OPUS ID</h3>
 
-Return a list of all download product types available for an OPUS ID.
+Return a list of all download product types and associated product versions available for an OPUS ID.
 
 Supported return formats: `json`
 
@@ -1680,16 +1693,19 @@ There are no parameters.
 
 #### JSON Return Format
 
-The return value is a JSON list of objects each containing information about one product type that is available for the given OPUS ID. Each product type is described by:
+The return value is a JSON list of objects each containing information about one product type and version that is available for the given OPUS ID. Each product type is described by:
 
 | Field Name | Description |
 |---|---|
+| `category` | The category of the product type (e.g. `Cassini ISS`)|
 | `product_type` | The abbreviated name of the product type (e.g. `coiss_raw`)|
 | `description` | A brief description of the product type (e.g. `Raw Image`)|
+| `version_number` | A numerical representation of the version number suitable for sorting (999999 means Current)|
+| `version_name` | A string representation of the version number |
 
 Example:
 
-* Retrieve the categories for a Cassini ISS observation in JSON format.
+* Retrieve the product types and versions for a Cassini ISS observation in JSON format.
 
     %EXTLINK%%HOST%/opus/api/product_types/co-iss-w1866600688.json%ENDEXTLINK%
 
@@ -1698,57 +1714,27 @@ Example:
 %CODE%
 [
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image"
+    "description": "Raw image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image"
+    "description": "Calibrated image",
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
+    "category": "Cassini ISS",
     "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)"
+    "description": "Extra preview (thumbnail)",
+    "version_number": 999999,
+    "version_name": "Current"
   },
-  {
-    "product_type": "coiss_medium",
-    "description": "Extra preview (medium)"
-  },
-  {
-    "product_type": "coiss_full",
-    "description": "Extra preview (full)"
-  },
-  {
-    "product_type": "inventory",
-    "description": "Target Body Inventory"
-  },
-  {
-    "product_type": "planet_geometry",
-    "description": "Planet Geometry Index"
-  },
-  {
-    "product_type": "moon_geometry",
-    "description": "Moon Geometry Index"
-  },
-  {
-    "product_type": "ring_geometry",
-    "description": "Ring Geometry Index"
-  },
-  {
-    "product_type": "browse_thumb",
-    "description": "Browse Image (thumbnail)"
-  },
-  {
-    "product_type": "browse_small",
-    "description": "Browse Image (small)"
-  },
-  {
-    "product_type": "browse_medium",
-    "description": "Browse Image (medium)"
-  },
-  {
-    "product_type": "browse_full",
-    "description": "Browse Image (full)"
-  }
+  [...]
 ]
 %ENDCODE%
 

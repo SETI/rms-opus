@@ -10,7 +10,10 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 
+
+<!--suppress CssUnusedSymbol -->
 <style>
 #left, #right, #gutter {
   position: absolute;
@@ -49,11 +52,25 @@
   vertical-align:top;
   padding: 0 5px;
 }
+#all-session-infos tr.HighlightedLogEntry > td {
+    background-color: #CFF5FF;
+}
+.tab-pane {
+    padding-bottom: 10pt;
+    padding-top: 10pt;
+}
 table.SessionLinkTable {
   border-collapse: separate;
   border-spacing: 4px 2px;
 }
-.show_all {   /* Used by --xxshowall for URLs that would orderinarily be ignored. */
+.Summary2 {
+  margin-left: 10pt
+}
+.Summary3 {
+  margin-left: 10pt
+
+}
+.show_all {   /* Used by --xxshowall for URLs that would ordinarily be ignored. */
   white-space: nowrap;
   color: darkgray;
 }
@@ -68,38 +85,42 @@ table.SessionLinkTable {
 
 <div id="left">
 
-<!--
+{#
 The left hand column is a controlled by a bootstrap navbar.  The user clicks on either "By IP" or "By Time" and
 bootstrap shows the appropriate tab-pane in the tab contents.
 
 The left-hand column controls what is visible in the right-hand panel by marking at most one of them as "active".
 Being inside a tab contents, only those marked active are made visible.  We unfortunately cannot use a bootstrap navbar
 because it requires that all the navigation tabs be within a single unordered list.
--->
+#}
 
 <nav class="navbar navbar-light bg-light">
 <ul class="nav nav-tabs">
-    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#ByIP">By IP</a></li>
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" data-target="#Summary">Summary</a></li>
+    <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByIP">By IP</a></li>
     <li class="nav-item"><a class="nav-link" data-toggle="tab" data-target="#ByTime">By Time</a></li>
 </ul>
 </nav>
 
-<div class="tab-content">
+<div class="tab-content" id="all-session-links">
 
-
-{% set marker_to_glyph = { "HAS_SEARCH": "search", "HAS_COLUMNS": "list-ul", "FETCHED_GALLERY": "images",
-                           "HAS_DOWNLOAD": "file-download", "HAS_OBSOLETE_SLUG" : "book-dead" }
+{% set name_and_glyph = (
+    ("HAS_SEARCH", "search"),
+    ("FETCHED_GALLERY",  "images"),
+    ("HAS_METADATA", "list-ul"),
+    ("HAS_DOWNLOAD", "file-download"),
+    ("HAS_OBSOLETE_SLUG" , "book-dead"))
 %}
+
+{% set ip_to_host_name = context.ip_to_host_name %}
+
 {% macro generate_session_row(session, full) %}
     <tr>
-    {% for flag in action_flags_list %}
-        {% set a = session %}
-        {% set b = session.session_info %}
-        {% set c = session.session_info.get_session_flags() %}
-        {% set flag_in_use = flag in session.session_info.get_session_flags() %}
+    {% for flag_name, glyph in name_and_glyph %}
+        {% set flag = context.flag_name_to_flag(flag_name) %}
+        {% set flag_in_use = flag in session.session_info.get_icon_flags() %}
         {% if flag_in_use or full %}
-            {% set glyph = 'fa-' ~ marker_to_glyph[flag.name] %}
-            {% set classes = ['fas', glyph] + ([] if flag_in_use else ['invisible']) %}
+            {% set classes = ['fas', 'fa-' + glyph] + ([] if flag_in_use else ['invisible']) %}
             <td><span class="{{ classes | join(' ') }}">&zwj;</span></td>
         {% else %}
             <td></td>
@@ -109,53 +130,61 @@ because it requires that all the navigation tabs be within a single unordered li
     </tr>
 {% endmacro %}
 
-{% macro host_info_ip_or_name(host_info) %}
-    {% if host_info.name %}
-        <a data-toggle="tooltip" title="{{ host_info.ip }}"> {{host_info.name}}</a>
+{% macro session_ip_or_name(session_info) %}
+    {% if session_info.host_ip in ip_to_host_name %}
+        <span data-toggle="tooltip" title="{{ session_info.host_ip }}">{{ ip_to_host_name[session_info.host_ip] }}</span>
     {% else %}
-        {{ host_info.ip }}
+        {{ session_info.host_ip }}
     {% endif %}
 {% endmacro %}
 
-<div id="ByIP" class="tab-pane show active">
+<div id="ByIP" class="tab-pane">
 {% for host_info in host_infos_by_ip %}
     {% if not loop.first %}<hr/>{% endif %}
-    {{ host_info_ip_or_name(host_info) }}
-    ({{ host_info.total_time() }})
+    {{ session_ip_or_name(host_info.sessions[0]) }}
+    ({{ host_info.total_time }})
     <table class="SessionLinkTable">
         {% for session in host_info.sessions %}
-            {% call generate_session_row(session, loop.first) %}
-               <a href="#" class=SessionLink data-target="#{{ session.id }}">
-                    {{ session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
-            {% endcall %}
+            {% call generate_session_row(session, loop.first) -%}
+               <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+                    {{- session.start_time().strftime("%Y %b %d %H:%M:%S") }} ({{ session.duration() }})</a>
+            {%- endcall %}
         {% endfor %}
     </table>
 {% endfor %}
 </div>  ## #ByIP
 
 <div id="ByTime" class="tab-pane">
-{% for day, host_infos_for_day in host_infos_by_date %}
+{% for day, sessions_for_day in context.get_host_infos_by_date() %}
     {% if not loop.first %}<hr/>{% endif %}
     <h4>{{ day.strftime("%Y %b %d") }}</h4>
     <table class="SessionLinkTable">
-    {% for host_info in host_infos_for_day %}
-        {% set session = host_info.sessions[0] %}
-        {% call generate_session_row(session, loop.first) %}
-            <a href="#" class=SessionLink data-target="#{{ session.id }}">
-               {{ session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
-               {{ host_info_ip_or_name(host_info) }}
-        {% endcall %}
+    {% for session in sessions_for_day %}
+        {% call generate_session_row(session, loop.first) -%}
+            <a href="#" class="SessionLink" data-target="#{{ session.id }}">
+               {{- session.start_time().strftime("%H:%M:%S") }}&nbsp;({{ session.duration() }})</a>
+            {{ session_ip_or_name(session) }}
+        {%- endcall %}
     {% endfor %}
     </table>
 {% endfor %}
-
 </div>  ## #ByTime
+
+<div id="Summary" class="tab-pane show active">
+{% include "summary.html" %}
+</div>  ## #Summary
+
+
 </div>  ## Tab Content containing #ByIp and #ByTime
 </div>  ## #left
 
+<div id="gutter">
+</div>
+
 {% macro print_slugs(session) %}
      <ul class="list-unstyled">
-     {% for type, slug_info in session.session_info.get_slug_info() %}
+     {% set search_slug_list, column_slug_list = session.session_info.get_slug_info() %}
+     {% for type, slug_info in (('search', search_slug_list), ('column', column_slug_list)) %}
          <li>
          <b>{{ type.title() }} Slugs: </b>
          {% for slug_name, is_obsolete in slug_info %}
@@ -173,38 +202,76 @@ because it requires that all the navigation tabs be within a single unordered li
     <table>
     {% for entry in session.entries %}
         {% for line in entry.data %}
-        <tr>
-            {% if loop.first %}
-                {% if entry.opus_url %}
-                    <td><a href="{{ api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
+            {%  set classes = context.log_entry_to_classes(session, entry, loop.index0) %}
+            <tr{% if classes %} class="{{ classes | join(' ') }}"{% endif %}>
+                {% if loop.first %}
+                    {% if entry.opus_url %}
+                        <td><a href="{{ context.api_host_url ~ entry.opus_url }}" target="_blank">{{ entry.relative_start_time }}</a></td>
+                    {% else %}
+                        <td>{{ entry.relative_start_time }}</td>
+                    {% endif %}
+                    <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
                 {% else %}
-                    <td>{{ entry.relative_start_time }}</td>
+                    <td></td><td></td>
                 {% endif %}
-                <td><a data-toggle="tooltip" href="#" title="{{ entry.target_url() }}">&bull;</a></td>
-            {% else %}
-                <td></td><td></td>
-            {% endif %}
-            <td>{{ line }}</td>
-        </tr>
+                <td>{{ line }}</td>
+            </tr>
         {% endfor %}
      {% endfor %}
      </table>
 {% endmacro %}
 
-<div id="gutter">
+<div id="right">
+{#  The following node is the parent of all SessionInfo nodes constructed on the fly.
+    We give it an id so that we can easily find it.
+#}
+<div id="all-session-infos" class="tab-content">
+
+{#
+The lines marked <<<< and >>>> are special markers for the code that reads the Jinja generated output and then writes
+it out to a file.  Each such line consists of four <'s or >'s, an id uniquely marking the session, and the actual
+contents of the line.
+
+If we are including session info inline, the code just ignores the <<<<, >>>>, and session id, and outputs whatever
+is on the rest of the line.
+
+If session info is in separate files, then the code between the <<<< and >>>> is written in a separate file whose
+name is generated from the session.id.  The additional text at the end of the line is ignored.
+
+These markers are never nested.
+#}
+
+<div class="float-right">
+    <button class="btn btn-primary pull-right" onclick="clickPrintButton()">
+        <span class="fa fa-print"></span>
+    </button>
+    <br><br>
 </div>
 
-<div id="right">
-<div class="tab-content">
-{% for host_info in host_infos_by_ip %}
-    {% for session in host_info.sessions %}
-    <div id="{{ session.id }}" class="SessionInfo tab-pane">
-        <h3>{{ host_info.hostname() }} at {{ session.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
-        {{ print_slugs(session) }}
-        <hr/>
-        {{ print_session_entries(session) }}
-    </div>{% endfor %}
+{% set session_info_classes = "SessionInfo tab-pane" %}
+
+<div id="SplashScreen" class="{{ session_info_classes }} active">
+    Welcome to the OPUS log Analyzer
+</div>
+
+{% for session in context.sessions %}
+    {# session_info_classes is a variable because it is also used in the JS below. #}
+    <<<< {{ session.id }} <div id="{{ session.id }}" class="{{ session_info_classes }}">
+        {% set host_ip = session.host_ip %}
+        {% if host_ip in ip_to_host_name %}
+            <h3>{{ ip_to_host_name[host_ip] }} ({{ host_ip }}) at {{ session.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
+        {% else %}
+            <h3>{{ host_ip }} at {{ session.start_time().strftime("%Y %b %d %H:%M:%S %z") }}</h3>
+        {% endif %}
+        {% if not context.elide_session_details %}
+            {{ print_slugs(session) }}
+            <hr/>
+            {{ print_session_entries(session) }}
+        {% endif %}
+    >>>> {{  session.id }} </div>
 {% endfor %}
+{% include 'histogram.html' %}
+
 </div>  ## class=tabContent
 </div>  ## #right
 </div>  ## class=row
@@ -212,26 +279,67 @@ because it requires that all the navigation tabs be within a single unordered li
 
 <script>
 
-
 $(function() {
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
-    $('.SessionLink').click(function() {
-        let target = $(this).data('target');
+    // Attach a handler to #all-session-links, which is the ancestor of all the .SessionLink objects that we can
+    // click on
+    $("#all-session-links").on('click', '.SessionLink', function (event)  {
+        // session_link is the node that was clicked, while $(this) is node this handler is attached to.
+        let session_link = $(event.target);
+        // The data-target field of the session_link contains #id of the .SessionInfo we want to display
+        let target = session_link.data('target');
+        // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
+        // the tree to see if there is a node with the field data-target-class.
+        let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
 
         // Deactivate the session links and session infos that are currently active.
         $('.SessionLink.active').removeClass('active');
         $('.SessionInfo.active').removeClass('active');
+        // Turn off all highlighting of log entries.
+        $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
 
-        // Mark as active both of the Session Links that point to this target so that they will be highlighted.
+        // Mark as active all of the Session Links that point to this target so that they will be highlighted.
         $(`a.SessionLink[data-target="${target}"]`).addClass('active');
-        // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        $(target).addClass('active');
 
-        $('#right').scrollTop(0);
+        let session_info = $(target);
+{% if context.sessions_relative_directory %}
+        if (session_info.length === 0) {
+            // DOM node doesn't exist.  Create it and load its contents.
+            let node_id = target.substr(1);
+            let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
+            $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
+                // Add the node to the DOM
+                .appendTo('#all-session-infos')
+                // And load its content.  Call the callback once the dom is loaded.
+                .load(session_location, function (response, status, xhr) {
+                    if (status === "error") {
+                        $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
+                    }
+                    // $this gets rebound to <div/> we just loaded a file into
+                    highlight_and_scroll_session_info($(this), target_class);
+                });
+            return false;
+        }
+{% endif %}
+        // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
+        highlight_and_scroll_session_info(session_info, target_class);
         return false;
     })
 });
+
+function highlight_and_scroll_session_info(session_info, target_class) {
+    // Make it behave, it terms of events, like the tab pane that it was supposed to be
+    session_info.trigger('show.bs.tab').addClass("active").trigger("shown.bs.tab");
+    $('#right').scrollTop(0);
+    if (target_class) {
+        let lines = session_info.find(`.${target_class}`);
+        lines.addClass("HighlightedLogEntry");
+        if (lines.length > 0) {
+            lines[0].scrollIntoView();
+        }
+    }
+}
 
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');
@@ -269,9 +377,33 @@ document.addEventListener('mousemove', function(e) {
   boxRight.style.width = ((containerOffsetWidth - 4 - leftWidth) * widthToPercentMultiplier) + '%';
 });
 
-document.addEventListener('mouseup', function(e) {
+document.addEventListener('mouseup', function(_e) {
   // Turn off dragging flag when user mouse is up
   isHandlerDragging = false;
+});
+
+function clickPrintButton() {
+    let win = window.open();
+    let printable = $('.SessionInfo.active');
+    win.document.write('<html lang="en">\n' +
+                       '<head><title>Log Analyzer</title>\n' +
+                       '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">\n');
+    if (printable.hasClass('OPUS-uses-plotly')) {
+        win.document.write('<' + 'script type="text/javascript" src=\'https://cdn.plot.ly/plotly-latest.min.js\'><' + '/script>\n');
+    }
+    win.document.write('</head>' +
+                       '<body>\n');
+    win.document.write(printable.html());
+    win.document.write('</body>\n' +
+                       '</html>\n');
+    // For now, just create a separate document.  Think later about printing it.
+    // win.print();
+}
+
+$(function(){
+    // Find the "Manifests" button and click it.
+    // DO NOT SUBMIT.  This line is a temporary hack!
+    // $('.SessionLink[data-target="#Manifests"]').trigger('click');
 });
 
 </script>

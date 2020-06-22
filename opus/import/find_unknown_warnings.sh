@@ -31,14 +31,10 @@ echo $S
 echo 22 `cat __tmp2 | grep "$S" | wc -l`
 cat __tmp2 | grep -v "$S" > __tmp1
 
-cp __tmp1 __tmp2
-
-S="Empty opus_product key"
+S="Missing row in metadata file"
 echo $S
-echo 1 `cat __tmp2 | grep "$S" | wc -l`
-cat __tmp2 | grep -v "$S" > __tmp1
-
-cp __tmp1 __tmp2
+echo 5 `cat __tmp1 | grep "$S" | wc -l`
+cat __tmp1 | grep -v "$S" > __tmp2
 
 cat __tmp2 | grep -v "$S" > __tmp1
 S="No description for item 2071"

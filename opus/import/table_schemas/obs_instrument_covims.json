@@ -47,6 +47,8 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
+            "INSTRUMENT_MODE_ID",
+            "TAB:supp_index",
             "INSTRUMENT_MODE_ID"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -67,13 +69,13 @@
         "pi_units": null,
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0,          "IMAGE",          "IMAGE",  10, "Y", null],
-              [   1,           "LINE",           "LINE",  20, "Y", null],
-              [   2,    "OCCULTATION",    "OCCULTATION",  30, "Y", null],
-              [   3,          "POINT",          "POINT",  40, "Y", null],
-              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND",  50, "Y", null],
-              [   5,      "CAL_SOLAR",      "CAL_SOLAR",  60, "Y", null],
-              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL",  70, "Y", null]
+              [   0,          "IMAGE",          "IMAGE", "010", "Y", null],
+              [   1,           "LINE",           "LINE", "020", "Y", null],
+              [   2,    "OCCULTATION",    "OCCULTATION", "030", "Y", null],
+              [   3,          "POINT",          "POINT", "040", "Y", null],
+              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND", "050", "Y", null],
+              [   5,      "CAL_SOLAR",      "CAL_SOLAR", "060", "Y", null],
+              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL", "070", "Y", null]
           ]
     },
     {
@@ -82,6 +84,8 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
+            "SPECTRAL_EDITING",
+            "TAB:supp_index",
             "SPECTRAL_EDITING"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -108,6 +112,8 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
+            "SPECTRAL_SUMMING",
+            "TAB:supp_index",
             "SPECTRAL_SUMMING"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -134,6 +140,8 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
+            "STAR_TRACKING",
+            "TAB:supp_index",
             "STAR_TRACKING"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -160,6 +168,8 @@
         "field_key": true,
         "data_source": [
             "TAB:index",
+            "SWATH_WIDTH",
+            "TAB:supp_index",
             "SWATH_WIDTH"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -186,6 +196,8 @@
         "field_key": true,
         "data_source": [
             "TAB:index",
+            "SWATH_LENGTH",
+            "TAB:supp_index",
             "SWATH_LENGTH"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -211,8 +223,8 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "IR_EXPOSURE"
+            "FUNCTION",
+            "obs_instrument_covims_ir_exposure_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e5,
@@ -224,7 +236,7 @@
         "pi_disp_order": 50,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "IR Exposure",
         "pi_label_results": "IR Exposure",
@@ -232,7 +244,7 @@
         "pi_slug": "COVIMSirexposure",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "milliseconds",
+        "pi_units": "seconds",
         "comments": "Definition from COVIMS label. For units format, use milliseconds as describled in COVIMS_*_index.lbl, and since observation derived from ir_exposure in seconds has .4f, we set .1f for ir_exposure."
     },
     {
@@ -242,6 +254,8 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
+            "IR_SAMPLING_MODE_ID",
+            "TAB:supp_index",
             "IR_SAMPLING_MODE_ID"
         ],
         "pi_category_name": "obs_instrument_covims",
@@ -262,9 +276,9 @@
         "pi_units": null,
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES", "Hi-Res",  10, "Y", null],
-              [   1, "NORMAL", "Normal",  20, "Y", null],
-              [   2,  "UNDER",  "Under",  30, "Y", null]
+              [   0, "HI-RES", "Hi-Res", "010", "Y", null],
+              [   1, "NORMAL", "Normal", "020", "Y", null],
+              [   2,  "UNDER",  "Under", "030", "Y", null]
           ]
     },
     {
@@ -273,8 +287,9 @@
         "field_default": null,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "VIS_EXPOSURE"
+            "FUNCTION",
+            "~obs_instrument_covims_vis_exposure_<TYPE>",
+            "IGNORE"
         ],
         "val_min": 0,
         "val_max": 1e5,
@@ -286,7 +301,7 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.4f",
         "pi_intro": null,
         "pi_label": "VIS Exposure",
         "pi_label_results": "VIS Exposure",
@@ -294,7 +309,7 @@
         "pi_slug": "COVIMSvisexposure",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "milliseconds",
+        "pi_units": "seconds",
         "comments": "Definition from COVIMS label. For units format, similar to ir_exposure."
     },
     {
@@ -304,7 +319,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "VIS_SAMPLING_MODE_ID"
+            "VIS_SAMPLING_MODE_ID",
+            "VALUESTR",
+            "N/A"
         ],
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
@@ -324,10 +341,10 @@
         "pi_units": null,
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES",  "Hi-Res",  10, "Y", null],
-              [   1, "NORMAL",  "Normal",  20, "Y", null],
-              [   2,    "UNK", "Unknown",  30, "Y", null],
-              [   3,    "N/A",     "N/A",  40, "Y", null]
+              [   0, "HI-RES",  "Hi-Res", "010", "Y", null],
+              [   1, "NORMAL",  "Normal", "020", "Y", null],
+              [   2,    "UNK", "Unknown", "030", "Y", null],
+              [   3,    "N/A",     "N/A", "040", "Y", null]
           ]
     },
     {
@@ -337,7 +354,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_COVIMS_channel"
+            "obs_instrument_covims_channel_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
@@ -357,8 +374,8 @@
         "pi_units": null,
         "comments": "XXX Needs definition",
         "mult_options": [
-              [   0,  "IR",  "IR",  10, "Y", null],
-              [   1, "VIS", "VIS",  20, "Y", null]
+              [   0,  "IR",  "IR", "010", "Y", null],
+              [   1, "VIS", "VIS", "020", "Y", null]
           ]
     },
     {

@@ -1,0 +1,186 @@
+{% with session_statistics = context.get_session_statistics(),
+        logged_download_statistics = context.get_logged_download_statistics(),
+        manifest_information = context.get_manifest_download_statistics() %}
+
+<div id="Histogram-IP" class="{{ session_info_classes }} OPUS-uses-plotly">
+    Number of sessions: {{ session_statistics.count }}<br>
+    Total duration: {{ session_statistics.sum }}<br>
+    Mean duration: {{ session_statistics.mean }}<br>
+    Median duration: {{ session_statistics.median }}<br>
+    <hr/>
+    <div id="chart_ips"></div>
+    <hr/>
+    <div id="chart_sessions"></div>
+    <hr/>
+    <div id="chart_sessions_cumulative"></div>
+</div>
+
+<div id="Histogram-Logged-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+    Number of downloads: {{ logged_download_statistics.count }}<br>
+    Total size: {{ logged_download_statistics.sum|filesizeformat }}<br>
+    Mean size: {{ logged_download_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ logged_download_statistics.gmean|filesizeformat }}<br>
+    Median size: {{ logged_download_statistics.median|filesizeformat }}<br>
+    <hr/>
+    <div id="logged_downloads"></div>
+    <hr/>
+    <div id="logged_downloads_log"></div>
+</div>
+
+{% set manifest_statistics = manifest_information.statistics %}
+<div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }} OPUS-uses-plotly">
+    Number of downloads: {{ manifest_statistics.count }}<br>
+    Total size: {{ manifest_statistics.sum|filesizeformat }}<br>
+    Mean size: {{ manifest_statistics.mean|filesizeformat }}<br>
+    Geometric mean size: {{ manifest_statistics.gmean|filesizeformat }}<br>
+    Median size: {{ manifest_statistics.median|filesizeformat }}<br>
+    <hr/>
+    <div id="manifest_downloads"></div>
+    <hr/>
+    <div id="manifest_downloads_log"></div>
+</div>
+
+{# This forces all digits to have the same width.  I think it stands for "tabular numbers". #}
+<style>
+#Manifests {
+  font-feature-settings: "tnum";
+}
+</style>
+
+<div id="Manifests" class="SessionInfo SessionInfoLoaded tab-pane">
+    <table class="table w-auto table-sm table-bordered table-striped">
+    {% for table in manifest_information['tables'] %}
+        {% set key_count = table.headers | length %}
+        {% set key_columns = 6 %}
+        {% set data_columns = 4 %}
+        {% set key_column_span = key_columns // key_count %}
+        <thead>
+            {% if not loop.first %}
+                <tr><th colspan="{{ key_columns + data_columns }}">&nbsp;</th></tr>
+            {% endif %}
+            <tr>
+                <th class="text-center" colspan="{{ key_columns }}">Key</th>
+                <th class="text-center">Manifest</th>
+                <th class="text-center">OPUS ID</th>
+                <th class="text-center" colspan="2">File Path</th>
+            </tr>
+            <tr>
+                {% for header in table.headers %}
+                    <th class="text-center" colspan="{{ key_column_span }}">{{ header }}</th>
+                {% endfor %}
+                <th class="text-center">Count</th>
+                <th class="text-center">Count</th>
+                <th class="text-center">Count</th>
+                <th class="text-center">Size (MB)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table.lines %}
+                <tr>
+                    {% for key in row.key %}
+                        <td colspan="{{ key_column_span }}">{{ key }}</td>
+                    {% endfor %}
+                    <td class="text-right">{{ "{:,d}".format(row.manifest_count) }}</td>
+                    <td class="text-right">{{ "{:,d}".format(row.opus_id_count) }}</td>
+                    <td class="text-right">{{ "{:,d}".format(row.file_path_count) }}</td>
+                    <td class="text-right">{{ "{:,.2f}".format(row.file_path_bytes / 1000000.0) }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <th colspan="{{ key_columns + 2 }}">Total</th>
+                <td class="text-right">{{ "{:,d}".format(table.total.file_path_count) }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(table.total.file_path_bytes / 1000000.0) }}</td>
+            </tr>
+        </tbody>
+    {% endfor %}
+    </table>
+    Number of manifest files: {{ "{:,d}".format(manifest_information['manifest_count']) }}<br>
+    Number of distinct OPUS IDs: {{ "{:,d}".format(manifest_information['opus_id_count']) }}<br>
+</div>
+
+<script>
+function graph_ip_statistics(event) {
+    const ip_data = event.data.ip_data;
+    const session_data = event.data.session_data;
+
+    let layout = {
+        xaxis: {
+            title: "Minutes",
+            tickangle: -90,
+        },
+        xbins: {
+            start: 0,
+            size: 10,
+        },
+        yaxis: {title: ""},
+        bargap: 0.05,
+    };
+
+    let config = {
+    };
+
+    layout.yaxis.title = '# Host IPs';
+    Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout, config);
+
+    layout.yaxis.title = '# Sessions';
+    // layout.xaxis = Plotly.makeTemplate('chart_ips').layout.xaxis;
+    // layout.xaxis.autorange=false;
+    Plotly.newPlot('chart_sessions', [{x: session_data, type: 'histogram'}], layout, config);
+
+    layout.yaxis.title = '# Sessions > ';
+    let cumulative = {
+        enabled: true,
+        direction: "decreasing",
+    };
+    Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout, config);
+}
+
+function graph_download_statistics(event) {
+    const sizes = event.data.sizes;
+    const tag = event.data.tag;
+    const layout = {
+        xaxis: {
+            title: "Size in bytes",
+            tickangle: -90,
+        },
+        yaxis: {
+            title: "# Downloads"
+        },
+        bargap: 0.05,
+    };
+
+    let config = {
+    };
+
+    Plotly.newPlot(tag, [{x: sizes, type: 'histogram'}], layout, config);
+
+    layout.xaxis.tickprefix = "10^";
+    const log10_sizes = sizes.map(value => Math.log10(value));
+    Plotly.newPlot(tag + '_log', [{x: log10_sizes, type: 'histogram'}], layout, config);
+}
+
+$(function() {
+    {% set ip_data %}
+        {% for host_info in host_infos_by_ip %}
+            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
+        {% endfor %}
+    {% endset %}
+    {% set session_data %}
+        {% for session in context.sessions %}
+            {{ [session.duration().total_seconds() / 60, 480.0]|min }},
+        {% endfor %}
+    {% endset %}
+
+    const ip_data = [{{ ip_data | replace('\n', '') | replace(' ', '') }}];
+    const session_data = [{{ session_data | replace('\n', '') | replace(' ', '') }}];
+    const logged_sizes = [{{ logged_download_statistics.data | join(',') }}];
+    const manifest_sizes = [{{ manifest_statistics.data | join(',') }}];
+
+    $('#Histogram-IP').one('show.bs.tab', { ip_data: ip_data, session_data: session_data}, graph_ip_statistics);
+    $('#Histogram-Logged-Downloads').one('show.bs.tab', { sizes: logged_sizes, tag: 'logged_downloads'}, graph_download_statistics);
+    $('#Histogram-Manifest-Downloads').one('show.bs.tab', { sizes: manifest_sizes, tag: 'manifest_downloads'}, graph_download_statistics);
+});
+
+</script>
+{% endwith %}
+

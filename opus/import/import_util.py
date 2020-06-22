@@ -52,6 +52,10 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('HSTUx_xxxx')
                     volume_descs.append('NHxxLO_xxxx')
                     volume_descs.append('NHxxMV_xxxx')
+                    volume_descs.append('EBROCC_xxxx')
+                    volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'ALLBUTNH':
                     # This is useful because NH has duplicate opus_id that require
                     # checking while the others don't.
@@ -71,6 +75,10 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('HSTNx_xxxx')
                     volume_descs.append('HSTOx_xxxx')
                     volume_descs.append('HSTUx_xxxx')
+                    volume_descs.append('EBROCC_xxxx')
+                    volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CASSINI':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
@@ -78,6 +86,9 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
                     volume_descs.append('COVIMS_0xxx')
+                    volume_descs.append('CORSS_8xxx')
+                    volume_descs.append('COUVIS_8xxx')
+                    volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'COISS':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
@@ -86,8 +97,12 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COCIRS_6xxx')
                 elif desc.upper() == 'COUVIS':
                     volume_descs.append('COUVIS_0xxx')
+                    volume_descs.append('COUVIS_8xxx')
                 elif desc.upper() == 'COVIMS':
                     volume_descs.append('COVIMS_0xxx')
+                    volume_descs.append('COVIMS_8xxx')
+                elif desc.upper() == 'CORSS':
+                    volume_descs.append('CORSS_8xxx')
                 elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
                     volume_descs.append('VGISS_5xxx')
                     volume_descs.append('VGISS_6xxx')
@@ -108,6 +123,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('NHxxLO_xxxx')
                 elif desc.upper() == 'NHMVIC':
                     volume_descs.append('NHxxMV_xxxx')
+                elif desc.upper() == 'EBROCC':
+                    volume_descs.append('EBROCC_xxxx')
                 else:
                     volume_descs.append(desc)
         # First make sure everything is valid
@@ -270,22 +287,6 @@ def slug_name_for_sfc_target(target_name):
     target_name = target_name.lower()
     target_name = target_name.replace('_', '').replace('/', '').replace(' ', '')
     return target_name
-
-def cleanup_target_name(target):
-    target = target.upper()
-    make_title = True
-    if target[:4].isdigit() and target[4] == ' ':
-        # This is things like 1999 HG12 or 2014 MU69
-        make_title = False
-    if (target.startswith('NGC ') or
-        target.startswith('HD ')):
-        make_title = False
-    if make_title:
-        target = target.title()
-    if target.endswith(' Cma'):
-        # Like Beta CMa (Cygnus Major)
-        target = target.replace(' Cma', 'CMa')
-    return target
 
 def read_schema_for_table(table_name, replace=[]):
     table_name = table_name.replace(IMPORT_TABLE_TEMP_PREFIX, '').lower()
