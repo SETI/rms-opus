@@ -386,7 +386,7 @@ Supported return formats: `json`, `html`, `csv`
 
 | Parameter | Description | Default |
 |---|---|---|
-| `cols=<field list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
+| `cols=<field list>` | Metadata fields to return | All columns |
 | `cats=<categories>` | If supplied, only returns data for these categories; if `cols` is supplied, `cats` is ignored | All categories |
 
 `categories` is a list of category names separated by commas. Category names can either be full names ending in "Constraints" (e.g. `PDS Constraints` or `Cassini ISS Constraints`) or abbreviated names representing internal database tables (`obs_pds`, `obs_mission_cassini`, or `obs_instrument_coiss`). Full category names must replace spaces with `+` or another appropriate encoding. The list of categories available for an `opusid` can be retrieved with [`api/categories/[opusid].json`](#categoriesopusidfmt).
@@ -691,7 +691,6 @@ Supported return formats: `json`.
 | Parameter | Description | Default |
 |---|---|---|
 | `<searchid>=<value>` | Search parameters (including sort order) | All observations in database |
-| `cols=<fieldid_list>` | Metadata fields to return | [Default columns](#retrievingmetadata) |
 | `startobs=<N>` | The (1-based) observation number to start with | 1 |
 | `limit=<N>` | The maximum number of observations to return | 100 |
 | `types=<types>` | List of product types to return | All product types |
@@ -947,7 +946,7 @@ Get the URLs of images of all sizes (or a given size) based on search criteria a
 
 If specified, `[size]` must be one of `full`, `med`, `small`, or `thumb`.
 
-Supported return formats: `json`, `csv`, `html` is also supported when a specified size is requested.
+Supported return formats: `json`, `csv`. `html` is also supported when a specified size is requested.
 
 #### Parameters
 
@@ -985,7 +984,7 @@ When all sizes are requested, `data` is an object containing a series of entries
 | `<size>_size_bytes` | Size of the image file in bytes |
 | `<size>_width` | Width of the image in pixels |
 | `<size>_height` | Height of the image in pixels |
-| `<size>_url` | Relative path to the image |
+| `<size>_url` | Full URL path to the image |
 
 When one size is requested, `data` an object containing a single entry with these fields:
 
@@ -996,7 +995,7 @@ When one size is requested, `data` an object containing a single entry with thes
 | `size_bytes` | Size of the image file in bytes |
 | `width` | Width of the image in pixels |
 | `height` | Height of the image in pixels |
-| `url` | Relative path to the image |
+| `url` | Full URL path to the image |
 
 Examples:
 

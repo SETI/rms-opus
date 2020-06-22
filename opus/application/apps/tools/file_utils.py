@@ -152,7 +152,8 @@ def get_pds_products(opus_id_list,
     return results
 
 
-def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
+def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None,
+                           ignore_missing=False):
     """Given a list of opus_ids, return a list of image info for a size.
 
         opus_id_list can be a string or a list.
@@ -214,6 +215,8 @@ def get_pds_preview_images(opus_id_list, preview_jsons, sizes=None):
             if not preview_json or not viewset:
                 # log.error('No preview image size "%s" found for '
                 #           +'opus_id "%s"', size, opus_id)
+                if ignore_missing:
+                    continue
                 url = settings.THUMBNAIL_NOT_FOUND
                 alt_text = 'Not found'
                 byte_size = 0
