@@ -99,22 +99,9 @@
 </div>
 
 <script>
-function graph_ip_statistics() {
-    {% with %}
-    {% set ip_data %}
-    {% for host_info in host_infos_by_ip %}
-        {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
-    {% endfor %}
-    {% endset %}
-    {% set session_data %}
-    {% for session in context.sessions %}
-        {{ [session.duration().total_seconds() / 60, 480.0]|min }},
-    {% endfor %}
-    {% endset %}
-
-    const ip_data = [{{ ip_data | replace('\n', '') | replace(' ', '') }}];
-    const session_data = [{{ session_data | replace('\n', '') | replace(' ', '') }}];
-    {% endwith %}
+function graph_ip_statistics(event) {
+    const ip_data = event.data.ip_data;
+    const session_data = event.data.session_data;
 
     let layout = {
         xaxis: {
@@ -132,7 +119,6 @@ function graph_ip_statistics() {
     let config = {
     };
 
-
     layout.yaxis.title = '# Host IPs';
     Plotly.newPlot('chart_ips', [{x: ip_data, type: 'histogram'}], layout, config);
 
@@ -149,7 +135,9 @@ function graph_ip_statistics() {
     Plotly.newPlot('chart_sessions_cumulative', [{x: session_data, type: 'histogram', cumulative: cumulative}], layout, config);
 }
 
-function graph_download_statistics(sizes, id) {
+function graph_download_statistics(event) {
+    const sizes = event.data.sizes;
+    const tag = event.data.tag;
     const layout = {
         xaxis: {
             title: "Size in bytes",
@@ -164,22 +152,34 @@ function graph_download_statistics(sizes, id) {
     let config = {
     };
 
-    Plotly.newPlot(id, [{x: sizes, type: 'histogram'}], layout, config);
+    Plotly.newPlot(tag, [{x: sizes, type: 'histogram'}], layout, config);
 
     layout.xaxis.tickprefix = "10^";
     const log10_sizes = sizes.map(value => Math.log10(value));
-    Plotly.newPlot(id + '_log', [{x: log10_sizes, type: 'histogram'}], layout, config);
+    Plotly.newPlot(tag + '_log', [{x: log10_sizes, type: 'histogram'}], layout, config);
 }
 
 $(function() {
-    const download_sizes = [{{ logged_download_statistics.data | join(',') }}];
+    {% set ip_data %}
+        {% for host_info in host_infos_by_ip %}
+            {{ [host_info.total_time.total_seconds() / 60, 480.0]|min }},
+        {% endfor %}
+    {% endset %}
+    {% set session_data %}
+        {% for session in context.sessions %}
+            {{ [session.duration().total_seconds() / 60, 480.0]|min }},
+        {% endfor %}
+    {% endset %}
+
+    const ip_data = [{{ ip_data | replace('\n', '') | replace(' ', '') }}];
+    const session_data = [{{ session_data | replace('\n', '') | replace(' ', '') }}];
+    const logged_sizes = [{{ logged_download_statistics.data | join(',') }}];
     const manifest_sizes = [{{ manifest_statistics.data | join(',') }}];
 
-    $('#Histogram-IP').one('show.bs.tab', graph_ip_statistics);
-    $('#Histogram-Logged-Downloads').one('show.bs.tab', () => graph_download_statistics(download_sizes, 'logged_downloads'));
-    $('#Histogram-Manifest-Downloads').one('show.bs.tab', () => graph_download_statistics(manifest_sizes, 'manifest_downloads'));
+    $('#Histogram-IP').one('show.bs.tab', { ip_data: ip_data, session_data: session_data}, graph_ip_statistics);
+    $('#Histogram-Logged-Downloads').one('show.bs.tab', { sizes: logged_sizes, tag: 'logged_downloads'}, graph_download_statistics);
+    $('#Histogram-Manifest-Downloads').one('show.bs.tab', { sizes: manifest_sizes, tag: 'manifest_downloads'}, graph_download_statistics);
 });
-
 
 </script>
 {% endwith %}

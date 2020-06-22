@@ -224,10 +224,10 @@ def main(arguments: Optional[List[str]] = None) -> None:
                         help='Generate html output rather than text output')
 
     parser.add_argument('--cronjob', action='store_true', dest='cronjob',
-                        help="Used by the chron job to generate a daily summary")
+                        help="DEPRECATED")
 
-    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
-                        help='Date for --cronjob.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
+    parser.add_argument('--date', '--cronjob-date', action='store', dest='date',
+                        help='Date for batch job.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
 
     parser.add_argument('--ignore-errors-file', type=argparse.FileType('r'), default=None, dest='ignore_errors_file')
 

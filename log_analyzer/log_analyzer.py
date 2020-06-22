@@ -59,7 +59,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--no-sessions', action='store_true', dest='no_sessions',
                         help="Don't generate detailed session information")
 
-    parser.add_argument('--cronjob-date', action='store', dest='cronjob_date',
+    parser.add_argument('--date', '--cronjob-date', action='store', dest='date',
                         help='Date for --batch.  One of -<number>, yyyy-mm, or yyyy-mm-dd.  default is today.')
 
     parser.add_argument('--api-host-url', default=DEFAULT_FIELDS_PREFIX, metavar='URL', dest='api_host_url',
@@ -80,12 +80,12 @@ def main(arguments: Optional[List[str]] = None) -> None:
     parser.add_argument('--configuration', dest='configuration_file', default='opus.configuration',
                         help="location of python configuration file")
 
-    # Temporary hack for when I don't have internet access
-    parser.add_argument('--xxlocal', action="store_true", dest="uses_local", help=argparse.SUPPRESS)
     # Stores DNS entries in a persistent database
     parser.add_argument('--xxdns-cache', action="store_true", dest="dns_cache", help=argparse.SUPPRESS)
+
     # Debugging hack that shows all log entries
     parser.add_argument('--xxshowall', action='store_true', dest='debug_show_all', help=argparse.SUPPRESS)
+
     # Caches the read entries into a database, rather than reading the log files anew each time.
     parser.add_argument('--xxcached_log_entry', action='store_true', dest='cached_log_entries', help=argparse.SUPPRESS)
 
@@ -104,7 +104,7 @@ def main(arguments: Optional[List[str]] = None) -> None:
     # args.ignored_ip comes out as a list of lists, and it needs to be flattened.
     args.ignored_ips = [ip for arg_list in args.ignore_ip for ip in arg_list]
     args.ip_to_host_converter = \
-        IpToHostConverter.get_ip_to_host_converter(args.uses_reverse_dns, args.uses_local, args.dns_cache)
+        IpToHostConverter.get_ip_to_host_converter(**vars(args))
 
     module = importlib.import_module(args.configuration_file)
     configuration = cast(AbstractConfiguration, module.Configuration(**vars(args)))  # type: ignore

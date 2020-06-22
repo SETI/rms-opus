@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import atexit
 import datetime
@@ -5,7 +7,7 @@ import functools
 import shelve
 import socket
 from ipaddress import IPv4Address
-from random import seed, randrange, choice, uniform
+from random import uniform
 from typing import Optional, Callable, Tuple
 
 
@@ -17,14 +19,12 @@ class IpToHostConverter(metaclass=abc.ABCMeta):
     RESULT_TYPE = Callable[[IPv4Address], Optional[str]]
 
     @staticmethod
-    def get_ip_to_host_converter(uses_reverse_dns: bool, uses_local: bool, dns_cache: bool) -> 'IpToHostConverter':
+    def get_ip_to_host_converter(uses_reverse_dns: bool, dns_cache: bool, **_args) -> IpToHostConverter:
         """
         Returns the appropriate IpToHostConvert, given the arguments.
         """
         if not uses_reverse_dns:
             return NullIpToHostConverter()
-        elif uses_local:
-            return FakeIpToHostConverter()
         elif dns_cache:
             return ShelvedIPToHostConverter(".logs/reverse-dns")
         else:
@@ -64,9 +64,9 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
     def __init__(self, file_name: str):
         super().__init__()
         self._database = shelve.open(file_name)
-        self._expired = self._purge_old_database_entries()
+        self._expired = self.__purge_old_database_entries()
         self._cached = self._created = 0
-        atexit.register(self._close)
+        atexit.register(self.__close)
 
     def _convert(self, ip: IPv4Address) -> Optional[str]:
         value: Optional[Tuple[Optional[str], datetime.timedelta]] = self._database.get(str(ip))
@@ -80,7 +80,7 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
         self._database[str(ip)] = (name, expiration)
         return name
 
-    def _purge_old_database_entries(self) -> int:
+    def __purge_old_database_entries(self) -> int:
         now = datetime.datetime.now()
         expired_keys = [key for key, (_, expiration) in self._database.items() if expiration < now]
         print(f"There are {len(expired_keys)} expired keys")
@@ -88,25 +88,12 @@ class ShelvedIPToHostConverter(NormalIpToHostConverter):
             del self._database[key]
         return len(expired_keys)
 
-    def _close(self) -> None:
+    def __close(self) -> None:
         oldest = min(expiration for (_, expiration) in self._database.values())
         self._database.close()
         print(f"IP Cache: Created {self._created}; Expired {self._expired}; Cached {self._cached}; oldest {oldest}.")
 
-
-class FakeIpToHostConverter(IpToHostConverter):
-    """An IpToHostConverter that returns fake, but reproducible names."""
-    COMPANIES = ('nasa', 'cia', 'pets', 'whitehouse', 'toysRus', 'sears', 'enron', 'pan-am', 'twa')
-    ISPS = ('comcast', 'verizon', 'warner')
-    TLDS = ('gov', 'mil', 'us', 'fr', 'uk', 'edu', 'es', 'eu')
-
-    def _convert(self, ip: IPv4Address) -> Optional[str]:
-        seed(str(ip))  # seemingly random, but deterministic, so we'll get the same result between runs.
-        i = randrange(5)
-        if i == 0:
-            ip_str = str(ip).replace('.', '-')
-            return f'{choice(self.ISPS)}.{ip_str}.{choice(self.TLDS)}'
-        elif i == 1:
-            return None
-        else:
-            return f'{choice(self.COMPANIES)}.{randrange(256)}.{choice(self.TLDS)}'
+    def __testing_update_expiration(self, days):
+        delta = datetime.timedelta(days=days)
+        values = [(key, (value, expiration - delta)) for key, (value, expiration) in self._database.items()]
+        self._database.update(values)
