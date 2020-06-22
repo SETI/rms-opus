@@ -760,9 +760,11 @@ def _api_get_images(request, fmt, api_code, size, include_search):
     preview_jsons = [json.loads(x[1]) for x in page]
     opus_ids = aux['opus_ids']
     if size is None:
-        image_list = get_pds_preview_images(opus_ids, preview_jsons)
+        image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                            ignore_missing=True)
     else:
-        image_list = get_pds_preview_images(opus_ids, preview_jsons, [size])
+        image_list = get_pds_preview_images(opus_ids, preview_jsons,
+                                            sizes=[size], ignore_missing=True)
 
     if not image_list:
         log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))
@@ -774,7 +776,6 @@ def _api_get_images(request, fmt, api_code, size, include_search):
         ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
     for image in image_list:
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
         if size is not None:
             if size+'_alt_text' in image:
                 image['alt_text'] = image[size+'_alt_text']
@@ -793,19 +794,23 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                 del image[size+'_url']
 
             # Backwards compatibility
-            url = image['url']
-            if 'previews/' in url:
-                path, img = url.split('previews/')
-                path += 'previews/'
-            elif 'browse/' in url:
-                path, img = url.split('browse/')
-                path += 'browse/'
+            path = None
+            img = None
+            if 'url' in image:
+                url = image['url']
+                if 'previews/' in url:
+                    path, img = url.split('previews/')
+                    path += 'previews/'
+                elif 'browse/' in url:
+                    path, img = url.split('browse/')
+                    path += 'browse/'
             else:
-                path = None
-                img = None
+                image['url'] = ''
             image['path'] = path
             image['img'] = img
             image[size] = img
+
+        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
         if 'cart_state' in image:
             del image['cart_state']
@@ -839,7 +844,10 @@ def _api_get_images(request, fmt, api_code, size, include_search):
             if size is None:
                 row = [image['opus_id']]
                 for img_size in settings.PREVIEW_SIZE_TO_PDS_TYPE.keys():
-                    row.append(image[img_size+'_url'])
+                    if img_size+'_url' not in image:
+                        row.append('')
+                    else:
+                        row.append(image[img_size+'_url'])
                 csv_data.append(row)
             else:
                 csv_data.append([image['opus_id'], image['url']])
