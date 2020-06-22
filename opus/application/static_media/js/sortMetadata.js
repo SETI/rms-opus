@@ -24,6 +24,7 @@ let o_sortMetadata = {
             items: "div.op-sort-only",
             cursor: "grab",
             containment: "parent",
+            helper: "clone",
             tolerance: "intersect",
             cancel: ".op-no-sort",
             stop: function(event, ui) {
