@@ -52,7 +52,7 @@
   vertical-align:top;
   padding: 0 5px;
 }
-#all-session-infos tr.HighlightedLogEntry > td {
+#all-session-infos tr.SelectedLogEntry > td {
     background-color: #CFF5FF;
 }
 .tab-pane {
@@ -280,20 +280,20 @@ These markers are never nested.
 <script>
 
 function click_session_link(event) {
-    // Note $(this) is node this handler is attached to.
+    // $(this) is node this handler is attached to, which is the root of all the .SessionLink nodes.
     // Set session_link to the node that was clicked.
     let session_link = $(event.target);
     // The data-target field of the session_link contains the #id of the .SessionInfo we want to display
     let target = session_link.data('target');
-    // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
-    // the tree to find a node with the field data-target-class.
+    // Clicking on the session_link may indicate that we want to select those log entries annotated with a particular
+    // class.  We look at this node and its ancestors to find a node with the field data-target-class.
     let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
 
     // Deactivate the session links and session infos that are currently active.
     $('.SessionLink.active').removeClass('active');
     $('.SessionInfo.active').removeClass('active');
     // Turn off all highlighting of log entries.
-    $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
+    $('.SelectedLogEntry').removeClass('SelectedLogEntry');
 
     // Mark as active all of the Session Links that point to this target so that they will be highlighted.
     $(`a.SessionLink[data-target="${target}"]`).addClass('active');
@@ -312,26 +312,30 @@ function click_session_link(event) {
                 if (status === "error") {
                     $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
                 }
-                // $this gets rebound to <div/> we just loaded a file into
-                highlight_and_scroll_session_info($(this), target_class);
+                set_up_selected_session_info_for_viewing($(this), target_class);
             });
         return false;
     }
 {% endif %}
-    // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-    highlight_and_scroll_session_info(session_info, target_class);
+    // If we didn't need to load the class, still perform the same setup operations.
+    set_up_selected_session_info_for_viewing(session_info, target_class);
     return false;
 }
 
-function highlight_and_scroll_session_info(session_info, target_class) {
-    // Make it behave, it terms of events, like the tab pane that it was supposed to be
+function set_up_selected_session_info_for_viewing(session_info, target_class) {
+    // session_info is the <div/> we are to show
+    // target_class, if defined, is a class that we are to cause to be highlighted.
+
+    // Alert the page that it is about to be made visible, and then that it is visible.
     session_info.trigger('show.bs.tab').addClass("active").trigger("shown.bs.tab");
+    // Move to the top of the page.
     $('#right').scrollTop(0);
     if (target_class) {
-        let lines = session_info.find(`.${target_class}`);
-        lines.addClass("HighlightedLogEntry");
+        // Mark all log entries that have the target class as being "Selected".  CSS will display this appropriately.
+        // Make sure the first such log entry is visible.
+        let lines = session_info.find(`.${target_class}`).addClass("SelectedLogEntry")
         if (lines.length > 0) {
-            lines[0].scrollIntoView();
+            lines[0].scrollIntoView();  // Note, this is a DOM call, not a jquery call.
         }
     }
 }
@@ -385,86 +389,18 @@ document.addEventListener('mouseup', function(_e) {
   isHandlerDragging = false;
 });
 
-// https://stackoverflow.com/questions/6209161/extract-the-current-dom-and-print-it-as-a-string-with-styles-intact
-Element.prototype.serializeWithStyles = (function () {
-
-    // Mapping between tag names and css default values lookup tables. This allows to exclude default values in the result.
-    var defaultStylesByTagName = {};
-
-    // Styles inherited from style sheets will not be rendered for elements with these tag names
-    var noStyleTags = {"BASE":true,"HEAD":true,"HTML":true,"META":true,"NOFRAME":true,"NOSCRIPT":true,"PARAM":true,"SCRIPT":true,"STYLE":true,"TITLE":true};
-
-    // This list determines which css default values lookup tables are precomputed at load time
-    // Lookup tables for other tag names will be automatically built at runtime if needed
-    var tagNames = ["A","ABBR","ADDRESS","AREA","ARTICLE","ASIDE","AUDIO","B","BASE","BDI","BDO","BLOCKQUOTE","BODY","BR","BUTTON","CANVAS","CAPTION","CENTER","CITE","CODE","COL","COLGROUP","COMMAND","DATALIST","DD","DEL","DETAILS","DFN","DIV","DL","DT","EM","EMBED","FIELDSET","FIGCAPTION","FIGURE","FONT","FOOTER","FORM","H1","H2","H3","H4","H5","H6","HEAD","HEADER","HGROUP","HR","HTML","I","IFRAME","IMG","INPUT","INS","KBD","KEYGEN","LABEL","LEGEND","LI","LINK","MAP","MARK","MATH","MENU","META","METER","NAV","NOBR","NOSCRIPT","OBJECT","OL","OPTION","OPTGROUP","OUTPUT","P","PARAM","PRE","PROGRESS","Q","RP","RT","RUBY","S","SAMP","SCRIPT","SECTION","SELECT","SMALL","SOURCE","SPAN","STRONG","STYLE","SUB","SUMMARY","SUP","SVG","TABLE","TBODY","TD","TEXTAREA","TFOOT","TH","THEAD","TIME","TITLE","TR","TRACK","U","UL","VAR","VIDEO","WBR"];
-
-    // Precompute the lookup tables.
-    for (var i = 0; i < tagNames.length; i++) {
-        if(!noStyleTags[tagNames[i]]) {
-            defaultStylesByTagName[tagNames[i]] = computeDefaultStyleByTagName(tagNames[i]);
-        }
-    }
-
-    function computeDefaultStyleByTagName(tagName) {
-        var defaultStyle = {};
-        var element = document.body.appendChild(document.createElement(tagName));
-        var computedStyle = getComputedStyle(element);
-        for (var i = 0; i < computedStyle.length; i++) {
-            defaultStyle[computedStyle[i]] = computedStyle[computedStyle[i]];
-        }
-        document.body.removeChild(element);
-        return defaultStyle;
-    }
-
-    function getDefaultStyleByTagName(tagName) {
-        tagName = tagName.toUpperCase();
-        if (!defaultStylesByTagName[tagName]) {
-            defaultStylesByTagName[tagName] = computeDefaultStyleByTagName(tagName);
-        }
-        return defaultStylesByTagName[tagName];
-    }
-
-    return function serializeWithStyles() {
-        if (this.nodeType !== Node.ELEMENT_NODE) { throw new TypeError(); }
-        var cssTexts = [];
-        var elements = this.querySelectorAll("*");
-        for ( var i = 0; i < elements.length; i++ ) {
-            var e = elements[i];
-            if (!noStyleTags[e.tagName]) {
-                var computedStyle = getComputedStyle(e);
-                var defaultStyle = getDefaultStyleByTagName(e.tagName);
-                cssTexts[i] = e.style.cssText;
-                for (var ii = 0; ii < computedStyle.length; ii++) {
-                    var cssPropName = computedStyle[ii];
-                    if (computedStyle[cssPropName] !== defaultStyle[cssPropName]) {
-                        e.style[cssPropName] = computedStyle[cssPropName];
-                    }
-                }
-            }
-        }
-        var result = this.outerHTML;
-        for ( var i = 0; i < elements.length; i++ ) {
-            elements[i].style.cssText = cssTexts[i];
-        }
-        return result;
-    }
-})();
-
-
 function clickPrintButton() {
     let win = window.open();
     let printable = $('.SessionInfo.active');
-    win.document.write('<html lang="en">\n' +
-                       '<head><title>Log Analyzer</title>\n' +
+    win.document.write('<html lang="en">\n',
+                       '<head><title>Log Analyzer</title>\n',
                        '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">\n');
     if (printable.find('svg').length) {
         win.document.write('<' + 'script type="text/javascript" src=\'https://cdn.plot.ly/plotly-latest.min.js\'><' + '/script>\n');
     }
-    win.document.write('</head>' +
-                       '<body>\n');
-    win.document.write(printable[0].serializeWithStyles());
-    win.document.write('</body>\n' +
-                       '</html>\n');
+    win.document.write('</head><body>\n');
+    win.document.write(printable.html());
+    win.document.write('</body></html>\n');
     // For now, just create a separate document.  Think later about printing it.
     // win.print();
 }
