@@ -712,21 +712,45 @@ def get_fields_info(fmt, slug=None, collapse=False):
             table_name = TableNames.objects.get(table_name=f.category_name)
             entry['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
+            collapsed_slug = f.slug
+            if collapse:
+                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
+                                                                    '<TARGET>')
+                entry['category'] = table_name.label.replace('Saturn',
+                                                             '<TARGET>')
+            else:
+                entry['field_id'] = f.slug
+                entry['category'] = table_name.label
+            f_type = None
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(f.form_type)
+            if form_type in settings.RANGE_FORM_TYPES:
+                if form_type == 'LONG':
+                    f_type = 'range_longitude'
+                elif form_type_format is not None:
+                    if form_type_format[-1] == 'd':
+                        f_type = 'range_integer'
+                    elif form_type_format[-1] == 'f':
+                        f_type = 'range_float'
+                    else:
+                        log.warning('Unparseable form type '+str(f.form_type))
+                elif form_type_func == 'range_time':
+                    f_type = 'range_time'
+                elif form_type_func is not None:
+                    f_type = 'range_special'
+            elif form_type in settings.MULT_FORM_TYPES:
+                f_type = 'multiple'
+            elif form_type == 'STRING':
+                f_type = 'string'
+            else:
+                log.warning('Unparseable form type '+str(f.form_type))
+            entry['type'] = f_type
             entry['label'] = f.label_results
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
             entry['full_search_label'] = f.body_qualified_label()
             entry['default_units'] = f.units
             entry['available_units'] = opus_support.get_valid_units(f.units)
-            collapsed_slug = f.slug
-            if collapse:
-                entry['category'] = table_name.label.replace('Saturn',
-                                                             '<TARGET>')
-                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
-                                                                    '<TARGET>')
-            else:
-                entry['category'] = table_name.label
-                entry['field_id'] = f.slug
             if f.old_slug and collapse: # Backwards compatibility
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:
