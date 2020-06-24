@@ -59,8 +59,6 @@ var o_search = {
     // Use to determine if user's input should proceed with validation and search when user types in
     // ranges names. We use slug with uniqueid as the key.
     performInputValidation: {},
-    // A object using slugWithId as keys to track if a change event is triggered and in progress by an input.
-    changeEventInProgress: {},
 
     addSearchBehaviors: function() {
         // Manually focus in the input field if it's not focused after the 1st click.
@@ -101,7 +99,7 @@ var o_search = {
 
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
-                !preprogrammedRangesDropdown.hasClass("show")) {
+                !preprogrammedRangesDropdown.hasClass("show") && !o_widgets.isReFocusingBackToInput) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
                 $(this).dropdown("toggle");
             }
@@ -153,20 +151,6 @@ var o_search = {
             }
 
             o_widgets.isKeepingRangesDropdownOpen = false;
-
-            // The following is to handle the case when "change" event is not fired after the user
-            // quickly removed the input value and focused out an input.
-            let inputName = $(this).attr("name");
-            let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
-            let uniqueid = $(this).attr("data-uniqueid");
-            let slugWithId = `${slug}_${uniqueid}`;
-            let currentValue = $(this).val().trim() === "" ? null : $(this).val().trim();
-            let counterStr = o_utils.getSlugOrDataTrailingCounterStr(inputName);
-            let idx = counterStr ? counterStr - 1 : 0;
-            if (!o_search.changeEventInProgress[slugWithId] &&
-                currentValue !== opus.selections[slug][idx]) {
-                $(this).trigger("change");
-            }
         });
 
         o_search.addPreprogrammedRangesSearchBehaviors();
@@ -253,7 +237,7 @@ var o_search = {
             let slug = o_utils.getSlugOrDataWithoutCounter(inputName);
             let uniqueid = $(this).attr("data-uniqueid");
             let slugWithId = `${slug}_${uniqueid}`;
-            o_search.changeEventInProgress[slugWithId] = true;
+
             // Handle preprogrammed ranges
             o_search.rangesNameTotalMatchedCounter[slugWithId] = (o_search.rangesNameTotalMatchedCounter[slugWithId] ||
                                                                   0);
@@ -284,7 +268,6 @@ var o_search = {
                             $(`#${widgetId} input.RANGE[name="${inputName}"]`).trigger("change");
                             let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
                             $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
-                            delete o_search.changeEventInProgress[slugWithId];
                             return;
                         }
                         break;
@@ -1001,7 +984,6 @@ var o_search = {
             // normalizedInputData
             if (normalizedInputData.reqno < o_search.slugNormalizeReqno[slug]) {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
-                delete o_search.changeEventInProgress[slug];
                 return;
             }
 
@@ -1015,7 +997,6 @@ var o_search = {
             // When search is invalid, we disabled browse tab in nav link.
             if (!opus.areInputsValid()) {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
-                delete o_search.changeEventInProgress[slug];
                 opus.navLinkRemembered = null;
                 return;
             }
@@ -1039,7 +1020,6 @@ var o_search = {
 
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
-            delete o_search.changeEventInProgress[slug];
             opus.changeTabToRemembered();
         });
     },

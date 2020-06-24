@@ -44,6 +44,10 @@ var o_widgets = {
     // inputs have values, we don't need to perform a search.
     isRemovingEmptyWidget: true,
 
+    // This flag is used to make sure dropdown is not open again when we re-focus into
+    // an input after a preprogrammed range item is selected.
+    isReFocusingBackToInput: false,
+
     addWidgetBehaviors: function() {
         $("#op-search-widgets").sortable({
             items: "> li",
@@ -228,6 +232,16 @@ var o_widgets = {
                 let uniqueid = minInput.attr("data-uniqueid");
                 let oppositeSuffixSlug = (slug.match(/(.*)1$/) ? `${slugName}2` : `${slugName}1`);
                 $(`#${widgetId} input.RANGE[name*="${oppositeSuffixSlug}"][data-uniqueid="${uniqueid}"]`).trigger("change");
+
+                // Re-focus into the min input so that it will remember the current value (minVal) as
+                // the old value. That way, when user changes the input value (new value), this old value
+                // will be used for comparison to determine if a change event should fire. Note: if we
+                // don't re-focus into the min input, the old value will be the value when we first focused
+                // the input before selecting the preprogrammed item (not minVal).
+                o_widgets.isReFocusingBackToInput = true;
+                $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).blur();
+                $(`#${widgetId} input.RANGE[name="${minInputSlug}"]`).focus();
+                o_widgets.isReFocusingBackToInput = false;
             }
         });
 
