@@ -2258,7 +2258,7 @@ var o_browse = {
             update: function(e, ui) {
                 o_browse.onDoneUpdateMetadataDetails();
             },
-        });
+        }).addClass("op-no-select");
         $(".op-detail-data").fadeTo("fast", 0.15);
         $(".op-metadata-details-tools").show();
         $(".op-metadata-detail-edit-message").show();
@@ -2272,6 +2272,7 @@ var o_browse = {
     removeEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
         o_browse.onDoneUpdateMetadataDetails();
+        $(`#galleryViewContents .op-metadata-details .contents`).removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled")
         $(".op-metadata-details-tools").hide();
@@ -2290,9 +2291,6 @@ var o_browse = {
         $(`.op-metadata-details > .loader`).hide();
 
         // list columns + values
-        let editLine = `<div class="op-metatdata-detail-edit">` +
-                       `<a href="#" class="op-edit-metadata-button" action="edit"><i class="fas fa-pencil-alt"></i> Edit</a>` +
-                       `<div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div></div>`;
         let html = `<dl>`;
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
@@ -2307,7 +2305,7 @@ var o_browse = {
                 html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metadata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}${addTool}</dd></li></ul>`;
             }
         });
-        html = `${editLine}${html}</dl>`;
+        html = `${html}</dl>`;
         $("#galleryViewContents .contents").html(html);
 
         // if it was last in edit mode, open in edit mode...

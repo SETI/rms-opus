@@ -1094,8 +1094,9 @@ when window sized is narrow */
     overflow-y: auto;
     /* Make #galleryView modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
+    4% for the edit line & icon
     metadata and font awesome icons */
-    height: 93%;
+    height: 89%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
@@ -2970,6 +2971,10 @@ when wrapping into the 2nd line */
         -ms-transform: scale(2.5); /* IE 9 */
         -webkit-transform: scale(2.5); /* Safari 3-8 */
         transform: scale(2.5);
+    }
+
+    #galleryViewContents .op-metadata-details {
+        height: 81%;
     }
 }
 
