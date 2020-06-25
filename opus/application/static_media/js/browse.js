@@ -2221,8 +2221,13 @@ var o_browse = {
 
         let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
         let targetPosition = $(e.currentTarget).position();
-        let top = targetPosition.top;
         let left = targetPosition.left;
+        let top = targetPosition.top;
+
+        // if the top of the dropdrown is more than half way down the list, dropup instead
+        if (top * 2 > $(".op-metadata-details").height()) {
+            //top =
+        }
         // add code here to move the top so that it doesn't fall off page
 
         $(contextMenu).css({
@@ -2243,6 +2248,7 @@ var o_browse = {
             o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
             // passing in false indicates to not close the gallery view on loadData
             o_selectMetadata.saveChanges();
+            o_selectMetadata.reRender();
         }
         o_browse.hideMetadataList();
     },

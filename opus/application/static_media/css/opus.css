@@ -1179,6 +1179,7 @@ a:-webkit-any-link, a::any-link {
 }
 
 #op-add-metadata-fields {
+    position: relative;
     z-index: 9999;
 }
 
