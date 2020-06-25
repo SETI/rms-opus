@@ -326,12 +326,12 @@ var o_browse = {
             let slug = $(this).closest("ul").data("slug");
             if ($("#op-add-metadata-fields").hasClass("show")) {
                 o_browse.hideMetadataList(e);
-            } else {
-                // save anything that was changed via sort/trash before the dropdown is displayed
-                o_browse.onDoneUpdateMetadataDetails();
-                o_browse.showMetadataList(e);
-                $("#op-add-metadata-fields").data("slug", slug);
             }
+            // save anything that was changed via sort/trash before the dropdown is displayed
+            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.showMetadataList(e);
+            $("#op-add-metadata-fields").data("slug", slug);
+
             return false;
         });
 
@@ -1221,6 +1221,7 @@ var o_browse = {
             clearTimeout(o_browse.pageLoaderSpinnerTimer);
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
+            o_utils.enableUserInteraction();
         }
     },
 
@@ -1357,7 +1358,7 @@ var o_browse = {
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
-                viewNamespace.observationData[opusId] = item.metadata;	// for galleryView, store in global array
+                viewNamespace.observationData[opusId] = item.metadata;    // for galleryView, store in global array
                 let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
 
                 let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range`;
@@ -1510,7 +1511,6 @@ var o_browse = {
 
         o_browse.initResizableColumn(tab);
         o_browse.initDraggableColumn(tab);
-        o_utils.enableUserInteraction();
     },
 
     initResizableColumn: function(tab) {
@@ -2220,8 +2220,10 @@ var o_browse = {
         let contextMenu = "#op-add-metadata-fields";
 
         let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
-        let top =  e.pageY;
-        let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
+        let targetPosition = $(e.currentTarget).position();
+        let top = targetPosition.top;
+        let left = targetPosition.left;
+        // add code here to move the top so that it doesn't fall off page
 
         $(contextMenu).css({
             display: "block",

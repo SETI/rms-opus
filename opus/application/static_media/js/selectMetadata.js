@@ -151,7 +151,7 @@ var o_selectMetadata = {
                     return;
                 }
                 $(".op-select-metadata-details").html(data.html);
-                $("#op-add-metadata-fields .op-select-list").html(data.listhtml);
+                $("#op-add-metadata-fields .op-select-list").html(data.add_field_html);
                 o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
@@ -163,7 +163,6 @@ var o_selectMetadata = {
                 $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
                     $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).hide();
-                    o_utils.enableUserInteraction();
                 });
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");

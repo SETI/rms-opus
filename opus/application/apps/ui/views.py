@@ -185,10 +185,10 @@ def api_get_metadata_selector(request):
     menu_context['all_slugs_info'] = col_slugs_info
     menu_context['which'] = 'selector'
     menu_template = get_template('ui/select_metadata.html')
-    minimenu_template = get_template('ui/minimenu.html')
+    add_field_menu_template = get_template('ui/add_field.html')
     html = menu_template.render(menu_context)
-    listhtml = minimenu_template.render(menu_context)
-    ret = json_response({'html': html, 'listhtml': listhtml, 'reqno': reqno})
+    add_field_html = add_field_menu_template.render(menu_context)
+    ret = json_response({'html': html, 'add_field_html': add_field_html, 'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
