@@ -1103,6 +1103,11 @@ when window sized is narrow */
     right: 0;
 }
 
+/* to account for empty field data */
+#galleryViewContents .op-metadata-details dd {
+    min-height: 1em;
+}
+
 /* prevent weird browser y-scrollbar */
 #galleryView {
     overflow-y: hidden;

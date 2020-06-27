@@ -347,10 +347,12 @@ var o_browse = {
 
         // Toggle the submenu category and avoid dropdown menu #op-add-metadata-fields from closing
         // When clicking inside #op-add-metadata-fields.
-        $("#op-add-metadata-fields").on("click", ".op-submenu-category", function(e) {
+        $("#op-add-metadata-fields").on("click", ".op-submenu-category, .op-search-menu-category", function(e) {
             e.stopPropagation();
             let collapsibleID = $(this).attr("href");
-            $(`${collapsibleID}`).collapse("toggle");
+            if (collapsibleId !== undefined) {
+                $(`${collapsibleID}`).collapse("toggle");
+            }
         });
 
         $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function() {
