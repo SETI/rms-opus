@@ -349,6 +349,9 @@ var o_browse = {
         // When clicking inside #op-add-metadata-fields.
         $("#op-add-metadata-fields").on("click", ".op-submenu-category, .op-search-menu-category", function(e) {
             e.stopPropagation();
+            // Prevent dropdown menu from jumping when clicking on categories with scrollbar appears
+            // and disappears.
+            e.preventDefault();
             let collapsibleID = $(this).attr("href");
             if (collapsibleID !== undefined) {
                 $(`${collapsibleID}`).collapse("toggle");
