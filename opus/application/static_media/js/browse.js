@@ -350,7 +350,7 @@ var o_browse = {
         $("#op-add-metadata-fields").on("click", ".op-submenu-category, .op-search-menu-category", function(e) {
             e.stopPropagation();
             let collapsibleID = $(this).attr("href");
-            if (collapsibleId !== undefined) {
+            if (collapsibleID !== undefined) {
                 $(`${collapsibleID}`).collapse("toggle");
             }
         });
