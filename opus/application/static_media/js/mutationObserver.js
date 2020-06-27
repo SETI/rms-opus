@@ -291,6 +291,7 @@ var o_mutationObserver = {
         let selectMetadata = $("#op-select-metadata")[0];
         let selectMetadataContents = $("#op-select-metadata-contents")[0];
         let browseDialogModal = $("#galleryView.modal")[0];
+        let browseDialogModalDetails = $("#galleryView.modal .op-metadata-details")[0];
 
         let browseGalleryView = $("#browse .gallery")[0];
         let browseTableView = $("#browse .op-data-table")[0];
@@ -327,6 +328,8 @@ var o_mutationObserver = {
         selectedMetadataObserver.observe(selectMetadataContents, childListObserverConfig);
         // update ps when browse dialog open/close
         browseDialogObserver.observe(browseDialogModal, {attributes: true});
+        // update metadata modal ps when a new detailed item is added
+        browseDialogObserver.observe(browseDialogModalDetails, childListObserverConfig);
         // udpate ps in browse gallery view
         browseGalleryViewObserver.observe(browseGalleryView, generalObserverConfig);
         // update ps in browse table view
