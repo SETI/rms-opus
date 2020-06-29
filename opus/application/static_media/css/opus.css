@@ -208,6 +208,10 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     margin-bottom: 0.5em;
 }
 
+.op-metatdata-detail-edit a:hover {
+    text-decoration: none;
+}
+
 .op-metadata-detail-edit-message {
     display: inline-flex;
     float: right;
