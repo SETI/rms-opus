@@ -120,7 +120,8 @@ var o_selectMetadata = {
 
         if (!o_selectMetadata.rendered) {
             let spinnerTimer = setTimeout(function() {
-                $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner"); }, opus.spinnerDelay);
+                $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
+            }, opus.spinnerDelay);
 
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
@@ -162,7 +163,7 @@ var o_selectMetadata = {
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
-                    $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).hide();
+                    $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).parent().hide();
                 });
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
@@ -213,6 +214,7 @@ var o_selectMetadata = {
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
+                o_utils.enableUserInteraction();
                 clearTimeout(spinnerTimer);
             });
         }

@@ -273,6 +273,7 @@ var o_browse = {
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
             $(namespace).find(".op-modal-show").removeClass("op-modal-show");
+            o_browse.removeEditMetadataDetails();
         });
 
         $('#galleryView').on("click", "a.op-cart-toggle", function(e) {
@@ -342,6 +343,7 @@ var o_browse = {
             if ($("a.op-metadata-detail-remove").length <= 1) {
                 $("a.op-metadata-detail-remove").addClass("op-button-disabled");
             }
+            o_browse.onDoneUpdateMetadataDetails();
             return false;
         });
 
@@ -371,6 +373,7 @@ var o_browse = {
                 $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
                 //o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
                 o_selectMetadata.saveChanges();
+                o_selectMetadata.reRender();
             }
             // remove the disable in case there was only one field to start with...
             $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
@@ -1226,7 +1229,6 @@ var o_browse = {
             clearTimeout(o_browse.pageLoaderSpinnerTimer);
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
-            o_utils.enableUserInteraction();
         }
     },
 
@@ -2228,10 +2230,13 @@ var o_browse = {
         let targetPosition = $(e.currentTarget).position();
         let left = targetPosition.left;
         let top = targetPosition.top;
+        let galleryViewContentsHeight = $("#galleryViewContents").height();
+        let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
 
         // if the top of the dropdrown is more than half way down the list, dropup instead
-        if (top * 2 > $(".op-metadata-details").height()) {
-            //top =
+        if (top * 2 > galleryViewContentsHeight) {
+            // make sure to move the bottom to the top of the line, not the bottom
+            top -= (menuHeight + $(e.currentTarget).height());
         }
         // add code here to move the top so that it doesn't fall off page
 
@@ -2306,7 +2311,8 @@ var o_browse = {
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
                          `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" "><i class="fas fa-plus pr-1"> Add field here</i></a>`;
+        //let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add dropdown" title="${selectMetadataTitle}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" "><i class="fas fa-plus pr-1"> Add field here</i></a>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
