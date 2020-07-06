@@ -107,7 +107,7 @@ var o_menu = {
 
     markCurrentMenuItems: function() {
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_menu.markMenuItem(`.op-search-menu li > [data-slug="${slug}"]`);
+            o_menu.markMenuItem(`#search .op-search-menu li > [data-slug="${slug}"]`);
         });
     },
 
