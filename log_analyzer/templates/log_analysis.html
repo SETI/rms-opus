@@ -333,7 +333,7 @@ function set_up_selected_session_info_for_viewing(session_info, target_class) {
     if (target_class) {
         // Mark all log entries that have the target class as being "Selected".  CSS will display this appropriately.
         // Make sure the first such log entry is visible.
-        let lines = session_info.find(`.${target_class}`).addClass("SelectedLogEntry")
+        let lines = session_info.find(`.${target_class}`).addClass("SelectedLogEntry");
         if (lines.length > 0) {
             lines[0].scrollIntoView();  // Note, this is a DOM call, not a jquery call.
         }

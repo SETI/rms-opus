@@ -29,7 +29,7 @@
 
 {% set manifest_statistics = manifest_information.statistics %}
 <div id="Histogram-Manifest-Downloads" class="{{ session_info_classes }}">
-    Number of downloads: {{ manifest_statistics.count }}<br>
+    Number of manifests: {{ manifest_statistics.count }}<br>
     Total size: {{ manifest_statistics.sum|filesizeformat }}<br>
     Mean size: {{ manifest_statistics.mean|filesizeformat }}<br>
     Geometric mean size: {{ manifest_statistics.gmean|filesizeformat }}<br>
