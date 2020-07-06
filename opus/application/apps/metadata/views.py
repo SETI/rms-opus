@@ -580,19 +580,25 @@ def api_get_fields(request, fmt, slug=None):
     Can return JSON or CSV.
 
     Returned JSON:
-        {"time1":
-            {"label": "Observation Start Time",
-             "search_label": "Observation Time",
-             "full_label": "Observation Start Time",
-             "full_search_label": "Observation Time [General]",
-             "category": "General Constraints",
-             "field_id": "time1",
-             "old_field_id": "timesec1"}
+      {
+        "time1": {
+          "field_id": "time1",
+          "category": "General Constraints",
+          "type": "range_time",
+          "label": "Observation Start Time",
+          "search_label": "Observation Time",
+          "full_label": "Observation Start Time",
+          "full_search_label": "Observation Time [General]",
+          "default_units": null,
+          "available_units": null,
+          "old_slug": "timesec1",
+          "slug": "time1"
         }
+      }
 
     Returned CSV:
-        Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID
-        time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1
+        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID
+        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
@@ -712,21 +718,45 @@ def get_fields_info(fmt, slug=None, collapse=False):
             table_name = TableNames.objects.get(table_name=f.category_name)
             entry['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
+            collapsed_slug = f.slug
+            if collapse:
+                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
+                                                                    '<TARGET>')
+                entry['category'] = table_name.label.replace('Saturn',
+                                                             '<TARGET>')
+            else:
+                entry['field_id'] = f.slug
+                entry['category'] = table_name.label
+            f_type = None
+            (form_type, form_type_func,
+             form_type_format) = parse_form_type(f.form_type)
+            if form_type in settings.RANGE_FORM_TYPES:
+                if form_type == 'LONG':
+                    f_type = 'range_longitude'
+                elif form_type_format is not None:
+                    if form_type_format[-1] == 'd':
+                        f_type = 'range_integer'
+                    elif form_type_format[-1] == 'f':
+                        f_type = 'range_float'
+                    else:
+                        log.warning('Unparseable form type '+str(f.form_type))
+                elif form_type_func == 'range_time':
+                    f_type = 'range_time'
+                elif form_type_func is not None:
+                    f_type = 'range_special'
+            elif form_type in settings.MULT_FORM_TYPES:
+                f_type = 'multiple'
+            elif form_type == 'STRING':
+                f_type = 'string'
+            else:
+                log.warning('Unparseable form type '+str(f.form_type))
+            entry['type'] = f_type
             entry['label'] = f.label_results
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
             entry['full_search_label'] = f.body_qualified_label()
             entry['default_units'] = f.units
             entry['available_units'] = opus_support.get_valid_units(f.units)
-            collapsed_slug = f.slug
-            if collapse:
-                entry['category'] = table_name.label.replace('Saturn',
-                                                             '<TARGET>')
-                collapsed_slug = entry['field_id'] = f.slug.replace('saturn',
-                                                                    '<TARGET>')
-            else:
-                entry['category'] = table_name.label
-                entry['field_id'] = f.slug
             if f.old_slug and collapse: # Backwards compatibility
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:
@@ -749,17 +779,19 @@ def get_fields_info(fmt, slug=None, collapse=False):
     elif fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
-        labels = ['Field ID', 'Category',
+        labels = ['Field ID', 'Category', 'Type',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Old Field ID', 'Units'
+                  'Default Units', 'Available Units', 'Old Field ID'
                  ]
-        rows = [(v['field_id'], v['category'],
+        rows = [(v['field_id'], v['category'], v['type'],
                  v['search_label'], v['label'],
                  v['full_search_label'],
                  v['full_label'],
+                 v['default_units'],
+                 v['available_units'],
                  v['old_slug'],
-                 v['available_units']) for k,v in return_obj.items()]
+                 ) for k,v in return_obj.items()]
         ret = csv_response('fields', rows, labels)
     else:
         log.error('get_fields_info: Unknown format "%s"', fmt)

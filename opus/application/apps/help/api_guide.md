@@ -1768,12 +1768,16 @@ The return value is a JSON object containing this field:
 |---|---|
 | `field_id` | The `fieldid` |
 | `category` | The full name of the category to which the field belongs |
+| `type` | The data type of the field |
 | `search_label` | The field name as shown on the Search tab (without Min/Max qualifiers) |
 | `full_search_label` | The field name without Min/Max qualifiers but with the category name |
 | `label` | The field name as shown when displaying results (with Min/Max qualifiers as appropriate) |
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+
+`type` can be one of: `multiple`, `string`, `range_integer`, `range_float`,
+`range_longitude`, `range_time`, or `range_special`.
 
 Examples:
 
