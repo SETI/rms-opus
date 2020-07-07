@@ -93,6 +93,15 @@ var o_selectMetadata = {
             return false;
         });
 
+        // collapse/expand the add field for the slide view
+        $("#op-select-metadata").on("show.bs.collapse hide.bs.collapse", function(e) {
+            let collapsibleID = $(e.target).attr("id");
+            if (collapsibleID !== undefined) {
+                collapsibleID = collapsibleID.replace("submenu", "mini");
+                $(`#${collapsibleID}`).collapse("toggle");
+            }
+        });
+
         // buttons
         $("#op-select-metadata").on("click", ".btn", function() {
             switch($(this).attr("type")) {
@@ -128,8 +137,10 @@ var o_selectMetadata = {
             let hash = o_hash.getFullHashStr();
 
             // Figure out which categories are already expanded
-            let numberCategories = $("#op-select-metadata .op-submenu-category").length;
-            let expandedCategoryLinks = $("#op-select-metadata .op-submenu-category").not(".collapsed");
+            // if the add selected metadata menu from the slide show is open, use those expanded categories instead
+            let id = $("#op-add-metadata-fields").hasClass("show") ? "#op-add-metadata-fields" : "#op-select-metadata";
+            let numberCategories = $(`${id} .op-submenu-category`).length;
+            let expandedCategoryLinks = $(`${id} .op-submenu-category`).not(".collapsed");
             let expandedCategories = [];
             $.each(expandedCategoryLinks, function(index, linkObj) {
                 expandedCategories.push($(linkObj).data("cat"));

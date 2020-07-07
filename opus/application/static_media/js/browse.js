@@ -357,6 +357,8 @@ var o_browse = {
             let collapsibleID = $(this).attr("href");
             if (collapsibleID !== undefined) {
                 $(`${collapsibleID}`).collapse("toggle");
+                collapsibleID = collapsibleID.replace("mini", "submenu");
+                $(`${collapsibleID}`).collapse("toggle");
             }
         });
 
