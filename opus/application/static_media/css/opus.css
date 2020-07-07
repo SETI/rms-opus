@@ -2986,6 +2986,14 @@ when wrapping into the 2nd line */
     #galleryViewContents .op-metadata-details {
         height: 81%;
     }
+
+    #op-add-metadata-fields {
+        font-size: 75% !important;
+    }
+
+    #op-add-metadata-fields .op-select-list {
+        height: 30vh;
+    }
 }
 
 @media (max-width: 560px), (max-height: 630px) {
