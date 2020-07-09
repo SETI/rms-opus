@@ -383,6 +383,11 @@ var o_browse = {
             return false;
         });
 
+        $("#op-add-metadata-fields").on("mousedown", function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
         // Click add all to cart icon in the first column of the browse table header
         $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
             o_browse.confirmationBeforeAddAll();
@@ -2320,7 +2325,8 @@ var o_browse = {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
                 let slug = opus.prefs.cols[index];
-                let value = `<span class="op-detail-data">${viewNamespace.observationData[opusId][index]}</span>`;
+                let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
+                let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
                 html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metadata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}${addTool}</dd></li></ul>`;
             }
         });
