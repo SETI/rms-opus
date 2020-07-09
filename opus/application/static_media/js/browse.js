@@ -383,6 +383,7 @@ var o_browse = {
             return false;
         });
 
+        // prevent drag of gallery modal while the add field menu is present
         $("#op-add-metadata-fields").on("mousedown", function(e) {
             e.stopPropagation();
             e.preventDefault();
@@ -2161,6 +2162,12 @@ var o_browse = {
     adjustBrowseDialogPS: function() {
         let containerHeight = $("#galleryViewContents .op-metadata-details").height();
         let browseDialogHeight = $("#galleryViewContents .op-metadata-details .contents").height();
+        let slug = $("#op-add-metadata-fields").data("slug");
+        if (slug !== undefined) {
+            let currentElement = $(`ul.op-metadata-details-sortable[data-slug="${slug}"] a.op-metadata-detail-add`);
+            let top = o_browse.adjustTopOfMetadataList(currentElement);
+            $(`#op-add-metadata-fields`).css("top", top);
+        }
 
         if (o_browse.modalScrollbar) {
             if (containerHeight > browseDialogHeight) {
@@ -2229,6 +2236,19 @@ var o_browse = {
         $("#op-add-metadata-fields").removeClass("show").hide();
     },
 
+    adjustTopOfMetadataList: function(elem) {
+        let top = $(elem).position().top;
+        let galleryViewContentsHeight = $("#galleryViewContents").height();
+        let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
+
+        // if the top of the dropdrown is more than half way down the list, dropup instead
+        if (top * 2 > galleryViewContentsHeight) {
+            // make sure to move the bottom to the top of the line, not the bottom
+            top -= (menuHeight + $(elem).height());
+        }
+        return top;
+    },
+
     showMetadataList: function(e) {
         let tab = opus.getViewTab();
         let contextMenu = "#op-add-metadata-fields";
@@ -2236,16 +2256,7 @@ var o_browse = {
         let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
         let targetPosition = $(e.currentTarget).position();
         let left = targetPosition.left;
-        let top = targetPosition.top;
-        let galleryViewContentsHeight = $("#galleryViewContents").height();
-        let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
-
-        // if the top of the dropdrown is more than half way down the list, dropup instead
-        if (top * 2 > galleryViewContentsHeight) {
-            // make sure to move the bottom to the top of the line, not the bottom
-            top -= (menuHeight + $(e.currentTarget).height());
-        }
-        // add code here to move the top so that it doesn't fall off page
+        let top = o_browse.adjustTopOfMetadataList(e.currentTarget);
 
         $(contextMenu).css({
             display: "block",
