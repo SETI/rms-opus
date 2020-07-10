@@ -52,7 +52,7 @@
   vertical-align:top;
   padding: 0 5px;
 }
-#all-session-infos tr.HighlightedLogEntry > td {
+#all-session-infos tr.SelectedLogEntry > td {
     background-color: #CFF5FF;
 }
 .tab-pane {
@@ -279,67 +279,74 @@ These markers are never nested.
 
 <script>
 
-$(function() {
-    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
+function click_session_link(event) {
+    // $(this) is node this handler is attached to, which is the root of all the .SessionLink nodes.
+    // Set session_link to the node that was clicked.
+    let session_link = $(event.target);
+    // The data-target field of the session_link contains the #id of the .SessionInfo we want to display
+    let target = session_link.data('target');
+    // Clicking on the session_link may indicate that we want to select those log entries annotated with a particular
+    // class.  We look at this node and its ancestors to find a node with the field data-target-class.
+    let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
 
-    // Attach a handler to #all-session-links, which is the ancestor of all the .SessionLink objects that we can
-    // click on
-    $("#all-session-links").on('click', '.SessionLink', function (event)  {
-        // session_link is the node that was clicked, while $(this) is node this handler is attached to.
-        let session_link = $(event.target);
-        // The data-target field of the session_link contains #id of the .SessionInfo we want to display
-        let target = session_link.data('target');
-        // Clicking on the session_link may indicate that we want to highlight a particular class.  We move up
-        // the tree to see if there is a node with the field data-target-class.
-        let target_class = session_link.closest("[data-target-class]", $(this)).data("target-class");
+    // Deactivate the session links and session infos that are currently active.
+    $('.SessionLink.active').removeClass('active');
+    $('.SessionInfo.active').removeClass('active');
+    // Turn off all highlighting of log entries.
+    $('.SelectedLogEntry').removeClass('SelectedLogEntry');
 
-        // Deactivate the session links and session infos that are currently active.
-        $('.SessionLink.active').removeClass('active');
-        $('.SessionInfo.active').removeClass('active');
-        // Turn off all highlighting of log entries.
-        $('.HighlightedLogEntry').removeClass('HighlightedLogEntry');
+    // Mark as active all of the Session Links that point to this target so that they will be highlighted.
+    $(`a.SessionLink[data-target="${target}"]`).addClass('active');
 
-        // Mark as active all of the Session Links that point to this target so that they will be highlighted.
-        $(`a.SessionLink[data-target="${target}"]`).addClass('active');
-
-        let session_info = $(target);
+    let session_info = $(target);
 {% if context.sessions_relative_directory %}
-        if (session_info.length === 0) {
-            // DOM node doesn't exist.  Create it and load its contents.
-            let node_id = target.substr(1);
-            let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
-            $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
-                // Add the node to the DOM
-                .appendTo('#all-session-infos')
-                // And load its content.  Call the callback once the dom is loaded.
-                .load(session_location, function (response, status, xhr) {
-                    if (status === "error") {
-                        $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
-                    }
-                    // $this gets rebound to <div/> we just loaded a file into
-                    highlight_and_scroll_session_info($(this), target_class);
-                });
-            return false;
-        }
-{% endif %}
-        // Mark the target itself (a Session Info) as active.  It's inside a tab pane, so this unhides it.
-        highlight_and_scroll_session_info(session_info, target_class);
+    if (session_info.length === 0) {
+        // DOM node doesn't exist.  Create it and load its contents.
+        let node_id = target.substr(1);
+        let session_location = `{{ context.sessions_relative_directory }}${node_id}.html`;
+        $('<div/>', {id: node_id, "class": "{{ session_info_classes }}"})
+            // Add the node to the DOM
+            .appendTo('#all-session-infos')
+            // And load its content.  Call the callback once the dom is loaded.
+            .load(session_location, function (response, status, xhr) {
+                if (status === "error") {
+                    $(this).html(`Got error status ${xhr.status} when loading "${session_location}".`)
+                }
+                set_up_selected_session_info_for_viewing($(this), target_class);
+            });
         return false;
-    })
-});
+    }
+{% endif %}
+    // If we didn't need to load the class, still perform the same setup operations.
+    set_up_selected_session_info_for_viewing(session_info, target_class);
+    return false;
+}
 
-function highlight_and_scroll_session_info(session_info, target_class) {
-    // Make it behave, it terms of events, like the tab pane that it was supposed to be
+function set_up_selected_session_info_for_viewing(session_info, target_class) {
+    // session_info is the <div/> we are to show
+    // target_class, if defined, is a class that we are to cause to be highlighted.
+
+    // Alert the page that it is about to be made visible, and then that it is visible.
     session_info.trigger('show.bs.tab').addClass("active").trigger("shown.bs.tab");
+    // Move to the top of the page.
     $('#right').scrollTop(0);
     if (target_class) {
-        let lines = session_info.find(`.${target_class}`);
-        lines.addClass("HighlightedLogEntry");
+        // Mark all log entries that have the target class as being "Selected".  CSS will display this appropriately.
+        // Make sure the first such log entry is visible.
+        let lines = session_info.find(`.${target_class}`).addClass("SelectedLogEntry");
         if (lines.length > 0) {
-            lines[0].scrollIntoView();
+            lines[0].scrollIntoView();  // Note, this is a DOM call, not a jquery call.
         }
     }
 }
+
+$(function() {
+    // Turn on all tooltips
+    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
+
+    // Attach a handler to #all-session-links, which is the ancestor of all clickable .SessionLink objects.
+    $("#all-session-links").on('click', '.SessionLink', click_session_link)
+});
 
 let gutter = document.querySelector('#gutter');
 let wrapper = gutter.closest('.row');
@@ -385,26 +392,18 @@ document.addEventListener('mouseup', function(_e) {
 function clickPrintButton() {
     let win = window.open();
     let printable = $('.SessionInfo.active');
-    win.document.write('<html lang="en">\n' +
-                       '<head><title>Log Analyzer</title>\n' +
+    win.document.write('<html lang="en">\n',
+                       '<head><title>Log Analyzer</title>\n',
                        '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">\n');
-    if (printable.hasClass('OPUS-uses-plotly')) {
+    if (printable.find('svg').length) {
         win.document.write('<' + 'script type="text/javascript" src=\'https://cdn.plot.ly/plotly-latest.min.js\'><' + '/script>\n');
     }
-    win.document.write('</head>' +
-                       '<body>\n');
+    win.document.write('</head><body>\n');
     win.document.write(printable.html());
-    win.document.write('</body>\n' +
-                       '</html>\n');
+    win.document.write('</body></html>\n');
     // For now, just create a separate document.  Think later about printing it.
     // win.print();
 }
-
-$(function(){
-    // Find the "Manifests" button and click it.
-    // DO NOT SUBMIT.  This line is a temporary hack!
-    // $('.SessionLink[data-target="#Manifests"]').trigger('click');
-});
 
 </script>
 </body>

@@ -51,6 +51,12 @@ class Manifest(NamedTuple):
     def read_manifests(file_names: Sequence[str]) -> Sequence[Manifest]:
         return [Manifest.read_manifest(file_name) for file_name in file_names]
 
+    def size_in_bytes(self):
+        file_to_size: Dict[str, int] = collections.defaultdict(int)
+        for entry in self.entries:
+            file_to_size[entry.file_path] = max(file_to_size[entry.file_path], entry.size)
+        return sum(file_to_size.values())
+
     def __repr__(self) -> str:
         name = os.path.basename(self.file_name)
         return f'<Manifest {name}>'
@@ -110,11 +116,6 @@ class ManifestStatus:
                             file_path_bytes=sum(x.file_path_bytes for x in result))
         return result, total
 
-    def __get_histogram_data(self) -> Sequence[int]:
-        all_items = {(manifest, entry.file_path): entry.size
-                     for manifest in self._manifests for entry in manifest.entries}
-        return tuple(all_items.values())
-
     def __get_statistics(self) -> Dict[str, Any]:
         result1, total1 = self.__get_one_table(lambda entry: (entry.product_category, entry.product_type))
         result2, total2 = self.__get_one_table(lambda entry: (entry.volume_set,))
@@ -128,11 +129,13 @@ class ManifestStatus:
         opus_id_count = len({entry.opus_id
                              for manifest in self._manifests
                              for entry in manifest.entries})
+        data = tuple(manifest.size_in_bytes() for manifest in self._manifests)
+
         return {
             "tables": (summary1, summary2, summary3),
             "manifest_count": manifest_count,
             "opus_id_count": opus_id_count,
-            "data": self.__get_histogram_data()
+            "data": data,
         }
 
     @staticmethod
