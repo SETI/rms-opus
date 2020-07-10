@@ -3242,6 +3242,7 @@ when screen is narrow (cart tab) */
 different browsers */
 #galleryViewContents .bottom {
     align-items: stretch;
+    padding-top: 0.3em;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {

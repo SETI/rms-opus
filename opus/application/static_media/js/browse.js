@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, opus */
+/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
@@ -291,6 +291,7 @@ var o_browse = {
             let opusId = $(this).data("id");
 
             if (opusId) {
+                o_browse.removeEditMetadataDetails();
                 o_browse.loadPageIfNeeded(action, opusId);
                 o_browse.updateGalleryView(opusId);
             }
@@ -325,9 +326,6 @@ var o_browse = {
                 return false;
             }
             let slug = $(this).closest("ul").data("slug");
-            if ($("#op-add-metadata-fields").hasClass("show")) {
-                o_browse.hideMetadataList(e);
-            }
             // save anything that was changed via sort/trash before the dropdown is displayed
             o_browse.onDoneUpdateMetadataDetails();
             o_browse.showMetadataList(e);
@@ -1525,7 +1523,7 @@ var o_browse = {
         });
 
         o_browse.initResizableColumn(tab);
-        o_browse.initDraggableColumn(tab);
+        //o_browse.initDraggableColumn(tab);
     },
 
     initResizableColumn: function(tab) {
@@ -1577,7 +1575,6 @@ var o_browse = {
             tolerance: "pointer",
             helper: function(e, ui) {
                 let slug = ui.attr("id");
-                let td = $("tbody tr").find(`[data-slug="${slug}"]`);
                 $("tbody tr:first").find('td').each(function(column, td) {
                     $(td).width($(td).width());
                 });
@@ -1602,7 +1599,7 @@ var o_browse = {
                     let movingItemCol = $("tbody tr").find(`[data-slug="${itemSlug}"]`).index();
                     let nextCol = $("tbody tr").find(`[data-slug="${nextSlug}"]`).index();
                 }
-                console.log(`item:   ${ui.item.attr("id")}, item.prev: ${ui.item.prev().attr("id")}, item.next: ${ui.item.next().attr("id")}`)
+                console.log(`item:   ${ui.item.attr("id")}, item.prev: ${ui.item.prev().attr("id")}, item.next: ${ui.item.next().attr("id")}`);
                 console.log(`placeholder: prev: ${ui.placeholder.prev().attr("id") }, next: ${ui.placeholder.next().attr("id")}`);
             },
             update: function(e, ui) {
@@ -1854,7 +1851,7 @@ var o_browse = {
         }
     },
 
-    loadData: function(view, closeGalleryView=true, startObs, customizedLimitNum=undefined) {
+    loadData: function(view, closeGalleryView=true, startObs=undefined, customizedLimitNum=undefined) {
         /**
          * Fetch initial data when reloading page, changing sort order,
          * or switching to browse tab after search is changed.
@@ -2250,10 +2247,7 @@ var o_browse = {
     },
 
     showMetadataList: function(e) {
-        let tab = opus.getViewTab();
         let contextMenu = "#op-add-metadata-fields";
-
-        let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
         let targetPosition = $(e.currentTarget).position();
         let left = targetPosition.left;
         let top = o_browse.adjustTopOfMetadataList(e.currentTarget);
@@ -2296,7 +2290,7 @@ var o_browse = {
         $(".op-detail-data").fadeTo("fast", 0.15);
         $(".op-metadata-details-tools").show();
         $(".op-metadata-detail-edit-message").show();
-        $(".op-metadata-details").addClass("op-metadata-details-edit-enabled")
+        $(".op-metadata-details").addClass("op-metadata-details-edit-enabled");
         if ($("a.op-metadata-detail-remove").length <= 1) {
             $("a.op-metadata-detail-remove").addClass("op-button-disabled");
         }
@@ -2308,7 +2302,7 @@ var o_browse = {
         o_browse.onDoneUpdateMetadataDetails();
         $(`#galleryViewContents .op-metadata-details .contents`).removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
-        $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled")
+        $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");
         $(".op-metadata-details-tools").hide();
         $(".op-metadata-detail-edit-message").hide();
         if ($(`#galleryViewContents .op-metadata-details .contents`).sortable("instance") !== undefined) {
