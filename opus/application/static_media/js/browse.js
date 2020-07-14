@@ -369,6 +369,8 @@ var o_browse = {
             if (index >= 0) {
                 index++;
                 opus.prefs.cols.splice(index, 0, slug);
+                // save the last slug that was added so that we can make sure it is visible on scroll
+                $("#op-add-metadata-fields").data("last", slug);
                 $(`.op-metadata-details > .loader`).show();
                 $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
                 //o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
@@ -489,10 +491,12 @@ var o_browse = {
                         break;
                     case 39:  // next
                         detailOpusId = $("#galleryView").find(".op-next").data("id");
+                        o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("next", detailOpusId);
                         break;
                     case 37:  // prev
                         detailOpusId = $("#galleryView").find(".op-prev").data("id");
+                        o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
                         break;
                 }
@@ -1236,6 +1240,7 @@ var o_browse = {
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
+        o_utils.enableUserInteraction();
     },
 
     getViewInfo: function() {
@@ -2157,8 +2162,9 @@ var o_browse = {
     },
 
     adjustBrowseDialogPS: function() {
-        let containerHeight = $("#galleryViewContents .op-metadata-details").height();
-        let browseDialogHeight = $("#galleryViewContents .op-metadata-details .contents").height();
+        let container = "#galleryViewContents .op-metadata-details";
+        let containerHeight = $(container).height();
+        let browseDialogHeight = $(`#galleryViewContents .op-metadata-details .contents`).height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
             let currentElement = $(`ul.op-metadata-details-sortable[data-slug="${slug}"] a.op-metadata-detail-add`);
@@ -2168,16 +2174,26 @@ var o_browse = {
 
         if (o_browse.modalScrollbar) {
             if (containerHeight > browseDialogHeight) {
-                if (!$("#galleryViewContents .op-metadata-details .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $("#galleryViewContents .op-metadata-details .ps__rail-y").addClass("hide_ps__rail-y");
+                if (!$(`#galleryViewContents .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
+                    $(`#galleryViewContents .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
                     o_browse.modalScrollbar.settings.suppressScrollY = true;
                 }
             } else {
-                $("#galleryViewContents .op-metadata-details .ps__rail-y").removeClass("hide_ps__rail-y");
+                $(`#galleryViewContents .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
+                let last = $("#op-add-metadata-fields").data("last");
+                if (last !== undefined) {
+                    let addedElement =  $(`ul.op-metadata-details-sortable[data-slug="${slug}"]`).find("dd");
+                    // if any part of the newly added element is not on the screen, move the scrollbar down
+                    if (!addedElement.isOnScreen($(container), 0)) {
+                        let height = $(addedElement).height();
+                        $(container).scrollTop(height);
+                    }
+                }
             }
             o_browse.modalScrollbar.update();
         }
+        $("#op-add-metadata-fields").removeData("last");
     },
 
     cartButtonInfo: function(action) {

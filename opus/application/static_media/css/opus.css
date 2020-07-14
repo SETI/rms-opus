@@ -221,7 +221,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-left: 2em;
 }
 
-.op-metadata-details-edit-enabled li:hover {
+.op-metadata-details-edit-enabled ul:hover {
     cursor: -webkit-grab;
     cursor: grabbing;
 }
@@ -2985,10 +2985,6 @@ when wrapping into the 2nd line */
         -ms-transform: scale(2.5); /* IE 9 */
         -webkit-transform: scale(2.5); /* Safari 3-8 */
         transform: scale(2.5);
-    }
-
-    #galleryViewContents .op-metadata-details {
-        height: 81%;
     }
 
     #op-add-metadata-fields {

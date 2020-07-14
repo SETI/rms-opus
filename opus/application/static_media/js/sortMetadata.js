@@ -125,7 +125,6 @@ let o_sortMetadata = {
     }, // end edit sort metadata behaviours
 
     onClickSortOrder: function(orderBy, addToSort=true) {
-        $("body").addClass("op-prevent-pointer-events");
         o_browse.showPageLoaderSpinner();
 
         let newOrder = [];
@@ -299,6 +298,7 @@ let o_sortMetadata = {
     },
 
     renderSortedDataFromBeginning: function(closeGalleryView=true) {
+        o_utils.disableUserInteraction();
         o_browse.clearObservationData();
         o_browse.loadData(opus.prefs.view, closeGalleryView);
     },
