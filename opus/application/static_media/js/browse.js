@@ -2315,14 +2315,16 @@ var o_browse = {
 
     removeEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
+        let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
+
         o_browse.onDoneUpdateMetadataDetails();
-        $(`#galleryViewContents .op-metadata-details .contents`).removeClass("op-no-select");
+        detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");
         $(".op-metadata-details-tools").hide();
         $(".op-metadata-detail-edit-message").hide();
-        if ($(`#galleryViewContents .op-metadata-details .contents`).sortable("instance") !== undefined) {
-            $(`#galleryViewContents .op-metadata-details .contents`).sortable("destroy");
+        if (detailContents.sortable("instance") !== undefined) {
+            detailContents.sortable("destroy");
         }
         $(".op-detail-data").fadeTo("fast", 1);
         viewNamespace.metadataDetailEdit = false;
@@ -2335,7 +2337,7 @@ var o_browse = {
         $(`.op-metadata-details > .loader`).hide();
 
         // list columns + values
-        let html = `<dl>`;
+        let html = "";
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
                          `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
@@ -2348,11 +2350,13 @@ var o_browse = {
                 let slug = opus.prefs.cols[index];
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
-                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}<li class="op-metadata-detail-item list-inline-item"><dt>${columnLabel}:</dt><dd>${value}${addTool}</dd></li></ul>`;
+                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}`;
+                html += `<li class="op-metadata-detail-item list-inline-item">`;
+                html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div><div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
+                html += `</li></ul>`;
             }
         });
-        html = `${html}</dl>`;
-        $("#galleryViewContents .contents").html(html);
+        $("#galleryViewContents .op-metadata-details .contents").html(html);
 
         // if it was last in edit mode, open in edit mode...
         if (viewNamespace.metadataDetailEdit) {
