@@ -217,7 +217,6 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 .op-metadata-detail-edit-message {
     display: inline-flex;
     float: right;
-    padding-right: 12em;
     padding-left: 2em;
 }
 
