@@ -2167,7 +2167,7 @@ var o_browse = {
         let browseDialogHeight = $(`#galleryViewContents .op-metadata-details .contents`).height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
-            let currentElement = $(`ul.op-metadata-details-sortable[data-slug="${slug}"] a.op-metadata-detail-add`);
+            let currentElement = $(`ul[data-slug="${slug}"] a.op-metadata-detail-add`);
             let top = o_browse.adjustTopOfMetadataList(currentElement);
             $(`#op-add-metadata-fields`).css("top", top);
         }
@@ -2183,7 +2183,7 @@ var o_browse = {
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
                 let last = $("#op-add-metadata-fields").data("last");
                 if (last !== undefined) {
-                    let addedElement =  $(`ul.op-metadata-details-sortable[data-slug="${slug}"]`).find("dd");
+                    let addedElement =  $(`ul[data-slug="${slug}"]`).find("dd");
                     // if any part of the newly added element is not on the screen, move the scrollbar down
                     if (!addedElement.isOnScreen($(container), 0)) {
                         let height = $(addedElement).height();
@@ -2276,7 +2276,7 @@ var o_browse = {
     },
 
     onDoneUpdateMetadataDetails: function(e) {
-        let columnOrder = $.map($("ul.op-metadata-details-sortable"), function(n, i) {
+        let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
         });
         // only bother if something actually changed...
@@ -2295,7 +2295,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
-            items: "ul.op-metadata-details-sortable",
+            items: "ul",
             cursor: "grabbing",
             containment: "parent",
             tolerance: "pointer",
@@ -2350,7 +2350,7 @@ var o_browse = {
                 let slug = opus.prefs.cols[index];
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
-                html += `<ul class="op-metadata-details-sortable list-inline d-flex" data-slug="${slug}">${removeTool}`;
+                html += `<ul class="list-inline d-flex mb-0" data-slug="${slug}">${removeTool}`;
                 html += `<li class="op-metadata-detail-item list-inline-item">`;
                 html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div><div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
                 html += `</li></ul>`;
