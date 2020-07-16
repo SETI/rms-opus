@@ -1097,7 +1097,9 @@ when window sized is narrow */
 }
 
 #galleryViewContents .op-metadata-details {
-    overflow-y: auto;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior: contain;
     /* Make #galleryView modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
     4% for the edit line & icon
@@ -1110,7 +1112,7 @@ when window sized is narrow */
 }
 
 /* to account for empty field data */
-#galleryViewContents .op-metadata-details dd {
+#galleryViewContents .op-metadata-details .op-metadata-data {
     min-height: 1em;
 }
 

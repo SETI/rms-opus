@@ -2299,6 +2299,18 @@ var o_browse = {
             cursor: "grabbing",
             containment: "parent",
             tolerance: "pointer",
+            start: function(e, ui) {
+                let scrollContainer = $(e.target).data("ui-sortable").scrollParent;
+                let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
+                $(e.target).data("maxScrollTop", maxScrollTop);
+            },
+            sort: function(e, ui) {
+                let scrollContainer = $(e.target).data("ui-sortable").scrollParent;
+                let maxScrollTop = $(e.target).data("maxScrollTop");
+                if (scrollContainer.scrollTop() >= maxScrollTop) {
+                    scrollContainer.scrollTop(maxScrollTop);
+                }
+            },
             update: function(e, ui) {
                 o_browse.onDoneUpdateMetadataDetails();
             },
