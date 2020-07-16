@@ -755,7 +755,6 @@ th.sticky-header {
     transform: translateY(-50%);
 }
 
-
 .op-data-table-view {
     width: 100%;
     position: relative;
@@ -781,10 +780,6 @@ th.sticky-header {
 /* avoid seeing through ps__rail_x in table view */
 .op-data-table-view .ps__thumb-x {
     bottom: 1px;
-}
-
-.op-data-table-view .ui-sortable-placeholder {
-    display: none;
 }
 
 .op-sort-position-indicator {
