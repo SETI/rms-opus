@@ -316,7 +316,6 @@ var o_browse = {
 
         $(".op-select-list").on("click", ".dropdown-item", function(e) {
             o_browse.hideMenus();
-            //o_sortMetadata.onClickSortOrder($(this).data("slug"));
             return false;
         });
 
@@ -335,7 +334,7 @@ var o_browse = {
         });
 
         $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
-            let slug = $(this).parent().parent().data('slug');
+            let slug = $(this).closest("ul").data("slug");
             o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
             $(this).parent().parent().remove();
             if ($("a.op-metadata-detail-remove").length <= 1) {
@@ -373,7 +372,7 @@ var o_browse = {
                 $("#op-add-metadata-fields").data("last", slug);
                 $(`.op-metadata-details > .loader`).show();
                 $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
-                //o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`);
+
                 o_selectMetadata.saveChanges();
                 o_selectMetadata.reRender();
             }
@@ -2210,17 +2209,19 @@ var o_browse = {
     },
 
     onDoneUpdateMetadataDetails: function(e) {
+        o_utils.disableUserInteraction();
         let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
         });
         // only bother if something actually changed...
         if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
-            o_utils.disableUserInteraction();
             opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
             o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
             // passing in false indicates to not close the gallery view on loadData
             o_selectMetadata.saveChanges();
             o_selectMetadata.reRender();
+        } else {
+            o_utils.enableUserInteraction();
         }
         o_browse.hideMetadataList();
     },
@@ -2287,7 +2288,6 @@ var o_browse = {
         let selectMetadataTitle = "Add metadata field after the current field";
         let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
                          `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
-        //let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add dropdown" title="${selectMetadataTitle}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" "><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {

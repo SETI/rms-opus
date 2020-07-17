@@ -3,9 +3,9 @@
         {% for div in menu.divs %}
             {% if div.table_name != 'search_fields' %}
             <li class="list-group-item py-0 op-search-menu-category">
-                        <a href="#{{ which }}-mini-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category {{ div.collapsed }}" data-cat="{{ div.table_name }}">
-                            <span class="title">{{ div.label }}&nbsp;<span class="op-menu-arrow"></span></span>
-                        </a>
+                <a href="#{{ which }}-mini-{{ div.table_name }}" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle py-2 op-submenu-category {{ div.collapsed }}" data-cat="{{ div.table_name }}">
+                    <span class="title">{{ div.label }}&nbsp;<span class="op-menu-arrow"></span></span>
+                </a>
                 <ul class="list-group list-group-flush submenu collapse {{ div.show }}" id="{{ which }}-mini-{{ div.table_name }}">
 
                 <!-- all div labels have level 2 submenu to list params-->
@@ -39,7 +39,7 @@
                                                         {% else %}
                                                             {{ p.body_qualified_label }}
                                                         {% endif %}
-                                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                                        " data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                                         <span class="op-menu-item">
                                                             <span class="op-search-param-checkmark">
                                                                 <i class="fa fa-check"></i>
@@ -69,13 +69,13 @@
                                         {% else %}
                                             {{ p.label }}
                                         {% endif %}
-                                      " data-qualifiedlabel="
+                                        " data-qualifiedlabel="
                                         {% if menu.data.labels_view == 'selector' %}
                                             {{ p.body_qualified_label_results }}
                                         {% else %}
                                             {{ p.body_qualified_label }}
                                         {% endif %}
-                                      " data-slug="{{ p.slug }}" class="op-search-param" href="#">
+                                        " data-slug="{{ p.slug }}" class="op-search-param" href="#">
                                         <span class="op-menu-item">
                                             <span class="op-search-param-checkmark">
                                                 <i class="fa fa-check"></i>
