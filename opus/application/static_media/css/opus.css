@@ -1109,6 +1109,8 @@ when window sized is narrow */
 /* to account for empty field data */
 #galleryViewContents .op-metadata-details .op-metadata-data {
     min-height: 1em;
+    /* Make sure info with long string like "Multiple Target List" is wrapped
+    in metadata detail modal */
     overflow-wrap: anywhere;
 }
 
