@@ -1109,6 +1109,7 @@ when window sized is narrow */
 /* to account for empty field data */
 #galleryViewContents .op-metadata-details .op-metadata-data {
     min-height: 1em;
+    overflow-wrap: anywhere;
 }
 
 /* prevent weird browser y-scrollbar */

@@ -2128,6 +2128,8 @@ var o_browse = {
                     }
                 }
             }
+            // X-scrolling is not allowed in metadata detail modal.
+            o_browse.modalScrollbar.settings.suppressScrollX = true;
             o_browse.modalScrollbar.update();
         }
         $("#op-add-metadata-fields").removeData("last");
