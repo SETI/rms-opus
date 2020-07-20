@@ -204,13 +204,13 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     background-color: transparent !important;
 }
 
-.op-metatdata-detail-edit {
+.op-metadata-detail-edit {
     margin-bottom: 0.5em;
     white-space: nowrap;
     display: inline-flex;
 }
 
-.op-metatdata-detail-edit a:hover {
+.op-metadata-detail-edit a:hover {
     text-decoration: none;
 }
 
@@ -1109,6 +1109,11 @@ when window sized is narrow */
 /* to account for empty field data */
 #galleryViewContents .op-metadata-details .op-metadata-data {
     min-height: 1em;
+    /* Make sure info with long string like "Multiple Target List" is wrapped
+    in metadata detail modal */
+    overflow-wrap: anywhere;
+    /* For Safari */
+    line-break: anywhere;
 }
 
 /* prevent weird browser y-scrollbar */

@@ -2095,8 +2095,12 @@ var o_browse = {
     },
 
     adjustBrowseDialogPS: function() {
+        let modalHeight = $("#galleryViewContents").height();
+        let modalEditHeight = $(".op-metadata-detail-edit").outerHeight(true);
+        let bottomRowHeight = $("#galleryViewContents .bottom").outerHeight(true);
+        let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
         let container = "#galleryViewContents .op-metadata-details";
-        let containerHeight = $(container).height();
+        let containerHeight = $(container).height(calculatedContainerHeight);
         let browseDialogHeight = $(`#galleryViewContents .op-metadata-details .contents`).height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
@@ -2124,6 +2128,8 @@ var o_browse = {
                     }
                 }
             }
+            // X-scrolling is not allowed in metadata detail modal.
+            o_browse.modalScrollbar.settings.suppressScrollX = true;
             o_browse.modalScrollbar.update();
         }
         $("#op-add-metadata-fields").removeData("last");
