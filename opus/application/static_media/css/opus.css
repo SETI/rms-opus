@@ -1112,6 +1112,8 @@ when window sized is narrow */
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
     overflow-wrap: anywhere;
+    /* For Safari */
+    line-break: anywhere;
 }
 
 /* prevent weird browser y-scrollbar */
