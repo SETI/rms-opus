@@ -208,6 +208,8 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     margin-bottom: 0.5em;
     white-space: nowrap;
     display: inline-flex;
+    position: absolute;
+    top: 0;
 }
 
 .op-metadata-detail-edit a:hover {
@@ -1103,6 +1105,7 @@ when window sized is narrow */
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
+    top: 1.5em;
     right: 0;
 }
 

@@ -731,7 +731,7 @@ var opus = {
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
         let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
         let hideOrShowSelectedMetadataPSDB = _.debounce(o_selectMetadata.hideOrShowPS, 200);
-        let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let adjustBrowseDialogPSDB = function() {o_browse.adjustBrowseDialogPS(true);};
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {

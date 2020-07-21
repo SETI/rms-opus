@@ -10,6 +10,8 @@
 var o_utils = {
 /* jshint varstmt: true */
 
+    numberOfDisableUserInteractionRequests: 0,
+
     /**
      *
      *  some utils
@@ -136,7 +138,8 @@ $.fn.isOnScreen = function(scope, slop) {
     }
     scope = $(scope);
     let top = scope.offset().top;
-    let bottom = top + scope.height();
+    let positionTop = scope.position().top;
+    let bottom = (top + scope.height()) - positionTop;
     let elementHeight = target.outerHeight();
     let offset = elementHeight * slop;   // allow part of the object to be off screen
     let elementTop = target.offset().top;

@@ -2105,8 +2105,11 @@ var o_browse = {
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
             let currentElement = $(`ul[data-slug="${slug}"] a.op-metadata-detail-add`);
-            let top = o_browse.adjustTopOfMetadataList(currentElement);
-            $(`#op-add-metadata-fields`).css("top", top);
+            // could have been deleted in interim, so best to check beforehand...
+            if (currentElement !== undefined && $(currentElement).position() !== undefined) {
+                let top = o_browse.adjustTopOfMetadataList(currentElement);
+                $(`#op-add-metadata-fields`).css("top", top);
+            }
         }
 
         if (o_browse.modalScrollbar) {
@@ -2118,13 +2121,13 @@ var o_browse = {
             } else {
                 $(`#galleryViewContents .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
-                let last = $("#op-add-metadata-fields").data("last");
-                if (last !== undefined) {
-                    let addedElement =  $(`ul[data-slug="${slug}"]`).find("dd");
+                let lastAddedSlug = $("#op-add-metadata-fields").data("last");
+                if (lastAddedSlug !== undefined) {
+                    let addedElement =  $(`ul[data-slug="${lastAddedSlug}"]`);
                     // if any part of the newly added element is not on the screen, move the scrollbar down
                     if (!addedElement.isOnScreen($(container), 0)) {
-                        let height = $(addedElement).height();
-                        $(container).scrollTop(height);
+                        let scrollUp = $(addedElement).height() + $(container).scrollTop();
+                        $(container).scrollTop(scrollUp);
                     }
                 }
             }
@@ -2240,6 +2243,7 @@ var o_browse = {
             cursor: "grabbing",
             containment: "parent",
             tolerance: "pointer",
+            helper: "clone",
             start: function(e, ui) {
                 let scrollContainer = $(e.target).data("ui-sortable").scrollParent;
                 let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
@@ -2252,8 +2256,8 @@ var o_browse = {
                     scrollContainer.scrollTop(maxScrollTop);
                 }
             },
-            update: function(e, ui) {
-                o_browse.onDoneUpdateMetadataDetails();
+            stop: function(e, ui) {
+                _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
             },
         }).addClass("op-no-select");
         $(".op-detail-data").fadeTo("fast", 0.15);
