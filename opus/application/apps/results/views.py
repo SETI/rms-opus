@@ -56,6 +56,7 @@ from search.views import (get_param_info_by_slug,
 from tools.app_utils import (cols_to_slug_list,
                              convert_ring_obs_id_to_opus_id,
                              csv_response,
+                             download_filename,
                              enter_api_call,
                              exit_api_call,
                              format_metadata_number_or_func,
@@ -382,7 +383,8 @@ def api_get_data(request, fmt):
         csv_data = []
         csv_data.append(labels)
         csv_data.extend(page)
-        ret = csv_response('data', csv_data)
+        csv_filename = download_filename(None, 'data')
+        ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data}
         ret = render(request, 'results/data.html', context)
@@ -653,7 +655,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 row_data.append(v)
             csv_data.append(row_title)
             csv_data.append(row_data)
-        ret = csv_response(opus_id, csv_data)
+        csv_filename = download_filename(opus_id, 'metadata')
+        ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data,
                    'all_info': all_info,
@@ -692,7 +695,7 @@ def api_get_images_by_size(request, size, fmt):
     """
     api_code = enter_api_call('api_get_images_by_size', request)
 
-    ret = _api_get_images(request, fmt, api_code, size, True)
+    ret = _api_get_images(request, fmt, api_code, size, True, None)
 
     exit_api_call(api_code, ret)
     return ret
@@ -713,7 +716,7 @@ def api_get_images(request, fmt):
     """
     api_code = enter_api_call('api_get_images', request)
 
-    ret = _api_get_images(request, fmt, api_code, None, True)
+    ret = _api_get_images(request, fmt, api_code, None, True, None)
 
     exit_api_call(api_code, ret)
     return ret
@@ -735,12 +738,12 @@ def api_get_image(request, opus_id, size, fmt):
         request.GET = request.GET.copy()
         request.GET['opusid'] = opus_id
         request.GET['qtype-opusid'] = 'matches'
-    ret = _api_get_images(request, fmt, api_code, size, False)
+    ret = _api_get_images(request, fmt, api_code, size, False, opus_id)
 
     exit_api_call(api_code, ret)
     return ret
 
-def _api_get_images(request, fmt, api_code, size, include_search):
+def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     if not request or request.GET is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
@@ -853,7 +856,8 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                 csv_data.append(row)
             else:
                 csv_data.append([image['opus_id'], image['url']])
-        ret = csv_response('data', csv_data, column_names=columns)
+        csv_filename = download_filename(opus_id, 'images')
+        ret = csv_response(csv_filename, csv_data, column_names=columns)
     elif fmt == 'html':
         context = {'data': image_list,
                    'size': size}
@@ -1694,7 +1698,8 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
         raise ret
 
     if fmt == 'csv':
-        return csv_response(opus_id, page, labels)
+        csv_filename = download_filename(opus_id, 'metadata')
+        return csv_response(csv_filename, page, labels)
 
     url_cols = request.GET.get('url_cols', False)
 

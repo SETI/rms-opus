@@ -49,6 +49,7 @@ from search.views import (url_to_search_params,
                           create_order_by_sql)
 from tools.app_utils import (cols_to_slug_list,
                              csv_response,
+                             download_filename,
                              enter_api_call,
                              exit_api_call,
                              get_reqno,
@@ -254,7 +255,8 @@ def api_get_cart_csv(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = csv_response('data', page, column_labels)
+    csv_filename = download_filename(None, 'cart')
+    ret = csv_response(csv_filename, page, column_labels)
 
     exit_api_call(api_code, ret)
     return ret
@@ -588,7 +590,8 @@ def api_create_download(request, opus_id=None):
     files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)
 
-    zip_base_file_name = _zip_filename(opus_id, url_file_only)
+    file_type = 'url' if url_file_only else 'data'
+    zip_base_file_name = download_filename(opus_id, file_type) + '.zip'
     zip_root = zip_base_file_name.split('.')[0]
     zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
     # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
@@ -1373,21 +1376,6 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 # Support routines - Downloads
 #
 ################################################################################
-
-
-def _zip_filename(opus_id, url_file_only):
-    "Create a unique .zip filename for a user's cart."
-    random_ascii = random.choice(string.ascii_letters).lower()
-    timestamp = "T".join(str(datetime.datetime.now()).split(' '))
-    # Windows doesn't like ':' in filenames
-    timestamp = timestamp.replace(':', '-')
-    # And we don't want a period to confuse the suffix later
-    timestamp = timestamp.replace('.', '-')
-    data_url = 'url' if url_file_only else 'data'
-    root = f'pdsrms-{timestamp}-{data_url}-{random_ascii}'
-    if opus_id:
-        root += f'_{opus_id}'
-    return root + '.zip'
 
 
 def _csv_helper(request, opus_id, api_code=None):
