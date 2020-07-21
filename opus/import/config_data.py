@@ -766,7 +766,7 @@ TARGET_NAME_INFO = {
     '2014 PN70':            (None,  'OTHER',      '2014 PN70'),
 
     # Other rings
-    'CHARIKLO RING':        (None,  'RING',       'Chariklo RING'),
+    'CHARIKLO RING':        (None,  'RING',       'Chariklo Ring'),
 
     # Comets
     'SHOEMAKER LEVY 9':     (None,  'OTHER',      'Shoemaker Levy 9'),

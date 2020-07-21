@@ -118,6 +118,7 @@ var opus = {
         "chrome (ios)": 56,
         "opera": 42,
         "safari": 10.1,
+        "edge": 83,
         "based on applewebkit": 537, // Based on Chrome 56
         "width": 550,
         "height": 270
@@ -1232,6 +1233,17 @@ var opus = {
             matchObj = userAgent.match(/Version\/(\d+.\d+)/);
             browserName = "Safari";
             browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("Edg") > -1) {
+            // ==== Microsoft Edge ====
+            // ** Mac:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36 Edg/83.0.478.37
+            // ** Windows:
+            // Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36 Edg/83.0.478.37
+            matchObj = userAgent.match(/Edg\/(\d+.\d+)/);
+            browserName = "Edge";
+            browserVersion = matchObj[1];
         } else if (userAgent.indexOf("AppleWebKit") > -1 && userAgent.indexOf("Edge") === -1 &&
                    userAgent.indexOf("Edg") === -1) {
             // ==== Other AppleWebKit-based Browser ====
@@ -1265,6 +1277,7 @@ var opus = {
                         Chrome (${opus.browserSupport.chrome}+),
                         Safari (${opus.browserSupport.safari}+),
                         Opera (${opus.browserSupport.opera}+),
+                        Edge (${opus.browserSupport.edge}+),
                         and other AppleWebKit-based browsers (${opus.browserSupport["based on applewebkit"]})+.
                         ${updateString}`);
         $("#op-browser-version-msg-modal .modal-body").html(modalMsg);

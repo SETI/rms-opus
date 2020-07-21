@@ -1,2 +1,2 @@
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID
+time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1
