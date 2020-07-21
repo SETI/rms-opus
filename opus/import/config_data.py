@@ -521,7 +521,7 @@ TARGET_NAME_INFO = {
     'VENUS':                ('VEN', 'PLANET',       'Venus'),
 
     'EARTH':                ('EAR', 'PLANET',       'Earth'),
-      'MOON':               ('EAR', 'REG_SAT',      'Moon'),
+      'MOON':               ('EAR', 'REG_SAT',      'Moon'), # noqa: E131
 
     'MARS':                 ('MAR', 'PLANET',       'Mars'),
 
@@ -692,23 +692,17 @@ TARGET_NAME_INFO = {
       'U RINGS':            ('URA', 'RING',         'Uranus Rings'),
 
     'NEPTUNE':              ('NEP', 'PLANET',       'Neptune'),
-      'CHARON':             ('NEP', 'IRR_SAT',      'Charon'),
       'DESPINA':            ('NEP', 'REG_SAT',      'Despina'),
       'GALATEA':            ('NEP', 'REG_SAT',      'Galatea'),
       'HALIMEDE':           ('NEP', 'IRR_SAT',      'Halimede'),
-      'HYDRA':              ('NEP', 'IRR_SAT',      'Hydra'),
-      'KERBEROS':           ('NEP', 'IRR_SAT',      'Kerberos'),
       'LAOMEDEIA':          ('NEP', 'IRR_SAT',      'Laomedeia'),
       'LARISSA':            ('NEP', 'REG_SAT',      'Larissa'),
       'NAIAD':              ('NEP', 'REG_SAT',      'Naiad'),
       'NEREID':             ('NEP', 'IRR_SAT',      'Nereid'),
       'NESO':               ('NEP', 'IRR_SAT',      'Neso'),
-      'NIX':                ('NEP', 'IRR_SAT',      'Nix'),
-      'PLUTO':              ('NEP', 'IRR_SAT',      'Pluto'),
       'PROTEUS':            ('NEP', 'REG_SAT',      'Proteus'),
       'PSAMATHE':           ('NEP', 'IRR_SAT',      'Psamathe'),
       'SAO':                ('NEP', 'IRR_SAT',      'Sao'),
-      'STYX':               ('NEP', 'IRR_SAT',      'Styx'),
       'THALASSA':           ('NEP', 'REG_SAT',      'Thalassa'),
       'TRITON':             ('NEP', 'IRR_SAT',      'Triton'),
       'N RINGS':            ('NEP', 'RING',         'Neptune Rings'),

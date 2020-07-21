@@ -4,12 +4,7 @@
 # Perform various validations on the database.
 ################################################################################
 
-import os
-
-import pdsfile
-
 import impglobals
-import import_util
 
 
 def validate_param_info(namespace):
@@ -251,7 +246,7 @@ LEFT JOIN {wl_table} ON {q(full_obs_table_name)}.{q('obs_general_id')} =
 
 def do_validate(namespace='perm'):
     impglobals.LOGGER.open(
-            f'Performing database validation', limits={'info': -1, 'debug': -1})
+            'Performing database validation', limits={'info': -1, 'debug': -1})
 
     validate_param_info(namespace)
     validate_nulls(namespace)

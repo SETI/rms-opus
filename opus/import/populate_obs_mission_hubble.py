@@ -67,8 +67,6 @@ def populate_obs_general_HSTx_opus_id_OBS(**kwargs):
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
@@ -86,7 +84,6 @@ def populate_obs_general_HSTx_ring_obs_id_OBS(**kwargs):
     instrument_id = index_row['INSTRUMENT_ID']
     image_date = index_row['START_TIME'][:10]
     filename = index_row['PRODUCT_ID']
-    image_num = filename[1:11]
     planet = _helper_hubble_planet_id(**kwargs)
     if planet is None:
         pl_str = ''
@@ -134,7 +131,6 @@ populate_obs_general_HSTWFPC2_quantity_OBS = populate_obs_general_HSTx_quantity_
 
 def populate_obs_general_HSTx_observation_type_OBS(**kwargs):
     metadata = kwargs['metadata']
-    instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     obs_type = index_row['OBSERVATION_TYPE']
     # XXX Temporary fix for issue pds-webserver/10
@@ -856,11 +852,10 @@ def populate_obs_wavelength_HSTSTIS_spec_flag_OBS(**kwargs):
     return 'N'
 
 def populate_obs_wavelength_HSTSTIS_spec_size_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    general_row = metadata['obs_general_row']
-    obs_type = general_row['observation_type']
-
     return None
+    # metadata = kwargs['metadata']
+    # general_row = metadata['obs_general_row']
+    # obs_type = general_row['observation_type']
     # if obs_type == 'IMG':
     #     return None
     #
@@ -1073,7 +1068,7 @@ def populate_obs_mission_hubble_HSTWFPC2_targeted_detector_id(**kwargs):
     targeted_detector_id = index_row['TARGETED_DETECTOR_ID']
     if targeted_detector_id == '':
         import_util.log_nonrepeating_error(
-            f'Empty targeted detector ID')
+            'Empty targeted detector ID')
     return targeted_detector_id
 
 def populate_obs_mission_hubble_HSTx_optical_element(**kwargs):
@@ -1086,7 +1081,6 @@ populate_obs_mission_hubble_HSTWFPC2_optical_element = populate_obs_mission_hubb
 
 def populate_obs_mission_hubble_HSTSTIS_optical_element(**kwargs):
     metadata = kwargs['metadata']
-    instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     element = index_row['OPTICAL_ELEMENT_NAME'].upper()
     return (element, element)

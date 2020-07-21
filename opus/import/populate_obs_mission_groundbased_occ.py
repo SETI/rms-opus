@@ -5,10 +5,7 @@
 # It may change fields in obs_general or obs_mission_groundbased.
 ################################################################################
 
-import opus_support
-
 from config_data import *
-import impglobals
 import import_util
 
 

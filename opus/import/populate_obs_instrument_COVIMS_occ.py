@@ -7,7 +7,6 @@
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -403,7 +402,7 @@ def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs)
 
     return el
 
-def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
@@ -483,7 +482,7 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2_OCC(**kwargs):
     if sc1 is not None and sc_cvt < sc1:
         import_util.log_warning(
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +f'are in the wrong order - setting to count1')
+    +'are in the wrong order - setting to count1')
         sc_cvt = sc1
 
     return sc_cvt

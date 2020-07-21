@@ -267,7 +267,6 @@ def populate_obs_type_image_GOSSI_greater_pixel_size_OBS(**kwargs):
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    instrument_id = index_row['INSTRUMENT_ID']
     filter_name = index_row['FILTER_NAME']
 
     if filter_name not in _GOSSI_FILTER_WAVELENGTHS:
