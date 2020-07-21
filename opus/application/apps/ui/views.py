@@ -43,6 +43,7 @@ from tools.app_utils import (cols_to_slug_list,
                              convert_ring_obs_id_to_opus_id,
                              enter_api_call,
                              exit_api_call,
+                             format_metadata_number_or_func,
                              get_git_version,
                              get_mult_name,
                              get_reqno,
@@ -281,26 +282,20 @@ def api_get_widget(request, **kwargs):
                     +'</ul>')
 
         else: # param is constrained
-            if form_type_func is None:
-                if form_type_format == 'd':
-                    func = int
-                else:
-                    func = float
-            else:
-                if form_type_func in opus_support.RANGE_FUNCTIONS:
-                    func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
-                else:
-                    log.error('Unknown RANGE function "%s"',
-                              form_type_func)
-                    func = float
             key = 0
             while key<length:
                 try:
-                    form_vals[slug1] = func(selections[param1][key])
+                    form_vals[slug1] = format_metadata_number_or_func(
+                                                selections[param1][key],
+                                                form_type_func,
+                                                form_type_format)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
-                    form_vals[slug2] = func(selections[param2][key])
+                    form_vals[slug2] = format_metadata_number_or_func(
+                                                selections[param2][key],
+                                                form_type_func,
+                                                form_type_format)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 
