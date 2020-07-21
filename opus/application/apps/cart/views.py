@@ -30,7 +30,6 @@ from django.db import connection, DatabaseError
 from django.http import (HttpResponse,
                          HttpResponseServerError,
                          Http404)
-from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
@@ -57,12 +56,14 @@ from tools.app_utils import (cols_to_slug_list,
                              json_response,
                              throw_random_http404_error,
                              throw_random_http500_error,
+                             HTTP404_BAD_DOWNLOAD,
                              HTTP404_BAD_OR_MISSING_RANGE,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_BAD_RECYCLEBIN,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_SLUG,
                              HTTP500_DATABASE_ERROR,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
@@ -507,7 +508,7 @@ def api_reset_session(request):
 
 @never_cache
 def api_create_download(request, opus_id=None):
-    """Creates a zip file of all items in the cart or the given OPUS ID.
+    r"""Creates a zip file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
 
@@ -548,22 +549,22 @@ def api_create_download(request, opus_id=None):
             max_selections = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
             if num_selections > max_selections:
                 ret = json_response({'error':
-                     f'You are attempting to download more than the maximum '
+                      'You are attempting to download more than the maximum '
                     +f'permitted number ({max_selections}) of observations in '
-                    +f'a URL archive. Please reduce the number of '
-                    +f'observations you are trying to download.'})
+                    + 'a URL archive. Please reduce the number of '
+                    + 'observations you are trying to download.'})
                 exit_api_call(api_code, ret)
                 return ret
         else:
             max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
             if num_selections > max_selections:
                 ret = json_response({'error':
-                     f'You are attempting to download more than the maximum '
+                      'You are attempting to download more than the maximum '
                     +f'permitted number ({max_selections}) of observations in '
-                    +f'a data archive. Please either reduce the number of '
-                    +f'observations you are trying to download or download a '
-                    +f'URL archive instead and then retrieve the data products '
-                    +f'using "wget".'})
+                    + 'a data archive. Please either reduce the number of '
+                    + 'observations you are trying to download or download a '
+                    + 'URL archive instead and then retrieve the data products '
+                    + 'using "wget".'})
                 exit_api_call(api_code, ret)
                 return ret
         res = (Cart.objects
@@ -608,10 +609,10 @@ def api_create_download(request, opus_id=None):
                  +' bytes but the maximum allowed is '
                  +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
                  +' bytes. Please either reduce the number of '
-                 +f'observations you are trying to download, reduce the number '
-                 +f'of data products for each observation, or download a URL '
-                 +f'archive instead and then retrieve the data products using '
-                 +f'"wget".'})
+                 +'observations you are trying to download, reduce the number '
+                 +'of data products for each observation, or download a URL '
+                 +'archive instead and then retrieve the data products using '
+                 +'"wget".'})
             exit_api_call(api_code, ret)
             return ret
 
@@ -659,7 +660,6 @@ def api_create_download(request, opus_id=None):
                 size = file_data['size']
                 pretty_name = path.split('/')[-1]
                 logical_path = path[path.index('/holdings')+9:]
-                digest = f'{pretty_name}:{checksum}'
                 mdigest = (f'{f_opus_id},{category},{product_type},'
                           +f'{product_abbrev},{version_name},{logical_path},'
                           +f'{checksum},{size}')
@@ -673,10 +673,11 @@ def api_create_download(request, opus_id=None):
                         try:
                             zip_file.write(path, arcname=filename)
                         except Exception as e:
-                            log.error(
-            'api_create_download threw exception for opus_id %s, product_type %s, '
-            +'file %s, pretty_name %s: %s',
-            f_opus_id, product_type, path, pretty_name, str(e))
+                            log.error('api_create_download threw exception '+
+                                      'for opus_id %s, product_type %s, '+
+                                      'file %s, pretty_name %s: %s',
+                                      f_opus_id, product_type, path,
+                                      pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
                     added.append(pretty_name)
 
@@ -954,7 +955,7 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
         # There are a few things this misses - empty opus_ids and duplicate
         # opus_ids will return this same error. But it doesn't seem worth
         # trying to catch those for an internal API.
-        return (f'Internal Error: One or more OPUS_IDs not found; '
+        return ('Internal Error: One or more OPUS_IDs not found; '
                 +'nothing added to cart')
 
     num_cart_and_recycle = (Cart.objects
@@ -972,13 +973,13 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
         settings.MAX_SELECTIONS_ALLOWED):
         if len(general_res) == 1:
             return (f'Your request to add OPUS ID {opus_id_list[0]} to the '
-                    +f'cart failed - there are already too many observations '
-                    +f'in the cart and recycle bin. The maximum allowed is '
+                    +'cart failed - there are already too many observations '
+                    +'in the cart and recycle bin. The maximum allowed is '
                     +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
         else:
-            return (f'Your request to add multiple OPUS IDs to the cart failed '
-                    +f'- there are already too many observations in the cart '
-                    +f'and recycle bin. The maximum allowed is '
+            return ('Your request to add multiple OPUS IDs to the cart failed '
+                    +'- there are already too many observations in the cart '
+                    +'and recycle bin. The maximum allowed is '
                     +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
 
     # We use REPLACE INTO to avoid problems with duplicate entries or
@@ -1017,7 +1018,7 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
                .filter(opus_id__in=opus_id_list)
                .values_list('opus_id', 'obs_general_id'))
         if len(res) != len(opus_id_list):
-            return (f'Internal Error: One or more OPUS_IDs not found; '
+            return ('Internal Error: One or more OPUS_IDs not found; '
                     +'nothing removed from cart')
         values = [(session_id, obs_general_id, opus_id, 1)
                   for opus_id, obs_general_id in res]
@@ -1232,10 +1233,10 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                 settings.MAX_SELECTIONS_ALLOWED):
                 return (f'Your request to add {num_wanted:,d} observations ('
                         +f'OPUS IDs {ids[0]} to {ids[1]}) '
-                        +f'to the cart failed. The resulting cart and recycle '
-                        +f'bin would have more than the maximum '
+                        +'to the cart failed. The resulting cart and recycle '
+                        +'bin would have more than the maximum '
                         +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                        +f'allowed. None of the observations were added.')
+                        +'allowed. None of the observations were added.')
 
         sql_params = []
         sql = 'REPLACE INTO '+q('cart')+' ('
@@ -1331,10 +1332,10 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 
         if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
             return (f'Your request to add all {count:,d} observations '
-                    +f'to the cart failed. The resulting cart and recycle bin '
-                    +f'would have more than the maximum '
+                    +'to the cart failed. The resulting cart and recycle bin '
+                    +'would have more than the maximum '
                     +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                    +f'allowed. None of the observations were added.')
+                    +'allowed. None of the observations were added.')
 
         values = [session_id]
         sql = 'REPLACE INTO '+q('cart')+' ('

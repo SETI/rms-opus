@@ -50,6 +50,7 @@ from tools.app_utils import (cols_to_slug_list,
                              parse_form_type,
                              strip_numeric_suffix,
                              throw_random_http404_error,
+                             HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_NO_REQUEST)
 from tools.file_utils import (get_pds_preview_images,
                               get_pds_products)
@@ -205,7 +206,6 @@ def api_get_widget(request, **kwargs):
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = strip_numeric_suffix(kwargs['slug'])
-    fmt = 'html'
     form = ''
 
     param_info = get_param_info_by_slug(slug, 'widget')
@@ -251,8 +251,6 @@ def api_get_widget(request, **kwargs):
         if param_qualified_name_no_num in qtypes:
             initial_qtype = qtypes[param_qualified_name_no_num][0]
 
-    search_form = param_info.category_name
-
     if form_type in settings.RANGE_FORM_TYPES:
         auto_id = False
 
@@ -267,10 +265,14 @@ def api_get_widget(request, **kwargs):
 
         # find length of longest list of selections for either param1 or param2,
         # tells us how many times to go through loop below
-        try: len1 = len(selections[param1])
-        except: len1 = 0
-        try: len2 = len(selections[param2])
-        except: len2 = 0
+        try:
+            len1 = len(selections[param1])
+        except:
+            len1 = 0
+        try:
+            len2 = len(selections[param2])
+        except:
+            len2 = 0
         length = len1 if len1 > len2 else len2
 
         if not length: # param is not constrained
@@ -294,12 +296,12 @@ def api_get_widget(request, **kwargs):
             key = 0
             while key<length:
                 try:
-                  form_vals[slug1] = func(selections[param1][key])
-                except (IndexError, KeyError, ValueError, TypeError) as e:
+                    form_vals[slug1] = func(selections[param1][key])
+                except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
                     form_vals[slug2] = func(selections[param2][key])
-                except (IndexError, KeyError, ValueError, TypeError) as e:
+                except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 
                 extra_str = ''
@@ -356,28 +358,30 @@ def api_get_widget(request, **kwargs):
                 new_values.append(val)
             form_vals = {slug: new_values}
 
+        # XXX It's horrible that this whole section is inside a try/except
         try:
-            grouping = model.objects.distinct().values('grouping')
+            _ = model.objects.distinct().values('grouping')
             grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
             grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
                 glabel = group_info.label if group_info.label else 'Other'
-                if glabel == 'NULL': glabel = 'Other'
+                if glabel == 'NULL':
+                    glabel = 'Other'
                 if model.objects.filter(grouping=gvalue)[0:1]:
-                    form +=  ("\n\n"
-                              +'<div class="mult_group_label_container'
-                              +' mult_group_' + str(glabel) + '">'
-                              +'<span class="indicator fa fa-plus">'
-                              +'</span>'
-                              +'<span class="mult_group_label">'
-                              +str(glabel) + '</span></div>'
-                              +'<ul class="mult_group"'
-                              +' data-group=' + str(glabel) + '>'
-                              +SearchForm(form_vals,
-                                          auto_id = '%s_' + str(gvalue),
-                                          grouping=gvalue).as_ul()
-                              +'</ul>');
+                    form += ("\n\n"
+                             +'<div class="mult_group_label_container'
+                             +' mult_group_' + str(glabel) + '">'
+                             +'<span class="indicator fa fa-plus">'
+                             +'</span>'
+                             +'<span class="mult_group_label">'
+                             +str(glabel) + '</span></div>'
+                             +'<ul class="mult_group"'
+                             +' data-group=' + str(glabel) + '>'
+                             +SearchForm(form_vals,
+                                         auto_id='%s_' + str(gvalue),
+                                         grouping=gvalue).as_ul()
+                             +'</ul>')
 
         except FieldError:
             # this model does not have grouping
@@ -406,7 +410,6 @@ def api_get_widget(request, **kwargs):
     units = opus_support.get_display_names(param_info.units)
     valid_units = opus_support.get_valid_units(param_info.units)
     ranges = param_info.get_ranges_info()
-    test_ranges = param_info.get_ranges_info()
 
     for cat in ranges:
         default_format = cat['format']
@@ -449,7 +452,7 @@ def api_get_widget(request, **kwargs):
 
 @never_cache
 def api_init_detail_page(request, **kwargs):
-    """Render the top part of the Details tab.
+    r"""Render the top part of the Details tab.
 
     This is a PRIVATE API.
 
@@ -464,8 +467,6 @@ def api_init_detail_page(request, **kwargs):
         results.get_metadata()
     """
     api_code = enter_api_call('api_get_data', request, kwargs)
-
-    slugs = request.GET.get('cols', False)
 
     opus_id = kwargs['opus_id']
 
@@ -911,11 +912,11 @@ def api_normalize_url(request):
             unit_slug = None
 
         if found_unit and not valid_units:
-                # We have a unit for a field that doesn't allow units!
-                msg = ('Search term "'+escape(found_unit)+'" is a unit for '
-                       +'a field that does not allow units; '
-                       +'it has been ignored.')
-                msg_list.append(msg)
+            # We have a unit for a field that doesn't allow units!
+            msg = ('Search term "'+escape(found_unit)+'" is a unit for '
+                   +'a field that does not allow units; '
+                   +'it has been ignored.')
+            msg_list.append(msg)
 
         if unit_slug in units_by_slug:
             if unit_val != units_by_slug[unit_slug]:
@@ -1325,7 +1326,7 @@ def api_normalize_url(request):
                        +'OPUS_ID ('+opus_id+'); it has been converted for you.')
                 msg_list.append(msg)
             try:
-                obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+                _ = ObsGeneral.objects.get(opus_id=opus_id)
             except ObjectDoesNotExist:
                 msg = ('The OPUS_ID specified for the "detail" tab '
                        +'was not found in the current database; '
@@ -1468,12 +1469,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     menu_data = {}
     menu_data['labels_view'] = labels_view
 
-    obs_surface_geometry_div = None
     obs_surface_geometry_name_div = None
     for d in divs:
-        if d.table_name == 'obs_surface_geometry':
-            obs_surface_geometry_div = d
-        elif d.table_name == 'obs_surface_geometry_name':
+        if d.table_name == 'obs_surface_geometry_name':
             obs_surface_geometry_name_div = d
 
     for d in divs:

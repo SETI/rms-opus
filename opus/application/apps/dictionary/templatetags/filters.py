@@ -1,8 +1,9 @@
 from django import template
 from dictionary.views import html_decode
+import logging
+
 register = template.Library()
 
-import logging
 log = logging.getLogger(__name__)
 
 

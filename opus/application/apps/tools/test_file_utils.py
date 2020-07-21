@@ -2,7 +2,6 @@
 
 from collections import OrderedDict
 import logging
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache

@@ -67,11 +67,15 @@ from tools.app_utils import (cols_to_slug_list,
                              throw_random_http404_error,
                              throw_random_http500_error,
                              HTTP404_BAD_LIMIT,
+                             HTTP404_BAD_OFFSET,
                              HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_BAD_PAGENO,
+                             HTTP404_BAD_STARTOBS,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
                              HTTP404_UNKNOWN_CATEGORY,
+                             HTTP404_UNKNOWN_FORMAT,
                              HTTP404_UNKNOWN_OPUS_ID,
                              HTTP404_UNKNOWN_RING_OBS_ID,
                              HTTP404_UNKNOWN_SLUG,
@@ -262,7 +266,7 @@ def api_get_data_and_images(request):
             'columns_no_units': labels_no_units,
             'total_obs_count':  count,
             'reqno':            reqno
-           }
+            }
 
     if page_no is not None:
         data['page_no'] = page_no # Bakwards compatibility
@@ -338,8 +342,6 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    session_id = get_session_id(request)
-
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
@@ -398,7 +400,7 @@ def api_get_data(request, fmt):
 
 @never_cache
 def api_get_metadata(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
@@ -428,7 +430,7 @@ def api_get_metadata(request, opus_id, fmt):
 
 @never_cache
 def api_get_metadata_v2(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
@@ -453,7 +455,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
                         'api_get_metadata_v2', False, False)
 
 def api_get_metadata_v2_internal(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PRIVATE API.
 
@@ -718,7 +720,7 @@ def api_get_images(request, fmt):
 
 @never_cache
 def api_get_image(request, opus_id, size, fmt):
-    """Return info about a preview image for the given opus_id and size.
+    r"""Return info about a preview image for the given opus_id and size.
 
     This is a PUBLIC API.
 
@@ -869,7 +871,7 @@ def _api_get_images(request, fmt, api_code, size, include_search):
 
 @never_cache
 def api_get_files(request, opus_id=None):
-    """Return all files for a given opus_id or search results.
+    r"""Return all files for a given opus_id or search results.
 
     This is a PUBLIC API.
 
@@ -958,7 +960,7 @@ def api_get_files(request, opus_id=None):
 
 @never_cache
 def api_get_categories_for_opus_id(request, opus_id):
-    """Return a JSON list of all categories (tables) this opus_id appears in.
+    r"""Return a JSON list of all categories (tables) this opus_id appears in.
 
     This is a PUBLIC API.
 
@@ -1058,7 +1060,7 @@ def api_get_categories_for_search(request):
 
 @never_cache
 def api_get_product_types_for_opus_id(request, opus_id):
-    """Return a JSON list of all product types available for this opus_id.
+    r"""Return a JSON list of all product types available for this opus_id.
 
     This is a PUBLIC API.
 
@@ -1625,6 +1627,7 @@ def get_search_results_chunk(request, use_cart=None,
     if return_cart_states:
         # For retrieving cart states
         coll_index = column_names.index('cart.recycled')
+
         def _recycled_mapping(x):
             if x is None:
                 return False # Not in cart at all

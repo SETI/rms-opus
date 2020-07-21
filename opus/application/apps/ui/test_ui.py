@@ -7,9 +7,9 @@ from unittest import TestCase
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
-from django.test.client import Client
 
-from ui.views import *
+from ui.views import (api_last_blog_update,
+                      api_normalize_url)
 
 import settings
 
@@ -42,7 +42,6 @@ class uiTests(TestCase):
 
     def test__api_last_blog_update_no_get(self):
         "[test_ui.py] api_last_blog_update: no GET"
-        c = Client()
         request = self.factory.get('__lastblogupdate.json')
         request.GET = None
         with self.assertRaises(Http404):
@@ -51,7 +50,6 @@ class uiTests(TestCase):
     def test__api_last_blog_update_ok(self):
         "[test_ui.py] api_last_blog_update: normal"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/lastblogupdate.txt'
-        c = Client()
         request = self.factory.get('__lastblogupdate.json')
         ret = api_last_blog_update(request)
         print(ret)
@@ -60,7 +58,6 @@ class uiTests(TestCase):
     def test__api_last_blog_update_bad(self):
         "[test_ui.py] api_last_blog_update: missing"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/xyxyxyxyxyx.txt'
-        c = Client()
         request = self.factory.get('__lastblogupdate.json')
         ret = api_last_blog_update(request)
         print(ret)
@@ -80,7 +77,6 @@ class uiTests(TestCase):
 
     def test__api_normalize_url_no_get(self):
         "[test_ui.py] api_normalize_url: no GET"
-        c = Client()
         request = self.factory.get('__normalizeurl.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,

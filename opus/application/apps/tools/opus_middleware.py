@@ -20,17 +20,17 @@ class StripWhitespaceMiddleware(object):
     """
 
     def __init__(self, get_response):
-        self.whitespace = re.compile('^\s*\n', re.MULTILINE)
+        self.whitespace = re.compile(r'^\s*\n', re.MULTILINE)
         self.get_response = get_response
-        self.whitespace_lead = re.compile('^\s+', re.MULTILINE)
-        self.whitespace_trail = re.compile('\s+$', re.MULTILINE)
+        self.whitespace_lead = re.compile(r'^\s+', re.MULTILINE)
+        self.whitespace_trail = re.compile(r'\s+$', re.MULTILINE)
 
 
     def __call__(self, request):
         response = self.get_response(request)
         if "text" in response['Content-Type']:
-        #Use next line instead to avoid failure on cached / HTTP 304 NOT MODIFIED responses without Content-Type
-        #if response.status_code == 200 and "text" in response['Content-Type']:
+            # Use next line instead to avoid failure on cached / HTTP 304 NOT MODIFIED responses without Content-Type
+            # if response.status_code == 200 and "text" in response['Content-Type']:
             decoded = response.content.decode()
             orig_decoded = decoded
             if decoded.startswith('<!--NOSTRIP-->'):
