@@ -99,7 +99,7 @@ var o_search = {
 
             if ((preprogrammedRangesDropdown.length !== 0 && $(e.target).hasClass("op-range-input-min")) &&
                 (!currentValue || o_search.rangesNameTotalMatchedCounter[slugWithId] > 0) &&
-                !preprogrammedRangesDropdown.hasClass("show")) {
+                !preprogrammedRangesDropdown.hasClass("show") && !o_widgets.isReFocusingBackToInput) {
                 o_widgets.isKeepingRangesDropdownOpen = true;
                 $(this).dropdown("toggle");
             }
@@ -172,7 +172,6 @@ var o_search = {
             let currentValue = $(this).val().trim();
             // Check if there is any match between input values and ranges names
             o_search.compareInputWithRangesInfo(currentValue, e.target);
-
             o_search.lastSlugNormalizeRequestNo++;
             o_search.slugNormalizeReqno[slugWithId] = o_search.lastSlugNormalizeRequestNo;
 
@@ -539,7 +538,6 @@ var o_search = {
         let currentValue = $(target).val().trim();
         let qtypeSlugWithId = `qtype-${slugName}_${uniqueid}`;
         let unitSlugWithId = `unit-${slugName}_${uniqueid}`;
-
         // Call normalize input api with only the slug and value from current input.
         let encodedValue = o_hash.encodeSlugValue(currentValue);
         let newHash = `${slugWithId}=${encodedValue}`;
@@ -1000,6 +998,10 @@ var o_search = {
             if (!opus.areInputsValid()) {
                 delete opus.normalizeInputForAllFieldsInProgress[slug];
                 opus.navLinkRemembered = null;
+                // This is for the case when we change a valid search (result1) to an invalid
+                // search (result2), and later on change back to result1, there will be a search
+                // triggered again to put back the valid green hints instead of keeping "?".
+                opus.force_load = true;
                 return;
             }
 
@@ -1022,8 +1024,22 @@ var o_search = {
 
             $("#sidebar").removeClass("search_overlay");
             delete opus.normalizeInputForAllFieldsInProgress[slug];
-
             opus.changeTabToRemembered();
+
+            let slugNoCounter = o_utils.getSlugOrDataWithoutCounter(slug);
+            let uniqueid = o_utils.getSlugOrDataTrailingCounterStr(slug);
+            let targetInput = $(`input.RANGE[name^="${slugNoCounter}"][data-uniqueid="${uniqueid}"]`);
+            // Re-focus into the min input so that it will remember the current value (minVal) as
+            // the old value. That way, when user changes the input value (new value), this old value
+            // will be used for comparison to determine if a change event should fire. Note: if we
+            // don't re-focus into the min input, the old value will be the value when we first focused
+            // the input before selecting the preprogrammed item (not minVal).
+            if (o_widgets.isReFocusingBackToInput && targetInput.hasClass("op-range-input-min") &&
+                targetInput.hasClass("op-ranges-dropdown-menu")) {
+                targetInput.blur();
+                targetInput.focus();
+                o_widgets.isReFocusingBackToInput = false;
+            }
         });
     },
 

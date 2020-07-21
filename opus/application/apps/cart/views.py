@@ -16,11 +16,8 @@
 ################################################################################
 
 import csv
-import datetime
 import logging
 import os
-import random
-import string
 import time
 import zipfile
 

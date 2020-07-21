@@ -580,19 +580,25 @@ def api_get_fields(request, fmt, slug=None):
     Can return JSON or CSV.
 
     Returned JSON:
-        {"time1":
-            {"label": "Observation Start Time",
-             "search_label": "Observation Time",
-             "full_label": "Observation Start Time",
-             "full_search_label": "Observation Time [General]",
-             "category": "General Constraints",
-             "field_id": "time1",
-             "old_field_id": "timesec1"}
+      {
+        "time1": {
+          "field_id": "time1",
+          "category": "General Constraints",
+          "type": "range_time",
+          "label": "Observation Start Time",
+          "search_label": "Observation Time",
+          "full_label": "Observation Start Time",
+          "full_search_label": "Observation Time [General]",
+          "default_units": null,
+          "available_units": null,
+          "old_slug": "timesec1",
+          "slug": "time1"
         }
+      }
 
     Returned CSV:
-        Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID
-        time1,General Constraints,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,timesec1
+        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID
+        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
@@ -773,17 +779,19 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
     elif fmt == 'json':
         ret = json_response({'data': return_obj})
     elif fmt == 'csv':
-        labels = ['Field ID', 'Category',
+        labels = ['Field ID', 'Category', 'Type',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Old Field ID', 'Units'
+                  'Default Units', 'Available Units', 'Old Field ID'
                   ]
-        rows = [(v['field_id'], v['category'],
+        rows = [(v['field_id'], v['category'], v['type'],
                  v['search_label'], v['label'],
                  v['full_search_label'],
                  v['full_label'],
+                 v['default_units'],
+                 v['available_units'],
                  v['old_slug'],
-                 v['available_units']) for k,v in return_obj.items()]
+                 ) for k,v in return_obj.items()]
         ret = csv_response('fields', rows, labels)
     else:
         log.error('get_fields_info: Unknown format "%s"', fmt)
