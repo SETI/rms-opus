@@ -174,7 +174,14 @@ var o_selectMetadata = {
                 // display check next to any currently used columns
                 $.each(opus.prefs.cols, function(index, col) {
                     o_menu.markMenuItem(`#op-select-metadata .op-all-metadata-column a[data-slug="${col}"]`);
-                    $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).parent().hide();
+                    let elem = $(`#op-add-metadata-fields .op-select-list a[data-slug="${col}"]`).parent();
+                    elem.remove();
+                });
+                //remove category from the add menu if it's empty
+                $(`#op-add-metadata-fields .op-search-menu-category ul`).each(function(index, elem) {
+                    if ($(elem).find("li").length === 0) {
+                        $(elem).parent().remove();
+                    }
                 });
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");

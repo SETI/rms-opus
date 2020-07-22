@@ -10,8 +10,6 @@
 var o_utils = {
 /* jshint varstmt: true */
 
-    numberOfDisableUserInteractionRequests: 0,
-
     /**
      *
      *  some utils

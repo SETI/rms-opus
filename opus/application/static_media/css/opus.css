@@ -209,7 +209,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     white-space: nowrap;
     display: inline-flex;
     position: absolute;
-    top: 0;
+    top: -0.5em;
 }
 
 .op-metadata-detail-edit a:hover {
@@ -228,7 +228,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 }
 
 .op-metadata-detail-add {
-    left: 1em;
+    left: 0;
     position: absolute;
 }
 
@@ -1109,6 +1109,10 @@ when window sized is narrow */
     right: 0;
 }
 
+#galleryViewContents .op-metadata-details  .op-metadata-details-tools {
+    float: left;
+}
+
 /* to account for empty field data */
 #galleryViewContents .op-metadata-details .op-metadata-data {
     min-height: 1em;
@@ -1131,8 +1135,8 @@ when window sized is narrow */
 #galleryView button.close {
     position: absolute;
     float: right;
-    top: .8em;
-    right: 1em;
+    top: 0.4em;
+    right: 0.5em;
     z-index: 999;
 }
 

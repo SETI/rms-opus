@@ -40,6 +40,11 @@ var o_browse = {
     // The viewable fraction of an item's height such that it will be treated as present on the screen
     galleryImageViewableFraction: 0.8,
 
+    // A flag to determine if the sortable item sorting is happening. This
+    // will be used in mutation observer to determine if scrollbar location should
+    // be set.
+    isSortingHappening: false,
+
     // unique to o_browse
     imageSize: 100,     // default
 
@@ -1329,7 +1334,6 @@ var o_browse = {
         let hashArray = o_hash.getHashArray();
         let slugs = hashArray.cols.split(",");
 
-
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
         let tableHtml = "";
@@ -2095,6 +2099,9 @@ var o_browse = {
     },
 
     adjustBrowseDialogPS: function() {
+        if (o_browse.isSortingHappening) {
+            return;
+        }
         let modalHeight = $("#galleryViewContents").height();
         let modalEditHeight = $(".op-metadata-detail-edit").outerHeight(true);
         let bottomRowHeight = $("#galleryViewContents .bottom").outerHeight(true);
@@ -2113,6 +2120,7 @@ var o_browse = {
         }
 
         if (o_browse.modalScrollbar) {
+            o_browse.hideMetadataList();
             if (containerHeight > browseDialogHeight) {
                 if (!$(`#galleryViewContents .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
                     $(`#galleryViewContents .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
@@ -2244,20 +2252,16 @@ var o_browse = {
             containment: "parent",
             tolerance: "pointer",
             helper: "clone",
-            start: function(e, ui) {
-                let scrollContainer = $(e.target).data("ui-sortable").scrollParent;
-                let maxScrollTop = scrollContainer[0].scrollHeight - scrollContainer.height();
-                $(e.target).data("maxScrollTop", maxScrollTop);
-            },
-            sort: function(e, ui) {
-                let scrollContainer = $(e.target).data("ui-sortable").scrollParent;
-                let maxScrollTop = $(e.target).data("maxScrollTop");
-                if (scrollContainer.scrollTop() >= maxScrollTop) {
-                    scrollContainer.scrollTop(maxScrollTop);
-                }
-            },
             stop: function(e, ui) {
                 _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
+                o_browse.isSortingHappening = false;
+            },
+            start: function(e, ui) {
+                o_widgets.getMaxScrollTopVal(e.target);
+                o_browse.isSortingHappening = true;
+            },
+            sort: function(e, ui) {
+                o_widgets.preventContinuousDownScrolling(e.target);
             },
         }).addClass("op-no-select");
         $(".op-detail-data").fadeTo("fast", 0.15);
@@ -2296,8 +2300,8 @@ var o_browse = {
         // list columns + values
         let html = "";
         let selectMetadataTitle = "Add metadata field after the current field";
-        let removeTool = `<li class="op-metadata-details-tools list-inline-item">` +
-                         `<a href="#" class="op-metadata-detail-remove" title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let removeTool = `<li class="op-metadata-details-tools mr-2">` +
+                         `<a href="#" class="op-metadata-detail-remove" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
         let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
@@ -2306,8 +2310,8 @@ var o_browse = {
                 let slug = opus.prefs.cols[index];
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
-                html += `<ul class="list-inline d-flex mb-0" data-slug="${slug}">${removeTool}`;
-                html += `<li class="op-metadata-detail-item list-inline-item">`;
+                html += `<ul class="list-inline mb-0" data-slug="${slug}">${removeTool}`;
+                html += `<li class="op-metadata-detail-item>`;
                 html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div><div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
                 html += `</li></ul>`;
             }
