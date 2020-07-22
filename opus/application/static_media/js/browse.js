@@ -1499,7 +1499,7 @@ var o_browse = {
             },
             start: function(e, ui) {
                  //dragColumn(ui, e.type);
-                $("tbody").animate({opacity: '0.4'});
+                $("tbody").animate({opacity: '0.1'});
                 positionArray = [];
                 $("thead th.op-draggable").each(function(index, th) {
                     $(th).width($(th).width());
