@@ -1280,7 +1280,7 @@ var o_browse = {
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
-                viewNamespace.observationData[opusId] = item.metadata;	// for galleryView, store in global array
+                viewNamespace.observationData[opusId] = item.metadata;    // for galleryView, store in global array
                 let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
 
                 let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range`;
@@ -1427,10 +1427,11 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
+        o_browse.initDraggableColumn(tab);
         $("body").removeClass("op-prevent-pointer-events");
     },
 
@@ -1459,6 +1460,80 @@ var o_browse = {
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
+            },
+        });
+    },
+
+    initDraggableColumn: function(tab) {
+        let positionArray = [];
+        function dragColumn(ui, action) {
+            let element = ui.item;
+            let slug = element.attr("id");
+            let func = (action === "sortstart" ? "addClass" : "removeClass");
+            $(`${tab} .op-data-table-colun-move-bar`)[func]("op-column-move");
+            $(`${tab} .op-data-table td[data-slug="${slug}"]`).each(function(column, td) {
+                $(td)[func]("op-column-move");
+            });
+        }
+        function moveColumn(table, from, to) {
+            let rows = $('tr', table);
+            let cols;
+            rows.each(function() {
+                cols = $(this).children("td");
+                cols.eq(from).detach().insertBefore(cols.eq(to));
+            });
+        }
+
+        $(`${tab} .op-data-table thead`).sortable({
+            items: "th.op-draggable",
+            axis: "x",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "pointer",
+            helper: function(e, ui) {
+                let slug = ui.attr("id");
+                $("tbody tr:first").find('td').each(function(column, td) {
+                    $(td).width($(td).width());
+                });
+                return ui;
+            },
+            start: function(e, ui) {
+                 //dragColumn(ui, e.type);
+                $("tbody").animate({opacity: '0.4'});
+                positionArray = [];
+                $("thead th.op-draggable").each(function(index, th) {
+                    $(th).width($(th).width());
+                    let slug = $(th).attr("id");
+                    positionArray[`${slug}`] = $(th).offset().left;
+                });
+                return ui;
+            },
+            sort: function(e, ui) {
+                // if the tr is moving left, look at next
+                if (ui.item.next().attr("id") === ui.placeholder.prev().attr("id")) {
+                    let itemSlug = ui.item.attr("id");
+                    let nextSlug = ui.placeholder.prev().attr("id");
+                    let movingItemCol = $("tbody tr").find(`[data-slug="${itemSlug}"]`).index();
+                    let nextCol = $("tbody tr").find(`[data-slug="${nextSlug}"]`).index();
+                }
+                console.log(`item:   ${ui.item.attr("id")}, item.prev: ${ui.item.prev().attr("id")}, item.next: ${ui.item.next().attr("id")}`);
+                console.log(`placeholder: prev: ${ui.placeholder.prev().attr("id") }, next: ${ui.placeholder.next().attr("id")}`);
+            },
+            stop: function(e, ui) {
+                let columnOrder = $.map($(this).find("th.op-draggable"), function(n, i) {
+                    return n.id;
+                });
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+                    let initialCol = opus.prefs.cols.indexOf(ui.item.attr("id")) + 2;
+                    let finalCol = columnOrder.indexOf(ui.item.attr("id")) + 2;
+                    moveColumn(".op-data-table", initialCol, finalCol);
+
+                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
+                }
+                $("tbody").animate({opacity: '1'});
             },
         });
     },
