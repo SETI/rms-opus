@@ -232,6 +232,10 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     position: absolute;
 }
 
+.op-metadata-detail-add .ui-sortable-placeholder {
+    height: 0;
+}
+
 .op-metadata-details-sortable {
     margin-bottom: 0;
 }
@@ -1118,7 +1122,7 @@ when window sized is narrow */
     min-height: 1em;
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     /* For Safari */
     line-break: anywhere;
 }
