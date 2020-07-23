@@ -2196,6 +2196,7 @@ var o_browse = {
     },
 
     hideMetadataList: function() {
+        $(`.op-metadata-details > .loader`).hide();
         $("#op-add-metadata-fields").removeClass("show").hide();
     },
 
@@ -2227,6 +2228,7 @@ var o_browse = {
 
     onDoneUpdateMetadataDetails: function(e) {
         o_utils.disableUserInteraction();
+        $(`.op-metadata-details > .loader`).show();
         let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
         });
@@ -2245,6 +2247,8 @@ var o_browse = {
 
     initEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
+        let onDoneUpdateMetadataDetails = _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
+
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
             items: "ul",
@@ -2253,7 +2257,7 @@ var o_browse = {
             tolerance: "pointer",
             helper: "clone",
             stop: function(e, ui) {
-                _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
+                onDoneUpdateMetadataDetails();
                 o_browse.isSortingHappening = false;
             },
             start: function(e, ui) {

@@ -232,10 +232,6 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     position: absolute;
 }
 
-.op-metadata-detail-add .ui-sortable-placeholder {
-    height: 0;
-}
-
 .op-metadata-details-sortable {
     margin-bottom: 0;
 }
