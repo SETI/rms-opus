@@ -752,9 +752,10 @@ def _get_download_info(product_types, session_id):
     values = []
     sql = 'SELECT DISTINCT '
 
-    # Retrieve the distinct list of product types for all observations, including the ones in the
-    # recycle bin.  This is used to allow the items on the cart to be added/removed from the recycle bin
-    # and update the download data panel without redrawing the cart page on every edit.
+    # Retrieve the distinct list of product types for all observations,
+    # including the ones in the recycle bin.  This is used to allow the items
+    # in the cart to be added/removed from the recycle bin and update the
+    # download data panel without redrawing the cart page on every edit.
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
@@ -765,6 +766,7 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
+    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)

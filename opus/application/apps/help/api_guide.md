@@ -1663,15 +1663,15 @@ Example:
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
     "description": "Calibrated image",
-    "version_number": 10000,
-    "version_name": "1.0"
+    "version_number": 999999,
+    "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
     "description": "Calibrated image",
-    "version_number": 999999,
-    "version_name": "Current"
+    "version_number": 10000,
+    "version_name": "1.0"
   },
   [...]
 ]

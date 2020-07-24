@@ -1105,7 +1105,8 @@ def api_get_product_types_for_opus_id(request, opus_id):
     sql += q('obs_files')+'.'+q('opus_id')+' = %s'
     values.append(opus_id)
     sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' DESC'
 
     log.debug('get_product_types_for_opus_id SQL: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -1182,7 +1183,8 @@ def api_get_product_types_for_search(request):
         sql += ' ON '+q('obs_files')+'.'+q('obs_general_id')+'='
         sql += q(user_query_table)+'.'+q('id')
     sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' DESC'
 
     log.debug('get_product_types_for_search SQL: %s %s', sql, values)
     cursor.execute(sql, values)
