@@ -331,7 +331,7 @@ var o_browse = {
             }
             let slug = $(this).closest("ul").data("slug");
             // save anything that was changed via sort/trash before the dropdown is displayed
-            o_browse.onDoneUpdateMetadataDetailsDB();
+            o_browse.onDoneUpdateMetadataDetails();
             o_browse.showMetadataList(e);
             $("#op-add-metadata-fields").data("slug", slug);
 
@@ -345,7 +345,7 @@ var o_browse = {
             if ($("a.op-metadata-detail-remove").length <= 1) {
                 $("a.op-metadata-detail-remove").addClass("op-button-disabled");
             }
-            o_browse.onDoneUpdateMetadataDetailsDB();
+            o_browse.onDoneUpdateMetadataDetails();
             return false;
         });
 
@@ -2227,7 +2227,7 @@ var o_browse = {
         }).addClass("show");
     },
 
-    onDoneUpdateMetadataDetailsDB: function(e) {
+    onDoneUpdateMetadataDetails: function(e) {
         o_utils.disableUserInteraction();
         let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
@@ -2247,7 +2247,7 @@ var o_browse = {
 
     initEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
-        let onDoneUpdateMetadataDetailsDB = _.debounce(o_browse.onDoneUpdateMetadataDetailsDB, 200);
+        let onDoneUpdateMetadataDetailsDB = _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
 
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
@@ -2282,7 +2282,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
         let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
 
-        o_browse.onDoneUpdateMetadataDetailsDB();
+        o_browse.onDoneUpdateMetadataDetails();
         detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");
