@@ -2261,6 +2261,7 @@ var o_browse = {
                 o_browse.isSortingHappening = false;
             },
             start: function(e, ui) {
+                ui.placeholder.height(ui.helper.height());
                 o_widgets.getMaxScrollTopVal(e.target);
                 o_browse.isSortingHappening = true;
             },
@@ -2313,10 +2314,10 @@ var o_browse = {
                 let slug = opus.prefs.cols[index];
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
-                html += `<ul class="list-inline mb-0" data-slug="${slug}">${removeTool}`;
+                html += `<ul class="list-inline mb-2" data-slug="${slug}">${removeTool}`;
                 html += `<li class="op-metadata-detail-item">`;
                 html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div>`;
-                html += `<div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
+                html += `<div class="op-metadata-data ml-0">${value}${addTool}</div>`;
                 html += `</li></ul>`;
             }
         });
