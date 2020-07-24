@@ -331,7 +331,7 @@ var o_browse = {
             }
             let slug = $(this).closest("ul").data("slug");
             // save anything that was changed via sort/trash before the dropdown is displayed
-            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.onDoneUpdateMetadataDetailsDB();
             o_browse.showMetadataList(e);
             $("#op-add-metadata-fields").data("slug", slug);
 
@@ -345,7 +345,7 @@ var o_browse = {
             if ($("a.op-metadata-detail-remove").length <= 1) {
                 $("a.op-metadata-detail-remove").addClass("op-button-disabled");
             }
-            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.onDoneUpdateMetadataDetailsDB();
             return false;
         });
 
@@ -375,7 +375,6 @@ var o_browse = {
                 opus.prefs.cols.splice(index, 0, slug);
                 // save the last slug that was added so that we can make sure it is visible on scroll
                 $("#op-add-metadata-fields").data("last", slug);
-                $(`.op-metadata-details > .loader`).show();
                 $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
 
                 o_selectMetadata.saveChanges();
@@ -1244,6 +1243,9 @@ var o_browse = {
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
+        // this is here because if the selectMetadata modal was the cause of the change AND the galleryView modal
+        // is showing, the detail/right side of the gallery view is not done redrawing until here.
+        $(`.op-metadata-details > .loader`).hide();
         o_utils.enableUserInteraction();
     },
 
@@ -2196,7 +2198,6 @@ var o_browse = {
     },
 
     hideMetadataList: function() {
-        $(`.op-metadata-details > .loader`).hide();
         $("#op-add-metadata-fields").removeClass("show").hide();
     },
 
@@ -2226,9 +2227,8 @@ var o_browse = {
         }).addClass("show");
     },
 
-    onDoneUpdateMetadataDetails: function(e) {
+    onDoneUpdateMetadataDetailsDB: function(e) {
         o_utils.disableUserInteraction();
-        $(`.op-metadata-details > .loader`).show();
         let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
             return $(n).data("slug");
         });
@@ -2247,7 +2247,7 @@ var o_browse = {
 
     initEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
-        let onDoneUpdateMetadataDetails = _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
+        let onDoneUpdateMetadataDetailsDB = _.debounce(o_browse.onDoneUpdateMetadataDetailsDB, 200);
 
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
@@ -2257,7 +2257,7 @@ var o_browse = {
             tolerance: "pointer",
             helper: "clone",
             stop: function(e, ui) {
-                onDoneUpdateMetadataDetails();
+                onDoneUpdateMetadataDetailsDB();
                 o_browse.isSortingHappening = false;
             },
             start: function(e, ui) {
@@ -2282,7 +2282,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
         let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
 
-        o_browse.onDoneUpdateMetadataDetails();
+        o_browse.onDoneUpdateMetadataDetailsDB();
         detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");
@@ -2299,7 +2299,6 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
         opus.metadataDetailOpusId = opusId;
-        $(`.op-metadata-details > .loader`).hide();
 
         // list columns + values
         let html = "";
@@ -2315,8 +2314,9 @@ var o_browse = {
                 let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
                 let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
                 html += `<ul class="list-inline mb-0" data-slug="${slug}">${removeTool}`;
-                html += `<li class="op-metadata-detail-item>`;
-                html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div><div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
+                html += `<li class="op-metadata-detail-item">`;
+                html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div>`;
+                html += `<div class="op-metadata-data mb-2 ml-0">${value}${addTool}</div>`;
                 html += `</li></ul>`;
             }
         });

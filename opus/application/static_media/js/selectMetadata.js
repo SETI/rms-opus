@@ -21,6 +21,8 @@ var o_selectMetadata = {
     // be set.
     isSortingHappening: false,
 
+    spinnerTimer: null,
+
     // save the original copy in case we need to discard
     originalOpusPrefsCols: [],
 
@@ -122,15 +124,27 @@ var o_selectMetadata = {
         });
     },  // /addSelectMetadataBehaviors
 
+    showMenuLoaderSpinner: function() {
+        o_selectMetadata.spinnerTimer = setTimeout(function() {
+            $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
+        }, opus.spinnerDelay);
+
+        if ($("#galleryView").hasClass("show")) {
+            $(`.op-metadata-details > .loader`).show();
+        }
+    },
+
+    hideMenuLoaderSpinner: function() {
+        clearTimeout(o_selectMetadata.spinnerTimer);
+    },
+
     render: function() {
         let tab = opus.getViewTab();
         let downloadTitle = (tab === "#cart" ? "Download a CSV of selected metadata for all observations in the cart" : "Download CSV of selected metadata for ALL observations in current results");
         let buttonTitle = (tab === "#cart" ? "Download CSV (in cart)" : "Download CSV (all results)");
 
         if (!o_selectMetadata.rendered) {
-            let spinnerTimer = setTimeout(function() {
-                $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
-            }, opus.spinnerDelay);
+            o_selectMetadata.showMenuLoaderSpinner();
 
             // We use getFullHashStr instead of getHash because we want the updated
             // version of widgets= even if the main URL hasn't been updated yet
@@ -232,8 +246,7 @@ var o_selectMetadata = {
                 o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
-                o_utils.enableUserInteraction();
-                clearTimeout(spinnerTimer);
+                o_selectMetadata.hideMenuLoaderSpinner();
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
@@ -329,6 +342,13 @@ var o_selectMetadata = {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+
+        // if the user is updating the metadata fields from the selectMetadata modal,
+        // disable user interaction until complete.
+        // We don't want to always disable user interation because we build this modal asynchonously on load
+        if ($("#galleryView").hasClass("show")) {
+            o_utils.disableUserInteraction();
+        }
         o_selectMetadata.reRender();
         o_browse.loadData(opus.prefs.view, false);
     },

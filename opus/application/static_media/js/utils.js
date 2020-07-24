@@ -56,10 +56,12 @@ var o_utils = {
     // browse/cart tab which can cause a race condition
     disableUserInteraction: function(e) {
         $("body").addClass("op-prevent-pointer-events");
+        $(".modal-content").addClass("op-prevent-pointer-events");
     },
 
     enableUserInteraction: function(e) {
         $("body").removeClass("op-prevent-pointer-events");
+        $(".modal-content").removeClass("op-prevent-pointer-events");
     },
 
     // Break apart the window.location and return just the protocol and hostname
