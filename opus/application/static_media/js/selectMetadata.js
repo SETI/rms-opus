@@ -202,11 +202,7 @@ var o_selectMetadata = {
                         $(elem).parent().remove();
                     }
                 });
-                if ($(".op-select-list .op-search-menu").length === 0) {
-                    $(".op-button-disabled").addClass("op-button-disabled");
-                } else {
-                    $(".op-button-disabled").removeClass("op-button-disabled");
-                }
+                o_browse.checkForEmptyMetadataList();
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
 

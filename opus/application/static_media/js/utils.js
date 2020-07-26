@@ -15,6 +15,8 @@ var o_utils = {
      *  some utils
      *
      **/
+    ignoreArrowKeys: false,
+
     areObjectsEqual: function(obj1, obj2) {
         /**
          * This is for comparing objects whose values are all arrays.
@@ -52,37 +54,18 @@ var o_utils = {
         return Math.ceil(num - 0.0000001);
     },
 
-    arrowKeysHandler: function(e) {
-        switch(e.keyCode){
-            case 37:
-            case 39:
-                e.preventDefault();
-                break;
-            default:
-                break; // do not block other keys
-        }
-    },
-
-    disableRightLeftArrowKeys: function(e) {
-        $(document).bind("keydown", o_utils.arrowKeyHandler);
-    },
-
-    enableRightLeftArrowKeys: function(e) {
-        $(document).unbind("keydown", o_utils.arrowKeyHandler);
-    },
-
     // these functions are used to prevent the user from moving off the
     // browse/cart tab which can cause a race condition
     disableUserInteraction: function(e) {
         $("body").addClass("op-prevent-pointer-events");
         $(".modal-content").addClass("op-prevent-pointer-events");
-        o_utils.disableRightLeftArrowKeys();
+        o_utils.ignoreArrowKeys = true;
     },
 
     enableUserInteraction: function(e) {
         $("body").removeClass("op-prevent-pointer-events");
         $(".modal-content").removeClass("op-prevent-pointer-events");
-        o_utils.enableRightLeftArrowKeys();
+        o_utils.ignoreArrowKeys = false;
     },
 
     // Break apart the window.location and return just the protocol and hostname

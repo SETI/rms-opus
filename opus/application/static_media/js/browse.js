@@ -469,6 +469,12 @@ var o_browse = {
                 o_browse.hideMenus();
             }
 
+            if (o_utils.ignoreArrowKeys &&
+                ((e.which || e.keyCode) == 37 || (e.which || e.keyCode) == 39)) {
+                e.preventDefault();
+                return;
+            }
+
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 o_browse.hideGalleryViewModal();
                 $("#op-select-metadata").modal('hide');
@@ -1062,6 +1068,10 @@ var o_browse = {
     },
 
     showMetadataDetailModal: function(opusId) {
+        if (o_browse.pageLoaderSpinnerTimer !== null) {
+            // if the spinner is active, do not allow modal to become active
+            return;
+        }
         o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId);
         // this is to make sure modal is at its original position when open again
@@ -1855,6 +1865,9 @@ var o_browse = {
             }
         }
 
+        if (closeGalleryView) {
+            o_browse.hideGalleryViewModal();
+        }
         o_browse.showPageLoaderSpinner();
 
         // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also uses
@@ -1880,9 +1893,6 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
 
-            if (closeGalleryView) {
-                o_browse.hideGalleryViewModal();
-            }
             o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (opus.metadataDetailOpusId !== "") {
@@ -2247,7 +2257,6 @@ var o_browse = {
 
     initEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
-        let onDoneUpdateMetadataDetailsDB = _.debounce(o_browse.onDoneUpdateMetadataDetails, 200);
 
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
         $(`#galleryViewContents .op-metadata-details .contents`).sortable({
@@ -2257,7 +2266,7 @@ var o_browse = {
             tolerance: "pointer",
             helper: "clone",
             stop: function(e, ui) {
-                onDoneUpdateMetadataDetailsDB();
+                o_browse.onDoneUpdateMetadataDetails();
                 o_browse.isSortingHappening = false;
             },
             start: function(e, ui) {
