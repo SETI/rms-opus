@@ -1209,6 +1209,10 @@ a:-webkit-any-link, a::any-link {
     overflow-y: auto;
 }
 
+#op-add-metadata-fields .submenu {
+    margin-left: 1.2em;
+}
+
 /* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
 .op-disabled {
     pointer-events: none;

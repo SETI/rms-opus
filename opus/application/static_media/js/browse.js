@@ -2276,14 +2276,22 @@ var o_browse = {
         if ($("a.op-metadata-detail-remove").length <= 1) {
             $("a.op-metadata-detail-remove").addClass("op-button-disabled");
         }
+        o_browse.checkForEmptyMetadataList();
         viewNamespace.metadataDetailEdit = true;
+    },
+
+    checkForEmptyMetadataList: function() {
+        if ($(".op-select-list .op-search-menu").find("li").length === 0) {
+            $(".op-metadata-detail-add").addClass("op-button-disabled");
+        } else {
+            $(".op-metadata-detail-add").removeClass("op-button-disabled");
+        }
     },
 
     removeEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
         let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
 
-        o_browse.onDoneUpdateMetadataDetails();
         detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
         $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");

@@ -193,10 +193,20 @@ var o_selectMetadata = {
                 });
                 //remove category from the add menu if it's empty
                 $(`#op-add-metadata-fields .op-search-menu-category ul`).each(function(index, elem) {
+                    $(elem).find(".submenu").each(function(i, subelem) {
+                        if ($(subelem).find("li").length === 0) {
+                            $(subelem).parent().remove();
+                        }
+                    });
                     if ($(elem).find("li").length === 0) {
                         $(elem).parent().remove();
                     }
                 });
+                if ($(".op-select-list .op-search-menu").length === 0) {
+                    $(".op-button-disabled").addClass("op-button-disabled");
+                } else {
+                    $(".op-button-disabled").removeClass("op-button-disabled");
+                }
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
 
