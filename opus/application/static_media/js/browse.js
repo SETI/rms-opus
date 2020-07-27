@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, opus */
+/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, o_widgets, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
@@ -1893,6 +1893,9 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
 
+            if (closeGalleryView) {
+                o_browse.hideGalleryViewModal();
+            }
             o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (opus.metadataDetailOpusId !== "") {
