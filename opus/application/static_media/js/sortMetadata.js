@@ -24,6 +24,7 @@ let o_sortMetadata = {
             items: "div.op-sort-only",
             cursor: "grab",
             containment: "parent",
+            helper: "clone",
             tolerance: "intersect",
             cancel: ".op-no-sort",
             stop: function(event, ui) {
@@ -31,7 +32,8 @@ let o_sortMetadata = {
                 let newOrder = [];
                 $(this).find(".list-inline-item span.badge-pill").each(function(index, obj) {
                     let slug = $(obj).data("slug");
-                    newOrder.push(slug);
+                    let descending = ($(obj).data("descending") === true ? "-" : "");
+                    newOrder.push(`${descending}${slug}`);
                 });
                 // only bother if something actually changed...
                 if (!o_utils.areObjectsEqual(opus.prefs.order, newOrder)) {
@@ -125,7 +127,6 @@ let o_sortMetadata = {
     }, // end edit sort metadata behaviours
 
     onClickSortOrder: function(orderBy, addToSort=true) {
-        $("body").addClass("op-prevent-pointer-events");
         o_browse.showPageLoaderSpinner();
 
         let newOrder = [];
@@ -202,7 +203,7 @@ let o_sortMetadata = {
         });
         $("#op-add-sort-metadata .op-sort-list").html(html);
 
-        let menu = {"height":$("#op-add-sort-metadata").innerHeight(), "width":$(contextMenu).innerWidth()};
+        let menu = {"height":$(contextMenu).innerHeight(), "width":$(contextMenu).innerWidth()};
         let top =  e.pageY;
         let left = ($(tab).innerWidth() - e.pageX > menu.width)  ? e.pageX + 12: e.pageX-menu.width;
 
@@ -298,8 +299,9 @@ let o_sortMetadata = {
         o_sortMetadata.renderSortedDataFromBeginning();
     },
 
-    renderSortedDataFromBeginning: function() {
+    renderSortedDataFromBeginning: function(closeGalleryView=true) {
+        o_utils.disableUserInteraction();
         o_browse.clearObservationData();
-        o_browse.loadData(opus.prefs.view);
+        o_browse.loadData(opus.prefs.view, closeGalleryView);
     },
 };

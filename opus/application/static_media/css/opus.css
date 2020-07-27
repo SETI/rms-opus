@@ -204,6 +204,38 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     background-color: transparent !important;
 }
 
+.op-metadata-detail-edit {
+    margin-bottom: 0.5em;
+    white-space: nowrap;
+    display: inline-flex;
+    position: absolute;
+    top: -0.5em;
+}
+
+.op-metadata-detail-edit a:hover {
+    text-decoration: none;
+}
+
+.op-metadata-detail-edit-message {
+    display: inline-flex;
+    float: right;
+    padding-left: 2em;
+}
+
+.op-metadata-details-edit-enabled ul:hover {
+    cursor: -webkit-grab;
+    cursor: grabbing;
+}
+
+.op-metadata-detail-add {
+    left: 0;
+    position: absolute;
+}
+
+.op-metadata-details-sortable {
+    margin-bottom: 0;
+}
+
 .op-browse-view[data-view] {
     width: 8em;
 }
@@ -360,6 +392,16 @@ to 100%, this will make the shrinking look smoother */
 .op-search-menu .dropdown-toggle.collapsed .op-menu-arrow {
     transform: rotate(-90deg);
     -webkit-transform: rotate(-90deg);
+}
+
+
+/* for selected metadata items */
+.op-mark .op-menu-item {
+    background: gainsboro;
+}
+
+.op-mark .op-search-param-checkmark {
+    opacity: 1;
 }
 
 /* Css styling for triangle arrow pointing right */
@@ -1056,15 +1098,33 @@ when window sized is narrow */
 }
 
 #galleryViewContents .op-metadata-details {
-    overflow-y: auto;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior: contain;
     /* Make #galleryView modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
+    4% for the edit line & icon
     metadata and font awesome icons */
-    height: 93%;
+    height: 89%;
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
+    top: 1.5em;
     right: 0;
+}
+
+#galleryViewContents .op-metadata-details  .op-metadata-details-tools {
+    float: left;
+}
+
+/* to account for empty field data */
+#galleryViewContents .op-metadata-details .op-metadata-data {
+    min-height: 1.5em;
+    /* Make sure info with long string like "Multiple Target List" is wrapped
+    in metadata detail modal */
+    overflow-wrap: break-word;
+    /* For Safari */
+    line-break: anywhere;
 }
 
 /* prevent weird browser y-scrollbar */
@@ -1079,8 +1139,8 @@ when window sized is narrow */
 #galleryView button.close {
     position: absolute;
     float: right;
-    top: .8em;
-    right: 1em;
+    top: 0.4em;
+    right: 0.5em;
     z-index: 999;
 }
 
@@ -1140,6 +1200,21 @@ a:-webkit-any-link, a::any-link {
 
 #galleryViewContents a.menu {
     width: 0px;
+}
+
+#op-add-metadata-fields {
+    position: relative;
+    cursor: pointer;
+    z-index: 9999;
+}
+
+#op-add-metadata-fields .op-select-list {
+    height: 40vh;
+    overflow-y: auto;
+}
+
+#op-add-metadata-fields .submenu {
+    margin-left: 1.2em;
 }
 
 /* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
@@ -2927,6 +3002,14 @@ when wrapping into the 2nd line */
         -webkit-transform: scale(2.5); /* Safari 3-8 */
         transform: scale(2.5);
     }
+
+    #op-add-metadata-fields {
+        font-size: 75% !important;
+    }
+
+    #op-add-metadata-fields .op-select-list {
+        height: 30vh;
+    }
 }
 
 @media (max-width: 560px), (max-height: 630px) {
@@ -3171,6 +3254,7 @@ when screen is narrow (cart tab) */
 different browsers */
 #galleryViewContents .bottom {
     align-items: stretch;
+    padding-top: 0.3em;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {

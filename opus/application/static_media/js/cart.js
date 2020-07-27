@@ -57,6 +57,7 @@ var o_cart = {
 
     // these vars are common w/o_browse
     reloadObservationData: true, // start over by reloading all data
+    metadataDetailEdit: false, // is the metadata detail view currently in edit mode?
     observationData: {},  // holds observation column data
     totalObsCount : undefined,
     recycledCount : undefined,
@@ -563,7 +564,7 @@ var o_cart = {
                 let startObsLabel = o_browse.getStartObsLabel();
                 let startObs = Math.max(opus.prefs[startObsLabel], 1);
                 startObs = (startObs > o_cart.totalObsCount  ? 1 : startObs);
-                o_browse.loadData(view, startObs);
+                o_browse.loadData(view, true, startObs);
 
                 if (zippedFiles_html) {
                     $(".op-zipped-files", "#cart").html(zippedFiles_html);
