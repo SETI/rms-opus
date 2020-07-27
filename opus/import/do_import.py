@@ -353,8 +353,6 @@ def read_or_create_mult_table(mult_table_name, table_column):
     if mult_table_name in _MULT_TABLE_CACHE:
         return _MULT_TABLE_CACHE[mult_table_name]
 
-    use_mult_table_name = None
-
     if 'mult_options' in table_column:
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
             impglobals.LOGGER.log('debug',
@@ -632,7 +630,7 @@ def import_one_volume(volume_id):
                 vol_prefix = basename.replace('_raw_image_index.lbl', '')
                 vol_prefix = vol_prefix.replace('_RAW_IMAGE_INDEX.LBL', '')
                 impglobals.LOGGER.log('debug',
-                    f'Using RAW_IMAGE_INDEX metadata version of main index: '+
+                    'Using RAW_IMAGE_INDEX metadata version of main index: '+
                     f'{volume_label_path}')
                 break
 
@@ -642,7 +640,7 @@ def import_one_volume(volume_id):
                 if basename.upper() == 'OBSINDEX.LBL':
                     volume_label_path = os.path.join(path, basename)
                     impglobals.LOGGER.log('debug',
-                        f'Using OBSINDEX version of main index: '+
+                        'Using OBSINDEX version of main index: '+
                         f'{volume_label_path}')
                     break
 
@@ -1255,7 +1253,6 @@ def import_observation_table(volume_id,
                              table_schema,
                              metadata):
     "Import the data from a row from a PDS file into a single table."
-    index_row = metadata['index_row']
     new_row = {}
 
     # So it can be accessed by populate_*
@@ -1333,7 +1330,7 @@ def import_observation_table(volume_id,
                             # If we don't have ring_geo for this volume, don't
                             # bitch about it because we already did earlier.
                             error_list.append(
-                                f'Unknown internal metadata name '+
+                                'Unknown internal metadata name '+
                                 f'"{data_source_cmd_param}"'+
                                 f' while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1341,13 +1338,13 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[data_source_cmd_param+'_row']
                     if ref_index_row is None:
                         import_util.log_nonrepeating_warning(
-                            f'Missing row in metadata file '+
+                            'Missing row in metadata file '+
                             f'"{data_source_cmd_param}"')
                         processed = True
                         break
                     if data_source_data not in ref_index_row:
                         error_list.append(
-                                f'Unknown referenced column '+
+                                'Unknown referenced column '+
                                 f'"{data_source_data}" '+
                                 f'while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1368,7 +1365,7 @@ def import_observation_table(volume_id,
                             # If we don't have ring_geo for this volume, don't
                             # bitch about it because we already did earlier.
                             error_list.append(
-                                f'Unknown internal metadata name '+
+                                'Unknown internal metadata name '+
                                 f'"{ref_index_name}"'+
                                 f' while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1376,13 +1373,13 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[ref_index_name+'_row']
                     if ref_index_row is None:
                         import_util.log_nonrepeating_warning(
-                            f'Missing row in metadata file '+
+                            'Missing row in metadata file '+
                             f'"{data_source_cmd_param}"')
                         processed = True
                         break
                     if data_source_data not in ref_index_row:
                         error_list.append(
-                                f'Unknown referenced column '+
+                                'Unknown referenced column '+
                                 f'"{data_source_data}" '+
                                 f'while processing table "{table_name}"')
                         continue
@@ -1470,7 +1467,7 @@ def import_observation_table(volume_id,
             if notnull:
                 import_util.log_nonrepeating_error(
                     f'Column "{field_name}" in table "{table_name}" '+
-                    f'has NULL value but NOT NULL is set')
+                    'has NULL value but NOT NULL is set')
         else:
             if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -1490,7 +1487,7 @@ def import_observation_table(volume_id,
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has FLAG type but value "{column_val}" is not '+
-                        f'a valid flag value')
+                        'a valid flag value')
                     column_val = None
             if field_type.startswith('char'):
                 field_size = int(field_type[4:])
@@ -1537,7 +1534,7 @@ def import_observation_table(volume_id,
                         import_util.log_nonrepeating_error(
                             f'Caught sentinel value {the_val} for column '+
                             f'"{field_name}" that was missed'+
-                            f' by the PDS label!')
+                            ' by the PDS label!')
                 if column_val is not None and the_val is not None:
                     val_min = table_column.get('val_min', None)
                     val_max = table_column.get('val_max', None)
@@ -1548,7 +1545,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small -'+
-                                   f' substituting NULL')
+                                   ' substituting NULL')
                             impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
@@ -1561,7 +1558,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value {val_max}'+
                                    f' but {column_val} is too large - '+
-                                   f'substituting NULL')
+                                   'substituting NULL')
                             impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
@@ -1606,7 +1603,7 @@ def import_observation_table(volume_id,
                 if (ring_geo is None and
                     impglobals.ARGUMENTS.import_report_missing_ring_geo):
                     impglobals.LOGGER.log('warning',
-                        f'RING GEO metadata available but missing for '+
+                        'RING GEO metadata available but missing for '+
                         f'opus_id "{opus_id}"')
             if 'body_surface_geo' in metadata:
                 body_geo = metadata['body_surface_geo'].get(opus_id)
@@ -1669,7 +1666,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
         import_util.log_nonrepeating_warning(
-                  f'Empty opus_product key for files: '+
+                  'Empty opus_product key for files: '+
                   file_list_str)
         del products['']
         _check_for_pdsfile_exception()
@@ -1732,7 +1729,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                        'size': size,
                        'width': width,
                        'height': height
-                      }
+                       }
                 rows.append(row)
                 if size == 0:
                     import_util.log_nonrepeating_warning(
@@ -1800,7 +1797,7 @@ def do_import_steps():
         if (impglobals.ARGUMENTS.drop_cache_tables or
             impglobals.ARGUMENTS.create_cart):
             impglobals.LOGGER.open(
-                f'Cleaning up OPUS/Django tables',
+                'Cleaning up OPUS/Django tables',
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,
                         'debug': impglobals.ARGUMENTS.log_debug_limit})
 

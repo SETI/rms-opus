@@ -1,16 +1,29 @@
 # results/test_results.py
 
 import logging
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
-from django.test.client import Client
 
-from results.views import *
+from results.views import (api_get_categories_for_opus_id,
+                           api_get_categories_for_search,
+                           api_get_data,
+                           api_get_data_and_images,
+                           api_get_files,
+                           api_get_image,
+                           api_get_images,
+                           api_get_images_by_size,
+                           api_get_metadata,
+                           api_get_metadata_v2,
+                           api_get_product_types_for_opus_id,
+                           api_get_product_types_for_search,
+                           get_triggered_tables,
+                           url_to_search_params)
+
+import settings
 
 cursor = connection.cursor()
 
@@ -20,7 +33,7 @@ class resultsTests(TestCase):
         cursor = connection.cursor()
         cursor.execute('DELETE FROM user_searches')
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("SHOW TABLES LIKE %s" , ["cache_%"])
+        cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
         for row in cursor:
             q = 'DROP TABLE ' + row[0]
             print(q)
@@ -53,7 +66,6 @@ class resultsTests(TestCase):
 
     def test__api_get_data_and_images_no_get(self):
         "[test_results.py] api_get_data_and_images: no GET"
-        c = Client()
         request = self.factory.get('/__api/dataimages.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -73,7 +85,6 @@ class resultsTests(TestCase):
 
     def test__api_get_data_no_get(self):
         "[test_results.py] api_get_data: no GET"
-        c = Client()
         request = self.factory.get('/__api/data.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -94,7 +105,6 @@ class resultsTests(TestCase):
 
     def test__api_get_metadata_no_get(self):
         "[test_results.py] api_get_metadata: no GET"
-        c = Client()
         request = self.factory.get('/api/metadata/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -114,7 +124,6 @@ class resultsTests(TestCase):
 
     def test__api_get_metadata_v2_no_get(self):
         "[test_results.py] api_get_metadata_v2: no GET"
-        c = Client()
         request = self.factory.get('/api/metadata_v2/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -134,7 +143,6 @@ class resultsTests(TestCase):
 
     def test__api_get_images_no_get(self):
         "[test_results.py] api_get_images: no GET"
-        c = Client()
         request = self.factory.get('/api/images.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -154,7 +162,6 @@ class resultsTests(TestCase):
 
     def test__api_get_images_by_size_no_get(self):
         "[test_results.py] api_get_images_by_size: no GET"
-        c = Client()
         request = self.factory.get('/api/images/small.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -174,7 +181,6 @@ class resultsTests(TestCase):
 
     def test__api_get_image_no_get(self):
         "[test_results.py] api_get_image: no GET"
-        c = Client()
         request = self.factory.get('/api/image/small/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -194,7 +200,6 @@ class resultsTests(TestCase):
 
     def test__api_get_files_no_get(self):
         "[test_results.py] api_get_files: no GET"
-        c = Client()
         request = self.factory.get('/api/files/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -214,7 +219,6 @@ class resultsTests(TestCase):
 
     def test__api_get_categories_for_opus_id_no_get(self):
         "[test_results.py] api_get_categories_for_opus_id: no GET"
-        c = Client()
         request = self.factory.get('/api/categories/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -235,7 +239,6 @@ class resultsTests(TestCase):
 
     def test__api_get_categories_for_search_no_get(self):
         "[test_results.py] api_get_categories_for_search: no GET"
-        c = Client()
         request = self.factory.get('/api/categories.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -255,7 +258,6 @@ class resultsTests(TestCase):
 
     def test__api_get_product_types_for_opus_id_no_get(self):
         "[test_results.py] api_get_product_types_for_opus_id: no GET"
-        c = Client()
         request = self.factory.get('/api/product_types/vg-iss-2-s-c4360845.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -276,7 +278,6 @@ class resultsTests(TestCase):
 
     def test__api_get_product_types_for_search_no_get(self):
         "[test_results.py] api_get_product_types_for_search: no GET"
-        c = Client()
         request = self.factory.get('/api/product_types.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,

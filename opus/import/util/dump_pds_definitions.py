@@ -30,7 +30,7 @@ for field_name in sorted(index_dict.keys()):
     index_description = re.sub(' +', ' ', index_description)
     index_description = re.sub('\n +', '\n', index_description)
     index_description = re.sub(' +\n', '\n', index_description)
-    index_description, _ = re.subn('(\S)\n(\S)', '\\1 \\2', index_description)
+    index_description, _ = re.subn(r'(\S)\n(\S)', '\\1 \\2', index_description)
     index_description = index_description.replace('\n\n', '\\n')
     print(field_name)
     print(f'    "definition": "{index_description}",')

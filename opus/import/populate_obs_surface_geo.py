@@ -28,7 +28,6 @@ def populate_obs_surface_geo_name_target_name(**kwargs):
 # standard one-to-one mapping with OPUS ID
 def populate_obs_surface_geo_target_list(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
     target_list = metadata['inventory_list']
     if target_list is None:
         return None

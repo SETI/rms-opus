@@ -65,8 +65,6 @@ class ParamInfo(models.Model):
         if self.label is None: # pragma: no cover
             return None
 
-        append_to_label = None
-
         pretty_name = (TableNames.objects
                        .get(table_name=self.category_name).label)
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
@@ -82,8 +80,6 @@ class ParamInfo(models.Model):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:
             return None
-
-        append_to_label = None
 
         pretty_name = (TableNames.objects
                        .get(table_name=self.category_name).label)

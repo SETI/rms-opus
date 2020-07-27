@@ -39,13 +39,22 @@ def csv_response(filename, data, column_names=None):
 def json_response(data):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
-def download_file_name():
-    "Create a unique download filename based on the current time"
-    randstr = (random.choice(string.ascii_lowercase)
-               + random.choice(string.ascii_lowercase)
-               + random.choice(string.ascii_lowercase))
-    return ('ringdata_' + randstr + '_'
-            + 'T'.join(str(datetime.datetime.utcnow()).split(' ')))
+def download_filename(opus_id, file_type):
+    "Create a unique filename for a user's cart or CSV file."
+    random_ascii = random.choice(string.ascii_letters).lower()
+    timestamp = "T".join(str(datetime.datetime.now()).split(' '))
+    # Windows doesn't like ':' in filenames
+    timestamp = timestamp.replace(':', '-')
+    # And we don't want a period to confuse the suffix later
+    timestamp = timestamp.replace('.', '-')
+    if file_type is None:
+        file_type = ''
+    if file_type:
+        file_type += '-'
+    root = f'pdsrms-{timestamp}-{file_type}{random_ascii}'
+    if opus_id:
+        root += f'_{opus_id}'
+    return root
 
 def strip_numeric_suffix(name):
     "Strip a trailing 1 or 2, if any, from a slug"

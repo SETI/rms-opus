@@ -33,7 +33,8 @@ class MultiFloatField(forms.Field):
         # Use the parent's handling of required fields, etc.
         super(MultiFloatField, self).validate(value)
 
-        if not value: return
+        if not value:
+            return
 
         if type(value).__name__ != 'str':
             value = [value]
@@ -52,8 +53,10 @@ class MultiTimeField(forms.Field):
         super(MultiFloatField(blank=True), self).validate(value)
 
         for num in value:
-            try:    float(num)
-            except: raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
+            try:
+                float(num)
+            except:
+                raise forms.ValidationError("value must be a number: " + num[0:20] + '...')
 
 
 class SearchForm(forms.Form):
@@ -78,8 +81,8 @@ class SearchForm(forms.Form):
 
             if not param_info:
                 log.error(
-            "SearchForm: Could not find param_info entry for slug %s",
-            str(slug))
+                    "SearchForm: Could not find param_info entry for slug %s",
+                    str(slug))
                 continue  # todo this should raise end user error
 
             try:
@@ -93,25 +96,24 @@ class SearchForm(forms.Form):
             if form_type == 'STRING':
                 choices = ((x,x) for x in settings.STRING_QTYPES)
                 self.fields[slug] = forms.CharField(
-                    widget = forms.TextInput(
+                    widget=forms.TextInput(
                         attrs={'class': 'STRING',
                                'size': '50',
                                'tabindex': 0,
                                'data-slugname': slug
-                              }),
-                    required = False,
-                    label = '')
+                               }),
+                    required=False,
+                    label='')
                 self.fields['qtype-'+slug] = forms.CharField(
-                     required = False,
-                     label = '',
-                     widget = forms.Select(
-                        choices = choices,
-                        attrs = {'tabindex':0, 'class':'STRING'}
+                     required=False,
+                     label='',
+                     widget=forms.Select(
+                        choices=choices,
+                        attrs={'tabindex':0, 'class':'STRING'}
                      ),
                 )
 
             if form_type in settings.RANGE_FORM_TYPES:
-
                 choices = ((x,x) for x in settings.RANGE_QTYPES)
                 slug_no_num = strip_numeric_suffix(slug)
                 num = get_numeric_suffix(slug)
@@ -136,10 +138,10 @@ class SearchForm(forms.Form):
                 data_toggle = 'dropdown' if ranges else ''
 
                 self.fields[slug] = MultiFloatField(
-                    required = False,
-                    label = label.capitalize(),
-                    widget = forms.TextInput(
-                        attrs = {
+                    required=False,
+                    label=label.capitalize(),
+                    widget=forms.TextInput(
+                        attrs={
                             'class': 'op-range-input-' + label + ' RANGE ' + dropdown_class,
                             'placeholder': hints,
                             'autocomplete': 'off',
@@ -152,19 +154,19 @@ class SearchForm(forms.Form):
                 )
                 if not is_single_column_range(pi.param_qualified_name()):
                     self.fields['qtype-'+slug_no_num] = forms.CharField(
-                         required = False,
-                         label = '',
-                         widget = forms.Select(
-                            choices = choices,
-                            attrs = {'tabindex':0, 'class':"RANGE"}
-                         ),
+                        required=False,
+                        label='',
+                        widget=forms.Select(
+                            choices=choices,
+                            attrs={'tabindex':0, 'class':"RANGE"}
+                        ),
                     )
                     self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2', 'qtype-'+slug_no_num]  # makes sure min is first! boo ya!
                 else:
                     self.fields.keyOrder = [slug_no_num+'1', slug_no_num+'2']  # makes sure min is first! boo ya!
 
             elif form_type in settings.MULT_FORM_TYPES:
-                #self.fields[slug]= MultiStringField(forms.Field)
+                # self.fields[slug]= MultiStringField(forms.Field)
                 try:
                     param_qualified_name = ParamInfo.objects.get(slug=slug).param_qualified_name()
                 except ParamInfo.DoesNotExist:
@@ -174,7 +176,7 @@ class SearchForm(forms.Form):
                 mult_param = get_mult_name(param_qualified_name)
                 model      = apps.get_model('search',mult_param.title().replace('_',''))
 
-                #grouped mult fields:
+                # grouped mult fields:
                 if grouped:
                     choices = [(mult.label, mult.label) for mult in model.objects.filter(grouping=grouping, display='Y').order_by('disp_order')]
                 else:
@@ -183,14 +185,14 @@ class SearchForm(forms.Form):
                 if param_qualified_name == 'obs_surface_geometry_name.target_name':
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
-                            label = '',
-                            widget = forms.RadioSelect(attrs={'class':'singlechoice'}, choices=choices),
+                            label='',
+                            widget=forms.RadioSelect(attrs={'class':'singlechoice'}, choices=choices),
                             required=False)
                 else:
                     self.fields[slug] = forms.CharField(
                             # label = ParamInfo.objects.get(slug=slug).label,
-                            label = '',
-                            widget = forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}, choices=choices),
+                            label='',
+                            widget=forms.CheckboxSelectMultiple(attrs={'class':'multichoice'}, choices=choices),
                             required=False)
 
         # XXX RF - This is awful. It takes the last form_type from the above loop, but

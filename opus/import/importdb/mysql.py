@@ -1,8 +1,5 @@
 from functools import lru_cache
 
-import csv
-import numpy as np
-
 try:
     import MySQLdb
     MYSQLDB_AVAILABLE = True
@@ -45,7 +42,7 @@ class ImportDBMySQL(ImportDBSuper):
             except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal',
-                            f'Unable to connect to MySQL server '
+                            'Unable to connect to MySQL server '
                            +f'"{self.db_hostname}": {e.args[1]}')
                 raise ImportDBException(e)
 

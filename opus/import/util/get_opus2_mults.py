@@ -5,13 +5,9 @@
 # This program should only be used for initial setup of the new import pipeline.
 # Once all tables are transferred over this program is deprecated.
 
-import json
-import re
 import sys
 
 import MySQLdb
-
-import pdsparser
 
 from secrets import *
 
@@ -39,7 +35,7 @@ for table_name in table_names:
         continue
     cur.execute('SELECT value, label, disp_order, display FROM '+table_name)
     rows = list(cur.fetchall())
-    rows.sort(key=lambda x: 0 if x[2] is None else x[2] )
+    rows.sort(key=lambda x: 0 if x[2] is None else x[2])
     new_rows = []
     always_same = True
     for row in rows:

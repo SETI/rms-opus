@@ -6,16 +6,13 @@
 
 import csv
 import glob
-import json
 import os
-import traceback
 
 import pdsparser
 
 import impglobals
 import import_util
 import opus_secrets
-import opus_support
 
 def create_import_definitions_table():
     db = impglobals.DATABASE

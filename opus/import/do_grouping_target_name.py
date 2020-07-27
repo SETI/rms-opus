@@ -7,9 +7,6 @@
 # for the Intended Target widget.
 ################################################################################
 
-import os
-
-from config_data import *
 import impglobals
 import import_util
 

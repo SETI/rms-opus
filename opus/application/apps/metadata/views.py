@@ -29,7 +29,7 @@ from django.db import connection, DatabaseError
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Min, Count
-from django.http import Http404, HttpResponse, HttpResponseServerError
+from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.views.decorators.cache import never_cache
 
@@ -97,7 +97,7 @@ def api_get_result_count(request, fmt, internal=False):
     Returned HTML:
         <body>
             <dl>
-		        <dt>result_count</dt><dd>47</dd>
+                <dt>result_count</dt><dd>47</dd>
             </dl>
         </body>
 
@@ -148,7 +148,7 @@ def api_get_result_count_internal(request):
 
 @never_cache
 def api_get_mult_counts(request, slug, fmt, internal=False):
-    """Return the mults for a given slug along with result counts.
+    r"""Return the mults for a given slug along with result counts.
 
     This is a PUBLIC API.
 
@@ -168,10 +168,10 @@ def api_get_mult_counts(request, slug, fmt, internal=False):
 
     Returned HTML:
         <body>
-        	<dl>
-        	    <dt>Atlas</dt><dd>2</dd>
-        	    <dt>Daphnis</dt><dd>4</dd>
-        	</dl>
+            <dl>
+                <dt>Atlas</dt><dd>2</dd>
+                <dt>Daphnis</dt><dd>4</dd>
+            </dl>
         </body>
 
     Returned CSV:
@@ -340,7 +340,7 @@ def api_get_mult_counts_internal(request, slug):
 
 @never_cache
 def api_get_range_endpoints(request, slug, fmt, internal=False):
-    """Compute and return range widget endpoints (min, max, nulls)
+    r"""Compute and return range widget endpoints (min, max, nulls)
 
     This is a PUBLIC API.
 
@@ -565,7 +565,7 @@ def api_get_range_endpoints_internal(request, slug):
 
 @never_cache
 def api_get_fields(request, fmt, slug=None):
-    """Return information about fields in the database (slugs).
+    r"""Return information about fields in the database (slugs).
 
     This is a PUBLIC API.
 
@@ -620,7 +620,7 @@ def api_get_fields(request, fmt, slug=None):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = get_fields_info(fmt, slug, collapse=collapse)
+    ret = get_fields_info(fmt, request, api_code, slug=slug, collapse=collapse)
 
     exit_api_call(api_code, ret)
     return ret
@@ -688,7 +688,7 @@ def get_cart_count(session_id, recycled=False):
     return count, recycled_count
 
 # This routine is public because it's called by the API guide in guide/views.py
-def get_fields_info(fmt, slug=None, collapse=False):
+def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
     "Helper routine for api_get_fields."
     cache_key = (settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX
                  + ':getFields:field:' + str(slug) + ':' + str(collapse))
@@ -783,7 +783,7 @@ def get_fields_info(fmt, slug=None, collapse=False):
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
                   'Default Units', 'Available Units', 'Old Field ID'
-                 ]
+                  ]
         rows = [(v['field_id'], v['category'], v['type'],
                  v['search_label'], v['label'],
                  v['full_search_label'],

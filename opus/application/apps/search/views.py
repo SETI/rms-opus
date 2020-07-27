@@ -15,8 +15,8 @@ import json
 import logging
 import math
 import re
-import regex # This is used instead of "re" because it's closer to the ICU
-             # regex library used by MySQL
+import regex    # This is used instead of "re" because it's closer to the ICU
+                # regex library used by MySQL
 import time
 
 from django.apps import apps
@@ -525,11 +525,9 @@ def url_to_search_params(request_get, allow_errors=False,
 
         # Find the master param_info
         param_info = None
-        is_qtype = None
         is_unit = None
         is_sourceunit = None
         if slug.startswith('qtype-'): # like qtype-time=all
-            is_qtype = True
             slug = slug[6:]
             slug_no_num = strip_numeric_suffix(slug)
             if slug_no_num != slug:
@@ -1266,8 +1264,8 @@ def construct_query_string(selections, extras):
     """Given a set selections,extras generate the appropriate SQL SELECT"""
     all_qtypes = extras['qtypes'] if 'qtypes' in extras else []
     all_units = extras['units'] if 'units' in extras else []
-    finished_ranges = [] # Ranges are done for both sides at once so track
-                         # which are finished to avoid duplicates
+    finished_ranges = []    # Ranges are done for both sides at once so track
+                            # which are finished to avoid duplicates
 
     clauses = []
     clause_params = []
@@ -1276,8 +1274,6 @@ def construct_query_string(selections, extras):
 
     # We always have to have obs_general since it's the master keeper of IDs
     obs_tables.add('obs_general')
-
-    cursor = connection.cursor()
 
     # We sort this so that testing results are predictable
     for param_qualified_name in sorted(selections.keys()):
@@ -1293,7 +1289,6 @@ def construct_query_string(selections, extras):
             return None, None
         cat_name = param_info.category_name
         quoted_cat_name = connection.ops.quote_name(cat_name)
-        name = param_info.name
 
         if param_qualified_name_no_num in all_qtypes:
             qtypes = all_qtypes[param_qualified_name_no_num]
@@ -1439,7 +1434,7 @@ def _valid_regex(r):
     # user input, not a real internal error.
     cursor = connection.cursor()
     try:
-        cursor.execute(f'SELECT REGEXP_LIKE("x", %s)', (r,))
+        cursor.execute('SELECT REGEXP_LIKE("x", %s)', (r,))
     except DatabaseError:
         return False
     return True
@@ -1464,7 +1459,6 @@ def get_string_query(selections, param_qualified_name, qtypes):
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
-    table_name = param_info.category_name
 
     cat_name = param_info.category_name
     quoted_cat_name = connection.ops.quote_name(cat_name)
@@ -1553,8 +1547,6 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
-    table_name = param_info.category_name
-    name = param_info.name
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
     param_qualified_name_min = param_qualified_name_no_num + '1'
@@ -1708,8 +1700,6 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
 
     (form_type, form_type_func,
      form_type_format) = parse_form_type(param_info.form_type)
-    table_name = param_info.category_name
-    name = param_info.name
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
     param_qualified_name_min = param_qualified_name_no_num + '1'
@@ -1723,8 +1713,6 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     cat_name = param_info.category_name
     quoted_cat_name = connection.ops.quote_name(cat_name)
     name_no_num = strip_numeric_suffix(param_info.name)
-    name_min = name_no_num + '1'
-    name_max = name_no_num + '2'
     col_d_long = cat_name + '.d_' + name_no_num
 
     if qtypes is None or len(qtypes) == 0:
@@ -1813,11 +1801,6 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
                 params.append(value_max)
 
         else:
-            quoted_param_qualified_name_min = (quoted_cat_name+'.'
-                                               +connection.ops.quote_name(name_min))
-            quoted_param_qualified_name_max = (quoted_cat_name+'.'
-                                               +connection.ops.quote_name(name_max))
-
             # Find the midpoint and dx of the user's range
             if value_max >= value_min:
                 longit = (value_min + value_max)/2.
@@ -1860,7 +1843,7 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
 
 def get_user_search_table_name(num):
     """ pass cache_no, returns user search table name"""
-    return 'cache_' + str(num);
+    return 'cache_' + str(num)
 
 
 ################################################################################
@@ -1900,8 +1883,8 @@ def is_single_column_range(param_qualified_name):
     # Single column range queries will not have the numeric suffix
     name_no_num = strip_numeric_suffix(name)
     try:
-        temp = ParamInfo.objects.get(category_name=cat_name,
-                                     name=name_no_num)
+        _ = ParamInfo.objects.get(category_name=cat_name,
+                                  name=name_no_num)
         return True
     except ParamInfo.DoesNotExist:
         return False
@@ -1910,7 +1893,8 @@ def is_single_column_range(param_qualified_name):
 
 
 def _clean_numeric_field(s):
-    clean_func = lambda x: x.replace(' ', '').replace(',', '').replace('_','')
+    def clean_func(x):
+        return x.replace(' ', '').replace(',', '').replace('_','')
     if isinstance(s, (list, tuple)):
         return [clean_func(z) for z in s]
 

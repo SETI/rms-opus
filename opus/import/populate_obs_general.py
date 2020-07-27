@@ -8,13 +8,11 @@ import json
 import os
 import traceback
 
-import julian
 import pdsfile
 
 from config_data import *
 import impglobals
 import import_util
-import opus_secrets
 
 # Ordering:
 #   target_name must come before target_class
@@ -185,7 +183,7 @@ def populate_obs_general_preview_images(**kwargs):
                   'bytes': 2000, 'width': 512, 'height': 512},
                  {'url': base_path+'_full.'+ext, 'name': 'full',
                   'bytes': 4000, 'width': 1024, 'height': 1024}
-                ]
+                 ]
             }
         else:
             browse_data = {'viewables': []}

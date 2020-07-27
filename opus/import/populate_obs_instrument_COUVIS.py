@@ -13,7 +13,6 @@ import os
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -115,8 +114,6 @@ def populate_obs_general_COUVIS_quantity_OBS(**kwargs):
 
 def populate_obs_general_COUVIS_observation_type_OBS(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
     if channel == 'HSP' or channel == 'HDAC':
         return 'TS' # Time Series
     assert channel == 'EUV' or channel == 'FUV'
@@ -140,7 +137,6 @@ def populate_obs_general_COUVIS_time2_OBS(**kwargs):
     if start_time_sec is None:
         return None
 
-    index_row = metadata['index_row']
     supp_index_row = metadata['supp_index_row']
     samples = import_util.safe_column(supp_index_row, 'LINE_SAMPLES')
     integration_duration = _integration_duration_helper(**kwargs)
@@ -244,8 +240,8 @@ def _COUVIS_is_image(**kwargs):
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
         import_util.log_nonrepeating_warning(
-            f'_COUVIS_is_image has channel EUV or FUV but no '+
-            f'DATA_OBJECT_TYPE available')
+            '_COUVIS_is_image has channel EUV or FUV but no '+
+            'DATA_OBJECT_TYPE available')
         return False
 
     object_type = supp_index_row['DATA_OBJECT_TYPE']
@@ -349,12 +345,12 @@ def populate_obs_wavelength_COUVIS_wavelength1_OBS(**kwargs):
         return None
 
     if channel == 'EUV':
-        return  0.0558 + band1 * 0.0000607422
+        return 0.0558 + band1 * 0.0000607422
     if channel == 'FUV':
         return 0.11 + band1 * 0.000078125
 
     import_util.log_nonrepeating_warning(
-        f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
+        'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
         f' {channel}')
     return None
 
@@ -374,12 +370,12 @@ def populate_obs_wavelength_COUVIS_wavelength2_OBS(**kwargs):
         return None
 
     if channel == 'EUV':
-        return  0.0558 + (band2 + 1) * 0.0000607422
+        return 0.0558 + (band2 + 1) * 0.0000607422
     if channel == 'FUV':
         return 0.11 + (band2 + 1) * 0.000078125
 
     import_util.log_nonrepeating_warning(
-        f'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
+        'obs_wavelength_COUVIS_wavelength1 has unknown channel type '+
         f' {channel}')
     return None
 
@@ -472,8 +468,6 @@ def populate_obs_wavelength_COUVIS_wave_no_res2_OBS(**kwargs):
 def _spec_size_helper(**kwargs):
     channel, image_time = _COUVIS_channel_time_helper(**kwargs)
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    slit_state = index_row['SLIT_STATE']
 
     if channel == 'HSP' or channel == 'HDAC':
         return None
