@@ -5,8 +5,6 @@
 # of the import pipeline.
 ################################################################################
 
-import sys
-
 ## The username and password for the import user. This user needs to have most
 # privileges including table creation and deletion.
 DB_USER = 'XXX'

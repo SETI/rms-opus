@@ -4,9 +4,6 @@
 # Routines to populate fields specific to ground-based instruments.
 ################################################################################
 
-import numpy as np
-
-import julian
 import pdsfile
 
 from config_data import *

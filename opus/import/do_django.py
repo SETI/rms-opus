@@ -4,8 +4,6 @@
 # Things related to Django and the OPUS UI.
 ################################################################################
 
-import os
-
 import impglobals
 import import_util
 

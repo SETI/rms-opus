@@ -11,7 +11,6 @@ import sys
 import traceback
 
 import pdsfile
-import pdslogger
 import pdsparser
 import pdstable
 
@@ -196,15 +195,13 @@ def safe_pdstable_read(filename):
     try:
         if preprocess_label_func is None:
             table = pdstable.PdsTable(filename, replacements=replacements,
-                                      table_callback=
-                                            preprocess_table_func)
+                                      table_callback=preprocess_table_func)
         else:
             lines = pdsparser.PdsLabel.load_file(filename)
             lines = preprocess_label_func(lines)
             table = pdstable.PdsTable(filename, label_contents=lines,
                                       replacements=replacements,
-                                      table_callback=
-                                            preprocess_table_func)
+                                      table_callback=preprocess_table_func)
 
     except KeyboardInterrupt:
         raise

@@ -94,18 +94,18 @@ _CASSINI_PHASE_NAME_MAPPING = (
     ('Titan A Encounter',         '2004-300T00:30:21.455', '2004-300T21:15:32.979'),
     ('Titan B Encounter',         '2004-348T00:18:13.469', '2004-348T22:03:45.065'),
     # Full length encounters that completely cover the mission timeline
-    ('Science Cruise',            '1997-001T00:00:00.000', '2000-262T00:32:38.930'), #'2000-209T02:40:23.416'
-    ('Earth-Jupiter Cruise',      '2000-262T00:32:38.930', '2001-014T23:02:09.804'), #'2001-013T22:47:48.047'
-    ('Jupiter Encounter',         '2001-014T23:02:09.804', '2001-071T12:28:05.413'), #'2001-071T00:58:38.838'
-    ('Cruise Science',            '2001-071T12:28:05.413', '2003-138T02:16:18.383'), #'2003-115T07:45:08.222'
-    ('Space Science',             '2003-138T02:16:18.383', '2004-037T02:07:06.418'), #'2003-359T10:29:18.711'
-    ('Approach Science',          '2004-037T02:07:06.418', '2004-164T02:33:41.000'), #'2004-162T14:47:05.854'
-    ('Tour Pre-Huygens',          '2004-164T02:33:41.000', '2004-359T12:53:08.998'), #'2004-358T13:47:22.548'),
-    ('Huygens Probe Separation',  '2004-359T12:53:08.998', '2004-360T13:30:10.410'), #'2004-359T13:47:22.981'),
+    ('Science Cruise',            '1997-001T00:00:00.000', '2000-262T00:32:38.930'), # '2000-209T02:40:23.416'
+    ('Earth-Jupiter Cruise',      '2000-262T00:32:38.930', '2001-014T23:02:09.804'), # '2001-013T22:47:48.047'
+    ('Jupiter Encounter',         '2001-014T23:02:09.804', '2001-071T12:28:05.413'), # '2001-071T00:58:38.838'
+    ('Cruise Science',            '2001-071T12:28:05.413', '2003-138T02:16:18.383'), # '2003-115T07:45:08.222'
+    ('Space Science',             '2003-138T02:16:18.383', '2004-037T02:07:06.418'), # '2003-359T10:29:18.711'
+    ('Approach Science',          '2004-037T02:07:06.418', '2004-164T02:33:41.000'), # '2004-162T14:47:05.854'
+    ('Tour Pre-Huygens',          '2004-164T02:33:41.000', '2004-359T12:53:08.998'), # '2004-358T13:47:22.548'),
+    ('Huygens Probe Separation',  '2004-359T12:53:08.998', '2004-360T13:30:10.410'), # '2004-359T13:47:22.981'),
     # The descent actually happened on Jan 14
-    ('Huygens Descent',           '2004-360T13:30:10.410', '2005-015T18:28:29.451'), #'2005-001T14:28:54.449'),
-    ('Tour',                      '2005-015T18:28:29.451', '2008-183T21:04:08.998'), #'2008-183T09:17:06.323'),
-    ('Extended Mission',          '2008-183T21:04:08.998', '2010-285T05:22:24.745'), #'2010-283T14:14:20.741'),
+    ('Huygens Descent',           '2004-360T13:30:10.410', '2005-015T18:28:29.451'), # '2005-001T14:28:54.449'),
+    ('Tour',                      '2005-015T18:28:29.451', '2008-183T21:04:08.998'), # '2008-183T09:17:06.323'),
+    ('Extended Mission',          '2008-183T21:04:08.998', '2010-285T05:22:24.745'), # '2010-283T14:14:20.741'),
     ('Extended-Extended Mission', '2010-285T05:22:24.745', '2020-001T00:00:00.000')
 )
 
@@ -147,7 +147,7 @@ def helper_cassini_obs_name(**kwargs):
     return obs_id
 
 def helper_cassini_valid_obs_name(obs_name):
-    """Check a Cassini observation name to see if it is parsable. Such a
+    r"""Check a Cassini observation name to see if it is parsable. Such a
     name will have four parts separated by _:
 
     <PRIME> _ <REVNO> <TARGETCODE> _ <ACTIVITYNAME> <ACTIVITYNUMBER> _ <INST>
@@ -194,14 +194,14 @@ def helper_cassini_valid_obs_name(obs_name):
         return False
 
     ret = re.fullmatch(
-'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
+r'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
         obs_name)
     if ret:
         return True
 
     # Try without _INST
     ret = re.fullmatch(
-'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
+r'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
         obs_name)
     if ret:
         return True
@@ -213,7 +213,6 @@ def helper_cassini_planet_id(**kwargs):
     instruments)."""
 
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
 
     time_sec2 = obs_general_row['time2']

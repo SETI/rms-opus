@@ -1,6 +1,6 @@
-from dictionary.models import *
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, Http404
+from dictionary.models import Definitions
+from django.shortcuts import render
+from django.http import JsonResponse
 
 import string
 
@@ -42,21 +42,23 @@ def api_display_definitions(request):
                   {'alphabetlist': alphabetlist})
 
 def api_display_definition(request):
-    term = request.GET.get('term', None)
-    if term is None:
-        raise Http404
-    try:
-        definition = (Definitions.objects
-                      .select_related()
-                      .filter(context=context,
-                              term=term).values('definition',
-                                                'term',
-                                                'context__description').first())
-        return definition
-    except Definitions.DoesNotExist:
-        return False
-
-    return render(request, 'dictionary/dictionary.html', {'alphabetlist':alphabetlist})
+    return
+    # XXX All of this code is bad and doesn't work
+    # term = request.GET.get('term', None)
+    # if term is None:
+    #     raise Http404
+    # try:
+    #     definition = (Definitions.objects
+    #                   .select_related()
+    #                   .filter(context=context,
+    #                           term=term).values('definition',
+    #                                             'term',
+    #                                             'context__description').first())
+    #     return definition
+    # except Definitions.DoesNotExist:
+    #     return False
+    #
+    # return render(request, 'dictionary/dictionary.html', {'alphabetlist':alphabetlist})
 
 
 def api_search_definitions(request):
@@ -75,8 +77,8 @@ def api_search_definitions(request):
         return JsonResponse(list(definitions), safe=False)
     except Definitions.DoesNotExist:
         log.info('Dictionary search for "%s" returned nothing',
-                 slug)
-        return JsonResponse({'error': 'Search string "'+slug+'" not found'})
+                 term)
+        return JsonResponse({'error': 'Search string "'+term+'" not found'})
 
 def html_decode(s):
     """

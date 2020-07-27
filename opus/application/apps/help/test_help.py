@@ -1,15 +1,21 @@
 # help/test_help.py
 
 import logging
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
-from django.test.client import Client
 
-from help.views import *
+from help.views import (api_about,
+                        api_citing_opus,
+                        api_api_guide,
+                        api_faq,
+                        api_gettingstarted,
+                        api_splash,
+                        api_volumes)
+
+import settings
 
 class helpTests(TestCase):
 
@@ -38,7 +44,6 @@ class helpTests(TestCase):
 
     def test__api_about_no_get(self):
         "[test_help.py] api_about: no GET"
-        c = Client()
         request = self.factory.get('__help/about.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -58,7 +63,6 @@ class helpTests(TestCase):
 
     def test__api_volumes_no_get(self):
         "[test_help.py] api_volumes: no GET"
-        c = Client()
         request = self.factory.get('__help/volumes.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -78,7 +82,6 @@ class helpTests(TestCase):
 
     def test__api_faq_no_get(self):
         "[test_help.py] api_faq: no GET"
-        c = Client()
         request = self.factory.get('__help/faq.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -98,7 +101,6 @@ class helpTests(TestCase):
 
     def test__api_api_guide_no_get(self):
         "[test_help.py] api_api_guide: no GET"
-        c = Client()
         request = self.factory.get('__help/apiguide.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -118,7 +120,6 @@ class helpTests(TestCase):
 
     def test__api_gettingstarted_no_get(self):
         "[test_help.py] api_gettingstarted: no GET"
-        c = Client()
         request = self.factory.get('__help/gettingstarted.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -138,7 +139,6 @@ class helpTests(TestCase):
 
     def test__api_splash_no_get(self):
         "[test_help.py] api_splash: no GET"
-        c = Client()
         request = self.factory.get('__help/splash.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -158,7 +158,6 @@ class helpTests(TestCase):
 
     def test__api_citing_opus_no_get(self):
         "[test_help.py] api_citing_opus: no GET"
-        c = Client()
         request = self.factory.get('__help/citing.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,

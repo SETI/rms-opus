@@ -4,8 +4,6 @@
 # Routines to populate fields specific to NHLORRI.
 ################################################################################
 
-import numpy as np
-
 import pdsfile
 
 import import_util

@@ -4,8 +4,6 @@
 # Routines to populate fields specific to NHMVIC.
 ################################################################################
 
-import numpy as np
-
 import pdsfile
 
 import import_util
@@ -36,8 +34,6 @@ def populate_obs_general_NHMVIC_opus_id_OBS(**kwargs):
     except:
         opus_id = None
     if not opus_id:
-        metadata = kwargs['metadata']
-        index_row = metadata['index_row']
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]

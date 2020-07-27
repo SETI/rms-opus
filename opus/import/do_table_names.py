@@ -4,8 +4,6 @@
 # Generate and maintain the table_names table.
 ################################################################################
 
-import os
-
 from config_data import *
 import impglobals
 import import_util

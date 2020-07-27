@@ -105,7 +105,7 @@ class ImportDBSuper:
         if len(self._enter_stack) == 0:
             if self.logger and len(self._warning_list) > 0:
                 self.logger.log('warning',
-                           f'Warnings found during database operation:')
+                           'Warnings found during database operation:')
                 for cmd in self._cmds_executed:
                     self.logger.log('warning', '  '+cmd)
                 for w in self._warning_list:
