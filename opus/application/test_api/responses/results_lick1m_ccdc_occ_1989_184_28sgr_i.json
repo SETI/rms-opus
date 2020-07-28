@@ -5,11 +5,11 @@
         "targetclass": "Ring",
         "mission": "Ground-based",
         "insthost": "Ground-based",
-        "instrument": "McDonald 2.7-m INSB",
+        "instrument": "Lick 1-m CCD",
         "observationtype": "Occultation Profile",
-        "time1": "1989-07-03T05:57:24.720",
-        "time2": "1989-07-03T06:48:58.880",
-        "observationduration": "3094.16",
+        "time1": "1989-07-03T05:58:00.000",
+        "time2": "1989-07-03T06:49:00.000",
+        "observationduration": "3060",
         "quantity": "Optical Depth",
         "rightasc1": "281.585879",
         "rightasc2": "281.585879",
@@ -18,11 +18,11 @@
     },
     "PDS Constraints": {
         "volumeid": "EBROCC_0001",
-        "datasetid": "MCD27M-SR-IIRAR-4-OCC-V1.0",
-        "productid": "MCD_INGRESS",
-        "productcreationtime": "2003-07-08T23:29:36.000",
-        "primaryfilespec": "EBROCC_0001/DATA/MCD27M/MCD_IPD.LBL",
-        "opusid": "mcd27m-iirar-occ-1989-184-28sgr-i",
+        "datasetid": "LICK1M-SR-CCDC-4-OCC-V1.0",
+        "productid": "LICK_INGRESS",
+        "productcreationtime": "2003-07-08T23:27:22.000",
+        "primaryfilespec": "EBROCC_0001/DATA/LICK1M/LIC_IPD.LBL",
+        "opusid": "lick1m-ccdc-occ-1989-184-28sgr-i",
         "note": null
     },
     "Image Constraints": {
@@ -33,12 +33,12 @@
         "imagetype": null
     },
     "Wavelength Constraints": {
-        "wavelength1": "2.1",
-        "wavelength2": "2.1",
+        "wavelength1": "0.9",
+        "wavelength2": "0.9",
         "waveres1": null,
         "waveres2": null,
-        "waveno1": "4761.9",
-        "waveno2": "4761.9",
+        "waveno1": "11111.1",
+        "waveno2": "11111.1",
         "wavenores1": null,
         "wavenores2": null,
         "specflag": "No",
@@ -55,7 +55,7 @@
         "occdepth2": null,
         "occwlband": "IR",
         "occsource": "28 Sgr",
-        "occreceiverhost": "McDonald Observatory 2.7-m Harlan J. Smith Telescope"
+        "occreceiverhost": "Lick Observatory Anna L. Nickel 1-m Telescope"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
@@ -123,7 +123,7 @@
         "RINGGEOedgeonradialresolution2": null,
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
-        "RINGGEOringintercepttime1": "1989-07-03T04:42:22.860",
-        "RINGGEOringintercepttime2": "1989-07-03T05:33:57.120"
+        "RINGGEOringintercepttime1": "1989-07-03T04:43:00.000",
+        "RINGGEOringintercepttime2": "1989-07-03T05:34:00.000"
     }
 }
