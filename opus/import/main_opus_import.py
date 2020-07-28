@@ -159,6 +159,10 @@ parser.add_argument(
     help='Report observations that should have ring_geo data but don\'t'
 )
 parser.add_argument(
+    '--import-report-inventory-mismatch', action='store_true', default=False,
+    help='Report mismatches between inventory and surface geometry tables'
+)
+parser.add_argument(
     '--import-force-metadata-index', action='store_true', default=False,
     help='Force the use of metadata index files and fail if none available'
 )

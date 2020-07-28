@@ -7,6 +7,7 @@
 
 from config_data import *
 
+import impglobals
 import import_util
 
 # This is the target_name field in obs_surface_geometry that has the many-to-one
@@ -40,4 +41,22 @@ def populate_obs_surface_geo_target_list(**kwargs):
             import_util.announce_unknown_target_name(target_name)
             return None
         new_target_list.append(TARGET_NAME_INFO[target_name][2])
-    return ','.join(sorted(new_target_list))
+    ret = ','.join(sorted(new_target_list))
+
+    if impglobals.ARGUMENTS.import_report_inventory_mismatch:
+        used_targets = metadata['used_surface_geo_targets']
+        used_target_list = []
+        for target_name in used_targets:
+            if target_name in TARGET_NAME_MAPPING:
+                target_name = TARGET_NAME_MAPPING[target_name]
+            if target_name not in TARGET_NAME_INFO:
+                import_util.announce_unknown_target_name(target_name)
+                return None
+            used_target_list.append(TARGET_NAME_INFO[target_name][2])
+        used_str = ','.join(sorted(used_target_list))
+
+        if ret != used_str:
+            import_util.log_nonrepeating_warning(
+                f'Inventory and surface geo differ: {ret} vs {used_str}')
+
+    return ret
