@@ -70,6 +70,10 @@ parser.add_argument(
     '--override-pds-data-dir', type=str, default=None,
     help='Override the PDS_DATA_DIR specified in opus_secrets.py (.../holdings)'
 )
+parser.add_argument(
+    '--use-shelves-only', action='store_true', default=False,
+    help='Use shelve files only instead of looking at actual pdsdata volumes'
+)
 
 # What to actually do - main import
 parser.add_argument(
@@ -398,6 +402,8 @@ try: # Top-level exception handling so we always log what's going on
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
+    if impglobals.ARGUMENTS.use_shelves_only:
+        pdsfile.use_shelves_only()
     pdsfile.use_pickles()
     if impglobals.ARGUMENTS.override_pds_data_dir:
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
