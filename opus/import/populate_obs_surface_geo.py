@@ -56,7 +56,17 @@ def populate_obs_surface_geo_target_list(**kwargs):
         used_str = ','.join(sorted(used_target_list))
 
         if ret != used_str:
-            import_util.log_nonrepeating_warning(
-                f'Inventory and surface geo differ: {ret} vs {used_str}')
+            # It's OK if the surface geo has the central planet but the
+            # inventory doesn't
+            for planet in ['Jupiter', 'Saturn', 'Uranus', 'Neptune',
+                            'Pluto']:
+                try:
+                    used_target_list.remove(planet)
+                except ValueError:
+                    pass
+            used_str = ','.join(sorted(used_target_list))
+            if ret != used_str:
+                import_util.log_nonrepeating_warning(
+                    f'Inventory and surface geo differ: {ret} vs {used_str}')
 
     return ret
