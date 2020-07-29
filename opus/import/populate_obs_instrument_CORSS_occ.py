@@ -369,60 +369,56 @@ def populate_obs_ring_geometry_CORSS_phase2_OCC(**kwargs):
 def populate_obs_ring_geometry_CORSS_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
 def populate_obs_ring_geometry_CORSS_incidence2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
 def populate_obs_ring_geometry_CORSS_north_based_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
 def populate_obs_ring_geometry_CORSS_north_based_incidence2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
 def populate_obs_ring_geometry_CORSS_emission1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
 def populate_obs_ring_geometry_CORSS_emission2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
 def populate_obs_ring_geometry_CORSS_north_based_emission1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90-el
 
 def populate_obs_ring_geometry_CORSS_north_based_emission2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return 90-el
 
@@ -451,30 +447,58 @@ populate_obs_ring_geometry_CORSS_center_north_based_emission2_OCC = \
 def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_elevation1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_elevation2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
 
 def populate_obs_ring_geometry_CORSS_ring_intercept_time1_OCC(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)

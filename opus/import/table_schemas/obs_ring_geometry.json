@@ -874,7 +874,9 @@
         "field_key": true,
         "data_source": [
             "TAB:ring_geo",
-            "MINIMUM_SOLAR_RING_ELEVATION"
+            "MINIMUM_SOLAR_RING_ELEVATION",
+            "FUNCTION",
+            "~obs_ring_geometry_<INST>_solar_ring_elevation1_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -882,10 +884,10 @@
         "pi_category_name": "obs_ring_geometry",
         "pi_dict_context": "RING_GEO",
         "pi_dict_name": "SOLAR_RING_ELEVATION",
-        "definition": "The range of solar ring elevations in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun. The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored. Both the minimum and maximum solar ring elevations are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "definition": "The range of solar ring elevations in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun (or other light source in the case of an occultation). The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored. Both the minimum and maximum solar ring elevations are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
         "pi_dict_context_results": "RING_GEO",
         "pi_dict_name_results": "MINIMUM_SOLAR_RING_ELEVATION",
-        "definition_results": "The minimum solar ring elevation in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun. The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.",
+        "definition_results": "The minimum solar ring elevation in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun (or other light source in the case of an occultation). The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.",
         "pi_disp_order": 250,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -907,7 +909,9 @@
         "field_key": true,
         "data_source": [
             "TAB:ring_geo",
-            "MAXIMUM_SOLAR_RING_ELEVATION"
+            "MAXIMUM_SOLAR_RING_ELEVATION",
+            "FUNCTION",
+            "~obs_ring_geometry_<INST>_solar_ring_elevation2_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -915,7 +919,7 @@
         "pi_category_name": "obs_ring_geometry",
         "pi_dict_context_results": "RING_GEO",
         "pi_dict_name_results": "MAXIMUM_SOLAR_RING_ELEVATION",
-        "definition_results": "The maximum solar ring elevation in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun. The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.",
+        "definition_results": "The maximum solar ring elevation in the field of view. Solar ring elevation is the angle, measured at the ring intercept point, between the ring plane and the direction of the incoming photon from the Sun (or other light source in the case of an occultation). The value is positive on the side of the ring plane defined by prograde rotation; note that this is the north side of the ring plane for Jupiter, Saturn and Neptune, but the IAU-defined south side for Uranus. Ring intercept points that are obscured by the planet or a moon within the observed field of view are ignored. For observations capturing reflected sunlight (i.e., with wavelengths in the visual or near-infrared), ring intercept points that are shadowed by the planet are also ignored.",
         "pi_disp_order": 251,
         "pi_display": 0,
         "pi_display_results": 1,
@@ -1674,7 +1678,9 @@
         "field_key": true,
         "data_source": [
             "TAB:ring_geo",
-            "SOLAR_RING_OPENING_ANGLE"
+            "SOLAR_RING_OPENING_ANGLE",
+            "FUNCTION",
+            "~obs_ring_geometry_<INST>_solar_ring_opening_angle1_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -1682,10 +1688,10 @@
         "pi_category_name": "obs_ring_geometry",
         "pi_dict_context": "RING_GEO",
         "pi_dict_name": "SOLAR_RING_OPENING_ANGLE",
-        "definition": "The solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun. It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view. Both the minimum and maximum north-based ring emission angles are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
+        "definition": "The solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun (or other light source in the case of an occultation). It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view. Both the minimum and maximum north-based ring emission angles are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
         "pi_dict_context_results": "RING_GEO",
         "pi_dict_name_results": "MINIMUM_SOLAR_RING_OPENING_ANGLE",
-        "definition_results": "The minimum solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun. It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
+        "definition_results": "The minimum solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun (or other light source in the case of an occultation). It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
         "pi_disp_order": 350,
         "pi_display": 1,
         "pi_display_results": 1,
@@ -1707,7 +1713,9 @@
         "field_key": true,
         "data_source": [
             "TAB:ring_geo",
-            "SOLAR_RING_OPENING_ANGLE"
+            "SOLAR_RING_OPENING_ANGLE",
+            "FUNCTION",
+            "~obs_ring_geometry_<INST>_solar_ring_opening_angle2_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -1715,7 +1723,7 @@
         "pi_category_name": "obs_ring_geometry",
         "pi_dict_context_results": "RING_GEO",
         "pi_dict_name_results": "MAXIMUM_SOLAR_RING_OPENING_ANGLE",
-        "definition_results": "The maximum solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun. It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
+        "definition_results": "The maximum solar ring opening angle at the center of the ring system. This is the angle from the ring plane to the direction of incoming photon from the Sun (or other light source in the case of an occultation). It is positive on the north side of the ring plane and negative on the south side. This value is defined by the geometry during the time of the observation; it is independent of the field of view.",
         "pi_disp_order": 351,
         "pi_display": 0,
         "pi_display_results": 1,

@@ -54,13 +54,13 @@ if __name__ == "__main__":
         'mcd27m-iirar-occ-1989-184-28sgr-i',
         'eso1m-apph-occ-1989-184-28sgr-e',
         'lick1m-ccdc-occ-1989-184-28sgr-i',
-        # 'co-rss-occ-2005-123-k26-i',
-        # 'co-rss-occ-2008-217-s63-i',
-        # 'co-rss-occ-2010-170-x34-e',
-        # 'co-uvis-occ-2005-175-126tau-i',
-        # 'co-uvis-occ-2009-015-gamcas-e',
-        # 'co-vims-occ-2006-204-alpori-i',
-        # 'co-vims-occ-2014-175-l2pup-e'
+        'co-rss-occ-2005-123-k26-i',
+        'co-rss-occ-2008-217-s63-i',
+        'co-rss-occ-2010-170-x34-e',
+        'co-uvis-occ-2005-175-126tau-i',
+        'co-uvis-occ-2009-015-gamcas-e',
+        'co-vims-occ-2006-204-alpori-i',
+        'co-vims-occ-2014-175-l2pup-e'
     ]
 
     # occ = {'Occultation Constraints': {'occtype': None, 'occdir': None, 'bodyoccflag': None, 'occtimesampling': None, 'occdataquality': None, 'occdepth1': None, 'occdepth2': None, 'occwlband': None, 'occsource': None, 'occreceiverhost': None}}

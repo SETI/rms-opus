@@ -300,7 +300,7 @@ def populate_obs_ring_geometry_GB_center_phase2_OCC(**kwargs):
 def _incidence_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+    inc = supp_index_row['INCIDENCE_ANGLE']
 
     return inc
 
@@ -392,6 +392,29 @@ def populate_obs_ring_geometry_GB_observer_ring_elevation2_OCC(**kwargs):
     # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
     # side of the rings
     return 90.-_incidence_helper(**kwargs)
+
+### Solar ring opening angle (positive on north side of rings)
+### Solar ring elevation (positive on north side of rings for Saturn)
+
+def populate_obs_ring_geometry_GB_solar_ring_opening_angle1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_opening_angle2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_elevation1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_elevation2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
 
 ### Time
 
