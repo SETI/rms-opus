@@ -1108,6 +1108,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             # Handle obs_surface_geometry_name and
             # obs_surface_geometry__<TARGET>
 
+            target_dict = {}
             if 'body_surface_geo' in metadata:
                 surface_geo_dict = metadata['body_surface_geo']
                 for table_name in table_names_in_order:
@@ -1149,7 +1150,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
-                f'Creating surface geo table for new target {new_target_name}')
+                f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
 
             # Handle obs_surface_geometry
@@ -1162,6 +1163,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 if opus_id in inventory:
                     surface_target_list = inventory[opus_id]['TARGET_LIST']
             metadata['inventory_list'] = surface_target_list
+            metadata['used_surface_geo_targets'] = list(target_dict.keys())
 
             for table_name in table_names_in_order:
                 if table_name != 'obs_surface_geometry':

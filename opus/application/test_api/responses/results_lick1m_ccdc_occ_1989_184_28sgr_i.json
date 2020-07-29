@@ -5,11 +5,11 @@
         "targetclass": "Ring",
         "mission": "Ground-based",
         "insthost": "Ground-based",
-        "instrument": "ESO 1-m ApPhot",
+        "instrument": "Lick 1-m CCD",
         "observationtype": "Occultation Profile",
-        "time1": "1989-07-03T08:36:25.070",
-        "time2": "1989-07-03T09:30:13.070",
-        "observationduration": "3228",
+        "time1": "1989-07-03T05:58:00.000",
+        "time2": "1989-07-03T06:49:00.000",
+        "observationduration": "3060",
         "quantity": "Optical Depth",
         "rightasc1": "281.585879",
         "rightasc2": "281.585879",
@@ -18,11 +18,11 @@
     },
     "PDS Constraints": {
         "volumeid": "EBROCC_0001",
-        "datasetid": "ESO1M-SR-APPH-4-OCC-V1.0",
-        "productid": "ES1_EGRESS",
-        "productcreationtime": "2003-07-08T23:06:45.000",
-        "primaryfilespec": "EBROCC_0001/DATA/ESO1M/ES1_EPD.LBL",
-        "opusid": "eso1m-apph-occ-1989-184-28sgr-e",
+        "datasetid": "LICK1M-SR-CCDC-4-OCC-V1.0",
+        "productid": "LICK_INGRESS",
+        "productcreationtime": "2003-07-08T23:27:22.000",
+        "primaryfilespec": "EBROCC_0001/DATA/LICK1M/LIC_IPD.LBL",
+        "opusid": "lick1m-ccdc-occ-1989-184-28sgr-i",
         "note": null
     },
     "Image Constraints": {
@@ -33,12 +33,12 @@
         "imagetype": null
     },
     "Wavelength Constraints": {
-        "wavelength1": "3.4",
-        "wavelength2": "3.4",
+        "wavelength1": "0.9",
+        "wavelength2": "0.9",
         "waveres1": null,
         "waveres2": null,
-        "waveno1": "2941.2",
-        "waveno2": "2941.2",
+        "waveno1": "11111.1",
+        "waveno2": "11111.1",
         "wavenores1": null,
         "wavenores2": null,
         "specflag": "No",
@@ -47,7 +47,7 @@
     },
     "Occultation Constraints": {
         "occtype": "Stellar",
-        "occdir": "Egress",
+        "occdir": "Ingress",
         "bodyoccflag": "No",
         "occtimesampling": null,
         "occdataquality": "Unassigned",
@@ -55,7 +55,7 @@
         "occdepth2": null,
         "occwlband": "IR",
         "occsource": "28 Sgr",
-        "occreceiverhost": "European Southern Observatory La Sille 1-m Telescope"
+        "occreceiverhost": "Lick Observatory Anna L. Nickel 1-m Telescope"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
@@ -123,7 +123,7 @@
         "RINGGEOedgeonradialresolution2": null,
         "RINGGEOedgeonaltitude1": null,
         "RINGGEOedgeonaltitude2": null,
-        "RINGGEOringintercepttime1": "1989-07-03T07:21:23.460",
-        "RINGGEOringintercepttime2": "1989-07-03T08:15:11.530"
+        "RINGGEOringintercepttime1": "1989-07-03T04:43:00.000",
+        "RINGGEOringintercepttime2": "1989-07-03T05:34:00.000"
     }
 }
