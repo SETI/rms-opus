@@ -298,6 +298,11 @@ parser.add_argument(
     help='Omit tracebacks from exception reports'
 )
 
+# Argument about whether to check index row files or not
+parser.add_argument(
+    '--import-use-row-files', action='store_true', default=False,
+    help='Import with checking row files under shelves/index'
+)
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
 
@@ -319,6 +324,8 @@ if impglobals.ARGUMENTS.do_all_import:
     impglobals.ARGUMENTS.do_import = True
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
     impglobals.ARGUMENTS.drop_new_import_tables = True
+    # Comment/Uncomment the line below to determine if row files are used
+    impglobals.ARGUMENTS.import_use_row_files = True
 
 if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True

@@ -1693,13 +1693,39 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
             pref = pref.upper()
         sort_order = pref + ('%03d' % sort_order_num)
         list_of_sublists = products[product_type]
+
+        skip_current_product_type = False
+
         for sublist in list_of_sublists:
+            if (impglobals.ARGUMENTS.import_use_row_files and
+                skip_current_product_type):
+                break;
             for file_num, file in enumerate(sublist):
                 version_number = sublist[0].version_rank
                 version_name = sublist[0].version_id
                 if version_name == '':
                     version_name = 'Current'
                 logical_path = file.logical_path
+
+                if (impglobals.ARGUMENTS.import_use_row_files and
+                    ('_summary.tab' in logical_path or
+                     '_index.tab' in logical_path or
+                     '_hstfiles.tab' in logical_path)):
+
+                    # Check if corresponding files exist in shelves/index
+                    if os.path.exists(file.indexshelf_abspath):
+                        basename = filespec.split('/')[-1]
+                        selection = basename.split('.')[0]
+                        try:
+                            file.find_selected_row_key(selection, '=')
+                        except: # can't find the row, we skip this producut_type
+                            skip_current_product_type = True
+                            break
+                    else:
+                        impglobals.LOGGER.log('warning',
+                            f'Volume "{volume_id}" is missing row files under '+
+                            'shelves/index')
+
                 url = file.url
                 checksum = file.checksum
                 size = file.size_bytes
