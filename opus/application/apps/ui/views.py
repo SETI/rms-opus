@@ -505,9 +505,17 @@ def api_init_detail_page(request, **kwargs):
     new_products = OrderedDict()
     for version in products:
         new_products[version] = OrderedDict()
+        selection = None
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
+            if (selection is None and (product_type[3].find('Browse Image') or
+                product_type[3].find('Browse Diagram'))):
+                for fn in file_list:
+                    if selection:
+                        break
+                    basename = fn.split('/')[-1]
+                    selection = basename.split('.')[0]
             # Create the URL to look up a particular OPUS_ID in a given
             # metadata summary file in ViewMaster
             if product_type[3].find('Index') != -1:
@@ -519,7 +527,7 @@ def api_init_detail_page(request, **kwargs):
                         break
                 if tab_url:
                     tab_url = tab_url.replace('holdings', 'viewmaster')
-                    tab_url += '/'+opus_id.split('-')[-1]
+                    tab_url += '/'+selection
                 product_info['product_link'] = tab_url
             else:
                 product_info['product_link'] = None
