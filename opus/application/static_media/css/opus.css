@@ -718,6 +718,21 @@ th.sticky-header {
     text-decoration: none;
 }
 
+#op-edit-field-tool .dropdown-menu {
+    overflow-y: auto;
+}
+
+#op-edit-field-tool {
+    min-width: 0;
+    background-color: black;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    -webkit-transition: height 0.5s ease-in-out;
+    -moz-transition: height 0.5s ease-in-out;
+    -o-transition: height 0.5s ease-in-out;
+    transition: height 0.5s;
+}
+
 .op-data-table .op-column-ordering {
     margin: 0 10px;
 }
@@ -1203,7 +1218,6 @@ a:-webkit-any-link, a::any-link {
 }
 
 #op-add-metadata-fields {
-    position: relative;
     cursor: pointer;
     z-index: 9999;
 }
@@ -1731,7 +1745,6 @@ panel are properly separated */
 #op-add-sort-metadata .op-sort-list {
     max-height: 50vh;
     overflow-y: auto;
-
 }
 
 /* Set the vertical spacing between each dropdown item */
