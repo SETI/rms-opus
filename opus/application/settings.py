@@ -369,6 +369,3 @@ THRESHOLD_FOR_EXPONENTIAL = 1e8
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
-
-# A list of opus_types that are unchecked by default in the cart download pane.
-UNCHECKED_PRODUCT_TYPES = ['rms_index']

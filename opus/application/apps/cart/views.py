@@ -120,8 +120,8 @@ def api_view_cart(request):
 
     for name, details in info['product_cat_list']:
         for type in details:
-            if (type['slug_name'] in not_selected_product_types or
-                type['slug_name'] in settings.UNCHECKED_PRODUCT_TYPES):
+            if(type['slug_name'] in not_selected_product_types or
+               not type['default_checked']):
                 type['selected'] = ''
             else:
                 type['selected'] = 'checked'
@@ -760,7 +760,8 @@ def _get_download_info(product_types, session_id):
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
-    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')
+    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')
     sql += 'FROM '+q('obs_files')+' '
     sql += 'INNER JOIN '+q('cart')+' ON '
     sql += q('cart')+'.'+q('obs_general_id')+'='
@@ -780,7 +781,7 @@ def _get_download_info(product_types, session_id):
     product_dict_by_short_name = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name) = res
+        (category, sort_order, short_name, full_name, default_checked) = res
 
         pretty_name = category
         if category == 'standard':
@@ -813,7 +814,8 @@ def _get_download_info(product_types, session_id):
             'product_count': 0,
             'download_count': 0,
             'download_size': 0,
-            'download_size_pretty': 0
+            'download_size_pretty': 0,
+            'default_checked': default_checked
         }
         cur_product_list.append(product_dict_entry)
         product_dict_by_short_name[short_name] = product_dict_entry

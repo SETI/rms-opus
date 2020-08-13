@@ -1674,7 +1674,9 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         _check_for_pdsfile_exception()
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
-        (category, sort_order_num, short_name, full_name) = product_type
+        (category, sort_order_num, short_name,
+            full_name, default_checked) = product_type
+        default_checked = 1 if default_checked else 0
         if category == 'standard':
             pref = 'ZZZZZ1'
         elif category == 'metadata':
@@ -1756,7 +1758,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                        'checksum': checksum,
                        'size': size,
                        'width': width,
-                       'height': height
+                       'height': height,
+                       'default_checked': default_checked,
                        }
                 rows.append(row)
                 if size == 0:

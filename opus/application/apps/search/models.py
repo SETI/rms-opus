@@ -1353,6 +1353,7 @@ class ObsFiles(models.Model):
     height = models.PositiveIntegerField(blank=True, null=True)
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
+    default_checked = models.PositiveIntegerField()
 
     class Meta:
         managed = False
