@@ -1571,7 +1571,7 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Click to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
+            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Drag to reorder\nClick to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
                 orderToolTip = "title='Change to descending sort'";
@@ -1592,7 +1592,7 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header" title="Drag to reorder"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
