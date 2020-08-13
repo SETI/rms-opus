@@ -1099,8 +1099,7 @@ def api_get_product_types_for_opus_id(request, opus_id):
     sql += q('obs_files')+'.'+q('full_name')+', '
     sql += q('obs_files')+'.'+q('version_number')+', '
     sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('default_checked')
+    sql += q('obs_files')+'.'+q('sort_order')
     sql += ' FROM '+q('obs_files')
     sql += ' WHERE '
     sql += q('obs_files')+'.'+q('opus_id')+' = %s'
@@ -1177,8 +1176,7 @@ def api_get_product_types_for_search(request):
     sql += q('obs_files')+'.'+q('full_name')+', '
     sql += q('obs_files')+'.'+q('version_number')+', '
     sql += q('obs_files')+'.'+q('version_name')+', '
-    sql += q('obs_files')+'.'+q('sort_order')+', '
-    sql += q('obs_files')+'.'+q('default_checked')
+    sql += q('obs_files')+'.'+q('sort_order')
     sql += ' FROM '+q('obs_files')
     if selections:
         sql += ' INNER JOIN '+q(user_query_table)
