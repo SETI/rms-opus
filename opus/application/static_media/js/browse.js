@@ -2219,6 +2219,8 @@ var o_browse = {
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
+        o_browse.hideMetadataList();
+        o_browse.hideTableMetadataTools();
         opus.getViewNamespace().tableScrollbar.update();
     },
 
