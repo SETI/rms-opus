@@ -1571,15 +1571,16 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Drag to reorder\nClick to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
+            let reorderTip = "Drag to reorder\n";
+            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
-                orderToolTip = "title='Change to descending sort'";
+                orderToolTip = `title='${reorderTip}Change to descending sort'`;
                 columnSorting = "asc";
                 icon =  "-down";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionAsc+1}</span>`;
             } else if (positionDesc >= 0) {
-                orderToolTip = "title='Change to ascending sort'";
+                orderToolTip = `title='${reorderTip}Change to ascending sort'`;
                 columnSorting = "desc";
                 icon = "-up";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionDesc+1}</span>`;
