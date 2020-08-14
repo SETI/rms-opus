@@ -410,9 +410,12 @@ var o_browse = {
             o_browse.showTableMetadataTools(e, slug);
         });
 
-        $("nav").on("mouseover", function(e) {
-            o_browse.hideMetadataList(e);
-            o_browse.hideTableMetadataTools(e);
+        $(".op-data-table-view").on("mouseleave", "th.op-draggable", function(e) {
+            let tools = $("#op-edit-field-tool");
+            if (e.pageY < Math.floor(tools.offset().top) || (e.pageX - tools.outerWidth() > tools.offset().left)) {
+                o_browse.hideMetadataList(e);
+                o_browse.hideTableMetadataTools(e);
+            }
         });
 
         $("#op-add-metadata-fields").on("mouseleave", function(e) {
