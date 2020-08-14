@@ -778,10 +778,6 @@ th.sticky-header {
     overflow: hidden;
 }
 
-.op-data-table-view .ui-sortable-placeholder {
-    display: none;
-}
-
 .op-data-table-view .ps__rail-y {
     background-color: transparent !important;
     z-index: 11;

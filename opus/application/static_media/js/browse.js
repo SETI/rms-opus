@@ -1659,10 +1659,11 @@ var o_browse = {
             containment: "parent",
             tolerance: "pointer",
             helper: function(e, ui) {
-                let slug = ui.attr("id");
-                $("tbody tr:first").find('td').each(function(column, td) {
-                    $(td).width($(td).width());
+                // maintain width of all headers while moving
+                $(e.currentTarget).find("th").each(function() {
+                    $(this).width($(this).width());
                 });
+
                 return ui;
             },
             stop: function(e, ui) {
@@ -1687,7 +1688,6 @@ var o_browse = {
                 $("tbody").animate({opacity: '0.1'});
                 o_browse.hideTableMetadataTools();
                 o_browse.isSortingHappening = true;
-                /*ui.placeholder.width(ui.helper.width());*/
             },
         });
     },
