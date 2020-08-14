@@ -2329,7 +2329,7 @@ var o_browse = {
 
     showTableMetadataTools: function(e, slug) {
         let elem = e.currentTarget;
-        let targetPosition = $(elem).position();
+        let targetPosition = $(elem).offset();
         let left = targetPosition.left;
         let width = $(elem).outerWidth();
         // need to adjust for the PerfectScrollbar overlaying a bit on the last field
