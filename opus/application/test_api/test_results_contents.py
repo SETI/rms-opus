@@ -276,6 +276,11 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/metadata_v2/nh-mvic-mp1_0012448104.json"
         self._run_json_equal_file(url, "results_nh_mvic_mp1_0012448104.json")
 
+    def test__results_contents_lick1m_ccdc_occ_1989_184_28sgr_i(self):
+        "[test_results_contents.py] lick1m-ccdc-occ-1989-184-28sgr-i"
+        url = "/api/metadata_v2/lick1m-ccdc-occ-1989-184-28sgr-i.json"
+        self._run_json_equal_file(url, "results_lick1m_ccdc_occ_1989_184_28sgr_i.json")
+
     def test__results_contents_mcd27m_iirar_occ_1989_184_28sgr_i(self):
         "[test_results_contents.py] mcd27m-iirar-occ-1989-184-28sgr-i"
         url = "/api/metadata_v2/mcd27m-iirar-occ-1989-184-28sgr-i.json"

@@ -979,6 +979,9 @@ var opus = {
             case "announcements":
                 window.open("https://ringsnodesearchtool.blogspot.com/", "_blank");
                 return;
+            case "tutorialVideos":
+                window.open("https://www.youtube.com/playlist?list=PLgPYitJagzrYj0iMFiuwQpdGImP6Wdt29", "_blank");
+                return;
         }
 
         let buttons = '<div class="op-open-help">';
