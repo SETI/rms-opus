@@ -2,51 +2,51 @@
   "data": {
     "co-iss-w1866145657": {
       "coiss_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.LBL",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
       ],
       "coiss_calib": [
-        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
-        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
       ],
       "coiss_thumb": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1866071296_1866225122/W1866145657_1.IMG.jpeg_small"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1866071296_1866225122/W1866145657_1.IMG.jpeg_small"
       ],
       "coiss_medium": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/browse/1866071296_1866225122/W1866145657_1.IMG.jpeg"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/browse/1866071296_1866225122/W1866145657_1.IMG.jpeg"
       ],
       "coiss_full": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
       ],
       "inventory": [
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.lbl"
       ],
       "planet_geometry": [
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.tab",
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.lbl"
       ],
       "moon_geometry": [
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.tab",
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.lbl"
       ],
       "ring_geometry": [
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.tab",
-        "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.lbl"
       ],
       "browse_thumb": [
-        "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg"
+        "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg"
       ],
       "browse_small": [
-        "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg"
+        "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg"
       ],
       "browse_medium": [
-        "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_med.jpg"
+        "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_med.jpg"
       ],
       "browse_full": [
-        "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_full.png"
+        "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_full.png"
       ]
     }
   },
@@ -54,51 +54,51 @@
     "co-iss-w1866145657": {
       "Current": {
         "coiss_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.LBL",
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1.LBL",
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
         ],
         "coiss_calib": [
-          "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
-          "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_CALIB.LBL"
         ],
         "coiss_thumb": [
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1866071296_1866225122/W1866145657_1.IMG.jpeg_small"
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1866071296_1866225122/W1866145657_1.IMG.jpeg_small"
         ],
         "coiss_medium": [
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/browse/1866071296_1866225122/W1866145657_1.IMG.jpeg"
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/browse/1866071296_1866225122/W1866145657_1.IMG.jpeg"
         ],
         "coiss_full": [
-          "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
+          "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
         ],
         "inventory": [
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.lbl"
         ],
         "planet_geometry": [
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.tab",
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_saturn_summary.lbl"
         ],
         "moon_geometry": [
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.tab",
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_moon_summary.lbl"
         ],
         "ring_geometry": [
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.tab",
-          "https://pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_ring_summary.lbl"
         ],
         "browse_thumb": [
-          "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg"
+          "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_thumb.jpg"
         ],
         "browse_small": [
-          "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg"
+          "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_small.jpg"
         ],
         "browse_medium": [
-          "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_med.jpg"
+          "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_med.jpg"
         ],
         "browse_full": [
-          "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_full.png"
+          "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2111/data/1866071296_1866225122/W1866145657_1_full.png"
         ]
       }
     }
