@@ -1664,7 +1664,7 @@ var o_browse = {
                     $(this).width($(this).width());
                 });
 
-                return ui;
+                return ui.clone();
             },
             stop: function(e, ui) {
                 o_browse.isSortingHappening = false;
