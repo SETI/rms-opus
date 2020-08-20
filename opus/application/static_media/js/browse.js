@@ -1684,7 +1684,9 @@ var o_browse = {
                 $("tbody").animate({opacity: '1'});
             },
             start: function(e, ui) {
-                 //dragColumn(ui, e.type);
+                // There is a tiny width difference (2px) between .ui-sortable-placeholder and the helper. This will
+                // prevent the little table width shifting when sorting starts (all header texts are single line).
+                ui.placeholder.width(ui.helper.width());
                 $("tbody").animate({opacity: '0.1'});
                 o_browse.hideTableMetadataTools();
                 o_browse.isSortingHappening = true;

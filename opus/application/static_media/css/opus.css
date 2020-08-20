@@ -756,6 +756,22 @@ th.sticky-header {
     /* border-right-width: 15px; */
 }
 
+/* Fine tune the sortable helper text to stay at bottom in table header.
+Note: the original text moves up because the helper's default position is
+absolute, and this will result its child element ui-resizable (position: relative)
+to move up.
+*/
+.op-data-table .ui-sortable-helper {
+    display: flex;
+    align-items: flex-end;
+    border-bottom-width: 1px;
+}
+
+/* Make sure placeholder width matches helper */
+.op-data-table .ui-sortable-placeholder {
+    display: block;
+}
+
 .op-data-table th > div {
     vertical-align: middle;
     display: inline-block;
