@@ -20,7 +20,7 @@
         "volumeid": "COVIMS_8001",
         "datasetid": "CO-SR-VIMS-4/5-OCC-V2.1",
         "productid": "VIMS_2006_204_ALPORI_I_TAU_01KM.TAB",
-        "productcreationtime": "2019-04-08T12:00:00.000",
+        "productcreationtime": "2020-05-04T12:00:00.000",
         "primaryfilespec": "COVIMS_8001/DATA/VIMS_2006_204_ALPORI_I_TAU_01KM.LBL",
         "opusid": "co-vims-occ-2006-204-alpori-i",
         "note": "Data quality good"
