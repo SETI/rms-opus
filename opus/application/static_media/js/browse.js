@@ -1633,16 +1633,6 @@ var o_browse = {
     },
 
     initDraggableColumn: function(tab) {
-        let positionArray = [];
-        function dragColumn(ui, action) {
-            let element = ui.item;
-            let slug = element.attr("id");
-            let func = (action === "sortstart" ? "addClass" : "removeClass");
-            $(`${tab} .op-data-table-colun-move-bar`)[func]("op-column-move");
-            $(`${tab} .op-data-table td[data-slug="${slug}"]`).each(function(column, td) {
-                $(td)[func]("op-column-move");
-            });
-        }
         function moveColumn(table, from, to) {
             let rows = $('tr', table);
             let cols;
@@ -1652,6 +1642,7 @@ var o_browse = {
             });
         }
 
+        let borderRightWidth = "border-right-width: 15px";
         $(`${tab} .op-data-table thead tr`).sortable({
             items: "th.op-draggable",
             axis: "x",
@@ -1681,12 +1672,14 @@ var o_browse = {
                     o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                     o_sortMetadata.renderSortedDataFromBeginning();
                 }
+                $(".op-data-table th:last-child").css(borderRightWidth);
                 $("tbody").animate({opacity: '1'});
             },
             start: function(e, ui) {
                 // There is a tiny width difference (2px) between .ui-sortable-placeholder and the helper. This will
                 // prevent the little table width shifting when sorting starts (all header texts are single line).
                 ui.placeholder.width(ui.helper.width());
+
                 $("tbody").animate({opacity: '0.1'});
                 o_browse.hideTableMetadataTools();
                 o_browse.isSortingHappening = true;
