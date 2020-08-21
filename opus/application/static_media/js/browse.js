@@ -1574,7 +1574,8 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let reorderTip = "Drag to reorder\n";
+            //let reorderTip = "Drag to reorder\n";
+            let reorderTip = "";
             let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
@@ -1596,11 +1597,11 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header" title="Drag to reorder"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
-        o_browse.initDraggableColumn(tab);
+        //o_browse.initDraggableColumn(tab);
     },
 
     initResizableColumn: function(tab) {

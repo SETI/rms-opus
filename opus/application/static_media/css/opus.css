@@ -749,11 +749,11 @@ th.sticky-header {
 
 /* Move y-scrollbar out of container in table view */
 .op-data-table th:last-child {
-    /* border-right-width: 15px; */
+    border-right-width: 15px;
 }
 
 .op-data-table tr > td:last-child {
-    /* border-right-width: 15px; */
+    border-right-width: 15px;
 }
 
 /* Fine tune the sortable helper text to stay at bottom in table header.
