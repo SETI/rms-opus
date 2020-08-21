@@ -509,13 +509,12 @@ def api_init_detail_page(request, **kwargs):
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
-            if (selection is None and (product_type[3].find('Browse Image') or
-                product_type[3].find('Browse Diagram'))):
-                for fn in file_list:
-                    if selection:
-                        break
-                    basename = fn.split('/')[-1]
-                    selection = basename.split('.')[0]
+            if (selection is None and
+                (product_type[3].find('Browse Image') or
+                 product_type[3].find('Browse Diagram'))):
+                if len(file_list) > 0:
+                    selection = file_list[0].split('/')[-1].split('.')[0]
+
             # Create the URL to look up a particular OPUS_ID in a given
             # metadata summary file in ViewMaster
             if product_type[3].find('Index') != -1:

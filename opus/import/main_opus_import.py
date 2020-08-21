@@ -7,8 +7,10 @@
 ################################################################################
 
 import argparse
+import cProfile, io
 import logging
 import os
+import pstats
 import sys
 import traceback
 import warnings
@@ -301,7 +303,13 @@ parser.add_argument(
 # Argument about whether to check index row files or not
 parser.add_argument(
     '--import-use-row-files', action='store_true', default=False,
-    help='Import with checking row files under shelves/index'
+    help="""Use metadata row files to determine whether index and summary files
+            should be included in the files table"""
+)
+
+parser.add_argument(
+    '--profile', action='store_true', default=False,
+    help='Do performance profiling'
 )
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
@@ -324,8 +332,6 @@ if impglobals.ARGUMENTS.do_all_import:
     impglobals.ARGUMENTS.do_import = True
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
     impglobals.ARGUMENTS.drop_new_import_tables = True
-    # Comment/Uncomment the line below to determine if row files are used
-    impglobals.ARGUMENTS.import_use_row_files = True
 
 if impglobals.ARGUMENTS.do_import_finalization:
     impglobals.ARGUMENTS.copy_import_to_permanent_tables = True
@@ -403,6 +409,10 @@ if impglobals.ARGUMENTS.override_db_schema:
     our_schema_name = impglobals.ARGUMENTS.override_db_schema
 
 try: # Top-level exception handling so we always log what's going on
+    # Start the profiling
+    if impglobals.ARGUMENTS.profile:
+        pr = cProfile.Profile()
+        pr.enable()
 
     impglobals.LOGGER.open(
             'Performing all requested import functions',
@@ -509,6 +519,17 @@ try: # Top-level exception handling so we always log what's going on
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
         do_dictionary.do_dictionary()
         impglobals.LOGGER.close()
+
+    if impglobals.ARGUMENTS.profile:
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats(sortby)
+        ps.print_stats()
+        ps.print_callers()
+        impglobals.LOGGER.info('Profile results:\n%s', s.getvalue())
+        # with open('cprofile_results.txt', 'w+') as f:
+        #     f.write(s.getvalue())
 
     impglobals.LOGGER.close()
 

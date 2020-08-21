@@ -1675,7 +1675,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
         (category, sort_order_num, short_name,
-            full_name, default_checked) = product_type
+         full_name, default_checked) = product_type
         default_checked = 1 if default_checked else 0
         if category == 'standard':
             pref = 'ZZZZZ1'
@@ -1701,7 +1701,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         for sublist in list_of_sublists:
             if (impglobals.ARGUMENTS.import_use_row_files and
                 skip_current_product_type):
-                break;
+                break
             for file_num, file in enumerate(sublist):
                 version_number = sublist[0].version_rank
                 version_name = sublist[0].version_id
@@ -1709,24 +1709,32 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     version_name = 'Current'
                 logical_path = file.logical_path
 
-                if (impglobals.ARGUMENTS.import_use_row_files and
-                    ('_summary.tab' in logical_path or
-                     '_index.tab' in logical_path or
-                     '_hstfiles.tab' in logical_path)):
+                # is_index: check if it's an index file by the presence of the
+                # corresponding indexshelf file in shelves/index
+                if impglobals.ARGUMENTS.import_use_row_files and file.is_index:
+                    basename = filespec.split('/')[-1]
+                    selection = basename.split('.')[0]
+                    try:
+                        file.find_selected_row_key(selection, '=')
+                    except OSError:
+                        # can't find the row, we skip this product_type
+                        skip_current_product_type = True
+                        break
+                elif ('_summary.tab' in logical_path or
+                      '_index.tab' in logical_path or
+                      '_hstfiles.tab' in logical_path):
+                    # if an index file has no files in shelves/index
+                    import_util.log_nonrepeating_warning(
+                        f'Volume "{volume_id}" is missing row files under '+
+                        'shelves/index')
 
-                    # Check if corresponding files exist in shelves/index
-                    if os.path.exists(file.indexshelf_abspath):
-                        basename = filespec.split('/')[-1]
-                        selection = basename.split('.')[0]
-                        try:
-                            file.find_selected_row_key(selection, '=')
-                        except: # can't find the row, we skip this producut_type
-                            skip_current_product_type = True
-                            break
-                    else:
-                        impglobals.LOGGER.log('warning',
-                            f'Volume "{volume_id}" is missing row files under '+
-                            'shelves/index')
+                # Check if corresponding shelves/info or shelves/links files
+                # exist, if not, we skip the file.
+                try:
+                    file.shelf_lookup('links')
+                    file.shelf_lookup('info')
+                except (IOError, OSError, KeyError, ValueError):
+                    continue
 
                 url = file.url
                 checksum = file.checksum

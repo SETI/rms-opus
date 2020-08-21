@@ -17,6 +17,10 @@
       "covims_full": [
         "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
       ],
+      "rms_index": [
+        "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
+        "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
+      ],
       "inventory": [
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
         "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.lbl"
@@ -65,6 +69,10 @@
         ],
         "covims_full": [
           "https://pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
+        ],
+        "rms_index": [
+          "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
+          "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
         ],
         "inventory": [
           "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
