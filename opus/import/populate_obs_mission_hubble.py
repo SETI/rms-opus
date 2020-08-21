@@ -1039,6 +1039,20 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 
+def populate_obs_mission_hubble_HSTx_proposed_aperture_type(**kwargs):
+    return None
+
+populate_obs_mission_hubble_HSTACS_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTNICMOS_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTWFC3_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTWFPC2_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+
+def populate_obs_mission_hubble_HSTSTIS_proposed_aperture_type(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    aperture = index_row['PROPOSED_APERTURE_TYPE'].upper()
+    return (aperture, aperture)
+
 def populate_obs_mission_hubble_HSTACS_targeted_detector_id(**kwargs):
     return None
 

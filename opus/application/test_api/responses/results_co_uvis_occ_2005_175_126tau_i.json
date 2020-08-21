@@ -20,7 +20,7 @@
         "volumeid": "COUVIS_8001",
         "datasetid": "CO-SR-UVIS-HSP-2/4-OCC-V2.0",
         "productid": "UVIS_HSP_2005_175_126TAU_I_TAU01KM.TAB",
-        "productcreationtime": "2020-04-29T12:00:00.000",
+        "productcreationtime": null,
         "primaryfilespec": "COUVIS_8001/DATA/UVIS_HSP_2005_175_126TAU_I_TAU01KM.LBL",
         "opusid": "co-uvis-occ-2005-175-126tau-i",
         "note": "Data quality poor"
