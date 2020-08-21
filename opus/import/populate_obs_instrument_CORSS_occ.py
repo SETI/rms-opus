@@ -124,7 +124,7 @@ def populate_obs_pds_CORSS_primary_file_spec_OCC(**kwargs):
     return _CORSS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_CORSS_product_creation_time_OCC(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 # Format: "CO-SR-RSS-4/5-OCC-V2.0"
 def populate_obs_pds_CORSS_data_set_id_OCC(**kwargs):

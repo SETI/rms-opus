@@ -169,7 +169,7 @@ def populate_obs_pds_COUVIS_primary_file_spec_OBS(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COUVIS_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
 def populate_obs_pds_COUVIS_data_set_id_OBS(**kwargs):
