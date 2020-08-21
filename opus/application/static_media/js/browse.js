@@ -1574,7 +1574,7 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let reorderTip = "Drag to reorder\n";
+            let reorderTip = ""; // "Drag to reorder\n";
             let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
@@ -1596,11 +1596,11 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header" title="Drag to reorder"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
-        o_browse.initDraggableColumn(tab);
+        //o_browse.initDraggableColumn(tab);  TBD later
     },
 
     initResizableColumn: function(tab) {
@@ -1632,6 +1632,7 @@ var o_browse = {
         });
     },
 
+    // this code is not currently being used.
     initDraggableColumn: function(tab) {
         function moveColumn(table, from, to) {
             let rows = $('tr', table);
@@ -1642,7 +1643,6 @@ var o_browse = {
             });
         }
 
-        let borderRightWidth = "border-right-width: 15px";
         $(`${tab} .op-data-table thead tr`).sortable({
             items: "th.op-draggable",
             axis: "x",
@@ -1672,12 +1672,10 @@ var o_browse = {
                     o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
                     o_sortMetadata.renderSortedDataFromBeginning();
                 }
-                $(".op-data-table th:last-child").css(borderRightWidth);
                 $("tbody").animate({opacity: '1'});
             },
             start: function(e, ui) {
                 ui.placeholder.width(ui.helper.width());
-                $(".op-data-table th:last-child").css("border-right-width", "0");
                 $("tbody").animate({opacity: '0.1'});
                 o_browse.hideTableMetadataTools();
                 o_browse.isSortingHappening = true;
