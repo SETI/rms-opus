@@ -20,7 +20,7 @@
         "volumeid": "COVIMS_8001",
         "datasetid": "CO-SR-VIMS-4/5-OCC-V2.1",
         "productid": "VIMS_2014_175_L2PUP_E_TAU_01KM.TAB",
-        "productcreationtime": "2019-04-08T12:00:00.000",
+        "productcreationtime": null,
         "primaryfilespec": "COVIMS_8001/DATA/VIMS_2014_175_L2PUP_E_TAU_01KM.LBL",
         "opusid": "co-vims-occ-2014-175-l2pup-e",
         "note": "Data quality fair"

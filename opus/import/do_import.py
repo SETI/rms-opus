@@ -719,18 +719,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     impglobals.LOGGER.log('info',
                f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
 
-    # This is used to make all ground-based observations look like they were
-    # done by a single instrument to make writing the populate_* functions
-    # easier.
-    func_instrument_name = instrument_name
-    if instrument_name is None:
-        # There could be multiple instruments in a single volume, in which case
-        # we need to look in the index labelself.
-        # We assume this only happens for ground-based instruments.
-        instrument_name = (obs_label_dict['INSTRUMENT_HOST_ID']
-                           +obs_label_dict['INSTRUMENT_ID'])
-        func_instrument_name = 'GB'
-
     metadata = {}
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
@@ -1035,6 +1023,26 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
+        # This is used to make all ground-based observations look like they were
+        # done by a single instrument to make writing the populate_* functions
+        # easier.
+        func_instrument_name = instrument_name
+        derived_instrument_name = instrument_name
+        if instrument_name is None:
+            # There could be multiple instruments in a single index file.
+            # We assume this only happens for ground-based instruments.
+            if ('supp_index_row' not in metadata or
+                metadata['supp_index_row'] is None):
+                filename = index_row['FILE_SPECIFICATION_NAME'].upper()
+                import_util.log_nonrepeating_error(
+                    f'Missing supplemental index information for "{filename}"'
+                )
+            else:
+                supp_index_row = metadata['supp_index_row']
+                derived_instrument_name = (supp_index_row['INSTRUMENT_HOST_ID']
+                                           +supp_index_row['INSTRUMENT_ID'])
+                func_instrument_name = 'GB'
+
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
@@ -1067,7 +1075,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     continue
                 row = import_observation_table(volume_id,
                                                volset,
-                                               instrument_name,
+                                               derived_instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
                                                volume_type,
@@ -1140,7 +1148,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
                         row = import_observation_table(volume_id,
                                                        volset,
-                                                       instrument_name,
+                                                       derived_instrument_name,
                                                        func_instrument_name,
                                                        mission_abbrev,
                                                        volume_type,
@@ -1174,7 +1182,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
                 row = import_observation_table(volume_id,
                                                volset,
-                                               instrument_name,
+                                               derived_instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
                                                volume_type,

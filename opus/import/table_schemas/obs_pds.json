@@ -133,7 +133,7 @@
     {
         "field_name": "product_creation_time",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -151,7 +151,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "RANGE:range_time",
-        "pi_intro": null,
+        "pi_intro": "The Product Creation Time is the time when the actual final data product was created for inclusion in the PDS archive, not the time of the original observation. In most cases, you will want to use the Observation Time under General Constraints instead.",
         "pi_label": "Product Creation Time",
         "pi_label_results": "Product Creation Time",
         "pi_slug": "productcreationtime",

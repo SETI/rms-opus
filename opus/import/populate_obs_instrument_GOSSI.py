@@ -163,7 +163,7 @@ def populate_obs_pds_GOSSI_primary_file_spec_OBS(**kwargs):
     return _GOSSI_file_spec_helper(**kwargs)
 
 def populate_obs_pds_GOSSI_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 def populate_obs_pds_GOSSI_data_set_id_OBS(**kwargs):
     return populate_data_set_id_from_index(**kwargs)

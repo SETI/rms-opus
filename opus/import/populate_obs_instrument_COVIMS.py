@@ -108,7 +108,7 @@ def populate_obs_pds_COVIMS_primary_file_spec_OBS(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COVIMS_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_pds_COVIMS_data_set_id_OBS(**kwargs):

@@ -20,7 +20,7 @@
         "volumeid": "COUVIS_8001",
         "datasetid": "CO-SR-UVIS-HSP-2/4-OCC-V2.0",
         "productid": "UVIS_HSP_2009_015_GAMCAS_E_TAU01KM.TAB",
-        "productcreationtime": "2019-04-15T12:00:00.000",
+        "productcreationtime": null,
         "primaryfilespec": "COUVIS_8001/DATA/UVIS_HSP_2009_015_GAMCAS_E_TAU01KM.LBL",
         "opusid": "co-uvis-occ-2009-015-gamcas-e",
         "note": "Data quality good"

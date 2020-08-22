@@ -91,7 +91,7 @@ def populate_obs_pds_GB_product_creation_time_OCC(**kwargs):
 
 # Format: "ESO1M-SR-APPH-4-OCC-V1.0"
 def populate_obs_pds_GB_data_set_id_OCC(**kwargs):
-    return populate_data_set_id_from_index_label(**kwargs)
+    return populate_data_set_id_from_supp_index(**kwargs)
 
 # Format: "ES1_EGRESS"
 def populate_obs_pds_GB_product_id_OCC(**kwargs):
@@ -132,15 +132,15 @@ def populate_obs_type_image_GB_greater_pixel_size_OCC(**kwargs):
 
 def populate_obs_wavelength_GB_wavelength1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return wl
 
 def populate_obs_wavelength_GB_wavelength2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return wl
 
@@ -152,15 +152,15 @@ def populate_obs_wavelength_GB_wave_res2_OCC(**kwargs):
 
 def populate_obs_wavelength_GB_wave_no1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
 def populate_obs_wavelength_GB_wave_no2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
@@ -222,8 +222,8 @@ def populate_obs_occultation_GB_quality_score_OCC(**kwargs):
 
 def populate_obs_occultation_GB_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     if wl > 0.7:
         return 'IR'
@@ -240,7 +240,7 @@ def populate_obs_occultation_GB_source_OCC(**kwargs):
 
 def populate_obs_occultation_GB_host_OCC(**kwargs):
     metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_label']
+    supp_index_row = metadata['supp_index_row']
     insthost = supp_index_row['INSTRUMENT_HOST_NAME']
 
     return (insthost, insthost)
