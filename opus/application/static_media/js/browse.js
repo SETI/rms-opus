@@ -2379,7 +2379,7 @@ var o_browse = {
     adjustTopOfMetadataList: function(elem) {
         let top = $(elem).offset().top;
         // if this is coming from the slideshow view, calulate the top differently
-        if ($(elem).hasClass("op-metadata-detail-add")) {
+        if ($(elem).hasClass("op-metadata-details-tools")) {
             let galleryViewContentsHeight = $("#galleryViewContents").height();
             let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
 
@@ -2463,10 +2463,10 @@ var o_browse = {
 
     checkForEmptyMetadataList: function() {
         // if there is only one metadata field left, disable the trash in both the gallery view and table tools dropdown
-        if (opus.prefs.cols.length === 0) {
-            $(".op-metadata-detail-add, .op-metadata-detail.remove").addClass("op-button-disabled");
+        if ($(".op-select-list .op-search-menu").find("li").length === 0) {
+            $(".op-metadata-detail-add").addClass("op-button-disabled");
         } else {
-            $(".op-metadata-detail-add, .op-metadata-detail.remov").removeClass("op-button-disabled");
+            $(".op-metadata-detail-add").removeClass("op-button-disabled");
         }
     },
 

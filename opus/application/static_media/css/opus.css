@@ -227,7 +227,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     cursor: grabbing;
 }
 
-.op-metadata-detail-add {
+.#galleryView .op-metadata-detail-add {
     left: 0;
     position: absolute;
 }
