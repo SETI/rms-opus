@@ -274,18 +274,7 @@ populate_obs_pds_HSTWFC3_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_f
 populate_obs_pds_HSTWFPC2_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
 
 def populate_obs_pds_HSTx_product_creation_time_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    pct = index_label['PRODUCT_CREATION_TIME']
-
-    try:
-        pct_sec = julian.tai_from_iso(pct)
-    except Exception as e:
-        import_util.log_nonrepeating_error(
-            f'Bad product creation time format "{pct}": {e}')
-        return None
-
-    return pct_sec
+    return None # Until the proper data is available in the supplemental index
 
 populate_obs_pds_HSTACS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
 populate_obs_pds_HSTNICMOS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
@@ -1049,6 +1038,20 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
             f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
+
+def populate_obs_mission_hubble_HSTx_proposed_aperture_type(**kwargs):
+    return None
+
+populate_obs_mission_hubble_HSTACS_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTNICMOS_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTWFC3_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+populate_obs_mission_hubble_HSTWFPC2_proposed_aperture_type = populate_obs_mission_hubble_HSTx_proposed_aperture_type
+
+def populate_obs_mission_hubble_HSTSTIS_proposed_aperture_type(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    aperture = index_row['PROPOSED_APERTURE_TYPE'].upper()
+    return (aperture, aperture)
 
 def populate_obs_mission_hubble_HSTACS_targeted_detector_id(**kwargs):
     return None
