@@ -93,7 +93,7 @@ def populate_obs_pds_COCIRS_primary_file_spec_OBS(**kwargs):
     return _COCIRS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COCIRS_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 # Format: "CO-S-CIRS-2/3/4-REFORMATTED-V1.0"
 def populate_obs_pds_COCIRS_data_set_id_OBS(**kwargs):

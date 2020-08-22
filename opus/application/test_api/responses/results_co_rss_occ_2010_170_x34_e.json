@@ -20,7 +20,7 @@
         "volumeid": "CORSS_8001",
         "datasetid": "CO-SR-RSS-4/5-OCC-V2.0",
         "productid": "RSS_2010_170_X34_E_TAU_01KM.LBL",
-        "productcreationtime": "2018-12-03T16:00:00.000",
+        "productcreationtime": null,
         "primaryfilespec": "CORSS_8001/data/Rev133/Rev133E/Rev133E_RSS_2010_170_X34_E/RSS_2010_170_X34_E_TAU_01KM.LBL",
         "opusid": "co-rss-occ-2010-170-x34-e",
         "note": null

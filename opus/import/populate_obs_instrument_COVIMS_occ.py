@@ -81,7 +81,7 @@ def populate_obs_pds_COVIMS_primary_file_spec_OCC(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COVIMS_product_creation_time_OCC(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 # Format: "CO-SR-VIMS-HSP-2/4-OCC-V2.0"
 def populate_obs_pds_COVIMS_data_set_id_OCC(**kwargs):
