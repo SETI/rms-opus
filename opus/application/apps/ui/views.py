@@ -527,6 +527,7 @@ def api_init_detail_page(request, **kwargs):
                 if tab_url:
                     tab_url = tab_url.replace('holdings', 'viewmaster')
                     tab_url += '/'+selection
+                    tab_url = tab_url.replace('opus.pds-rings', 'pds-rings')
                 product_info['product_link'] = tab_url
             else:
                 product_info['product_link'] = None
