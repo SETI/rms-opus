@@ -305,7 +305,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
 PUBLIC_OPUS_URL = 'https://pds-rings.seti.org/search/'
 
 # The root URL used to retrieve product files from a web server
-PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
+PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'
 
 # The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
