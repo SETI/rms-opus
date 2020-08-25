@@ -18,8 +18,8 @@
         "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
       ],
       "rms_index": [
-        "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
-        "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
       ],
       "inventory": [
         "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
@@ -28,10 +28,6 @@
       "planet_geometry": [
         "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.tab",
         "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.lbl"
-      ],
-      "moon_geometry": [
-        "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.tab",
-        "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.lbl"
       ],
       "ring_geometry": [
         "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.tab",
@@ -71,8 +67,8 @@
           "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_0xxx/COVIMS_0006/extras/tiff/2005050T195627_2005051T095112/v1487539692_1.qub.tiff"
         ],
         "rms_index": [
-          "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
-          "https://pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_index.lbl"
         ],
         "inventory": [
           "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_inventory.tab",
@@ -81,10 +77,6 @@
         "planet_geometry": [
           "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.tab",
           "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_saturn_summary.lbl"
-        ],
-        "moon_geometry": [
-          "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.tab",
-          "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_moon_summary.lbl"
         ],
         "ring_geometry": [
           "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_0xxx/COVIMS_0006/COVIMS_0006_ring_summary.tab",

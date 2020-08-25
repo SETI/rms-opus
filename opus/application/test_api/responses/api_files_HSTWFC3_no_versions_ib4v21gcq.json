@@ -22,12 +22,12 @@
         "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"
       ],
       "rms_index": [
-        "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.tab",
-        "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.lbl"
+        "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.lbl"
       ],
       "hstfiles_index": [
-          "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab",
-          "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl"
+          "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl"
       ],
       "browse_thumb": [
         "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg"
@@ -67,12 +67,12 @@
           "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ.LBL"
         ],
         "rms_index": [
-            "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.tab",
-            "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.lbl"
+            "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.tab",
+            "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_index.lbl"
         ],
         "hstfiles_index": [
-            "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab",
-            "https://pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl"
+            "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.tab",
+            "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_1559/HSTI1_1559_hstfiles.lbl"
         ],
         "browse_thumb": [
           "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_21/IB4V21GCQ_thumb.jpg"
