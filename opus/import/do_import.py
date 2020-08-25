@@ -1736,14 +1736,14 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                         f'Volume "{volume_id}" is missing row files under '+
                         'shelves/index')
 
-                # Check if corresponding shelves/info or shelves/links files
-                # exist, if not, we skip the file.
+                # Check if corresponding shelves/info files exist, if not, we
+                # skip the file.
                 try:
-                    file.shelf_lookup('links')
                     file.shelf_lookup('info')
                 except (IOError, OSError, KeyError, ValueError):
                     continue
 
+                # The following info are obtained from _info (from shelves/info)
                 url = file.url
                 checksum = file.checksum
                 size = file.size_bytes
