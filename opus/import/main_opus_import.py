@@ -7,7 +7,8 @@
 ################################################################################
 
 import argparse
-import cProfile, io
+import cProfile
+import io
 import logging
 import os
 import pstats
