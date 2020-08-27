@@ -352,9 +352,9 @@ var o_selectMetadata = {
         // if the user is updating the metadata fields from the selectMetadata modal,
         // disable user interaction until complete.
         // We don't want to always disable user interation because we build this modal asynchonously on load
-        if ($("#galleryView").hasClass("show")) {
+        //if ($("#galleryView").hasClass("show")) {
             o_utils.disableUserInteraction();
-        }
+        //}
         o_selectMetadata.reRender();
         o_browse.loadData(opus.prefs.view, false);
     },

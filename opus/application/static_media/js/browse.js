@@ -2343,7 +2343,7 @@ var o_browse = {
             top: top,
             left: left,
             width: width,
-        }).slideDown("slow");
+        }).fadeIn("slow");
 
         $("#op-edit-field-tool").data("slug", slug);
     },
@@ -2364,8 +2364,6 @@ var o_browse = {
         o_selectMetadata.reRender();
         o_browse.hideMetadataList();
         o_browse.hideTableMetadataTools();
-
-        o_utils.enableUserInteraction();
     },
 
     hideMetadataList: function() {
