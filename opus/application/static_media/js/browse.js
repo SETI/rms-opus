@@ -412,7 +412,9 @@ var o_browse = {
 
         $(".op-data-table-view").on("mouseleave", "th.op-draggable", function(e) {
             let tools = $("#op-edit-field-tool");
-            if (e.pageY < Math.floor(tools.offset().top) || (e.pageX - tools.outerWidth() > tools.offset().left)) {
+            if (e.pageY < Math.floor(tools.offset().top) ||
+               (e.pageX - tools.outerWidth() > tools.offset().left) ||
+               (e.pageX < tools.offset().left)) {
                 o_browse.hideMetadataList(e);
                 o_browse.hideTableMetadataTools(e);
             }
