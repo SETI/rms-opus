@@ -474,6 +474,7 @@ def api_init_detail_page(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
     instrument_id = obs_general.instrument_id
+    filespec = obs_general.primary_file_spec
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
@@ -509,11 +510,8 @@ def api_init_detail_page(request, **kwargs):
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
-            if (selection is None and
-                (product_type[3].find('Browse Image') or
-                 product_type[3].find('Browse Diagram'))):
-                if len(file_list) > 0:
-                    selection = file_list[0].split('/')[-1].split('.')[0]
+            if selection is None:
+                selection = filespec.split('/')[-1].split('.')[0]
 
             # Create the URL to look up a particular OPUS_ID in a given
             # metadata summary file in ViewMaster

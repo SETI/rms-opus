@@ -303,9 +303,9 @@ parser.add_argument(
 
 # Argument about whether to check index row files or not
 parser.add_argument(
-    '--import-use-row-files', action='store_true', default=False,
-    help="""Use metadata row files to determine whether index and summary files
-            should be included in the files table"""
+    '--import-dont-use-row-files', action='store_true', default=False,
+    help="""Do not use metadata row files to determine whether index and summary
+            files should be included in the files table"""
 )
 
 parser.add_argument(

@@ -1685,7 +1685,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     for product_type in products:
         (category, sort_order_num, short_name,
          full_name, default_checked) = product_type
-        default_checked = 1 if default_checked else 0
+
         if category == 'standard':
             pref = 'ZZZZZ1'
         elif category == 'metadata':
@@ -1708,7 +1708,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         skip_current_product_type = False
 
         for sublist in list_of_sublists:
-            if (impglobals.ARGUMENTS.import_use_row_files and
+            if (not impglobals.ARGUMENTS.import_dont_use_row_files and
                 skip_current_product_type):
                 break
             for file_num, file in enumerate(sublist):
@@ -1720,7 +1720,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
 
                 # is_index: check if it's an index file by the presence of the
                 # corresponding indexshelf file in shelves/index
-                if impglobals.ARGUMENTS.import_use_row_files and file.is_index:
+                if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                    file.is_index):
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
