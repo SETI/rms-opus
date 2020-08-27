@@ -433,7 +433,7 @@ var o_browse = {
         $("#op-edit-field-tool a").on("click", function(e) {
             let action = $(this).data("action");
             let slug = $("#op-edit-field-tool").data("slug");
-            switch(action) {
+            switch (action) {
                 case "addBefore":
                     $("#op-add-metadata-fields").data("slug", slug);
                     $("#op-add-metadata-fields").data("direction", "before");
@@ -1636,9 +1636,8 @@ var o_browse = {
     initDraggableColumn: function(tab) {
         function moveColumn(table, from, to) {
             let rows = $('tr', table);
-            let cols;
             rows.each(function() {
-                cols = $(this).children("td");
+                let cols = $(this).children("td");
                 cols.eq(from).detach().insertBefore(cols.eq(to));
             });
         }
@@ -1660,11 +1659,10 @@ var o_browse = {
             },
             stop: function(e, ui) {
                 o_browse.isSortingHappening = false;
-                let columnOrder = $(this).sortable( "toArray" );
+                let columnOrder = $(this).sortable("toArray");
 
                 // only bother if something actually changed...
                 if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
-
                     let initialCol = opus.prefs.cols.indexOf(ui.item.attr("id")) + 2;
                     let finalCol = columnOrder.indexOf(ui.item.attr("id")) + 2;
                     moveColumn(".op-data-table", initialCol, finalCol);
@@ -2356,9 +2354,7 @@ var o_browse = {
 
     onDoneUpdateFromTableMetadataDetails: function(e) {
         o_utils.disableUserInteraction();
-
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-        // passing in false indicates to not close the gallery view on loadData
         if (opus.prefs.cols.length <= 1) {
             $("a.op-metadata-detail-remove").addClass("op-button-disabled");
         } else {
@@ -2380,7 +2376,7 @@ var o_browse = {
         let top = $(elem).offset().top;
         // if this is coming from the slideshow view, calulate the top differently
         if ($(elem).hasClass("op-metadata-details-tools")) {
-            let galleryViewContentsHeight = $("#galleryViewContents").height();
+            let galleryViewContentsHeight = $("#galleryView .modal-content").height();
             let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
 
             // if the top of the dropdrown is more than half way down the list, dropup instead
@@ -2462,7 +2458,7 @@ var o_browse = {
     },
 
     checkForEmptyMetadataList: function() {
-        // if there is only one metadata field left, disable the trash in both the gallery view and table tools dropdown
+        // if there is only one metadata field left, disable the trash in both the slide show and table tools dropdown
         if ($(".op-select-list .op-search-menu").find("li").length === 0) {
             $(".op-metadata-detail-add").addClass("op-button-disabled");
         } else {

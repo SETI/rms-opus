@@ -227,7 +227,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     cursor: grabbing;
 }
 
-.#galleryView .op-metadata-detail-add {
+#galleryView .op-metadata-detail-add {
     left: 0;
     position: absolute;
 }
@@ -756,10 +756,10 @@ th.sticky-header {
     border-right-width: 15px;
 }
 
-/* Fine tune the sortable helper text to stay at bottom in table header.
-Note: the original text moves up because the helper's default position is
-absolute, and this will result its child element ui-resizable (position: relative)
-to move up.
+/* Fine tune the sortable helper text to stay at the bottom in table header.
+   Note: the original text moves up because the helper's default position is
+    absolute, which causes the child element, ui-resizable (position: relative),
+    to move up.
 */
 .op-data-table .ui-sortable-helper {
     display: flex;
