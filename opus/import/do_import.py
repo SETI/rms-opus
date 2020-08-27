@@ -1718,15 +1718,16 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     version_name = 'Current'
                 logical_path = file.logical_path
 
-                # is_index: check if it's an index file by the presence of the
-                # corresponding indexshelf file in shelves/index
+                # For an index file, we check to see if this observation is
+                # present. If not, we don't include the index file in the
+                # results.
                 if (not impglobals.ARGUMENTS.import_dont_use_row_files and
                     file.is_index):
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
                         file.find_selected_row_key(selection, '=')
-                    except OSError:
+                    except KeyError:
                         # can't find the row, we skip this product_type
                         skip_current_product_type = True
                         break
@@ -1743,6 +1744,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 try:
                     file.shelf_lookup('info')
                 except (IOError, OSError, KeyError, ValueError):
+                    import_util.log_warning('Missing corresponding ' +
+                                            f'shelves/info for {file}')
                     continue
 
                 # The following info are obtained from _info (from shelves/info)

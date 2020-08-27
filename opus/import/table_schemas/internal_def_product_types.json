@@ -52,22 +52,22 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "hstfiles_index",
-        "definition": "Text files ([volume]_hstfiles.tab) that list the associations between data files in a particular HST volume. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files ([volume]_hstfiles.tab) that list the FITS files in the STScI archive for this data set, along with the associated PDS files in this archive. Associated labels (*.lbl) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "raw_image_index",
-        "definition": "Text files ([volume]_raw_image_index.tab) that list the values of various raw image data in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files ([volume]_raw_image_index.tab) that tabulate information about the raw image for each observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "profile_index",
-        "definition": "Text files ([volume]_profile_index.tab) that [...placeholder]. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files ([volume]_profile_index.tab) that tabulate metadata from the data provider for all profiles in a set of occultations. Associated labels (*.lbl) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "supplemental_index",
-        "definition": "Text files ([volume]_supplemental_index.tab) that [...placeholder]. Associated labels (*.lbl) describe the contents of the text files."
+        "definition": "Text files ([volume]_supplemental_index.tab) created by the Ring-Moon Systems Node that augment metadata for all observations in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

@@ -529,8 +529,6 @@ try: # Top-level exception handling so we always log what's going on
         ps.print_stats()
         ps.print_callers()
         impglobals.LOGGER.info('Profile results:\n%s', s.getvalue())
-        # with open('cprofile_results.txt', 'w+') as f:
-        #     f.write(s.getvalue())
 
     impglobals.LOGGER.close()
 
