@@ -120,8 +120,8 @@ def api_view_cart(request):
 
     for name, details in info['product_cat_list']:
         for type in details:
-            if(type['slug_name'] in not_selected_product_types or
-               not type['default_checked']):
+            if (type['slug_name'] in not_selected_product_types or
+                not type['default_checked']):
                 type['selected'] = ''
             else:
                 type['selected'] = 'checked'
