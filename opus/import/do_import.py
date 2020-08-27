@@ -819,7 +819,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             break
                         geo_full_file_spec = geo_vol+'/'+geo_file_spec
                         geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_file_spec)
+                                                geo_full_file_spec,
+                                                fix_case=True)
                         key = geo_pdsfile.opus_id
                         if key is None:
                             import_util.log_nonrepeating_error(
@@ -1664,7 +1665,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     rows = []
 
     try:
-        pdsf = pdsfile.PdsFile.from_filespec(filespec)
+        pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
         _check_for_pdsfile_exception()
     except ValueError:
         import_util.log_nonrepeating_error(

@@ -131,7 +131,7 @@ def populate_obs_general_preview_images(**kwargs):
     elif file_spec.startswith('CORSS'):
         file_spec = file_spec.replace('.LBL', '.TAB')
 
-    pdsf = pdsfile.PdsFile.from_filespec(file_spec)
+    pdsf = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     try:
         viewset = pdsf.viewset
     except ValueError as e:

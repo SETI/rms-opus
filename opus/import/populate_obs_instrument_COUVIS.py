@@ -53,7 +53,7 @@ def _COUVIS_channel_time_helper(**kwargs):
 
 def populate_obs_general_COUVIS_opus_id_OBS(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     try:
         opus_id = pds_file.opus_id
     except:
