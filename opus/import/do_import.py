@@ -1686,6 +1686,11 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         (category, sort_order_num, short_name,
          full_name, default_checked) = product_type
 
+        # We will skip all the diagrams of COUVIS_8xxx for now.
+        if (volume_id.startswith('COUVIS_8') and
+            full_name.find('Browse Diagram') != -1):
+            continue
+
         if category == 'standard':
             pref = 'ZZZZZ1'
         elif category == 'metadata':
