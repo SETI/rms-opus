@@ -1750,7 +1750,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     file.shelf_lookup('info')
                 except (IOError, OSError, KeyError, ValueError):
                     import_util.log_warning('Missing corresponding ' +
-                                            f'shelves/info for {file}')
+                                            f'shelves/info for {file.abspath}')
                     continue
 
                 # The following info are obtained from _info (from shelves/info)
