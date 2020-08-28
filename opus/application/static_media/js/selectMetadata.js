@@ -348,13 +348,7 @@ var o_selectMetadata = {
         o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
         o_browse.clearObservationData(true); // Leave startobs alone
         o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
-
-        // if the user is updating the metadata fields from the selectMetadata modal,
-        // disable user interaction until complete.
-        // We don't want to always disable user interation because we build this modal asynchonously on load
-        if ($("#galleryView").hasClass("show")) {
-            o_utils.disableUserInteraction();
-        }
+        o_utils.disableUserInteraction();
         o_selectMetadata.reRender();
         o_browse.loadData(opus.prefs.view, false);
     },

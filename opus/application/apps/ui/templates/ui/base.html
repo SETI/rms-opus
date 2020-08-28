@@ -265,11 +265,18 @@
                 <div class="loader"></div>
             </div>
 
+            <div id="op-edit-field-tool" class="dropdown-menu dropdown-menu-sm border-top-0 border-dark mt-0" data-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
+                <div class="d-flex justify-content-between">
+                    <a href="#" class="op-metadata-detail-add" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus pl-1"></i></a>
+                    <a href="#" class="op-metadata-detail-remove" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" class="op-metadata-detail-add" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pr-1"></i></a>
+                </div>
+            </div>
         </div><!-- /tabcontent -->
 
 
         <!-- dropdown menu for observations -->
-        <div class="dropdown-menu dropdown-menu-sm" id="op-obs-menu" data-toggle="dropdown" aria-labelledby="op-obs-menu" aria-haspopup="true" aria-expanded="false">
+        <div id="op-obs-menu" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-obs-menu" aria-haspopup="true" aria-expanded="false">
             <h2 class="dropdown-header"></h2>
             <a class="dropdown-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
             <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
@@ -281,8 +288,14 @@
             <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
         </div>
 
+        <!-- dropdown menu for adding metadata fields -->
+        <div id="op-add-metadata-fields" class="op-no-select dropdown-menu dropdown-menu-sm" data-toggle="dropdown" data-direction="after" aria-labelledby="op-add-metadata-fields" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add Metadata Field</h2>
+            <div class="op-select-list"></div>
+        </div>
+
         <!-- dropdown menu for sort metadata columns -->
-        <div class="op-no-select dropdown-menu dropdown-menu-sm" id="op-add-sort-metadata" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+        <div id="op-add-sort-metadata" class="op-no-select dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
             <h2 class="dropdown-header">Add Metadata Field to Sort</h2>
             <div class="op-sort-list"></div>
         </div>
@@ -323,10 +336,6 @@
                                     <div class="loader"></div>
                                 </div>
                                 <div class="row bottom"></div>
-                                <div id="op-add-metadata-fields" class="op-no-select dropdown-menu dropdown-menu-sm" data-toggle="dropdown">
-                                    <h2 class="dropdown-header">Add Metadata Field</h2>
-                                    <div class="op-select-list"></div>
-                                </div>
                             </div>
                         </div>
                     </div>

@@ -341,7 +341,7 @@ var o_browse = {
         $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
             let slug = $(this).closest("ul").data("slug");
             o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
-            $(this).parent().parent().remove();
+            $(this).closest("ul").remove();
             if ($("a.op-metadata-detail-remove").length <= 1) {
                 $("a.op-metadata-detail-remove").addClass("op-button-disabled");
             }
@@ -364,18 +364,22 @@ var o_browse = {
             }
         });
 
-        $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function() {
+        $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function(e) {
             let slug = $(this).data('slug');
             if (!slug) { return; }
+            let contextMenu = "#op-add-metadata-fields";
 
-            let parentSlug = $("#op-add-metadata-fields").data("slug");
+            let parentSlug = $(contextMenu).data("slug");
+            let direction = $(contextMenu).data("direction");
             let index = $.inArray(parentSlug, opus.prefs.cols);
             if (index >= 0) {
-                index++;
+                if (direction === "after") {
+                    index++;
+                }
                 opus.prefs.cols.splice(index, 0, slug);
                 // save the last slug that was added so that we can make sure it is visible on scroll
-                $("#op-add-metadata-fields").data("last", slug);
-                $((`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`)).hide();
+                $(contextMenu).data("last", slug);
+                $((`${contextMenu} .op-select-list a[data-slug="${slug}"]`)).hide();
 
                 o_selectMetadata.saveChanges();
                 o_selectMetadata.reRender();
@@ -383,6 +387,7 @@ var o_browse = {
             // remove the disable in case there was only one field to start with...
             $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
             o_browse.hideMetadataList();
+            o_browse.hideTableMetadataTools(e);
             return false;
         });
 
@@ -395,6 +400,60 @@ var o_browse = {
         // Click add all to cart icon in the first column of the browse table header
         $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
             o_browse.confirmationBeforeAddAll();
+        });
+
+        $(".op-data-table-view").on("mouseenter", "th.op-draggable", function(e) {
+            if ($(".op-metadata-detail-add").hasClass("op-add-disabled") || o_browse.isSortingHappening) {
+                return false;
+            }
+            let slug = $(this).attr("id");
+            o_browse.showTableMetadataTools(e, slug);
+        });
+
+        $(".op-data-table-view").on("mouseleave", "th.op-draggable", function(e) {
+            let tools = $("#op-edit-field-tool");
+            if (e.pageY < Math.floor(tools.offset().top)  ||
+               (e.pageY > tools.outerHeight() + tools.offset().top) ||
+               (e.pageX < tools.offset().left) ||
+               (e.pageX > tools.outerWidth() + tools.offset().left)) {
+                o_browse.hideMetadataList(e);
+                o_browse.hideTableMetadataTools(e);
+            }
+        });
+
+        $("#op-add-metadata-fields").on("mouseleave", function(e) {
+            o_browse.hideMetadataList(e);
+            o_browse.hideTableMetadataTools(e);
+        });
+
+        $("#op-edit-field-tool").on("mouseleave", function(e) {
+            // only hide the edit metadata field tool bar if the add metadata menu is not showing
+            if (!$("#op-add-metadata-fields").hasClass("show")) {
+                o_browse.hideTableMetadataTools(e);
+            }
+        });
+
+        $("#op-edit-field-tool a").on("click", function(e) {
+            let action = $(this).data("action");
+            let slug = $("#op-edit-field-tool").data("slug");
+            switch (action) {
+                case "addBefore":
+                    $("#op-add-metadata-fields").data("slug", slug);
+                    $("#op-add-metadata-fields").data("direction", "before");
+                    o_browse.showMetadataList(e);
+                    break;
+                case "remove":
+                    o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
+                    opus.prefs.cols = opus.prefs.cols.filter(col => col !== slug);
+                    o_browse.onDoneUpdateFromTableMetadataDetails(e);
+                    break;
+                case "addAfter":
+                    $("#op-add-metadata-fields").data("slug", slug);
+                    $("#op-add-metadata-fields").data("direction", "after");
+                    o_browse.showMetadataList(e);
+                    break;
+            }
+            return false;
         });
 
         $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
@@ -1518,15 +1577,17 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Click to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
+            //let reorderTip = "Drag to reorder\n";
+            let reorderTip = "";
+            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
-                orderToolTip = "title='Change to descending sort'";
+                orderToolTip = `title='${reorderTip}Change to descending sort'`;
                 columnSorting = "asc";
                 icon =  "-down";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionAsc+1}</span>`;
             } else if (positionDesc >= 0) {
-                orderToolTip = "title='Change to ascending sort'";
+                orderToolTip = `title='${reorderTip}Change to ascending sort'`;
                 columnSorting = "desc";
                 icon = "-up";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionDesc+1}</span>`;
@@ -1539,10 +1600,11 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
+        //o_browse.initDraggableColumn(tab);
     },
 
     initResizableColumn: function(tab) {
@@ -1570,6 +1632,59 @@ var o_browse = {
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
+            },
+        });
+    },
+
+    initDraggableColumn: function(tab) {
+        function moveColumn(table, from, to) {
+            let rows = $('tr', table);
+            rows.each(function() {
+                let cols = $(this).children("td");
+                cols.eq(from).detach().insertBefore(cols.eq(to));
+            });
+        }
+
+        let borderRightWidth = "border-right-width: 15px";
+        $(`${tab} .op-data-table thead tr`).sortable({
+            items: "th.op-draggable",
+            axis: "x",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "pointer",
+            helper: function(e, ui) {
+                // maintain width of all headers while moving
+                $(e.currentTarget).find("th").each(function() {
+                    $(this).width($(this).width());
+                });
+
+                return ui.clone();
+            },
+            stop: function(e, ui) {
+                o_browse.isSortingHappening = false;
+                let columnOrder = $(this).sortable("toArray");
+
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+                    let initialCol = opus.prefs.cols.indexOf(ui.item.attr("id")) + 2;
+                    let finalCol = columnOrder.indexOf(ui.item.attr("id")) + 2;
+                    moveColumn(".op-data-table", initialCol, finalCol);
+
+                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
+                }
+                $(".op-data-table th:last-child").css(borderRightWidth);
+                $("tbody").animate({opacity: '1'});
+            },
+            start: function(e, ui) {
+                // There is a tiny width difference (2px) between .ui-sortable-placeholder and the helper. This will
+                // prevent the little table width shifting when sorting starts (all header texts are single line).
+                ui.placeholder.width(ui.helper.width());
+
+                $("tbody").animate({opacity: '0.1'});
+                o_browse.hideTableMetadataTools();
+                o_browse.isSortingHappening = true;
             },
         });
     },
@@ -2110,6 +2225,8 @@ var o_browse = {
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
+        o_browse.hideMetadataList();
+        o_browse.hideTableMetadataTools();
         opus.getViewNamespace().tableScrollbar.update();
     },
 
@@ -2210,30 +2327,79 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
+    showTableMetadataTools: function(e, slug) {
+        let elem = e.currentTarget;
+        let targetPosition = $(elem).offset();
+        let left = targetPosition.left;
+        let width = $(elem).outerWidth();
+        // need to adjust for the PerfectScrollbar overlaying a bit on the last field
+        if (slug === opus.prefs.cols.last()) {
+            width -= $(`.op-data-table-view .ps__thumb-y`).width();
+        }
+        let top = $(elem).offset().top +
+                  $(elem).outerHeight();
+
+        o_browse.checkForEmptyMetadataList();
+
+        $("#op-edit-field-tool").css({
+            display: "block",
+            top: top,
+            left: left,
+            width: width,
+        }).fadeIn("slow");
+
+        $("#op-edit-field-tool").data("slug", slug);
+    },
+
+    hideTableMetadataTools: function() {
+        $("#op-edit-field-tool").removeClass("show").hide();
+    },
+
+    onDoneUpdateFromTableMetadataDetails: function(e) {
+        o_utils.disableUserInteraction();
+        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+        if (opus.prefs.cols.length <= 1) {
+            $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+        } else {
+            $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
+        }
+        o_selectMetadata.saveChanges();
+        o_selectMetadata.reRender();
+        o_browse.hideMetadataList();
+        o_browse.hideTableMetadataTools();
+    },
+
     hideMetadataList: function() {
         $("#op-add-metadata-fields").removeClass("show").hide();
     },
 
     adjustTopOfMetadataList: function(elem) {
-        let top = $(elem).position().top;
-        let galleryViewContentsHeight = $("#galleryViewContents").height();
-        let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
+        let top = $(elem).offset().top;
+        // if this is coming from the slideshow view, calulate the top differently
+        if ($(elem).hasClass("op-metadata-details-tools")) {
+            let galleryViewContentsHeight = $("#galleryView .modal-content").height();
+            let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
 
-        // if the top of the dropdrown is more than half way down the list, dropup instead
-        if (top * 2 > galleryViewContentsHeight) {
-            // make sure to move the bottom to the top of the line, not the bottom
-            top -= (menuHeight + $(elem).height());
+            // if the top of the dropdrown is more than half way down the list, dropup instead
+            if (top * 2 > galleryViewContentsHeight) {
+                // make sure to move the bottom to the top of the line, not the bottom
+                top -= (menuHeight + $(elem).height());
+            }
         }
         return top;
     },
 
     showMetadataList: function(e) {
-        let contextMenu = "#op-add-metadata-fields";
-        let targetPosition = $(e.currentTarget).position();
-        let left = targetPosition.left;
+        let targetPosition = $(e.currentTarget).offset();
         let top = o_browse.adjustTopOfMetadataList(e.currentTarget);
+        let left = targetPosition.left + Math.ceil($(".fa-plus").outerWidth());
+        let menuWidth = $("#op-add-metadata-fields").outerWidth();
+        let tableWidth = $(".op-data-table-view").outerWidth();
+        if (left + menuWidth > tableWidth) {
+            left = targetPosition.left - menuWidth;
+        }
 
-        $(contextMenu).css({
+        $("#op-add-metadata-fields").css({
             display: "block",
             top: top,
             left: left,
@@ -2293,6 +2459,7 @@ var o_browse = {
     },
 
     checkForEmptyMetadataList: function() {
+        // if there is only one metadata field left, disable the trash in both the slide show and table tools dropdown
         if ($(".op-select-list .op-search-menu").find("li").length === 0) {
             $(".op-metadata-detail-add").addClass("op-button-disabled");
         } else {

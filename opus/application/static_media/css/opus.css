@@ -227,7 +227,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     cursor: grabbing;
 }
 
-.op-metadata-detail-add {
+#galleryView .op-metadata-detail-add {
     left: 0;
     position: absolute;
 }
@@ -718,6 +718,21 @@ th.sticky-header {
     text-decoration: none;
 }
 
+#op-edit-field-tool .dropdown-menu {
+    overflow-y: auto;
+}
+
+#op-edit-field-tool {
+    min-width: 0;
+    background-color: black;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    -webkit-transition: height 0.5s ease-in-out;
+    -moz-transition: height 0.5s ease-in-out;
+    -o-transition: height 0.5s ease-in-out;
+    transition: height 0.5s;
+}
+
 .op-data-table .op-column-ordering {
     margin: 0 10px;
 }
@@ -739,6 +754,22 @@ th.sticky-header {
 
 .op-data-table tr > td:last-child {
     border-right-width: 15px;
+}
+
+/* Fine tune the sortable helper text to stay at the bottom in table header.
+   Note: the original text moves up because the helper's default position is
+    absolute, which causes the child element, ui-resizable (position: relative),
+    to move up.
+*/
+.op-data-table .ui-sortable-helper {
+    display: flex;
+    align-items: flex-end;
+    border-bottom-width: 1px;
+}
+
+/* Make sure placeholder width matches helper */
+.op-data-table .ui-sortable-placeholder {
+    display: block;
 }
 
 .op-data-table th > div {
@@ -1199,7 +1230,6 @@ a:-webkit-any-link, a::any-link {
 }
 
 #op-add-metadata-fields {
-    position: relative;
     cursor: pointer;
     z-index: 9999;
 }
@@ -1727,7 +1757,6 @@ panel are properly separated */
 #op-add-sort-metadata .op-sort-list {
     max-height: 50vh;
     overflow-y: auto;
-
 }
 
 /* Set the vertical spacing between each dropdown item */
@@ -2999,7 +3028,7 @@ when wrapping into the 2nd line */
         transform: scale(2.5);
     }
 
-    #op-add-metadata-fields {
+    #op-add-metadata-fields, #op-edit-field-tool {
         font-size: 75% !important;
     }
 
