@@ -130,10 +130,9 @@ var o_selectMetadata = {
 
     showMenuLoaderSpinner: function() {
         o_selectMetadata.spinnerTimer = setTimeout(function() {
-            $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
             $(`.op-select-metadata-load-status > .loader`).show();
-            o_utils.disableUserInteraction();
             $("#op-select-metadata .op-select-metadata-contents").css("opacity", "0.1");
+            o_utils.disableUserInteraction();
         }, opus.spinnerDelay);
 
         if ($("#galleryView").hasClass("show")) {
