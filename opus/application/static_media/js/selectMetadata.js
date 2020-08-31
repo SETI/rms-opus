@@ -133,6 +133,7 @@ var o_selectMetadata = {
             $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
             $(`.op-select-metadata-load-status > .loader`).show();
             o_utils.disableUserInteraction();
+            $("#op-select-metadata .op-select-metadata-contents").css("opacity", "0.1");
         }, opus.spinnerDelay);
 
         if ($("#galleryView").hasClass("show")) {
@@ -144,6 +145,7 @@ var o_selectMetadata = {
         if (o_selectMetadata.spinnerTimer !== null) {
             clearTimeout(o_selectMetadata.spinnerTimer);
             $(`.op-select-metadata-load-status > .loader`).hide();
+            $("#op-select-metadata .op-select-metadata-contents").css("opacity", "1");
             o_selectMetadata.spinnerTimer = null;
         }
         o_utils.enableUserInteraction();
