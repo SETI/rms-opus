@@ -150,21 +150,12 @@ var o_selectMetadata = {
         o_utils.enableUserInteraction();
     },
 
-    disableSelectMetadataButton: function() {
-        $(`.op-metadata-modal.nav-link`).addClass("op-button-disabled");
-    },
-
-    enableSelectMetadataButton: function() {
-        $(`.op-metadata-modal.nav-link`).removeClass("op-button-disabled");
-    },
-
     render: function() {
         let tab = opus.getViewTab();
         let downloadTitle = (tab === "#cart" ? "Download a CSV of selected metadata for all observations in the cart" : "Download CSV of selected metadata for ALL observations in current results");
         let buttonTitle = (tab === "#cart" ? "Download CSV (in cart)" : "Download CSV (all results)");
 
         if (!o_selectMetadata.rendered) {
-            o_selectMetadata.disableSelectMetadataButton();
             o_selectMetadata.showMenuLoaderSpinner();
 
             // We use getFullHashStr instead of getHash because we want the updated
@@ -268,7 +259,6 @@ var o_selectMetadata = {
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
                 o_selectMetadata.hideMenuLoaderSpinner();
-                o_selectMetadata.enableSelectMetadataButton();
                 o_selectMetadata.rendered = true;
             });
         }

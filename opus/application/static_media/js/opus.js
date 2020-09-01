@@ -488,12 +488,6 @@ var opus = {
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
 
-        // if the selectMetadata modal is in the process of rendering, disable
-        // the menu option on all tabs temporarily - will be enabled after render complete
-        if (!o_selectMetadata.rendered) {
-            o_selectMetadata.disableSelectMetadataButton();
-        }
-
         switch(opus.prefs.view) {
             case "search":
                 window.scrollTo(0,0);
