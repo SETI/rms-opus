@@ -130,8 +130,8 @@ var o_selectMetadata = {
 
     showMenuLoaderSpinner: function() {
         o_selectMetadata.spinnerTimer = setTimeout(function() {
-            $(`.op-select-metadata-load-status > .loader`).show();
-            $("#op-select-metadata .op-select-metadata-contents").css("opacity", "0.1");
+            $(".op-select-metadata-load-status > .loader").show();
+            $(".op-select-metadata-row-contents").css("opacity", "0.1");
             o_utils.disableUserInteraction();
         }, opus.spinnerDelay);
 
@@ -143,8 +143,8 @@ var o_selectMetadata = {
     hideMenuLoaderSpinner: function() {
         if (o_selectMetadata.spinnerTimer !== null) {
             clearTimeout(o_selectMetadata.spinnerTimer);
-            $(`.op-select-metadata-load-status > .loader`).hide();
-            $("#op-select-metadata .op-select-metadata-contents").css("opacity", "1");
+            $(".op-select-metadata-load-status > .loader").hide();
+            $(".op-select-metadata-row-contents").css("opacity", "1");
             o_selectMetadata.spinnerTimer = null;
         }
         o_utils.enableUserInteraction();
