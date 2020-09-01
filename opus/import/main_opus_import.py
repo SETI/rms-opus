@@ -182,6 +182,15 @@ parser.add_argument(
     help='Don\'t warn about missing browse images'
 )
 parser.add_argument(
+    '--import-dont-use-row-files', action='store_true', default=False,
+    help="""Do not use metadata row files to determine whether index and summary
+            files should be included in the files table"""
+)
+parser.add_argument(
+    '--import-report-empty-products', action='store_true', default=False,
+    help='Report empty products during import'
+)
+parser.add_argument(
     '--import-fake-images', action='store_true', default=False,
     help='Fake the existence of browse images if real browse files are missing'
 )
@@ -301,21 +310,9 @@ parser.add_argument(
     help='Omit tracebacks from exception reports'
 )
 
-# Argument about whether to check index row files or not
-parser.add_argument(
-    '--import-dont-use-row-files', action='store_true', default=False,
-    help="""Do not use metadata row files to determine whether index and summary
-            files should be included in the files table"""
-)
-
 parser.add_argument(
     '--profile', action='store_true', default=False,
     help='Do performance profiling'
-)
-
-parser.add_argument(
-    '--import-report-empty-products', action='store_true', default=False,
-    help='Report empty products during import'
 )
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
