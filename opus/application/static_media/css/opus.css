@@ -2030,7 +2030,8 @@ even when screen is narrow */
 }
 
 /* large ellips spinner */
-.op-page-loading-status .loader {
+.op-page-loading-status .loader,
+.op-select-metadata-load-status .loader {
     display: none;
     /* top: 250px; */
 }
@@ -3182,7 +3183,7 @@ when wrapping into the 2nd line */
 @media (max-height: 400px) {
     /* Hide download csv button menu in select metadata menu when screen is short
     (browse tab) */
-    .op-select-metadata-details .op-download-csv {
+    #op-select-metadata-contents .op-download-csv {
         display: none !important;
     }
 

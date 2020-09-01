@@ -716,6 +716,7 @@ var opus = {
         o_cart.addCartBehaviors();
         o_search.addSearchBehaviors();
         o_sortMetadata.addBehaviours();
+        o_selectMetadata.addBehaviors();
     },
 
     addOpusBehaviors: function() {

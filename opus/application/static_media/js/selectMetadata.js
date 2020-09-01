@@ -15,7 +15,11 @@ const gapBetweenBottomEdgeAndMetadataModal = 55;
 /* jshint varstmt: false */
 var o_selectMetadata = {
 /* jshint varstmt: true */
-    selectMetadataDrawn: false,
+    // PS scrollbars - defining here; they will need to be set to NULL to release
+    // memory and enable garbage collection whenever a new render of the modal is requested
+    allMetadataScrollbar: null,
+    selectedMetadataScrollbar: null,
+
     // A flag to determine if the sortable item sorting is happening. This
     // will be used in mutation observer to determine if scrollbar location should
     // be set.
@@ -73,7 +77,7 @@ var o_selectMetadata = {
             o_browse.hidePageLoaderSpinner();
         });
 
-        $("#op-select-metadata .op-all-metadata-column").on("click", '.submenu li a', function() {
+        $("#op-select-metadata").on("click", ".op-all-metadata-column .submenu li a", function() {
             let slug = $(this).data('slug');
             if (!slug) { return; }
 
@@ -89,7 +93,7 @@ var o_selectMetadata = {
         });
 
         // removes chosen column
-        $("#op-select-metadata .op-selected-metadata-column").on("click", "li .op-selected-metadata-unselect", function() {
+        $("#op-select-metadata").on("click", ".op-selected-metadata-column li .op-selected-metadata-unselect", function() {
             let slug = $(this).parent().attr("id").split('__')[1];
             o_selectMetadata.removeColumn(slug);
             return false;
@@ -126,7 +130,9 @@ var o_selectMetadata = {
 
     showMenuLoaderSpinner: function() {
         o_selectMetadata.spinnerTimer = setTimeout(function() {
-            $("#op-select-metadata .op-menu-spinner.spinner").addClass("op-show-spinner");
+            $(".op-select-metadata-load-status > .loader").show();
+            $(".op-select-metadata-row-contents").css("opacity", "0.1");
+            o_utils.disableUserInteraction();
         }, opus.spinnerDelay);
 
         if ($("#galleryView").hasClass("show")) {
@@ -135,7 +141,13 @@ var o_selectMetadata = {
     },
 
     hideMenuLoaderSpinner: function() {
-        clearTimeout(o_selectMetadata.spinnerTimer);
+        if (o_selectMetadata.spinnerTimer !== null) {
+            clearTimeout(o_selectMetadata.spinnerTimer);
+            $(".op-select-metadata-load-status > .loader").hide();
+            $(".op-select-metadata-row-contents").css("opacity", "1");
+            o_selectMetadata.spinnerTimer = null;
+        }
+        o_utils.enableUserInteraction();
     },
 
     render: function() {
@@ -176,9 +188,13 @@ var o_selectMetadata = {
                 if (data.reqno < o_selectMetadata.lastMetadataMenuRequestNo) {
                     return;
                 }
-                $(".op-select-metadata-details").html(data.html);
+                // cleanup first
+                o_selectMetadata.allMetadataScrollbar = null;
+                o_selectMetadata.selectedMetadataScrollbar = null;
+                $("#op-select-metadata .op-selected-metadata-column > ul").sortable("destroy");
+
+                $("#op-select-metadata-contents").html(data.html);
                 $("#op-add-metadata-fields .op-select-list").html(data.add_field_html);
-                o_selectMetadata.rendered = true;  // bc this gets saved not redrawn
                 $("#op-select-metadata .op-reset-button").hide(); // we are not using this
 
                 // since we are rendering the left side of metadata selector w/the same code that builds the select menu,
@@ -205,15 +221,6 @@ var o_selectMetadata = {
                 o_browse.checkForEmptyMetadataList();
 
                 o_menu.wrapTriangleArrowAndLastWordOfMenuCategory("#op-select-metadata");
-
-                // Prevent the same event handlers from being attached to #op-select-metadata
-                // for multiple times. This will avoid o_selectMetadata.render() and
-                // /opus/__fake/__selectmetadatamodal.json being called for multiple times when
-                // the user clicks "Select Metadata" in browse tab.
-                $("#op-select-metadata").off("hide.bs.modal");
-                $("#op-select-metadata").off("show.bs.modal");
-
-                o_selectMetadata.addBehaviors();
 
                 o_selectMetadata.allMetadataScrollbar = new PerfectScrollbar("#op-select-metadata-contents .op-all-metadata-column", {
                     minScrollbarLength: opus.minimumPSLength
@@ -249,10 +256,10 @@ var o_selectMetadata = {
                 o_selectMetadata.lastSavedSelected = $("#op-select-metadata .op-selected-metadata-column > ul").find("li");
                 o_selectMetadata.saveOpusPrefsCols();
                 o_selectMetadata.adjustHeight();
-                o_selectMetadata.rendered = true;
                 o_selectMetadata.hideOrShowPS();
                 o_selectMetadata.hideOrShowMenuPS();
                 o_selectMetadata.hideMenuLoaderSpinner();
+                o_selectMetadata.rendered = true;
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
@@ -265,8 +272,7 @@ var o_selectMetadata = {
     },
 
     saveOpusPrefsCols: function() {
-        o_selectMetadata.originalOpusPrefsCols = [];
-        $.extend(o_selectMetadata.originalOpusPrefsCols, opus.prefs.cols);
+        o_selectMetadata.originalOpusPrefsCols = opus.prefs.cols.map((x) => x);
     },
 
     addColumn: function(slug) {
@@ -314,9 +320,7 @@ var o_selectMetadata = {
         o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
         // remove all from selected column
         $("#op-select-metadata .op-selected-metadata-column li").remove();
-
-        opus.prefs.cols = [];
-        $.extend(opus.prefs.cols, o_selectMetadata.originalOpusPrefsCols);
+        opus.prefs.cols = o_selectMetadata.originalOpusPrefsCols.map((x) => x);
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
