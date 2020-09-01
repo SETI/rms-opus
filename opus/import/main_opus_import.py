@@ -313,6 +313,11 @@ parser.add_argument(
     help='Do performance profiling'
 )
 
+parser.add_argument(
+    '--import-report-empty-products', action='store_true', default=False,
+    help='Report empty products during import'
+)
+
 impglobals.ARGUMENTS = parser.parse_args(command_list)
 
 if impglobals.ARGUMENTS.do_it_all:

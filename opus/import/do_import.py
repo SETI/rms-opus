@@ -1676,9 +1676,10 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     _check_for_pdsfile_exception()
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
-        import_util.log_nonrepeating_warning(
-                  'Empty opus_product key for files: '+
-                  file_list_str)
+        if impglobals.ARGUMENTS.import_report_empty_products:
+            import_util.log_nonrepeating_warning(
+                      'Empty opus_product key for files: '+
+                      file_list_str)
         del products['']
         _check_for_pdsfile_exception()
     # Keep a running list of all products by type, sorted by version
