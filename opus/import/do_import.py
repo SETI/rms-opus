@@ -1737,6 +1737,15 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                         # can't find the row, we skip this product_type
                         skip_current_product_type = True
                         break
+                    except OSError as e:
+                        # selection is partially matched, we skip this
+                        # product_type
+                        import_util.log_warning(
+                            f'{e}\n' +
+                            f'{selection} is partially matched and ' +
+                            'does not exist in the table.')
+                        skip_current_product_type = True
+                        break
                 elif ('_summary.tab' in logical_path or
                       '_index.tab' in logical_path or
                       '_hstfiles.tab' in logical_path):
@@ -1750,8 +1759,9 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 try:
                     file.shelf_lookup('info')
                 except (IOError, OSError, KeyError, ValueError):
-                    import_util.log_warning('Missing corresponding ' +
-                                            f'shelves/info for {file.abspath}')
+                    import_util.log_nonrepeating_warning(
+                        'Missing corresponding ' +
+                        f'shelves/info for {file.abspath}')
                     continue
 
                 # The following info are obtained from _info (from shelves/info)
