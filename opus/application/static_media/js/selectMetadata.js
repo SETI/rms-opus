@@ -320,9 +320,7 @@ var o_selectMetadata = {
         o_menu.markMenuItem("#op-select-metadata .op-all-metadata-column a", "unselect");
         // remove all from selected column
         $("#op-select-metadata .op-selected-metadata-column li").remove();
-
-        opus.prefs.cols = [];
-        $.extend(opus.prefs.cols, o_selectMetadata.originalOpusPrefsCols);
+        opus.prefs.cols = o_selectMetadata.originalOpusPrefsCols.map((x) => x);
 
         // add them back in...
         $(opus.prefs.cols).each(function(index, slug) {
