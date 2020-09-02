@@ -1741,8 +1741,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                         # selection is partially matched, we skip this
                         # product_type
                         import_util.log_warning(
-                            f'{e}\n' +
-                            f'{selection} is partially matched and ' +
+                            f'{e} - {selection} is partially matched and ' +
                             'does not exist in the table.')
                         skip_current_product_type = True
                         break
