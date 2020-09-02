@@ -1758,7 +1758,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 # skip the file.
                 try:
                     file.shelf_lookup('info')
-                except (IOError, OSError, KeyError, ValueError):
+                except OSError:
                     import_util.log_nonrepeating_warning(
                         'Missing corresponding ' +
                         f'shelves/info for {file.abspath}')
