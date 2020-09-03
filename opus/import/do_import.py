@@ -1751,7 +1751,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     # if an index file has no files in shelves/index
                     import_util.log_nonrepeating_warning(
                         f'Volume "{volume_id}" is missing row files under '+
-                        'shelves/index')
+                        f'shelves/index for {logical_path}')
 
                 # Check if corresponding shelves/info files exist, if not, we
                 # skip the file.
