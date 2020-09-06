@@ -122,6 +122,8 @@ def populate_obs_general_preview_images(**kwargs):
     if file_spec.startswith('NH'):
         file_spec = file_spec.replace('.lbl', '.fit')
         file_spec = file_spec.replace('.LBL', '.FIT')
+    elif file_spec.startswith('COUVIS_8'):
+        file_spec = file_spec.replace('.LBL', '.TAB')
     elif file_spec.startswith('COUVIS'):
         file_spec = file_spec.replace('.LBL', '.DAT')
     elif file_spec.startswith('VGISS'):
@@ -129,7 +131,7 @@ def populate_obs_general_preview_images(**kwargs):
     elif file_spec.startswith('CORSS'):
         file_spec = file_spec.replace('.LBL', '.TAB')
 
-    pdsf = pdsfile.PdsFile.from_filespec(file_spec)
+    pdsf = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     try:
         viewset = pdsf.viewset
     except ValueError as e:

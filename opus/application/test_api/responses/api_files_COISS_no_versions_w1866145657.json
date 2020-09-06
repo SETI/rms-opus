@@ -20,6 +20,10 @@
       "coiss_full": [
         "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
       ],
+      "rms_index": [
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_index.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_index.lbl"
+      ],
       "inventory": [
         "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",
         "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.lbl"
@@ -71,6 +75,10 @@
         ],
         "coiss_full": [
           "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/tiff/1866071296_1866225122/W1866145657_1.IMG.tiff"
+        ],
+        "rms_index": [
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_index.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_index.lbl"
         ],
         "inventory": [
           "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2111/COISS_2111_inventory.tab",

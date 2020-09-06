@@ -38,7 +38,7 @@ def populate_obs_general_COVIMS_opus_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name'].lower()
     file_spec = _COVIMS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     try:
         opus_id = pds_file.opus_id
     except:

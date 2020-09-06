@@ -196,7 +196,7 @@ def _COISS_file_spec_helper(**kwargs):
 
 def populate_obs_general_COISS_opus_id_OBS(**kwargs):
     file_spec = _COISS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     try:
         opus_id = pds_file.opus_id
     except:

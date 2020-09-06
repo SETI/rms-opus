@@ -474,6 +474,8 @@ def api_init_detail_page(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
     instrument_id = obs_general.instrument_id
+    filespec = obs_general.primary_file_spec
+    selection = filespec.split('/')[-1].split('.')[0]
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
@@ -505,6 +507,7 @@ def api_init_detail_page(request, **kwargs):
     new_products = OrderedDict()
     for version in products:
         new_products[version] = OrderedDict()
+
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
@@ -519,7 +522,9 @@ def api_init_detail_page(request, **kwargs):
                         break
                 if tab_url:
                     tab_url = tab_url.replace('holdings', 'viewmaster')
-                    tab_url += '/'+opus_id.split('-')[-1]
+                    tab_url += '/'+selection
+                    tab_url = tab_url.replace(settings.PRODUCT_HTTP_PATH,
+                                              settings.VIEWMASTER_ROOT_PATH)
                 product_info['product_link'] = tab_url
             else:
                 product_info['product_link'] = None

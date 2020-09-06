@@ -819,7 +819,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             break
                         geo_full_file_spec = geo_vol+'/'+geo_file_spec
                         geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_file_spec)
+                                                geo_full_file_spec,
+                                                fix_case=True)
                         key = geo_pdsfile.opus_id
                         if key is None:
                             import_util.log_nonrepeating_error(
@@ -1664,7 +1665,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     rows = []
 
     try:
-        pdsf = pdsfile.PdsFile.from_filespec(filespec)
+        pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
         _check_for_pdsfile_exception()
     except ValueError:
         import_util.log_nonrepeating_error(
@@ -1675,14 +1676,22 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
     _check_for_pdsfile_exception()
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
-        import_util.log_nonrepeating_warning(
-                  'Empty opus_product key for files: '+
-                  file_list_str)
+        if impglobals.ARGUMENTS.import_report_empty_products:
+            import_util.log_nonrepeating_warning(
+                      'Empty opus_product key for files: '+
+                      file_list_str)
         del products['']
         _check_for_pdsfile_exception()
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
-        (category, sort_order_num, short_name, full_name) = product_type
+        (category, sort_order_num, short_name,
+         full_name, default_checked) = product_type
+
+        # We will skip all the diagrams of COUVIS_8xxx for now.
+        if (volume_id.startswith('COUVIS_8') and
+            full_name.find('Browse Diagram') != -1):
+            continue
+
         if category == 'standard':
             pref = 'ZZZZZ1'
         elif category == 'metadata':
@@ -1701,13 +1710,60 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
             pref = pref.upper()
         sort_order = pref + ('%03d' % sort_order_num)
         list_of_sublists = products[product_type]
+
+        skip_current_product_type = False
+
         for sublist in list_of_sublists:
+            if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                skip_current_product_type):
+                break
             for file_num, file in enumerate(sublist):
                 version_number = sublist[0].version_rank
                 version_name = sublist[0].version_id
                 if version_name == '':
                     version_name = 'Current'
                 logical_path = file.logical_path
+
+                # For an index file, we check to see if this observation is
+                # present. If not, we don't include the index file in the
+                # results.
+                if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                    file.is_index):
+                    basename = filespec.split('/')[-1]
+                    selection = basename.split('.')[0]
+                    try:
+                        file.find_selected_row_key(selection, '=')
+                    except KeyError:
+                        # can't find the row, we skip this product_type
+                        skip_current_product_type = True
+                        break
+                    except OSError as e:
+                        # selection is partially matched, we skip this
+                        # product_type
+                        import_util.log_warning(
+                            f'{e} - {selection} is partially matched and ' +
+                            'does not exist in the table.')
+                        skip_current_product_type = True
+                        break
+                elif ('_summary.tab' in logical_path or
+                      '_index.tab' in logical_path or
+                      '_hstfiles.tab' in logical_path):
+                    # if an index file has no files in shelves/index
+                    import_util.log_nonrepeating_warning(
+                        f'Volume "{volume_id}" is missing row files under '+
+                        f'shelves/index for {logical_path}')
+
+                # Check if corresponding shelves/info files exist, if not, we
+                # skip the file.
+                try:
+                    file.shelf_lookup('info')
+                except OSError:
+                    import_util.log_nonrepeating_warning(
+                        'Missing corresponding ' +
+                        f'shelves/info for {file.abspath}')
+                    continue
+
+                # The following info are obtained from _info (from shelves/info)
                 url = file.url
                 checksum = file.checksum
                 size = file.size_bytes
@@ -1738,7 +1794,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                        'checksum': checksum,
                        'size': size,
                        'width': width,
-                       'height': height
+                       'height': height,
+                       'default_checked': default_checked,
                        }
                 rows.append(row)
                 if size == 0:

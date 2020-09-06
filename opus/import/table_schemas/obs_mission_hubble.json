@@ -425,9 +425,9 @@
         "pi_tooltip": null,
         "pi_units": null,
         "mult_options": [
-              [   0, "A2D0.",  "A2D0", "010", "Y", null],
-              [   1, "A2D1.",  "A2D1", "020", "Y", null],
-              [   2, "A2D4.",  "A2D4", "030", "Y", null],
+              [   0,  "A2D0",  "A2D0", "010", "Y", null],
+              [   1,  "A2D1",  "A2D1", "020", "Y", null],
+              [   2,  "A2D4",  "A2D4", "030", "Y", null],
               [   3,  "A2D7",  "A2D7", "040", "Y", null],
               [   4, "A2D15", "A2D15", "050", "Y", null],
               [   5,   "N/A",   "N/A", "060", "Y", null]

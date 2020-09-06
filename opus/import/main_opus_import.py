@@ -7,8 +7,11 @@
 ################################################################################
 
 import argparse
+import cProfile
+import io
 import logging
 import os
+import pstats
 import sys
 import traceback
 import warnings
@@ -179,6 +182,15 @@ parser.add_argument(
     help='Don\'t warn about missing browse images'
 )
 parser.add_argument(
+    '--import-dont-use-row-files', action='store_true', default=False,
+    help="""Do not use metadata row files to determine whether index and summary
+            files should be included in the files table"""
+)
+parser.add_argument(
+    '--import-report-empty-products', action='store_true', default=False,
+    help='Report empty products during import'
+)
+parser.add_argument(
     '--import-fake-images', action='store_true', default=False,
     help='Fake the existence of browse images if real browse files are missing'
 )
@@ -298,6 +310,10 @@ parser.add_argument(
     help='Omit tracebacks from exception reports'
 )
 
+parser.add_argument(
+    '--profile', action='store_true', default=False,
+    help='Do performance profiling'
+)
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
 
@@ -396,6 +412,10 @@ if impglobals.ARGUMENTS.override_db_schema:
     our_schema_name = impglobals.ARGUMENTS.override_db_schema
 
 try: # Top-level exception handling so we always log what's going on
+    # Start the profiling
+    if impglobals.ARGUMENTS.profile:
+        pr = cProfile.Profile()
+        pr.enable()
 
     impglobals.LOGGER.open(
             'Performing all requested import functions',
@@ -502,6 +522,15 @@ try: # Top-level exception handling so we always log what's going on
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
         do_dictionary.do_dictionary()
         impglobals.LOGGER.close()
+
+    if impglobals.ARGUMENTS.profile:
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats(sortby)
+        ps.print_stats()
+        ps.print_callers()
+        impglobals.LOGGER.info('Profile results:\n%s', s.getvalue())
 
     impglobals.LOGGER.close()
 

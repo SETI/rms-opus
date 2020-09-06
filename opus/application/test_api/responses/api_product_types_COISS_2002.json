@@ -43,6 +43,13 @@
   },
   {
     "category": "metadata",
+    "description": "RMS Node Augmented Index",
+    "product_type": "rms_index",
+    "version_name": "Current",
+    "version_number": 999999
+  },
+  {
+    "category": "metadata",
     "product_type": "inventory",
     "description": "Target Body Inventory",
     "version_number": 999999,
