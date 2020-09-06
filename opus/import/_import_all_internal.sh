@@ -3,25 +3,25 @@
 # original import_all.sh interactive.
 
 # Destroy the current database
-python main_opus_import.py --drop-permanent-tables --scorched-earth --override-db-schema $1
+python main_opus_import.py --drop-permanent-tables --scorched-earth --override-db-schema $1 $3
 
 # Start with volumes that require duplicate ID checks to make them run faster
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 GALILEO
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 HST
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 NEWHORIZONS --exclude-volumes NHKCLO1001,NHKCLO_2001,NHKELO_1001,NHKELO_2001,NHKCMV1001,NHKCMV_2001,NHKEMV_1001,NHKEMV_2001
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 COVIMS_0xxx
-python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 COUVIS_0xxx
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 $3 GALILEO
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 $3 HST
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 $3 NEWHORIZONS --exclude-volumes NHKCLO1001,NHKCLO_2001,NHKELO_1001,NHKELO_2001,NHKCMV1001,NHKCMV_2001,NHKEMV_1001,NHKEMV_2001
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 $3 COVIMS_0xxx
+python main_opus_import.py --import-check-duplicate-id --do-all-import --override-db-schema $1 $3 COUVIS_0xxx
 
 # Other normal volumes
-python main_opus_import.py --do-all-import --override-db-schema $1 VOYAGER
-python main_opus_import.py --do-all-import --override-db-schema $1 COCIRS
-python main_opus_import.py --do-all-import --override-db-schema $1 COISS
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 VOYAGER
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 COCIRS
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 COISS
 
 # Occultations
-python main_opus_import.py --do-all-import --override-db-schema $1 COUVIS_8xxx
-python main_opus_import.py --do-all-import --override-db-schema $1 COVIMS_8xxx
-python main_opus_import.py --do-all-import --override-db-schema $1 CORSS
-python main_opus_import.py --do-all-import --override-db-schema $1 EBROCC
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 COUVIS_8xxx
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 COVIMS_8xxx
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 CORSS
+python main_opus_import.py --do-all-import --override-db-schema $1 $3 EBROCC
 
 python main_opus_import.py --cleanup-aux-tables --override-db-schema $1
 python main_opus_import.py --import-dictionary --override-db-schema $1

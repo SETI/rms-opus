@@ -72,6 +72,16 @@ echo $S
 echo 6 `cat __tmp1 | grep "$S" | wc -l`
 cat __tmp1 | grep -v "$S" > __tmp2
 
+S="Inventory and surface geo"
+echo $S - IGNORE this if not using the compare inventory and surface geo option
+echo 3069 `cat __tmp2 | grep "$S" | wc -l`
+cat __tmp2 | grep -v "$S" > __tmp1 
+
+S="Index selection is ambiguous"
+echo $S
+echo 76 `cat __tmp1 | grep "$S" | wc -l`
+cat __tmp1 | grep -v "$S" > __tmp2
+
 cp __tmp2 __tmp1
 
 S="COISS.*are in the wrong order - setting to count1"
@@ -94,4 +104,9 @@ echo $S
 echo 332 `cat __tmp2 | grep "$S" | wc -l`
 cat __tmp2 | grep -v "$S" > __tmp1
 
-cat __tmp1
+S="File has zero size"
+echo $S
+echo 1 `cat __tmp1 | grep "$S" | wc -l`
+cat __tmp1 | grep -v "$S" > __tmp2
+
+cat __tmp2
