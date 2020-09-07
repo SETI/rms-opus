@@ -154,8 +154,3 @@ $.fn.isOnScreen = function(scope, slop) {
 
     return (elementTop + offset <= bottom) && (elementTop >= top);
 };
-
-// more convenient this way... 
-Array.prototype.last = function() {
-    return this[this.length-1];
-}

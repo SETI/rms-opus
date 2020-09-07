@@ -2333,7 +2333,8 @@ var o_browse = {
         let left = targetPosition.left;
         let width = $(elem).outerWidth();
         // need to adjust for the PerfectScrollbar overlaying a bit on the last field
-        if (slug === opus.prefs.cols.last()) {
+        let lastSlug = opus.prefs.cols[opus.prefs.cols.length - 1];
+        if (slug === lastSlug) {
             width -= $(`.op-data-table-view .ps__thumb-y`).width();
         }
         let top = $(elem).offset().top +
