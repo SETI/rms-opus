@@ -546,6 +546,17 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-close-widgets-modal"
+            confirm_title="Confirm Close Search Fields"
+            confirm_msg="You are trying to remove a search field that has constraints. Removing the search field will remove the constraints.  Are you sure you wish to proceed?"
+            target="op-close-widgets-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-close-surfacegeo-widgets-modal"
             confirm_title="Confirm Close All Surface Geometry Search Fields"
             confirm_msg="Closing the Surface Geometry Target Selector search field will also close all target-specific search fields. Are you sure you wish to proceed?"

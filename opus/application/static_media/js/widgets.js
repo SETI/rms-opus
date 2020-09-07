@@ -294,10 +294,18 @@ var o_widgets = {
         }
     },
 
-    closeAndRemoveWidgetFromDOM: function(slug) {
+    closeAndRemoveWidgetFromDOM: function(slug, confirm) {
         /**
          * Close #widget__slug and remove elements from DOM.
          */
+        if (confirm !== undefined && confirm) {
+            // see if there has been any constraints set; if so, create modal.
+            if ($(`#widget__${slug} .op-input`).find("input").is(':checked') ||
+                $(`#widget__${slug} .op-input`).find("input").val() !== "") {
+                    $("#op-close-widgets-modal").modal("show").data("slug", slug);
+                    return;
+            }
+        }
         o_widgets.closeWidget(slug);
         let id = "#widget__"+slug;
         try {
@@ -1559,6 +1567,8 @@ var o_widgets = {
         itemsInOneCategory.attr("id", updatedDataCategory);
         itemsInOneCategory.attr("data-mininput", correspondingMinInput);
     },
+
+
 
     scrollToWidget: function(widget) {
         /**

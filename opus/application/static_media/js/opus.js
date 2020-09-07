@@ -885,6 +885,10 @@ var opus = {
                         case "op-addall-to-cart-modal":
                             o_cart.addAllToCart();
                             break;
+                        case "op-close-widgets-modal":
+                            let slug = $("#op-close-widgets-modal").data("slug");
+                            o_widgets.closeAndRemoveWidgetFromDOM(slug);
+                            break;
                         case "op-close-surfacegeo-widgets-modal":
                             o_widgets.closeAllSURFACEGEOWidgets();
                             break;

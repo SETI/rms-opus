@@ -32,6 +32,7 @@ var o_menu = {
                 } catch(e) {
                     return false;
                 }
+                o_widgets.closeAndRemoveWidgetFromDOM(slug, true);
                 return false;
             } else {
                 o_menu.markMenuItem(this);
