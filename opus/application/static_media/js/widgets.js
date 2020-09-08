@@ -116,13 +116,7 @@ var o_widgets = {
             e.preventDefault();
 
             let slug = $(this).data('slug');
-
-            if (slug === "surfacegeometrytargetname" &&
-                $(".widget[id^='widget__SURFACEGEO']").length !== 0) {
-                $("#op-close-surfacegeo-widgets-modal").modal("show");
-            } else {
-                o_widgets.closeAndRemoveWidgetFromDOM(slug);
-            }
+            o_widgets.closeCard(slug);
         });
 
         // Update surfacegeo widgets in place if user selects another surfacegeo target.
@@ -294,16 +288,29 @@ var o_widgets = {
         }
     },
 
+    closeCard: function(slug, confirm) {
+        if (slug === "surfacegeometrytargetname" &&
+            $(".widget[id^='widget__SURFACEGEO']").length !== 0) {
+            $("#op-close-surfacegeo-widgets-modal").modal("show");
+        } else {
+            o_widgets.closeAndRemoveWidgetFromDOM(slug, confirm);
+        }
+    },
+
     closeAndRemoveWidgetFromDOM: function(slug, confirm) {
         /**
          * Close #widget__slug and remove elements from DOM.
          */
         if (confirm !== undefined && confirm) {
             // see if there has been any constraints set; if so, create modal.
-            if ($(`#widget__${slug} .op-input`).find("input").is(':checked') ||
-                $(`#widget__${slug} .op-input`).find("input").val() !== "") {
+            // there are two types of inputs; multichoice and text.  Only need to check
+            // the text type if we know it's not multichoice, as .val() will return
+            // a value for checkboxes as well as text input.
+            let multichoice = $(`#widget__${slug} .op-input .multichoice`);
+            if ((multichoice.length === 0 && $(`#widget__${slug} .op-input`).find("input").val() !== "") ||
+                 (multichoice.length > 0 && multichoice.is(':checked'))) {
                     $("#op-close-widgets-modal").modal("show").data("slug", slug);
-                    return;
+                return;
             }
         }
         o_widgets.closeWidget(slug);
