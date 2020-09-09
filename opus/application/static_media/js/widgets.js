@@ -281,11 +281,11 @@ var o_widgets = {
         /**
          * Close surfacegeometrytargetname and all SURFACEGEO related widgets.
          */
-        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname");
         for (const closeWidgetIcon of $(".close_card[data-slug^='SURFACEGEO']")) {
             let slug = $(closeWidgetIcon).attr("data-slug");
             o_widgets.closeAndRemoveWidgetFromDOM(slug);
         }
+        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname");
     },
 
     closeCard: function(slug, confirm) {
@@ -306,10 +306,12 @@ var o_widgets = {
             // there are two types of inputs; multichoice and text.  Only need to check
             // the text type if we know it's not multichoice, as .val() will return
             // a value for checkboxes as well as text input.
-            let multichoice = $(`#widget__${slug} .op-input .multichoice`);
-            if ((multichoice.length === 0 && $(`#widget__${slug} .op-input`).find("input").val() !== "") ||
-                 (multichoice.length > 0 && multichoice.is(':checked'))) {
-                    $("#op-close-widgets-modal").modal("show").data("slug", slug);
+            let isSet = $(`#widget__${slug} .op-input`).find("input").filter(function() {
+                return (($(this).attr("type") === "text" && $(this).val().trim()) || $(this).is(':checked'));
+            }).length > 0;
+
+            if (isSet) {
+                $("#op-close-widgets-modal").modal("show").data("slug", slug);
                 return;
             }
         }
