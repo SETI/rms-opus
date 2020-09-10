@@ -25,13 +25,9 @@ var o_menu = {
             let slug = $(this).data("slug");
             if (!slug) { return; }
             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
-                // widget is already showing do not fetch another
-                try {
-                    // scroll to widget and highlight it
-                    o_widgets.scrollToWidget(`widget__${slug}`);
-                } catch(e) {
-                    return false;
-                }
+                // if the widget is already showing, delete it
+                // if the widget has config params, ask first... 
+                o_widgets.closeCard(slug, true);
                 return false;
             } else {
                 o_menu.markMenuItem(this);
