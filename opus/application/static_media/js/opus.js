@@ -887,7 +887,7 @@ var opus = {
                             break;
                         case "op-close-widgets-modal":
                             let slug = $("#op-close-widgets-modal").data("slug");
-                            o_widgets.closeAndRemoveWidgetFromDOM(slug);
+                            o_widgets.closeAndRemoveWidgetFromDOM(slug, false);
                             break;
                         case "op-close-surfacegeo-widgets-modal":
                             o_widgets.closeAllSURFACEGEOWidgets();

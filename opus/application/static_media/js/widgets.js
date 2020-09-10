@@ -116,7 +116,7 @@ var o_widgets = {
             e.preventDefault();
 
             let slug = $(this).data('slug');
-            o_widgets.closeCard(slug);
+            o_widgets.closeCard(slug, false);
         });
 
         // Update surfacegeo widgets in place if user selects another surfacegeo target.
@@ -281,11 +281,12 @@ var o_widgets = {
         /**
          * Close surfacegeometrytargetname and all SURFACEGEO related widgets.
          */
+        let noConfirm = false;
         for (const closeWidgetIcon of $(".close_card[data-slug^='SURFACEGEO']")) {
             let slug = $(closeWidgetIcon).attr("data-slug");
-            o_widgets.closeAndRemoveWidgetFromDOM(slug);
+            o_widgets.closeAndRemoveWidgetFromDOM(slug, noConfirm);
         }
-        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname");
+        o_widgets.closeAndRemoveWidgetFromDOM("surfacegeometrytargetname", noConfirm);
     },
 
     closeCard: function(slug, confirm) {
@@ -301,9 +302,9 @@ var o_widgets = {
         /**
          * Close #widget__slug and remove elements from DOM.
          */
-        if (confirm !== undefined && confirm) {
-            // see if there has been any constraints set; if so, create modal.
-            // there are two types of inputs; multichoice and text.  Only need to check
+        if (confirm) {
+            // see if there have been any constraints set; if so, create modal.
+            // there are two types of inputs: multichoice and text.  Only need to check
             // the text type if we know it's not multichoice, as .val() will return
             // a value for checkboxes as well as text input.
             let isSet = $(`#widget__${slug} .op-input`).find("input").filter(function() {
@@ -1576,8 +1577,6 @@ var o_widgets = {
         itemsInOneCategory.attr("id", updatedDataCategory);
         itemsInOneCategory.attr("data-mininput", correspondingMinInput);
     },
-
-
 
     scrollToWidget: function(widget) {
         /**
