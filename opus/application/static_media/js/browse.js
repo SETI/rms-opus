@@ -23,7 +23,7 @@ var o_browse = {
         maxScrollbarLength: opus.galleryAndTablePSLength,
     }),
     // only in o_browse
-    modalScrollbar: new PerfectScrollbar("#galleryViewContents .op-metadata-details", {
+    modalScrollbar: new PerfectScrollbar("#op-gallery-view-contents .op-metadata-details", {
         minScrollbarLength: opus.minimumPSLength
     }),
 
@@ -265,6 +265,20 @@ var o_browse = {
             drag: function(event, ui) {
                 o_browse.hideMenus();
             }
+        });
+
+        $("#galleryView .modal-content").resizable({
+            handles: "n, e, s, w, ne, se, sw, nw",
+            minWidth: 500,
+            resize: function(event, ui) {
+                //o_browse.adjustBrowseDialogPS();
+                let width = $(this).width();
+                if (width < 545) {
+                    $(this).addClass("op-resize-small");
+                } else {
+                    $(this).removeClass("op-resize-small");
+                }
+            },
         });
 
         // Disable draggable for these infomation modals
@@ -568,7 +582,7 @@ var o_browse = {
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
                         break;
                 }
-                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                if (detailOpusId && !$("#op-gallery-view-contents").hasClass("op-disabled")) {
                     o_browse.updateGalleryView(detailOpusId);
                 }
             }
@@ -624,7 +638,7 @@ var o_browse = {
 
         if (checkView) {
             // make sure the current element that the modal is displaying is viewable
-            if (!element.isOnScreen($(`${tab} .gallery-contents`), 0.5)) {
+            if (!element.isOnScreen($(`${tab} .op-gallery-contents`), 0.5)) {
                 let galleryBoundingRect = opus.getViewNamespace().galleryBoundingRect;
 
                 let startObs = $(`${tab} ${contentsView}`).data("infiniteScroll").options.sliderObsNum;
@@ -651,12 +665,12 @@ var o_browse = {
         // Make sure obsNum is rendered before setting scrollbar position
         if (galleryTarget.length && tableTarget.length) {
             let galleryTargetTopPosition = galleryTarget.offset().top;
-            let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
-            let galleryScrollbarPosition = $(`${tab} .gallery-contents .op-gallery-view`).scrollTop();
+            let galleryContainerTopPosition = $(`${tab} .op-gallery-contents .op-gallery-view`).offset().top;
+            let galleryScrollbarPosition = $(`${tab} .op-gallery-contents .op-gallery-view`).scrollTop();
 
             let galleryTargetFinalPosition = (galleryTargetTopPosition - galleryContainerTopPosition +
                                               galleryScrollbarPosition - offset);
-            $(`${tab} .gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
+            $(`${tab} .op-gallery-contents .op-gallery-view`).scrollTop(galleryTargetFinalPosition);
 
             // make sure it's scrolled to the correct position in table view
             let tableTargetTopPosition = tableTarget.offset().top;
@@ -939,10 +953,10 @@ var o_browse = {
         let alignedCachedFirstObs = (o_browse.isGalleryView() ? (o_utils.floor((firstCachedObs - 1)/
                                      galleryBoundingRect.x) * galleryBoundingRect.x + 1) : firstCachedObs);
 
-        // For gallery view, the topBoxBoundary is the top of .gallery-contents
+        // For gallery view, the topBoxBoundary is the top of .op-gallery-contents
         // For table view, we will set the topBoxBoundary to be the bottom of thead
         // (account for height of thead)
-        let browseContentsContainerTop = $(`${tab} .gallery-contents`).offset().top;
+        let browseContentsContainerTop = $(`${tab} .op-gallery-contents`).offset().top;
         let topBoxBoundary = (o_browse.isGalleryView() ?
                               browseContentsContainerTop : browseContentsContainerTop +
                               $(`${tab} .op-data-table thead th`).outerHeight());
@@ -1102,7 +1116,7 @@ var o_browse = {
         let tableOffset = 0;
         if (galleryTarget.length && tableTarget.length) {
             let galleryTargetTopPosition = galleryTarget.offset().top;
-            let galleryContainerTopPosition = $(`${tab} .gallery-contents .op-gallery-view`).offset().top;
+            let galleryContainerTopPosition = $(`${tab} .op-gallery-contents .op-gallery-view`).offset().top;
             galleryOffset = galleryTargetTopPosition - galleryContainerTopPosition;
             let tableTargetTopPosition = tableTarget.offset().top;
             let tableContainerTopPosition = $(`${tab} .op-data-table-view`).offset().top;
@@ -1424,7 +1438,7 @@ var o_browse = {
                     // just reset back to 1 and get a new page
                     opus.prefs[o_browse.getStartObsLabel()] = 1;
                     o_hash.updateURLFromCurrentHash();
-                    $("#galleryViewContents").addClass("op-disabled");
+                    $("#op-gallery-view-contents").addClass("op-disabled");
                     $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
                 } else {
                     // we've hit the end of the infinite scroll.
@@ -1756,7 +1770,7 @@ var o_browse = {
         // don't delete the metadata if the observation is in the cart
         let delOpusId = galleryObsElem.eq(index).data("id");
         if ($("#galleryView").hasClass("show")) {
-            if (delOpusId === $("#galleryViewContents .op-cart-toggle").data("id")) {
+            if (delOpusId === $("#op-gallery-view-contents .op-cart-toggle").data("id")) {
                 o_browse.hideGalleryViewModal();
             }
         }
@@ -2045,28 +2059,28 @@ var o_browse = {
         // Maybe we only care to do this if the modal is visible...  right now, just let it be.
         // Update to make prev button appear when prefetching previous page is done
         if (opus.metadataDetailOpusId !== "" &&
-            !$("#galleryViewContents .op-prev").data("id") &&
-            $("#galleryViewContents .op-prev").hasClass("op-button-disabled")) {
+            !$("#op-gallery-view-contents .op-prev").data("id") &&
+            $("#op-gallery-view-contents .op-prev").hasClass("op-button-disabled")) {
             let prev = $(`${tab} tr[data-id=${opus.metadataDetailOpusId}]`).prev("tr");
             prev = (prev.data("id") ? prev.data("id") : "");
 
-            $("#galleryViewContents .op-prev").data("id", prev);
-            $("#galleryViewContents .op-prev").toggleClass("op-button-disabled", (prev === ""));
+            $("#op-gallery-view-contents .op-prev").data("id", prev);
+            $("#op-gallery-view-contents .op-prev").toggleClass("op-button-disabled", (prev === ""));
         }
 
         // Update to make next button appear when prefetching next page is done
         if (opus.metadataDetailOpusId !== "" &&
-            !$("#galleryViewContents .op-next").data("id") &&
-            $("#galleryViewContents .op-next").hasClass("op-button-disabled")) {
+            !$("#op-gallery-view-contents .op-next").data("id") &&
+            $("#op-gallery-view-contents .op-next").hasClass("op-button-disabled")) {
             let next = $(`${tab} tr[data-id=${opus.metadataDetailOpusId}]`).next("tr");
             next = (next.data("id") ? next.data("id") : "");
 
-            $("#galleryViewContents .op-next").data("id", next);
-            $("#galleryViewContents .op-next").toggleClass("op-button-disabled", (next === ""));
+            $("#op-gallery-view-contents .op-next").data("id", next);
+            $("#op-gallery-view-contents .op-next").toggleClass("op-button-disabled", (next === ""));
         }
 
         // if left/right arrow are disabled, make them clickable again
-        $("#galleryViewContents").removeClass("op-disabled");
+        $("#op-gallery-view-contents").removeClass("op-disabled");
         viewNamespace.infiniteScrollLoadInProgress = false;
 
         if (data.count !== 0) {
@@ -2146,7 +2160,7 @@ var o_browse = {
         let navbarHeight = $(`${tab} .panel-heading`).outerHeight();
         // The main navbar (#op-main-nav) and the 2nd navbar (.panel-heading) have an overlapping
         // area, need to take this overlapped height into consideration when doing the calculation.
-        // This will make sure there is no gap between the end of .gallery-contents and .app-footer.
+        // This will make sure there is no gap between the end of .op-gallery-contents and .app-footer.
         let navOverlappedHeight = $("#op-main-nav").offset().top + mainNavHeight -
                                   $(`${tab} .panel-heading`).offset().top;
         let totalNonGalleryHeight = footerHeight + mainNavHeight + navbarHeight - navOverlappedHeight;
@@ -2157,7 +2171,7 @@ var o_browse = {
     calculateGalleryWidth: function(view) {
         let tab = opus.getViewTab(view);
         // This is the width of container that contains all thumbnail images.
-        let width = $(`${tab} .gallery-contents .gallery`).width();
+        let width = $(`${tab} .op-gallery-contents .gallery`).width();
         if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
@@ -2192,8 +2206,8 @@ var o_browse = {
         // Check screen size and update o_browse.imageSize
         o_browse.updateImageSize();
         let containerHeight = o_browse.calculateGalleryHeight();
-        $(`${tab} .gallery-contents`).height(containerHeight);
-        $(`${tab} .gallery-contents .op-gallery-view`).height(containerHeight);
+        $(`${tab} .op-gallery-contents`).height(containerHeight);
+        $(`${tab} .op-gallery-contents .op-gallery-view`).height(containerHeight);
 
         let viewNamespace = opus.getViewNamespace();
         viewNamespace.galleryScrollbar.update();
@@ -2221,8 +2235,8 @@ var o_browse = {
 
     adjustTableSize: function() {
         let tab = opus.getViewTab();
-        let containerWidth = $(`${tab} .gallery-contents`).width();
-        let containerHeight = $(`${tab} .gallery-contents`).height();
+        let containerWidth = $(`${tab} .op-gallery-contents`).width();
+        let containerHeight = $(`${tab} .op-gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
         o_browse.hideMetadataList();
@@ -2234,13 +2248,13 @@ var o_browse = {
         if (o_browse.isSortingHappening) {
             return;
         }
-        let modalHeight = $("#galleryViewContents").height();
+        let modalHeight = $("#op-gallery-view-contents").height();
         let modalEditHeight = $(".op-metadata-detail-edit").outerHeight(true);
-        let bottomRowHeight = $("#galleryViewContents .bottom").outerHeight(true);
+        let bottomRowHeight = $("#op-gallery-view-contents .bottom").outerHeight(true);
         let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
-        let container = "#galleryViewContents .op-metadata-details";
+        let container = "#op-gallery-view-contents .op-metadata-details";
         let containerHeight = $(container).height(calculatedContainerHeight);
-        let browseDialogHeight = $(`#galleryViewContents .op-metadata-details .contents`).height();
+        let browseDialogHeight = $(`#op-gallery-view-contents .op-metadata-details .contents`).height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
             let currentElement = $(`ul[data-slug="${slug}"] a.op-metadata-detail-add`);
@@ -2254,12 +2268,12 @@ var o_browse = {
         if (o_browse.modalScrollbar) {
             o_browse.hideMetadataList();
             if (containerHeight > browseDialogHeight) {
-                if (!$(`#galleryViewContents .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
-                    $(`#galleryViewContents .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
+                if (!$(`#op-gallery-view-contents .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
+                    $(`#op-gallery-view-contents .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
                     o_browse.modalScrollbar.settings.suppressScrollY = true;
                 }
             } else {
-                $(`#galleryViewContents .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
+                $(`#op-gallery-view-contents .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
                 let lastAddedSlug = $("#op-add-metadata-fields").data("last");
                 if (lastAddedSlug !== undefined) {
@@ -2306,7 +2320,7 @@ var o_browse = {
         });
 
         let tab = opus.getViewTab();
-        let modalCartSelector = `#galleryViewContents .bottom .op-cart-toggle[data-id=${opusId}]`;
+        let modalCartSelector = `#op-gallery-view-contents .bottom .op-cart-toggle[data-id=${opusId}]`;
         if ($("#galleryView").is(":visible") && $(modalCartSelector).length > 0) {
             $(modalCartSelector).html(`<i class="${buttonInfo[tab].icon} fa-2x"></i>`);
             $(modalCartSelector).prop("title", `${buttonInfo[tab].title} (spacebar)`);
@@ -2429,7 +2443,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
 
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
-        $(`#galleryViewContents .op-metadata-details .contents`).sortable({
+        $(`#op-gallery-view-contents .op-metadata-details .contents`).sortable({
             items: "ul",
             cursor: "grabbing",
             containment: "parent",
@@ -2470,7 +2484,7 @@ var o_browse = {
 
     removeEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
-        let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
+        let detailContents = $(`#op-gallery-view-contents .op-metadata-details .contents`);
 
         detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
@@ -2509,7 +2523,7 @@ var o_browse = {
                 html += `</li></ul>`;
             }
         });
-        $("#galleryViewContents .op-metadata-details .contents").html(html);
+        $("#op-gallery-view-contents .op-metadata-details .contents").html(html);
 
         // if it was last in edit mode, open in edit mode...
         if (viewNamespace.metadataDetailEdit) {
@@ -2533,7 +2547,7 @@ var o_browse = {
 
         // mini-menu like the hamburger on the observation/gallery page
         html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
-        $("#galleryViewContents .bottom").html(html);
+        $("#op-gallery-view-contents .bottom").html(html);
     },
 
     updateGalleryView: function(opusId) {
@@ -2555,7 +2569,7 @@ var o_browse = {
         let obsNum = $(element).data("obs");
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
 
-        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
+        $("#op-gallery-view-contents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
         o_browse.metadataboxHtml(opusId);
     },
 

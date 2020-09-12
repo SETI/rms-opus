@@ -815,6 +815,10 @@ th.sticky-header {
     bottom: 1px;
 }
 
+.op-gallery-view-docked {
+    display: none;
+}
+
 .op-sort-position-indicator {
     border-radius: 0.6em;
     -moz-border-radius: 0.6em;
@@ -1113,6 +1117,10 @@ img.op-slideshow-image-preview {
     border: solid 2px #FFF;
 }
 
+#galleryView .op-resize-small {
+    font-size: 75%;
+}
+
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
 #galleryView .op-obs-direction {
@@ -1124,7 +1132,7 @@ when window sized is narrow */
     min-height: 75vh;
 }
 
-#galleryViewContents .op-metadata-details {
+#op-gallery-view-contents .op-metadata-details {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
@@ -1140,12 +1148,12 @@ when window sized is narrow */
     right: 0;
 }
 
-#galleryViewContents .op-metadata-details  .op-metadata-details-tools {
+#op-gallery-view-contents .op-metadata-details  .op-metadata-details-tools {
     float: left;
 }
 
 /* to account for empty field data */
-#galleryViewContents .op-metadata-details .op-metadata-data {
+#op-gallery-view-contents .op-metadata-details .op-metadata-data {
     min-height: 1.5em;
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
@@ -1198,7 +1206,7 @@ when window sized is narrow */
     margin-right: .4em;
 }
 
-#galleryViewContents {
+#op-gallery-view-contents {
     position: relative;
     border-radius: 1%;
 }
@@ -1207,7 +1215,7 @@ when window sized is narrow */
     cursor: grab;
 }
 
-#galleryViewContents .contents:hover {
+#op-gallery-view-contents .contents:hover {
     cursor: text;
 }
 
@@ -1216,16 +1224,16 @@ a:-webkit-any-link, a::any-link {
     cursor: inherit;
 }
 
-#galleryViewContents .detail {
+#op-gallery-view-contents .detail {
     position: fixed;
     bottom: 3.7em;
 }
 
-#galleryViewContents .ps__rail-y {
+#op-gallery-view-contents .ps__rail-y {
     background-color: transparent !important;
 }
 
-#galleryViewContents a.menu {
+#op-gallery-view-contents a.menu {
     width: 0px;
 }
 
@@ -1243,7 +1251,7 @@ a:-webkit-any-link, a::any-link {
     margin-left: 1.2em;
 }
 
-/* this is used to disable clicking on modal (#galleryViewContents) when infiniteScroll is still loading the next page */
+/* this is used to disable clicking on modal (#op-gallery-view-contents) when infiniteScroll is still loading the next page */
 .op-disabled {
     pointer-events: none;
     cursor: default;
@@ -1317,7 +1325,7 @@ panel */
     overflow-y: hidden;
 }
 
-#cart .gallery-contents {
+#cart .op-gallery-contents {
     position: relative;
 }
 
@@ -1668,13 +1676,13 @@ to stay in one line */
         padding-top: 0.5em;
     }
 
-    /* Make sure gallery-contents not cut off by the right edge of the
+    /* Make sure op-gallery-contents not cut off by the right edge of the
     screen */
-    #cart .gallery-contents {
+    #cart .op-gallery-contents {
         padding-left: 10px;
     }
 
-    /* Remove the white space at the bottom of gallery-contents when screen
+    /* Remove the white space at the bottom of op-gallery-contents when screen
     is narrow */
     #cart .op-cart-gallery-side {
         height: 100vh;
@@ -1813,7 +1821,7 @@ panel are properly separated */
     display: none;
 }
 
-.panel-body .gallery-contents {
+.panel-body .op-gallery-contents {
     position: fixed !important;
     overflow-y: auto;
 }
@@ -3272,13 +3280,13 @@ when screen is narrow (cart tab) */
 }
 
 /* Make sure image always stays at the left in metadata modal */
-#galleryViewContents .row {
+#op-gallery-view-contents .row {
     flex-wrap: nowrap !important;
 }
 
 /* Make sure bottom icons will be vertically centered in metadata modal in
 different browsers */
-#galleryViewContents .bottom {
+#op-gallery-view-contents .bottom {
     align-items: stretch;
     padding-top: 0.3em;
 }
