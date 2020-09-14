@@ -1115,6 +1115,7 @@ img.op-slideshow-image-preview {
 
 #galleryView .modal-content {
     border: solid 2px #FFF;
+    max-height: 80vh !important;
 }
 
 #galleryView .op-resize-small {
@@ -1127,9 +1128,21 @@ when window sized is narrow */
     flex-grow: 3;
 }
 
-/* prevent modal from shirnking to a too small window when resizing horizontally */
-#galleryView .left, #galleryView .right {
-    min-height: 75vh;
+#galleryView .left a, #galleryView .left a img {
+    height: 100%;
+}
+#galleryView .row {
+    height: 100%;
+}
+#op-gallery-view-contents {
+    height: 100%;
+}
+/* This is the place that restrict the size of the modal contents, now set it to 90% of window height by default */
+#galleryView .modal-dialog, #galleryView .modal-content {
+    height: 90%;
+}
+#galleryView {
+    height: 100%;
 }
 
 #op-gallery-view-contents .op-metadata-details {

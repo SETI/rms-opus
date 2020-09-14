@@ -270,14 +270,23 @@ var o_browse = {
         $("#galleryView .modal-content").resizable({
             handles: "n, e, s, w, ne, se, sw, nw",
             minWidth: 500,
+            start: function(event, ui) {
+                let $target = $(event.target);
+                let modalCenter =  $("body").height() - 0.5*$target.height() -  $target.offset().top;
+                $target.resizable("instance").center = modalCenter;
+            },
             resize: function(event, ui) {
                 //o_browse.adjustBrowseDialogPS();
+                let $target = $(event.target);
                 let width = $(this).width();
                 if (width < 545) {
-                    $(this).addClass("op-resize-small");
+                    $target.addClass("op-resize-small");
                 } else {
-                    $(this).removeClass("op-resize-small");
+                    $target.removeClass("op-resize-small");
                 }
+                let modalCenter = $target.resizable("instance").center;
+                let newTop = $("body").height() - 0.5*$target.height() - modalCenter;
+                $target.offset({top: newTop});
             },
         });
 
