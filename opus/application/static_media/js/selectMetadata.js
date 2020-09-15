@@ -134,10 +134,6 @@ var o_selectMetadata = {
             $(".op-select-metadata-row-contents").css("opacity", "0.1");
             o_utils.disableUserInteraction();
         }, opus.spinnerDelay);
-
-        if ($("#galleryView").hasClass("show")) {
-            $(`.op-metadata-details > .loader`).show();
-        }
     },
 
     hideMenuLoaderSpinner: function() {
