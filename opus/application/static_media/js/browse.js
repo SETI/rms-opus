@@ -2580,7 +2580,7 @@ var o_browse = {
         let obsNum = $(element).data("obs");
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
 
-        $("#op-gallery-view-contents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
+        $("#op-gallery-view-contents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview img-fluid"/></a>`);
         o_browse.metadataboxHtml(opusId);
     },
 

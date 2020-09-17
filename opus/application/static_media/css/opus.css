@@ -1128,10 +1128,6 @@ when window sized is narrow */
     flex-grow: 3;
 }
 
-#galleryView .left a, #galleryView .left a img {
-    height: 100%;
-}
-
 #galleryView .row {
     height: 100%;
 }
