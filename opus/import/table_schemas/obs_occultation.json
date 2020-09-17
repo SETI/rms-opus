@@ -342,6 +342,24 @@
         "pi_units": null
     },
     {
+        "field_name": "ring_radius1",
+        "field_type": "real8",
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius1",
+        "pi_disp_order": 100,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "field_name": "ring_radius2",
+        "field_type": "real8",
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius2",
+        "pi_disp_order": 101,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
         "put_mults_here": true
     },
     {

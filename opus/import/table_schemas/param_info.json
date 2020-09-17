@@ -2,14 +2,14 @@
     {
         "field_name": "category_name",
         "field_type": "varchar150",
-        "field_notnull": true,
-        "field_key": true
+        "field_key": true,
+        "field_default": null
     },
     {
         "field_name": "name",
         "field_type": "varchar87",
-        "field_notnull": true,
-        "field_key": true
+        "field_key": true,
+        "field_default": null
     },
     {
         "field_name": "form_type",
@@ -48,6 +48,11 @@
     },
     {
         "field_name": "old_slug",
+        "field_type": "varchar255",
+        "field_default": null
+    },
+    {
+        "field_name": "referred_slug",
         "field_type": "varchar255",
         "field_default": null
     },
