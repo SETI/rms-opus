@@ -25,6 +25,7 @@ class ParamInfo(models.Model):
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
+    referred_slug = models.CharField(max_length=255, blank=True, null=True)
     units = models.CharField(max_length=75, blank=True, null=True)
     ranges = models.TextField()
     field_hints1 = models.CharField(max_length=255, blank=True, null=True)
