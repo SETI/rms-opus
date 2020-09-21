@@ -73,7 +73,8 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name == 'Surface':
+        if (pretty_name == 'Surface' or
+            f'[{pretty_name}]' in self.label):
             return self.label
         return self.label + ' [' + pretty_name + ']'
 
@@ -91,6 +92,10 @@ class ParamInfo(models.Model):
 
         if pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
                            'Occultation', 'Surface']:
+            return self.label_results
+        # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
+        # label for referred slug.
+        if f'[{pretty_name}]' in self.label_results:
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 
