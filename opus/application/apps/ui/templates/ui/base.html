@@ -318,11 +318,16 @@
         <!-- modal dialog for the gallery views -->
         <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content">
+                <div id="op-gallery-view-content" class="modal-content">
+                    <div class="op-docking-tools">
+                        <a href="#" class="op-slide-minimize" aria-label="Minimize" title="Minimize the slide"><i class="fas fa-compress fa-lg text-info"></i></a>
+                        <a href="#" class="op-slide-maximize" aria-label="Maximize" title="Restore the slide to the default size"><i class="fas fa-expand-arrows-alt fa-lg text-info"></i></a>
+                        <a href="#" class="op-pin" aria-label="Pin" title="Pin the slide to the right of the Browse view"><i class="fas fa-sign-in-alt fa-lg text-info"></i></a>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <i class="far fa-times-circle fa-lg text-info"></i>
                     </button>
-                    <div id="op-gallery-view-contents" class="modal-body bg-dark">
+                    <div class="op-gallery-view-body modal-body bg-dark">
                         <div class="row">
                             <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
                             <div class="right col-lg-5 col-sm">

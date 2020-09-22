@@ -154,3 +154,18 @@ $.fn.isOnScreen = function(scope, slop) {
 
     return (elementTop + offset <= bottom) && (elementTop >= top);
 };
+
+// extend the jquery UI .resizable
+$.widget("ui.resizable", $.ui.resizable, {
+    resizeTo: function(newSize) {
+        let start = new $.Event("mousedown", { pageX: 0, pageY: 0 });
+        this._mouseStart(start);
+        this.axis = 'se';
+        let end = new $.Event("mouseup", {
+            pageX: newSize.width - this.originalSize.width,
+            pageY: newSize.height - this.originalSize.height
+        });
+        this._mouseDrag(end);
+        this._mouseStop(end);
+    }
+});

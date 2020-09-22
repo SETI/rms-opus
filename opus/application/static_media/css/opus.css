@@ -227,11 +227,6 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     cursor: grabbing;
 }
 
-#galleryView .op-metadata-detail-add {
-    left: 0;
-    position: absolute;
-}
-
 .op-metadata-details-sortable {
     margin-bottom: 0;
 }
@@ -1112,40 +1107,72 @@ img.op-slideshow-image-preview {
     font-size: 75%;
 }
 
-/* make modal width shrink smoothly with screen */
-#galleryView .modal-dialog {
-    max-width: 92%;
+/* prevent weird browser y-scrollbar */
+#galleryView {
+    overflow-y: hidden;
+    pointer-events: none;
+    /* Make sure metadata modal will not be covered by the main nav when screen
+    is short & narrow */
+    z-index: 1031;
 }
 
 #galleryView .modal-content {
     border: solid 2px #FFF;
-    max-height: 80vh !important;
+    /*max-height: 80vh !important;*/
+}
+
+#galleryView .modal-dialog:hover {
+    cursor: grab;
+}
+
+#op-gallery-view-content .op-docking-tools {
+    position: absolute;
+    float: right;
+    top: 1em;
+    right: 4em;
+    z-index: 999;
+}
+
+.op-docking-tools a {
+    opacity: 0.5;
+    padding-right: 0.5em;
+}
+
+#op-gallery-view-content button.close {
+    position: absolute;
+    float: right;
+    top: 0.4em;
+    right: 0.5em;
+    z-index: 999;
+}
+
+.op-gallery-view-body {
+    position: relative;
+    height: 100%;
+    border-radius: 1%;
+}
+
+.op-gallery-view-body .contents:hover {
+    cursor: text;
+}
+
+.op-gallery-view-body .row {
+    height: 100%;
 }
 
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
-#galleryView .op-obs-direction {
+.op-gallery-view-body .op-obs-direction {
     flex-grow: 3;
+    width: 20em;
 }
 
-#galleryView .row {
-    height: 100%;
+.op-gallery-view-body .op-metadata-detail-add {
+    left: 0;
+    position: absolute;
 }
 
-#op-gallery-view-contents {
-    height: 100%;
-}
-
-/* This is the place that restrict the size of the modal contents, now set it to 90% of window height by default */
-#galleryView .modal-dialog, #galleryView .modal-content {
-    height: 90%;
-}
-
-#galleryView {
-    height: 100%;
-}
-
-#op-gallery-view-contents .op-metadata-details {
+.op-gallery-view-body .op-metadata-details {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
@@ -1161,12 +1188,12 @@ when window sized is narrow */
     right: 0;
 }
 
-#op-gallery-view-contents .op-metadata-details  .op-metadata-details-tools {
+.op-gallery-view-body .op-metadata-details  .op-metadata-details-tools {
     float: left;
 }
 
 /* to account for empty field data */
-#op-gallery-view-contents .op-metadata-details .op-metadata-data {
+.op-gallery-view-body .op-metadata-details .op-metadata-data {
     min-height: 1.5em;
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
@@ -1175,28 +1202,11 @@ when window sized is narrow */
     line-break: anywhere;
 }
 
-/* prevent weird browser y-scrollbar */
-#galleryView {
-    overflow-y: hidden;
-    pointer-events: none;
-    /* Make sure metadata modal will not be covered by the main nav when screen
-    is short & narrow */
-    z-index: 1031;
+.op-gallery-view-body .op-prev > i {
+    margin-right: .4em;
 }
 
-#galleryView button.close {
-    position: absolute;
-    float: right;
-    top: 0.4em;
-    right: 0.5em;
-    z-index: 999;
-}
-
-#galleryView .fa-cart-plus {
-    float: left;
-}
-
-#galleryView .bottom {
+.op-gallery-view-body .bottom {
     position: absolute;
     padding-right: 1em;
     bottom: 0;
@@ -1211,43 +1221,21 @@ when window sized is narrow */
     height: 5%;
 }
 
-#galleryView .op-obs-direction {
-    width: 20em;
+.op-gallery-view-body .fa-cart-plus {
+    float: left;
 }
 
-#galleryView .op-prev > i {
-    margin-right: .4em;
+.op-gallery-view-body a.menu {
+    width: 0px;
 }
 
-#op-gallery-view-contents {
-    position: relative;
-    border-radius: 1%;
-}
-
-#galleryView .modal-dialog:hover {
-    cursor: grab;
-}
-
-#op-gallery-view-contents .contents:hover {
-    cursor: text;
+.op-gallery-view-body .ps__rail-y {
+    background-color: transparent !important;
 }
 
 /* note - this is here to allow the user-style to be overridden on the modal */
 a:-webkit-any-link, a::any-link {
     cursor: inherit;
-}
-
-#op-gallery-view-contents .detail {
-    position: fixed;
-    bottom: 3.7em;
-}
-
-#op-gallery-view-contents .ps__rail-y {
-    background-color: transparent !important;
-}
-
-#op-gallery-view-contents a.menu {
-    width: 0px;
 }
 
 #op-add-metadata-fields {
@@ -1264,7 +1252,7 @@ a:-webkit-any-link, a::any-link {
     margin-left: 1.2em;
 }
 
-/* this is used to disable clicking on modal (#op-gallery-view-contents) when infiniteScroll is still loading the next page */
+/* this is used to disable clicking on modal (.op-gallery-view-body) when infiniteScroll is still loading the next page */
 .op-disabled {
     pointer-events: none;
     cursor: default;
@@ -1828,10 +1816,6 @@ panel are properly separated */
     height: 1.5em;
     position: relative;
     min-width: .68em;
-}
-
-.table-page {
-    display: none;
 }
 
 .panel-body .op-gallery-contents {
@@ -3081,8 +3065,7 @@ when wrapping into the 2nd line */
     /* Keep the spaces for detail metadata modal in browse & cart tab to have
     the pretty display when screen is narrow or short */
     #galleryView .modal-header,
-    #galleryView .modal-body,
-    #galleryView .modal-footer {
+    #galleryView .modal-body {
         padding: 1.3em !important;
     }
 
@@ -3091,7 +3074,7 @@ when wrapping into the 2nd line */
         font-size: 1.1em;
     }
 
-    #galleryView .bottom i {
+    .op-gallery-view-body .bottom i {
         font-size: 1.8em;
     }
 
@@ -3293,13 +3276,13 @@ when screen is narrow (cart tab) */
 }
 
 /* Make sure image always stays at the left in metadata modal */
-#op-gallery-view-contents .row {
+.op-gallery-view-body .row {
     flex-wrap: nowrap !important;
 }
 
 /* Make sure bottom icons will be vertically centered in metadata modal in
 different browsers */
-#op-gallery-view-contents .bottom {
+.op-gallery-view-body .bottom {
     align-items: stretch;
     padding-top: 0.3em;
 }
