@@ -53,6 +53,8 @@
     "quality_score": null,
     "optical_depth1": null,
     "optical_depth2": null,
+    "ring_radius1": null,
+    "ring_radius2": null,
     "wl_band": null,
     "source": null,
     "host": null
