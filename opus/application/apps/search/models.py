@@ -1454,6 +1454,7 @@ class ObsInstrumentCoiss(models.Model):
     target_desc = models.CharField(max_length=75)
     combined_filter = models.CharField(max_length=30)
     camera = models.CharField(max_length=1)
+    duration = models.FloatField(blank=True, null=True)
     mult_obs_instrument_coiss_data_conversion_type = models.ForeignKey(MultObsInstrumentCoissDataConversionType, models.DO_NOTHING, db_column='mult_obs_instrument_coiss_data_conversion_type')
     mult_obs_instrument_coiss_compression_type = models.ForeignKey(MultObsInstrumentCoissCompressionType, models.DO_NOTHING, db_column='mult_obs_instrument_coiss_compression_type')
     mult_obs_instrument_coiss_gain_mode = models.ForeignKey(MultObsInstrumentCoissGainModeId, models.DO_NOTHING)
