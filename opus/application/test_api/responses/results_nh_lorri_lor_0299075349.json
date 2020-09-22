@@ -58,7 +58,7 @@
         "occreceiverhost": null
     },
     "Surface Geometry Constraints": {
-        "surfacegeometrytargetlist": null
+        "surfacegeometrytargetlist": "Charon"
     },
     "Charon Surface Geometry Constraints": {
         "SURFACEGEOcharon_planetographiclatitude1": "-36.356",
