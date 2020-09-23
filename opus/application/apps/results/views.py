@@ -587,6 +587,12 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                .order_by('disp_order'))
         if param_info_list:
             for param_info in param_info_list:
+                if param_info.referred_slug is not None:
+                    param_info = get_param_info_by_slug(
+                                                param_info.referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results())
                 if return_db_names:
                     all_info[param_info.name] = param_info
                 else:

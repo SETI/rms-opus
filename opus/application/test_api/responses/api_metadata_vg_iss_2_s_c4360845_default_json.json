@@ -46,6 +46,8 @@
     "polarization_type": "NONE"
   },
   "Occultation Constraints": {
+    "observer_ring_opening_angle1": null,
+    "observer_ring_opening_angle2": null,
     "occ_type": null,
     "occ_dir": null,
     "body_occ_flag": null,
@@ -55,6 +57,8 @@
     "optical_depth2": null,
     "ring_radius1": null,
     "ring_radius2": null,
+    "solar_ring_opening_angle1": null,
+    "solar_ring_opening_angle2": null,
     "wl_band": null,
     "source": null,
     "host": null

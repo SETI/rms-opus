@@ -1521,8 +1521,8 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                                              'category_name': d.table_name,
                                              'sub_heading': sub_head}))
                 for p in all_param_info:
-                    # If referred_slug exists, we will put that referred_slug
-                    # under the current category.
+                    # If referred_slug exists, we will look up the param info
+                    # based on the referred_slug.
                     if p.referred_slug is not None:
                         p = get_param_info_by_slug(p.referred_slug, 'col')
                         p.label = p.body_qualified_label()
