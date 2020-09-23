@@ -287,6 +287,15 @@
           ]
     },
     {
+        "field_name": "duration",
+        "field_type": "real8",
+        "pi_category_name": "obs_instrument_gossi",
+        "pi_referred_slug": "duration",
+        "pi_disp_order": 1000,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
         "put_mults_here": true
     },
     {
