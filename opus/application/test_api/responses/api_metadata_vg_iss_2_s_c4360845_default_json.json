@@ -206,6 +206,7 @@
   },
   "Voyager ISS Constraints": {
     "camera": "N",
+    "duration": null,
     "filter_name": "VIOLET",
     "filter_number": "1",
     "shutter_mode": "NAONLY",
