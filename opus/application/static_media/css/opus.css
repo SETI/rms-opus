@@ -3306,3 +3306,8 @@ different browsers */
         padding-right: 1em;
     }
 }
+
+.op-referred-link {
+    font-size: smaller;
+    color: #707070;
+}

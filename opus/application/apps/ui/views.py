@@ -1548,9 +1548,13 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                 # If referred_slug exists, we will put that referred_slug
                 # under the current category.
                 if p.referred_slug is not None:
-                    p = get_param_info_by_slug(p.referred_slug, 'col')
+                    referred_slug = p.referred_slug
+                    p = get_param_info_by_slug(referred_slug, 'col')
                     p.label = p.body_qualified_label()
                     p.label_results = p.body_qualified_label_results()
+                    # assign referred_slug used to determine if an icon should
+                    # be appended at the end of a menu item.
+                    p.referred_slug = referred_slug
 
                 # On the search tab, we don't need the trailing 1 & 2 for
                 # data-slug in the Select Metadata modal we do.
