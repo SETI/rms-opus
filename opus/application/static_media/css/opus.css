@@ -1103,6 +1103,79 @@ img.op-slideshow-image-preview {
     max-height: 70vh !important;
 }
 
+/* The following will make sure vertical resizing of modal works properly
+without resizing image proportionally. */
+/* Make flex box children items (a tag) stay inside of the parent */
+#galleryView .left {
+    align-items: stretch !important;
+}
+/* Make sure children (img tag) stay inside of it */
+#galleryView .left a {
+    display: flex;
+}
+
+#galleryView .modal-dialog, #galleryView .modal-content {
+    height: 80%;
+}
+
+#galleryView {
+    height: 100%;
+}
+
+/* Here are to move image to the top of the gallery modal and metadata to
+the bottom of modal. Need to use JS to detect the change of modal width */
+/* #galleryView .left a {
+    height: 80%;
+    align-self: center;
+} */
+/* #galleryView .row {
+    flex-direction: column;
+    align-items: stretch;
+} */
+/* #galleryView .left, #galleryView .right {
+    max-width: 100% !important;
+} */
+/* .op-metadata-details {
+    height: 80%;
+    padding-left: 1em;
+} */
+/* .op-metadata-detail-edit {
+    top: 0;
+    height: 10%;
+} */
+/* #galleryView .right .bottom {
+    height: 10%;
+} */
+.op-tune-image-size {
+    height: 90%;
+    align-self: center;
+}
+/* Move image to the top and metadata to the bottom */
+.op-flip-gallery-modal {
+    flex-direction: column;
+}
+/* Make sure image (.left) & metadata (.right) takes up full width */
+.op-extend-full-width {
+    max-width: 100% !important;
+}
+/* metadata info takes up 80% of .left */
+.op-tune-metadata-detail {
+    height: 80% !important;
+    padding-left: 1em;
+}
+/* Edit button takes up 10% */
+.op-position-edit-button {
+    height: 10%;
+    top: 0;
+}
+/* Row of bottom icon takes up 10% */
+.op-position-modal-bttom {
+    height: 10% !important;
+    align-items: center !important;
+}
+/* #################################### */
+
+
 .op-resize-small {
     font-size: 75%;
 }

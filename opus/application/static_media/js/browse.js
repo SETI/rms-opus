@@ -286,6 +286,7 @@ var o_browse = {
                 }
                 let width = $target.width();
                 let height = $target.height();
+
                 if (width < 545 || height <= 400) {
                     $target.addClass("op-resize-small");
                     // need to resize the add metadata menu as well and X in the corner
@@ -299,6 +300,25 @@ var o_browse = {
                 let modalCenter = $target.resizable("instance").center;
                 let newTop = $("body").height() - 0.5 * height - modalCenter;
                 $target.offset({top: newTop});
+
+                // Move modal image to the top and metadata info to the bottom.
+                if (width <= 500) {
+                    $("#galleryView .row").addClass("op-flip-gallery-modal");
+                    $("#galleryView .left a").addClass("op-tune-image-size");
+                    $("#galleryView .left").addClass("op-extend-full-width");
+                    $("#galleryView .right").addClass("op-extend-full-width");
+                    $(".op-metadata-details").addClass("op-tune-metadata-detail");
+                    $(".op-metadata-detail-edit").addClass("op-position-edit-button");
+                    $("#galleryView .right .bottom").addClass("op-position-modal-bttom");
+                } else {
+                    $("#galleryView .row").removeClass("op-flip-gallery-modal");
+                    $("#galleryView .left a").removeClass("op-tune-image-size");
+                    $("#galleryView .left").removeClass("op-extend-full-width");
+                    $("#galleryView .right").removeClass("op-extend-full-width");
+                    $(".op-metadata-details").removeClass("op-tune-metadata-detail");
+                    $(".op-metadata-detail-edit").removeClass("op-position-edit-button");
+                    $("#galleryView .right .bottom").removeClass("op-position-modal-bttom");
+                }
             },
         });
 
