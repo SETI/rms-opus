@@ -162,7 +162,7 @@ var o_browse = {
             else if (e.shiftKey) {
                 o_browse.cartShiftKeyHandler(e, opusId);
             } else {
-                o_browse.showMetadataDetailModal(opusId);
+                o_browse.showGalleryViewModal(opusId);
             }
         });
 
@@ -200,7 +200,7 @@ var o_browse = {
             else if (e.shiftKey) {
                 o_browse.cartShiftKeyHandler(e, opusId);
             } else {
-                o_browse.showMetadataDetailModal(opusId);
+                o_browse.showGalleryViewModal(opusId);
             }
         });
 
@@ -321,14 +321,10 @@ var o_browse = {
             let $resizable = $slide.resizable("instance");
             let width = $slide.resizable("option", "minWidth");
             let height = $slide.resizable("option", "minHeight");
-            /*$slide.resizable("resizeTo", {
+            $slide.resizable("resizeTo", {
                 width: width,
                 height: height,
-            });*/
-            $("#galleryView .modal-content").animate({
-                width: width,
-                height: height,
-            });
+            }).animate("slow");
         });
 
         $('.op-slide-maximize').on("click", function(e) {
@@ -342,7 +338,11 @@ var o_browse = {
             }
         });
 
-        $('.op-slide-pin').on("click", function(e) {
+        $('.op-slide-dock').on("click", function(e) {
+            // remove resizable for the moment; maybe change to just e-w
+            let slidePanel = $("#op-gallery-view-content .op-gallery-view-body").detach();
+            $(".op-gallery-view-docked").html(slidePanel);
+            $(".op-gallery-view-docked").show();
         });
 
         $('.op-gallery-view-body').on("click", "a.op-cart-toggle", function(e) {
@@ -1190,7 +1190,7 @@ var o_browse = {
         return false;
     },
 
-    showMetadataDetailModal: function(opusId) {
+    showGalleryViewModal: function(opusId) {
         if (o_browse.pageLoaderSpinnerTimer !== null) {
             // if the spinner is active, do not allow modal to become active
             return;
@@ -2225,7 +2225,7 @@ var o_browse = {
         if (width <= 0) {
             width = $(window).width();
             if (tab === "#cart") {
-                let leftPanelWidth = parseInt($(".cart_details").css("min-width"));
+                let leftPanelWidth = parseInt($(".op-cart-details").css("min-width"));
                 width -= leftPanelWidth;
             }
         }

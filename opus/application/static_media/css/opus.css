@@ -1351,7 +1351,7 @@ panel */
     margin: 10px 0px 15px -20px;
 }
 
-.cart_details {
+.op-cart-details {
     border-left: .3em double black;
     padding-left: 2em;
     /* Fix the width of download data area */
@@ -1662,7 +1662,7 @@ to stay in one line */
 
 @media (max-width: 1100px) {
     /* Hide download data pane when the screen is too narrow */
-    .cart_details {
+    .op-cart-details {
         display: none;
         max-width: 40%;
         min-width: 10%;

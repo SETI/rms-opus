@@ -305,7 +305,7 @@ var o_cart = {
             $(".op-download-panel-title").hide();
         } else {
             opus.hideHelpAndCartPanels();
-            $(".cart_details").html(html);
+            $(".op-cart-details").html(html);
             $(".op-download-panel-title").show();
         }
         o_cart.adjustProductInfoHeight();
