@@ -597,7 +597,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                 param_info.body_qualified_label_results())
                 else:
                     all_param_names.append(param_info.name)
-                # all_param_names.append(param_info.name)
+
                 if return_db_names:
                     all_info[param_info.name] = param_info
                 else:
@@ -614,9 +614,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 exit_api_call(api_code, ret)
                 return ret
 
-            # all_param_names = [p.name for p in param_info_list]
-            # print('==============')
-            # print(results)
             result_vals = results.values(*all_param_names)
             if not result_vals:
                 # This is normal - we're looking at ALL tables so many won't
@@ -626,12 +623,15 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             ordered_results = OrderedDict()
             for param_info in param_info_list:
                 if param_info.referred_slug is not None:
-                    param_info = get_param_info_by_slug(
-                                                param_info.referred_slug, 'col')
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results())
-                    continue
+                    # Assign referred_slug, this will be used to determine if
+                    # the param info is from referred_slug, and we will used
+                    # the slug to get the metadata result later.
+                    param_info.referred_slug = referred_slug
 
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
@@ -644,8 +644,19 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                           mult_val,
                                                          cvt_null=(fmt!='json'))
                 else:
-                    result = result_vals[param_info.name]
-                    if (result is None and fmt != 'json' and
+                    result = result_vals.get(param_info.name, None)
+                    # If this is the param info from referred_slug, we will get
+                    # the result from _get_metadata_by_slugs.
+                    if result is None and param_info.referred_slug:
+                        r_data = _get_metadata_by_slugs(
+                                                    request, opus_id,
+                                                    param_info.referred_slug,
+                                                    'raw_data',
+                                                    return_db_names,
+                                                    internal,
+                                                    api_code)
+                        result = r_data[0].get(param_info.referred_slug, None)
+                    elif (result is None and fmt != 'json' and
                         form_type != 'STRING'):
                         result = 'N/A'
                     else:
@@ -1751,6 +1762,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                    'url_cols': url_cols}
         return render(request, 'results/detail_metadata_slugs.html',
                       context)
+    if fmt == 'raw_data':
+        for slug, result in zip(slug_list, page[0]):
+            data.append({slug: result})
+        return data
 
     log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
     ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))
