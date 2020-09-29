@@ -83,8 +83,9 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP500_DATABASE_ERROR,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
-from tools.db_utils import (query_table_for_opus_id,
-                            lookup_pretty_value_for_mult)
+from tools.db_utils import *
+# from tools.db_utils import (query_table_for_opus_id,
+#                             lookup_pretty_value_for_mult)
 from tools.file_utils import get_pds_preview_images, get_pds_products
 
 log = logging.getLogger(__name__)
@@ -586,6 +587,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                        display_results=1)
                                .order_by('disp_order'))
         if param_info_list:
+            all_param_names = []
             for param_info in param_info_list:
                 if param_info.referred_slug is not None:
                     param_info = get_param_info_by_slug(
@@ -593,6 +595,9 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results())
+                else:
+                    all_param_names.append(param_info.name)
+                # all_param_names.append(param_info.name)
                 if return_db_names:
                     all_info[param_info.name] = param_info
                 else:
@@ -609,7 +614,9 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 exit_api_call(api_code, ret)
                 return ret
 
-            all_param_names = [p.name for p in param_info_list]
+            # all_param_names = [p.name for p in param_info_list]
+            # print('==============')
+            # print(results)
             result_vals = results.values(*all_param_names)
             if not result_vals:
                 # This is normal - we're looking at ALL tables so many won't
@@ -618,6 +625,14 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
             for param_info in param_info_list:
+                if param_info.referred_slug is not None:
+                    param_info = get_param_info_by_slug(
+                                                param_info.referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results())
+                    continue
+
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
 

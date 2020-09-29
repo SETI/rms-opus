@@ -342,8 +342,6 @@
         "pi_units": null
     },
     {
-        "field_name": "ring_radius1",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOringradius1",
         "pi_disp_order": 1000,
@@ -351,8 +349,6 @@
         "pi_display_results": 1
     },
     {
-        "field_name": "ring_radius2",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOringradius2",
         "pi_disp_order": 1001,
@@ -360,8 +356,6 @@
         "pi_display_results": 1
     },
     {
-        "field_name": "solar_ring_opening_angle1",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOsolarringopeningangle1",
         "pi_disp_order": 1010,
@@ -369,8 +363,6 @@
         "pi_display_results": 1
     },
     {
-        "field_name": "solar_ring_opening_angle2",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOsolarringopeningangle2",
         "pi_disp_order": 1011,
@@ -378,8 +370,6 @@
         "pi_display_results": 1
     },
     {
-        "field_name": "observer_ring_opening_angle1",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOobserverringopeningangle1",
         "pi_disp_order": 1020,
@@ -387,8 +377,6 @@
         "pi_display_results": 1
     },
     {
-        "field_name": "observer_ring_opening_angle2",
-        "field_type": "real8",
         "pi_category_name": "obs_occultation",
         "pi_referred_slug": "RINGGEOobserverringopeningangle2",
         "pi_disp_order": 1021,
