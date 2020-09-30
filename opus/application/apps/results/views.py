@@ -549,8 +549,10 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     cats = request.GET.get('cats', False)
     url_cols = request.GET.get('url_cols', False)
 
-    data = OrderedDict()     # Holds data struct to be returned
-    all_info = OrderedDict() # Holds all the param info objects
+    # Holds data struct to be returned
+    data = OrderedDict()
+    # Holds all the param info objects keyed by table label
+    data_all_info = OrderedDict()
 
     if cats == '':
         all_tables = []
@@ -579,6 +581,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
+        all_info = OrderedDict() # Holds all the param info objects
 
         # Make a list of all slugs and another of all param_names in this table
         param_info_list = list(ParamInfo.objects
@@ -602,6 +605,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     all_info[param_info.name] = param_info
                 else:
                     all_info[param_info.slug] = param_info
+            # Store all param info objects for current table
+            data_all_info[table_label] = all_info
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
@@ -694,7 +699,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data,
-                   'all_info': all_info,
+                   'data_all_info': data_all_info,
                    'url_cols': url_cols}
         if internal:
             ret = render(request, 'results/detail_metadata_internal.html',
