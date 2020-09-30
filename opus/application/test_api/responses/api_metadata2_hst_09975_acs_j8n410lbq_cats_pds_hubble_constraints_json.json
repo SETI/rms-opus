@@ -28,6 +28,7 @@
     "HSTfineguidancesystemlocktype": "Fine",
     "HSTgainmode": "N/A",
     "HSTinstrumentmode": "ACCUM",
-    "HSTpublicationdate": "2003-08-07T00:00:00.000"
+    "HSTpublicationdate": "2003-08-07T00:00:00.000",
+    "duration": "0.2"
   }
 }
