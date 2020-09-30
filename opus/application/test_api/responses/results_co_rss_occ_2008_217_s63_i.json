@@ -55,7 +55,13 @@
         "occdepth2": "0.90894921",
         "occwlband": "S",
         "occsource": "Cassini",
-        "occreceiverhost": "DSN 63 (Madrid 70m)"
+        "occreceiverhost": "DSN 63 (Madrid 70m)",
+        "RINGGEOobserverringopeningangle1": "-6.85",
+        "RINGGEOobserverringopeningangle2": "-6.849",
+        "RINGGEOringradius1": "76501.25",
+        "RINGGEOringradius2": "144999.75",
+        "RINGGEOsolarringopeningangle1": "6.849",
+        "RINGGEOsolarringopeningangle2": "6.85"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

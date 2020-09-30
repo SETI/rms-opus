@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null,
+        "RINGGEOringradius1": null,
+        "RINGGEOringradius2": null,
+        "RINGGEOsolarringopeningangle1": null,
+        "RINGGEOsolarringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
@@ -146,6 +152,7 @@
         "HSTfineguidancesystemlocktype": "Fine",
         "HSTgainmode": "A2D15",
         "HSTinstrumentmode": "FULL",
-        "HSTpublicationdate": "1998-03-12T00:00:00.000"
+        "HSTpublicationdate": "1998-03-12T00:00:00.000",
+        "duration": "0.3"
     }
 }

@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOobserverringopeningangle1": "-0.414",
+        "RINGGEOobserverringopeningangle2": "-0.414",
+        "RINGGEOringradius1": "178346.027",
+        "RINGGEOringradius2": "271331.227",
+        "RINGGEOsolarringopeningangle1": "-22.561",
+        "RINGGEOsolarringopeningangle2": "-22.561"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": "Enceladus,Telesto"

@@ -46,8 +46,8 @@
     "polarization_type": "NONE"
   },
   "Occultation Constraints": {
-    "observer_ring_opening_angle1": null,
-    "observer_ring_opening_angle2": null,
+    "observer_ring_opening_angle1": "10.753",
+    "observer_ring_opening_angle2": "10.753",
     "occ_type": null,
     "occ_dir": null,
     "body_occ_flag": null,
@@ -55,10 +55,10 @@
     "quality_score": null,
     "optical_depth1": null,
     "optical_depth2": null,
-    "ring_radius1": null,
-    "ring_radius2": null,
-    "solar_ring_opening_angle1": null,
-    "solar_ring_opening_angle2": null,
+    "ring_radius1": "60366.558",
+    "ring_radius2": "561518.661",
+    "solar_ring_opening_angle1": "7.871",
+    "solar_ring_opening_angle2": "7.871",
     "wl_band": null,
     "source": null,
     "host": null
@@ -206,7 +206,7 @@
   },
   "Voyager ISS Constraints": {
     "camera": "N",
-    "duration": null,
+    "duration": "2.88",
     "filter_name": "VIOLET",
     "filter_number": "1",
     "shutter_mode": "NAONLY",

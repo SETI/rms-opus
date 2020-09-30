@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOobserverringopeningangle1": "-4.264",
+        "RINGGEOobserverringopeningangle2": "-4.264",
+        "RINGGEOringradius1": null,
+        "RINGGEOringradius2": null,
+        "RINGGEOsolarringopeningangle1": "-22.719",
+        "RINGGEOsolarringopeningangle2": "-22.719"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": ""

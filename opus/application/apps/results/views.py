@@ -495,7 +495,6 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
 def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
-
     if not request or request.GET is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
@@ -594,7 +593,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                 param_info.referred_slug, 'col')
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
-                                param_info.body_qualified_label_results())
+                                param_info.body_qualified_label_results(True))
+
                 else:
                     all_param_names.append(param_info.name)
 
@@ -627,7 +627,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     param_info = get_param_info_by_slug(referred_slug, 'col')
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
-                                param_info.body_qualified_label_results())
+                                param_info.body_qualified_label_results(True))
                     # Assign referred_slug, this will be used to determine if
                     # the param info is from referred_slug, and we will used
                     # the slug to get the metadata result later.
@@ -646,7 +646,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 else:
                     result = result_vals.get(param_info.name, None)
                     # If this is the param info from referred_slug, we will get
-                    # the result from _get_metadata_by_slugs.
+                    # the result data from _get_metadata_by_slugs.
                     if result is None and param_info.referred_slug:
                         r_data = _get_metadata_by_slugs(
                                                     request, opus_id,
@@ -656,6 +656,9 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                     internal,
                                                     api_code)
                         result = r_data[0].get(param_info.referred_slug, None)
+                        if (result == 'N/A' and fmt == 'json' and
+                            form_type != 'STRING'):
+                            result = None
                     elif (result is None and fmt != 'json' and
                         form_type != 'STRING'):
                         result = 'N/A'

@@ -78,7 +78,7 @@ class ParamInfo(models.Model):
             return self.label
         return self.label + ' [' + pretty_name + ']'
 
-    def body_qualified_label_results(self):
+    def body_qualified_label_results(self, referred=False):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:
             return None
@@ -90,8 +90,8 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name in ['General', 'PDS', 'Wavelength',
-                           'Occultation', 'Surface']:
+        if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
+                           'Occultation', 'Surface'] and not referred):
             return self.label_results
         # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
         # label for referred slug.

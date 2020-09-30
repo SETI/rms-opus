@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "0.415",
+    "RINGGEOobserverringopeningangle2": "0.415",
+    "RINGGEOringradius1": "1100318.46",
+    "RINGGEOringradius2": "1107938.389",
+    "RINGGEOsolarringopeningangle1": "-23.154",
+    "RINGGEOsolarringopeningangle2": "-23.154"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Titan"
@@ -219,6 +225,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1481663213",
     "COISStargetdesc": "Titan",
-    "COISSimageobservationtype": "Science"
+    "COISSimageobservationtype": "Science",
+    "duration": "5.6"
   }
 }

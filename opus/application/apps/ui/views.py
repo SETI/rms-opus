@@ -1526,7 +1526,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     if p.referred_slug is not None:
                         p = get_param_info_by_slug(p.referred_slug, 'col')
                         p.label = p.body_qualified_label()
-                        p.label_results = p.body_qualified_label_results()
+                        p.label_results = p.body_qualified_label_results(True)
 
                     if labels_view == 'search':
                         if p.slug[-1] == '2':
@@ -1551,7 +1551,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     referred_slug = p.referred_slug
                     p = get_param_info_by_slug(referred_slug, 'col')
                     p.label = p.body_qualified_label()
-                    p.label_results = p.body_qualified_label_results()
+                    p.label_results = p.body_qualified_label_results(True)
                     # assign referred_slug used to determine if an icon should
                     # be appended at the end of a menu item.
                     p.referred_slug = referred_slug
