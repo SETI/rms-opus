@@ -1790,7 +1790,7 @@ Examples:
 %CODE%
 {
   "data": {
-    "obs_general": {
+    "General Constraints": {
       "planet": {
         "label": "Planet",
         "search_label": "Planet",
@@ -1824,7 +1824,7 @@ Examples:
       [...]
     },
     [...]
-    "obs_surface_geometry__umbriel": {
+    "Umbriel Surface Geometry Constraints": {
       "SURFACEGEOumbriel_planetographiclatitude1": {
         "label": "Observed Planetographic Latitude (Min)",
         "search_label": "Observed Planetographic Latitude",
@@ -1860,7 +1860,7 @@ Examples:
 {
   "data": {
     [...]
-    "obs_surface_geometry__&lt;TARGET&gt;": {
+    "&lt;TARGET&gt; Surface Geometry Constraints": {
       "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
         "label": "Observed Planetographic Latitude (Min)",
         "search_label": "Observed Planetographic Latitude",

@@ -774,28 +774,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_fields_time1_cache(self):
         "[test_metadata_api.py] /api/fields: time1 json cache"
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
         url = '/api/fields/time1.json'
-        expected = {"data": {"obs_general": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'referred': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": None, "available_units": None, "type": "range_time"}}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_csv(self):

@@ -727,14 +727,15 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if f.slug.startswith('**'):
                 # Internal use only
                 continue
-            cat = f.category_name
-            if collapse and cat.find('obs_surface_geometry__') != -1:
-                cat = 'obs_surface_geometry__<TARGET>'
+
+            table_name = TableNames.objects.get(table_name=f.category_name)
+            cat = table_name.label
+            if collapse and cat.find('Surface Geometry Constraints') != -1:
+                cat = cat.replace('Saturn', '<TARGET>')
 
             return_obj[cat] = return_obj.get(cat, OrderedDict())
 
             entry = OrderedDict()
-            table_name = TableNames.objects.get(table_name=f.category_name)
             return_obj[cat]['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
             collapsed_slug = f.slug
@@ -781,7 +782,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             else:
                 entry['old_slug'] = f.old_slug
             entry['slug'] = entry['field_id'] # Backwards compatibility
-            entry['referred'] = True if f.referred_slug else False
+            entry['linked'] = True if f.referred_slug else False
             return_obj.get(cat)[collapsed_slug] = entry
 
         # Organize return_obj before returning
