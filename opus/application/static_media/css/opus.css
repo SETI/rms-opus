@@ -3310,4 +3310,5 @@ different browsers */
 .op-referred-link {
     font-size: smaller;
     color: #707070;
+    padding-left: 0.5em;
 }
