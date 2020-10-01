@@ -706,7 +706,17 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         return_obj = {}
         for f in fields:
             if not f.slug:
-                continue
+                # Include referred slug
+                if f.referred_slug is not None:
+                    category = f.category_name
+                    disp_order = f.disp_order
+                    f = get_param_info_by_slug(f.referred_slug, 'col')
+                    f.label = f.body_qualified_label()
+                    f.label_results = f.body_qualified_label_results(True)
+                    f.category_name = category
+                    f.disp_order = disp_order
+                else:
+                    continue
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
@@ -714,9 +724,12 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if f.slug.startswith('**'):
                 # Internal use only
                 continue
+            cat = f.category_name
+            return_obj[cat] = return_obj.get(cat, OrderedDict())
+
             entry = OrderedDict()
             table_name = TableNames.objects.get(table_name=f.category_name)
-            entry['table_order'] = table_name.disp_order
+            return_obj[cat]['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
             collapsed_slug = f.slug
             if collapse:
@@ -762,15 +775,20 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             else:
                 entry['old_slug'] = f.old_slug
             entry['slug'] = entry['field_id'] # Backwards compatibility
-            return_obj[collapsed_slug] = entry
+            return_obj.get(cat)[collapsed_slug] = entry
 
+        # Organize return_obj before returning
+        # Sort categories by table_order
         return_obj = OrderedDict(sorted(return_obj.items(),
-                                        key=lambda x: (x[1]['table_order'],
-                                                       x[1]['disp_order'])))
-        # Hide internal sort order info from the end user
-        for key, val in return_obj.items():
-            del val['table_order']
-            del val['disp_order']
+                                    key=lambda x: x[1]['table_order']))
+        for cat, cat_data in return_obj.items():
+            del cat_data['table_order']
+        # Sort slugs of each category by disp_order
+        return_obj[cat] = OrderedDict(sorted(return_obj[cat].items(),
+                                        key=lambda x: x[1]['disp_order']))
+        for cat, cat_data in return_obj.items():
+            for key, val in cat_data.items():
+                del val['disp_order']
 
         cache.set(cache_key, return_obj)
 
