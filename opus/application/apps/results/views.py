@@ -83,9 +83,8 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP500_DATABASE_ERROR,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
-from tools.db_utils import *
-# from tools.db_utils import (query_table_for_opus_id,
-#                             lookup_pretty_value_for_mult)
+from tools.db_utils import (query_table_for_opus_id,
+                            lookup_pretty_value_for_mult)
 from tools.file_utils import get_pds_preview_images, get_pds_products
 
 log = logging.getLogger(__name__)
