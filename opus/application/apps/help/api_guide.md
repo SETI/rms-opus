@@ -1790,53 +1790,59 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
-    },
-    [...]
-    "rightasc1": {
-      "label": "Right Ascension (Min)",
-      "search_label": "Right Ascension",
-      "full_label": "Right Ascension (Min)",
-      "full_search_label": "Right Ascension [General]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "General Constraints",
-      "field_id": "rightasc1"
-    },
-    "rightasc2": {
-      "label": "Right Ascension (Max)",
-      "search_label": "Right Ascension",
+    "obs_general": {
+      "planet": {
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "category": "General Constraints",
+        "field_id": "planet"
+      },
+      [...]
+      "rightasc1": {
+        "label": "Right Ascension (Min)",
+        "search_label": "Right Ascension",
+        "full_label": "Right Ascension (Min)",
+        "full_search_label": "Right Ascension [General]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "category": "General Constraints",
+        "field_id": "rightasc1"
+      },
+      "rightasc2": {
+        "label": "Right Ascension (Max)",
+        "search_label": "Right Ascension",
+        [...]
+      },
       [...]
     },
     [...]
-    "SURFACEGEOumbriel_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
-      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Umbriel Surface Geometry Constraints",
-      "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
-    },
-    "SURFACEGEOumbriel_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
+    "obs_surface_geometry__umbriel": {
+      "SURFACEGEOumbriel_planetographiclatitude1": {
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
+        "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "category": "Umbriel Surface Geometry Constraints",
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
+      },
+      "SURFACEGEOumbriel_planetographiclatitude2": {
+        "label": "Observed Planetographic Latitude (Max)",
+        [...]
+      },
       [...]
     },
     [...]
@@ -1854,35 +1860,38 @@ Examples:
 {
   "data": {
     [...]
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
+    "obs_surface_geometry__&lt;TARGET&gt;": {
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
+      },
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
+        "label": "Observed Planetographic Latitude (Max)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
+      },
+      [...]
     },
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
-    },
-  [...]
+    [...]
   }
 }
 %ENDCODE%

@@ -728,6 +728,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 # Internal use only
                 continue
             cat = f.category_name
+            if collapse and cat.find('obs_surface_geometry__') != -1:
+                cat = 'obs_surface_geometry__<TARGET>'
+
             return_obj[cat] = return_obj.get(cat, OrderedDict())
 
             entry = OrderedDict()
