@@ -3312,3 +3312,8 @@ different browsers */
     color: #707070;
     padding-left: 0.5em;
 }
+/* Styling for link icon in detail tab */
+#detail .op-referred-link {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}

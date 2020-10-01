@@ -13,9 +13,17 @@
                                 {% endif %}
                                 <div>
                                     {% if param_info.get_units %}
-                                        {{ param_info.label_results }} {{ param_info.get_units }}:&nbsp;
+                                        {% if param_info.referred_slug %}
+                                            {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link"></i>:&nbsp;
+                                        {% else %}
+                                            {{ param_info.label_results }} {{ param_info.get_units }}:&nbsp;
+                                        {% endif %}
                                     {% else %}
-                                        {{ param_info.label_results }}:&nbsp;
+                                        {% if param_info.referred_slug %}
+                                            {{ param_info.label_results }}<i class="fas fa-link op-referred-link"></i>:&nbsp;
+                                        {% else %}
+                                            {{ param_info.label_results }}:&nbsp;
+                                        {% endif %}
                                     {% endif %}
                                     <span class="op-detail-entry-values">{{ val }}
                                         {% if param_info.is_string_or_mult %}

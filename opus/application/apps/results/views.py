@@ -591,11 +591,12 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             all_param_names = []
             for param_info in param_info_list:
                 if param_info.referred_slug is not None:
-                    param_info = get_param_info_by_slug(
-                                                param_info.referred_slug, 'col')
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results(True))
+                    param_info.referred_slug = referred_slug
 
                 else:
                     all_param_names.append(param_info.name)

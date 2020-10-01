@@ -46,6 +46,9 @@
                                                                     {% else %}
                                                                         <span>{{ p.label }}</span>
                                                                     {% endif %}
+                                                                    {% if p.referred_slug %}
+                                                                        <i class="fas fa-link op-referred-link"></i>
+                                                                    {% endif %}
                                                                 </span>
                                                             </a>
                                                         </li>
@@ -78,6 +81,9 @@
                                                         <span>{{ p.label_results }}</span>
                                                     {% else %}
                                                         <span>{{ p.label }}</span>
+                                                    {% endif %}
+                                                    {% if p.referred_slug %}
+                                                        <i class="fas fa-link op-referred-link"></i>
                                                     {% endif %}
                                                 </span>
                                             </a>
