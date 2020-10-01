@@ -309,12 +309,13 @@ def api_api_guide(request, fmt):
 
     fields_dict = get_fields_info('raw', request, api_code, collapse=True)
     fields = []
-    for field_name, field in fields_dict.items():
-        field['pretty_units'] = None
-        available_units = field['available_units']
-        if available_units:
-            field['pretty_units'] = ', '.join(available_units)
-        fields.append(field)
+    for cat, cat_data in fields_dict.items():
+        for field_name, field in cat_data.items():
+            field['pretty_units'] = None
+            available_units = field['available_units']
+            if available_units:
+                field['pretty_units'] = ', '.join(available_units)
+            fields.append(field)
 
     template_name = 'help/apiguide.html'
     if fmt == 'pdf':
