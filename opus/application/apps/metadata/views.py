@@ -581,19 +581,20 @@ def api_get_fields(request, fmt, slug=None):
 
     Returned JSON:
       {
-        "time1": {
-          "field_id": "time1",
-          "category": "General Constraints",
-          "type": "range_time",
-          "label": "Observation Start Time",
-          "search_label": "Observation Time",
-          "full_label": "Observation Start Time",
-          "full_search_label": "Observation Time [General]",
-          "default_units": null,
-          "available_units": null,
-          "old_slug": "timesec1",
-          "slug": "time1"
-        }
+        "obs_general"
+            "time1": {
+              "field_id": "time1",
+              "category": "General Constraints",
+              "type": "range_time",
+              "label": "Observation Start Time",
+              "search_label": "Observation Time",
+              "full_label": "Observation Start Time",
+              "full_search_label": "Observation Time [General]",
+              "default_units": null,
+              "available_units": null,
+              "old_slug": "timesec1",
+              "slug": "time1"
+            }
       }
 
     Returned CSV:
@@ -708,11 +709,13 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if not f.slug:
                 # Include referred slug
                 if f.referred_slug is not None:
+                    referred_slug = f.referred_slug
                     category = f.category_name
                     disp_order = f.disp_order
-                    f = get_param_info_by_slug(f.referred_slug, 'col')
+                    f = get_param_info_by_slug(referred_slug, 'col')
                     f.label = f.body_qualified_label()
                     f.label_results = f.body_qualified_label_results(True)
+                    f.referred_slug = referred_slug
                     f.category_name = category
                     f.disp_order = disp_order
                 else:
@@ -775,6 +778,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             else:
                 entry['old_slug'] = f.old_slug
             entry['slug'] = entry['field_id'] # Backwards compatibility
+            entry['referred'] = True if f.referred_slug else False
             return_obj.get(cat)[collapsed_slug] = entry
 
         # Organize return_obj before returning
@@ -802,14 +806,19 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                   'Full Search Label', 'Full Results Label',
                   'Default Units', 'Available Units', 'Old Field ID'
                   ]
-        rows = [(v['field_id'], v['category'], v['type'],
-                 v['search_label'], v['label'],
-                 v['full_search_label'],
-                 v['full_label'],
-                 v['default_units'],
-                 v['available_units'],
-                 v['old_slug'],
-                 ) for k,v in return_obj.items()]
+
+        rows = []
+        for cat, cat_data in return_obj.items():
+            for k, v in cat_data.items():
+                row_data = [(v['field_id'], v['category'], v['type'],
+                         v['search_label'], v['label'],
+                         v['full_search_label'],
+                         v['full_label'],
+                         v['default_units'],
+                         v['available_units'],
+                         v['old_slug'],
+                         )]
+                rows += row_data
         ret = csv_response('fields', rows, labels)
     else:
         log.error('get_fields_info: Unknown format "%s"', fmt)
