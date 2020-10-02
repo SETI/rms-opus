@@ -271,7 +271,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
-        "pi_intro": null,
+        "pi_intro": "To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.",
         "pi_label": "Filter Name",
         "pi_label_results": "Filter Name",
         "pi_old_slug": "missionhubbleFILTERNAME",
