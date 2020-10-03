@@ -581,7 +581,7 @@ def api_get_fields(request, fmt, slug=None):
 
     Returned JSON:
       {
-        "obs_general"
+        "General Constraints"
             "time1": {
               "field_id": "time1",
               "category": "General Constraints",
@@ -783,7 +783,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 entry['old_slug'] = f.old_slug
             entry['slug'] = entry['field_id'] # Backwards compatibility
             entry['linked'] = True if f.referred_slug else False
-            return_obj.get(cat)[collapsed_slug] = entry
+            return_obj[cat][collapsed_slug] = entry
 
         # Organize return_obj before returning
         # Sort categories by table_order
@@ -791,10 +791,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                                     key=lambda x: x[1]['table_order']))
         for cat, cat_data in return_obj.items():
             del cat_data['table_order']
-        # Sort slugs of each category by disp_order
-        return_obj[cat] = OrderedDict(sorted(return_obj[cat].items(),
-                                        key=lambda x: x[1]['disp_order']))
-        for cat, cat_data in return_obj.items():
+            # Sort slugs of each category by disp_order
+            cat_data = OrderedDict(sorted(cat_data.items(),
+                                    key=lambda x: x[1]['disp_order']))
             for key, val in cat_data.items():
                 del val['disp_order']
 
@@ -815,13 +814,13 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         for cat, cat_data in return_obj.items():
             for k, v in cat_data.items():
                 row_data = [(v['field_id'], v['category'], v['type'],
-                         v['search_label'], v['label'],
-                         v['full_search_label'],
-                         v['full_label'],
-                         v['default_units'],
-                         v['available_units'],
-                         v['old_slug'],
-                         )]
+                             v['search_label'], v['label'],
+                             v['full_search_label'],
+                             v['full_label'],
+                             v['default_units'],
+                             v['available_units'],
+                             v['old_slug'],
+                             )]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
     else:

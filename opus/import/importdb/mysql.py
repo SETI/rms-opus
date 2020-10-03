@@ -335,7 +335,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 mult_schema.append(entry)
             new_schema = []
             for column in schema:
-                if column.get('pi_referred_slug', None):
+                if column.get('pi_referred_slug', False):
                     continue
                 if column.get('put_mults_here', False):
                     new_schema += mult_schema

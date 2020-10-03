@@ -209,7 +209,7 @@ def create_tables_for_import(volume_id, namespace):
         # Create the referenced mult_ tables
         for table_column in table_schema:
             if (table_column.get('put_mults_here', False) or
-                table_column.get('pi_referred_slug', None)):
+                table_column.get('pi_referred_slug', False)):
                 continue
             field_name = table_column['field_name']
             pi_form_type = table_column.get('pi_form_type', None)
@@ -1288,7 +1288,7 @@ def import_observation_table(volume_id,
 
     for table_column in ordered_columns:
         if (table_column.get('put_mults_here', False) or
-            table_column.get('pi_referred_slug', None)):
+            table_column.get('pi_referred_slug', False)):
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']

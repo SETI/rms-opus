@@ -97,7 +97,7 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Constraints', '')
 
         if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
-                           'Occultation', 'Surface'] and not referred):
+                            'Occultation', 'Surface'] and not referred):
             return self.label_results
         # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
         # label for referred slug.

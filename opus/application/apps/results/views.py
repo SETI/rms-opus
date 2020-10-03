@@ -633,8 +633,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     param_info.label = param_info.body_qualified_label()
                     param_info.label_results = (
                                 param_info.body_qualified_label_results(True))
-                    # Assign referred_slug, this will be used to determine if
-                    # the param info is from referred_slug, and we will used
+                    # Assign referred_slug. This will be used to determine if
+                    # the param info is from referred_slug, and we will use
                     # the slug to get the metadata result later.
                     param_info.referred_slug = referred_slug
 
