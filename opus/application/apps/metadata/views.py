@@ -810,7 +810,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                   'Full Search Label', 'Full Results Label',
                   'Default Units', 'Available Units', 'Old Field ID',
                   'Linked'
-                 ]
+                  ]
 
         rows = []
         for cat, cat_data in return_obj.items():
