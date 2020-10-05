@@ -1775,6 +1775,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | true if this field is not native to this category but has been linked from its normal location |
 
 `type` can be one of: `multiple`, `string`, `range_integer`, `range_float`,
 `range_longitude`, `range_time`, or `range_special`.
@@ -1792,17 +1793,24 @@ Examples:
   "data": {
     "General Constraints": {
       "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
         "label": "Planet",
         "search_label": "Planet",
         "full_label": "Planet",
         "full_search_label": "Planet [General]",
         "default_units": null,
         "available_units": null,
-        "category": "General Constraints",
-        "field_id": "planet"
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
       },
       [...]
       "rightasc1": {
+        "field_id": "rightasc1",
+        "category": "General Constraints",
+        "type": "range_longitude",
         "label": "Right Ascension (Min)",
         "search_label": "Right Ascension",
         "full_label": "Right Ascension (Min)",
@@ -1813,12 +1821,13 @@ Examples:
           "hourangle",
           "radians"
         ],
-        "category": "General Constraints",
-        "field_id": "rightasc1"
+        "old_slug": null,
+        "slug": "rightasc1",
+        "linked": false
       },
       "rightasc2": {
-        "label": "Right Ascension (Max)",
-        "search_label": "Right Ascension",
+          "field_id": "rightasc2",
+          "category": "General Constraints",
         [...]
       },
       [...]
@@ -1826,6 +1835,9 @@ Examples:
     [...]
     "Umbriel Surface Geometry Constraints": {
       "SURFACEGEOumbriel_planetographiclatitude1": {
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude1",
+        "category": "Umbriel Surface Geometry Constraints",
+        "type": "range_float",
         "label": "Observed Planetographic Latitude (Min)",
         "search_label": "Observed Planetographic Latitude",
         "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
@@ -1836,11 +1848,12 @@ Examples:
           "hourangle",
           "radians"
         ],
-        "category": "Umbriel Surface Geometry Constraints",
-        "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
+        "old_slug": "SURFACEGEOumbrielplanetographiclatitude1",
+        "slug": "SURFACEGEOumbriel_planetographiclatitude1",
+        "linked": false
       },
       "SURFACEGEOumbriel_planetographiclatitude2": {
-        "label": "Observed Planetographic Latitude (Max)",
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude2",
         [...]
       },
       [...]
@@ -1862,6 +1875,9 @@ Examples:
     [...]
     "&lt;TARGET&gt; Surface Geometry Constraints": {
       "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
         "label": "Observed Planetographic Latitude (Min)",
         "search_label": "Observed Planetographic Latitude",
         "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
@@ -1872,10 +1888,14 @@ Examples:
           "hourangle",
           "radians"
         ],
-        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "linked": false
       },
       "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
         "label": "Observed Planetographic Latitude (Max)",
         "search_label": "Observed Planetographic Latitude",
         "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
@@ -1886,8 +1906,9 @@ Examples:
           "hourangle",
           "radians"
         ],
-        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "linked": false
       },
       [...]
     },
@@ -1954,6 +1975,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | Always false because this API call returns information about the field's native category |
 
 Examples:
 
@@ -1966,15 +1988,21 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
+    "General Constraints": {
+      "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
+      }
     }
   }
 }
@@ -1989,19 +2017,25 @@ Examples:
 %CODE%
 {
   "data": {
-    "SURFACEGEOrhea_centerphaseangle": {
-      "label": "Phase Angle at Body Center",
-      "search_label": "Phase Angle at Body Center",
-      "full_label": "Phase Angle at Body Center [Rhea]",
-      "full_search_label": "Phase Angle at Body Center [Rhea]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Rhea Surface Geometry Constraints",
-      "field_id": "SURFACEGEOrhea_centerphaseangle"
+    "Rhea Surface Geometry Constraints": {
+      "SURFACEGEOrhea_centerphaseangle": {
+        "field_id": "SURFACEGEOrhea_centerphaseangle",
+        "category": "Rhea Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Phase Angle at Body Center",
+        "search_label": "Phase Angle at Body Center",
+        "full_label": "Phase Angle at Body Center [Rhea]",
+        "full_search_label": "Phase Angle at Body Center [Rhea]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEOrheacenterphaseangle",
+        "slug": "SURFACEGEOrhea_centerphaseangle",
+        "linked": false
+      }
     }
   }
 }

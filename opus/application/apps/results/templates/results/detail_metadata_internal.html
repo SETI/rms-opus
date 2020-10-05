@@ -14,13 +14,13 @@
                                 <div>
                                     {% if param_info.get_units %}
                                         {% if param_info.referred_slug %}
-                                            {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltips }}"></i>:&nbsp;
+                                            {{ param_info.label_results }} {{ param_info.get_units }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
                                         {% else %}
                                             {{ param_info.label_results }} {{ param_info.get_units }}:&nbsp;
                                         {% endif %}
                                     {% else %}
                                         {% if param_info.referred_slug %}
-                                            {{ param_info.label_results }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltips }}"></i>:&nbsp;
+                                            {{ param_info.label_results }}<i class="fas fa-link op-referred-link" title="{{ param_info.get_link_tooltip }}"></i>:&nbsp;
                                         {% else %}
                                             {{ param_info.label_results }}:&nbsp;
                                         {% endif %}

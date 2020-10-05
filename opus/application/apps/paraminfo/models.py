@@ -61,7 +61,7 @@ class ParamInfo(models.Model):
             definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
 
-    def get_link_tooltips(self):
+    def get_link_tooltip(self):
         table_label = (TableNames.objects
                       .get(table_name=self.category_name).label)
         return (f'This field is a link to one available under {table_label}. '+

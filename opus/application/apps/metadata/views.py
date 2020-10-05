@@ -593,7 +593,8 @@ def api_get_fields(request, fmt, slug=None):
               "default_units": null,
               "available_units": null,
               "old_slug": "timesec1",
-              "slug": "time1"
+              "slug": "time1",
+              "linked": false
             }
       }
 
@@ -788,12 +789,12 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         # Organize return_obj before returning
         # Sort categories by table_order
         return_obj = OrderedDict(sorted(return_obj.items(),
-                                    key=lambda x: x[1]['table_order']))
+                                 key=lambda x: x[1]['table_order']))
         for cat, cat_data in return_obj.items():
             del cat_data['table_order']
             # Sort slugs of each category by disp_order
             cat_data = OrderedDict(sorted(cat_data.items(),
-                                    key=lambda x: x[1]['disp_order']))
+                                   key=lambda x: x[1]['disp_order']))
             for key, val in cat_data.items():
                 del val['disp_order']
 

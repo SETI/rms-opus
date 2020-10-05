@@ -597,7 +597,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     param_info.label_results = (
                                 param_info.body_qualified_label_results(True))
                     param_info.referred_slug = referred_slug
-
                 else:
                     all_param_names.append(param_info.name)
 
