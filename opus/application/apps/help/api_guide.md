@@ -1826,8 +1826,8 @@ Examples:
         "linked": false
       },
       "rightasc2": {
-          "field_id": "rightasc2",
-          "category": "General Constraints",
+        "field_id": "rightasc2",
+        "category": "General Constraints",
         [...]
       },
       [...]
@@ -1925,19 +1925,19 @@ Example:
 
 * Retrieve information about all fields in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
-target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
+target,General Constraints,multiple,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,,,0
 [...]
-rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
-rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
-declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
-declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
+rightasc1,General Constraints,range_longitude,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+rightasc2,General Constraints,range_longitude,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination1,General Constraints,range_float,Declination,Declination (Min),Declination [General],Declination (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination2,General Constraints,range_float,Declination,Declination (Max),Declination [General],Declination (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
 [...]
 %ENDCODE%
 
@@ -1975,7 +1975,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
-| `linked` | Always false because this API call returns information about the field's native category |
+| `linked` | Always `false` because this API call returns information about the field's native category |
 
 Examples:
 
@@ -2049,13 +2049,13 @@ Example:
 
 * Retrieve information about the `planet` field in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/planet.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
 %ENDCODE%
 
 --------------------------------------------------------------------------------

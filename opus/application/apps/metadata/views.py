@@ -808,19 +808,22 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         labels = ['Field ID', 'Category', 'Type',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Default Units', 'Available Units', 'Old Field ID'
-                  ]
+                  'Default Units', 'Available Units', 'Old Field ID',
+                  'Linked'
+                 ]
 
         rows = []
         for cat, cat_data in return_obj.items():
             for k, v in cat_data.items():
+                # In csv, we will store the linked field value as 0 or 1.
+                linked = 1 if v['linked'] else 0
                 row_data = [(v['field_id'], v['category'], v['type'],
                              v['search_label'], v['label'],
                              v['full_search_label'],
                              v['full_label'],
                              v['default_units'],
                              v['available_units'],
-                             v['old_slug'],
+                             v['old_slug'], linked
                              )]
                 rows += row_data
         ret = csv_response('fields', rows, labels)
