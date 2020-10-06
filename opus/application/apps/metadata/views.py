@@ -796,6 +796,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             # Sort slugs of each category by disp_order
             cat_data = OrderedDict(sorted(cat_data.items(),
                                    key=lambda x: x[1]['disp_order']))
+            return_obj[cat] = cat_data
             for key, val in cat_data.items():
                 del val['disp_order']
 
