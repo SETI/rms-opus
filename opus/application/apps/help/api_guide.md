@@ -1775,7 +1775,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
-| `linked` | true if this field is not native to this category but has been linked from its normal location |
+| `linked` | `true` if this field is not native to this category but has been linked from its normal location |
 
 `type` can be one of: `multiple`, `string`, `range_integer`, `range_float`,
 `range_longitude`, `range_time`, or `range_special`.

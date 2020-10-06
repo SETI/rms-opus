@@ -581,26 +581,27 @@ def api_get_fields(request, fmt, slug=None):
 
     Returned JSON:
       {
-        "General Constraints"
-            "time1": {
-              "field_id": "time1",
-              "category": "General Constraints",
-              "type": "range_time",
-              "label": "Observation Start Time",
-              "search_label": "Observation Time",
-              "full_label": "Observation Start Time",
-              "full_search_label": "Observation Time [General]",
-              "default_units": null,
-              "available_units": null,
-              "old_slug": "timesec1",
-              "slug": "time1",
-              "linked": false
-            }
+        "General Constraints": {
+          "time1": {
+            "field_id": "time1",
+            "category": "General Constraints",
+            "type": "range_time",
+            "label": "Observation Start Time",
+            "search_label": "Observation Time",
+            "full_label": "Observation Start Time",
+            "full_search_label": "Observation Time [General]",
+            "default_units": null,
+            "available_units": null,
+            "old_slug": "timesec1",
+            "slug": "time1",
+            "linked": false
+          }
+        }
       }
 
     Returned CSV:
-        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID
-        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1
+        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1,0
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
