@@ -10,6 +10,7 @@
   },
   "Hubble Mission Constraints": {
     "detector_id": "ACS-HRC",
+    "duration": "0.2",
     "filter_name": "ACS-F435W",
     "filter_type": "W",
     "optical_element": null,

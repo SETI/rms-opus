@@ -1775,6 +1775,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | `true` if this field is not native to this category but has been linked from its normal location |
 
 `type` can be one of: `multiple`, `string`, `range_integer`, `range_float`,
 `range_longitude`, `range_time`, or `range_special`.
@@ -1790,53 +1791,71 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
-    },
-    [...]
-    "rightasc1": {
-      "label": "Right Ascension (Min)",
-      "search_label": "Right Ascension",
-      "full_label": "Right Ascension (Min)",
-      "full_search_label": "Right Ascension [General]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "General Constraints",
-      "field_id": "rightasc1"
-    },
-    "rightasc2": {
-      "label": "Right Ascension (Max)",
-      "search_label": "Right Ascension",
+    "General Constraints": {
+      "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
+      },
+      [...]
+      "rightasc1": {
+        "field_id": "rightasc1",
+        "category": "General Constraints",
+        "type": "range_longitude",
+        "label": "Right Ascension (Min)",
+        "search_label": "Right Ascension",
+        "full_label": "Right Ascension (Min)",
+        "full_search_label": "Right Ascension [General]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": null,
+        "slug": "rightasc1",
+        "linked": false
+      },
+      "rightasc2": {
+        "field_id": "rightasc2",
+        "category": "General Constraints",
+        [...]
+      },
       [...]
     },
     [...]
-    "SURFACEGEOumbriel_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
-      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Umbriel Surface Geometry Constraints",
-      "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
-    },
-    "SURFACEGEOumbriel_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
+    "Umbriel Surface Geometry Constraints": {
+      "SURFACEGEOumbriel_planetographiclatitude1": {
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude1",
+        "category": "Umbriel Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
+        "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEOumbrielplanetographiclatitude1",
+        "slug": "SURFACEGEOumbriel_planetographiclatitude1",
+        "linked": false
+      },
+      "SURFACEGEOumbriel_planetographiclatitude2": {
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude2",
+        [...]
+      },
       [...]
     },
     [...]
@@ -1854,35 +1873,46 @@ Examples:
 {
   "data": {
     [...]
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
+    "&lt;TARGET&gt; Surface Geometry Constraints": {
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "linked": false
+      },
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Max)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "linked": false
+      },
+      [...]
     },
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
-    },
-  [...]
+    [...]
   }
 }
 %ENDCODE%
@@ -1895,19 +1925,19 @@ Example:
 
 * Retrieve information about all fields in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
-target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
+target,General Constraints,multiple,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,,,0
 [...]
-rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
-rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
-declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
-declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
+rightasc1,General Constraints,range_longitude,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+rightasc2,General Constraints,range_longitude,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination1,General Constraints,range_float,Declination,Declination (Min),Declination [General],Declination (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination2,General Constraints,range_float,Declination,Declination (Max),Declination [General],Declination (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
 [...]
 %ENDCODE%
 
@@ -1945,6 +1975,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | Always `false` because this API call returns information about the field's native category |
 
 Examples:
 
@@ -1957,15 +1988,21 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
+    "General Constraints": {
+      "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
+      }
     }
   }
 }
@@ -1980,19 +2017,25 @@ Examples:
 %CODE%
 {
   "data": {
-    "SURFACEGEOrhea_centerphaseangle": {
-      "label": "Phase Angle at Body Center",
-      "search_label": "Phase Angle at Body Center",
-      "full_label": "Phase Angle at Body Center [Rhea]",
-      "full_search_label": "Phase Angle at Body Center [Rhea]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Rhea Surface Geometry Constraints",
-      "field_id": "SURFACEGEOrhea_centerphaseangle"
+    "Rhea Surface Geometry Constraints": {
+      "SURFACEGEOrhea_centerphaseangle": {
+        "field_id": "SURFACEGEOrhea_centerphaseangle",
+        "category": "Rhea Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Phase Angle at Body Center",
+        "search_label": "Phase Angle at Body Center",
+        "full_label": "Phase Angle at Body Center [Rhea]",
+        "full_search_label": "Phase Angle at Body Center [Rhea]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEOrheacenterphaseangle",
+        "slug": "SURFACEGEOrhea_centerphaseangle",
+        "linked": false
+      }
     }
   }
 }
@@ -2006,13 +2049,13 @@ Example:
 
 * Retrieve information about the `planet` field in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/planet.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
 %ENDCODE%
 
 --------------------------------------------------------------------------------

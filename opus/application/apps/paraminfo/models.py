@@ -25,6 +25,7 @@ class ParamInfo(models.Model):
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
+    referred_slug = models.CharField(max_length=255, blank=True, null=True)
     units = models.CharField(max_length=75, blank=True, null=True)
     ranges = models.TextField()
     field_hints1 = models.CharField(max_length=255, blank=True, null=True)
@@ -60,6 +61,12 @@ class ParamInfo(models.Model):
             definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
 
+    def get_link_tooltip(self):
+        table_label = (TableNames.objects
+                      .get(table_name=self.category_name).label)
+        return (f'This field is a link to one available under {table_label}. '+
+                'It is provided here for your convenience.')
+
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label is None: # pragma: no cover
@@ -72,11 +79,12 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name == 'Surface':
+        if (pretty_name == 'Surface' or
+            f'[{pretty_name}]' in self.label):
             return self.label
         return self.label + ' [' + pretty_name + ']'
 
-    def body_qualified_label_results(self):
+    def body_qualified_label_results(self, referred=False):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:
             return None
@@ -88,8 +96,12 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
-                           'Occultation', 'Surface']:
+        if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
+                            'Occultation', 'Surface'] and not referred):
+            return self.label_results
+        # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
+        # label for referred slug.
+        if f'[{pretty_name}]' in self.label_results:
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 

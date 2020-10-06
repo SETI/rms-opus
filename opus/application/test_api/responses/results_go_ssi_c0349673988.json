@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null,
+        "RINGGEOringradius1": null,
+        "RINGGEOringradius2": null,
+        "RINGGEOsolarringopeningangle1": null,
+        "RINGGEOsolarringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
@@ -139,6 +145,7 @@
         "GOSSIobstruction": "Not Possible",
         "GOSSIframeduration": "60.667",
         "GOSSIimageid": "G1I0008",
-        "GOSSIobservationid": "G1ISGLOMON04"
+        "GOSSIobservationid": "G1ISGLOMON04",
+        "duration": "0.2625"
     }
 }

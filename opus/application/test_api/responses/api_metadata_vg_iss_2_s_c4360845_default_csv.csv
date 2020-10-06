@@ -11,8 +11,8 @@ Wavelength Constraints
 Wavelength (Min) (microns),Wavelength (Max) (microns),Wavelength Resolution (Min) (microns/pixel),Wavelength Resolution (Max) (microns/pixel),Wavenumber (Min) (cm^-1),Wavenumber (Max) (cm^-1),Wavenumber Resolution (Min) (cm^-1/pixel),Wavenumber Resolution (Max) (cm^-1/pixel),Spectral Information Flag,Spectrum Size,Polarization Type
 0.35,0.45,0.1,0.1,22222.2,28571.4,6349.206,6349.206,No,N/A,NONE
 Occultation Constraints
-Occultation Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detectable Optical Depth (Min),Detectable Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name
-N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A
+Occultation Type,Occultation Direction,Body Occultation Flag,Temporal Sampling Interval (secs),Data Quality Score,Detectable Optical Depth (Min),Detectable Optical Depth (Max),Wavelength Band,Signal Source Name,Receiver Host Name,Observed Ring Radius (Min) [Ring] (km),Observed Ring Radius (Max) [Ring] (km),Ring Center Opening Angle to Sun (Min) [Ring] (degrees),Ring Center Opening Angle to Sun (Max) [Ring] (degrees),Ring Center Opening Angle to Observer (Min) [Ring] (degrees),Ring Center Opening Angle to Observer (Max) [Ring] (degrees)
+N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,60366.558,561518.661,7.871,7.871,10.753,10.753
 Surface Geometry Constraints
 Multiple Target List
 "Saturn,Tethys"
@@ -29,5 +29,5 @@ Voyager Mission Constraints
 Mission Phase [Voyager],Spacecraft Clock Start Count [Voyager],Spacecraft Clock Stop Count [Voyager],Earth Received Time [Voyager]
 SATURN ENCOUNTER,43608:44:752,43608:45:001,1981-08-12T23:19:04.000
 Voyager ISS Constraints
-Camera [Voyager ISS],Filter Name [Voyager ISS],Filter Number [Voyager ISS],Shutter Mode [Voyager ISS],Edit Mode [Voyager ISS],Gain Mode [Voyager ISS],Scan Mode [Voyager ISS],Image ID [Voyager ISS],Usable Lines [Voyager ISS],Usable Samples [Voyager ISS]
-N,VIOLET,1,NAONLY,1:1,LOW,3:1,1388S2-014,800,800
+Camera [Voyager ISS],Filter Name [Voyager ISS],Filter Number [Voyager ISS],Shutter Mode [Voyager ISS],Edit Mode [Voyager ISS],Gain Mode [Voyager ISS],Scan Mode [Voyager ISS],Image ID [Voyager ISS],Usable Lines [Voyager ISS],Usable Samples [Voyager ISS],Exposure Duration [Image] (secs)
+N,VIOLET,1,NAONLY,1:1,LOW,3:1,1388S2-014,800,800,2.88

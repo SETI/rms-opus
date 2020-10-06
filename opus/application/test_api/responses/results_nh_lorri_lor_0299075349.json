@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOobserverringopeningangle1": "42.72",
+        "RINGGEOobserverringopeningangle2": "42.72",
+        "RINGGEOringradius1": "11425.374",
+        "RINGGEOringradius2": "25252.503",
+        "RINGGEOsolarringopeningangle1": "51.476",
+        "RINGGEOsolarringopeningangle2": "51.476"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": "Charon"
@@ -199,6 +205,7 @@
     },
     "New Horizons LORRI Constraints": {
         "NHLORRIbinningmode": "1x1",
-        "NHLORRIinstrumentcompressiontype": "Lossy"
+        "NHLORRIinstrumentcompressiontype": "Lossy",
+        "duration": "0.15"
     }
 }

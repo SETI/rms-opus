@@ -581,24 +581,27 @@ def api_get_fields(request, fmt, slug=None):
 
     Returned JSON:
       {
-        "time1": {
-          "field_id": "time1",
-          "category": "General Constraints",
-          "type": "range_time",
-          "label": "Observation Start Time",
-          "search_label": "Observation Time",
-          "full_label": "Observation Start Time",
-          "full_search_label": "Observation Time [General]",
-          "default_units": null,
-          "available_units": null,
-          "old_slug": "timesec1",
-          "slug": "time1"
+        "General Constraints": {
+          "time1": {
+            "field_id": "time1",
+            "category": "General Constraints",
+            "type": "range_time",
+            "label": "Observation Start Time",
+            "search_label": "Observation Time",
+            "full_label": "Observation Start Time",
+            "full_search_label": "Observation Time [General]",
+            "default_units": null,
+            "available_units": null,
+            "old_slug": "timesec1",
+            "slug": "time1",
+            "linked": false
+          }
         }
       }
 
     Returned CSV:
-        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID
-        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1
+        Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+        time1,General Constraints,range_time,Observation Time,Observation Start Time,Observation Time [General],Observation Start Time,,,timesec1,0
 
     If collapse=1, then all surface geometry is collapsed into a single
     <TARGET> version based on the Saturn prototype.
@@ -706,7 +709,19 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         return_obj = {}
         for f in fields:
             if not f.slug:
-                continue
+                # Include referred slug
+                if f.referred_slug is not None:
+                    referred_slug = f.referred_slug
+                    category = f.category_name
+                    disp_order = f.disp_order
+                    f = get_param_info_by_slug(referred_slug, 'col')
+                    f.label = f.body_qualified_label()
+                    f.label_results = f.body_qualified_label_results(True)
+                    f.referred_slug = referred_slug
+                    f.category_name = category
+                    f.disp_order = disp_order
+                else:
+                    continue
             if (collapse and
                 f.slug.startswith('SURFACEGEO') and
                 not f.slug.startswith('SURFACEGEOsaturn')):
@@ -714,9 +729,16 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             if f.slug.startswith('**'):
                 # Internal use only
                 continue
-            entry = OrderedDict()
+
             table_name = TableNames.objects.get(table_name=f.category_name)
-            entry['table_order'] = table_name.disp_order
+            cat = table_name.label
+            if collapse and cat.find('Surface Geometry Constraints') != -1:
+                cat = cat.replace('Saturn', '<TARGET>')
+
+            return_obj[cat] = return_obj.get(cat, OrderedDict())
+
+            entry = OrderedDict()
+            return_obj[cat]['table_order'] = table_name.disp_order
             entry['disp_order'] = f.disp_order
             collapsed_slug = f.slug
             if collapse:
@@ -762,15 +784,21 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             else:
                 entry['old_slug'] = f.old_slug
             entry['slug'] = entry['field_id'] # Backwards compatibility
-            return_obj[collapsed_slug] = entry
+            entry['linked'] = True if f.referred_slug else False
+            return_obj[cat][collapsed_slug] = entry
 
+        # Organize return_obj before returning
+        # Sort categories by table_order
         return_obj = OrderedDict(sorted(return_obj.items(),
-                                        key=lambda x: (x[1]['table_order'],
-                                                       x[1]['disp_order'])))
-        # Hide internal sort order info from the end user
-        for key, val in return_obj.items():
-            del val['table_order']
-            del val['disp_order']
+                                 key=lambda x: x[1]['table_order']))
+        for cat, cat_data in return_obj.items():
+            del cat_data['table_order']
+            # Sort slugs of each category by disp_order
+            cat_data = OrderedDict(sorted(cat_data.items(),
+                                   key=lambda x: x[1]['disp_order']))
+            return_obj[cat] = cat_data
+            for key, val in cat_data.items():
+                del val['disp_order']
 
         cache.set(cache_key, return_obj)
 
@@ -782,16 +810,24 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
         labels = ['Field ID', 'Category', 'Type',
                   'Search Label', 'Results Label',
                   'Full Search Label', 'Full Results Label',
-                  'Default Units', 'Available Units', 'Old Field ID'
+                  'Default Units', 'Available Units', 'Old Field ID',
+                  'Linked'
                   ]
-        rows = [(v['field_id'], v['category'], v['type'],
-                 v['search_label'], v['label'],
-                 v['full_search_label'],
-                 v['full_label'],
-                 v['default_units'],
-                 v['available_units'],
-                 v['old_slug'],
-                 ) for k,v in return_obj.items()]
+
+        rows = []
+        for cat, cat_data in return_obj.items():
+            for k, v in cat_data.items():
+                # In csv, we will store the linked field value as 0 or 1.
+                linked = 1 if v['linked'] else 0
+                row_data = [(v['field_id'], v['category'], v['type'],
+                             v['search_label'], v['label'],
+                             v['full_search_label'],
+                             v['full_label'],
+                             v['default_units'],
+                             v['available_units'],
+                             v['old_slug'], linked
+                             )]
+                rows += row_data
         ret = csv_response('fields', rows, labels)
     else:
         log.error('get_fields_info: Unknown format "%s"', fmt)

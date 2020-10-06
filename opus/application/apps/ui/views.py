@@ -1421,9 +1421,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     "Return the categories in the search tab or metadata selector."
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
-        filter = "display"
+        filter_ = "display"
     else:
-        filter = "display_results"
+        filter_ = "display_results"
 
     if search_slugs_info:
         expanded_cats = ['search_fields']
@@ -1450,7 +1450,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     divs = (TableNames.objects.filter(display='Y',
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
-    params = (ParamInfo.objects.filter(**{filter:1,
+    params = (ParamInfo.objects.filter(**{filter_:1,
                                           "category_name__in":triggered_tables})
                                .order_by('disp_order'))
 
@@ -1517,10 +1517,17 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     sub_head_tuple = (sub_head, 'collapsed', '')
 
                 all_param_info = (ParamInfo.objects
-                                  .filter(**{filter:1,
+                                  .filter(**{filter_:1,
                                              'category_name': d.table_name,
                                              'sub_heading': sub_head}))
                 for p in all_param_info:
+                    # If referred_slug exists, we will look up the param info
+                    # based on the referred_slug.
+                    if p.referred_slug is not None:
+                        p = get_param_info_by_slug(p.referred_slug, 'col')
+                        p.label = p.body_qualified_label()
+                        p.label_results = p.body_qualified_label_results(True)
+
                     if labels_view == 'search':
                         if p.slug[-1] == '2':
                             # We can just skip these because we never use them
@@ -1535,8 +1542,20 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         else:
             # this div has no sub headings
             menu_data[table_name]['has_sub_heading'] = False
-            for p in ParamInfo.objects.filter(**{filter:1,
+            for p in ParamInfo.objects.filter(**{filter_:1,
                                                 'category_name': d.table_name}):
+
+                # If referred_slug exists, we will put that referred_slug
+                # under the current category.
+                if p.referred_slug is not None:
+                    referred_slug = p.referred_slug
+                    p = get_param_info_by_slug(referred_slug, 'col')
+                    p.label = p.body_qualified_label()
+                    p.label_results = p.body_qualified_label_results(True)
+                    # assign referred_slug used to determine if an icon should
+                    # be appended at the end of a menu item.
+                    p.referred_slug = referred_slug
+
                 # On the search tab, we don't need the trailing 1 & 2 for
                 # data-slug in the Select Metadata modal we do.
                 if labels_view == 'search':

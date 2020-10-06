@@ -3,13 +3,17 @@
         <dt>{{ cat }}</dt>
         <dl>
             {% for param, val in d.items %}
-                {% for name, param_info in all_info.items %}
-                    {% if name == param %}
-                        {% if param_info.get_units %}
-                            <dt>{{ param_info.label_results }} {{ param_info.get_units }}</dt><dd>{{ val }}</dd>
-                        {% else %}
-                            <dt>{{ param_info.label_results }}</dt><dd>{{ val }}</dd>
-                        {% endif %}
+                {% for table, all_info in data_all_info.items %}
+                    {% if table == cat %}
+                        {% for name, param_info in all_info.items %}
+                            {% if name == param %}
+                                {% if param_info.get_units %}
+                                    <dt>{{ param_info.label_results }} {{ param_info.get_units }}</dt><dd>{{ val }}</dd>
+                                {% else %}
+                                    <dt>{{ param_info.label_results }}</dt><dd>{{ val }}</dd>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
                     {% endif %}
                 {% endfor %}
             {% endfor %}

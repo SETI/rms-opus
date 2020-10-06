@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "-16.32",
+    "RINGGEOobserverringopeningangle2": "-16.32",
+    "RINGGEOringradius1": "60310.039",
+    "RINGGEOringradius2": "514489.897",
+    "RINGGEOsolarringopeningangle1": "-24.98",
+    "RINGGEOsolarringopeningangle2": "-24.98"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Aegaeon,Anthe,Calypso,Dione,Enceladus,Janus,Methone,Pan,Prometheus,Saturn,Telesto"
@@ -516,6 +522,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1460961193",
     "COISStargetdesc": "Saturn-Rings",
-    "COISSimageobservationtype": "Science"
+    "COISSimageobservationtype": "Science",
+    "duration": "0.26"
   }
 }

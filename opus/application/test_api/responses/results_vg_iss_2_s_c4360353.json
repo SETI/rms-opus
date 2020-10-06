@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": null,
         "occsource": null,
-        "occreceiverhost": null
+        "occreceiverhost": null,
+        "RINGGEOringradius1": "61046.427",
+        "RINGGEOringradius2": "3047750.647",
+        "RINGGEOsolarringopeningangle1": "7.869",
+        "RINGGEOsolarringopeningangle2": "7.869",
+        "RINGGEOobserverringopeningangle1": "10.745",
+        "RINGGEOobserverringopeningangle2": "10.745"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": "Aegaeon,Anthe,Atlas,Calypso,Daphnis,Dione,Enceladus,Epimetheus,Helene,Janus,Methone,Mimas,Pallene,Pan,Pandora,Polydeuces,Prometheus,Rhea,Saturn,Telesto,Tethys"
@@ -835,6 +841,7 @@
         "VGISSscanmode": "3:1",
         "VGISSimageid": "1096S2-014",
         "VGISSusablelines": "800",
-        "VGISSusablesamples": "800"
+        "VGISSusablesamples": "800",
+        "duration": "0.96"
     }
 }

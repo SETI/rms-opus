@@ -55,7 +55,13 @@
         "occdepth2": "2.7606",
         "occwlband": "IR",
         "occsource": "L2 Pup",
-        "occreceiverhost": "Cassini"
+        "occreceiverhost": "Cassini",
+        "RINGGEOobserverringopeningangle1": "-41.91",
+        "RINGGEOobserverringopeningangle2": "-41.91",
+        "RINGGEOringradius1": "74121",
+        "RINGGEOringradius2": "145000",
+        "RINGGEOsolarringopeningangle1": "41.91",
+        "RINGGEOsolarringopeningangle2": "41.91"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
