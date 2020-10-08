@@ -269,7 +269,7 @@ var o_browse = {
 
         $("#galleryView .modal-content").resizable({
             handles: "n, e, s, w, ne, se, sw, nw",
-            minWidth: 500,
+            minWidth: 250,
             minHeight: 240,
             start: function(event, ui) {
                 let $target = $(event.target);
@@ -277,48 +277,8 @@ var o_browse = {
                 $target.resizable("instance").center = modalCenter;
             },
             resize: function(event, ui) {
-                //o_browse.adjustBrowseDialogPS();
-                // keep track of the original size so the maximize can work
-                let $target = $(event.target);
-                if ($target.resizable("instance").options.originalHeight === undefined) {
-                    $target.resizable("instance").options.originalHeight = ui.originalSize.height;
-                    $target.resizable("instance").options.originalWidth = ui.originalSize.width;
-                }
-                let width = $target.width();
-                let height = $target.height();
-
-                if (width < 545 || height <= 400) {
-                    $target.addClass("op-resize-small");
-                    // need to resize the add metadata menu as well and X in the corner
-                    $target.find("i.fa-times-circle").removeClass("fa-lg");
-                    $(`#op-add-metadata-fields .op-select-list`).addClass("op-resize-small");
-                } else {
-                    $target.removeClass("op-resize-small");
-                    $target.find("i.fa-times-circle").addClass("fa-lg");
-                    $(`#op-add-metadata-fields .op-select-list`).removeClass("op-resize-small");
-                }
-                let modalCenter = $target.resizable("instance").center;
-                let newTop = $("body").height() - 0.5 * height - modalCenter;
-                $target.offset({top: newTop});
-
-                // Move modal image to the top and metadata info to the bottom.
-                if (width <= 500) {
-                    $("#galleryView .row").addClass("op-flip-gallery-modal");
-                    $("#galleryView .left a").addClass("op-tune-image-size");
-                    $("#galleryView .left").addClass("op-extend-full-width");
-                    $("#galleryView .right").addClass("op-extend-full-width");
-                    $(".op-metadata-details").addClass("op-tune-metadata-detail");
-                    $(".op-metadata-detail-edit").addClass("op-position-edit-button");
-                    $("#galleryView .right .bottom").addClass("op-position-modal-bttom");
-                } else {
-                    $("#galleryView .row").removeClass("op-flip-gallery-modal");
-                    $("#galleryView .left a").removeClass("op-tune-image-size");
-                    $("#galleryView .left").removeClass("op-extend-full-width");
-                    $("#galleryView .right").removeClass("op-extend-full-width");
-                    $(".op-metadata-details").removeClass("op-tune-metadata-detail");
-                    $(".op-metadata-detail-edit").removeClass("op-position-edit-button");
-                    $("#galleryView .right .bottom").removeClass("op-position-modal-bttom");
-                }
+                o_browse.saveOriginalModalDimensions(event.target);
+                o_browse.onResizeGalleryView(event.target);
             },
         });
 
@@ -337,23 +297,32 @@ var o_browse = {
         });
 
         $('.op-slide-minimize').on("click", function(e) {
-            let $slide = $("#galleryView .modal-content");
-            let $resizable = $slide.resizable("instance");
+            let selector = "#galleryView .modal-content";
+            o_browse.saveOriginalModalDimensions(selector);
+            let $slide = $(selector);
             let width = $slide.resizable("option", "minWidth");
             let height = $slide.resizable("option", "minHeight");
-            $slide.resizable("resizeTo", {
+            $slide.animate({
                 width: width,
                 height: height,
-            }).animate("slow");
+            }, function(evt) {
+                // Animation complete.
+                o_browse.onResizeGalleryView(selector);
+            });
         });
 
         $('.op-slide-maximize').on("click", function(e) {
-            let $slide = $("#galleryView .modal-content");
+            let selector = "#galleryView .modal-content";
+            o_browse.saveOriginalModalDimensions(selector);
+            let $slide = $(selector);
             let $resizable = $slide.resizable("instance");
             if ($resizable.options.originalHeight !== undefined) {
-                $("#galleryView .modal-content").animate({
+                $slide.animate({
                     width: $resizable.options.originalWidth,
                     height: $resizable.options.originalHeight,
+                }, function() {
+                    // Animation complete.
+                    o_browse.onResizeGalleryView("#galleryView .modal-content");
                 });
             }
         });
@@ -1208,6 +1177,72 @@ var o_browse = {
         }
         o_browse.updateSliderHandle(view, false, false, true);
         return false;
+    },
+
+    saveOriginalModalDimensions: function(elem) {
+        let $target = $(elem);
+        if ($target.resizable("instance").options.originalHeight === undefined) {
+            $target.resizable("instance").options.originalHeight = $("#op-gallery-view-content").height();
+            $target.resizable("instance").options.originalWidth = $("#op-gallery-view-content").width();
+        }
+    },
+
+    onResizeGalleryView: function(elem) {
+        // keep track of the original size so the maximize can work
+        let $target = $(elem);
+        let width = $target.width();
+        let height = $target.height();
+
+        if (width < 300 || height <= 400) {
+            $target.addClass("op-resize-small");
+            // need to resize the add metadata menu as well and X in the corner
+            $target.find("i.fa-times-circle").removeClass("fa-lg");
+            $(`#op-add-metadata-fields .op-select-list`).addClass("op-resize-small");
+        } else {
+            $target.removeClass("op-resize-small");
+            $target.find("i.fa-times-circle").addClass("fa-lg");
+            $(`#op-add-metadata-fields .op-select-list`).removeClass("op-resize-small");
+        }
+        //Move modal image to the top and metadata info to the bottom.
+        if (width <= 500) {
+            // once the modal narrows, we don't need this to wrap so remove it
+            $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
+            $(".op-metadata-details").removeClass("mt-3");
+
+            $("#op-gallery-view-content .row").addClass("flex-column");
+            $(".op-metadata-details").addClass("op-tune-metadata-detail");
+            let paddingBottom = (height <= 360 ? "pb-2" : "pb-3");
+            $("#op-gallery-view-content .row.bottom").removeClass("^='pb-'");
+            $("#op-gallery-view-content .row.bottom").addClass(paddingBottom);
+            $("#op-gallery-view-content .left").removeClass("col-lg-7");
+            $("#op-gallery-view-content .left").addClass("col-lg-5 pt-4 pb-3");
+            $("#op-gallery-view-content .right").removeClass("col-lg-5");
+            $("#op-gallery-view-content .right").addClass("col-lg-7");
+        } else {
+            if (width <= 800) {
+                // wrap the edit message if it exists when narrow
+                $(".op-metadata-detail-edit").addClass("op-metadata-detail-edit-wrap");
+                $(".op-metadata-details").addClass("mt-3");
+            }
+            $("#op-gallery-view-content .row").removeClass("flex-column");
+            $(".op-metadata-details").removeClass("op-tune-metadata-detail");
+            $("#op-gallery-view-content .row.bottom").removeClass("^='pb-'");
+            $("#op-gallery-view-content .left").addClass("col-lg-7");
+            $("#op-gallery-view-content .left").removeClass("col-lg-5 pt-4 pb-3");
+            $("#op-gallery-view-content .right").addClass("col-lg-5");
+            $("#op-gallery-view-content .right").removeClass("col-lg-7");
+        }
+        // some minor adjusting to allow the icons at the bottom to move down
+        /* a bit when the height gets really short and the font small
+        if (height <= 300 && !$taret.hasClass("op-resize-small")) {
+            $("#op-gallery-view-content .row.bottom").removeClass("pb-3");
+            $("#op-gallery-view-content .row.bottom").addClass("pb-2");
+        } else {
+            $("#op-gallery-view-content .row.bottom").removeClass("pb-2");
+        }*/
+        let modalCenter = $target.resizable("instance").center;
+        let newTop = $("body").height() - 0.5 * height - modalCenter;
+        $target.offset({top: newTop});
     },
 
     showGalleryViewModal: function(opusId) {
@@ -2462,9 +2497,7 @@ var o_browse = {
         let top = $(elem).offset().top;
         // if this is coming from the slideshow view, calulate the top differently
         if ($(elem).hasClass("op-metadata-details-tools")) {
-            let galleryViewContentsHeight = $("#galleryView .modal-content").height();
             let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
-
             let adjustedTop = top - (menuHeight + $(elem).height());
             top = (adjustedTop > 0 ? adjustedTop : top);
         }
@@ -2604,8 +2637,8 @@ var o_browse = {
         let buttonInfo = o_browse.cartButtonInfo(action);
 
         // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
-        html += `<div class="col text-center op-obs-direction">`;
+        html = `<div class="col-sm"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+        html += `<div class="col-sm text-center op-obs-direction">`;
         let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
         let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
         html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
@@ -2613,7 +2646,7 @@ var o_browse = {
         html += `</div>`;
 
         // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+        html += `<div class="col-sm"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
         $(".op-gallery-view-body .bottom").html(html);
     },
 

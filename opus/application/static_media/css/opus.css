@@ -216,9 +216,13 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     text-decoration: none;
 }
 
+.op-metadata-detail-edit-wrap {
+    max-width: 100px;
+    flex-wrap: wrap;
+}
+
 .op-metadata-detail-edit-message {
     display: inline-flex;
-    float: right;
     padding-left: 2em;
 }
 
@@ -1103,15 +1107,19 @@ img.op-slideshow-image-preview {
     max-height: 70vh !important;
 }
 
+.op-resize-small {
+    font-size: 75%;
+}
+
 /* The following will make sure vertical resizing of modal works properly
 without resizing image proportionally. */
-/* Make flex box children items (a tag) stay inside of the parent */
-#galleryView .left {
-    align-items: stretch !important;
-}
-/* Make sure children (img tag) stay inside of it */
+/* The following two stylings make sure children (img tag) stay inside of it */
 #galleryView .left a {
     display: flex;
+    height: 100%;
+}
+#galleryView .left img {
+    object-fit: contain;
 }
 
 #galleryView .modal-dialog, #galleryView .modal-content {
@@ -1122,42 +1130,11 @@ without resizing image proportionally. */
     height: 100%;
 }
 
-/* Here are to move image to the top of the gallery modal and metadata to
-the bottom of modal. Need to use JS to detect the change of modal width */
-/* #galleryView .left a {
-    height: 80%;
-    align-self: center;
-} */
-/* #galleryView .row {
-    flex-direction: column;
-    align-items: stretch;
-} */
-/* #galleryView .left, #galleryView .right {
-    max-width: 100% !important;
-} */
-/* .op-metadata-details {
-    height: 80%;
-    padding-left: 1em;
-} */
-/* .op-metadata-detail-edit {
-    top: 0;
-    height: 10%;
-} */
-/* #galleryView .right .bottom {
-    height: 10%;
-} */
 .op-tune-image-size {
-    height: 90%;
-    align-self: center;
+    height: 88% !important;
+    /*align-self: center; */
 }
-/* Move image to the top and metadata to the bottom */
-.op-flip-gallery-modal {
-    flex-direction: column;
-}
-/* Make sure image (.left) & metadata (.right) takes up full width */
-.op-extend-full-width {
-    max-width: 100% !important;
-}
+
 /* metadata info takes up 80% of .left */
 .op-tune-metadata-detail {
     height: 80% !important;
@@ -1169,16 +1146,11 @@ the bottom of modal. Need to use JS to detect the change of modal width */
     top: 0;
 }
 /* Row of bottom icon takes up 10% */
-.op-position-modal-bttom {
+.op-position-modal-buttom {
     height: 10% !important;
     align-items: center !important;
 }
 /* #################################### */
-
-
-.op-resize-small {
-    font-size: 75%;
-}
 
 /* prevent weird browser y-scrollbar */
 #galleryView {
@@ -1229,6 +1201,7 @@ the bottom of modal. Need to use JS to detect the change of modal width */
     cursor: text;
 }
 
+/* Make sure image always stays at the left in metadata modal */
 .op-gallery-view-body .row {
     height: 100%;
 }
@@ -1238,6 +1211,8 @@ when window sized is narrow */
 .op-gallery-view-body .op-obs-direction {
     flex-grow: 3;
     width: 20em;
+    padding-right: 0;
+    padding-left: 0;
 }
 
 .op-gallery-view-body .op-metadata-detail-add {
@@ -1284,7 +1259,12 @@ when window sized is narrow */
     padding-right: 1em;
     bottom: 0;
     width: 100%;
+    height: auto !important;
     z-index: 1030;
+    /* Make sure bottom icons will be vertically centered in metadata modal in
+    different browsers */
+    align-items: stretch;
+    padding-top: 0.3em;
     /* All icons in metadata display will stay at the bottom */
     align-items: flex-end;
     /* align-item for Safari */
@@ -3346,18 +3326,6 @@ when screen is narrow (cart tab) */
     .op-cart-toggle-download-panel {
         padding: 0;
     }
-}
-
-/* Make sure image always stays at the left in metadata modal */
-.op-gallery-view-body .row {
-    flex-wrap: nowrap !important;
-}
-
-/* Make sure bottom icons will be vertically centered in metadata modal in
-different browsers */
-.op-gallery-view-body .bottom {
-    align-items: stretch;
-    padding-top: 0.3em;
 }
 
 @media (max-width: 768px) and (max-height: 400px) {
