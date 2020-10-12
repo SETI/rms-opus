@@ -328,6 +328,7 @@ var o_browse = {
         });
 
         $('.op-slide-dock').on("click", function(e) {
+            /* NOT YET IMPLEMENTED */
             // remove resizable for the moment; maybe change to just e-w
             let slidePanel = $("#op-gallery-view-content .op-gallery-view-body").detach();
             $(".op-gallery-view-docked").html(slidePanel);
