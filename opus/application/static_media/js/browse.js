@@ -1203,6 +1203,9 @@ var o_browse = {
             $target.find("i.fa-times-circle").addClass("fa-lg");
             $(`#op-add-metadata-fields .op-select-list`).removeClass("op-resize-small");
         }
+        $("#op-gallery-view-content .row.bottom").removeClass( function(index, css) {
+            return (css.match(/\pb-\S+/g) || []).join(' ');
+        });
         //Move modal image to the top and metadata info to the bottom.
         if (width <= 500) {
             // once the modal narrows, we don't need this to wrap so remove it
@@ -1212,7 +1215,6 @@ var o_browse = {
             $("#op-gallery-view-content .row").addClass("flex-column");
             $(".op-metadata-details").addClass("op-tune-metadata-detail");
             let paddingBottom = (height <= 360 ? "pb-2" : "pb-3");
-            $("#op-gallery-view-content .row.bottom").removeClass("^='pb-'");
             $("#op-gallery-view-content .row.bottom").addClass(paddingBottom);
             $("#op-gallery-view-content .left").removeClass("col-lg-7");
             $("#op-gallery-view-content .left").addClass("col-lg-5 pt-4 pb-3");
@@ -1226,7 +1228,6 @@ var o_browse = {
             }
             $("#op-gallery-view-content .row").removeClass("flex-column");
             $(".op-metadata-details").removeClass("op-tune-metadata-detail");
-            $("#op-gallery-view-content .row.bottom").removeClass("^='pb-'");
             $("#op-gallery-view-content .left").addClass("col-lg-7");
             $("#op-gallery-view-content .left").removeClass("col-lg-5 pt-4 pb-3");
             $("#op-gallery-view-content .right").addClass("col-lg-5");
