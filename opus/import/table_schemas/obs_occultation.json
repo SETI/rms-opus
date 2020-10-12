@@ -342,6 +342,48 @@
         "pi_units": null
     },
     {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius1",
+        "pi_disp_order": 1000,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius2",
+        "pi_disp_order": 1001,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle1",
+        "pi_disp_order": 1010,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle2",
+        "pi_disp_order": 1011,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOobserverringopeningangle1",
+        "pi_disp_order": 1020,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOobserverringopeningangle2",
+        "pi_disp_order": 1021,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
         "put_mults_here": true
     },
     {

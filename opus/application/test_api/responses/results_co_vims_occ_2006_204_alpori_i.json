@@ -55,7 +55,13 @@
         "occdepth2": "1.1194",
         "occwlband": "IR",
         "occsource": "Alp Ori (Betelgeuse)",
-        "occreceiverhost": "Cassini"
+        "occreceiverhost": "Cassini",
+        "RINGGEOobserverringopeningangle1": "11.68",
+        "RINGGEOobserverringopeningangle2": "11.68",
+        "RINGGEOringradius1": "111914",
+        "RINGGEOringradius2": "139021",
+        "RINGGEOsolarringopeningangle1": "-11.68",
+        "RINGGEOsolarringopeningangle2": "-11.68"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

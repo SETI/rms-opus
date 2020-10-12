@@ -3351,3 +3351,14 @@ when screen is narrow (cart tab) */
         padding-right: 1em;
     }
 }
+
+.op-referred-link {
+    font-size: smaller;
+    color: #707070;
+    padding-left: 0.5em;
+}
+/* Styling for link icon in detail tab */
+#detail .op-referred-link {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}

@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "-16.324",
+    "RINGGEOobserverringopeningangle2": "-16.324",
+    "RINGGEOringradius1": null,
+    "RINGGEOringradius2": null,
+    "RINGGEOsolarringopeningangle1": "-24.917",
+    "RINGGEOsolarringopeningangle2": "-24.917"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": ""
@@ -186,6 +192,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1461810160",
     "COISStargetdesc": "Constant I/F",
-    "COISSimageobservationtype": "Calibration"
+    "COISSimageobservationtype": "Calibration",
+    "duration": "1"
   }
 }

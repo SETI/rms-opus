@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "-16.323",
+    "RINGGEOobserverringopeningangle2": "-16.323",
+    "RINGGEOringradius1": "136655.202",
+    "RINGGEOringradius2": "547265.176",
+    "RINGGEOsolarringopeningangle1": "-24.938",
+    "RINGGEOsolarringopeningangle2": "-24.938"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Calypso,Dione,Methone,Mimas,Polydeuces,Telesto,Tethys"
@@ -417,6 +423,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1461527506",
     "COISStargetdesc": "Saturn-Ering",
-    "COISSimageobservationtype": "Science"
+    "COISSimageobservationtype": "Science",
+    "duration": "15"
   }
 }

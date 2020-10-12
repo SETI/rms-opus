@@ -55,7 +55,13 @@
         "occdepth2": null,
         "occwlband": "IR",
         "occsource": "28 Sgr",
-        "occreceiverhost": "Lick Observatory Anna L. Nickel 1-m Telescope"
+        "occreceiverhost": "Lick Observatory Anna L. Nickel 1-m Telescope",
+        "RINGGEOobserverringopeningangle1": "25.373",
+        "RINGGEOobserverringopeningangle2": "25.373",
+        "RINGGEOringradius1": "73004.5",
+        "RINGGEOringradius2": "141994.5",
+        "RINGGEOsolarringopeningangle1": "-25.373",
+        "RINGGEOsolarringopeningangle2": "-25.373"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

@@ -494,7 +494,6 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
 def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
-
     if not request or request.GET is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
@@ -549,8 +548,10 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     cats = request.GET.get('cats', False)
     url_cols = request.GET.get('url_cols', False)
 
-    data = OrderedDict()     # Holds data struct to be returned
-    all_info = OrderedDict() # Holds all the param info objects
+    # Holds data struct to be returned
+    data = OrderedDict()
+    # Holds all the param info objects keyed by table label
+    data_all_info = OrderedDict()
 
     if cats == '':
         all_tables = []
@@ -579,6 +580,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
+        all_info = OrderedDict() # Holds all the param info objects
 
         # Make a list of all slugs and another of all param_names in this table
         param_info_list = list(ParamInfo.objects
@@ -586,11 +588,24 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                        display_results=1)
                                .order_by('disp_order'))
         if param_info_list:
+            all_param_names = []
             for param_info in param_info_list:
+                if param_info.referred_slug is not None:
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results(True))
+                    param_info.referred_slug = referred_slug
+                else:
+                    all_param_names.append(param_info.name)
+
                 if return_db_names:
                     all_info[param_info.name] = param_info
                 else:
                     all_info[param_info.slug] = param_info
+            # Store all param info objects for current table
+            data_all_info[table_label] = all_info
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
@@ -603,7 +618,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 exit_api_call(api_code, ret)
                 return ret
 
-            all_param_names = [p.name for p in param_info_list]
             result_vals = results.values(*all_param_names)
             if not result_vals:
                 # This is normal - we're looking at ALL tables so many won't
@@ -612,6 +626,17 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
             for param_info in param_info_list:
+                if param_info.referred_slug is not None:
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results(True))
+                    # Assign referred_slug. This will be used to determine if
+                    # the param info is from referred_slug, and we will use
+                    # the slug to get the metadata result later.
+                    param_info.referred_slug = referred_slug
+
                 (form_type, form_type_func,
                  form_type_format) = parse_form_type(param_info.form_type)
 
@@ -623,8 +648,22 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                           mult_val,
                                                          cvt_null=(fmt!='json'))
                 else:
-                    result = result_vals[param_info.name]
-                    if (result is None and fmt != 'json' and
+                    result = result_vals.get(param_info.name, None)
+                    # If this is the param info from referred_slug, we will get
+                    # the result data from _get_metadata_by_slugs.
+                    if result is None and param_info.referred_slug:
+                        r_data = _get_metadata_by_slugs(
+                                                    request, opus_id,
+                                                    param_info.referred_slug,
+                                                    'raw_data',
+                                                    return_db_names,
+                                                    internal,
+                                                    api_code)
+                        result = r_data[0].get(param_info.referred_slug, None)
+                        if (result == 'N/A' and fmt == 'json' and
+                            form_type != 'STRING'):
+                            result = None
+                    elif (result is None and fmt != 'json' and
                         form_type != 'STRING'):
                         result = 'N/A'
                     else:
@@ -659,7 +698,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data,
-                   'all_info': all_info,
+                   'data_all_info': data_all_info,
                    'url_cols': url_cols}
         if internal:
             ret = render(request, 'results/detail_metadata_internal.html',
@@ -1730,6 +1769,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                    'url_cols': url_cols}
         return render(request, 'results/detail_metadata_slugs.html',
                       context)
+    if fmt == 'raw_data':
+        for slug, result in zip(slug_list, page[0]):
+            data.append({slug: result})
+        return data
 
     log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
     ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))

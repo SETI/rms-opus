@@ -374,7 +374,7 @@
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
-        "pi_intro": null,
+        "pi_intro": "To select observations by color or wavelength range instead of by instrument-specific filter name, use the Wavelength field available under Wavelength Constraints.",
         "pi_label": "Filter",
         "pi_label_results": "Filter",
         "pi_old_slug": "FILTER",
@@ -414,6 +414,13 @@
               [   0, "N", "Narrow Angle", "010", "Y", null],
               [   1, "W",   "Wide Angle", "020", "Y", null]
           ]
+    },
+    {
+        "pi_category_name": "obs_instrument_coiss",
+        "pi_referred_slug": "duration",
+        "pi_disp_order": 1000,
+        "pi_display": 1,
+        "pi_display_results": 1
     },
     {
         "put_mults_here": true

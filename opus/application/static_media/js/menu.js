@@ -26,11 +26,12 @@ var o_menu = {
             if (!slug) { return; }
             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
                 // if the widget is already showing, delete it
-                // if the widget has config params, ask first... 
+                // if the widget has config params, ask first...
                 o_widgets.closeCard(slug, true);
                 return false;
             } else {
-                o_menu.markMenuItem(this);
+                let menuSelector = `.op-search-menu a[data-slug=${slug}]`;
+                o_menu.markMenuItem(menuSelector);
                 o_widgets.getWidget(slug,'#op-search-widgets');
             }
 

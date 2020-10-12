@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "-16.338",
+    "RINGGEOobserverringopeningangle2": "-16.338",
+    "RINGGEOringradius1": "60293.511",
+    "RINGGEOringradius2": "385865.174",
+    "RINGGEOsolarringopeningangle1": "-24.803",
+    "RINGGEOsolarringopeningangle2": "-24.803"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Calypso,Methone,Pan,Saturn"
@@ -285,6 +291,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1463306217",
     "COISStargetdesc": "Saturn",
-    "COISSimageobservationtype": "Science/Calibration"
+    "COISSimageobservationtype": "Science/Calibration",
+    "duration": "1"
   }
 }

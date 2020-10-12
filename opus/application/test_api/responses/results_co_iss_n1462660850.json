@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "-16.331",
+    "RINGGEOobserverringopeningangle2": "-16.331",
+    "RINGGEOringradius1": "78269.77",
+    "RINGGEOringradius2": "455923.893",
+    "RINGGEOsolarringopeningangle1": "-24.853",
+    "RINGGEOsolarringopeningangle2": "-24.853"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Aegaeon,Atlas,Calypso,Methone,Mimas,Pallene,Telesto"
@@ -417,6 +423,7 @@
     "COISSmissinglines": "0",
     "COISSimagenumber": "1462660850",
     "COISStargetdesc": "Mimas",
-    "COISSimageobservationtype": "OpNav"
+    "COISSimageobservationtype": "OpNav",
+    "duration": "0.12"
   }
 }
