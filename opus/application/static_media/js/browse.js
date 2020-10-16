@@ -146,24 +146,13 @@ var o_browse = {
 
         // images...
         $(".gallery").on("click", ".thumbnail, .op-recycle-overlay", function(e) {
-            // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
-            // but is not caught in time before hidden.bs to get correct opusId
-            e.preventDefault();
-            o_browse.hideMenus();
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
+        });
 
-            let opusId = $(this).parent().data("id");
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
-            }
+        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
         });
 
         // data_table - clicking a table row adds to cart
@@ -183,24 +172,6 @@ var o_browse = {
                 o_cart.toggleInCart(opusId);
                 // single click stops range selection; shift click starts range
                 o_browse.undoRangeSelect();
-            }
-        });
-
-        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
-            let opusId = $(this).parent().data("id");
-            e.preventDefault();
-            o_browse.hideMenus();
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
             }
         });
 
@@ -294,11 +265,13 @@ var o_browse = {
         $('#galleryView').on("click", "a.op-prev,a.op-next", function(e) {
             let action = $(this).hasClass("op-prev") ? "prev" : "next";
             let opusId = $(this).data("id");
+            let obsNum = $(this).data("obs");
 
             if (opusId) {
                 o_browse.removeEditMetadataDetails();
                 o_browse.loadPageIfNeeded(action, opusId);
-                o_browse.updateGalleryView(opusId);
+                obsNum += (action === "prev" ? -1 : 1);
+                o_browse.updateGalleryView(opusId, obsNum);
             }
             return false;
         });
@@ -548,7 +521,11 @@ var o_browse = {
                     Left: 37
                     Space: 32 */
 
+                let tab = opus.getViewTab();
+                let viewNamespace = opus.getViewNamespace();
                 let detailOpusId;
+                let offset = 0;
+                let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 32:  // spacebar
@@ -559,22 +536,68 @@ var o_browse = {
                         break;
                     case 39:  // next
                         detailOpusId = $("#galleryView").find(".op-next").data("id");
+                        obsNum++;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("next", detailOpusId);
                         break;
                     case 37:  // prev
                         detailOpusId = $("#galleryView").find(".op-prev").data("id");
+                        obsNum--;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
                         break;
+                    case 38:  // up
+                        // note that if there is no where to go in the up direction, nothing will change ... it could go to the very first, tho
+                        offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                        if (obsNum > offset) {
+                            obsNum -= offset;
+                            detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
+                            o_browse.removeEditMetadataDetails();
+                            o_browse.loadPageIfNeeded("prev", detailOpusId);
+                        }
+                        break;
+                    case 40:  // down
+                        // note that if there are not enough left to go down, nothing will change ... it could go to the very last tho
+                        offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                        if (obsNum + offset <= viewNamespace.totalObsCount) {
+                            obsNum += offset;
+                            detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
+                            o_browse.removeEditMetadataDetails();
+                            o_browse.loadPageIfNeeded("next", detailOpusId);
+                        }
+                        break;
                 }
                 if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(detailOpusId);
+                    o_browse.updateGalleryView(detailOpusId, obsNum);
                 }
             }
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    onGalleryOrRowClick: function(obj, e) {
+        // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
+        // but is not caught in time before hidden.bs to get correct opusId
+        e.preventDefault();
+        o_browse.hideMenus();
+
+        if (obj !== null) {
+            let opusId = obj.data("id");
+            let obsNum = obj.data("obs");
+
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
+            }
+            // Detecting shift key
+            else if (e.shiftKey) {
+                o_browse.cartShiftKeyHandler(e, opusId);
+            } else {
+                o_browse.showMetadataDetailModal(opusId, obsNum);
+            }
+        }
+    },
 
     confirmationBeforeAddAll: function() {
         /**
@@ -1126,13 +1149,13 @@ var o_browse = {
         return false;
     },
 
-    showMetadataDetailModal: function(opusId) {
+    showMetadataDetailModal: function(opusId, obsNum) {
         if (o_browse.pageLoaderSpinnerTimer !== null) {
             // if the spinner is active, do not allow modal to become active
             return;
         }
         o_browse.loadPageIfNeeded("prev", opusId);
-        o_browse.updateGalleryView(opusId);
+        o_browse.updateGalleryView(opusId, obsNum);
         // this is to make sure modal is at its original position when open again
         $("#galleryView .modal-dialog").css({top: 0, left: 0});
         $("#galleryView").modal("show");
@@ -2536,7 +2559,7 @@ var o_browse = {
         $("#galleryViewContents .bottom").html(html);
     },
 
-    updateGalleryView: function(opusId) {
+    updateGalleryView: function(opusId, obsNum) {
         let tab = opus.getViewTab();
         $(tab).find(".op-modal-show").removeClass("op-modal-show");
         $(tab).find(`[data-id='${opusId}'] div.op-modal-overlay`).addClass("op-modal-show");
@@ -2545,18 +2568,16 @@ var o_browse = {
         $(tab).find(`[data-id='${opusId}'] div.op-recycle-overlay`).addClass("op-modal-show");
 
         let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
-        o_browse.updateMetaGalleryView(opusId, imageURL);
+        o_browse.updateMetaGalleryView(opusId, obsNum, imageURL);
     },
 
 
-    updateMetaGalleryView: function(opusId, imageURL) {
-        let tab = opus.getViewTab();
-        let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
-        let obsNum = $(element).data("obs");
+    updateMetaGalleryView: function(opusId, obsNum, imageURL) {
         let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
 
-        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
         o_browse.metadataboxHtml(opusId);
+        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
+        $("#galleryViewContents .op-obs-direction a").data("obs", obsNum);
     },
 
     clearObservationData: function(leaveStartObs) {
