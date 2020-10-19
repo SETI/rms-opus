@@ -272,9 +272,9 @@ var o_browse = {
             minWidth: 250,
             minHeight: 240,
             start: function(event, ui) {
-                let $target = $(event.target);
-                let modalCenter =  $("body").height() - 0.5 * $target.height() -  $target.offset().top;
-                $target.resizable("instance").center = modalCenter;
+                let target = $(event.target);
+                let modalCenter =  $("body").height() - 0.5 * target.height() -  target.offset().top;
+                target.resizable("instance").center = modalCenter;
             },
             resize: function(event, ui) {
                 o_browse.saveOriginalModalDimensions(event.target);
@@ -296,7 +296,7 @@ var o_browse = {
             o_browse.removeEditMetadataDetails();
         });
 
-        $('.op-slide-minimize').on("click", function(e) {
+        $(".op-slide-minimize").on("click", function(e) {
             let selector = "#galleryView .modal-content";
             o_browse.saveOriginalModalDimensions(selector);
             let $slide = $(selector);
@@ -311,7 +311,7 @@ var o_browse = {
             });
         });
 
-        $('.op-slide-maximize').on("click", function(e) {
+        $(".op-slide-maximize").on("click", function(e) {
             let selector = "#galleryView .modal-content";
             o_browse.saveOriginalModalDimensions(selector);
             let $slide = $(selector);
@@ -327,7 +327,7 @@ var o_browse = {
             }
         });
 
-        $('.op-slide-dock').on("click", function(e) {
+        $(".op-slide-dock").on("click", function(e) {
             /* NOT YET IMPLEMENTED */
             // remove resizable for the moment; maybe change to just e-w
             let slidePanel = $("#op-gallery-view-content .op-gallery-view-body").detach();
@@ -335,7 +335,7 @@ var o_browse = {
             $(".op-gallery-view-docked").show();
         });
 
-        $('.op-gallery-view-body').on("click", "a.op-cart-toggle", function(e) {
+        $(".op-gallery-view-body").on("click", "a.op-cart-toggle", function(e) {
             let opusId = $(this).data("id");
             if (opusId) {
                 // clicking on the cart/trash can aborts range select
@@ -345,7 +345,7 @@ var o_browse = {
             return false;
         });
 
-        $('.op-gallery-view-body').on("click", "a.op-prev,a.op-next", function(e) {
+        $(".op-gallery-view-body").on("click", "a.op-prev,a.op-next", function(e) {
             let action = $(this).hasClass("op-prev") ? "prev" : "next";
             let opusId = $(this).data("id");
 
@@ -1181,30 +1181,30 @@ var o_browse = {
     },
 
     saveOriginalModalDimensions: function(elem) {
-        let $target = $(elem);
-        if ($target.resizable("instance").options.originalHeight === undefined) {
-            $target.resizable("instance").options.originalHeight = $("#op-gallery-view-content").height();
-            $target.resizable("instance").options.originalWidth = $("#op-gallery-view-content").width();
+        let target = $(elem);
+        if (target.resizable("instance").options.originalHeight === undefined) {
+            target.resizable("instance").options.originalHeight = $("#op-gallery-view-content").outerHeight();
+            target.resizable("instance").options.originalWidth = $("#op-gallery-view-content").outerWidth();
         }
     },
 
     onResizeGalleryView: function(elem) {
         // keep track of the original size so the maximize can work
-        let $target = $(elem);
-        let width = $target.width();
-        let height = $target.height();
+        let target = $(elem);
+        let width = target.width();
+        let height = target.height();
 
         if (width < 300 || height <= 400) {
-            $target.addClass("op-resize-small");
+            target.addClass("op-resize-small");
             // need to resize the add metadata menu as well and X in the corner
-            $target.find("i.fa-times-circle").removeClass("fa-lg");
-            $(`#op-add-metadata-fields .op-select-list`).addClass("op-resize-small");
+            target.find("i.fa-times-circle").removeClass("fa-lg");
+            $("#op-add-metadata-fields .op-select-list").addClass("op-resize-small");
         } else {
-            $target.removeClass("op-resize-small");
-            $target.find("i.fa-times-circle").addClass("fa-lg");
-            $(`#op-add-metadata-fields .op-select-list`).removeClass("op-resize-small");
+            target.removeClass("op-resize-small");
+            target.find("i.fa-times-circle").addClass("fa-lg");
+            $("#op-add-metadata-fields .op-select-list").removeClass("op-resize-small");
         }
-        $("#op-gallery-view-content .row.bottom").removeClass( function(index, css) {
+        $("#op-gallery-view-content .row.bottom").removeClass(function(index, css) {
             return (css.match(/\pb-\S+/g) || []).join(' ');
         });
         //Move modal image to the top and metadata info to the bottom.
@@ -1234,17 +1234,9 @@ var o_browse = {
             $("#op-gallery-view-content .right").addClass("col-lg-5");
             $("#op-gallery-view-content .right").removeClass("col-lg-7");
         }
-        // some minor adjusting to allow the icons at the bottom to move down
-        /* a bit when the height gets really short and the font small
-        if (height <= 300 && !$taret.hasClass("op-resize-small")) {
-            $("#op-gallery-view-content .row.bottom").removeClass("pb-3");
-            $("#op-gallery-view-content .row.bottom").addClass("pb-2");
-        } else {
-            $("#op-gallery-view-content .row.bottom").removeClass("pb-2");
-        }*/
-        let modalCenter = $target.resizable("instance").center;
+        let modalCenter = target.resizable("instance").center;
         let newTop = $("body").height() - 0.5 * height - modalCenter;
-        $target.offset({top: newTop});
+        target.offset({top: newTop});
     },
 
     showGalleryViewModal: function(opusId) {
@@ -1419,7 +1411,7 @@ var o_browse = {
     showPageLoaderSpinner: function() {
         if (o_browse.pageLoaderSpinnerTimer === null) {
             o_browse.pageLoaderSpinnerTimer = setTimeout(function() {
-                $(`.op-page-loading-status > .loader`).show(); }, opus.spinnerDelay);
+                $(".op-page-loading-status > .loader").show(); }, opus.spinnerDelay);
         }
     },
 
@@ -1430,12 +1422,12 @@ var o_browse = {
             // until the last operation is complete. However, this sounds like a recipe for bugs,
             // and it isn't a common occurrence
             clearTimeout(o_browse.pageLoaderSpinnerTimer);
-            $(`.op-page-loading-status > .loader`).hide();
+            $(".op-page-loading-status > .loader").hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
         // this is here because if the selectMetadata modal was the cause of the change AND the galleryView modal
         // is showing, the detail/right side of the gallery view is not done redrawing until here.
-        $(`.op-metadata-details > .loader`).hide();
+        $(".op-metadata-details > .loader").hide();
         o_utils.enableUserInteraction();
     },
 
@@ -2361,26 +2353,26 @@ var o_browse = {
         let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
         let container = ".op-gallery-view-body .op-metadata-details";
         let containerHeight = $(container).height(calculatedContainerHeight);
-        let browseDialogHeight = $(`.op-gallery-view-body .op-metadata-details .contents`).height();
+        let browseDialogHeight = $(".op-gallery-view-body .op-metadata-details .contents").height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
             let currentElement = $(`ul[data-slug="${slug}"] a.op-metadata-detail-add`);
             // could have been deleted in interim, so best to check beforehand...
             if (currentElement !== undefined && $(currentElement).position() !== undefined) {
                 let top = o_browse.adjustTopOfMetadataList(currentElement);
-                $(`#op-add-metadata-fields`).css("top", top);
+                $("#op-add-metadata-fields").css("top", top);
             }
         }
 
         if (o_browse.modalScrollbar) {
             o_browse.hideMetadataList();
             if (containerHeight > browseDialogHeight) {
-                if (!$(`.op-gallery-view-body .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
-                    $(`.op-gallery-view-body .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
+                if (!$(".op-gallery-view-body .op-metadata-details .ps__rail-y").hasClass("hide_ps__rail-y")) {
+                    $(".op-gallery-view-body .op-metadata-details .ps__rail-y").addClass("hide_ps__rail-y");
                     o_browse.modalScrollbar.settings.suppressScrollY = true;
                 }
             } else {
-                $(`.op-gallery-view-body .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
+                $(".op-gallery-view-body .op-metadata-details .ps__rail-y").removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
                 let lastAddedSlug = $("#op-add-metadata-fields").data("last");
                 if (lastAddedSlug !== undefined) {
@@ -2456,7 +2448,7 @@ var o_browse = {
         // need to adjust for the PerfectScrollbar overlaying a bit on the last field
         let lastSlug = opus.prefs.cols[opus.prefs.cols.length - 1];
         if (slug === lastSlug) {
-            width -= $(`.op-data-table-view .ps__thumb-y`).width();
+            width -= $(".op-data-table-view .ps__thumb-y").width();
         }
         let top = $(elem).offset().top +
                   $(elem).outerHeight();
@@ -2499,7 +2491,7 @@ var o_browse = {
         let top = $(elem).offset().top;
         // if this is coming from the slideshow view, calulate the top differently
         if ($(elem).hasClass("op-metadata-details-tools")) {
-            let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
+            let menuHeight = $("#op-add-metadata-fields .op-select-list").height();
             let adjustedTop = top - (menuHeight + $(elem).height());
             top = (adjustedTop > 0 ? adjustedTop : top);
         }
@@ -2545,7 +2537,7 @@ var o_browse = {
         let viewNamespace = opus.getViewNamespace();
 
         $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
-        $(`.op-gallery-view-body .op-metadata-details .contents`).sortable({
+        $(".op-gallery-view-body .op-metadata-details .contents").sortable({
             items: "ul",
             cursor: "grabbing",
             containment: "parent",
@@ -2586,7 +2578,7 @@ var o_browse = {
 
     removeEditMetadataDetails: function() {
         let viewNamespace = opus.getViewNamespace();
-        let detailContents = $(`.op-gallery-view-body .op-metadata-details .contents`);
+        let detailContents = $(".op-gallery-view-body .op-metadata-details .contents");
 
         detailContents.removeClass("op-no-select");
         $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
@@ -2683,10 +2675,10 @@ var o_browse = {
             // data so we can keep our place.
             opus.prefs.startobs = 1; // reset startobs to 1 when data is flushed
             opus.prefs.cart_startobs = 1;
-            $(`.op-gallery-view`).infiniteScroll({"scrollbarObsNum": 1});
-            $(`.op-gallery-view`).infiniteScroll({"sliderObsNum": 1});
-            $(`.op-data-table-view`).infiniteScroll({"scrollbarObsNum": 1});
-            $(`.op-data-table-view`).infiniteScroll({"sliderObsNum": 1});
+            $(".op-gallery-view").infiniteScroll({"scrollbarObsNum": 1});
+            $(".op-gallery-view").infiniteScroll({"sliderObsNum": 1});
+            $(".op-data-table-view").infiniteScroll({"scrollbarObsNum": 1});
+            $(".op-data-table-view").infiniteScroll({"sliderObsNum": 1});
         }
         o_cart.reloadObservationData = true;  // forces redraw of cart tab
         o_cart.observationData = {};
