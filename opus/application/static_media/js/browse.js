@@ -575,6 +575,10 @@ var o_browse = {
             }
         });
 
+        $(window).on("resize", function (e) {
+            o_browse.hideGalleryViewModal();
+        });
+
         $(document).on("keydown click", function(e) {
             // don't close the mini-menu on the ctrl key in case the user
             // is trying to open a new window for detail
@@ -2352,7 +2356,8 @@ var o_browse = {
         let bottomRowHeight = $(".op-gallery-view-body .bottom").outerHeight(true);
         let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
         let container = ".op-gallery-view-body .op-metadata-details";
-        let containerHeight = $(container).height(calculatedContainerHeight);
+        $(container).height(calculatedContainerHeight);
+        let containerHeight = $(container).height();
         let browseDialogHeight = $(".op-gallery-view-body .op-metadata-details .contents").height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
