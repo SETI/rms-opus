@@ -529,7 +529,7 @@ var o_browse = {
                 // the || is for cross-browser support; firefox does not support keyCode
                 switch (e.which || e.keyCode) {
                     case 32:  // spacebar
-                        if (opus.metadataDetailOpusId !== "") {
+                        if ((opus.metadataDetailOpusId !== "" && opus.metadataDetailOpusId !== undefined) && !$("#galleryViewContents").hasClass("op-disabled")) {
                             o_browse.undoRangeSelect();
                             o_cart.toggleInCart(opus.metadataDetailOpusId);
                         }
@@ -539,18 +539,12 @@ var o_browse = {
                         obsNum++;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("next", detailOpusId);
-                        if (!$("#galleryViewContents").hasClass("op-disabled")) {
-                            o_browse.updateGalleryView(detailOpusId, obsNum);
-                        }
                         break;
                     case 37:  // prev
                         detailOpusId = $("#galleryView").find(".op-prev").data("id");
                         obsNum--;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
-                        if (!$("#galleryViewContents").hasClass("op-disabled")) {
-                            o_browse.updateGalleryView(detailOpusId, obsNum);
-                        }
                         break;
                     case 38:  // up
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
@@ -559,12 +553,8 @@ var o_browse = {
                             detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
                             o_browse.removeEditMetadataDetails();
                             o_browse.loadPageIfNeeded("prev", detailOpusId);
-                            // note: need to check for detailOpusId because if the next window is loading, it could still be undefined at this point
-                            if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                                o_browse.updateGalleryView(detailOpusId, obsNum);
-                            }
                         }
-                        return false;
+                        break;
                     case 40:  // down
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                         if (obsNum + offset <= viewNamespace.totalObsCount) {
@@ -572,12 +562,12 @@ var o_browse = {
                             detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
                             o_browse.removeEditMetadataDetails();
                             o_browse.loadPageIfNeeded("next", detailOpusId);
-                            // note: need to check for detailOpusId because if the next window is loading, it could still be undefined at this point
-                            if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                                o_browse.updateGalleryView(detailOpusId, obsNum);
-                            }
                         }
-                        return false;
+                        break;
+                }
+                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                    o_browse.updateGalleryView(detailOpusId, obsNum);
+                    return false;
                 }
             }
             // don't return false here or it will snatch all the user input!
