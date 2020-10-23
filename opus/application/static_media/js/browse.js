@@ -553,7 +553,6 @@ var o_browse = {
                         }
                         break;
                     case 38:  // up
-                        // note that if there is no where to go in the up direction, nothing will change ... it could go to the very first, tho
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                         if (obsNum > offset) {
                             obsNum -= offset;
@@ -567,7 +566,6 @@ var o_browse = {
                         }
                         return false;
                     case 40:  // down
-                        // note that if there are not enough left to go down, nothing will change ... it could go to the very last tho
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                         if (obsNum + offset <= viewNamespace.totalObsCount) {
                             obsNum += offset;
