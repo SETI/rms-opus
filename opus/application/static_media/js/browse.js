@@ -539,12 +539,18 @@ var o_browse = {
                         obsNum++;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("next", detailOpusId);
+                        if (!$("#galleryViewContents").hasClass("op-disabled")) {
+                            o_browse.updateGalleryView(detailOpusId, obsNum);
+                        }
                         break;
                     case 37:  // prev
                         detailOpusId = $("#galleryView").find(".op-prev").data("id");
                         obsNum--;
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
+                        if (!$("#galleryViewContents").hasClass("op-disabled")) {
+                            o_browse.updateGalleryView(detailOpusId, obsNum);
+                        }
                         break;
                     case 38:  // up
                         // note that if there is no where to go in the up direction, nothing will change ... it could go to the very first, tho
@@ -554,8 +560,12 @@ var o_browse = {
                             detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
                             o_browse.removeEditMetadataDetails();
                             o_browse.loadPageIfNeeded("prev", detailOpusId);
+                            // note: need to check for detailOpusId because if the next window is loading, it could still be undefined at this point
+                            if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                                o_browse.updateGalleryView(detailOpusId, obsNum);
+                            }
                         }
-                        break;
+                        return false;
                     case 40:  // down
                         // note that if there are not enough left to go down, nothing will change ... it could go to the very last tho
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
@@ -564,11 +574,12 @@ var o_browse = {
                             detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
                             o_browse.removeEditMetadataDetails();
                             o_browse.loadPageIfNeeded("next", detailOpusId);
+                            // note: need to check for detailOpusId because if the next window is loading, it could still be undefined at this point
+                            if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
+                                o_browse.updateGalleryView(detailOpusId, obsNum);
+                            }
                         }
-                        break;
-                }
-                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(detailOpusId, obsNum);
+                        return false;
                 }
             }
             // don't return false here or it will snatch all the user input!
