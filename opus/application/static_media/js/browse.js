@@ -513,7 +513,7 @@ var o_browse = {
                 // reset range select
                 o_browse.undoRangeSelect();
             }
-            if ($("#galleryView").hasClass("show")) {
+            if ($("#galleryView").hasClass("show") && !viewNamespace.loadDataInProgress) {
                 /*  Catch the right/left arrow and spacebar while in the modal
                     Up: 38
                     Down: 40
