@@ -513,6 +513,7 @@ var o_browse = {
                 // reset range select
                 o_browse.undoRangeSelect();
             }
+            let viewNamespace = opus.getViewNamespace();
             if ($("#galleryView").hasClass("show") && !viewNamespace.loadDataInProgress) {
                 /*  Catch the right/left arrow and spacebar while in the modal
                     Up: 38
@@ -522,7 +523,6 @@ var o_browse = {
                     Space: 32 */
 
                 let tab = opus.getViewTab();
-                let viewNamespace = opus.getViewNamespace();
                 let detailOpusId;
                 let offset = 0;
                 let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
