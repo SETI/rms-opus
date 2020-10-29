@@ -1353,9 +1353,6 @@ var o_browse = {
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
-        // this is here because if the selectMetadata modal was the cause of the change AND the galleryView modal
-        // is showing, the detail/right side of the gallery view is not done redrawing until here.
-        $(`.op-metadata-details > .loader`).hide();
         o_utils.enableUserInteraction();
     },
 
