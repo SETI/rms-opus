@@ -513,8 +513,7 @@ var o_browse = {
                 // reset range select
                 o_browse.undoRangeSelect();
             }
-            let viewNamespace = opus.getViewNamespace();
-            if ($("#galleryView").hasClass("show") && !viewNamespace.loadDataInProgress) {
+            if ($("#galleryView").hasClass("show")) {
                 /*  Catch the right/left arrow and spacebar while in the modal
                     Up: 38
                     Down: 40
@@ -523,6 +522,7 @@ var o_browse = {
                     Space: 32 */
 
                 let tab = opus.getViewTab();
+                let viewNamespace = opus.getViewNamespace();
                 let detailOpusId;
                 let offset = 0;
                 let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
@@ -535,14 +535,19 @@ var o_browse = {
                         }
                         break;
                     case 39:  // next
-                        detailOpusId = $("#galleryView").find(".op-next").data("id");
                         obsNum++;
-                        o_browse.removeEditMetadataDetails();
-                        o_browse.loadPageIfNeeded("next", detailOpusId);
+                        // if this new observation is in the last row of screen, don't allow the user to arrow there
+                        if (!o_browse.isLastRowOfObservations(tab, viewNamespace, obsNum)) {
+                            detailOpusId = $("#galleryView").find(".op-next").data("id");
+                            o_browse.removeEditMetadataDetails();
+                            o_browse.loadPageIfNeeded("next", detailOpusId);
+                        } else {
+                            return false;
+                        }
                         break;
                     case 37:  // prev
-                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
                         obsNum--;
+                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
                         o_browse.removeEditMetadataDetails();
                         o_browse.loadPageIfNeeded("prev", detailOpusId);
                         break;
@@ -559,9 +564,14 @@ var o_browse = {
                         offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
                         if (obsNum + offset <= viewNamespace.totalObsCount) {
                             obsNum += offset;
-                            detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
-                            o_browse.removeEditMetadataDetails();
-                            o_browse.loadPageIfNeeded("next", detailOpusId);
+                            // if this new observation is in the last row of screen, don't allow the user to arrow there
+                            if (!o_browse.isLastRowOfObservations(tab, viewNamespace, obsNum)) {
+                                detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
+                                o_browse.removeEditMetadataDetails();
+                                o_browse.loadPageIfNeeded("next", detailOpusId);
+                            } else {
+                                return false;
+                            }
                         }
                         break;
                 }
@@ -573,6 +583,15 @@ var o_browse = {
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    isLastRowOfObservations: function(tab, viewNamespace, obsNum) {
+        let firstObsOnScreen = $(`${tab} .op-observation-slider`).slider("option", "value");
+        let obsPerRow = viewNamespace.galleryBoundingRect.x;
+        let totalObsOnScreen = obsPerRow * viewNamespace.galleryBoundingRect.yFloor;
+        let beginningOfLastRow = firstObsOnScreen + (totalObsOnScreen - obsPerRow);
+        let lastObs = $(`${tab} .op-thumbnail-container`).last().data("obs");
+        return (lastObs - firstObsOnScreen < o_browse.getLimit() && obsNum >= beginningOfLastRow);
+    },
 
     onGalleryOrRowClick: function(obj, e) {
         // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
