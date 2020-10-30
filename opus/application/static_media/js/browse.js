@@ -1166,8 +1166,12 @@ var o_browse = {
         }
         o_browse.loadPageIfNeeded("prev", opusId);
         o_browse.updateGalleryView(opusId, obsNum);
-        // this is to make sure modal is at its original position when open again
-        $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        if (!$("#galleryView").hasClass("show")) {
+            // this is to make sure the gallery view/slide modal is at its original position when open again
+            // BUT if the gallery view modal was already open and the user is just
+            // clicking on a different observation, don't recenter...
+            $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        }
         $("#galleryView").modal("show");
 
         // Do the fake API call to write in the Apache log files that
