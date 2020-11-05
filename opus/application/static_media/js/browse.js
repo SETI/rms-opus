@@ -249,6 +249,7 @@ var o_browse = {
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
             $(namespace).find(".op-modal-show").removeClass("op-modal-show");
+            opus.metadataDetailOpusId = "";
             o_browse.removeEditMetadataDetails();
         });
 
