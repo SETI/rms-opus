@@ -2027,7 +2027,6 @@ var o_browse = {
             o_browse.renderGalleryAndTable(data, this.url, view);
 
             if (opus.metadataDetailOpusId !== "") {
-                let obsNum =  o_browse.getGalleryElement(opus.metadataDetailOpusId).data("obs");
                 o_browse.metadataboxHtml(opus.metadataDetailOpusId, view);
             }
             o_sortMetadata.updateSortOrder(data);
@@ -2568,7 +2567,7 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in galleryView html...
-            html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
