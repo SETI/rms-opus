@@ -576,7 +576,10 @@ var o_browse = {
         });
 
         $(window).on("resize", function (e) {
-            o_browse.hideGalleryViewModal();
+            // only close the modal if we were not resizeing the modal itself..
+            if (e.target.classList === undefined) {
+                o_browse.hideGalleryViewModal();
+            }
         });
 
         $(document).on("keydown click", function(e) {
