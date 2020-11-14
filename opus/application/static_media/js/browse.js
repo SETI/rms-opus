@@ -146,24 +146,13 @@ var o_browse = {
 
         // images...
         $(".gallery").on("click", ".thumbnail, .op-recycle-overlay", function(e) {
-            // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
-            // but is not caught in time before hidden.bs to get correct opusId
-            e.preventDefault();
-            o_browse.hideMenus();
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
+        });
 
-            let opusId = $(this).parent().data("id");
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
-            }
+        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
         });
 
         // data_table - clicking a table row adds to cart
@@ -183,24 +172,6 @@ var o_browse = {
                 o_cart.toggleInCart(opusId);
                 // single click stops range selection; shift click starts range
                 o_browse.undoRangeSelect();
-            }
-        });
-
-        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
-            let opusId = $(this).parent().data("id");
-            e.preventDefault();
-            o_browse.hideMenus();
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
             }
         });
 
@@ -278,6 +249,7 @@ var o_browse = {
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
             $(namespace).find(".op-modal-show").removeClass("op-modal-show");
+            opus.metadataDetailOpusId = "";
             o_browse.removeEditMetadataDetails();
         });
 
@@ -294,11 +266,13 @@ var o_browse = {
         $('#galleryView').on("click", "a.op-prev,a.op-next", function(e) {
             let action = $(this).hasClass("op-prev") ? "prev" : "next";
             let opusId = $(this).data("id");
+            let obsNum = $(this).data("obs");
 
             if (opusId) {
                 o_browse.removeEditMetadataDetails();
                 o_browse.loadPageIfNeeded(action, opusId);
-                o_browse.updateGalleryView(opusId);
+                obsNum += (action === "prev" ? -1 : 1);
+                o_browse.updateGalleryView(opusId, obsNum);
             }
             return false;
         });
@@ -541,40 +515,78 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                /*  Catch the right/left arrow and spacebar while in the modal
-                    Up: 38
-                    Down: 40
-                    Right: 39
-                    Left: 37
-                    Space: 32 */
-
-                let detailOpusId;
-                // the || is for cross-browser support; firefox does not support keyCode
-                switch (e.which || e.keyCode) {
-                    case 32:  // spacebar
-                        if (opus.metadataDetailOpusId !== "") {
-                            o_browse.undoRangeSelect();
-                            o_cart.toggleInCart(opus.metadataDetailOpusId);
-                        }
-                        break;
-                    case 39:  // next
-                        detailOpusId = $("#galleryView").find(".op-next").data("id");
-                        o_browse.removeEditMetadataDetails();
-                        o_browse.loadPageIfNeeded("next", detailOpusId);
-                        break;
-                    case 37:  // prev
-                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
-                        o_browse.removeEditMetadataDetails();
-                        o_browse.loadPageIfNeeded("prev", detailOpusId);
-                        break;
+                e.preventDefault();
+                if (o_browse.pageLoaderSpinnerTimer === null) {
+                    /*  Catch the right/left arrow and spacebar while in the modal
+                        Up: 38
+                        Down: 40
+                        Right: 39
+                        Left: 37
+                        Space: 32 */
+                    let viewNamespace = opus.getViewNamespace();
+                    let offset = 0;
+                    let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
+                    // the || is for cross-browser support; firefox does not support keyCode
+                    switch (e.which || e.keyCode) {
+                        case 32:  // spacebar
+                            if (opus.metadataDetailOpusId !== "" && opus.metadataDetailOpusId !== undefined) {
+                                o_browse.undoRangeSelect();
+                                o_cart.toggleInCart(opus.metadataDetailOpusId);
+                            }
+                            break;
+                        case 37:  // prev
+                            obsNum--;
+                            o_browse.moveToNextMetadataSlide(obsNum, "prev");
+                            break;
+                        case 39:  // next
+                            obsNum++;
+                            o_browse.moveToNextMetadataSlide(obsNum, "next");
+                            break;
+                        case 38:  // up
+                            // decrement the current obsNum by 1 if table view such that up and left behave the same for the table view,
+                            // otherwise by number of observations per row
+                            offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                            obsNum -= offset;
+                            o_browse.moveToNextMetadataSlide(obsNum, "prev");
+                            break;
+                        case 40:  // down
+                            // increment the current obsNum by 1 if table view such that down and right behave the same for the table view,
+                            // otherwise by number of observations per row
+                            offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                            obsNum += offset;
+                            o_browse.moveToNextMetadataSlide(obsNum, "next");
+                            break;
+                    }
                 }
-                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(detailOpusId);
-                }
+                return false;
             }
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    onGalleryOrRowClick: function(obj, e) {
+        // make sure selected slide show modal thumb is unhighlighted, as clicking on this closes
+        // the slide show modal but is not caught in time before hidden.bs to get correct opusId
+        e.preventDefault();
+        o_browse.hideMenus();
+
+        if (obj !== null) {
+            let opusId = obj.data("id");
+            let obsNum = obj.data("obs");
+
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
+            }
+            // Detecting shift key
+            else if (e.shiftKey) {
+                o_browse.cartShiftKeyHandler(e, opusId);
+            } else {
+                o_browse.showMetadataDetailModal(opusId, obsNum);
+            }
+        }
+    },
 
     confirmationBeforeAddAll: function() {
         /**
@@ -1126,15 +1138,19 @@ var o_browse = {
         return false;
     },
 
-    showMetadataDetailModal: function(opusId) {
+    showMetadataDetailModal: function(opusId, obsNum) {
         if (o_browse.pageLoaderSpinnerTimer !== null) {
             // if the spinner is active, do not allow modal to become active
             return;
         }
         o_browse.loadPageIfNeeded("prev", opusId);
-        o_browse.updateGalleryView(opusId);
-        // this is to make sure modal is at its original position when open again
-        $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        o_browse.updateGalleryView(opusId, obsNum);
+        if (!$("#galleryView").hasClass("show")) {
+            // this is to make sure the gallery view/slide modal is at its original position when open again
+            // BUT if the gallery view modal was already open and the user is just
+            // clicking on a different observation, don't recenter...
+            $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        }
         $("#galleryView").modal("show");
 
         // Do the fake API call to write in the Apache log files that
@@ -1312,9 +1328,6 @@ var o_browse = {
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
-        // this is here because if the selectMetadata modal was the cause of the change AND the galleryView modal
-        // is showing, the detail/right side of the gallery view is not done redrawing until here.
-        $(`.op-metadata-details > .loader`).hide();
         o_utils.enableUserInteraction();
     },
 
@@ -2313,8 +2326,8 @@ var o_browse = {
         }
     },
 
-    getNextPrevHandles: function(opusId, view) {
-        let tab = opus.getViewTab(view);
+    getNextPrevHandles: function(opusId) {
+        let tab = opus.getViewTab();
         let idArray = $(`${tab} .op-thumbnail-container[data-obs]`).map(function() {
             return $(this).data("id");
         });
@@ -2484,6 +2497,25 @@ var o_browse = {
         viewNamespace.metadataDetailEdit = false;
     },
 
+    moveToNextMetadataSlide: function(obsNum, direction) {
+        let viewNamespace = opus.getViewNamespace();
+        if (obsNum >= 0 && obsNum <= viewNamespace.totalObsCount) {
+            let tab = opus.getViewTab();
+            let lastCachedObsNum = $(`${tab} .op-thumbnail-container`).last().data("obs");
+            let detailOpusId;
+            // Only allow the down/next arrow keys to proceed to the next row of observations if either we are at the end of total observations
+            // OR if we are not yet at the end of the cached observations and waiting for the fetch to update the DOM
+            // This is to prevent the alignment of the bottom row of the gallery view when we hit the end of the cached observations in the DOM,
+            // which causes some unsigtly momentary jumping around
+            if (lastCachedObsNum === viewNamespace.totalObsCount || obsNum + viewNamespace.galleryBoundingRect.x <= lastCachedObsNum) {
+                detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
+                o_browse.removeEditMetadataDetails();
+                o_browse.loadPageIfNeeded(direction, detailOpusId);
+                o_browse.updateGalleryView(detailOpusId, obsNum);
+            }
+        }
+    },
+
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
@@ -2518,45 +2550,42 @@ var o_browse = {
             o_browse.removeEditMetadataDetails();
         }
 
-        let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
-        let action = o_cart.isIn(opusId) ? "" : "remove";
-        let buttonInfo = o_browse.cartButtonInfo(action);
-
-        // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
-        html += `<div class="col text-center op-obs-direction">`;
-        let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
-        let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
-        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
-        html += `</div>`;
-
-        // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
-        $("#galleryViewContents .bottom").html(html);
-    },
-
-    updateGalleryView: function(opusId) {
-        let tab = opus.getViewTab();
+        // update the binoculars here
         $(tab).find(".op-modal-show").removeClass("op-modal-show");
         $(tab).find(`[data-id='${opusId}'] div.op-modal-overlay`).addClass("op-modal-show");
         $(tab).find(`tr[data-id='${opusId}']`).addClass("op-modal-show");
         // if the observation is in the recycle bin, move the icon over a bit so there is not conflict w/the binoculars
         $(tab).find(`[data-id='${opusId}'] div.op-recycle-overlay`).addClass("op-modal-show");
-
-        let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
-        o_browse.updateMetaGalleryView(opusId, imageURL);
     },
 
+    updateGalleryView: function(opusId, obsNum) {
+        if (opusId) {
+            let tab = opus.getViewTab();
 
-    updateMetaGalleryView: function(opusId, imageURL) {
-        let tab = opus.getViewTab();
-        let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
-        let obsNum = $(element).data("obs");
-        let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+            let nextPrevHandles = o_browse.getNextPrevHandles(opusId);
+            let action = o_cart.isIn(opusId) ? "" : "remove";
+            let buttonInfo = o_browse.cartButtonInfo(action);
 
-        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
-        o_browse.metadataboxHtml(opusId);
+            // prev/next buttons - put this in galleryView html...
+            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            html += `<div class="col text-center op-obs-direction">`;
+            let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
+            let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
+            html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
+            html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
+            html += `</div>`;
+
+            // mini-menu like the hamburger on the observation/gallery page
+            html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            $("#galleryViewContents .bottom").html(html);
+
+            let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
+            let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+
+            o_browse.metadataboxHtml(opusId);
+            $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
+            $("#galleryViewContents .op-obs-direction a").data("obs", obsNum);
+        }
     },
 
     clearObservationData: function(leaveStartObs) {
