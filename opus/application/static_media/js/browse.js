@@ -278,7 +278,7 @@ var o_browse = {
             },
             resize: function(event, ui) {
                 o_browse.saveOriginalModalDimensions(event.target);
-                o_browse.onResizeGalleryView(event.target);
+                o_browse.onResizeGalleryView(false);
             },
         });
 
@@ -299,15 +299,15 @@ var o_browse = {
         $(".op-slide-minimize").on("click", function(e) {
             let selector = "#galleryView .modal-content";
             o_browse.saveOriginalModalDimensions(selector);
-            let $slide = $(selector);
-            let width = $slide.resizable("option", "minWidth");
-            let height = $slide.resizable("option", "minHeight");
-            $slide.animate({
+            let slide = $(selector);
+            let width = slide.resizable("option", "minWidth");
+            let height = slide.resizable("option", "minHeight");
+            slide.animate({
                 width: width,
                 height: height,
             }, function(evt) {
                 // Animation complete.
-                o_browse.onResizeGalleryView(selector);
+                o_browse.onResizeGalleryView(false);
             });
         });
 
@@ -322,7 +322,7 @@ var o_browse = {
                     height: $resizable.options.originalHeight,
                 }, function() {
                     // Animation complete.
-                    o_browse.onResizeGalleryView("#galleryView .modal-content");
+                    o_browse.onResizeGalleryView(false);
                 });
             }
         });
@@ -572,13 +572,6 @@ var o_browse = {
             stop: function(event, ui) {
                 let tab = ui.handle.dataset.target;
                 o_browse.onSliderHandleStop(tab, ui.value);
-            }
-        });
-
-        $(window).on("resize", function (e) {
-            // only close the modal if we were not resizeing the modal itself..
-            if (e.target.classList === undefined) {
-                o_browse.hideGalleryViewModal();
             }
         });
 
@@ -1195,9 +1188,9 @@ var o_browse = {
         }
     },
 
-    onResizeGalleryView: function(elem) {
+    onResizeGalleryView: function(open) {
         // keep track of the original size so the maximize can work
-        let target = $(elem);
+        let target = $("#galleryView .modal-content");
         let width = target.width();
         let height = target.height();
 
@@ -1232,7 +1225,7 @@ var o_browse = {
             if (width <= 800) {
                 // wrap the edit message if it exists when narrow
                 $(".op-metadata-detail-edit").addClass("op-metadata-detail-edit-wrap");
-                $(".op-metadata-details").addClass("mt-3");
+                //$(".op-metadata-details").addClass("mt-3");
             }
             $("#op-gallery-view-content .row").removeClass("flex-column");
             $(".op-metadata-details").removeClass("op-tune-metadata-detail");
@@ -1241,9 +1234,14 @@ var o_browse = {
             $("#op-gallery-view-content .right").addClass("col-lg-5");
             $("#op-gallery-view-content .right").removeClass("col-lg-7");
         }
-        let modalCenter = target.resizable("instance").center;
-        let newTop = $("body").height() - 0.5 * height - modalCenter;
-        target.offset({top: newTop});
+
+        // don't reset the position of the modal if we are just opening it, only if it is being resized
+        if (!open && target.resizable("instance") !== undefined && target.resizable("instance").center !== undefined) {
+            let modalCenter = target.resizable("instance").center;
+            // don't let the top of the modal wander out of view...
+            let newTop = Math.max(0, $("body").height() - (0.5 * height) - modalCenter);
+            target.offset({top: newTop});
+        }
     },
 
     showGalleryViewModal: function(opusId) {
@@ -1256,6 +1254,7 @@ var o_browse = {
         // this is to make sure modal is at its original position when open again
         $("#galleryView .modal-dialog").css({top: 0, left: 0});
         $("#galleryView").modal("show");
+        o_browse.onResizeGalleryView(true);
 
         // Do the fake API call to write in the Apache log files that
         // we showed the modal for this OPUSID. This is what the previous
