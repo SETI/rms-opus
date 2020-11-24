@@ -298,7 +298,11 @@ class ToInfoMap:
 
         # This is a known bug in the JSON.  We correct it before writing it out.
         data = info['data']
-        assert data['ringobsid']
-        del data['ringobsid']
-        data['opusid']['old_slug'] = 'ringobsid'
+        new_data = {}
+        for cat, slug_info in data.items():
+            new_data.update(slug_info)
+        info['data'] = new_data
+        assert new_data['ringobsid']
+        del new_data['ringobsid']
+        new_data['opusid']['old_slug'] = 'ringobsid'
         return cast(Dict[str, Any], info)
