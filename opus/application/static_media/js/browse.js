@@ -842,7 +842,6 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-
         // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
         // trigger to load new data (previous page). During the time when infiniteScroll is
         // still loading (before all new obs are rendered), if we keep resizing and cause some
@@ -2127,7 +2126,7 @@ var o_browse = {
 
         let trCountFloor = viewNamespace.galleryBoundingRect.trFloor;
         if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
+            trCountFloor = o_utils.floor((height-$(`${tab} .op-data-table th`).outerHeight()) /
                                          $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
         }
 
