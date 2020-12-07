@@ -80,4 +80,4 @@
 
 11. Run the webserver
 
-    python manage.py migrate
+    python manage.py runserver
