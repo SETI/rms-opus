@@ -579,7 +579,7 @@ var o_browse = {
                         Space: 32 */
                     let viewNamespace = opus.getViewNamespace();
                     let offset = 0;
-                    let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
+                    let obsNum = $("#op-gallery-view-content .op-obs-direction a").data("obs");
                     // the || is for cross-browser support; firefox does not support keyCode
                     switch (e.which || e.keyCode) {
                         case 32:  // spacebar
@@ -2689,6 +2689,13 @@ var o_browse = {
             // mini-menu like the hamburger on the observation/gallery page
             html += `<div class="col-sm"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-gallery-view-body .bottom").html(html);
+
+            // update the binoculars here
+            $(tab).find(".op-modal-show").removeClass("op-modal-show");
+            $(tab).find(`[data-id='${opusId}'] div.op-modal-overlay`).addClass("op-modal-show");
+            $(tab).find(`tr[data-id='${opusId}']`).addClass("op-modal-show");
+            // if the observation is in the recycle bin, move the icon over a bit so there is not conflict w/the binoculars
+            $(tab).find(`[data-id='${opusId}'] div.op-recycle-overlay`).addClass("op-modal-show");
 
             let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
             let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
