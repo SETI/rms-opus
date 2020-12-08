@@ -752,7 +752,7 @@ var o_browse = {
                 let contentsView = o_browse.getScrollContainerClass();
                 $(`${tab} ${contentsView}`).infiniteScroll("loadNextPage");
             } else {
-                o_browse.setScrollbarPosition(value, value, view);
+                o_browse.setScrollbarPosition(value, value);
             }
         } else {
             // When scrolling on slider and loadData is called, we will fetch 3 * getLimit items
@@ -2127,7 +2127,7 @@ var o_browse = {
 
         let trCountFloor = viewNamespace.galleryBoundingRect.trFloor;
         if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            // Note: in table view, if there are more than one row, we divide by the 2nd table tr's
+            // Note: in table view, if there is more than one row, we divide by the 2nd table tr's
             // height because in Firefox & Safari, the first table tr's height will be 1px larger
             // than rest of tr, and this will mess up the calculation.
             let tableRowHeight = ($(`${tab} .op-data-table tbody tr[data-obs]`).length === 1 ?
