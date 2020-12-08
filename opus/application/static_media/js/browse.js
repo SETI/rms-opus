@@ -842,7 +842,6 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-
         // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
         // trigger to load new data (previous page). During the time when infiniteScroll is
         // still loading (before all new obs are rendered), if we keep resizing and cause some
