@@ -248,7 +248,6 @@ var o_browse = {
                 target.resizable("instance").center = modalCenter;
             },
             resize: function(event, ui) {
-                o_browse.saveOriginalModalDimensions(event.target);
                 o_browse.onResizeGalleryView(false);
             },
         });
@@ -270,7 +269,6 @@ var o_browse = {
 
         $(".op-slide-minimize").on("click", function(e) {
             let selector = "#galleryView .modal-content";
-            o_browse.saveOriginalModalDimensions(selector);
             let slide = $(selector);
             let width = slide.resizable("option", "minWidth");
             let height = slide.resizable("option", "minHeight");
@@ -284,19 +282,17 @@ var o_browse = {
         });
 
         $(".op-slide-maximize").on("click", function(e) {
-            let selector = "#galleryView .modal-content";
-            o_browse.saveOriginalModalDimensions(selector);
-            let $slide = $(selector);
-            let $resizable = $slide.resizable("instance");
-            if ($resizable.options.originalHeight !== undefined) {
-                $slide.animate({
-                    width: $resizable.options.originalWidth,
-                    height: $resizable.options.originalHeight,
-                }, function() {
-                    // Animation complete.
-                    o_browse.onResizeGalleryView(false);
-                });
-            }
+            let maxWidth = $("#galleryView .modal-dialog").width();
+            let maxHeight = $("#galleryView .modal-dialog").height() * 0.8;
+            $("#galleryView .modal-content").animate({
+                height: maxHeight,
+                width: maxWidth,
+            }, function() {
+                // Animation complete.
+                // clearing out any values that were set previous to all the css to do it's job re: maximize
+                $("#galleryView .modal-content").width("").height("");
+                o_browse.onResizeGalleryView(false);
+            });
         });
 
         $(".op-slide-dock").on("click", function(e) {
@@ -1192,11 +1188,10 @@ var o_browse = {
         return false;
     },
 
-    saveOriginalModalDimensions: function(elem) {
-        let target = $(elem);
-        if (target.resizable("instance").options.originalHeight === undefined) {
-            target.resizable("instance").options.originalHeight = $("#op-gallery-view-content").outerHeight();
-            target.resizable("instance").options.originalWidth = $("#op-gallery-view-content").outerWidth();
+    // for the mutationObserver code on browser resize...
+    adjustGalleryViewSize:function() {
+        if ($("#galleryView").hasClass("show")) {
+            o_browse.onResizeGalleryView();
         }
     },
 
@@ -1205,6 +1200,14 @@ var o_browse = {
         let target = $("#galleryView .modal-content");
         let width = target.width();
         let height = target.height();
+        open = (open === undefined ? true : open);
+
+        // don't let the height get greater than 80% of the body height; this is for brower resize...
+        let maxHeight = $("body").height() * 0.8;
+        if (height > maxHeight) {
+            height = maxHeight;
+            target.height(height);
+        }
 
         if (width < 300 || height <= 400) {
             target.addClass("op-resize-small");
@@ -1247,13 +1250,12 @@ var o_browse = {
             $("#op-gallery-view-content .right").removeClass("col-lg-7");
         }
 
-        // don't reset the position of the modal if we are just opening it, only if it is being resized
-        if (!open && target.resizable("instance") !== undefined && target.resizable("instance").center !== undefined) {
-            let modalCenter = target.resizable("instance").center;
-            // don't let the top of the modal wander out of view...
-            let newTop = Math.max(0, $("body").height() - (0.5 * height) - modalCenter);
-            target.offset({top: newTop});
-        }
+        // recenter the dialog on resize
+        //$("#galleryView .modal-dialog").css("top", 0).css("left", 0);
+        $("#galleryView .modal-dialog").animate({
+            top: 0,
+            left:0,
+        });
     },
 
     showMetadataDetailModal: function(opusId, obsNum) {
