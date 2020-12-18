@@ -228,14 +228,12 @@ var o_browse = {
             return retValue;
         }); // end click a browse tools icon
 
-        // do we need an on.resize for when the user makes the screen tiny?
-
         $(".modal-dialog").draggable({
             handle: ".modal-content",
             cancel: ".contents",
-            drag: function(event, ui) {
+            start: function(event, ui) {
                 o_browse.hideMenus();
-            }
+            },
         });
 
         $("#galleryView .modal-content").resizable({
@@ -249,10 +247,16 @@ var o_browse = {
             },
             resize: function(event, ui) {
                 o_browse.onResizeGalleryView(false);
+                o_browse.adjustBrowseDialogPS(true);
             },
+            stop: function(event, ui) {
+                console.log("stop");
+            },
+        }).on("resize", function(e) {
+            e.stopPropagation();
         });
 
-        // Disable draggable for these infomation modals
+        // Disable draggable for these information modals
         $.each($(".op-confirm-modal"), function(idx, dialog) {
             if ($(dialog).data("draggable") === "False") {
                 let id = $(dialog).attr("id");
@@ -272,10 +276,11 @@ var o_browse = {
             let slide = $(selector);
             let width = slide.resizable("option", "minWidth");
             let height = slide.resizable("option", "minHeight");
+            o_browse.centerGalleryViewToDefault();
             slide.animate({
                 width: width,
                 height: height,
-            }, function(evt) {
+            }, function() {
                 // Animation complete.
                 o_browse.onResizeGalleryView(false);
             });
@@ -284,14 +289,16 @@ var o_browse = {
         $(".op-slide-maximize").on("click", function(e) {
             let maxWidth = $("#galleryView .modal-dialog").width();
             let maxHeight = $("#galleryView .modal-dialog").height() * 0.8;
+            o_browse.centerGalleryViewToDefault();
             $("#galleryView .modal-content").animate({
                 height: maxHeight,
                 width: maxWidth,
             }, function() {
                 // Animation complete.
                 // clearing out any values that were set previous to all the css to do it's job re: maximize
-                $("#galleryView .modal-content").width("").height("");
+                $("#op-gallery-view-content").width("").height("");
                 o_browse.onResizeGalleryView(false);
+                o_browse.adjustBrowseDialogPS(true);
             });
         });
 
@@ -1189,10 +1196,21 @@ var o_browse = {
     },
 
     // for the mutationObserver code on browser resize...
-    adjustGalleryViewSize:function() {
+    adjustGalleryViewSize: function() {
         if ($("#galleryView").hasClass("show")) {
             o_browse.onResizeGalleryView();
         }
+        o_browse.centerGalleryViewToDefault();
+    },
+
+    centerGalleryViewToDefault: function() {
+        $("#op-gallery-view-content").animate({
+            top: "",
+        })
+        $("#galleryView .modal-dialog").animate({
+            top: "",
+            left: "",
+        });
     },
 
     onResizeGalleryView: function(open) {
@@ -1222,8 +1240,9 @@ var o_browse = {
         $("#op-gallery-view-content .row.bottom").removeClass(function(index, css) {
             return (css.match(/\pb-\S+/g) || []).join(' ');
         });
+
         //Move modal image to the top and metadata info to the bottom.
-        if (width <= 500) {
+        if ((width <= 480 && height > 400) || (width <= 390)) {
             // once the modal narrows, we don't need this to wrap so remove it
             $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
             $(".op-metadata-details").removeClass("mt-3");
@@ -1252,10 +1271,13 @@ var o_browse = {
 
         // recenter the dialog on resize
         //$("#galleryView .modal-dialog").css("top", 0).css("left", 0);
-        $("#galleryView .modal-dialog").animate({
+/*        $("#op-gallery-view-content").animate({
             top: 0,
             left:0,
-        });
+        }, function() {
+            // Animation complete.
+            console.log("done");
+        });*/
     },
 
     showMetadataDetailModal: function(opusId, obsNum) {
