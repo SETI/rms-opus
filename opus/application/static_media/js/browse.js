@@ -282,7 +282,8 @@ var o_browse = {
         $(".op-slide-maximize").on("click", function(e) {
             let width = $("#galleryView .modal-dialog").width();
             let height = $("#galleryView .modal-dialog").height() * 0.8;
-            o_browse.centerGalleryViewToDefault(width, height);
+            o_browse.centerGalleryViewToDefault(width, height, true);
+            // added so that on maximize, as the user grows/shrinks the browser, the slide grows/shrinks apprpriately
         });
 
         $(".op-slide-dock").on("click", function(e) {
@@ -1186,7 +1187,7 @@ var o_browse = {
         o_browse.centerGalleryViewToDefault();
     },
 
-    centerGalleryViewToDefault: function(width, height) {
+    centerGalleryViewToDefault: function(width, height, max) {
         let options = {};
         if (width !== undefined) {
             options["width"] = width;
@@ -1200,10 +1201,17 @@ var o_browse = {
             // Animation complete.
             o_browse.onResizeGalleryView(false);
             o_browse.adjustBrowseDialogPS(true);
+            if (max) {
+                $(this).removeAttr("style");
+            }
         });
         $("#galleryView .modal-dialog").animate({
             top: "",
             left: "",
+        }, function () {
+            if (max) {
+                $(this).removeAttr("style");
+            }        
         });
     },
 
