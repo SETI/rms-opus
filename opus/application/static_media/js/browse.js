@@ -276,30 +276,13 @@ var o_browse = {
             let slide = $(selector);
             let width = slide.resizable("option", "minWidth");
             let height = slide.resizable("option", "minHeight");
-            o_browse.centerGalleryViewToDefault();
-            slide.animate({
-                width: width,
-                height: height,
-            }, function() {
-                // Animation complete.
-                o_browse.onResizeGalleryView(false);
-            });
+            o_browse.centerGalleryViewToDefault(width, height);
         });
 
         $(".op-slide-maximize").on("click", function(e) {
-            let maxWidth = $("#galleryView .modal-dialog").width();
-            let maxHeight = $("#galleryView .modal-dialog").height() * 0.8;
-            o_browse.centerGalleryViewToDefault();
-            $("#galleryView .modal-content").animate({
-                height: maxHeight,
-                width: maxWidth,
-            }, function() {
-                // Animation complete.
-                // clearing out any values that were set previous to all the css to do it's job re: maximize
-                $("#op-gallery-view-content").width("").height("");
-                o_browse.onResizeGalleryView(false);
-                o_browse.adjustBrowseDialogPS(true);
-            });
+            let width = $("#galleryView .modal-dialog").width();
+            let height = $("#galleryView .modal-dialog").height() * 0.8;
+            o_browse.centerGalleryViewToDefault(width, height);
         });
 
         $(".op-slide-dock").on("click", function(e) {
@@ -1203,10 +1186,21 @@ var o_browse = {
         o_browse.centerGalleryViewToDefault();
     },
 
-    centerGalleryViewToDefault: function() {
-        $("#op-gallery-view-content").animate({
-            top: "",
-        })
+    centerGalleryViewToDefault: function(width, height) {
+        let options = {};
+        if (width !== undefined) {
+            options["width"] = width;
+        }
+        if (height !== undefined) {
+            options["height"] = height;
+        }
+        options["top"] = "";
+        options["left"] = "";
+        $("#galleryView .modal-content").animate(options, function() {
+            // Animation complete.
+            o_browse.onResizeGalleryView(false);
+            o_browse.adjustBrowseDialogPS(true);
+        });
         $("#galleryView .modal-dialog").animate({
             top: "",
             left: "",
@@ -1268,16 +1262,6 @@ var o_browse = {
             $("#op-gallery-view-content .right").addClass("col-lg-5");
             $("#op-gallery-view-content .right").removeClass("col-lg-7");
         }
-
-        // recenter the dialog on resize
-        //$("#galleryView .modal-dialog").css("top", 0).css("left", 0);
-/*        $("#op-gallery-view-content").animate({
-            top: 0,
-            left:0,
-        }, function() {
-            // Animation complete.
-            console.log("done");
-        });*/
     },
 
     showMetadataDetailModal: function(opusId, obsNum) {
@@ -1291,7 +1275,8 @@ var o_browse = {
             // this is to make sure the gallery view/slide modal is at its original position when open again
             // BUT if the gallery view modal was already open and the user is just
             // clicking on a different observation, don't recenter...
-            $("#galleryView .modal-dialog").css({top: 0, left: 0});
+            $("#galleryView .modal-dialog").css({top: "", left: ""});
+            $("#galleryView .modal-content").css("top", "");
         }
         $("#galleryView").modal("show");
         o_browse.onResizeGalleryView(true);
