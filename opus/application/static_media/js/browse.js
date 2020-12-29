@@ -1211,7 +1211,7 @@ var o_browse = {
         }, function () {
             if (max) {
                 $(this).removeAttr("style");
-            }        
+            }
         });
     },
 
@@ -1228,9 +1228,12 @@ var o_browse = {
             height = maxHeight;
             target.height(height);
         }
+        let fontPercent = (100 * parseFloat($('body').css('font-size')) / parseFloat($('body').parent().css('font-size')));
+        let mediaBreak = ($("body").height() <= opus.browserThresholdHeight || $("body").width() <= opus.browserThresholdWidth);
 
-        if (width < 300 || height <= 400) {
+        if ((width < 300 || height <= 400) && (!mediaBreak)) {
             target.addClass("op-resize-small");
+
             // need to resize the add metadata menu as well and X in the corner
             target.find("i.fa-times-circle").removeClass("fa-lg");
             $("#op-add-metadata-fields .op-select-list").addClass("op-resize-small");
