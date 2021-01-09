@@ -1134,11 +1134,6 @@ without resizing image proportionally. */
     height: 88% !important;
 }
 
-/* metadata info takes up 80% of .left */
-.op-tune-metadata-detail {
-    height: 80% !important;
-    padding-left: 1em;
-}
 /* Edit button takes up 10% */
 .op-position-edit-button {
     height: 10%;

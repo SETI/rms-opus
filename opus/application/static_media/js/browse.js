@@ -249,9 +249,6 @@ var o_browse = {
                 o_browse.onResizeGalleryView(false);
                 o_browse.adjustBrowseDialogPS(true);
             },
-            stop: function(event, ui) {
-                console.log("stop");
-            },
         }).on("resize", function(e) {
             e.stopPropagation();
         });
@@ -1246,13 +1243,13 @@ var o_browse = {
         });
 
         //Move modal image to the top and metadata info to the bottom.
-        if ((width <= 480 && height > 400) || (width <= 390)) {
+        if ((width <= 480 && height > 400) || (width <= 450)) {
             // once the modal narrows, we don't need this to wrap so remove it
             $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
             $(".op-metadata-details").removeClass("mt-3");
 
             $("#op-gallery-view-content .row").addClass("flex-column");
-            $(".op-metadata-details").addClass("op-tune-metadata-detail");
+            $(".op-metadata-details").addClass("pl-3");
             let paddingBottom = (height <= 360 ? "pb-2" : "pb-3");
             $("#op-gallery-view-content .row.bottom").addClass(paddingBottom);
             $("#op-gallery-view-content .left").removeClass("col-lg-7");
@@ -1266,7 +1263,7 @@ var o_browse = {
                 //$(".op-metadata-details").addClass("mt-3");
             }
             $("#op-gallery-view-content .row").removeClass("flex-column");
-            $(".op-metadata-details").removeClass("op-tune-metadata-detail");
+            $(".op-metadata-details").removeClass("pl-3");
             $("#op-gallery-view-content .left").addClass("col-lg-7");
             $("#op-gallery-view-content .left").removeClass("col-lg-5 pt-4 pb-3");
             $("#op-gallery-view-content .right").addClass("col-lg-5");
@@ -2393,13 +2390,16 @@ var o_browse = {
         if (o_browse.isSortingHappening) {
             return;
         }
-        let modalHeight = $(".op-gallery-view-body").height();
+        // if we are in verical column mode, calculate the container height differently
+        let containerHeight = ($("#op-gallery-view-content .row").hasClass("flex-column") ? $(".op-gallery-view-body .right").height() : $(".op-gallery-view-body").height());
         let modalEditHeight = $(".op-metadata-detail-edit").outerHeight(true);
         let bottomRowHeight = $(".op-gallery-view-body .bottom").outerHeight(true);
-        let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
+        let calculatedContainerHeight = containerHeight - modalEditHeight - bottomRowHeight;
+
         let container = ".op-gallery-view-body .op-metadata-details";
         $(container).height(calculatedContainerHeight);
-        let containerHeight = $(container).height();
+        // update the containerHeight w/the actual value for deciding to enable/disable PS
+        containerHeight = $(container).height();
         let browseDialogHeight = $(".op-gallery-view-body .op-metadata-details .contents").height();
         let slug = $("#op-add-metadata-fields").data("slug");
         if (slug !== undefined) {
@@ -2702,8 +2702,8 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in galleryView html...
-            html = `<div class="col-sm"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
-            html += `<div class="col-sm text-center op-obs-direction">`;
+            html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
             html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
@@ -2711,7 +2711,7 @@ var o_browse = {
             html += `</div>`;
 
             // mini-menu like the hamburger on the observation/gallery page
-            html += `<div class="col-sm"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            html += `<div class="col"><a href="#" class="menu pr-3 float-right text-center" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
             $(".op-gallery-view-body .bottom").html(html);
 
             // update the binoculars here
