@@ -588,7 +588,7 @@ var o_cart = {
     emptyCartOrRecycleBin: function(what) {
         // to disable clicks:
         o_utils.disableUserInteraction();
-        o_browse.hideGalleryViewModal();
+        o_browse.hideMetadataDetailModal();
         o_cart.showCartCountSpinner();
         o_cart.showDownloadSpinner();
 

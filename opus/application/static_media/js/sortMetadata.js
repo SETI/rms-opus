@@ -299,9 +299,9 @@ let o_sortMetadata = {
         o_sortMetadata.renderSortedDataFromBeginning();
     },
 
-    renderSortedDataFromBeginning: function(closeGalleryView=true) {
+    renderSortedDataFromBeginning: function(closeMetadataDetailView=true) {
         o_utils.disableUserInteraction();
         o_browse.clearObservationData();
-        o_browse.loadData(opus.prefs.view, closeGalleryView);
+        o_browse.loadData(opus.prefs.view, closeMetadataDetailView);
     },
 };

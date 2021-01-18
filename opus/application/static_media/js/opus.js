@@ -107,7 +107,7 @@ var opus = {
     widgetElementsDrawn: [], // the element is drawn but the widget might not be fetched yet
 
     // opusID of the current slide show/gallery view observation.
-    // Note that both browse and cart use the same dialog for galleryView, so we
+    // Note that both browse and cart use the same dialog for op-metadata-detail-view, so we
     //      only need one variable to represent the last observation in that dialog
     metadataDetailOpusId: "",
 
@@ -476,7 +476,7 @@ var opus = {
         o_browse.hideMenus();
 
         // Close any open modals
-        $("#galleryView").modal('hide');
+        $("#op-metadata-detail-view").modal('hide');
 
         // Update the state with the newly selected view
         opus.prefs.view = tab ? tab : opus.prefs.view;
@@ -731,7 +731,7 @@ var opus = {
         let adjustProductInfoHeightDB = _.debounce(o_cart.adjustProductInfoHeight, 200);
         let adjustDetailHeightDB = _.debounce(o_detail.adjustDetailHeight, 200);
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
-        let adjustGalleryViewSizeDB = _.debounce(o_browse.adjustGalleryViewSize, 200);
+        let adjustMetadataDetailViewSizeDB = _.debounce(o_browse.adjustMetadataDetailViewSize, 200);
         let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
         let hideOrShowSelectedMetadataPSDB = _.debounce(o_selectMetadata.hideOrShowPS, 200);
         let adjustBrowseDialogPSDB = function() {o_browse.adjustBrowseDialogPS(true);};
@@ -744,7 +744,7 @@ var opus = {
             adjustProductInfoHeightDB();
             adjustDetailHeightDB();
             adjustHelpPanelHeightDB();
-            adjustGalleryViewSizeDB();
+            adjustMetadataDetailViewSizeDB();
             o_selectMetadata.adjustHeight();
             hideOrShowSelectMetadataMenuPSDB();
             hideOrShowSelectedMetadataPSDB();

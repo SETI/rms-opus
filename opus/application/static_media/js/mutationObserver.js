@@ -290,8 +290,8 @@ var o_mutationObserver = {
         let helpPanel = $("#op-help-panel")[0];
         let selectMetadata = $("#op-select-metadata")[0];
         let selectMetadataContents = $("#op-select-metadata-contents")[0];
-        let browseDialogModal = $("#galleryView.modal")[0];
-        let browseDialogModalDetails = $("#galleryView.modal .op-metadata-details")[0];
+        let browseDialogModal = $("#op-metadata-detail-view.modal")[0];
+        let browseDialogModalDetails = $("#op-metadata-detail-view.modal .op-metadata-details")[0];
 
         let browseGalleryView = $("#browse .gallery")[0];
         let browseTableView = $("#browse .op-data-table")[0];

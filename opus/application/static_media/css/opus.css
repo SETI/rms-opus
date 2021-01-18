@@ -194,13 +194,13 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-left: 1.5em;
 }
 
-.op-gallery-view {
+.op-metadata-detail-view {
     overflow: hidden;
     position: relative;
 }
 
 /* Make sure y-axis rail is not moving and always visible */
-.op-gallery-view > .ps__rail-y {
+.op-metadata-detail-view > .ps__rail-y {
     background-color: transparent !important;
 }
 
@@ -814,7 +814,7 @@ th.sticky-header {
     bottom: 1px;
 }
 
-.op-gallery-view-docked {
+.op-metadata-detail-view-docked {
     display: none;
 }
 
@@ -1114,19 +1114,24 @@ img.op-slideshow-image-preview {
 /* The following will make sure vertical resizing of modal works properly
 without resizing image proportionally. */
 /* The following two stylings make sure children (img tag) stay inside of it */
-#galleryView .left a {
+#op-metadata-detail-view .left a {
     display: flex;
     height: 100%;
 }
-#galleryView .left img {
+#op-metadata-detail-view .left img {
     object-fit: contain;
 }
 
-#galleryView .modal-dialog, #galleryView .modal-content {
+#op-metadata-detail-view .modal-dialog {
     height: 80%;
 }
 
-#galleryView {
+#op-metadata-detail-view .modal-content {
+    height: 80%;
+    max-height: 80%;
+}
+
+#op-metadata-detail-view {
     height: 100%;
 }
 
@@ -1146,7 +1151,7 @@ without resizing image proportionally. */
 }
 
 /* prevent weird browser y-scrollbar */
-#galleryView {
+#op-metadata-detail-view {
     overflow-y: hidden;
     pointer-events: none;
     /* Make sure metadata modal will not be covered by the main nav when screen
@@ -1154,15 +1159,15 @@ without resizing image proportionally. */
     z-index: 1031;
 }
 
-#galleryView .modal-content {
+#op-metadata-detail-view .modal-content {
     border: solid 2px #FFF;
 }
 
-#galleryView .modal-dialog:hover {
+#op-metadata-detail-view .modal-dialog:hover {
     cursor: grab;
 }
 
-#op-gallery-view-content .op-docking-tools {
+#op-metadata-detail-view-content .op-docking-tools {
     position: absolute;
     float: right;
     top: 1em;
@@ -1175,7 +1180,7 @@ without resizing image proportionally. */
     padding-right: 0.5em;
 }
 
-#op-gallery-view-content button.close {
+#op-metadata-detail-view-content button.close {
     position: absolute;
     float: right;
     top: 0.4em;
@@ -1183,40 +1188,40 @@ without resizing image proportionally. */
     z-index: 999;
 }
 
-.op-gallery-view-body {
+.op-metadata-detail-view-body {
     position: relative;
     height: 100%;
     border-radius: 1%;
 }
 
-.op-gallery-view-body .contents:hover {
+.op-metadata-detail-view-body .contents:hover {
     cursor: text;
 }
 
 /* Make sure image always stays at the left in metadata modal */
-.op-gallery-view-body .row {
+.op-metadata-detail-view-body .row {
     height: 100%;
 }
 
 /* make sure left/right hand icon in metadata dialog stay in the same line
 when window sized is narrow */
-.op-gallery-view-body .op-obs-direction {
+.op-metadata-detail-view-body .op-obs-direction {
     flex-grow: 3;
     width: 20em;
     padding-right: 0;
     padding-left: 0;
 }
 
-.op-gallery-view-body .op-metadata-detail-add {
+.op-metadata-detail-view-body .op-metadata-detail-add {
     left: 0;
     position: absolute;
 }
 
-.op-gallery-view-body .op-metadata-details {
+.op-metadata-detail-view-body .op-metadata-details {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     overscroll-behavior: contain;
-    /* Make #galleryView modal right contents shrink vertically
+    /* Make #op-metadata-detail-view modal right contents shrink vertically
     93% for the metadata info, 5% for the bottom icons, 2% for the gap between
     4% for the edit line & icon
     metadata and font awesome icons */
@@ -1228,12 +1233,12 @@ when window sized is narrow */
     right: 0;
 }
 
-.op-gallery-view-body .op-metadata-details  .op-metadata-details-tools {
+.op-metadata-detail-view-body .op-metadata-details  .op-metadata-details-tools {
     float: left;
 }
 
 /* to account for empty field data */
-.op-gallery-view-body .op-metadata-details .op-metadata-data {
+.op-metadata-detail-view-body .op-metadata-details .op-metadata-data {
     min-height: 1.5em;
     /* Make sure info with long string like "Multiple Target List" is wrapped
     in metadata detail modal */
@@ -1242,11 +1247,11 @@ when window sized is narrow */
     line-break: anywhere;
 }
 
-.op-gallery-view-body .op-prev > i {
+.op-metadata-detail-view-body .op-prev > i {
     margin-right: .4em;
 }
 
-.op-gallery-view-body .bottom {
+.op-metadata-detail-view-body .bottom {
     position: absolute;
     padding-right: 1em;
     bottom: 0;
@@ -1266,15 +1271,15 @@ when window sized is narrow */
     height: 5%;
 }
 
-.op-gallery-view-body .fa-cart-plus {
+.op-metadata-detail-view-body .fa-cart-plus {
     float: left;
 }
 
-.op-gallery-view-body a.menu {
+.op-metadata-detail-view-body a.menu {
     width: 0px;
 }
 
-.op-gallery-view-body .ps__rail-y {
+.op-metadata-detail-view-body .ps__rail-y {
     background-color: transparent !important;
 }
 
@@ -1297,7 +1302,7 @@ a:-webkit-any-link, a::any-link {
     margin-left: 1.2em;
 }
 
-/* this is used to disable clicking on modal (.op-gallery-view-body) when infiniteScroll is still loading the next page */
+/* this is used to disable clicking on modal (.op-metadata-detail-view-body) when infiniteScroll is still loading the next page */
 .op-disabled {
     pointer-events: none;
     cursor: default;
@@ -3109,17 +3114,17 @@ when wrapping into the 2nd line */
 
     /* Keep the spaces for detail metadata modal in browse & cart tab to have
     the pretty display when screen is narrow or short */
-    #galleryView .modal-header,
-    #galleryView .modal-body {
+    #op-metadata-detail-view .modal-header,
+    #op-metadata-detail-view .modal-body {
         padding: 1.3em !important;
     }
 
     /* Reduce the size of font awesome icon in slide show */
-    #galleryView .close i {
+    #op-metadata-detail-view .close i {
         font-size: 1.1em;
     }
 
-    .op-gallery-view-body .bottom i {
+    .op-metadata-detail-view-body .bottom i {
         font-size: 1.8em;
     }
 
