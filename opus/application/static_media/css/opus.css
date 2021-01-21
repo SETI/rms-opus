@@ -194,13 +194,13 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-left: 1.5em;
 }
 
-.op-metadata-detail-view {
+.op-gallery-view {
     overflow: hidden;
     position: relative;
 }
 
 /* Make sure y-axis rail is not moving and always visible */
-.op-metadata-detail-view > .ps__rail-y {
+.op-gallery-view > .ps__rail-y {
     background-color: transparent !important;
 }
 
@@ -1165,6 +1165,10 @@ without resizing image proportionally. */
 
 #op-metadata-detail-view .modal-dialog:hover {
     cursor: grab;
+}
+
+#op-metadata-detail-view-content {
+    top: 15%;
 }
 
 #op-metadata-detail-view-content .op-docking-tools {

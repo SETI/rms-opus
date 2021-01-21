@@ -241,16 +241,22 @@ var o_browse = {
             minHeight: 240,
             start: function(event, ui) {
                 let target = $(event.target);
-                let modalCenter =  $("body").height() - 0.5 * target.height() -  target.offset().top;
-                target.resizable("instance").center = modalCenter;
-                var temp = 1;
+                target.resizable("instance").max = false;
+                target.resizable("instance").min = false;
             },
             resize: function(event, ui) {
-                o_browse.onResizeMetadataDetailView(false);
+                o_browse.onResizeMetadataDetailView();
                 o_browse.adjustBrowseDialogPS(true);
             },
             stop: function(event, ui) {
-                let temp = $(event.target).outerHeight();
+                let target = $(event.target);
+                let width = target.outerWidth();
+                let height = target.outerHeight();
+                // this is to account for the small bug in resizable that moves the modal even tho it's max
+                var selector = "#op-metadata-detail-view .modal-dialog";
+                target.resizable("instance").max =
+                    (Math.round($(selector).height() * 0.8) == Math.round(height) &&
+                     Math.round($(selector).width()) == Math.round(width));
             },
         }).on("resize", function(e) {
             e.stopPropagation();
@@ -273,21 +279,25 @@ var o_browse = {
 
         $(".op-slide-minimize").on("click", function(e) {
             let selector = "#op-metadata-detail-view-content";
-            let width = $(selector).resizable("option", "minWidth");
-            let height = $(selector).resizable("option", "minHeight");
             // don't do anything if already minimized..
-            if ($(selector).outerWidth() !== width || $(selector).outerHeight() !== height) {
+            if ($(selector).resizable("instance").min !== true) {
+                let width = $(selector).resizable("option", "minWidth");
+                let height = $(selector).resizable("option", "minHeight");
+                $(selector).resizable("instance").min = true;
+                $(selector).resizable("instance").max = false;
                 o_browse.centerMetadataDetailViewToDefault(width, height);
             }
         });
 
         $(".op-slide-maximize").on("click", function(e) {
             // if no style defined, must already be maximized.
-            if ($("#op-metadata-detail-view-content").attr("style") !== undefined) {
+            let selector = "#op-metadata-detail-view-content";
+            if ($(selector).resizable("instance").max !== true) {
                 let width = $("#op-metadata-detail-view .modal-dialog").width();
                 let height = $("#op-metadata-detail-view .modal-dialog").height() * 0.8;
-                o_browse.centerMetadataDetailViewToDefault(width, height, true);
-                // added so that on maximize, as the user grows/shrinks the browser, the slide grows/shrinks apprpriately
+                $(selector).resizable("instance").max = true;
+                $(selector).resizable("instance").min = false;
+                o_browse.centerMetadataDetailViewToDefault(width, height);
             }
         });
 
@@ -1191,7 +1201,7 @@ var o_browse = {
         o_browse.centerMetadataDetailViewToDefault();
     },
 
-    centerMetadataDetailViewToDefault: function(width, height, max) {
+    centerMetadataDetailViewToDefault: function(width, height) {
         let options = {};
         if (width !== undefined) {
             options["width"] = width;
@@ -1201,34 +1211,40 @@ var o_browse = {
         }
         options["top"] = "";
         options["left"] = "";
-        $("#op-metadata-detail-view .modal-content").animate(options, function() {
+        let selector = "#op-metadata-detail-view-content";
+        $(selector).animate(options, function() {
             // Animation complete.
-            o_browse.onResizeMetadataDetailView(false);
+            o_browse.onResizeMetadataDetailView();
             o_browse.adjustBrowseDialogPS(true);
-            if (max) {
+            if ($(selector).resizable("instance").max) {
                 $(this).removeAttr("style");
             }
         });
+        // this separate animate takes care of recentering the dialog by setting top/left to default
+        let top = $("#op-metadata-detail-view .modal-dialog").outerHeight() * 0.15;
         $("#op-metadata-detail-view .modal-dialog").animate({
-            top: "",
+            top: top,
             left: "",
         }, function () {
-            if (max) {
+            if ($(selector).resizable("instance").max) {
                 $(this).removeAttr("style");
             }
         });
     },
 
-    onResizeMetadataDetailView: function(open) {
+    onResizeMetadataDetailView: function() {
         let target = $("#op-metadata-detail-view .modal-content");
         let width = target.width();
         let height = target.height();
         let borderHeight = target.outerHeight() - height;
-        open = (open === undefined ? true : open);
 
         if ($("#op-metadata-detail-view-content").attr("style") === undefined) {
             let maxHeight = target.outerHeight();
+            let maxWidth = $("#op-metadata-detail-view .modal-dialog").outerWidth();
             target.resizable("option", "maxHeight", maxHeight);
+            target.resizable("option", "maxWidth", maxWidth)
+            target.resizable("instance").max = true;
+            target.resizable("instance").min = false;
         }
 
         let fontPercent = (100 * parseFloat($('body').css('font-size')) / parseFloat($('body').parent().css('font-size')));
@@ -1293,7 +1309,7 @@ var o_browse = {
             $("#op-metadata-detail-view .modal-content").css("top", "");
         }
         $("#op-metadata-detail-view").modal("show");
-        o_browse.onResizeMetadataDetailView(true);
+        o_browse.onResizeMetadataDetailView();
 
         // Do the fake API call to write in the Apache log files that
         // we showed the modal for this OPUSID. This is what the previous
