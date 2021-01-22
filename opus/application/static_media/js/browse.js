@@ -248,16 +248,6 @@ var o_browse = {
                 o_browse.onResizeMetadataDetailView();
                 o_browse.adjustBrowseDialogPS(true);
             },
-            stop: function(event, ui) {
-                let target = $(event.target);
-                let width = target.outerWidth();
-                let height = target.outerHeight();
-                // this is to account for the small bug in resizable that moves the modal even tho it's max
-                var selector = "#op-metadata-detail-view .modal-dialog";
-                target.resizable("instance").max =
-                    (Math.round($(selector).height() * 0.8) == Math.round(height) &&
-                     Math.round($(selector).width()) == Math.round(width));
-            },
         }).on("resize", function(e) {
             e.stopPropagation();
         });
@@ -1232,33 +1222,55 @@ var o_browse = {
         });
     },
 
-    onResizeMetadataDetailView: function() {
-        let target = $("#op-metadata-detail-view .modal-content");
-        let width = target.width();
-        let height = target.height();
-        let borderHeight = target.outerHeight() - height;
+    checkForMaximizeMetadataDetailView: function() {
+        let content = $("#op-metadata-detail-view .modal-content");
+        let dialog = $("#op-metadata-detail-view .modal-dialog");
 
-        if ($("#op-metadata-detail-view-content").attr("style") === undefined) {
-            let maxHeight = target.outerHeight();
-            let maxWidth = $("#op-metadata-detail-view .modal-dialog").outerWidth();
-            target.resizable("option", "maxHeight", maxHeight);
-            target.resizable("option", "maxWidth", maxWidth)
-            target.resizable("instance").max = true;
-            target.resizable("instance").min = false;
+        let width = content.outerWidth();
+        let height = content.outerHeight();
+
+        content.resizable("instance").max =
+            (Math.round(dialog.height() * 0.8) == Math.round(height) &&
+             Math.round(dialog.width()) == Math.round(width));
+
+        if (content.resizable("instance").max) {
+            content.resizable("option", "maxHeight", height);
+            content.resizable("option", "maxWidth", width)
+            content.resizable("instance").min = false;
+            $(".op-slide-maximize").addClass("op-button-disabled");
+            $(".op-slide-minimize").removeClass("op-button-disabled");
+        } else {
+            content.resizable("instance").min =
+                (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
+                 Math.round(content.resizable("option").minWidth) == Math.round(width));
+            $(".op-slide-maximize").removeClass("op-button-disabled");
+            if (content.resizable("instance").min) {
+                $(".op-slide-minimize").addClass("op-button-disabled");
+            } else {
+                $(".op-slide-minimize").removeClass("op-button-disabled");
+            }
         }
+    },
+
+    onResizeMetadataDetailView: function() {
+        let content = $("#op-metadata-detail-view .modal-content");
+        let width = content.width();
+        let height = content.height();
+
+        o_browse.checkForMaximizeMetadataDetailView();
 
         let fontPercent = (100 * parseFloat($('body').css('font-size')) / parseFloat($('body').parent().css('font-size')));
         let mediaBreak = ($("body").height() <= opus.browserThresholdHeight || $("body").width() <= opus.browserThresholdWidth);
 
         if ((width < 300 || height <= 400) && (!mediaBreak)) {
-            target.addClass("op-resize-small");
+            content.addClass("op-resize-small");
 
             // need to resize the add metadata menu as well and X in the corner
-            target.find("i.fa-times-circle").removeClass("fa-lg");
+            content.find("i.fa-times-circle").removeClass("fa-lg");
             $("#op-add-metadata-fields .op-select-list").addClass("op-resize-small");
         } else {
-            target.removeClass("op-resize-small");
-            target.find("i.fa-times-circle").addClass("fa-lg");
+            content.removeClass("op-resize-small");
+            content.find("i.fa-times-circle").addClass("fa-lg");
             $("#op-add-metadata-fields .op-select-list").removeClass("op-resize-small");
         }
         $("#op-metadata-detail-view-content .row.bottom").removeClass(function(index, css) {
