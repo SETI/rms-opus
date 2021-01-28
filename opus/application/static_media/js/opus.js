@@ -734,7 +734,7 @@ var opus = {
         let adjustMetadataDetailViewSizeDB = _.debounce(o_browse.adjustMetadataDetailViewSize, 200);
         let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
         let hideOrShowSelectedMetadataPSDB = _.debounce(o_selectMetadata.hideOrShowPS, 200);
-        let adjustBrowseDialogPSDB = function() {o_browse.adjustBrowseDialogPS(true);};
+        let adjustMetadataDetailDialogPSDB = function() {o_browse.adjustMetadataDetailDialogPS(true);};
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
@@ -748,7 +748,7 @@ var opus = {
             o_selectMetadata.adjustHeight();
             hideOrShowSelectMetadataMenuPSDB();
             hideOrShowSelectedMetadataPSDB();
-            adjustBrowseDialogPSDB();
+            adjustMetadataDetailDialogPSDB();
             displayCartLeftPaneDB();
             opus.checkBrowserSize();
             opus.hideOrShowSplashText();

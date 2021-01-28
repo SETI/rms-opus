@@ -1161,6 +1161,8 @@ without resizing image proportionally. */
 
 #op-metadata-detail-view .modal-content {
     border: solid 2px #FFF;
+    min-width: 250px;
+    min-height: 240px;
 }
 
 #op-metadata-detail-view .modal-dialog:hover {
@@ -2978,6 +2980,11 @@ when wrapping into the 2nd line */
 @media (max-width: 700px), (max-height: 400px) {
     body {
         font-size: 75% !important;
+    }
+
+    /* the metdata detail view slide needs to control it's own font size independent of the body */
+    #op-metadata-detail-view-content {
+        font-size: 100% !important;
     }
 
     /* Need to use !important here so that the footer (inside a flex container)

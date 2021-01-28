@@ -147,6 +147,8 @@ $.fn.isOnScreen = function(scope, slop) {
     let elementHeight = target.outerHeight();
     let offset = elementHeight * slop;   // allow part of the object to be off screen
     let elementTop = target.offset().top;
+    let sidesInBounds = true;
+
     // hack to take care of table header height
     if (this.is("tr")) {
         top += $("th").outerHeight();
@@ -154,7 +156,15 @@ $.fn.isOnScreen = function(scope, slop) {
         bottom = $(".app-footer").offset().top;
         // Make sure highlighted table item is fully displayed.
         offset = elementHeight;
+    } else {
+        // check left and right for modals
+        let left = scope.offset().left;
+        let elementLeft = target.offset().left;
+        let right = left + scope.outerWidth();
+        let elementRight = elementLeft + target.outerWidth();
+
+        sidesInBounds = (elementLeft > left && elementRight < right);
     }
 
-    return (elementTop + offset <= bottom) && (elementTop >= top);
+    return ((elementTop + offset <= bottom) && (elementTop >= top)) && sidesInBounds;
 };

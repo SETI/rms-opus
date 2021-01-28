@@ -240,13 +240,15 @@ var o_browse = {
             minWidth: 250,
             minHeight: 240,
             start: function(event, ui) {
-                let target = $(event.target);
-                target.resizable("instance").max = false;
-                target.resizable("instance").min = false;
+                o_browse.updateMetadataDetailViewTool("min", false);
+                o_browse.updateMetadataDetailViewTool("max", false);
             },
             resize: function(event, ui) {
                 o_browse.onResizeMetadataDetailView();
-                o_browse.adjustBrowseDialogPS(true);
+                o_browse.adjustMetadataDetailDialogPS(true);
+            },
+            stop: function(event, ui) {
+                o_browse.checkForMaximizeMetadataDetailView();
             },
         }).on("resize", function(e) {
             e.stopPropagation();
@@ -273,8 +275,7 @@ var o_browse = {
             if ($(selector).resizable("instance").min !== true) {
                 let width = $(selector).resizable("option", "minWidth");
                 let height = $(selector).resizable("option", "minHeight");
-                $(selector).resizable("instance").min = true;
-                $(selector).resizable("instance").max = false;
+                o_browse.updateMetadataDetailViewTool("min", true);
                 o_browse.centerMetadataDetailViewToDefault(width, height);
             }
         });
@@ -285,8 +286,7 @@ var o_browse = {
             if ($(selector).resizable("instance").max !== true) {
                 let width = $("#op-metadata-detail-view .modal-dialog").width();
                 let height = $("#op-metadata-detail-view .modal-dialog").height() * 0.8;
-                $(selector).resizable("instance").max = true;
-                $(selector).resizable("instance").min = false;
+                o_browse.updateMetadataDetailViewTool("max", true);
                 o_browse.centerMetadataDetailViewToDefault(width, height);
             }
         });
@@ -1187,8 +1187,37 @@ var o_browse = {
     adjustMetadataDetailViewSize: function() {
         if ($("#op-metadata-detail-view").hasClass("show")) {
             o_browse.onResizeMetadataDetailView();
+            o_browse.checkForMaximizeMetadataDetailView(true);
+            if (!$("#op-metadata-detail-view-content").isOnScreen("#op-metadata-detail-view", 1)) {
+                o_browse.centerMetadataDetailViewToDefault();
+            }
         }
-        o_browse.centerMetadataDetailViewToDefault();
+    },
+
+    updateMetadataDetailViewTool: function(which, enabled) {
+        let content = $("#op-metadata-detail-view-content");
+        switch (which) {
+            case "min":
+                content.resizable("instance").min = enabled;
+                if (enabled) {
+                    $(".op-slide-minimize").addClass("op-button-disabled");
+                    $(".op-slide-maximize").removeClass("op-button-disabled");
+                    content.resizable("instance").max = false;
+                } else {
+                    $(".op-slide-minimize").removeClass("op-button-disabled");
+                }
+                break;
+            case "max":
+                content.resizable("instance").max = enabled;
+                if (enabled) {
+                    $(".op-slide-maximize").addClass("op-button-disabled");
+                    $(".op-slide-minimize").removeClass("op-button-disabled");
+                    content.resizable("instance").min = false;
+                } else {
+                    $(".op-slide-maximize").removeClass("op-button-disabled");
+                }
+                break;
+            }
     },
 
     centerMetadataDetailViewToDefault: function(width, height) {
@@ -1205,7 +1234,7 @@ var o_browse = {
         $(selector).animate(options, function() {
             // Animation complete.
             o_browse.onResizeMetadataDetailView();
-            o_browse.adjustBrowseDialogPS(true);
+            o_browse.adjustMetadataDetailDialogPS(true);
             if ($(selector).resizable("instance").max) {
                 $(this).removeAttr("style");
             }
@@ -1222,33 +1251,27 @@ var o_browse = {
         });
     },
 
-    checkForMaximizeMetadataDetailView: function() {
+    checkForMaximizeMetadataDetailView: function(checkForOversize) {
         let content = $("#op-metadata-detail-view .modal-content");
         let dialog = $("#op-metadata-detail-view .modal-dialog");
 
         let width = content.outerWidth();
         let height = content.outerHeight();
 
-        content.resizable("instance").max =
-            (Math.round(dialog.height() * 0.8) == Math.round(height) &&
-             Math.round(dialog.width()) == Math.round(width));
+        let maxWidth = dialog.width();
+        let maxHeight = dialog.height() * 0.8;
+
+        let max = (Math.round(maxWidth) == Math.round(width) &&
+                   Math.round(maxHeight) == Math.round(height));
+        o_browse.updateMetadataDetailViewTool("max", max);
 
         if (content.resizable("instance").max) {
             content.resizable("option", "maxHeight", height);
             content.resizable("option", "maxWidth", width)
-            content.resizable("instance").min = false;
-            $(".op-slide-maximize").addClass("op-button-disabled");
-            $(".op-slide-minimize").removeClass("op-button-disabled");
         } else {
-            content.resizable("instance").min =
-                (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
-                 Math.round(content.resizable("option").minWidth) == Math.round(width));
-            $(".op-slide-maximize").removeClass("op-button-disabled");
-            if (content.resizable("instance").min) {
-                $(".op-slide-minimize").addClass("op-button-disabled");
-            } else {
-                $(".op-slide-minimize").removeClass("op-button-disabled");
-            }
+            let min = (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
+                       Math.round(content.resizable("option").minWidth) == Math.round(width));
+            o_browse.updateMetadataDetailViewTool("min", min);
         }
     },
 
@@ -1257,12 +1280,7 @@ var o_browse = {
         let width = content.width();
         let height = content.height();
 
-        o_browse.checkForMaximizeMetadataDetailView();
-
-        let fontPercent = (100 * parseFloat($('body').css('font-size')) / parseFloat($('body').parent().css('font-size')));
-        let mediaBreak = ($("body").height() <= opus.browserThresholdHeight || $("body").width() <= opus.browserThresholdWidth);
-
-        if ((width < 300 || height <= 400) && (!mediaBreak)) {
+        if ((width < 300 || height <= 400)) {
             content.addClass("op-resize-small");
 
             // need to resize the add metadata menu as well and X in the corner
@@ -1321,6 +1339,7 @@ var o_browse = {
             $("#op-metadata-detail-view .modal-content").css("top", "");
         }
         $("#op-metadata-detail-view").modal("show");
+        o_browse.checkForMaximizeMetadataDetailView();
         o_browse.onResizeMetadataDetailView();
 
         // Do the fake API call to write in the Apache log files that
@@ -2421,7 +2440,7 @@ var o_browse = {
         opus.getViewNamespace().tableScrollbar.update();
     },
 
-    adjustBrowseDialogPS: function() {
+    adjustMetadataDetailDialogPS: function() {
         if (o_browse.isSortingHappening) {
             return;
         }
