@@ -228,8 +228,9 @@ var o_browse = {
             return retValue;
         }); // end click a browse tools icon
 
-        $(".modal-dialog").draggable({
+        $("#op-metadata-detail-view-content, #op-select-metadata .modal-content").draggable({
             cancel: ".contents",
+            containment: "document",
             start: function(event, ui) {
                 o_browse.hideMenus();
             },
@@ -248,18 +249,11 @@ var o_browse = {
                 o_browse.adjustMetadataDetailDialogPS(true);
             },
             stop: function(event, ui) {
+                o_browse.keepMetadataDetailViewInview();
                 o_browse.checkForMaximizeMetadataDetailView();
             },
         }).on("resize", function(e) {
             e.stopPropagation();
-        });
-
-        // Disable draggable for these information modals
-        $.each($(".op-confirm-modal"), function(idx, dialog) {
-            if ($(dialog).data("draggable") === "False") {
-                let id = $(dialog).attr("id");
-                $(`#${id} .modal-dialog`).draggable("disable");
-            }
         });
 
         $(".app-body").on("hide.bs.modal", "#op-metadata-detail-view", function(e) {
@@ -1186,11 +1180,9 @@ var o_browse = {
     // for the mutationObserver code on browser resize...
     adjustMetadataDetailViewSize: function() {
         if ($("#op-metadata-detail-view").hasClass("show")) {
+            o_browse.keepMetadataDetailViewInview(true);
             o_browse.onResizeMetadataDetailView();
             o_browse.checkForMaximizeMetadataDetailView(true);
-            if (!$("#op-metadata-detail-view-content").isOnScreen("#op-metadata-detail-view", 1)) {
-                o_browse.centerMetadataDetailViewToDefault();
-            }
         }
     },
 
@@ -1261,6 +1253,9 @@ var o_browse = {
         let maxWidth = dialog.width();
         let maxHeight = dialog.height() * 0.8;
 
+        width = (width > maxWidth ? maxWidth : width);
+        height = (height > maxHeight ? maxHeight : height);
+
         let max = (Math.round(maxWidth) == Math.round(width) &&
                    Math.round(maxHeight) == Math.round(height));
         o_browse.updateMetadataDetailViewTool("max", max);
@@ -1272,6 +1267,62 @@ var o_browse = {
             let min = (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
                        Math.round(content.resizable("option").minWidth) == Math.round(width));
             o_browse.updateMetadataDetailViewTool("min", min);
+        }
+    },
+
+    keepMetadataDetailViewInview: function(keepSize) {
+        let content = $("#op-metadata-detail-view .modal-content");
+        let dialog = $("#op-metadata-detail-view .modal-dialog");
+
+        let top = (content.offset().top < 0 ? 0 : content.offset().top);
+        let left = (content.offset().left < 0 ? 0 : content.offset().left);
+        let width, height;
+
+        keepSize = (keepSize === undefined ? false : keepSize);
+
+        if (top !== content.offset().top || left !== content.offset().left) {
+            if (!keepSize) {
+                width = (content.offset().left < 0 ? content.width() + content.offset().left : content.width());
+                height = (content.offset().top < 0 ? content.height() + content.offset().top : content.height());
+            } else {
+                width = content.width();
+                height = content.height();
+            }
+            content.offset({top: top, left: left});
+            content.width(width);
+            content.height(height);
+        } else {
+            let visualWidth = $("#op-metadata-detail-view").width();
+            let visualHeight = $("#op-metadata-detail-view").height();
+            let maxModalWidth = visualWidth - left;
+            let maxModalHeight = visualHeight - top;
+            let width = visualWidth - left;
+            let height = visualHeight - top;
+            if (!keepSize) {
+                if (width < content.width()) {
+                    content.width(width);
+                }
+                if (height < content.height()) {
+                    content.height(height);
+                }
+            } else {
+                if (width < content.width()) {
+                    // move it to the left; only shrink if necessary
+                    left = visualWidth - content.width();
+                    if (left < 0) {
+                        content.width(content.width() + left);
+                        left = 0;
+                    }
+                }
+                if (height < content.height()) {
+                    top = visualHeight - content.height();
+                    if (top < 0) {
+                        content.height(content.height() + top);
+                        top = 0;
+                    }
+                }
+                content.offset({top: top, left: left});
+            }
         }
     },
 
