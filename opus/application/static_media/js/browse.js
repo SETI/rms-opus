@@ -241,19 +241,23 @@ var o_browse = {
             minWidth: 250,
             minHeight: 240,
             start: function(event, ui) {
+                // update the tools buttons for min/max to enable on start
                 o_browse.updateMetadataDetailViewTool("min", false);
                 o_browse.updateMetadataDetailViewTool("max", false);
             },
             resize: function(event, ui) {
+                o_browse.keepMetadataResizeContained();
                 o_browse.onResizeMetadataDetailView();
                 o_browse.adjustMetadataDetailDialogPS(true);
             },
-            stop: function(event, ui) {
-                o_browse.keepMetadataDetailViewInview();
-                o_browse.checkForMaximizeMetadataDetailView();
-            },
         }).on("resize", function(e) {
             e.stopPropagation();
+        });
+
+        $(".app-body").on("shown.bs.modal", "#op-metadata-detail-view", function(e) {
+            o_browse.checkForMaximizeMetadataDetailView();
+            o_browse.keepMetadataDetailViewInview(false);
+            o_browse.onResizeMetadataDetailView();
         });
 
         $(".app-body").on("hide.bs.modal", "#op-metadata-detail-view", function(e) {
@@ -279,7 +283,7 @@ var o_browse = {
             let selector = "#op-metadata-detail-view-content";
             if ($(selector).resizable("instance").max !== true) {
                 let width = $("#op-metadata-detail-view .modal-dialog").width();
-                let height = $("#op-metadata-detail-view .modal-dialog").height() * 0.8;
+                let height = $("#op-metadata-detail-view .modal-dialog").height();
                 o_browse.updateMetadataDetailViewTool("max", true);
                 o_browse.centerMetadataDetailViewToDefault(width, height);
             }
@@ -1232,7 +1236,7 @@ var o_browse = {
             }
         });
         // this separate animate takes care of recentering the dialog by setting top/left to default
-        let top = $("#op-metadata-detail-view .modal-dialog").outerHeight() * 0.15;
+        let top = $("#op-metadata-detail-view .modal-dialog").outerHeight() * 0.10;
         $("#op-metadata-detail-view .modal-dialog").animate({
             top: top,
             left: "",
@@ -1251,7 +1255,7 @@ var o_browse = {
         let height = content.outerHeight();
 
         let maxWidth = dialog.width();
-        let maxHeight = dialog.height() * 0.8;
+        let maxHeight = dialog.height();
 
         width = (width > maxWidth ? maxWidth : width);
         height = (height > maxHeight ? maxHeight : height);
@@ -1261,69 +1265,89 @@ var o_browse = {
         o_browse.updateMetadataDetailViewTool("max", max);
 
         if (content.resizable("instance").max) {
-            content.resizable("option", "maxHeight", height);
-            content.resizable("option", "maxWidth", width)
+            //content.resizable("option", "maxHeight", height);
+            //content.resizable("option", "maxWidth", width);
         } else {
             let min = (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
                        Math.round(content.resizable("option").minWidth) == Math.round(width));
             o_browse.updateMetadataDetailViewTool("min", min);
         }
+        content.resizable("option", "maxWidth", maxWidth);
+        content.resizable("option", "maxHeight", maxHeight);
     },
 
-    keepMetadataDetailViewInview: function(keepSize) {
+    keepMetadataResizeContained: function() {
         let content = $("#op-metadata-detail-view .modal-content");
-        let dialog = $("#op-metadata-detail-view .modal-dialog");
 
         let top = (content.offset().top < 0 ? 0 : content.offset().top);
         let left = (content.offset().left < 0 ? 0 : content.offset().left);
-        let width, height;
+        let width = content.outerWidth();
+        let height = content.outerHeight();
 
-        keepSize = (keepSize === undefined ? false : keepSize);
-
+        // if the top or left has gone negative, just adjust
         if (top !== content.offset().top || left !== content.offset().left) {
-            if (!keepSize) {
-                width = (content.offset().left < 0 ? content.width() + content.offset().left : content.width());
-                height = (content.offset().top < 0 ? content.height() + content.offset().top : content.height());
-            } else {
-                width = content.width();
-                height = content.height();
-            }
+            width = (content.offset().left < 0 ? width + content.offset().left : width);
+            height = (content.offset().top < 0 ? height + content.offset().top : height);
             content.offset({top: top, left: left});
-            content.width(width);
-            content.height(height);
+            content.outerWidth(width);
+            content.outerHeight(height);
         } else {
-            let visualWidth = $("#op-metadata-detail-view").width();
-            let visualHeight = $("#op-metadata-detail-view").height();
-            let maxModalWidth = visualWidth - left;
-            let maxModalHeight = visualHeight - top;
-            let width = visualWidth - left;
-            let height = visualHeight - top;
-            if (!keepSize) {
-                if (width < content.width()) {
-                    content.width(width);
-                }
-                if (height < content.height()) {
-                    content.height(height);
-                }
-            } else {
-                if (width < content.width()) {
-                    // move it to the left; only shrink if necessary
-                    left = visualWidth - content.width();
-                    if (left < 0) {
-                        content.width(content.width() + left);
-                        left = 0;
-                    }
-                }
-                if (height < content.height()) {
-                    top = visualHeight - content.height();
-                    if (top < 0) {
-                        content.height(content.height() + top);
-                        top = 0;
-                    }
-                }
-                content.offset({top: top, left: left});
+            // otherwise, see if the bottom or right side are out of view
+            // but don't modify top/left
+            let bodyWidth = $("body").width();
+            let bodyHeight = $("body").height();
+            if (left + width > bodyWidth) {
+                content.outerWidth(bodyWidth - left);
+            }
+            if (top + height > bodyHeight) {
+                content.outerHeight(bodyHeight - top);
             }
         }
+    },
+
+    keepMetadataDetailViewInview: function() {
+        let content = $("#op-metadata-detail-view .modal-content");
+        let adjust = false;
+
+        let top = content.offset().top;
+        let left = content.offset().left;
+        let bodyWidth = $("body").width();
+        let bodyHeight = $("body").height();
+        let maxWidth = content.resizable("option", "maxWidth");
+        let maxHeight = content.resizable("option", "maxHeight");
+        let width = content.outerWidth();
+        let height = content.outerHeight();
+        console.log(`before: top:${top}, left:${left}, bodyWidth:${bodyWidth}, width:${width}, bodyHeight:${bodyHeight}, height:${height}`);
+
+        // first, make sure that the modal is not too big for the new size
+        if (width > maxWidth) {
+            content.width(maxWidth);
+            width = maxWidth;
+        }
+        if (height > maxHeight) {
+            content.height(maxHeight);
+            height = maxHeight;
+        }
+
+        if (left < 0) {
+            left = 0;
+            adjust = true;
+        }
+
+        if (bodyWidth - left < width) {
+            left = bodyWidth - width;
+            adjust = true;
+        }
+
+        if (bodyHeight - top < height) {
+            top = bodyHeight - height;
+            adjust = true;
+        }
+
+        if (adjust) {
+            content.offset({top: top, left: left});
+        }
+        console.log(`after: top:${top}, left:${left}, width:${width}, height:${height}`);
     },
 
     onResizeMetadataDetailView: function() {
@@ -1386,12 +1410,11 @@ var o_browse = {
             // this is to make sure the gallery view/slide modal is at its original position when open again
             // BUT if the gallery view modal was already open and the user is just
             // clicking on a different observation, don't recenter...
+            let left = $("#op-metadata-detail-view .modal-content").position().left - $("#op-metadata-detail-view .modal-content").offset().left;
             $("#op-metadata-detail-view .modal-dialog").css({top: "", left: ""});
-            $("#op-metadata-detail-view .modal-content").css("top", "");
+            $("#op-metadata-detail-view .modal-content").css({top: "", left: left});
         }
         $("#op-metadata-detail-view").modal("show");
-        o_browse.checkForMaximizeMetadataDetailView();
-        o_browse.onResizeMetadataDetailView();
 
         // Do the fake API call to write in the Apache log files that
         // we showed the modal for this OPUSID. This is what the previous

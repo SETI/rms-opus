@@ -1127,8 +1127,9 @@ without resizing image proportionally. */
 }
 
 #op-metadata-detail-view .modal-content {
-    height: 80%;
-    max-height: 80%;
+    /* these need to be here so the min/max size is calculated correctly when the modal is opened */
+    height: 100%;
+    max-height: 100%;
 }
 
 #op-metadata-detail-view {
@@ -1170,7 +1171,7 @@ without resizing image proportionally. */
 }
 
 #op-metadata-detail-view-content {
-    top: 15%;
+    top: 10%;
 }
 
 #op-metadata-detail-view-content .op-docking-tools {
@@ -2985,6 +2986,7 @@ when wrapping into the 2nd line */
     /* the metdata detail view slide needs to control it's own font size independent of the body */
     #op-metadata-detail-view-content {
         font-size: 100% !important;
+        top: 0;
     }
 
     /* Need to use !important here so that the footer (inside a flex container)
