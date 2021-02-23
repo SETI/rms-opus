@@ -535,6 +535,16 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-notifications-modal"
+            confirm_title="Important Notification to OPUS users"
+            confirm_msg=""
+            target="op-notifications-modal"
+            yes_text="OK"
+            allow_close=True
+            draggable=False
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-download-links-error-msg-modal"
             confirm_title="Download Error"
             confirm_msg=""

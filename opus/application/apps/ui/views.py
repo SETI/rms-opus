@@ -4,7 +4,7 @@
 #
 # The (private) API interface for returning things for the main UI.
 #
-#    Format: __lastblogupdate.json
+#    Format: __notifications.json
 #    Format: __menu.json
 #    Format: __metadata_selector.json
 #    Format: __widget/(?P<slug>[-\w]+).html
@@ -80,22 +80,22 @@ class main_site(TemplateView):
         return context
 
 @never_cache
-def api_last_blog_update(request):
-    """Return the date of the last blog update.
+def api_notifications(request):
+    """Return the HTML for any pending notifications and the date of the last blog update.
 
     This is a PRIVATE API.
 
-    Format: __lastblogupdate.json
+    Format: __notifications.json
 
     JSON return:
-        {'lastupdate': '2019-01-31'}
-      or if none available:
-        {'lastupdate': None}
+        {'lastupdate': '2019-01-31',               (or if none available 'None')
+         'short_term_notification': '<html code>'  (or if none available 'None')
+        }
     """
-    api_code = enter_api_call('api_last_blog_update', request)
+    api_code = enter_api_call('api_notifications', request)
 
     if not request or request.GET is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__lastblogupdate.json'))
+        ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -105,12 +105,23 @@ def api_last_blog_update(request):
             lastupdate = fp.read().strip()
     except:
         try:
-            log.error('api_last_blog_update: Failed to read file "%s"',
+            log.error('api_notifications: Failed to read file "%s"',
                       settings.OPUS_LAST_BLOG_UPDATE_FILE)
         except:
-            log.error('api_last_blog_update: Failed to read file UNKNOWN')
+            log.error('api_notifications: Failed to read file UNKNOWN')
 
-    ret = json_response({'lastupdate': lastupdate})
+    notifications = None
+    try:
+        with open(settings.OPUS_NOTIFICATIONS_FILE, 'r') as fp:
+            notifications = fp.read().strip()
+    except:
+        try:
+            log.error('api_notifications: Failed to read file "%s"',
+                      settings.OPUS_NOTIFICATIONS_FILE)
+        except:
+            log.error('api_notifications: Failed to read file UNKNOWN')
+
+    ret = json_response({'lastupdate': lastupdate, 'notifications': notifications})
 
     exit_api_call(api_code, ret)
     return ret

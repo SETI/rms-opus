@@ -419,13 +419,13 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    updateLastBlogDate: function() {
+    updateNotifications: function() {
         /**
          * Retrieve the date of the last blog update and update the tooltip for
          * the 'Recent Announcements' nav bar item.
          */
 
-        $.getJSON("/opus/__lastblogupdate.json", function(data) {
+        $.getJSON("/opus/__notifications.json", function(data) {
             if (data.lastupdate !== null) {
                 let lastUpdateDate = new Date(data.lastupdate);
                 let today = Date.now();
@@ -440,6 +440,9 @@ var opus = {
                 $("#op-last-blog-update-date").attr("title", "Blog last updated "+prettyDate);
             } else {
                 $("#op-last-blog-update-date").attr("title", "");
+            }
+            if (data.notifications !== null && data.notifications !== "") {
+                opus.displayNotificationsDialog(data.notifications);
             }
         });
     },
@@ -483,7 +486,7 @@ var opus = {
         o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
 
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
@@ -933,6 +936,13 @@ var opus = {
         $(window).off("touchstart", opus.tooltipRemoveHandler);
     },
 
+    displayNotificationsDialog: function(html) {
+        $("#op-notifications-modal .modal-body").html(html);
+
+        opus.hideOrShowSplashText();
+        $("#op-notifications-modal").modal("show");
+    },
+
     displayHelpPane: function(action) {
         /**
          * Given the name of a help menu entry, open the help pane and load the
@@ -1088,7 +1098,7 @@ var opus = {
          * Initialize OPUS after the normalized URL has been returned.
          */
 
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];

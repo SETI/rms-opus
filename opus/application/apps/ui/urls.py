@@ -3,7 +3,7 @@ from django.conf.urls import url
 from django.contrib import admin
 
 from ui.views import (
-    api_last_blog_update,
+    api_notifications,
     api_get_menu,
     api_get_widget,
     api_get_metadata_selector,
@@ -14,7 +14,7 @@ from ui.views import (
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^__lastblogupdate.json$', api_last_blog_update),
+    url(r'^__notifications.json$', api_notifications),
     url(r'^__menu.json$', api_get_menu),
     url(r'^__metadata_selector.json$', api_get_metadata_selector),
     url(r'^__widget/(?P<slug>[-\w]+).html$', api_get_widget),
