@@ -515,7 +515,6 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                e.preventDefault();
                 if (o_browse.pageLoaderSpinnerTimer === null) {
                     /*  Catch the right/left arrow and spacebar while in the modal
                         Up: 38
@@ -556,6 +555,10 @@ var o_browse = {
                             obsNum += offset;
                             o_browse.moveToNextMetadataSlide(obsNum, "next");
                             break;
+                        default:
+                            // allow exception handling to propagate
+                            // fixes the bug that prevented click on the slide to open a full size image
+                            return true;
                     }
                 }
                 return false;
