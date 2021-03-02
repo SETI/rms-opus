@@ -442,8 +442,8 @@ var opus = {
                 $("#op-last-blog-update-date").attr("title", "");
             }
             // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
-            if (data.notifications !== null && data.notifications !== "" && $.cookie("notify") != data.notifications_cdate) {
-                opus.displayNotificationsDialog(data.notifications, data.notifications_cdate);
+            if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {
+                opus.displayNotificationDialog(data.notification, data.notification_mdate);
             }
         });
     },
@@ -899,7 +899,7 @@ var opus = {
                         case "op-http-response-error-modal":
                             location.reload();
                             break;
-                        case "op-notifications-modal":
+                        case "op-notification-modal":
                             $.cookie("notify", $(`#${target}`).data("cookie"), {expires: 1000000});
                             break;
                     }
@@ -940,12 +940,12 @@ var opus = {
         $(window).off("touchstart", opus.tooltipRemoveHandler);
     },
 
-    displayNotificationsDialog: function(html, cookie) {
-        $("#op-notifications-modal .modal-body").html(html);
-        $("#op-notifications-modal").data("cookie", cookie);
+    displayNotificationDialog: function(html, cookie) {
+        $("#op-notification-modal .modal-body").html(html);
+        $("#op-notification-modal").data("cookie", cookie);
 
         opus.hideOrShowSplashText();
-        $("#op-notifications-modal").modal("show");
+        $("#op-notification-modal").modal("show");
     },
 
     displayHelpPane: function(action) {

@@ -103,7 +103,7 @@ OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
 OPUS_LAST_BLOG_UPDATE_FILE = '<LAST_BLOG_UPDATE_FILE>'
 
 # The file that contains the html for any short-term notifications
-OPUS_NOTIFICATIONS_FILE = '<NOTIFICATIONS_FILE>'
+OPUS_NOTIFICATION_FILE = '<NOTIFICATION_FILE>'
 
 # What level of message to log at each destination
 OPUS_LOG_FILE_LEVEL = 'INFO'

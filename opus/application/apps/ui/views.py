@@ -89,8 +89,9 @@ def api_notifications(request):
     Format: __notifications.json
 
     JSON return:
-        {'lastupdate': '2019-01-31',               (or if none available 'None')
-         'short_term_notification': '<html code>'  (or if none available 'None')
+        {'lastupdate': '2019-01-31',                (or if none available 'None')
+         'notification': '<html code>',             (or if none available 'None')
+         'notification_mdate': '<file mod date>'   (store as cookie)
         }
     """
     api_code = enter_api_call('api_notifications', request)
@@ -111,26 +112,26 @@ def api_notifications(request):
         except:
             log.error('api_notifications: Failed to read file UNKNOWN')
 
-    notifications = None
-    notifications_modify = None
+    notification = None
+    notification_modify = None
     try:
-        with open(settings.OPUS_NOTIFICATIONS_FILE, 'r') as fp:
-            notifications = fp.read().strip()
+        with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
+            notification = fp.read().strip()
             try:
-                notifications_modify = os.path.getmtime(settings.OPUS_NOTIFICATIONS_FILE)
+                notification_modify = os.path.getmtime(settings.OPUS_NOTIFICATION_FILE)
             except:
-                log.error('api_notifications: Failed to read the modify date of file "%s"',
-                          settings.OPUS_NOTIFICATIONS_FILE)
+                log.error('api_notification: Failed to read the modify date of file "%s"',
+                          settings.OPUS_NOTIFICATION_FILE)
     except:
         try:
             log.error('api_notifications: Failed to read file "%s"',
-                      settings.OPUS_NOTIFICATIONS_FILE)
+                      settings.OPUS_NOTIFICATION_FILE)
         except:
             log.error('api_notifications: Failed to read file UNKNOWN')
 
     ret = json_response({'lastupdate': lastupdate,
-                         'notifications': notifications,
-                         'notifications_cdate': notifications_modify})
+                         'notification': notification,
+                         'notification_mdate': notification_modify})
 
     exit_api_call(api_code, ret)
     return ret

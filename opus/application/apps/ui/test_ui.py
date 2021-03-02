@@ -53,7 +53,7 @@ class uiTests(TestCase):
         request = self.factory.get('__notifications.json')
         ret = api_notifications(request)
         print(ret)
-        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notifications": null}')
+        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notification": null, "notification_mdate": null}')
 
     def test__api_notifications_bad_update_file(self):
         "[test_ui.py] api_notifications: missing last blog update file"
@@ -62,7 +62,7 @@ class uiTests(TestCase):
         ret = api_notifications(request)
         print(ret)
         print(ret.content)
-        self.assertEqual(ret.content, b'{"lastupdate": null, "notifications": null}')
+        self.assertEqual(ret.content, b'{"lastupdate": null, "notification": null, "notification_mdate": null}')
 
     def test__api_notifications_bad_notification_file(self):
         "[test_ui.py] api_notifications: missing notifications.html file"
@@ -71,7 +71,7 @@ class uiTests(TestCase):
         ret = api_notifications(request)
         print(ret)
         print(ret.content)
-        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notifications": null}')
+        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notification": null, "notification_mdate": null}')
 
 
             ################################################
