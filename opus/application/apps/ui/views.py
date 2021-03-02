@@ -19,6 +19,7 @@
 from collections import OrderedDict
 
 import settings
+import os
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
@@ -111,9 +112,15 @@ def api_notifications(request):
             log.error('api_notifications: Failed to read file UNKNOWN')
 
     notifications = None
+    notifications_modify = None
     try:
         with open(settings.OPUS_NOTIFICATIONS_FILE, 'r') as fp:
             notifications = fp.read().strip()
+            try:
+                notifications_modify = os.path.getmtime(settings.OPUS_NOTIFICATIONS_FILE)
+            except:
+                log.error('api_notifications: Failed to read the modify date of file "%s"',
+                          settings.OPUS_NOTIFICATIONS_FILE)
     except:
         try:
             log.error('api_notifications: Failed to read file "%s"',
@@ -121,7 +128,9 @@ def api_notifications(request):
         except:
             log.error('api_notifications: Failed to read file UNKNOWN')
 
-    ret = json_response({'lastupdate': lastupdate, 'notifications': notifications})
+    ret = json_response({'lastupdate': lastupdate,
+                         'notifications': notifications,
+                         'notifications_cdate': notifications_modify})
 
     exit_api_call(api_code, ret)
     return ret

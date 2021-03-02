@@ -441,8 +441,9 @@ var opus = {
             } else {
                 $("#op-last-blog-update-date").attr("title", "");
             }
-            if (data.notifications !== null && data.notifications !== "") {
-                opus.displayNotificationsDialog(data.notifications);
+            // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
+            if (data.notifications !== null && data.notifications !== "" && $.cookie("notify") != data.notifications_cdate) {
+                opus.displayNotificationsDialog(data.notifications, data.notifications_cdate);
             }
         });
     },
@@ -898,6 +899,9 @@ var opus = {
                         case "op-http-response-error-modal":
                             location.reload();
                             break;
+                        case "op-notifications-modal":
+                            $.cookie("notify", $(`#${target}`).data("cookie"), {expires: 1000000});
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
@@ -936,8 +940,9 @@ var opus = {
         $(window).off("touchstart", opus.tooltipRemoveHandler);
     },
 
-    displayNotificationsDialog: function(html) {
+    displayNotificationsDialog: function(html, cookie) {
         $("#op-notifications-modal .modal-body").html(html);
+        $("#op-notifications-modal").data("cookie", cookie);
 
         opus.hideOrShowSplashText();
         $("#op-notifications-modal").modal("show");
