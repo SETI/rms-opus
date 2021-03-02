@@ -20,7 +20,7 @@
         "volumeid": "COVIMS_0006",
         "datasetid": "CO-E/V/J/S-VIMS-2-QUBE-V1.0",
         "productid": "1/1484580518_1",
-        "productcreationtime": null,
+        "productcreationtime": "2005-01-17T09:44:55.000",
         "primaryfilespec": "COVIMS_0006/data/2005015T175855_2005016T184233/v1484580518_1.qub",
         "opusid": "co-vims-v1484580518_vis",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": "-1.697",
-        "RINGGEOobserverringopeningangle2": "-1.697",
         "RINGGEOringradius1": "284617.107",
         "RINGGEOringradius2": "360758.68",
         "RINGGEOsolarringopeningangle1": "-22.849",
-        "RINGGEOsolarringopeningangle2": "-22.849"
+        "RINGGEOsolarringopeningangle2": "-22.849",
+        "RINGGEOobserverringopeningangle1": "-1.697",
+        "RINGGEOobserverringopeningangle2": "-1.697"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": "Mimas"

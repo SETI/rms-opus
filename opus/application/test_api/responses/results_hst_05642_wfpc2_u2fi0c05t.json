@@ -18,7 +18,7 @@
     },
     "PDS Constraints": {
         "volumeid": "HSTU0_5642",
-        "datasetid": "HST-J-WFPC2-5-ID5642-V1.0",
+        "datasetid": "HST-J-WFPC2-5-ID5642-V1.1",
         "productid": "U2FI0C05T",
         "productcreationtime": null,
         "primaryfilespec": "HSTU0_5642/DATA/VISIT_0C/U2FI0C05T.LBL",

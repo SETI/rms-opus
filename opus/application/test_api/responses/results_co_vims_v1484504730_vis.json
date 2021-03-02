@@ -20,7 +20,7 @@
         "volumeid": "COVIMS_0006",
         "datasetid": "CO-E/V/J/S-VIMS-2-QUBE-V1.0",
         "productid": "1/1484504730_1",
-        "productcreationtime": null,
+        "productcreationtime": "2005-01-16T09:31:37.000",
         "primaryfilespec": "COVIMS_0006/data/2005015T175855_2005016T184233/v1484504730_1.qub",
         "opusid": "co-vims-v1484504730_vis",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": "3.284",
-        "RINGGEOobserverringopeningangle2": "3.284",
         "RINGGEOringradius1": "221504.254",
         "RINGGEOringradius2": "246927.839",
         "RINGGEOsolarringopeningangle1": "-22.857",
-        "RINGGEOsolarringopeningangle2": "-22.857"
+        "RINGGEOsolarringopeningangle2": "-22.857",
+        "RINGGEOobserverringopeningangle1": "3.284",
+        "RINGGEOobserverringopeningangle2": "3.284"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": "Enceladus"

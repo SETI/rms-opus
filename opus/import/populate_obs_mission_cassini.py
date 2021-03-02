@@ -300,18 +300,18 @@ def helper_fix_cassini_sclk(count):
 
     ### UVIS
     # See pds-opus issue #336
-    count = count.replace('.320', '.032')
-    count = count.replace('.640', '.064')
-    count = count.replace('.960', '.096')
-    if count.endswith('.32'):
-        count = count.replace('.32', '.032')
-    if count.endswith('.64'):
-        count = count.replace('.64', '.064')
-    if count.endswith('.96'):
-        count = count.replace('.96', '.096')
-    # See pds-opus issue #443
-    if count.endswith('.324'):
-        count = count.replace('.324', '.000')
+    # count = count.replace('.320', '.032')
+    # count = count.replace('.640', '.064')
+    # count = count.replace('.960', '.096')
+    # if count.endswith('.32'):
+    #     count = count.replace('.32', '.032')
+    # if count.endswith('.64'):
+    #     count = count.replace('.64', '.064')
+    # if count.endswith('.96'):
+    #     count = count.replace('.96', '.096')
+    # # See pds-opus issue #443
+    # if count.endswith('.324'):
+    #     count = count.replace('.324', '.000')
 
     ### VIMS
     # See pds-opus issue #444

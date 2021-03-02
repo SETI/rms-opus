@@ -18,7 +18,7 @@
     },
     "PDS Constraints": {
         "volumeid": "HSTO0_7308",
-        "datasetid": "HST-J-STIS-5-ID7308-V1.0",
+        "datasetid": "HST-J-STIS-5-ID7308-V1.2",
         "productid": "O43B2SXGQ",
         "productcreationtime": null,
         "primaryfilespec": "HSTO0_7308/DATA/VISIT_2S/O43B2SXGQ.LBL",
@@ -33,14 +33,14 @@
         "imagetype": "Frame"
     },
     "Wavelength Constraints": {
-        "wavelength1": "0.153",
-        "wavelength2": "1.21",
-        "waveres1": "0.032",
-        "waveres2": "0.032",
-        "waveno1": "8264.5",
-        "waveno2": "65359.5",
-        "wavenores1": "218.564",
-        "wavenores2": "13669.956",
+        "wavelength1": "0.174",
+        "wavelength2": "1.14",
+        "waveres1": "0.0138",
+        "waveres2": "0.0138",
+        "waveno1": "8771.9",
+        "waveno2": "57471.3",
+        "wavenores1": "106.187",
+        "wavenores2": "4558.066",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

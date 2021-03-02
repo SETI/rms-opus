@@ -424,7 +424,7 @@ try: # Top-level exception handling so we always log what's going on
 
     if not impglobals.ARGUMENTS.dont_use_shelves_only:
         pdsfile.use_shelves_only()
-    pdsfile.use_pickles()
+    pdsfile.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds_data_dir:
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:

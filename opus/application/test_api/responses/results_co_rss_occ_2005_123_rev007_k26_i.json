@@ -20,9 +20,9 @@
         "volumeid": "CORSS_8001",
         "datasetid": "CO-SR-RSS-4/5-OCC-V2.0",
         "productid": "RSS_2005_123_K26_I_TAU_01KM.LBL",
-        "productcreationtime": null,
+        "productcreationtime": "2018-10-03T13:52:31.000",
         "primaryfilespec": "CORSS_8001/data/Rev007/Rev007I/Rev007I_RSS_2005_123_K26_I/RSS_2005_123_K26_I_TAU_01KM.LBL",
-        "opusid": "co-rss-occ-2005-123-k26-i",
+        "opusid": "co-rss-occ-2005-123-rev007-k26-i",
         "note": null
     },
     "Image Constraints": {
@@ -56,12 +56,12 @@
         "occwlband": "Ka",
         "occsource": "Cassini",
         "occreceiverhost": "DSN 26 (Goldstone 34m)",
-        "RINGGEOobserverringopeningangle1": "-23.575",
-        "RINGGEOobserverringopeningangle2": "-23.574",
         "RINGGEOringradius1": "72001.25",
         "RINGGEOringradius2": "144998.75",
         "RINGGEOsolarringopeningangle1": "23.574",
-        "RINGGEOsolarringopeningangle2": "23.575"
+        "RINGGEOsolarringopeningangle2": "23.575",
+        "RINGGEOobserverringopeningangle1": "-23.575",
+        "RINGGEOobserverringopeningangle2": "-23.574"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

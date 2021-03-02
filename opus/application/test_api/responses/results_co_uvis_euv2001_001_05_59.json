@@ -20,7 +20,7 @@
         "volumeid": "COUVIS_0002",
         "datasetid": "CO-J-UVIS-2-CUBE-V1.2",
         "productid": "EUV2001_001_05_59",
-        "productcreationtime": null,
+        "productcreationtime": "2012-01-28T00:00:00.000",
         "primaryfilespec": "COUVIS_0002/DATA/D2001_001/EUV2001_001_05_59.LBL",
         "opusid": "co-uvis-euv2001_001_05_59",
         "note": "to obtain EUV and FUV spectral images of Jupiter while ISS performs a N-S meridional scan."
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

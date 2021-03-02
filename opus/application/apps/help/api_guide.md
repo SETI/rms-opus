@@ -639,7 +639,7 @@ data.csv
 manifest.csv
 urls.txt
 VGISS_6210_inventory.lbl
-VGISS_6210_inventory.tab
+VGISS_6210_inventory.csv
 VGISS_6210_moon_summary.lbl
 VGISS_6210_moon_summary.tab
 VGISS_6210_ring_summary.lbl

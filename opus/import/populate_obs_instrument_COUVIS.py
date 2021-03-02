@@ -54,10 +54,7 @@ def _COUVIS_channel_time_helper(**kwargs):
 def populate_obs_general_COUVIS_opus_id_OBS(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -169,7 +166,7 @@ def populate_obs_pds_COUVIS_primary_file_spec_OBS(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COUVIS_product_creation_time_OBS(**kwargs):
-    return None # Until the proper data is available in the supplemental index
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-S-UVIS-2-SSB-V1.4"
 def populate_obs_pds_COUVIS_data_set_id_OBS(**kwargs):

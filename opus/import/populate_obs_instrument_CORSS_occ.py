@@ -15,6 +15,7 @@ from populate_util import *
 
 _DSN_NAMES = {
     14: 'Goldstone 14m',
+    15: 'Goldstone 34m',
     24: 'Goldstone 34m',
     25: 'Goldstone 34m',
     26: 'Goldstone 34m',
@@ -45,10 +46,7 @@ def _CORSS_file_spec_helper(**kwargs):
 def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
     file_spec = _CORSS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -124,7 +122,7 @@ def populate_obs_pds_CORSS_primary_file_spec_OCC(**kwargs):
     return _CORSS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_CORSS_product_creation_time_OCC(**kwargs):
-    return None # Until the proper data is available in the supplemental index
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-SR-RSS-4/5-OCC-V2.0"
 def populate_obs_pds_CORSS_data_set_id_OCC(**kwargs):

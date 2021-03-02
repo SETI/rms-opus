@@ -20,7 +20,7 @@
         "volumeid": "COUVIS_0002",
         "datasetid": "CO-J-UVIS-2-SSB-V1.2",
         "productid": "HSP2001_087_04_00",
-        "productcreationtime": null,
+        "productcreationtime": "2012-01-28T00:00:00.000",
         "primaryfilespec": "COUVIS_0002/DATA/D2001_087/HSP2001_087_04_00.LBL",
         "opusid": "co-uvis-hsp2001_087_04_00",
         "note": "to calibrate the full range of HSP photometric sensitivity."
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

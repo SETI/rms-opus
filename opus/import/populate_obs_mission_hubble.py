@@ -62,15 +62,13 @@ def _HST_file_spec_helper(**kwargs):
 def populate_obs_general_HSTx_opus_id_OBS(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
-    try:
-        opus_id = pds_file.opus_id.replace('.', '-')
-    except:
-        opus_id = None
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
-    return opus_id
+
+    return opus_id.replace('.', '-')
 
 populate_obs_general_HSTACS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
 populate_obs_general_HSTNICMOS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
@@ -1025,17 +1023,17 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
-    # Temporary fix for issue #491 XXX
-    old_aperture = aperture
-    if aperture == 'NIC1FIX':
-        aperture = 'NIC1-FIX'
-    elif aperture == 'NIC2FIX':
-        aperture = 'NIC2-FIX'
-    elif aperture == 'NIC3FIX':
-        aperture = 'NIC3-FIX'
-    if old_aperture != aperture:
-        import_util.log_nonrepeating_warning(
-            f'Replaced bad aperture {old_aperture} with {aperture}')
+    # # Temporary fix for issue #491 XXX
+    # old_aperture = aperture
+    # if aperture == 'NIC1FIX':
+    #     aperture = 'NIC1-FIX'
+    # elif aperture == 'NIC2FIX':
+    #     aperture = 'NIC2-FIX'
+    # elif aperture == 'NIC3FIX':
+    #     aperture = 'NIC3-FIX'
+    # if old_aperture != aperture:
+    #     import_util.log_nonrepeating_warning(
+    #         f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 

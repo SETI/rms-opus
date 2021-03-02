@@ -137,12 +137,6 @@ def populate_obs_general_preview_images(**kwargs):
     except ValueError as e:
         import_util.log_nonrepeating_warning(
             f'ViewSet threw ValueError for "{file_spec}": {e}')
-        if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
-            trace_str = traceback.format_exception(
-                                            *pdsfile.PdsFile.LAST_EXC_INFO)
-            import_util.log_nonrepeating_warning(
-                'PdsFile had internal error: '+''.join(trace_str))
-            pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
         viewset = None
 
     if viewset:

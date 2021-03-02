@@ -20,8 +20,8 @@
         "volumeid": "COVIMS_8001",
         "datasetid": "CO-SR-VIMS-4/5-OCC-V2.1",
         "productid": "VIMS_2014_175_L2PUP_E_TAU_01KM.TAB",
-        "productcreationtime": null,
-        "primaryfilespec": "COVIMS_8001/DATA/VIMS_2014_175_L2PUP_E_TAU_01KM.LBL",
+        "productcreationtime": "2019-02-12T14:58:12.000",
+        "primaryfilespec": "COVIMS_8001/data/VIMS_2014_175_L2PUP_E_TAU_01KM.LBL",
         "opusid": "co-vims-occ-2014-175-l2pup-e",
         "note": "Data quality fair"
     },
@@ -56,12 +56,12 @@
         "occwlband": "IR",
         "occsource": "L2 Pup",
         "occreceiverhost": "Cassini",
-        "RINGGEOobserverringopeningangle1": "-41.91",
-        "RINGGEOobserverringopeningangle2": "-41.91",
         "RINGGEOringradius1": "74121",
         "RINGGEOringradius2": "145000",
         "RINGGEOsolarringopeningangle1": "41.91",
-        "RINGGEOsolarringopeningangle2": "41.91"
+        "RINGGEOsolarringopeningangle2": "41.91",
+        "RINGGEOobserverringopeningangle1": "-41.91",
+        "RINGGEOobserverringopeningangle2": "-41.91"
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

@@ -297,19 +297,19 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         self._run_json_equal_file(url, "results_eso1m_apph_occ_1989_184_28sgr_e.json")
 
     def test__results_contents_co_rss_occ_2005_123_k26_i(self):
-        "[test_results_contents.py] co-rss-occ-2005-123-k26-i"
-        url = "/api/metadata_v2/co-rss-occ-2005-123-k26-i.json"
-        self._run_json_equal_file(url, "results_co_rss_occ_2005_123_k26_i.json")
+        "[test_results_contents.py] co-rss-occ-2005-123-rev007-k26-i"
+        url = "/api/metadata_v2/co-rss-occ-2005-123-rev007-k26-i.json"
+        self._run_json_equal_file(url, "results_co_rss_occ_2005_123_rev007_k26_i.json")
 
     def test__results_contents_co_rss_occ_2008_217_s63_i(self):
-        "[test_results_contents.py] co-rss-occ-2008-217-s63-i"
-        url = "/api/metadata_v2/co-rss-occ-2008-217-s63-i.json"
-        self._run_json_equal_file(url, "results_co_rss_occ_2008_217_s63_i.json")
+        "[test_results_contents.py] co-rss-occ-2008-217-rev079c-s63-i"
+        url = "/api/metadata_v2/co-rss-occ-2008-217-rev079c-s63-i.json"
+        self._run_json_equal_file(url, "results_co_rss_occ_2008_217_rev079c_s63_i.json")
 
     def test__results_contents_co_rss_occ_2010_170_x34_e(self):
-        "[test_results_contents.py] co-rss-occ-2010-170-x34-e"
-        url = "/api/metadata_v2/co-rss-occ-2010-170-x34-e.json"
-        self._run_json_equal_file(url, "results_co_rss_occ_2010_170_x34_e.json")
+        "[test_results_contents.py] co-rss-occ-2010-170-rev133-x34-e"
+        url = "/api/metadata_v2/co-rss-occ-2010-170-rev133-x34-e.json"
+        self._run_json_equal_file(url, "results_co_rss_occ_2010_170_rev133_x34_e.json")
 
     def test__results_contents_co_uvis_occ_2005_175_126tau_i(self):
         "[test_results_contents.py] co-uvis-occ-2005-175-126tau-i"

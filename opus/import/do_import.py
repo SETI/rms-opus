@@ -761,8 +761,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 else:
                     # The pdstable.py module can't read non-fixed-length records
                     # so we fake it up ourselves here.
-                    table_filename = (assoc_label_path.replace('.LBL', '.TAB')
-                                      .replace('.lbl', '.tab'))
+                    table_filename = (assoc_label_path.replace('.LBL', '.CSV')
+                                      .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
                     with open(table_filename, 'r') as table_file:
@@ -773,7 +773,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             row_dict = {'VOLUME_ID': csv_volume.strip(),
                                         'FILE_SPECIFICATION_NAME':
                                                      csv_filespec.strip(),
-                                        'RING_OBSERVATION_ID':
+                                        'OPUS_ID':
                                                      csv_ringobsid.strip(),
                                         'TARGET_LIST': csv_targets}
                             assoc_rows.append(row_dict)
@@ -823,39 +823,35 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                                 geo_full_file_spec,
                                                 fix_case=True)
                         key = geo_pdsfile.opus_id
-                        if key is None:
+                        if not key:
                             import_util.log_nonrepeating_error(
             f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
                         key = key.replace('.', '-')
-                        # WARNING: HACK FOR VIMS XXX
+                        # WARNING: HACK FOR VIMS
                         # The current VIMS geo and inventory tables have entries
                         # for VIS and IR but the only way to distinguish
-                        # between them is to look at the deprecated
-                        # RING_OBSERVATION_ID. When Mark fixes this,
-                        # there will be a sub-instrument column of some
-                        # kind to use instead.
+                        # between them is to look at the OPUS_ID field.
                         if geo_vol.startswith('COVIMS'):
-                            ring_obs_id = row.get('RING_OBSERVATION_ID',
-                                                  None)
-                            if ring_obs_id is None:
+                            opus_id = row.get('OPUS_ID', None)
+                            if opus_id is None:
                                 import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing RING_OBSERVATION_ID field')
+                f'{assoc_label_path} is missing OPUS_ID field')
                                 break
-                            if ring_obs_id.endswith('IR'):
+                            if opus_id.endswith('ir'):
                                 key += '_ir'
-                            elif ring_obs_id.endswith('VIS'):
+                            elif opus_id.endswith('vis'):
                                 key += '_vis'
                             else:
                                 import_util.log_nonrepeating_error(
-                 f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
+                 f'{assoc_label_path} has bad OPUS_ID for '+
                  f'file_spec "{geo_full_file_spec}"')
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
-                            # RING_GEO is easy - there is at most a single entry
-                            # per observation, so we just create a dictionary
-                            # keyed by opus_id.
+                            # RING_GEO and INVENTORY are easy - there is at most
+                            # a single entry per observation, so we just create
+                            # a dictionary keyed by opus_id.
                             assoc_dict[key] = row
                         elif assoc_type == 'body_surface_geo':
                             # SURFACE_GEO is more complicated, because there can
@@ -987,6 +983,18 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
+        # The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
+        # (thanks VIMS team) but that's how we match across (supplemental) index
+        # files, so it's easier just to fake one here rather than special-case
+        # all the uses of FILE_SPECIFICATION_NAME later.
+        if volset == 'COVIMS_0xxx':
+            vims_filename = index_row['FILE_NAME']
+            vims_path = index_row['PATH_NAME']
+            if vims_path[0] == '/':
+                vims_path = vims_path[1:]
+            filespec = vims_path + '/' + vims_filename.replace('.qub', '.lbl')
+            index_row['FILE_SPECIFICATION_NAME'] = filespec
+
         if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
             # Match up the FILENAME with the key we generated earlier
             couvis_filename = index_row['FILE_NAME'].upper()
@@ -1049,7 +1057,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
-
         if volset == 'COVIMS_0xxx':
             phase_names = []
             if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
@@ -1655,27 +1662,18 @@ def import_run_field_function(func_name_suffix, volume_id,
                        table_name=table_name, table_schema=table_schema,
                        metadata=metadata))
 
-def _check_for_pdsfile_exception():
-    if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
-        trace_str = traceback.format_exception(*pdsfile.PdsFile.LAST_EXC_INFO)
-        import_util.log_nonrepeating_error('PdsFile had internal error: '
-                                           +''.join(trace_str))
-        pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
-
 def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                                   instrument_id):
     rows = []
 
     try:
         pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
-        _check_for_pdsfile_exception()
     except ValueError:
         import_util.log_nonrepeating_error(
                                     f'Failed to convert file_spec "{file_spec}"')
         return
 
     products = pdsf.opus_products()
-    _check_for_pdsfile_exception()
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
         if impglobals.ARGUMENTS.import_report_empty_products:
@@ -1683,7 +1681,6 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                       'Empty opus_product key for files: '+
                       file_list_str)
         del products['']
-        _check_for_pdsfile_exception()
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
         (category, sort_order_num, short_name,
@@ -1803,7 +1800,6 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                 if size == 0:
                     import_util.log_nonrepeating_warning(
                         f'File has zero size: {opus_id} {logical_path}')
-                _check_for_pdsfile_exception()
 
     return rows
 

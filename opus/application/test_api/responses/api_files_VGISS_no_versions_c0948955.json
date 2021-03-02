@@ -40,7 +40,7 @@
           "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_supplemental_index.lbl"
       ],
       "inventory": [
-        "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.tab",
+        "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.csv",
         "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.lbl"
       ],
       "planet_geometry": [
@@ -99,7 +99,7 @@
           "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_8xxx/VGISS_8201/DATA/C09489XX/C0948955_GEOMA.LBL"
         ],
         "inventory": [
-          "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.tab",
+          "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.csv",
           "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_8xxx/VGISS_8201/VGISS_8201_inventory.lbl"
         ],
         "planet_geometry": [
