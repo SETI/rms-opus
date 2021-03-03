@@ -33,12 +33,12 @@
         "imagetype": null
     },
     "Wavelength Constraints": {
-        "wavelength1": "0.9362",
-        "wavelength2": "0.9362",
+        "wavelength1": "9361.7",
+        "wavelength2": "9361.7",
         "waveres1": null,
         "waveres2": null,
-        "waveno1": "10681.8",
-        "waveno2": "10681.8",
+        "waveno1": "1.1",
+        "waveno2": "1.1",
         "wavenores1": null,
         "wavenores2": null,
         "specflag": "No",

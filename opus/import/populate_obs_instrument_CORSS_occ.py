@@ -172,14 +172,14 @@ def populate_obs_wavelength_CORSS_wavelength1_OCC(**kwargs):
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
-    return wl
+    return wl * 10000 # cm -> micron
 
 def populate_obs_wavelength_CORSS_wavelength2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
-    return wl
+    return wl * 10000 # cm -> micron
 
 def populate_obs_wavelength_CORSS_wave_res1_OCC(**kwargs):
     return None
