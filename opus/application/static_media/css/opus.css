@@ -1434,9 +1434,9 @@ footer for popover window */
     position: relative;
 }
 
-/* Make boostrap .modal-backdrop cover the popover window */
+/* Make the popover cover the chat balloon */
 .popover {
-    z-index: 1039;
+    z-index: 2000000001;
 }
 
 /* Make sure browser size modal window has higher z-index than other
