@@ -82,16 +82,17 @@ class main_site(TemplateView):
 
 @never_cache
 def api_notifications(request):
-    """Return the HTML for any pending notifications and the date of the last blog update.
+    """Return the HTML for any pending notifications and the date of the last
+       blog update.
 
     This is a PRIVATE API.
 
     Format: __notifications.json
 
     JSON return:
-        {'lastupdate': '2019-01-31',                (or if none available 'None')
-         'notification': '<html code>',             (or if none available 'None')
-         'notification_mdate': '<file mod date>'   (store as cookie)
+        {'lastupdate': '2019-01-31',               (or if none available 'None')
+         'notification': '<html code>',            (or if none available 'None')
+         'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
         }
     """
     api_code = enter_api_call('api_notifications', request)
@@ -105,29 +106,32 @@ def api_notifications(request):
     try:
         with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
             lastupdate = fp.read().strip()
+            if not lastupdate: lastupdate = None
     except:
         try:
             log.error('api_notifications: Failed to read file "%s"',
                       settings.OPUS_LAST_BLOG_UPDATE_FILE)
         except:
-            log.error('api_notifications: Failed to read file UNKNOWN')
+            log.error('api_notifications: OPUS_LAST_BLOG_UPDATE_FILE not set')
 
     notification = None
     notification_modify = None
     try:
         with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
             notification = fp.read().strip()
+            if not notification: notification = None
             try:
-                notification_modify = os.path.getmtime(settings.OPUS_NOTIFICATION_FILE)
+                notification_modify = os.path.getmtime(
+                                       settings.OPUS_NOTIFICATION_FILE)
             except:
-                log.error('api_notification: Failed to read the modify date of file "%s"',
-                          settings.OPUS_NOTIFICATION_FILE)
+                log.error('api_notification: Failed to read the modify date of '
+                          'file "%s"', settings.OPUS_NOTIFICATION_FILE)
     except:
         try:
-            log.error('api_notifications: Failed to read file "%s"',
+            log.debug('api_notifications: Failed to read file "%s"',
                       settings.OPUS_NOTIFICATION_FILE)
         except:
-            log.error('api_notifications: Failed to read file UNKNOWN')
+            log.debug('api_notifications: OPUS_NOTIFICATION_FILE not set')
 
     ret = json_response({'lastupdate': lastupdate,
                          'notification': notification,
