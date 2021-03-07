@@ -535,6 +535,17 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-notification-modal"
+            confirm_title="Important Message"
+            confirm_msg=""
+            target="op-notification-modal"
+            yes_text="Do not show again"
+            no_text="Close"
+            allow_close=True
+            draggable=False
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-download-links-error-msg-modal"
             confirm_title="Download Error"
             confirm_msg=""

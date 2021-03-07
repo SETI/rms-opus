@@ -419,13 +419,13 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    updateLastBlogDate: function() {
+    updateNotifications: function() {
         /**
          * Retrieve the date of the last blog update and update the tooltip for
          * the 'Recent Announcements' nav bar item.
          */
 
-        $.getJSON("/opus/__lastblogupdate.json", function(data) {
+        $.getJSON("/opus/__notifications.json", function(data) {
             if (data.lastupdate !== null) {
                 let lastUpdateDate = new Date(data.lastupdate);
                 let today = Date.now();
@@ -440,6 +440,10 @@ var opus = {
                 $("#op-last-blog-update-date").attr("title", "Blog last updated "+prettyDate);
             } else {
                 $("#op-last-blog-update-date").attr("title", "");
+            }
+            // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
+            if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {
+                opus.displayNotificationDialog(data.notification, data.notification_mdate);
             }
         });
     },
@@ -483,7 +487,7 @@ var opus = {
         o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
 
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
@@ -895,6 +899,9 @@ var opus = {
                         case "op-http-response-error-modal":
                             location.reload();
                             break;
+                        case "op-notification-modal":
+                            $.cookie("notify", $(`#${target}`).data("cookie"), {expires: 1000000});
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
@@ -931,6 +938,14 @@ var opus = {
     tooltipRemoveHandler: function() {
         $(".op-tooltip-text").remove();
         $(window).off("touchstart", opus.tooltipRemoveHandler);
+    },
+
+    displayNotificationDialog: function(html, cookie) {
+        $("#op-notification-modal .modal-body").html(html);
+        $("#op-notification-modal").data("cookie", cookie);
+
+        opus.hideOrShowSplashText();
+        $("#op-notification-modal").modal("show");
     },
 
     displayHelpPane: function(action) {
@@ -1088,7 +1103,7 @@ var opus = {
          * Initialize OPUS after the normalized URL has been returned.
          */
 
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];
