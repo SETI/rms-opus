@@ -8,9 +8,10 @@ from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
 
-from ui.views import (api_last_blog_update,
+from ui.views import (api_notifications,
                       api_normalize_url)
 
+import json
 import settings
 
 class uiTests(TestCase):
@@ -30,39 +31,110 @@ class uiTests(TestCase):
         logging.disable(logging.NOTSET)
 
 
-            ###################################################
-            ######### api_last_blog_update UNIT TESTS #########
-            ###################################################
+            ################################################
+            ######### api_notifications UNIT TESTS #########
+            ################################################
 
-    def test__api_last_blog_update_no_request(self):
-        "[test_ui.py] api_last_blog_update: no request"
+    def test__api_notifications_no_request(self):
+        "[test_ui.py] api_notifications: no request"
         with self.assertRaisesRegex(Http404,
-            r'Internal error \(No request was provided\) for /__lastblogupdate.json'):
-            api_last_blog_update(None)
+            r'Internal error \(No request was provided\) for /__notifications.json'):
+            api_notifications(None)
 
-    def test__api_last_blog_update_no_get(self):
-        "[test_ui.py] api_last_blog_update: no GET"
-        request = self.factory.get('__lastblogupdate.json')
+    def test__api_notifications_no_get(self):
+        "[test_ui.py] api_notifications: no GET"
+        request = self.factory.get('__notifications.json')
         request.GET = None
         with self.assertRaises(Http404):
-            api_last_blog_update(request)
+            api_notifications(request)
 
-    def test__api_last_blog_update_ok(self):
-        "[test_ui.py] api_last_blog_update: normal"
+    # tests specific for blog update file
+    def test__api_notifications_blog_update_file_ok(self):
+        "[test_ui.py] api_notifications: blog update file ok"
         settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/lastblogupdate.txt'
-        request = self.factory.get('__lastblogupdate.json')
-        ret = api_last_blog_update(request)
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/xyxyxyxyxyx.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
         print(ret)
-        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01"}')
+        self.assertEqual(ret.content, b'{"lastupdate": "2019-JAN-01", "notification": null, "notification_mdate": null}')
 
-    def test__api_last_blog_update_bad(self):
-        "[test_ui.py] api_last_blog_update: missing"
-        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/xyxyxyxyxyx.txt'
-        request = self.factory.get('__lastblogupdate.json')
-        ret = api_last_blog_update(request)
+    def test__api_notifications_blog_update_file_empty(self):
+        "[test_ui.py] api_notifications: blog update file empty"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/lastblogupdate_empty.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/xyxyxyxyxyx.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
         print(ret)
-        print(ret.content)
-        self.assertEqual(ret.content, b'{"lastupdate": null}')
+        self.assertEqual(ret.content, b'{"lastupdate": null, "notification": null, "notification_mdate": null}')
+
+    # tests specific for notification file
+    def test__api_notifications_notification_file_empty(self):
+        "[test_ui.py] api_notifications: notification file empty"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/lastblogupdate.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/notification.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        data = json.loads(ret.content)
+        print(data)
+        self.assertEqual(data['lastupdate'], "2019-JAN-01")
+        self.assertIsNone(data['notification'])
+        self.assertIsNotNone(data['notification_mdate'])
+
+    def test__api_notifications_notification_not_empty(self):
+        "[test_ui.py] api_notifications: notification file not empty"
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/test_ui_notification.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        data = json.loads(ret.content)
+        print(data)
+        self.assertEqual(data['notification'], "<div><p>test</p></div>")
+        self.assertIsNotNone(data['notification_mdate'])
+
+    # a few combination tests
+    def test__api_notifications_files_missing(self):
+        "[test_ui.py] api_notifications: missing last blog update and notification files"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/xyxyxyxyxyx.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/xyxyxyxyxyx.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        print(ret)
+        self.assertEqual(ret.content, b'{"lastupdate": null, "notification": null, "notification_mdate": null}')
+
+    def test__api_notifications_blog_update_file_empty_notification_file_not_empty(self):
+        "[test_ui.py] api_notifications: blog update file empty, notification file not empty"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/lastblogupdate_empty.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/test_ui_notification.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        data = json.loads(ret.content)
+        print(data)
+        self.assertIsNone(data['lastupdate'])
+        self.assertEqual(data['notification'], "<div><p>test</p></div>")
+        self.assertIsNotNone(data['notification_mdate'])
+
+    def test__api_notifications_blog_update_file_missing_notification_file_empty(self):
+        "[test_ui.py] api_notifications: blog update missing, notification file empty"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/xyxyxyxyxyx.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/notification.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        data = json.loads(ret.content)
+        print(data)
+        self.assertIsNone(data['lastupdate'])
+        self.assertIsNone(data['notification'])
+        self.assertIsNotNone(data['notification_mdate'])
+
+    def test__api_notifications_blog_update_file_missing_notification_file_not_empty(self):
+        "[test_ui.py] api_notifications: blog update missing, notification file empty"
+        settings.OPUS_LAST_BLOG_UPDATE_FILE = 'test_api/data/xyxyxyxyxyx.txt'
+        settings.OPUS_NOTIFICATION_FILE = 'test_api/data/test_ui_notification.html'
+        request = self.factory.get('__notifications.json')
+        ret = api_notifications(request)
+        data = json.loads(ret.content)
+        print(data)
+        self.assertIsNone(data['lastupdate'])
+        self.assertEqual(data['notification'], "<div><p>test</p></div>")
+        self.assertIsNotNone(data['notification_mdate'])
 
 
             ################################################

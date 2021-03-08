@@ -4,7 +4,7 @@
 #
 # The (private) API interface for returning things for the main UI.
 #
-#    Format: __lastblogupdate.json
+#    Format: __notifications.json
 #    Format: __menu.json
 #    Format: __metadata_selector.json
 #    Format: __widget/(?P<slug>[-\w]+).html
@@ -19,6 +19,7 @@
 from collections import OrderedDict
 
 import settings
+import os
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
@@ -80,22 +81,24 @@ class main_site(TemplateView):
         return context
 
 @never_cache
-def api_last_blog_update(request):
-    """Return the date of the last blog update.
+def api_notifications(request):
+    """Return the HTML for any pending notifications and the date of the last
+       blog update.
 
     This is a PRIVATE API.
 
-    Format: __lastblogupdate.json
+    Format: __notifications.json
 
     JSON return:
-        {'lastupdate': '2019-01-31'}
-      or if none available:
-        {'lastupdate': None}
+        {'lastupdate': '2019-01-31',               (or if none available 'None')
+         'notification': '<html code>',            (or if none available 'None')
+         'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
+        }
     """
-    api_code = enter_api_call('api_last_blog_update', request)
+    api_code = enter_api_call('api_notifications', request)
 
     if not request or request.GET is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__lastblogupdate.json'))
+        ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -103,14 +106,36 @@ def api_last_blog_update(request):
     try:
         with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
             lastupdate = fp.read().strip()
+            if not lastupdate: lastupdate = None
     except:
         try:
-            log.error('api_last_blog_update: Failed to read file "%s"',
+            log.error('api_notifications: Failed to read file "%s"',
                       settings.OPUS_LAST_BLOG_UPDATE_FILE)
         except:
-            log.error('api_last_blog_update: Failed to read file UNKNOWN')
+            log.error('api_notifications: OPUS_LAST_BLOG_UPDATE_FILE not set')
 
-    ret = json_response({'lastupdate': lastupdate})
+    notification = None
+    notification_modify = None
+    try:
+        with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
+            notification = fp.read().strip()
+            if not notification: notification = None
+            try:
+                notification_modify = os.path.getmtime(
+                                       settings.OPUS_NOTIFICATION_FILE)
+            except:
+                log.error('api_notification: Failed to read the modify date of '
+                          'file "%s"', settings.OPUS_NOTIFICATION_FILE)
+    except:
+        try:
+            log.debug('api_notifications: Failed to read file "%s"',
+                      settings.OPUS_NOTIFICATION_FILE)
+        except:
+            log.debug('api_notifications: OPUS_NOTIFICATION_FILE not set')
+
+    ret = json_response({'lastupdate': lastupdate,
+                         'notification': notification,
+                         'notification_mdate': notification_modify})
 
     exit_api_call(api_code, ret)
     return ret

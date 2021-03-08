@@ -515,7 +515,6 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                e.preventDefault();
                 if (o_browse.pageLoaderSpinnerTimer === null) {
                     /*  Catch the right/left arrow and spacebar while in the modal
                         Up: 38
@@ -556,6 +555,10 @@ var o_browse = {
                             obsNum += offset;
                             o_browse.moveToNextMetadataSlide(obsNum, "next");
                             break;
+                        default:
+                            // allow exception handling to propagate
+                            // fixes the bug that prevented click on the slide to open a full size image
+                            return true;
                     }
                 }
                 return false;
@@ -842,7 +845,6 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-
         // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
         // trigger to load new data (previous page). During the time when infiniteScroll is
         // still loading (before all new obs are rendered), if we keep resizing and cause some
@@ -2127,8 +2129,13 @@ var o_browse = {
 
         let trCountFloor = viewNamespace.galleryBoundingRect.trFloor;
         if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
-                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+            // Note: in table view, if there is more than one row, we divide by the 2nd table tr's
+            // height because in Firefox & Safari, the first table tr's height will be 1px larger
+            // than rest of tr, and this will mess up the calculation.
+            let tableRowHeight = ($(`${tab} .op-data-table tbody tr[data-obs]`).length === 1 ?
+                                  $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight() :
+                                  $(`${tab} .op-data-table tbody tr[data-obs]`).eq(1).outerHeight());
+            trCountFloor = o_utils.floor((height-$(`${tab} .op-data-table th`).outerHeight()) / tableRowHeight);
         }
 
         let xCount = o_utils.floor(width/o_browse.imageSize);
