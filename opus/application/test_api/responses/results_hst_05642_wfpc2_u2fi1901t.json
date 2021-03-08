@@ -20,7 +20,7 @@
         "volumeid": "HSTU0_5642",
         "datasetid": "HST-J-WFPC2-5-ID5642-V1.1",
         "productid": "U2FI1901T",
-        "productcreationtime": null,
+        "productcreationtime": "2010-08-19T16:51:07.000",
         "primaryfilespec": "HSTU0_5642/DATA/VISIT_19/U2FI1901T.LBL",
         "opusid": "hst-05642-wfpc2-u2fi1901t",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

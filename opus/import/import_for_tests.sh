@@ -18,7 +18,7 @@ python main_opus_import.py --do-all-import COVIMS_0006 $1
 python main_opus_import.py --do-all-import COCIRS_5408 $1
 python main_opus_import.py --do-all-import GO_0017 $1
 python main_opus_import.py --do-all-import VGISS_6210,VGISS_8201 $1
-python main_opus_import.py --do-all-import HSTI1_1559,HSTI1_2003,HSTJ0_9975,HSTN0_7243,HSTO0_7308,HSTU0_5642 $1
+python main_opus_import.py --do-all-import HSTI1_1559,HSTI1_2003,HSTJ0_9975,HSTN0_7243,HSTO0_7316,HSTU0_5642 $1
 python main_opus_import.py --do-all-import NHPELO_2001,NHLAMV_2001 $1
 python main_opus_import.py --do-all-import EBROCC_0001 $1
 python main_opus_import.py --do-all-import CORSS_8001 $1

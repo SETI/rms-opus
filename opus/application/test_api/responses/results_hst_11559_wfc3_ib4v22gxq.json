@@ -20,7 +20,7 @@
         "volumeid": "HSTI1_1559",
         "datasetid": "HST-J-WFC3-5-ID11559-V1.2",
         "productid": "IB4V22GXQ",
-        "productcreationtime": null,
+        "productcreationtime": "2018-07-14T14:29:09.000",
         "primaryfilespec": "HSTI1_1559/DATA/VISIT_22/IB4V22GXQ.LBL",
         "opusid": "hst-11559-wfc3-ib4v22gxq",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

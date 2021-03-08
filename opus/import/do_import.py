@@ -1731,7 +1731,8 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
-                        file.find_selected_row_key(selection, '=')
+                        file.find_selected_row_key(selection, '=',
+                                                   exact_match=True)
                     except KeyError:
                         # can't find the row, we skip this product_type
                         skip_current_product_type = True

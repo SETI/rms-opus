@@ -20,7 +20,7 @@
         "volumeid": "HSTN0_7243",
         "datasetid": "HST-J-NICMOS-5-ID7243-V1.0",
         "productid": "N4BE03SEQ",
-        "productcreationtime": null,
+        "productcreationtime": "2017-12-20T15:31:48.000",
         "primaryfilespec": "HSTN0_7243/DATA/VISIT_03/N4BE03SEQ.LBL",
         "opusid": "hst-07243-nicmos-n4be03seq",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null

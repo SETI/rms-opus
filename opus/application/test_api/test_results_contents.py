@@ -226,20 +226,15 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/metadata_v2/hst-07243-nicmos-n4be05blq.json"
         self._run_json_equal_file(url, "results_hst_07243_nicmos_n4be05blq.json")
 
-    def test__results_contents_hst_07308_stis_o43b2sxgq(self):
-        "[test_results_contents.py] hst-07308-stis-o43b2sxgq"
-        url = "/api/metadata_v2/hst-07308-stis-o43b2sxgq.json"
-        self._run_json_equal_file(url, "results_hst_07308_stis_o43b2sxgq.json")
+    def test__results_contents_hst_07316_stis_o57h02joq(self):
+        "[test_results_contents.py] hst-07316-stis-o57h02joq"
+        url = "/api/metadata_v2/hst-07316-stis-o57h02joq.json"
+        self._run_json_equal_file(url, "results_hst_07316_stis_o57h02joq.json")
 
-    def test__results_contents_hst_07308_stis_o43ba6bxq(self):
-        "[test_results_contents.py] hst-07308-stis-o43ba6bxq"
-        url = "/api/metadata_v2/hst-07308-stis-o43ba6bxq.json"
-        self._run_json_equal_file(url, "results_hst_07308_stis_o43ba6bxq.json")
-
-    def test__results_contents_hst_07308_stis_o43bd9bhq(self):
-        "[test_results_contents.py] hst-07308-stis-o43bd9bhq"
-        url = "/api/metadata_v2/hst-07308-stis-o43bd9bhq.json"
-        self._run_json_equal_file(url, "results_hst_07308_stis_o43bd9bhq.json")
+    def test__results_contents_hst_07316_stis_o57h02010(self):
+        "[test_results_contents.py] hst-07316-stis-o57h02010"
+        url = "/api/metadata_v2/hst-07316-stis-o57h02010.json"
+        self._run_json_equal_file(url, "results_hst_07316_stis_o57h02010.json")
 
     def test__results_contents_hst_09975_acs_j8n460zvq(self):
         "[test_results_contents.py] hst-09975-acs-j8n460zvq"

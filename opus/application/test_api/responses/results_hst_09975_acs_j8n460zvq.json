@@ -20,7 +20,7 @@
         "volumeid": "HSTJ0_9975",
         "datasetid": "HST-M-ACS-5-ID9975-V1.1",
         "productid": "J8N460ZVQ",
-        "productcreationtime": null,
+        "productcreationtime": "2013-06-17T12:57:25.000",
         "primaryfilespec": "HSTJ0_9975/DATA/VISIT_60/J8N460ZVQ.LBL",
         "opusid": "hst-09975-acs-j8n460zvq",
         "note": null
@@ -56,12 +56,12 @@
         "occwlband": null,
         "occsource": null,
         "occreceiverhost": null,
-        "RINGGEOobserverringopeningangle1": null,
-        "RINGGEOobserverringopeningangle2": null,
         "RINGGEOringradius1": null,
         "RINGGEOringradius2": null,
         "RINGGEOsolarringopeningangle1": null,
-        "RINGGEOsolarringopeningangle2": null
+        "RINGGEOsolarringopeningangle2": null,
+        "RINGGEOobserverringopeningangle1": null,
+        "RINGGEOobserverringopeningangle2": null
     },
     "Surface Geometry Constraints": {
         "surfacegeometrytargetlist": null
