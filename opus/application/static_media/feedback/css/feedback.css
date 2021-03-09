@@ -653,7 +653,7 @@ button.feedback-btn.small, input[type="submit"].feedback-btn.small {
     justify-content: center;
 }
 .feedbackTab p:before {
-    background-image: url(../image/msg_icon.png);
+    background-image: url(../image/envelope.jpg);
     opacity: 0.5; /* OPUS - Added to agree with text opacity */
     background-size: 18px 18px;
     background-repeat: no-repeat;
