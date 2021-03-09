@@ -506,20 +506,20 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
 
     def test__api_meta_range_endpoints_times_HSTI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI"
-        url = '/api/meta/range/endpoints/timesec1.json?volumeid=HSTI1_2003'
-        expected = {"max": "2009-08-08T23:13:10.000", "nulls": 0, "min": "2009-07-23T18:12:25.000", "units": None}
+        url = '/api/meta/range/endpoints/timesec1.json?volumeid=HSTI1_1559'
+        expected = {"min": "2009-09-18T13:13:10.000", "max": "2009-09-23T01:05:12.000", "nulls": 0, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_html(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI html"
-        url = '/api/meta/range/endpoints/timesec1.html?volumeid=HSTI1_2003'
-        expected = b'<dl>\n<dt>min</dt><dd>2009-07-23T18:12:25.000</dd>\n<dt>max</dt><dd>2009-08-08T23:13:10.000</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
+        url = '/api/meta/range/endpoints/timesec1.html?volumeid=HSTI1_1559'
+        expected = b'<dl>\n<dt>min</dt><dd>2009-09-18T13:13:10.000</dd>\n<dt>max</dt><dd>2009-09-23T01:05:12.000</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_csv(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI csv"
-        url = '/api/meta/range/endpoints/timesec1.csv?volumeid=HSTI1_2003'
-        expected = b'min,max,nulls,units\n2009-07-23T18:12:25.000,2009-08-08T23:13:10.000,0,\n'
+        url = '/api/meta/range/endpoints/timesec1.csv?volumeid=HSTI1_1559'
+        expected = b'min,max,nulls,units\n2009-09-18T13:13:10.000,2009-09-23T01:05:12.000,0,\n'
         self._run_csv_equal(url, expected)
 
     # General / Observation Duration (floating point return)

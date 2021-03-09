@@ -216,15 +216,15 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/metadata_v2/hst-05642-wfpc2-u2fi1901t.json"
         self._run_json_equal_file(url, "results_hst_05642_wfpc2_u2fi1901t.json")
 
-    def test__results_contents_hst_07243_nicmos_n4be03seq(self):
-        "[test_results_contents.py] hst-07243-nicmos-n4be03seq"
-        url = "/api/metadata_v2/hst-07243-nicmos-n4be03seq.json"
-        self._run_json_equal_file(url, "results_hst_07243_nicmos_n4be03seq.json")
+    def test__results_contents_hst_07181_nicmos_n4uc01b0q(self):
+        "[test_results_contents.py] hst-07181-nicmos-n4uc01b0q"
+        url = "/api/metadata_v2/hst-07181-nicmos-n4uc01b0q.json"
+        self._run_json_equal_file(url, "results_hst_07181_nicmos_n4uc01b0q.json")
 
-    def test__results_contents_hst_07243_nicmos_n4be05blq(self):
-        "[test_results_contents.py] hst-07243-nicmos-n4be05blq"
-        url = "/api/metadata_v2/hst-07243-nicmos-n4be05blq.json"
-        self._run_json_equal_file(url, "results_hst_07243_nicmos_n4be05blq.json")
+    def test__results_contents_hst_07181_nicmos_n4uc01cjq(self):
+        "[test_results_contents.py] hst-07181-nicmos-n4uc01cjq"
+        url = "/api/metadata_v2/hst-07181-nicmos-n4uc01cjq.json"
+        self._run_json_equal_file(url, "results_hst_07181_nicmos_n4uc01cjq.json")
 
     def test__results_contents_hst_07316_stis_o57h02joq(self):
         "[test_results_contents.py] hst-07316-stis-o57h02joq"
@@ -241,10 +241,26 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/metadata_v2/hst-09975-acs-j8n460zvq.json"
         self._run_json_equal_file(url, "results_hst_09975_acs_j8n460zvq.json")
 
+    def test__results_contents_hst_11085_acs_j9xe05011(self):
+        "[test_results_contents.py] hst-11085-acs-j9xe05011"
+        url = "/api/metadata_v2/hst-11085-acs-j9xe05011.json"
+        self._run_json_equal_file(url, "results_hst_11085_acs_j9xe05011.json")
+
     def test__results_contents_hst_11559_wfc3_ib4v22gxq(self):
         "[test_results_contents.py] hst-11559-wfc3-ib4v22gxq"
         url = "/api/metadata_v2/hst-11559-wfc3-ib4v22gxq.json"
         self._run_json_equal_file(url, "results_hst_11559_wfc3_ib4v22gxq.json")
+
+    def test__results_contents_hst_13667_wfc3_icok28ihq(self):
+        "[test_results_contents.py] hst-13667-wfc3-icok28ihq"
+        url = "/api/metadata_v2/hst-13667-wfc3-icok28ihq.json"
+        self._run_json_equal_file(url, "results_hst_13667_wfc3_icok28ihq.json")
+
+    def test__results_contents_hst_13667_wfc3_icok11rgq(self):
+        "[test_results_contents.py] hst-13667-wfc3-icok11rgq"
+        url = "/api/metadata_v2/hst-13667-wfc3-icok11rgq.json"
+        self._run_json_equal_file(url, "results_hst_13667_wfc3_icok11rgq.json")
+
 
     def test__results_contents_nh_lorri_lor_0299075349(self):
         "[test_results_contents.py] nh-lorri-lor_0299075349"
