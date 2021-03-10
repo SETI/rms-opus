@@ -462,6 +462,12 @@ var opus = {
         $("iframe").each(function(index) {
             let elem = $(this).contents().find("div#tawkchat-minified-box");
             if (elem.length > 0) {
+                if (elem.find("#minimizeChatMinifiedBtn").hasClass("hide")) {
+                    elem.hide();
+                }
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
+            if (elem.length > 0) {
                 elem.hide();
             }
         });
@@ -470,6 +476,10 @@ var opus = {
     showTawkChat: function(action) {
         $("iframe").each(function(index) {
             let elem = $(this).contents().find("div#tawkchat-minified-box");
+            if (elem.length > 0) {
+                elem.show();
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
             if (elem.length > 0) {
                 elem.show();
             }
