@@ -141,13 +141,23 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "nh_raw",
-        "definition": "Raw image files (*_eng.fit) for New Horizons LORRI and MVIC. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image."
+        "pi_dict_name": "nh_lorri_raw",
+        "definition": "Raw image files (*_eng.fit) for New Horizons LORRI. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "nh_calib",
-        "definition": "Calibrated image files (*_sci.fit) for New Horizons LORRI and MVIC. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration."
+        "pi_dict_name": "nh_lorri_calib",
+        "definition": "Calibrated image files (*_sci.fit) for New Horizons LORRI. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_raw",
+        "definition": "Raw image files (*_eng.fit) for New Horizons MVIC. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_calib",
+        "definition": "Calibrated image files (*_sci.fit) for New Horizons MVIC. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
@@ -396,12 +406,12 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "corss_occ_01",
-        "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
+        "pi_dict_name": "corss_occ_best_res",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with the best available (~1km) resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "corss_occ_10",
+        "pi_dict_name": "corss_occ_10km_res",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 10km resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
@@ -418,6 +428,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "corss_occ_geo",
         "definition": "Text files (*.TAB) that tabulate observation geometry parameters needed for the reconstruction of diffraction-limited profiles. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "corss_occ_doc",
+        "definition": "Document files (*.pdf) that provide details about an occultation. Associated labels (*.LBL) describe the contents of the document files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
