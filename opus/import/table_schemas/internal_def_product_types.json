@@ -161,13 +161,23 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "nh_raw_alternate",
-        "definition": "Raw image files (*_eng.fit) for New Horizons LORRI and MVIC. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. These are duplicate New Horizons images that were downlinked using alternate settings (e.g. lossy, compressed, or binned). The best version is provided as the primary Raw Image and lesser-quality images are included here when available."
+        "pi_dict_name": "nh_lorri_raw_alternate",
+        "definition": "Raw image files (*_eng.fit) for New Horizons LORRI. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. These are duplicate New Horizons images that were downlinked using alternate settings (e.g. lossy, compressed, or binned). The best version is provided as the primary Raw Image and lesser-quality images are included here when available."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
-        "pi_dict_name": "nh_calib_alternate",
-        "definition": "Calibrated image files (*_sci.fit) for New Horizons LORRI and MVIC. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration. The best version is provided as the primary Calibrated Image and lesser-quality images are included here when available."
+        "pi_dict_name": "nh_lorri_calib_alternate",
+        "definition": "Calibrated image files (*_sci.fit) for New Horizons LORRI. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration. The best version is provided as the primary Calibrated Image and lesser-quality images are included here when available."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_raw_alternate",
+        "definition": "Raw image files (*_eng.fit) for New Horizons MVIC. Images are in FITS format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. These are duplicate New Horizons images that were downlinked using alternate settings (e.g. lossy, compressed, or binned). The best version is provided as the primary Raw Image and lesser-quality images are included here when available."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_calib_alternate",
+        "definition": "Calibrated image files (*_sci.fit) for New Horizons MVIC. Images are in FITS format and have been calibrated by the New Horizons team. They are in units of calibrated DN (data number). Associated labels (*.LBL) are text files that contain information about the image and its calibration. The best version is provided as the primary Calibrated Image and lesser-quality images are included here when available."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
