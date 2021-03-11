@@ -17,11 +17,11 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "NHLAMV_2001",
-        "datasetid": "NH-X-MVIC-3-LAUNCH-V2.0",
-        "productid": "MC1_0005261846_0X537_SCI_1",
-        "productcreationtime": "2009-02-27T03:16:15.000",
-        "primaryfilespec": "NHLAMV_2001/data/20060321_000526/mc1_0005261846_0x537_sci_1.lbl",
+        "volumeid": "NHLAMV_1001",
+        "datasetid": "NH-X-MVIC-2-LAUNCH-V2.0",
+        "productid": "MC1_0005261846_0X537_ENG_1",
+        "productcreationtime": "2009-02-27T03:10:36.000",
+        "primaryfilespec": "NHLAMV_1001/data/20060321_000526/mc1_0005261846_0x537_eng_1.lbl",
         "opusid": "nh-mvic-mc1_0005261846",
         "note": null
     },
