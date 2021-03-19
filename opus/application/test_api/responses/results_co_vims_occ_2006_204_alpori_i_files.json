@@ -22,28 +22,32 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_supplemental_index.lbl"
             ],
             "browse_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_thumb.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_thumb.jpg"
             ],
             "browse_small": [
-                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_small.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_small.jpg"
             ],
             "browse_medium": [
-                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_med.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_med.jpg"
             ],
             "browse_full": [
-                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_full.jpg"
-            ],
-            "diagram_thumb": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_thumb.jpg"
-            ],
-            "diagram_small": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_small.jpg"
-            ],
-            "diagram_medium": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_med.jpg"
-            ],
-            "diagram_full": [
-                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_full.jpg"
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_full.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_full.jpg"
             ]
         }
     },
@@ -71,28 +75,32 @@
                     "https://opus.pds-rings.seti.org/holdings/metadata/COVIMS_8xxx/COVIMS_8001/COVIMS_8001_supplemental_index.lbl"
                 ],
                 "browse_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_thumb.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_thumb.jpg"
                 ],
                 "browse_small": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_small.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_small.jpg"
                 ],
                 "browse_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_med.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_med.jpg"
                 ],
                 "browse_full": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_full.jpg"
-                ],
-                "diagram_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_thumb.jpg"
-                ],
-                "diagram_small": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_small.jpg"
-                ],
-                "diagram_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_med.jpg"
-                ],
-                "diagram_full": [
-                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_full.jpg"
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_STAR_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_full.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_full.jpg"
                 ]
             },
             "2.0": {
@@ -103,6 +111,16 @@
                 "covims_occ_10": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v2.0/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_10KM.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v2.0/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_TAU_10KM.LBL"
+                ]
+            },
+            "1": {
+                "covims_occ_01": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v1/COVIMS_8001/EASYDATA/VIMS_2006_204_ALPORI_I_TAU_01KM.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v1/COVIMS_8001/EASYDATA/VIMS_2006_204_ALPORI_I_TAU_01KM.LBL"
+                ],
+                "covims_occ_10": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v1/COVIMS_8001/EASYDATA/VIMS_2006_204_ALPORI_I_TAU_10KM.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COVIMS_8xxx_v1/COVIMS_8001/EASYDATA/VIMS_2006_204_ALPORI_I_TAU_10KM.LBL"
                 ]
             }
         }

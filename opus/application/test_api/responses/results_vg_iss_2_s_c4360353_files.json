@@ -27,6 +27,22 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43603XX/C4360353_GEOMA.DAT",
                 "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43603XX/C4360353_GEOMA.LBL"
             ],
+            "vgiss_raw_browse": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_RAW.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_RAW.LBL"
+            ],
+            "vgiss_cleaned_browse": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CLEANED.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CLEANED.LBL"
+            ],
+            "vgiss_calib_browse": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CALIB.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CALIB.LBL"
+            ],
+            "vgiss_geomed_browse": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_GEOMED.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_GEOMED.LBL"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_6xxx/VGISS_6210/VGISS_6210_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_6xxx/VGISS_6210/VGISS_6210_index.lbl"
@@ -97,6 +113,22 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43603XX/C4360353_GEOMA.TAB",
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43603XX/C4360353_GEOMA.DAT",
                     "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43603XX/C4360353_GEOMA.LBL"
+                ],
+                "vgiss_raw_browse": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_RAW.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_RAW.LBL"
+                ],
+                "vgiss_cleaned_browse": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CLEANED.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CLEANED.LBL"
+                ],
+                "vgiss_calib_browse": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CALIB.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_CALIB.LBL"
+                ],
+                "vgiss_geomed_browse": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_GEOMED.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/BROWSE/C43603XX/C4360353_GEOMED.LBL"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/VGISS_6xxx/VGISS_6210/VGISS_6210_index.tab",

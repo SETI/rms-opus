@@ -59,7 +59,7 @@ class ApiTestHelper:
         print(expected)
         self._depth_first_remove(jdata, ignore)
         self._depth_first_remove(expected, ignore)
-        self.assertEqual(expected, jdata)
+        self.assertEqual(jdata, expected)
 
     def _run_json_equal_file(self, url, exp_file):
         print(url)
@@ -76,7 +76,7 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, jdata)
+        self.assertEqual(jdata, expected)
 
     def _run_html_equal(self, url, expected):
         print(url)
@@ -91,7 +91,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_html_equal_file(self, url, exp_file):
         print(url)
@@ -112,7 +112,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_html_startswith(self, url, expected):
         print(url)
@@ -128,7 +128,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     @staticmethod
     def _cleanup_csv(text):
@@ -147,7 +147,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_csv_equal_file(self, url, exp_file):
         print(url)
@@ -165,4 +165,4 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)

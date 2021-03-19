@@ -47,9 +47,8 @@ class ApiVimsDownlinksTests(TestCase):
                 try:
                     image_count = self._collect_vims_image_numbers_for_single_primary_filespec(primary_filespec, target_dict)
                 except Exception as error: # pragma: no cover
-                    error_msg.append(error)
+                    error_msg.append(error.args[0])
 
-                # print(image_count)
                 primary_filespec_object = target_dict[primary_filespec]
                 v1_ir_id = primary_filespec_object["images_with_opus_id"][0]
                 v1_vis_id = primary_filespec_object["images_with_opus_id"][1]
@@ -73,10 +72,11 @@ class ApiVimsDownlinksTests(TestCase):
                                 error_msg.append(f"{v1_id} is missing downlinks for image: {image}")
 
         if error_msg: # pragma: no cover
+            print('\n'.join(error_msg))
             for e in error_msg:
-                if e.args[0] in ["No VIMS data in test db",
-                                 "VIMS image data is not fully available in test db"] :
-                    test_data_not_available = e.args[0]
+                if e in ["No VIMS data in test db",
+                         "VIMS image data is not fully available in test db"] :
+                    test_data_not_available = e
                 else:
                     raise Exception("VIMS downlinks test failed")
         if test_data_not_available: # pragma: no cover
@@ -87,8 +87,8 @@ class ApiVimsDownlinksTests(TestCase):
     ### Helper functions ###
     ########################
     def _collect_vims_image_numbers_for_single_primary_filespec(self, primary_filespec, api_dict):
-        """Collect vims image numbers for ONE primary_filespecself.
-           return an image_count object to store the numbers
+        """Collect vims image numbers for ONE primary_filespec.
+           Return an image_count object to store the numbers
            ex:
            {'co-vims-v1490874598_001_ir': {
                 'browse_thumb': 2,

@@ -181,6 +181,16 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_lorri_calib_browse",
+        "definition": "Preview images (*.jpg) for the calibrated image files for New Horizons LORRI."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "nh_mvic_calib_browse",
+        "definition": "Preview images (*.jpg) for the calibrated image files for New Horizons LORRI."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "gossi_raw",
         "definition": "Raw image files (*.IMG) for Galileo SSI. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Also included are RTLMTAB.FMT, which describes the format of the VICAR binary header, and RLINEPRX.FMT, which describes the format of the binary prefix at the beginning of each line of imaging data."
     },
@@ -408,6 +418,26 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_geoma",
         "definition": "Files describing the nominal and measured reseau mark locations used to geometrically correct the image. Locations are provided in VICAR format (*_GEOMA.DAT) and text format (*_GEOMA.TAB). An associated label (*_GEOMA.LBL) is a text file that contains information about the *.DAT and *.TAB files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_raw_browse",
+        "definition": "Preview images (*_RAW.JPG) for the raw image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_cleaned_browse",
+        "definition": "Preview images (*_CLEANED.JPG) for the cleaned image files for Voyager ISS. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Apparent flaws in the raw image, including reseau markings and spikes, have been removed."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_calib_browse",
+        "definition": "Preview images (*_CALIB.JPG) for the calibrated image files for Voyager ISS. Images are in VICAR format and have been calibrated at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are calibrated versions of the cleaned images (*_CLEANED.IMG)."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgiss_geomed_browse",
+        "definition": "Preview images (*_GEOMED.JPG) for the calibrated and geometrically corrected image files for Voyager ISS. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG)."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

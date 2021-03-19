@@ -13,6 +13,14 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
             ],
+            "profile_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.lbl"
+            ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
+            ],
             "browse_thumb": [
                 "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_015_GAMCAS_E_thumb.jpg"
             ],
@@ -41,6 +49,14 @@
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_index.lbl"
+                ],
+                "profile_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_profile_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COUVIS_8xxx/COUVIS_8001/COUVIS_8001_supplemental_index.lbl"
                 ],
                 "browse_thumb": [
                     "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_015_GAMCAS_E_thumb.jpg"

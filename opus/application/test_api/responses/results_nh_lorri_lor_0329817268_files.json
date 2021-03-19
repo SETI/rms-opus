@@ -9,6 +9,12 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.fit",
                 "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.lbl"
             ],
+            "nh_lorri_calib_browse": [
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_med.jpg",
+                "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg"
+            ],
             "rms_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.lbl"
@@ -45,6 +51,12 @@
                 "nh_lorri_calib": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.fit",
                     "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.lbl"
+                ],
+                "nh_lorri_calib_browse": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_thumb.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_small.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_med.jpg",
+                    "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci_full.jpg"
                 ],
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/NHxxLO_xxxx/NHPELO_1001/NHPELO_1001_index.tab",

@@ -16,6 +16,11 @@
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408031652_611.LBL",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEODATA.FMT"
             ],
+            "cocirs_ispm": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408031652_FP1.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408031652_FP1.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPMDATA.FMT"
+            ],
             "cocirs_poi": [
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408031652_FP1.TAB",
                 "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408031652_FP1.LBL",
@@ -90,6 +95,11 @@
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408031652_615.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEO0408031652_611.LBL",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/GEODATA/GEODATA.FMT"
+                ],
+                "cocirs_ispm": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408031652_FP1.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPM0408031652_FP1.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/ISPMDATA/ISPMDATA.FMT"
                 ],
                 "cocirs_poi": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_5xxx/COCIRS_5408/DATA/POIDATA/POI0408031652_FP1.TAB",
