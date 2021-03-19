@@ -932,9 +932,12 @@ def populate_obs_wavelength_HSTSTIS_spec_size_OBS(**kwargs):
     lines = import_util.safe_column(index_row, 'LINES')
     samples = import_util.safe_column(index_row, 'LINE_SAMPLES')
     x1d_size = import_util.safe_column(index_row, 'X1D_SPECTRUM_SIZE')
-    if lines is None: lines = 0
-    if samples is None: samples = 0
-    if x1d_size is None: x1d_size = 0
+    if lines is None:
+        lines = 0
+    if samples is None:
+        samples = 0
+    if x1d_size is None:
+        x1d_size = 0
 
     return max(lines, samples, x1d_size)
 

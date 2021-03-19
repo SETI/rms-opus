@@ -6,7 +6,6 @@
 
 import csv
 import os
-import traceback
 
 import pdsfile
 

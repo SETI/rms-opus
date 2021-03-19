@@ -106,7 +106,8 @@ def api_notifications(request):
     try:
         with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
             lastupdate = fp.read().strip()
-            if not lastupdate: lastupdate = None
+            if not lastupdate:
+                lastupdate = None
     except:
         try:
             log.error('api_notifications: Failed to read file "%s"',
@@ -119,7 +120,8 @@ def api_notifications(request):
     try:
         with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
             notification = fp.read().strip()
-            if not notification: notification = None
+            if not notification:
+                notification = None
             try:
                 notification_modify = os.path.getmtime(
                                        settings.OPUS_NOTIFICATION_FILE)
