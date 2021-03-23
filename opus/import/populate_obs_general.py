@@ -124,11 +124,14 @@ def populate_obs_general_preview_images(**kwargs):
     if file_spec.startswith('NH'):
         file_spec = file_spec.replace('.lbl', '.fit')
         file_spec = file_spec.replace('.LBL', '.FIT')
-    elif file_spec.startswith('COUVIS'):
+    elif file_spec.startswith('COUVIS_0'):
         file_spec = file_spec.replace('.LBL', '.DAT')
-    elif file_spec.startswith('VGISS'):
+    elif (file_spec.startswith('VGISS_5') or
+          file_spec.startswith('VGISS_6') or
+          file_spec.startswith('VGISS_7') or
+          file_spec.startswith('VGISS_8')):
         file_spec = file_spec.replace('.LBL', '.IMG')
-    elif file_spec.startswith('CORSS'):
+    elif file_spec.startswith('CORSS_8'):
         file_spec = file_spec.replace('.LBL', '.TAB')
     elif file_spec.startswith('COUVIS_8'):
         file_spec = file_spec.replace('.LBL', '.TAB')

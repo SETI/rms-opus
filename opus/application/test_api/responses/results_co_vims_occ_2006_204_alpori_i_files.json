@@ -48,6 +48,18 @@
                 "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_full.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_full.jpg",
                 "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_full.jpg"
+            ],
+            "diagram_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_thumb.jpg"
+            ],
+            "diagram_small": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_small.jpg"
+            ],
+            "diagram_medium": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_med.jpg"
+            ],
+            "diagram_full": [
+                "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_full.jpg"
             ]
         }
     },
@@ -101,6 +113,18 @@
                     "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_NPOLE_full.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_LIGHTCURVE_full.jpg",
                     "https://opus.pds-rings.seti.org/holdings/previews/COVIMS_8xxx/COVIMS_8001/browse/VIMS_2006_204_ALPORI_I_TAU_GEOMETRY_full.jpg"
+                ],
+                "diagram_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_thumb.jpg"
+                ],
+                "diagram_small": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_small.jpg"
+                ],
+                "diagram_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_med.jpg"
+                ],
+                "diagram_full": [
+                    "https://opus.pds-rings.seti.org/holdings/diagrams/COVIMS_8xxx/COVIMS_8001/data/VIMS_2006_204_ALPORI_I_full.jpg"
                 ]
             },
             "2.0": {
