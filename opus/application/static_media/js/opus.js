@@ -419,13 +419,13 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    updateLastBlogDate: function() {
+    updateNotifications: function() {
         /**
          * Retrieve the date of the last blog update and update the tooltip for
          * the 'Recent Announcements' nav bar item.
          */
 
-        $.getJSON("/opus/__lastblogupdate.json", function(data) {
+        $.getJSON("/opus/__notifications.json", function(data) {
             if (data.lastupdate !== null) {
                 let lastUpdateDate = new Date(data.lastupdate);
                 let today = Date.now();
@@ -441,6 +441,10 @@ var opus = {
             } else {
                 $("#op-last-blog-update-date").attr("title", "");
             }
+            // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
+            if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {
+                opus.displayNotificationDialog(data.notification, data.notification_mdate);
+            }
         });
     },
 
@@ -452,6 +456,34 @@ var opus = {
             opus.navLinkRemembered = null;
             opus.triggerNavbarClick();
         }
+    },
+
+    hideTawkChat: function(action) {
+        $("iframe").each(function(index) {
+            let elem = $(this).contents().find("div#tawkchat-minified-box");
+            if (elem.length > 0) {
+                if (elem.find("#minimizeChatMinifiedBtn").hasClass("hide")) {
+                    elem.hide();
+                }
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
+            if (elem.length > 0) {
+                elem.hide();
+            }
+        });
+    },
+
+    showTawkChat: function(action) {
+        $("iframe").each(function(index) {
+            let elem = $(this).contents().find("div#tawkchat-minified-box");
+            if (elem.length > 0) {
+                elem.show();
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
+            if (elem.length > 0) {
+                elem.show();
+            }
+        });
     },
 
     changeTab: function(tab) {
@@ -483,7 +515,7 @@ var opus = {
         o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
 
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
@@ -496,24 +528,28 @@ var opus = {
                 // uses opacity, and we're already using opacity for the text
                 // and background image, so it flashes bright and then dims
                 $(".feedbackTab").show();
+                opus.showTawkChat();
                 o_search.activateSearchTab();
                 break;
 
             case "browse":
                 $("#browse").fadeIn();
                 $(".feedbackTab").hide();
+                opus.hideTawkChat();
                 o_browse.activateBrowseTab();
                 break;
 
             case "detail":
                 $("#detail").fadeIn();
                 $(".feedbackTab").show();
+                opus.showTawkChat();
                 o_detail.activateDetailTab(opus.prefs.detail);
                 break;
 
             case "cart":
                 $("#cart").fadeIn();
                 $(".feedbackTab").hide();
+                opus.hideTawkChat();
                 o_cart.activateCartTab();
                 break;
 
@@ -897,6 +933,9 @@ var opus = {
                         case "op-http-response-error-modal":
                             location.reload();
                             break;
+                        case "op-notification-modal":
+                            $.cookie("notify", $(`#${target}`).data("cookie"), {expires: 1000000});
+                            break;
                     }
                     $(`#${target}`).modal("hide");
                     break;
@@ -933,6 +972,14 @@ var opus = {
     tooltipRemoveHandler: function() {
         $(".op-tooltip-text").remove();
         $(window).off("touchstart", opus.tooltipRemoveHandler);
+    },
+
+    displayNotificationDialog: function(html, cookie) {
+        $("#op-notification-modal .modal-body").html(html);
+        $("#op-notification-modal").data("cookie", cookie);
+
+        opus.hideOrShowSplashText();
+        $("#op-notification-modal").modal("show");
     },
 
     displayHelpPane: function(action) {
@@ -1090,7 +1137,7 @@ var opus = {
          * Initialize OPUS after the normalized URL has been returned.
          */
 
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];

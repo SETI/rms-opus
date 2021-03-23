@@ -72,6 +72,10 @@ ALLOWED_HOSTS = ('127.0.0.1',
 #   https://www.google.com/search?q=django+secret+generator
 SECRET_KEY = '<SECRET_KEY>'
 
+# Tawk.to key.  During testing of the chat functionality, set this key
+# to the test widget instead of the production widget key.
+CHAT_KEY = '<CHAT_KEY>'
+
 # Where static files are served from in a production environment
 # This is ignored in a non-production environment
 STATIC_ROOT = '<STATIC_ROOT>'
@@ -101,6 +105,9 @@ OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
 
 # The file that contains the date of the last blog update
 OPUS_LAST_BLOG_UPDATE_FILE = '<LAST_BLOG_UPDATE_FILE>'
+
+# The file that contains the html for any short-term notifications
+OPUS_NOTIFICATION_FILE = '<NOTIFICATION_FILE>'
 
 # What level of message to log at each destination
 OPUS_LOG_FILE_LEVEL = 'INFO'
