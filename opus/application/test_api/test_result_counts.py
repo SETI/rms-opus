@@ -78,7 +78,7 @@ class APIResultCountsTests(TestCase):
                     try:
                         data = json.loads(client.get(api_url).text)
                     except Exception as error:
-                        error_flag.append(f"Return error:\n{api_url}")
+                        error_flag.append(f"Return error:\n{api_url}\n{error}")
                         continue
 
                     result_count = data["data"][0]["result_count"]
@@ -129,6 +129,6 @@ class ApiForResultCounts:
         if not self.target or self.target == "production":
             self.result_counts_api = self.api_base_url.format("https", "opus")
         elif self.target == "dev":
-            self.result_counts_api = self.api_base_url.format("https", "dev")
+            self.result_counts_api = self.api_base_url.format("http", "dev")
         else:
             assert False, self.target
