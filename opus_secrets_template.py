@@ -99,6 +99,15 @@ MANIFEST_FILE_PATH = '<MANIFEST_FILE_PATH>/'
 # Needs a TRAILING SLASH
 TAR_FILE_URL_PATH = '<TAR_FILE_URL>/'
 
+# The public URL to access OPUS
+PUBLIC_OPUS_URL = 'https://opus.pds-rings.seti.org/'
+
+# The root URL used to retrieve product files from a web server
+PRODUCT_HTTP_PATH = 'https://opus.pds-rings.seti.org/'
+
+# The root URL used to retrieve product files from viewmaster
+VIEWMASTER_ROOT_PATH = 'https://pds-rings.seti.org/'
+
 # The directory in which to place log files created by OPUS
 OPUS_LOGFILE_DIR = '<OPUS_LOGFILE_DIR>'
 OPUS_LOG_FILE = os.path.join(OPUS_LOGFILE_DIR, 'opus_log.txt')
