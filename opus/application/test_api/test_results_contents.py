@@ -606,6 +606,16 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/co-rss-occ-2010-170-rev133-x34-e.json"
         self._run_json_equal_file(url, "results_co_rss_occ_2010_170_rev133_x34_e_files.json")
 
+    def test__results_contents_co_uvis_occ_2005_139_126tau_e_metadata(self):
+        "[test_results_contents.py] co-uvis-occ-2005-139-126tau-e metadata"
+        url = "/api/metadata_v2/co-uvis-occ-2005-139-126tau-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2005_139_126tau_e_metadata.json")
+
+    def test__results_contents_co_uvis_occ_2005_139_126tau_e_files(self):
+        "[test_results_contents.py] co-uvis-occ-2005-139-126tau-e files"
+        url = "/api/files/co-uvis-occ-2005-139-126tau-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2005_139_126tau_e_files.json")
+
     def test__results_contents_co_uvis_occ_2005_175_126tau_i_metadata(self):
         "[test_results_contents.py] co-uvis-occ-2005-175-126tau-i metadata"
         url = "/api/metadata_v2/co-uvis-occ-2005-175-126tau-i.json"
