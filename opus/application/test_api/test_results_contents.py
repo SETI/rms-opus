@@ -516,6 +516,16 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/nh-lorri-lor_0330787458.json"
         self._run_json_equal_file(url, "results_nh_lorri_lor_0330787458_files.json")
 
+    def test__results_contents_nh_mvic_mc0_0032528036_metadata(self):
+        "[test_results_contents.py] nh-mvic-mc0_0032528036 metadata"
+        url = "/api/metadata_v2/nh-mvic-mc0_0032528036.json"
+        self._run_json_equal_file(url, "results_nh_mvic_mc0_0032528036_metadata.json")
+
+    def test__results_contents_nh_mvic_mc0_0032528036_files(self):
+        "[test_results_contents.py] nh-mvic-mc0_0032528036 files"
+        url = "/api/files/nh-mvic-mc0_0032528036.json"
+        self._run_json_equal_file(url, "results_nh_mvic_mc0_0032528036_files.json")
+
     def test__results_contents_nh_mvic_mc1_0005261846_metadata(self):
         "[test_results_contents.py] nh-mvic-mc1_0005261846 metadata"
         url = "/api/metadata_v2/nh-mvic-mc1_0005261846.json"
