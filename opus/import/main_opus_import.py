@@ -290,8 +290,8 @@ parser.add_argument(
 
 # Arguments about logging
 parser.add_argument(
-    '--log-pdsfile', action='store_true', default=False,
-    help='Also log output of pdsfile actions'
+    '--no-log-pdsfile', action='store_true', default=False,
+    help="""Don't log output of pdsfile actions"""
 )
 parser.add_argument(
     '--log-sql', action='store_true', default=False,
@@ -384,9 +384,6 @@ impglobals.LOGGER.add_handler(handler)
 handler = pdslogger.error_handler(IMPORT_LOGFILE_DIR, rotation='none')
 impglobals.LOGGER.add_handler(handler)
 
-if impglobals.ARGUMENTS.log_pdsfile:
-    import_util.pdsfile.set_logger(impglobals.LOGGER, True)
-
 impglobals.PYTHON_WARNING_LIST = []
 
 def _new_warning_handler(message, category, filename, lineno, file, line):
@@ -429,6 +426,11 @@ try: # Top-level exception handling so we always log what's going on
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:
         pdsfile.preload(PDS_DATA_DIR)
+
+    # We do this after the preload because we don't want to see all the preload
+    # debug messages.
+    if not impglobals.ARGUMENTS.no_log_pdsfile:
+        import_util.pdsfile.set_logger(impglobals.LOGGER)
 
     try:
         impglobals.DATABASE = importdb.get_db(
