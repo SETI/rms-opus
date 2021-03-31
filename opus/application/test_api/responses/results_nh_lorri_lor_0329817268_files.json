@@ -82,12 +82,6 @@
                 "browse_full": [
                     "https://opus.pds-rings.seti.org/holdings/previews/NHxxLO_xxxx/NHPELO_1001/data/20160703_032981/lor_0329817268_0x630_eng_full.jpg"
                 ]
-            },
-            "3": {
-                "nh_lorri_raw": [
-                    "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v3/NHPELO_1001/data/20160703_032981/lor_0329817268_0x630_eng.fit",
-                    "https://opus.pds-rings.seti.org/holdings/volumes/NHxxLO_xxxx_v3/NHPELO_1001/data/20160703_032981/lor_0329817268_0x630_eng.lbl"
-                ]
             }
         }
     }
