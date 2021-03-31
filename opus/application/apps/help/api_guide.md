@@ -639,7 +639,7 @@ data.csv
 manifest.csv
 urls.txt
 VGISS_6210_inventory.lbl
-VGISS_6210_inventory.tab
+VGISS_6210_inventory.csv
 VGISS_6210_moon_summary.lbl
 VGISS_6210_moon_summary.tab
 VGISS_6210_ring_summary.lbl
@@ -1655,21 +1655,21 @@ Example:
   {
     "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image",
+    "description": "Raw Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image",
+    "description": "Calibrated Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image",
+    "description": "Calibrated Image",
     "version_number": 10000,
     "version_name": "1.0"
   },
@@ -1716,21 +1716,21 @@ Example:
   {
     "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image",
+    "description": "Raw Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image",
+    "description": "Calibrated Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)",
+    "description": "Extra Preview (thumbnail)",
     "version_number": 999999,
     "version_name": "Current"
   },

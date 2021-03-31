@@ -254,8 +254,8 @@ class ApiReturnFormatTests(TestCase, ApiTestHelper):
     # ui/urls.py
 
     def test__api_retfmt_ui_lastblogupdate_pvt(self):
-        "[test_return_formats.py] return formats /__lastblogupdate.[fmt]"
-        self._test_return_formats('/__lastblogupdate.[fmt]', ('json',))
+        "[test_return_formats.py] return formats /__notifications.[fmt]"
+        self._test_return_formats('/__notifications.[fmt]', ('json',))
 
     def test__api_retfmt_ui_menu_pvt(self):
         "[test_return_formats.py] return formats /__menu.[fmt]"
