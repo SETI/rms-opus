@@ -421,17 +421,18 @@ def _range_time_decode(iso):
 # Format is decode float->string, encode string->float
 
 RANGE_FUNCTIONS = {
-    'range_time': (_range_time_encode, _range_time_decode),
-    'range_cassini_sclk': (format_cassini_sclk,
-                           parse_cassini_sclk),
-    'range_galileo_sclk': (format_galileo_sclk,
-                           parse_galileo_sclk),
+    'range_time':              (_range_time_encode,
+                                _range_time_decode),
+    'range_cassini_sclk':      (format_cassini_sclk,
+                                parse_cassini_sclk),
+    'range_galileo_sclk':      (format_galileo_sclk,
+                                parse_galileo_sclk),
     'range_new_horizons_sclk': (format_new_horizons_sclk,
                                 parse_new_horizons_sclk),
-    'range_voyager_sclk': (format_voyager_sclk,
-                           parse_voyager_sclk),
-    'range_cassini_rev_no': (format_cassini_orbit,
-                            parse_cassini_orbit),
+    'range_voyager_sclk':      (format_voyager_sclk,
+                                parse_voyager_sclk),
+    'range_cassini_rev_no':    (format_cassini_orbit,
+                                parse_cassini_orbit),
 }
 
 # Unit translation table
