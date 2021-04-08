@@ -1,0 +1,126 @@
+{
+    "data": {
+        "co-iss-n1482859953": {
+            "coiss_raw": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2.IMG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2.LBL",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt"
+            ],
+            "coiss_calib": [
+                "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.IMG",
+                "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.LBL"
+            ],
+            "coiss_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/thumbnail/1482676284_1483152379/N1482859953_2.IMG.jpeg_small"
+            ],
+            "coiss_medium": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/browse/1482676284_1483152379/N1482859953_2.IMG.jpeg"
+            ],
+            "coiss_full": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/full/1482676284_1483152379/N1482859953_2.IMG.png"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.lbl"
+            ],
+            "inventory": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.csv",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.lbl"
+            ],
+            "planet_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.lbl"
+            ],
+            "moon_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_moon_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_moon_summary.lbl"
+            ],
+            "ring_geometry": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_full.png"
+            ]
+        }
+    },
+    "versions": {
+        "co-iss-n1482859953": {
+            "Current": {
+                "coiss_raw": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2.LBL",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt"
+                ],
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.LBL"
+                ],
+                "coiss_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/thumbnail/1482676284_1483152379/N1482859953_2.IMG.jpeg_small"
+                ],
+                "coiss_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/browse/1482676284_1483152379/N1482859953_2.IMG.jpeg"
+                ],
+                "coiss_full": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2008/extras/full/1482676284_1483152379/N1482859953_2.IMG.png"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_index.lbl"
+                ],
+                "inventory": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.csv",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_inventory.lbl"
+                ],
+                "planet_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_saturn_summary.lbl"
+                ],
+                "moon_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_moon_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_moon_summary.lbl"
+                ],
+                "ring_geometry": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COISS_2xxx/COISS_2008/COISS_2008_ring_summary.lbl"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2008/data/1482676284_1483152379/N1482859953_2_full.png"
+                ]
+            },
+            "2": {
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v2/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.LBL"
+                ]
+            },
+            "1": {
+                "coiss_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.IMG",
+                    "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx_v1/COISS_2008/data/1482676284_1483152379/N1482859953_2_CALIB.LBL"
+                ]
+            }
+        }
+    }
+}

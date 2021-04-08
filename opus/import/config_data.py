@@ -51,12 +51,16 @@ VOLSETS_WITH_SURFACE_GEO = ['COISS_1xxx',
                             'VGISS_7xxx',
                             'VGISS_8xxx']
 
+# Also modify populate_obs_general_preview_images as necessary
 VOLSETS_WITH_PREVIEWS = ['COISS_1xxx',
                          'COISS_2xxx',
                          'COCIRS_5xxx',
                          'COCIRS_6xxx',
                          'COUVIS_0xxx',
+                         'COUVIS_8xxx',
                          'COVIMS_0xxx',
+                         'COVIMS_8xxx',
+                         'EBROCC_0xxx',
                          'GO_0xxx',
                          'HSTIx_xxxx',
                          'HSTJx_xxxx',

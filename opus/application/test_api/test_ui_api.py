@@ -63,13 +63,13 @@ class ApiUITests(TestCase, ApiTestHelper):
             self.assertIsNone(jdata['msg'])
 
 
-            ###############################################
-            ######### /__lastblogupdate API TESTS #########
-            ###############################################
+            ##############################################
+            ######### /__notifications API TESTS #########
+            ##############################################
 
-    def test__api_lastblogupdate(self):
-        "[test_ui_api.py] /__lastblogupdate: normal"
-        url = '/__lastblogupdate.json'
+    def test__api_notifications(self):
+        "[test_ui_api.py] /__notifications: normal"
+        url = '/__notifications.json'
         self._run_status_equal(url, 200)
 
 

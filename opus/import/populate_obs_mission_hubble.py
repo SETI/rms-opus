@@ -12,6 +12,8 @@ from config_data import *
 import impglobals
 import import_util
 
+from populate_util import *
+
 
 def _decode_filters(**kwargs):
     metadata = kwargs['metadata']
@@ -62,15 +64,13 @@ def _HST_file_spec_helper(**kwargs):
 def populate_obs_general_HSTx_opus_id_OBS(**kwargs):
     file_spec = _HST_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
-    try:
-        opus_id = pds_file.opus_id.replace('.', '-')
-    except:
-        opus_id = None
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
         return file_spec.split('/')[-1]
-    return opus_id
+
+    return opus_id.replace('.', '-')
 
 populate_obs_general_HSTACS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
 populate_obs_general_HSTNICMOS_opus_id_OBS = populate_obs_general_HSTx_opus_id_OBS
@@ -129,27 +129,38 @@ populate_obs_general_HSTSTIS_quantity_OBS = populate_obs_general_HSTx_quantity_O
 populate_obs_general_HSTWFC3_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
 populate_obs_general_HSTWFPC2_quantity_OBS = populate_obs_general_HSTx_quantity_OBS
 
-def populate_obs_general_HSTx_observation_type_OBS(**kwargs):
+def populate_obs_general_HSTACS_observation_type_OBS(**kwargs):
+    if _acs_spec_flag(**kwargs)[0]:
+        return 'SPI'
+    return 'IMG'
+
+def populate_obs_general_HSTNICMOS_observation_type_OBS(**kwargs):
+    if _nicmos_spec_flag(**kwargs)[0]:
+        return 'SPI'
+    return 'IMG'
+
+def populate_obs_general_HSTWFC3_observation_type_OBS(**kwargs):
+    if _wfc3_spec_flag(**kwargs)[0]:
+        return 'SPI'
+    return 'IMG'
+
+def populate_obs_general_HSTWFPC2_observation_type_OBS(**kwargs):
+    return 'IMG'
+
+def populate_obs_general_HSTSTIS_observation_type_OBS(**kwargs):
+    # STIS uses a prism/grism WITH a slit, so a spectrum/spectroscopic
+    # observation is a 1-D spatial array of type SPECTRUM that has NO
+    # image attributes.
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     obs_type = index_row['OBSERVATION_TYPE']
-    # XXX Temporary fix for issue pds-webserver/10
     if obs_type not in ('IMAGE', 'IMAGING', 'SPECTRUM', 'SPECTROSCOPIC'):
         import_util.log_nonrepeating_error(
             f'Unknown HST OBSERVATION_TYPE "{obs_type}"')
         return None
-    if obs_type in ('IMAGING', 'SPECTROSCOPIC'):
-        import_util.log_nonrepeating_warning(
-            f'Converting bad observation_type {obs_type}')
-    if obs_type.startswith('SPEC'): # Covers bad "SPECTROSCOPIC" value
-        return 'SPI' # Spectral Image (2-D with spectral information)
+    if obs_type.startswith('SPEC'): # SPECTRUM or SPECTROSCOPIC
+        return 'SPE' # Spectrum (1-D with spectral information)
     return 'IMG' # Image
-
-populate_obs_general_HSTACS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
-populate_obs_general_HSTNICMOS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
-populate_obs_general_HSTSTIS_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
-populate_obs_general_HSTWFC3_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
-populate_obs_general_HSTWFPC2_observation_type_OBS = populate_obs_general_HSTx_observation_type_OBS
 
 def populate_obs_general_HSTx_time1_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -274,7 +285,7 @@ populate_obs_pds_HSTWFC3_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_f
 populate_obs_pds_HSTWFPC2_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
 
 def populate_obs_pds_HSTx_product_creation_time_OBS(**kwargs):
-    return None # Until the proper data is available in the supplemental index
+    return populate_product_creation_time_from_index(**kwargs)
 
 populate_obs_pds_HSTACS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
 populate_obs_pds_HSTNICMOS_product_creation_time_OBS = populate_obs_pds_HSTx_product_creation_time_OBS
@@ -346,8 +357,18 @@ populate_obs_general_HSTWFPC2_declination2_OBS = populate_obs_general_HSTx_decli
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-# XXX
+def _is_image(**kwargs):
+    metadata = kwargs['metadata']
+    general_row = metadata['obs_general_row']
+    obs_type = general_row['observation_type']
+
+    assert obs_type in ('IMG', 'SPE', 'SPI')
+    return obs_type == 'IMG' or obs_type == 'SPI'
+
 def populate_obs_type_image_HSTx_image_type_id_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 'FRAM'
 
 populate_obs_type_image_HSTACS_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
@@ -357,6 +378,9 @@ populate_obs_type_image_HSTWFC3_image_type_id_OBS = populate_obs_type_image_HSTx
 populate_obs_type_image_HSTWFPC2_image_type_id_OBS = populate_obs_type_image_HSTx_image_type_id_OBS
 
 def populate_obs_type_image_HSTx_duration_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     metadata = kwargs['metadata']
     obs_general_row = metadata['obs_general_row']
     return obs_general_row['observation_duration']
@@ -368,21 +392,39 @@ populate_obs_type_image_HSTWFC3_duration_OBS = populate_obs_type_image_HSTx_dura
 populate_obs_type_image_HSTWFPC2_duration_OBS = populate_obs_type_image_HSTx_duration_OBS
 
 def populate_obs_type_image_HSTACS_levels_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 65536 # ACS Inst Handbook 25, Sec 3.4.3
 
 def populate_obs_type_image_HSTNICMOS_levels_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 65536 # NICMOS Inst Handbook, Sec 7.2.1
 
 def populate_obs_type_image_HSTSTIS_levels_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 65536 # STIS Inst Handbook, Sec 7.5.1
 
 def populate_obs_type_image_HSTWFC3_levels_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 65536 # WFC3 Inst Handbook, Sec 2.2.3
 
 def populate_obs_type_image_HSTWFPC2_levels_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     return 4096 # WFPC2 Inst Handbook, Sec 2.8
 
 def populate_obs_type_image_HSTx_lesser_pixel_size_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     lines = import_util.safe_column(index_row, 'LINES')
@@ -398,6 +440,9 @@ populate_obs_type_image_HSTWFC3_lesser_pixel_size_OBS = populate_obs_type_image_
 populate_obs_type_image_HSTWFPC2_lesser_pixel_size_OBS = populate_obs_type_image_HSTx_lesser_pixel_size_OBS
 
 def populate_obs_type_image_HSTx_greater_pixel_size_OBS(**kwargs):
+    if not _is_image(**kwargs):
+        return None
+
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     lines = import_util.safe_column(index_row, 'LINES')
@@ -680,15 +725,22 @@ populate_obs_occultation_HSTWFPC2_host_OBS = populate_obs_occultation_HSTx_host_
 
 ### ACS ###
 
-def populate_obs_wavelength_HSTACS_spec_flag_OBS(**kwargs):
+def _acs_spec_flag(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    if filter1.startswith('G') or filter1.startswith('PR'):
+    return (filter1.startswith('G') or filter1.startswith('PR'),
+            filter1, filter2)
+
+def populate_obs_wavelength_HSTACS_spec_flag_OBS(**kwargs):
+    if _acs_spec_flag(**kwargs)[0]:
         return 'Y'
     return 'N'
 
 def populate_obs_wavelength_HSTACS_spec_size_OBS(**kwargs):
-    filter1, filter2 = _decode_filters(**kwargs)
-    if not filter1.startswith('G') and not filter1.startswith('PR'):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    spec_flag, filter1, filter2 = _acs_spec_flag(**kwargs)
+    if not spec_flag:
         return None
 
     # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
@@ -701,7 +753,7 @@ def populate_obs_wavelength_HSTACS_spec_size_OBS(**kwargs):
         import_util.log_nonrepeating_warning(
             'G800L filter used, but not enough information available to '+
             'compute spec_size')
-        wr = 8000. / 120 * .0001 # Average 100 and 140
+        wr = 8000. / 140 * .0001
         bw = (10500-5500) * .0001
     elif filter1 == 'PR200L':
         wr = 2500. / 59 * .0001
@@ -715,7 +767,14 @@ def populate_obs_wavelength_HSTACS_spec_size_OBS(**kwargs):
     else:
         assert False, filter1
 
-    return bw // wr
+    spec_size = bw // wr
+
+    lines = import_util.safe_column(index_row, 'LINES')
+    samples = import_util.safe_column(index_row, 'LINE_SAMPLES')
+    if lines is None or samples is None:
+        return spec_size
+
+    return min(max(lines, samples), spec_size)
 
 def populate_obs_wavelength_HSTACS_polarization_type_OBS(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
@@ -762,35 +821,54 @@ def populate_obs_mission_hubble_HSTACS_filter_type(**kwargs):
 
 ### NICMOS ###
 
-def populate_obs_wavelength_HSTNICMOS_spec_flag_OBS(**kwargs):
+def _nicmos_spec_flag(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
-    if filter1.startswith('G'):
+    return filter1.startswith('G'), filter1, filter2
+
+def populate_obs_wavelength_HSTNICMOS_spec_flag_OBS(**kwargs):
+    if _nicmos_spec_flag(**kwargs)[0]:
         return 'Y'
     return 'N'
 
 def populate_obs_wavelength_HSTNICMOS_spec_size_OBS(**kwargs):
-    filter1, filter2 = _decode_filters(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    spec_flag, filter1, filter2 = _nicmos_spec_flag(**kwargs)
     assert filter2 is None
-    if not filter1.startswith('G'):
+    if not spec_flag:
         return None
 
     # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
     # Instead we use the Resolving Power (lambda / d-lambda) from NICMOS Inst
     # Handbook Tables 5.3 and 5.5
 
-    if filter1 == 'G096':
-        wr = 0.00536
-        bw = 1.2-0.8
-    elif filter1 == 'G141':
-        wr = 0.007992
-        bw = 1.9-1.1
-    elif filter1 == 'G206':
-        wr = 0.01152
-        bw = 2.5-1.4
-    else:
-        assert False, filter1
+    # if filter1 == 'G096':
+    #     wr = 1.0 / 200
+    #     bw = 1.2-0.8
+    # elif filter1 == 'G141':
+    #     wr = 1.5 / 200
+    #     bw = 1.9-1.1
+    # elif filter1 == 'G206':
+    #     wr = 1.95 / 200
+    #     bw = 2.5-1.4
+    # else:
+    #     assert False, filter1
+    #
+    # spec_size = bw // wr
 
-    return bw // wr
+    # For NICMOS, the entire detector is used for the spectrum, but we don't
+    # know which direction it goes in, so just be generous and give the maximum
+    # dimension of the image.
+    lines = import_util.safe_column(index_row, 'LINES')
+    samples = import_util.safe_column(index_row, 'LINE_SAMPLES')
+    if lines is None and samples is None:
+        return None
+    if lines is None:
+        return samples
+    if samples is None:
+        return lines
+    return max(lines, samples)
 
 def populate_obs_wavelength_HSTNICMOS_polarization_type_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -831,33 +909,37 @@ def populate_obs_mission_hubble_HSTNICMOS_filter_type(**kwargs):
 
 ### STIS ###
 
-def populate_obs_wavelength_HSTSTIS_spec_flag_OBS(**kwargs):
+def _stis_spec_flag(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']
     obs_type = general_row['observation_type']
 
-    if obs_type == 'SPI':
+    assert obs_type in ('IMG', 'SPE')
+    return obs_type == 'SPE'
+
+def populate_obs_wavelength_HSTSTIS_spec_flag_OBS(**kwargs):
+    if _stis_spec_flag(**kwargs):
         return 'Y'
     return 'N'
 
 def populate_obs_wavelength_HSTSTIS_spec_size_OBS(**kwargs):
-    return None
-    # metadata = kwargs['metadata']
-    # general_row = metadata['obs_general_row']
-    # obs_type = general_row['observation_type']
-    # if obs_type == 'IMG':
-    #     return None
-    #
-    # wl_row = metadata['obs_wavelength_row']
-    # wl1 = wl_row['wavelength1']
-    # wl2 = wl_row['wavelength2']
-    # res1 = wl_row['wave_res1']
-    # res2 = wl_row['wave_res2']
-    #
-    # if wl1 is None or wl2 is None or res1 is None or res2 is None:
-    #     return None
-    #
-    # return (wl2-wl1) / ((res1+res2)/2.)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    if not _stis_spec_flag(**kwargs):
+        return None
+
+    lines = import_util.safe_column(index_row, 'LINES')
+    samples = import_util.safe_column(index_row, 'LINE_SAMPLES')
+    x1d_size = import_util.safe_column(index_row, 'X1D_SPECTRUM_SIZE')
+    if lines is None:
+        lines = 0
+    if samples is None:
+        samples = 0
+    if x1d_size is None:
+        x1d_size = 0
+
+    return max(lines, samples, x1d_size)
 
 def populate_obs_wavelength_HSTSTIS_polarization_type_OBS(**kwargs):
     return 'NONE'
@@ -878,17 +960,22 @@ def populate_obs_mission_hubble_HSTSTIS_filter_type(**kwargs):
 
 ### WFC3 ###
 
-def populate_obs_wavelength_HSTWFC3_spec_flag_OBS(**kwargs):
+def _wfc3_spec_flag(**kwargs):
     filter1, filter2 = _decode_filters(**kwargs)
     assert filter2 is None
-    if filter1.startswith('G'):
+    return filter1.startswith('G'), filter1, filter2
+
+def populate_obs_wavelength_HSTWFC3_spec_flag_OBS(**kwargs):
+    if _wfc3_spec_flag(**kwargs)[0]:
         return 'Y'
     return 'N'
 
 def populate_obs_wavelength_HSTWFC3_spec_size_OBS(**kwargs):
-    filter1, filter2 = _decode_filters(**kwargs)
-    assert filter2 is None
-    if not filter1.startswith('G'):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+
+    spec_flag, filter1, filter2 = _wfc3_spec_flag(**kwargs)
+    if not spec_flag:
         return None
 
     # We can't use WAVELENGTH_RESOLUTION because it's too aggressive.
@@ -907,7 +994,14 @@ def populate_obs_wavelength_HSTWFC3_spec_size_OBS(**kwargs):
     else:
         assert False, filter1
 
-    return bw // wr
+    spec_size = bw // wr
+
+    lines = import_util.safe_column(index_row, 'LINES')
+    samples = import_util.safe_column(index_row, 'LINE_SAMPLES')
+    if lines is None or samples is None:
+        return spec_size
+
+    return min(max(lines, samples), spec_size)
 
 def populate_obs_wavelength_HSTWFC3_polarization_type_OBS(**kwargs):
     return 'NONE'
@@ -1025,17 +1119,17 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     instrument = kwargs['instrument_name']
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
-    # Temporary fix for issue #491 XXX
-    old_aperture = aperture
-    if aperture == 'NIC1FIX':
-        aperture = 'NIC1-FIX'
-    elif aperture == 'NIC2FIX':
-        aperture = 'NIC2-FIX'
-    elif aperture == 'NIC3FIX':
-        aperture = 'NIC3-FIX'
-    if old_aperture != aperture:
-        import_util.log_nonrepeating_warning(
-            f'Replaced bad aperture {old_aperture} with {aperture}')
+    # # Temporary fix for issue #491 XXX
+    # old_aperture = aperture
+    # if aperture == 'NIC1FIX':
+    #     aperture = 'NIC1-FIX'
+    # elif aperture == 'NIC2FIX':
+    #     aperture = 'NIC2-FIX'
+    # elif aperture == 'NIC3FIX':
+    #     aperture = 'NIC3-FIX'
+    # if old_aperture != aperture:
+    #     import_util.log_nonrepeating_warning(
+    #         f'Replaced bad aperture {old_aperture} with {aperture}')
     ret = instrument[3:] + '-' + aperture
     return (ret, ret)
 
