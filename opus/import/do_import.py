@@ -585,7 +585,7 @@ def import_one_volume(volume_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
-    if not volume_pdsfile.is_volume():
+    if not volume_pdsfile.is_volume:
         impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
@@ -1763,7 +1763,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                     continue
 
                 # The following info are obtained from _info (from shelves/info)
-                url = file.url
+                url = file.url.strip('/')
                 checksum = file.checksum
                 size = file.size_bytes
                 width = file.width or None

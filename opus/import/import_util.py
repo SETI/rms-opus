@@ -138,8 +138,8 @@ def yield_import_volume_ids(arguments):
                 impglobals.LOGGER.log('fatal',
                            f'Bad volume descriptor {volume_desc}')
             else:
-                if (not volume_pdsfile.is_volume_dir() and
-                    not volume_pdsfile.is_volset_dir()):
+                if (not volume_pdsfile.is_volume_dir and
+                    not volume_pdsfile.is_volset_dir):
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
                      f'Volume descriptor not a volume or volset: {volume_desc}')
@@ -153,7 +153,7 @@ def yield_import_volume_ids(arguments):
         new_voldescs = []
         for volume_desc in volume_descs:
             volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
-            if volume_pdsfile.is_volset_dir():
+            if volume_pdsfile.is_volset_dir:
                 new_voldescs += volume_pdsfile.childnames
             else:
                 new_voldescs.append(volume_desc)
