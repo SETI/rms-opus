@@ -1,15 +1,18 @@
 ################################################################################
 # opus_support.py
 #
-# Various parsing and formating routines for the OPUS UI.
+# General routines that are shared by the OPUS import pipeline and the OPUS
+# Django backend and thus can't be in either directory.
 #
-# MRS 6/5/18
+# These are generally related to conversion of values to/from various text
+# formats.
 ################################################################################
 
 import math
 import numpy as np
+import unittest
 
-import julian
+import julian # From pds-tools
 
 ################################################################################
 # General routines for handling a spacecraft clock where:
@@ -17,11 +20,12 @@ import julian
 #   - the clock partition is always one
 ################################################################################
 
-def _parse_two_field_sclk(sclk, sep, modval, scname):
+def _parse_two_field_sclk(sclk, ndigits, sep, modval, scname):
     """Convert a two-field clock string to a numeric value.
 
     Input:
         sclk        the spacecraft clock string.
+        ndigits     the maximum number of digits in the leading field.
         sep         the character that separates the fields, typically a colon
                     or a period.
         modval      the modulus value of the second field.
@@ -70,7 +74,8 @@ def _parse_two_field_sclk(sclk, sep, modval, scname):
         ints.append(0)
 
     # Check fields for valid ranges
-    if ints[1] >= modval:
+    if (ints[0] < 0 or len(parts[0]) > ndigits or
+        ints[1] < 0 or ints[1] >= modval):
         raise ValueError('%s clock trailing field out of range ' % scname +
                          '0-%d: ' % (modval-1) + sclk)
 
@@ -112,7 +117,7 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
 # Conversion routines for the Galileo spacecraft clock.
 #
 # The clock has two fields separated by a period. The first field has eight
-# digits with leading zeros if necessary. The second is a tw0-digit number
+# digits with leading zeros if necessary. The second is a two-digit number
 # 0-90. The partition is always 1.
 #
 # According to the SCLK kernel for Galileo, there are additional subfields.
@@ -123,13 +128,85 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
 def parse_galileo_sclk(sclk):
     """Convert a Galileo clock string to a numeric value."""
 
-    return _parse_two_field_sclk(sclk, '.', 91, 'Galileo')
+    return _parse_two_field_sclk(sclk, 8, '.', 91, 'Galileo')
 
 def format_galileo_sclk(value):
     """Convert a number into a valid Galileo clock string.
     """
 
     return _format_two_field_sclk(value, 8, '.', 91, 'Galileo')
+
+class GalileoTest(unittest.TestCase):
+    def test_parse_extra_slash(self):
+        "Galileo parse: Two slashes"
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/2/03464059.00')
+
+    def test_parse_bad_partition(self):
+        "Galileo parse: Partition number other than 1"
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('2/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('0/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1.0/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('-1/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('a/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('/03464059.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/03464059.00.00')
+
+    def test_parse_bad_value(self):
+        "Galileo parse: Bad sclk value"
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/a')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/0123456a')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/03464059.0a')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/03464059.-1')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/03464059.91')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/03464059.450')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/034640590.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/-1.00')
+        with self.assertRaises(ValueError):
+            parse_galileo_sclk('1/-34640590.00')
+
+    def test_parse_good_sclk(self):
+        "Galileo parse: Good sclk format"
+        self.assertEqual(parse_galileo_sclk('1.'), 1)
+        self.assertEqual(parse_galileo_sclk('1.0'), 1)
+        self.assertEqual(parse_galileo_sclk('1.00'), 1)
+        self.assertEqual(parse_galileo_sclk('1/03464059.00'), 3464059)
+        self.assertAlmostEqual(parse_galileo_sclk('1/03464059.90'),
+                               3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.90'),
+                               3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('1/3464059.9'),
+                               3464059.989010989)
+        self.assertAlmostEqual(parse_galileo_sclk('03464059.90'),
+                               3464059.989010989)
+
+    def test_format_good_sclk(self):
+        "Galileo format: Good value"
+        self.assertEqual(format_galileo_sclk(0), '00000000.00')
+        self.assertEqual(format_galileo_sclk(1234), '00001234.00')
+        self.assertEqual(format_galileo_sclk(12345678), '12345678.00')
+        self.assertEqual(format_galileo_sclk(1234.989010989), '00001234.90')
+        self.assertEqual(format_galileo_sclk(99999999.989010989), '99999999.90')
+
 
 ################################################################################
 ################################################################################
@@ -158,7 +235,7 @@ def parse_new_horizons_sclk(sclk):
         sclk = parts[2]
 
     # Convert to numeric value
-    value = _parse_two_field_sclk(sclk, ':', 50000, 'New Horizons')
+    value = _parse_two_field_sclk(sclk, 10, ':', 50000, 'New Horizons')
 
     # Validate the partition number if any
     if parts[1]:
@@ -175,6 +252,92 @@ def format_new_horizons_sclk(value):
 
     return _format_two_field_sclk(value, 10, ':', 50000, 'New Horizons')
 
+class NewHorizonsTest(unittest.TestCase):
+    def test_parse_extra_slash(self):
+        "NewHorizons parse: Two slashes"
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/2/0003103485:49000')
+
+    def test_parse_bad_partition(self):
+        "NewHorizons parse: Partition number other than 1 or 3"
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('4/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('2/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('0/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1.0/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('-1/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('a/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('/0003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0003103485:49000:49000')
+
+    def test_parse_bad_value(self):
+        "NewHorizons parse: Bad sclk value"
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/a')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/000310348a')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0003103485:4900a')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0003103485:-10000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0003103485:50000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0003103485:99999')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/00003103485:49000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk(':00000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/:00000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/-1.00000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/-0003103485:00000')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('1/0150000000:00001')
+        with self.assertRaises(ValueError):
+            parse_new_horizons_sclk('3/0149999999:49999')
+
+    def test_parse_good_sclk(self):
+        "NewHorizons parse: Good sclk format"
+        self.assertEqual(parse_new_horizons_sclk('1:'), 1)
+        self.assertEqual(parse_new_horizons_sclk('1:0'), 1)
+        self.assertEqual(parse_new_horizons_sclk('1:00'), 1)
+        self.assertEqual(parse_new_horizons_sclk('1/0003103485:25'), 3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('1/0003103485:25000'),
+                         3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('3/1003103485:25000'),
+                         1003103485.5)
+        self.assertEqual(parse_new_horizons_sclk('1/3103485:25000'),
+                         3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('1/3103485:25'),
+                         3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('0003103485:25000'),
+                         3103485.5)
+        self.assertEqual(parse_new_horizons_sclk('3/9999999999:49999'),
+                         9999999999.99998)
+        self.assertEqual(parse_new_horizons_sclk('1/0149999999:49999'),
+                         149999999.99998)
+        self.assertEqual(parse_new_horizons_sclk('3/0150000000:00001'),
+                         150000000.00002)
+
+    def test_format_good_sclk(self):
+        "NewHorizons format: Good value"
+        self.assertEqual(format_new_horizons_sclk(0), '0000000000:00000')
+        self.assertEqual(format_new_horizons_sclk(1234), '0000001234:00000')
+        self.assertEqual(format_new_horizons_sclk(1234567890),
+                         '1234567890:00000')
+        self.assertEqual(format_new_horizons_sclk(1234.5), '0000001234:25000')
+
+
 ################################################################################
 ################################################################################
 # CASSINI
@@ -189,13 +352,84 @@ def format_new_horizons_sclk(value):
 def parse_cassini_sclk(sclk):
     """Convert a Cassini clock string to a numeric value."""
 
-    return _parse_two_field_sclk(sclk, '.', 256, 'Cassini')
+    return _parse_two_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
 def format_cassini_sclk(value):
     """Convert a number into a valid Cassini clock string.
     """
 
     return _format_two_field_sclk(value, 10, '.', 256, 'Cassini')
+
+class CassiniTest(unittest.TestCase):
+    def test_parse_extra_slash(self):
+        "Cassini parse: Two slashes"
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/2/1294341579.000')
+
+    def test_parse_bad_partition(self):
+        "Cassini parse: Partition number other than 1"
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('2/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('0/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1.0/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('-1/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('a/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('/1294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/1294341579.000.000')
+
+    def test_parse_bad_value(self):
+        "Cassini parse: Bad sclk value"
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/a')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/0123456a')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/1294341579.00a')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/1294341579.-1')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/1294341579.256')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/1294341579.2560')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/01294341579.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/-1.000')
+        with self.assertRaises(ValueError):
+            parse_cassini_sclk('1/-34640590.000')
+
+    def test_parse_good_sclk(self):
+        "Cassini parse: Good sclk format"
+        self.assertEqual(parse_cassini_sclk('1.'), 1)
+        self.assertEqual(parse_cassini_sclk('1.0'), 1)
+        self.assertEqual(parse_cassini_sclk('1.00'), 1)
+        self.assertEqual(parse_cassini_sclk('1/03464059.00'), 3464059)
+        self.assertEqual(parse_cassini_sclk('1/0003464059.064'),
+                         3464059.25)
+        self.assertEqual(parse_cassini_sclk('1/3464059.064'),
+                         3464059.25)
+        self.assertEqual(parse_cassini_sclk('03464059.064'),
+                         3464059.25)
+
+    def test_format_good_sclk(self):
+        "Cassini format: Good value"
+        self.assertEqual(format_cassini_sclk(0), '0000000000.000')
+        self.assertEqual(format_cassini_sclk(1234), '0000001234.000')
+        self.assertEqual(format_cassini_sclk(1234567890), '1234567890.000')
+        self.assertEqual(format_cassini_sclk(1234.250), '0000001234.064')
+        self.assertEqual(format_cassini_sclk(1234.5), '0000001234.128')
+        self.assertEqual(format_cassini_sclk(1234.750), '0000001234.192')
+
 
 ################################################################################
 # Conversion routines for the Cassini orbit number.
@@ -243,6 +477,47 @@ def format_cassini_orbit(value):
         return CASSINI_ORBIT_NAME[value]
     except KeyError:
         raise ValueError('Invalid Cassini orbit %s' % str(value))
+
+class CassiniOrbitTest(unittest.TestCase):
+    def test_parse_bad_orbit(self):
+        "CassiniOrbit parse: Bad orbit"
+        with self.assertRaises(ValueError):
+            parse_cassini_orbit('-1')
+        with self.assertRaises(ValueError):
+            parse_cassini_orbit('1')
+        with self.assertRaises(ValueError):
+            parse_cassini_orbit('2')
+
+    def test_parse_good_orbit(self):
+        "CassiniOrbit parse: Good orbit"
+        self.assertEqual(parse_cassini_orbit('0'), -1)
+        self.assertEqual(parse_cassini_orbit('A'), 0)
+        self.assertEqual(parse_cassini_orbit('0A'), 0)
+        self.assertEqual(parse_cassini_orbit('00A'), 0)
+        self.assertEqual(parse_cassini_orbit('a'), 0)
+        self.assertEqual(parse_cassini_orbit('0a'), 0)
+        self.assertEqual(parse_cassini_orbit('00a'), 0)
+        self.assertEqual(parse_cassini_orbit('B'), 1)
+        self.assertEqual(parse_cassini_orbit('b'), 1)
+        self.assertEqual(parse_cassini_orbit('C'), 2)
+        self.assertEqual(parse_cassini_orbit('c'), 2)
+        self.assertEqual(parse_cassini_orbit('3'), 3)
+        self.assertEqual(parse_cassini_orbit('4'), 4)
+
+    def test_format_bad_orbit(self):
+        "CassiniOrbit format: Bad orbit"
+        with self.assertRaises(ValueError):
+            format_cassini_orbit(-2)
+
+    def test_format_good_orbit(self):
+        "CassiniOrbit format: Good orbit"
+        self.assertEqual(format_cassini_orbit(-1), '000')
+        self.assertEqual(format_cassini_orbit(0), '00A')
+        self.assertEqual(format_cassini_orbit(1), '00B')
+        self.assertEqual(format_cassini_orbit(2), '00C')
+        self.assertEqual(format_cassini_orbit(3), '003')
+        self.assertEqual(format_cassini_orbit(4), '004')
+
 
 ################################################################################
 # VOYAGER
@@ -401,6 +676,96 @@ def format_voyager_sclk(value, sep=':', fields=3):
         sclk = '%05d%s%02d' % (hours, sep, minutes)
 
     return sclk
+
+class VoyagerTest(unittest.TestCase):
+    def test_parse_extra_slash(self):
+        "Cassini parse: Two slashes"
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/2/08966:30:752')
+
+    def test_parse_bad_partition(self):
+        "Voyager parse: Bad partition/planet"
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/08966:30:752')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('5/08966:30:752')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('-1/08966:30:752')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('6/08966:30:752')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('a/08966:30:752')
+        with self.assertRaises(AssertionError):
+            parse_voyager_sclk('1/08966:30:752', planet=4)
+        with self.assertRaises(AssertionError):
+            parse_voyager_sclk('1/08966:30:752', planet=9)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/08966:30:752', planet=5)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('3/08966:30:752', planet=5)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/08966:30:752', planet=6)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('3/08966:30:752', planet=6)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/08966:30:752', planet=7)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('2/08966:30:752', planet=7)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('1/08966:30:752', planet=8)
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('5/08966:30:752', planet=8)
+
+    def test_parse_bad_sclk(self):
+        "Voyager parse: Bad sclk"
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:0:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:0:801')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:-1:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:61:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('-1:0:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('65536:0:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:0:a')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('0:a:0')
+        with self.assertRaises(ValueError):
+            parse_voyager_sclk('a:0:0')
+
+    def test_parse_good_partition(self):
+        "Voyager parse: Good partition/planet"
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:1'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1'), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1', planet=5), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('2/0:0:1', planet=6), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('3/0:0:1', planet=7), 0)
+        self.assertAlmostEqual(parse_voyager_sclk('4/0:0:1', planet=8), 0)
+
+    def test_parse_good_sclk(self):
+        "Voyager parse: Good sclk"
+        self.assertEqual(parse_voyager_sclk('0'), 0)
+        self.assertEqual(parse_voyager_sclk('0:0'), 0)
+        self.assertEqual(parse_voyager_sclk('0:0:1'), 0)
+        self.assertEqual(parse_voyager_sclk('0:0:401'), .5/60.)
+        self.assertEqual(parse_voyager_sclk('0:1:1'), 1/60.)
+        self.assertEqual(parse_voyager_sclk('1:0:1'), 1)
+        self.assertEqual(parse_voyager_sclk('1000:00:001'), 1000)
+        self.assertEqual(parse_voyager_sclk('1000.00.001'), 1000)
+        self.assertEqual(parse_voyager_sclk('100000'), 1000)
+
+    def test_format_good_sclk(self):
+        self.assertEqual(format_voyager_sclk(0), '00000:00:001')
+        self.assertEqual(format_voyager_sclk(.5/60), '00000:00:401')
+        self.assertEqual(format_voyager_sclk(1/60), '00000:01:001')
+        self.assertEqual(format_voyager_sclk(1), '00001:00:001')
+        self.assertEqual(format_voyager_sclk(5000), '05000:00:001')
+
 
 ################################################################################
 
@@ -578,3 +943,7 @@ def adjust_format_string_for_units(format, default_unit, unit):
                 UNIT_CONVERSION[default_unit]['conversions'][unit][1])))
     dec = max(int(format[1:-1]) + factor, 0)
     return '.' + str(dec) + 'f'
+
+
+if __name__ == '__main__':
+    unittest.main()
