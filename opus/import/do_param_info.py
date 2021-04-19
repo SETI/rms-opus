@@ -9,7 +9,8 @@ import os
 
 import impglobals
 import import_util
-import opus_support
+from opus_support import (is_valid_unit_id,
+                          parse_form_type)
 
 def create_import_param_info_table():
     db = impglobals.DATABASE
@@ -48,27 +49,16 @@ def create_import_param_info_table():
             category_name = column.get('pi_category_name', None)
             if category_name is None:
                 continue
-            # Log an error if value in pi_units is not in unit translation table
-            unit = column.get('pi_units', None)
             field_name = column.get('field_name', None)
-            if unit and unit not in opus_support.UNIT_CONVERSION:
+            form_type_str = column.get('pi_form_type', None)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(form_type_str)
+            if form_type_unit_id and not is_valid_unit_id(form_type_unit_id):
                 logger.log('error',
-                           f'"{unit}" in "{category_name}/{field_name}" is not '
+                           f'"{form_type_unit_id}" '
+                           +f'in "{category_name}/{field_name}" is not '
                            +'a valid unit')
                 return False
-            form_type = column.get('pi_form_type', None)
-            if (unit and
-                (not form_type or
-                 (not form_type.startswith('RANGE%') and
-                  not form_type.startswith('LONG%')))):
-                logger.log('warning',
-                           f'"{category_name}/{field_name}" has units but '
-                           +'not form_type RANGE%')
-            if form_type == 'RANGE':
-                logger.log('warning',
-                           f'"{category_name}/{field_name}" has RANGE type '
-                           +'without numerical format')
-
             # if pi_ranges exists in .json, get the corresponding ranges info
             # from dict and convert it to str before storing to database
             ranges = column.get('pi_ranges', None)
@@ -102,7 +92,6 @@ def create_import_param_info_table():
                 'old_slug': column.get('pi_old_slug', None),
                 'sub_heading': column.get('pi_sub_heading', None),
                 'tooltip': column.get('pi_tooltip', None),
-                'units': column.get('pi_units', None),
                 'ranges': ranges,
                 'field_hints1': column.get('pi_field_hints1', None),
                 'field_hints2': column.get('pi_field_hints2', None),

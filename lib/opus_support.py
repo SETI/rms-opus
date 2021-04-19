@@ -768,12 +768,11 @@ class VoyagerTest(unittest.TestCase):
 
 
 ################################################################################
+################################################################################
+# TIME CONVERSION
+################################################################################
 
-
-
-def _range_time_encode(tai):
-    return julian.iso_from_tai(tai, digits=3)
-def _range_time_decode(iso):
+def parse_time(iso):
     iso = str(iso)
     try:
         (day, sec, time_type) = julian.day_sec_type_from_string(iso)
@@ -783,166 +782,464 @@ def _range_time_decode(iso):
         raise ValueError('Invalid time syntax: '+iso)
     return julian.tai_from_day(day) + sec
 
-# Format is decode float->string, encode string->float
+def format_time_ymd(tai):
+    return julian.iso_from_tai(tai, ymd=True, digits=3)
 
-RANGE_FUNCTIONS = {
-    'range_time':              (_range_time_encode,
-                                _range_time_decode),
-    'range_cassini_sclk':      (format_cassini_sclk,
-                                parse_cassini_sclk),
-    'range_galileo_sclk':      (format_galileo_sclk,
-                                parse_galileo_sclk),
-    'range_new_horizons_sclk': (format_new_horizons_sclk,
-                                parse_new_horizons_sclk),
-    'range_voyager_sclk':      (format_voyager_sclk,
-                                parse_voyager_sclk),
-    'range_cassini_rev_no':    (format_cassini_orbit,
-                                parse_cassini_orbit),
+def format_time_ydoy(tai):
+    return julian.iso_from_tai(tai, ymd=False, digits=3)
+
+def format_time_jd(tai):
+    (day, sec) = julian.day_sec_from_tai(tai)
+    jd = julian.jd_from_day_sec(day, sec)
+    # We want seconds at a resolution of .001
+    # There are 86400 seconds in a day, which is roughly 100,000
+    # So we want 5+3=8 decimal places
+    return 'JD%.8f' % jd
+
+def format_time_mjd(tai):
+    (day, sec) = julian.day_sec_from_tai(tai)
+    mjd = julian.mjd_from_day_sec(day, sec)
+    # We want seconds at a resolution of .001
+    # There are 86400 seconds in a day, which is roughly 100,000
+    # So we want 5+3=8 decimal places
+    return 'MJD%.8f' % mjd
+
+class TimeTest(unittest.TestCase):
+    # Note - julian.py has its own test suite, so we don't need to duplicate
+    # all that here. We just do a couple of simple tests to make sure the
+    # interface is working.
+    def test_format_ymd(self):
+        "Time format: YMD"
+        self.assertEqual(format_time_ymd(0), '1999-12-31T23:59:28.000')
+        self.assertEqual(format_time_ymd(600000000), '2019-01-05T10:39:23.000')
+
+    def test_format_ydoy(self):
+        "Time format: YDOY"
+        self.assertEqual(format_time_ydoy(0), '1999-365T23:59:28.000')
+        self.assertEqual(format_time_ydoy(600000000), '2019-005T10:39:23.000')
+
+    def test_format_jd(self):
+        "Time format: JD"
+        self.assertEqual(format_time_jd(0), 'JD2451544.49962963')
+        self.assertEqual(format_time_jd(600000000), 'JD2458488.94401620')
+
+    def test_format_mjd(self):
+        "Time format: MJD"
+        self.assertEqual(format_time_mjd(0), 'MJD51543.99962963')
+        self.assertEqual(format_time_mjd(600000000), 'MJD58488.44401620')
+
+    def test_parse(self):
+        "Time parse"
+        self.assertEqual(parse_time('1999-12-31T23:59:28.000'), 0)
+        self.assertEqual(parse_time('2019-005T10:39:23.000'), 600000000)
+        self.assertEqual(julian.jd_from_time(julian.time_from_jd(0)), 0)
+        self.assertAlmostEqual(julian.jd_from_time(
+                                julian.time_from_jd(1000.123)),
+                               1000.123)
+        self.assertEqual(julian.mjd_from_time(julian.time_from_mjd(0)), 0)
+        self.assertAlmostEqual(julian.mjd_from_time(
+                                julian.time_from_mjd(1000.123)),
+                               1000.123)
+        self.assertAlmostEqual(parse_time('JD2451544.49962963'), 0, places=3)
+        self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000,
+                               places=3)
+        self.assertAlmostEqual(parse_time('MJD51543.99962963'), 0, places=3)
+        self.assertAlmostEqual(parse_time('MJD58488.44401620'), 600000000,
+                               places=3)
+
+
+################################################################################
+################################################################################
+# UNITS AND FORMATS
+################################################################################
+
+# This dictionary is keyed by "unit_id", which is the name of the group of
+# formats/units. Within a given "unit_id" is a set of "details" that include
+# 1) The display name for the unit/format in the UI. This might be in a
+#    dropdown box on the Search tab or in the Table View header or Detail Tab.
+# 2) The numerical conversion factor to apply to the number in the database.
+#    If the value in the database is already the correct value, or is just being
+#    sent to a formatting function, then the conversion factor is 1.
+# 3) The function to call, if any, to parse a string into a value with this
+#    format/unit. Often the parse routine is the same for multiple units/formats
+#    because we want the input to be free-form.
+# 4) The function to call, if any, to format a value with this format/unit as a
+#    string.
+# In addition:
+#    'display_search': True or False, indicating whether the unit/format names
+#                      should be displayed on the Search Tab in a dropdown box.
+#                      This will generally be False when we're just doing a
+#                      format that has no alternative selections, like an SCLK.
+#    'display_result': True or False, indicating whether the unit/format names
+#                      should be displayed in any results (Table View, Detail
+#                      Tab). This will generally be False when it's really
+#                      obvious what the displayed format is, like YMDhms.
+#    'default': The name of the default unit/format.
+
+UNIT_FORMAT_DB = {
+    'range_cassini_sclk': {
+        'display_search': False,
+        'display_result': False,
+        'default': 'range_cassini_sclk',
+        'conversions': {
+            'range_cassini_sclk': (None, 1,
+                                   parse_cassini_sclk, format_cassini_sclk)
+        }
+    },
+    'range_galileo_sclk': {
+        'display_search': False,
+        'display_result': False,
+        'default': 'range_galileo_sclk',
+        'conversions': {
+            'range_galileo_sclk': (None, 1,
+                                   parse_galileo_sclk, format_galileo_sclk)
+        }
+    },
+    'range_new_horizons_sclk': {
+        'display_search': False,
+        'display_result': False,
+        'default': 'range_new_horizons_sclk',
+        'conversions': {
+            'range_new_horizons_sclk': (None, 1,
+                                        parse_new_horizons_sclk,
+                                        format_new_horizons_sclk)
+        }
+    },
+    'range_voyager_sclk': {
+        'display_search': False,
+        'display_result': False,
+        'default': 'range_voyager_sclk',
+        'conversions': {
+            'range_voyager_sclk': (None, 1,
+                                   parse_voyager_sclk, format_voyager_sclk)
+        }
+    },
+    'range_cassini_rev_no': {
+        'display_search': False,
+        'display_result': False,
+        'default': 'range_cassini_rev_no',
+        'conversions': {
+            'range_cassini_rev_no': (None, 1,
+                                     parse_cassini_orbit, format_cassini_orbit)
+        }
+    },
+    'datetime': {
+        'display_search': True,
+        'display_result': False,
+        'default': 'YMDhms',
+        'conversions': {
+            'YMDhms':       ('YMDhms', 1, parse_time, format_time_ymd),
+            'YDhms':        ('YDhms',  1, parse_time, format_time_ydoy),
+            'JD':           ('JD',     1, parse_time, format_time_jd),
+            'MJD':          ('MJD',    1, parse_time, format_time_mjd),
+        }
+    },
+    'wavenumber': {
+        'display_search': True,
+        'display_result': True,
+        'default': '1/cm',
+        'conversions': {
+            '1/cm':         ('cm^-1', 1.,   None, None),
+            '1/m':          ('m^-1',  1e-2, None, None),
+        }
+    },
+    'wavenumber_resolution': {
+        'display_search': True,
+        'display_result': True,
+        'default': '1/cm/pixel',
+        'conversions': {
+            '1/cm/pixel':  ('cm^-1/pixel', 1.,   None, None),
+            '1/m/pixel':   ('m^-1/pixel',  1e-2, None, None),
+        }
+    },
+    'generic_angle': { # Generic degrees, like lighting geometry
+        'display_search': True,
+        'display_result': True,
+        'default': 'degrees',
+        'conversions': {
+            'degrees':      ('degrees',    1.,                  None, None),
+            'radians':      ('radians',    180./3.141592653589, None, None),
+        }
+    },
+    'latitude': { # Degrees for latitude
+        'display_search': True,
+        'display_result': True,
+        'default': 'degrees',
+        'conversions': {
+            'degrees':      ('degrees',    1.,                  None, None),
+            'radians':      ('radians',    180./3.141592653589, None, None),
+        }
+    },
+    'longitude': { # Degrees for longitude
+        'display_search': True,
+        'display_result': True,
+        'default': 'degrees',
+        'conversions': {
+            'degrees':      ('degrees',    1.,                  None, None),
+            'hourangle':    ('hour angle', 360./24.,            None, None),
+            'radians':      ('radians',    180./3.141592653589, None, None),
+        }
+    },
+    'hour_angle': { # Degrees for hour angle
+        'display_search': True,
+        'display_result': True,
+        'default': 'degrees',
+        'conversions': {
+            'degrees':      ('degrees',    1.,                  None, None),
+            'hourangle':    ('hour angle', 360./24.,            None, None),
+            'radians':      ('radians',    180./3.141592653589, None, None),
+        }
+    },
+    'distance_ring': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'km',
+        'conversions': {
+            'km':           ('km',         1,      None, None),
+            'm':            ('m',          1e-3,   None, None),
+            'jupiterradii': ('Rj (71492)', 71492., None, None),
+            'saturnradii':  ('Rs (60330)', 60330., None, None),
+            'neptuneradii': ('Rn (25225)', 25225., None, None),
+            'uranusradii':  ('Ru (25559)', 25559., None, None),
+        }
+    },
+    'distance': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'km',
+        'conversions': {
+            'km':           ('km',         1,      None, None),
+            'm':            ('m',          1e-3,   None, None),
+        }
+    },
+    'distance_resolution': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'km/pixel',
+        'conversions': {
+            'km/pixel':     ('km/pixel', 1,    None, None),
+            'm/pixel':      ('m/pixel',  1e-3, None, None),
+        }
+    },
+    'wavelength': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'microns',
+        'conversions': {
+            'microns':      ('microns',   1.,   None, None),
+            'angstroms':    ('angstroms', 1e-4, None, None),
+            'nm':           ('nm',        1e-3, None, None),
+            'cm':           ('cm',        1e4,  None, None),
+        }
+    },
+    'wavelength_resolution': {
+        'display_search': True,
+        'display_result': True,
+        'default': 'microns/pixel',
+        'conversions': {
+            'microns/pixel':      ('microns/pixel',   1,    None, None),
+            'angstroms/pixel':    ('angstroms/pixel', 1e-4, None, None),
+            'nm/pixel':           ('nm/pixel',        1e-3, None, None),
+            'cm/pixel':           ('cm/pixel',        1e4,  None, None),
+        }
+    },
+    'duration': { # Generic seconds for duration
+        'display_search': True,
+        'display_result': True,
+        'default': 'seconds',
+        'conversions': {
+            'seconds':      ('secs',    1,           None, None),
+            'microseconds': ('usecs',   0.000001,    None, None),
+            'milliseconds': ('msecs',   0.001,       None, None),
+            'minutes':      ('minutes', 60.,         None, None),
+            'hours':        ('hours',   60.*60.,     None, None),
+            'days':         ('days',    60.*60.*24., None, None),
+        }
+    },
 }
 
-# Unit translation table
-# db name : displayed name
-UNIT_CONVERSION = {
-    '1/cm':
-        {
-            'display_name': 'cm^-1',
-            'conversions': {
-                '1/m':         ('m^-1', 1e-2),
-            }
-        },
-    '1/cm/pixel':
-        {
-            'display_name': 'cm^-1/pixel',
-            'conversions': {
-                '1/m/pixel':   ('m^-1/pixel', 1e-2),
-            }
-        },
-    'degrees':
-        {
-            'display_name': 'degrees',
-            'conversions': {
-                'hourangle':    ('hour angle', 360./24.),
-                'radians':      ('radians', 180./3.141592653589)
-            }
-        },
-    'km':
-        {
-            'display_name': 'km',
-            'conversions': {
-                'm':            ('m', 1e-3),
-                'jupiterradii': ('Rj (71492)', 71492.),
-                'saturnradii':  ('Rs (60330)', 60330.),
-                'neptuneradii': ('Rn (25225)', 25225.),
-                'uranusradii':  ('Ru (25559)', 25559.),
-            }
-        },
-    'km/pixel':
-        {
-            'display_name': 'km/pixel',
-            'conversions': {
-                'm/pixel':      ('m/pixel', 1e-3),
-            }
-        },
-    'microns':
-        {
-            'display_name': 'microns',
-            'conversions': {
-                'angstroms':    ('angstroms', 1e-4),
-                'nm':           ('nm', 1e-3),
-                'cm':           ('cm', 1e4),
-            }
-        },
-    'microns/pixel':
-        {
-            'display_name': 'microns/pixel',
-            'conversions': {
-                'angstroms/pixel':    ('angstroms/pixel', 1e-4),
-                'nm/pixel':           ('nm/pixel', 1e-3),
-                'cm/pixel':           ('cm/pixel', 1e4),
-            }
-        },
-    'seconds':
-        {
-            'display_name': 'secs',
-            'conversions': {
-                'milliseconds': ('msecs', 1e-3),
-                'minutes':      ('minutes', 60.),
-                'hours':        ('hours', 60.*60.),
-                'days':         ('days', 60.*60.*24.),
-            }
-        },
-    'milliseconds':
-        {
-            'display_name': 'msec',
-            'conversions': {
-                'seconds':      ('secs', 1e3),
-            }
-        },
-}
+### NUMERICAL CONVERSION
+### (These routines *numerically* convert to/from the value stored in the
+###  database with no formatting)
 
-def convert_to_default_unit(val, default_unit, unit):
-    if val is None:
+def convert_to_default_unit(val, unit_id, unit):
+    "Convert a value from a specific unit to the default unit for unit_id."
+    if unit_id is None and unit is not None:
+        raise KeyError
+    if val is None or unit_id is None or unit is None:
         return val
+    default_unit = UNIT_FORMAT_DB[unit_id]['default']
     if default_unit == unit:
         return val
-    assert default_unit in UNIT_CONVERSION
-    ret = val * UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+    ret = val * UNIT_FORMAT_DB[unit_id]['conversions'][unit][1]
     if not math.isfinite(ret):
         raise ValueError
     return ret
 
-
-def convert_from_default_unit(val, default_unit, unit):
-    if val is None:
+def convert_from_default_unit(val, unit_id, unit):
+    "Convert a value from the default unit to a specific unit for unit_id."
+    if unit_id is None and unit is not None:
+        raise KeyError
+    if val is None or unit_id is None or unit is None:
         return val
-    if default_unit is None or default_unit == unit:
+    default_unit = UNIT_FORMAT_DB[unit_id]['default']
+    if default_unit == unit:
         return val
-    assert default_unit in UNIT_CONVERSION
-    ret = val / UNIT_CONVERSION[default_unit]['conversions'][unit][1]
+    ret = val / UNIT_FORMAT_DB[unit_id]['conversions'][unit][1]
     if not math.isfinite(ret):
         raise ValueError
     return ret
 
-def get_valid_units(default_unit):
-    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+### GET INFORMATION ABOUT UNITS
+
+def get_valid_units(unit_id):
+    "Get the list of valid units for a unit_id."
+    unit_info = UNIT_FORMAT_DB.get(unit_id, None)
     valid_units = None
-    if default_unit_info is not None:
-        valid_units = list(default_unit_info['conversions'].keys())
-        valid_units = [default_unit] + valid_units
+    if unit_info is not None:
+        # This will create a list with the same order as written in the dict
+        # initalization above.
+        valid_units = list(unit_info['conversions'].keys())
     return valid_units
 
-# Get a dictionary with valid units as keys and display names as values.
-def get_display_names(default_unit):
-    default_unit_info = UNIT_CONVERSION.get(default_unit, None)
+def get_unit_display_names(unit_id):
+    "Get a dictionary with valid units as keys and display names as values."
+    unit_info = UNIT_FORMAT_DB.get(unit_id, None)
     display_names = None
-    if default_unit_info is not None:
+    if unit_info is not None:
         display_names = {}
-        display_names[default_unit] = default_unit_info['display_name']
-        valid_units = default_unit_info['conversions']
+        valid_units = unit_info['conversions']
         for unit in valid_units:
-            display_names[unit] =  valid_units[unit][0]
+            display_names[unit] = valid_units[unit][0]
     return display_names
 
-def is_valid_unit(default_unit, unit):
-    if default_unit == unit:
-        return True
-    return unit in UNIT_CONVERSION[default_unit]['conversions']
+def get_unit_display_name(unit_id, unit):
+    "Get the display name for a given unit_id and unit."
+    return UNIT_FORMAT_DB[unit_id]['conversions'][unit][0]
 
-def adjust_format_string_for_units(format, default_unit, unit):
-    if default_unit is None or default_unit == unit:
-        return format
-    if not format.startswith('.') or not format.endswith('f'):
-        return format
-    assert default_unit in UNIT_CONVERSION
+def is_valid_unit_id(unit_id):
+    "Check if a unit_id is valid."
+    return unit_id in UNIT_FORMAT_DB
+
+def is_valid_unit(unit_id, unit):
+    "Check if a unit is a valid unit for unit_id."
+    return unit in UNIT_FORMAT_DB[unit_id]['conversions']
+
+def get_default_unit(unit_id):
+    "Return the default unit for a unit_id."
+    if unit_id is None:
+        return None
+    return UNIT_FORMAT_DB[unit_id]['default']
+
+def display_search_unit(unit_id):
+    "Check if a unit name should be displayed for a unit_id on the Search tab."
+    if not unit_id:
+        return False
+    return UNIT_FORMAT_DB[unit_id]['display_search']
+
+def display_result_unit(unit_id):
+    "Check if a unit name should be displayed for a unit_id for results."
+    if not unit_id:
+        return False
+    return UNIT_FORMAT_DB[unit_id]['display_result']
+
+def display_unit_ever(unit_id):
+    "Check if a unit name should ever be displayed for a unit_id."
+    return display_search_unit(unit_id) or display_result_unit(unit_id)
+
+### FORMAT A VALUE FOR A GIVEN UNIT
+
+def adjust_format_string_for_units(numerical_format, unit_id, unit):
+    "Adjust a format string size for a change of units."
+    if unit_id is None:
+        return numerical_format
+    if (not numerical_format.startswith('.') or
+        not numerical_format.endswith('f')):
+        return numerical_format
+    default_unit = UNIT_FORMAT_DB[unit_id]['default']
+    if default_unit == unit:
+        return numerical_format
+    assert unit_id in UNIT_FORMAT_DB
     # The behavior of ceil is to increase the number of positive numbers
     # (which is adding decimal places), which is good. And it's to decrease
     # the absolute value of negative numbers (which is removing decimal places),
     # which is also good. In both cases we're being conservative - adding too
     # many or removing too few.
     factor = int(np.ceil(np.log10(
-                UNIT_CONVERSION[default_unit]['conversions'][unit][1])))
-    dec = max(int(format[1:-1]) + factor, 0)
+                 UNIT_FORMAT_DB[unit_id]['conversions'][unit][1])))
+    dec = max(int(numerical_format[1:-1]) + factor, 0)
     return '.' + str(dec) + 'f'
+
+def format_unit_value(val, numerical_format, unit_id, unit,
+                      keep_trailing_zeros=False, convert_to_default=True):
+    "Format a value based on the unit_id and specific unit."
+    if val is None or isinstance(val, str):
+        return val
+    format_func = None
+    if unit_id is not None:
+        if unit is None:
+            unit = get_default_unit(unit_id)
+        if convert_to_default:
+            val = convert_from_default_unit(val, unit_id, unit)
+        format_func = UNIT_FORMAT_DB[unit_id]['conversions'][unit][3]
+    if format_func is None:
+        if numerical_format is None:
+            return str(val)
+        if abs(val) > 1e8:
+            numerical_format = numerical_format.replace('f', 'e')
+        new_format = adjust_format_string_for_units(numerical_format,
+                                                    unit_id, unit)
+        ret = ('{:'+new_format+'}').format(val)
+        if not keep_trailing_zeros and '.' in ret:
+            ret = ret.rstrip('0').rstrip('.')
+        return ret
+    return format_func(val)
+
+def _clean_numeric_field(s):
+    def clean_func(x):
+        return x.replace(' ', '').replace(',', '').replace('_','')
+    if isinstance(s, (list, tuple)):
+        return [clean_func(z) for z in s]
+
+    return clean_func(s)
+
+def parse_unit_value(val, numerical_format, unit_id, unit):
+    parse_func = None
+    if unit_id is not None:
+        if unit is None:
+            unit = get_default_unit(unit_id)
+        (display_name, conversion_factor, parse_func,
+         display_func) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
+    if parse_func is None:
+        parse_func = float
+        if numerical_format and numerical_format[-1] == 'd':
+            parse_func = int
+        val = _clean_numeric_field(val)
+    if not val:
+        return None
+    return parse_func(val)
+
+def parse_form_type(s):
+    """Parse the ParamInfo FORM_TYPE with its subfields.
+
+    Subfields are:
+        TYPE[%format][:unit]
+    """
+    if s is None:
+        return None, None, None
+
+    form_type = s
+    form_type_format = None
+    form_type_unit = None
+
+    if form_type.find(':') != -1:
+        form_type, form_type_unit = form_type.split(':')
+    if form_type.find('%') != -1:
+        form_type, form_type_format = form_type.split('%')
+
+    return form_type, form_type_format, form_type_unit
+
+
 
 
 if __name__ == '__main__':

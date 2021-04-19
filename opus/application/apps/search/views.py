@@ -30,11 +30,9 @@ from paraminfo.models import ParamInfo
 from search.models import UserSearches
 from tools.app_utils import (enter_api_call,
                              exit_api_call,
-                             format_metadata_number_or_func,
                              get_mult_name,
                              get_reqno,
                              json_response,
-                             parse_form_type,
                              sort_dictionary,
                              strip_numeric_suffix,
                              throw_random_http404_error,
@@ -51,7 +49,13 @@ from tools.db_utils import (MYSQL_EXECUTION_TIME_EXCEEDED,
 
 import settings
 
-import opus_support
+from opus_support import (convert_from_default_unit,
+                          convert_to_default_unit,
+                          format_unit_value,
+                          get_default_unit,
+                          get_valid_units,
+                          parse_form_type,
+                          parse_unit_value)
 
 log = logging.getLogger(__name__)
 
@@ -525,7 +529,12 @@ def url_to_search_params(request_get, allow_errors=False,
 
         # Find the master param_info
         param_info = None
+        # The unit is the unit we want the field to be in
         is_unit = None
+        # The sourceunit is used by normalizeurl to allow the conversion of
+        # values from ones unit to another. The original unit is available in
+        # "sourceunit" and the desination unit is available in "unit".
+        # sourceunit should not be used anywhere else.
         is_sourceunit = None
         if slug.startswith('qtype-'): # like qtype-time=all
             slug = slug[6:]
@@ -568,8 +577,9 @@ def url_to_search_params(request_get, allow_errors=False,
             # even though the user sees it in PDS Constraints.
             param_qualified_name = 'obs_general.opus_id'
         param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(param_info.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(param_info.form_type)
+        valid_units = get_valid_units(form_type_unit_id)
 
         if param_info.slug: # Should always be true # pragma: no cover
             # Kill off all the original slugs
@@ -620,7 +630,6 @@ def url_to_search_params(request_get, allow_errors=False,
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say unit-XXX=msec
         unit_slug = 'unit-'+slug_no_num+clause_num_str
-        valid_units = opus_support.get_valid_units(param_info.units)
         unit_val = None
         if unit_slug in request_get:
             unit_val = request_get[unit_slug]
@@ -634,20 +643,20 @@ def url_to_search_params(request_get, allow_errors=False,
                               +'"%s": %s', unit_slug, str(unit_val))
                     return None, None
         else:
-            unit_val = param_info.units # Default if not specified
+            # Default if not specified
+            unit_val = get_default_unit(form_type_unit_id)
 
         # Look for an associated sourceunit.
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say sourceunit-XXX=msec
         sourceunit_slug = 'sourceunit-'+slug_no_num+clause_num_str
-        valid_sourceunits = opus_support.get_valid_units(param_info.units)
         # sourceunit_val will be None if sourceunit_slug doesn't exist
         # in URL
         sourceunit_val = None
         if sourceunit_slug in request_get:
             sourceunit_val = request_get[sourceunit_slug]
-            if (valid_sourceunits is None or
-                sourceunit_val not in valid_sourceunits):
+            if (valid_units is None or
+                sourceunit_val not in valid_units):
                 log.error('url_to_search_params: Bad sourceunit value'
                           +' for "%s": %s', sourceunit_slug,
                           str(sourceunit_val))
@@ -716,51 +725,28 @@ def url_to_search_params(request_get, allow_errors=False,
             new_param_qualified_names = []
             new_values = []
 
-            # Get the correct number of decimal places if there is a unit
-            # passed in for RANGE input.
-            if is_unit or unit_val is not None:
-                form_type_format = opus_support.adjust_format_string_for_units(
-                        form_type_format, param_info.units, unit_val)
-
             for suffix in ('1', '2'):
                 new_slug = slug_no_num+suffix+clause_num_str
                 new_param_qualified_name = param_qualified_name_no_num+suffix
                 new_value = None
                 if new_slug in request_get:
                     value = request_get[new_slug].strip()
-                    # Convert the strings into the internal representations if
-                    # necessary
-                    if form_type_func is None:
-                        func = float
-                        if form_type_format and form_type_format[-1] == 'd':
-                            func = int
-                        value_to_use = _clean_numeric_field(value)
-                    else:
-                        if form_type_func in opus_support.RANGE_FUNCTIONS:
-                            func = (opus_support
-                                    .RANGE_FUNCTIONS[form_type_func][1])
-                            value_to_use = value
-                        else: # pragma: no cover
-                            log.error('url_to_search_params: Unknown RANGE '
-                                      +'function "%s"', form_type_func)
-                            return None, None
-                    if value_to_use:
+                    if value:
                         try:
-                            new_value = func(value_to_use)
-                            if func == float or func == int:
-                                if not math.isfinite(new_value):
-                                    raise ValueError
-
+                            # Convert the strings into the internal
+                            # representation if necessary
+                            new_value = parse_unit_value(value,
+                                                         form_type_format,
+                                                         form_type_unit_id,
+                                                         sourceunit_val)
                             if is_sourceunit or sourceunit_val is not None:
-                                default_val = (opus_support
-                                               .convert_to_default_unit(
+                                default_val = (convert_to_default_unit(
                                                     new_value,
-                                                    param_info.units,
+                                                    form_type_unit_id,
                                                     sourceunit_val))
-                                new_value = (opus_support
-                                             .convert_from_default_unit(
+                                new_value = (convert_from_default_unit(
                                                     default_val,
-                                                    param_info.units,
+                                                    form_type_unit_id,
                                                     unit_val))
 
                             # Do a conversion of the given value to the default
@@ -769,24 +755,32 @@ def url_to_search_params(request_get, allow_errors=False,
                             # term as invalid, since it will fail later in
                             # construct_query_string anyway. This allows
                             # normalizeinput to report it as bad immediately.
-                            default_val = (opus_support
-                                           .convert_to_default_unit(
+                            default_val = convert_to_default_unit(
                                                 new_value,
-                                                param_info.units,
-                                                unit_val))
+                                                form_type_unit_id,
+                                                unit_val)
 
                             if pretty_results:
-                                new_value = format_metadata_number_or_func(
-                                                    new_value, form_type_func,
-                                                    form_type_format)
+                                # We keep the returned value in the original
+                                # unit rather than converting it, but we have
+                                # to specify the unit here so the number
+                                # of digits after the decimal can be adjusted.
+                                # The actual conversion to the default unit
+                                # will happen when creating a query.
+                                new_value = format_unit_value(
+                                                    new_value, form_type_format,
+                                                    form_type_unit_id,
+                                                    unit_val,
+                                                    convert_to_default=False)
                         except ValueError as e:
                             new_value = None
                             if not allow_errors:
-                                log.error('url_to_search_params: Function "%s" '
+                                log.error('url_to_search_params: Unit ID "%s" '
                                           +'slug "%s" source unit "%s" unit '
                                           +'"%s" threw ValueError(%s) for %s',
-                                          func, slug, sourceunit_val, unit_val,
-                                          e, value_to_use)
+                                          form_type_unit_id, slug,
+                                          sourceunit_val, unit_val,
+                                          e, value)
                                 return None, None
                     else:
                         new_value = None
@@ -1191,8 +1185,8 @@ def get_param_info_by_slug(slug, source):
             # in a '1' or '2' - but for non-range types, it's OK to not
             # have the '1' or '2'. Note the non-single-column ranges were
             # already dealt with above.
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(ret.form_type)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(ret.form_type)
             if form_type in settings.RANGE_FORM_TYPES: # pragma: no cover
                 # Whoops! We are missing the numeric suffix.
                 return None
@@ -1242,8 +1236,8 @@ def get_param_info_by_slug(slug, source):
                 pass
 
         if ret:
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(ret.form_type)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(ret.form_type)
             if form_type not in settings.RANGE_FORM_TYPES:
                 # Whoops! It's not a range, but we have a numeric suffix.
                 return None
@@ -1299,8 +1293,8 @@ def construct_query_string(selections, extras):
         else:
             units = []
 
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(param_info.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(param_info.form_type)
 
         if form_type in settings.MULT_FORM_TYPES:
             # This is where we convert from the "pretty" name the user selected
@@ -1457,8 +1451,8 @@ def get_string_query(selections, param_qualified_name, qtypes):
     if not param_info:
         return None, None
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
 
     cat_name = param_info.category_name
     quoted_cat_name = connection.ops.quote_name(cat_name)
@@ -1545,8 +1539,8 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     if not param_info:
         return None, None
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
     param_qualified_name_min = param_qualified_name_no_num + '1'
@@ -1555,11 +1549,15 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     values_min = selections.get(param_qualified_name_min, [])
     values_max = selections.get(param_qualified_name_max, [])
 
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
+
     if qtypes is None or len(qtypes) == 0:
         qtypes = ['any'] * len(values_min)
 
     if units is None or len(units) == 0:
-        units = [param_info.units] * len(values_min)
+        default_unit = get_default_unit(form_type_unit_id)
+        units = [default_unit] * len(values_min)
 
     # But, for constructing the query, if this is a single column range,
     # the param_names are both the same
@@ -1604,12 +1602,12 @@ def get_range_query(selections, param_qualified_name, qtypes, units):
     for idx in range(len(values_min)):
         unit = units[idx]
         try:
-            value_min = opus_support.convert_to_default_unit(values_min[idx],
-                                                             param_info.units,
-                                                             unit)
-            value_max = opus_support.convert_to_default_unit(values_max[idx],
-                                                             param_info.units,
-                                                             unit)
+            value_min = convert_to_default_unit(values_min[idx],
+                                                form_type_unit_id,
+                                                unit)
+            value_max = convert_to_default_unit(values_max[idx],
+                                                form_type_unit_id,
+                                                unit)
         except KeyError:
             log.error('get_range_query: Unknown unit "%s" for "%s" '
                       +'*** Selections %s *** Qtypes %s *** Units %s',
@@ -1698,8 +1696,8 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     if not param_info:
         return None, None
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
 
     param_qualified_name_no_num = strip_numeric_suffix(param_qualified_name)
     param_qualified_name_min = param_qualified_name_no_num + '1'
@@ -1715,11 +1713,15 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     name_no_num = strip_numeric_suffix(param_info.name)
     col_d_long = cat_name + '.d_' + name_no_num
 
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
+
     if qtypes is None or len(qtypes) == 0:
         qtypes = ['any'] * len(values_min)
 
     if units is None or len(units) == 0:
-        units = [param_info.units] * len(values_min)
+        default_unit = get_default_unit(form_type_unit_id)
+        units = [default_unit] * len(values_min)
 
     if (len(qtypes) != len(values_min) or len(units) != len(values_min) or
         len(values_min) != len(values_max)):
@@ -1736,12 +1738,12 @@ def get_longitude_query(selections, param_qualified_name, qtypes, units):
     for idx in range(len(values_min)):
         unit = units[idx]
         try:
-            value_min = opus_support.convert_to_default_unit(values_min[idx],
-                                                             param_info.units,
-                                                             unit)
-            value_max = opus_support.convert_to_default_unit(values_max[idx],
-                                                             param_info.units,
-                                                             unit)
+            value_min = convert_to_default_unit(values_min[idx],
+                                                form_type_unit_id,
+                                                unit)
+            value_max = convert_to_default_unit(values_max[idx],
+                                                form_type_unit_id,
+                                                unit)
         except KeyError:
             log.error('get_longitude_query: Unknown unit "%s" for "%s" '
                       +'*** Selections %s *** Qtypes %s *** Units %s',
@@ -1945,8 +1947,8 @@ def create_order_by_sql(order_params, descending_params):
                 log.error('create_order_by_sql: Unable to resolve order'
                           +' slug "%s"', order_slug)
                 return None, None, None
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(pi.form_type)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(pi.form_type)
             order_param = pi.param_qualified_name()
             order_obs_tables.add(pi.category_name)
             if form_type in settings.MULT_FORM_TYPES:

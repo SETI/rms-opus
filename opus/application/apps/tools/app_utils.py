@@ -158,29 +158,6 @@ def exit_api_call(api_code, ret):
     if delay_amount:
         time.sleep(delay_amount)
 
-def parse_form_type(s):
-    """Parse the ParamInfo FORM_TYPE with its subfields.
-
-    Subfields are:
-        TYPE:function
-        TYPE%format
-    """
-    if s is None:
-        return None, None, None
-
-    form_type = s
-    form_type_func = None
-    form_type_format = None
-
-    if s.find(':') != -1:
-        form_type, form_type_func = s.split(':')
-    elif s.find('%') != -1:
-        form_type, form_type_format = s.split('%')
-
-    if form_type in settings.RANGE_FORM_TYPES:
-        return form_type, form_type_func, form_type_format
-    return form_type, None, None
-
 def is_old_format_ring_obs_id(s):
     "Return True if the string is a valid old-format ringobsid"
     return len(s) > 2 and (s[0] == '_' or s[1] == '_')
@@ -205,29 +182,6 @@ def convert_ring_obs_id_to_opus_id(ring_obs_id, force_ring_obs_id_fmt=False):
 def get_mult_name(param_qualified_name):
     "Returns mult widget foreign key table name"
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
-
-def format_metadata_number_or_func(val, form_type_func, form_type_format,
-                                   keep_trailing_zeros=False):
-    if val is None:
-        return None
-    if form_type_func:
-        if form_type_func in opus_support.RANGE_FUNCTIONS:
-            func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
-            return func(val)
-        else:
-            log.error('Unknown RANGE function "%s"', form_type_func)
-        return None
-    if form_type_format is None:
-        return str(val)
-    if abs(val) > settings.THRESHOLD_FOR_EXPONENTIAL:
-        form_type_format = form_type_format.replace('f', 'e')
-    try:
-        ret = format(val, form_type_format)
-        if not keep_trailing_zeros and '.' in ret:
-            ret = ret.rstrip('0').rstrip('.')
-        return ret
-    except TypeError:
-        return str(val)
 
 def get_git_version(force_valid=False, use_tag=False):
     curcwd = os.getcwd()

@@ -71,14 +71,13 @@
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.4f:wavelength",
         "pi_intro": null,
         "pi_label": "Wavelength",
         "pi_label_results": "Wavelength (Min)",
         "pi_slug": "wavelength1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "microns",
         "pi_ranges": "obs_wavelength",
         "pi_field_hints1": "Wavelength or Color",
         "pi_field_hints2": "",
@@ -101,14 +100,13 @@
         "pi_disp_order": 11,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.4f:wavelength",
         "pi_intro": null,
         "pi_label": "Wavelength",
         "pi_label_results": "Wavelength (Max)",
         "pi_slug": "wavelength2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "microns",
         "comments": "Definition derived from the PSDD and modified for our purposes. For units format, refer to wavelength1."
     },
     {
@@ -131,14 +129,13 @@
         "pi_disp_order": 20,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.6f",
+        "pi_form_type": "RANGE%.6f:wavelength_resolution",
         "pi_intro": null,
         "pi_label": "Wavelength Resolution",
         "pi_label_results": "Wavelength Resolution (Min)",
         "pi_slug": "waveres1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "microns/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, HSTSTIS/index.lbl is E10.4, HSTI1_*_index.lbl is F6.4, and rest in populate_obs_instrument_COISS/COUVIS/COVIMS/GOSSI/NHLORRI/NHMVIC/VGISS.py are converted from math to micron or micron/pixel, so we round up to .6f"
     },
     {
@@ -158,14 +155,13 @@
         "pi_disp_order": 21,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.6f",
+        "pi_form_type": "RANGE%.6f:wavelength_resolution",
         "pi_intro": null,
         "pi_label": "Wavelength Resolution",
         "pi_label_results": "Wavelength Resolution (Max)",
         "pi_slug": "waveres2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "microns/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_res1"
     },
     {
@@ -188,14 +184,13 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.1f:wavenumber",
         "pi_intro": null,
         "pi_label": "Wavenumber",
         "pi_label_results": "Wavenumber (Min)",
         "pi_slug": "waveno1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "1/cm",
         "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from 10000/wavelength1 and is 1/cm, rounding up to .1f."
     },
     {
@@ -215,14 +210,13 @@
         "pi_disp_order": 31,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.1f",
+        "pi_form_type": "RANGE%.1f:wavenumber",
         "pi_intro": null,
         "pi_label": "Wavenumber",
         "pi_label_results": "Wavenumber (Max)",
         "pi_slug": "waveno2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "1/cm",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no1."
     },
     {
@@ -245,14 +239,13 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:wavenumber_resolution",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution",
         "pi_label_results": "Wavenumber Resolution (Min)",
         "pi_slug": "wavenores1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "1/cm/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, it's derived from wave_no1 & wave_no2, rounding up to the same decimal place .1f."
     },
     {
@@ -272,14 +265,13 @@
         "pi_disp_order": 41,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:wavenumber_resolution",
         "pi_intro": null,
         "pi_label": "Wavenumber Resolution",
         "pi_label_results": "Wavenumber Resolution (Max)",
         "pi_slug": "wavenores2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "1/cm/pixel",
         "comments": "Definition is modified from old OPUS dictionary. For units format, refer to wave_no_res1."
     },
     {
@@ -305,7 +297,6 @@
         "pi_slug": "specflag",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is modified from old OPUS dictionary."
     },
     {
@@ -332,7 +323,6 @@
         "pi_slug": "specsize",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition was made up by RF. For units format, it's integer."
     },
     {
@@ -358,7 +348,6 @@
         "pi_slug": "polarizationtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0,   "LINEAR",   "Linear",   "010", "Y", null],
               [   1,     "NONE",     "None",   "020", "Y", null]

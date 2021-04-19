@@ -104,7 +104,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -121,7 +121,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -138,7 +138,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -155,7 +155,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -173,7 +173,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -190,7 +190,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -207,7 +207,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -225,7 +225,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -243,7 +243,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['YMDhms', 'YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -261,7 +261,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['YMDhms', 'YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -279,7 +279,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['YMDhms', 'YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -297,7 +297,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'only']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['YMDhms', 'YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -315,7 +315,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['YMDhms', 'YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -333,7 +333,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -351,7 +351,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['YMDhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
