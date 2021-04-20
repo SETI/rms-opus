@@ -612,7 +612,7 @@ def url_to_search_params(request_get, allow_errors=False,
                 valid_qtypes = settings.RANGE_QTYPES
         qtype_val = None
         if qtype_slug in request_get:
-            qtype_val = request_get[qtype_slug]
+            qtype_val = request_get[qtype_slug].lower()
             if valid_qtypes is None or qtype_val not in valid_qtypes:
                 if allow_errors: # pragma: no cover
                     # We never actually hit this because normalizeurl catches
@@ -632,7 +632,7 @@ def url_to_search_params(request_get, allow_errors=False,
         unit_slug = 'unit-'+slug_no_num+clause_num_str
         unit_val = None
         if unit_slug in request_get:
-            unit_val = request_get[unit_slug]
+            unit_val = request_get[unit_slug].lower()
             if valid_units is None or unit_val not in valid_units:
                 if allow_errors: # pragma: no cover
                     # We never actually hit this because normalizeurl catches
@@ -654,7 +654,7 @@ def url_to_search_params(request_get, allow_errors=False,
         # in URL
         sourceunit_val = None
         if sourceunit_slug in request_get:
-            sourceunit_val = request_get[sourceunit_slug]
+            sourceunit_val = request_get[sourceunit_slug].lower()
             if (valid_units is None or
                 sourceunit_val not in valid_units):
                 log.error('url_to_search_params: Bad sourceunit value'

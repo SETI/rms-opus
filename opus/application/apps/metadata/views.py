@@ -403,7 +403,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
     (form_type, form_type_format,
      form_type_unit_id) = parse_form_type(param_info.form_type)
     units = request.GET.get('units', get_default_unit(form_type_unit_id))
-    if (not is_valid_unit(form_type_unit_id, units) or
+    if ((form_type_unit_id and
+         not is_valid_unit(form_type_unit_id, units)) or
         throw_random_http404_error()):
         log.error('get_range_endpoints: Bad units "%s" for '+
                   'slug %s', str(units), str(slug))
@@ -750,7 +751,7 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 entry['category'] = table_name.label
             f_type = None
             (form_type, form_type_format,
-             form_type_unit_id) = parse_form_type(param_info.form_type)
+             form_type_unit_id) = parse_form_type(f.form_type)
             if form_type in settings.RANGE_FORM_TYPES:
                 if form_type == 'LONG':
                     f_type = 'range_longitude'
@@ -776,8 +777,10 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
             entry['full_search_label'] = f.body_qualified_label()
-            entry['default_units'] = f.units
-            entry['available_units'] = get_valid_units(f.units)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(f.form_type)
+            entry['default_units'] = get_default_unit(form_type_unit_id)
+            entry['available_units'] = get_valid_units(form_type_unit_id)
             if f.old_slug and collapse: # Backwards compatibility
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:

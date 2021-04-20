@@ -774,6 +774,13 @@ class VoyagerTest(unittest.TestCase):
 
 def parse_time(iso):
     iso = str(iso)
+    try: # ET is just a floating point number
+        et = float(iso)
+        if not math.isfinite(et):
+            raise ValueError('Invalid time syntax: '+iso)
+        return julian.tai_from_tdb(et)
+    except:
+        pass
     try:
         (day, sec, time_type) = julian.day_sec_type_from_string(iso)
     except:
@@ -796,6 +803,13 @@ def format_time_jd(tai):
     # So we want 5+3=8 decimal places
     return 'JD%.8f' % jd
 
+def format_time_jed(tai):
+    jed = julian.jed_from_tai(tai)
+    # We want seconds at a resolution of .001
+    # There are 86400 seconds in a day, which is roughly 100,000
+    # So we want 5+3=8 decimal places
+    return 'JED%.8f' % jed
+
 def format_time_mjd(tai):
     (day, sec) = julian.day_sec_from_tai(tai)
     mjd = julian.mjd_from_day_sec(day, sec)
@@ -803,6 +817,17 @@ def format_time_mjd(tai):
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return 'MJD%.8f' % mjd
+
+def format_time_mjed(tai):
+    mjed = julian.mjed_from_tai(tai)
+    # We want seconds at a resolution of .001
+    # There are 86400 seconds in a day, which is roughly 100,000
+    # So we want 5+3=8 decimal places
+    return 'MJED%.8f' % mjed
+
+def format_time_et(tai):
+    et = julian.tdb_from_tai(tai)
+    return '%.3f' % et
 
 class TimeTest(unittest.TestCase):
     # Note - julian.py has its own test suite, so we don't need to duplicate
@@ -823,10 +848,25 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(format_time_jd(0), 'JD2451544.49962963')
         self.assertEqual(format_time_jd(600000000), 'JD2458488.94401620')
 
+    def test_format_jed(self):
+        "Time format: JED"
+        self.assertEqual(format_time_jed(0), 'JED2451544.50037250')
+        self.assertEqual(format_time_jed(600000000), 'JED2458488.94481695')
+
     def test_format_mjd(self):
         "Time format: MJD"
         self.assertEqual(format_time_mjd(0), 'MJD51543.99962963')
         self.assertEqual(format_time_mjd(600000000), 'MJD58488.44401620')
+
+    def test_format_mjed(self):
+        "Time format: MJED"
+        self.assertEqual(format_time_mjed(0), 'MJED51544.00037250')
+        self.assertEqual(format_time_mjed(600000000), 'MJED58488.44481695')
+
+    def test_format_et(self):
+        "Time format: ET"
+        self.assertEqual(format_time_et(0), '-43167.816')
+        self.assertEqual(format_time_et(600000000), '599956832.184')
 
     def test_parse(self):
         "Time parse"
@@ -843,9 +883,69 @@ class TimeTest(unittest.TestCase):
         self.assertAlmostEqual(parse_time('JD2451544.49962963'), 0, places=3)
         self.assertAlmostEqual(parse_time('JD2458488.94401620'), 600000000,
                                places=3)
+        self.assertAlmostEqual(parse_time('JED2451544.49962963'),
+                               -64.18391461631109, places=3)
+        self.assertAlmostEqual(parse_time('JED2458488.94401620'),
+                               599999930.8156223, places=3)
         self.assertAlmostEqual(parse_time('MJD51543.99962963'), 0, places=3)
         self.assertAlmostEqual(parse_time('MJD58488.44401620'), 600000000,
                                places=3)
+        self.assertAlmostEqual(parse_time('MJED51543.99962963'),
+                               -64.18391461631109, places=3)
+        self.assertAlmostEqual(parse_time('MJED58488.44401620'),
+                               599999930.8156223, places=3)
+        with self.assertRaises(ValueError):
+            parse_time('nan')
+        with self.assertRaises(ValueError):
+            parse_time('inf')
+        self.assertAlmostEqual(parse_time('-43167.816'), 0, places=3)
+        self.assertAlmostEqual(parse_time('599956832.184'), 600000000, places=3)
+
+    def test_idopotent(self):
+        "Time idempotency"
+        self.assertEqual(format_time_ymd(parse_time('2015-05-03T10:12:34.123')),
+                         '2015-05-03T10:12:34.123')
+        self.assertEqual(format_time_ydoy(parse_time('2015-122T10:12:34.123')),
+                         '2015-122T10:12:34.123')
+        self.assertEqual(format_time_jd(parse_time('JD123456789.123')),
+                         'JD123456789.12300000')
+        self.assertEqual(format_time_jed(parse_time('JED123456789.123')),
+                         'JED123456789.12300000')
+
+################################################################################
+################################################################################
+# ANGLE CONVERSION
+################################################################################
+
+def parse_dms_hms(val):
+    # "x x x" defaults to dms
+    return parse_dms(val)
+
+def parse_hms_dms(val):
+    # "x x x" defaults to hms
+    return parse_hms(val)
+
+def parse_dms(val):
+    # "x x x" defaults to dms
+    val = _clean_numeric_field(val)
+    ret = float(val)
+    if not math.isfinite(ret):
+        return None
+    return ret
+
+def parse_hms(val):
+    # "x x x" defaults to dms
+    val = _clean_numeric_field(val)
+    ret = float(val)
+    if not math.isfinite(ret):
+        return None
+    return ret
+
+def format_dms(val):
+    return '%f' % val
+
+def format_hms(val):
+    return '%f' % val
 
 
 ################################################################################
@@ -926,30 +1026,28 @@ UNIT_FORMAT_DB = {
     'datetime': {
         'display_search': True,
         'display_result': False,
-        'default': 'YMDhms',
+        'default': 'ymdhms',
         'conversions': {
-            'YMDhms':       ('YMDhms', 1, parse_time, format_time_ymd),
-            'YDhms':        ('YDhms',  1, parse_time, format_time_ydoy),
-            'JD':           ('JD',     1, parse_time, format_time_jd),
-            'MJD':          ('MJD',    1, parse_time, format_time_mjd),
+            'ymdhms':       ('YMDhms',   1, parse_time, format_time_ymd),
+            'ydhms':        ('YDhms',    1, parse_time, format_time_ydoy),
+            'jd':           ('JD',       1, parse_time, format_time_jd),
+            'jed':          ('JED',      1, parse_time, format_time_jed),
+            'mjd':          ('MJD',      1, parse_time, format_time_mjd),
+            'mjed':         ('MJED',     1, parse_time, format_time_mjed),
+            'et':           ('SPICE ET', 1, parse_time, format_time_et)
         }
     },
-    'wavenumber': {
+    'duration': { # Difference between two datetimes
         'display_search': True,
         'display_result': True,
-        'default': '1/cm',
+        'default': 'seconds',
         'conversions': {
-            '1/cm':         ('cm^-1', 1.,   None, None),
-            '1/m':          ('m^-1',  1e-2, None, None),
-        }
-    },
-    'wavenumber_resolution': {
-        'display_search': True,
-        'display_result': True,
-        'default': '1/cm/pixel',
-        'conversions': {
-            '1/cm/pixel':  ('cm^-1/pixel', 1.,   None, None),
-            '1/m/pixel':   ('m^-1/pixel',  1e-2, None, None),
+            'seconds':      ('secs',    1,           None, None),
+            'microseconds': ('usecs',   0.000001,    None, None),
+            'milliseconds': ('msecs',   0.001,       None, None),
+            'minutes':      ('minutes', 60.,         None, None),
+            'hours':        ('hours',   60.*60.,     None, None),
+            'days':         ('days',    60.*60.*24., None, None),
         }
     },
     'generic_angle': { # Generic degrees, like lighting geometry
@@ -961,33 +1059,39 @@ UNIT_FORMAT_DB = {
             'radians':      ('radians',    180./3.141592653589, None, None),
         }
     },
-    'latitude': { # Degrees for latitude
+    'latitude': { # Latitude on a body; includes declination
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,                  None, None),
-            'radians':      ('radians',    180./3.141592653589, None, None),
+            'degrees':      ('degrees',    1., parse_dms, None),
+            'dms':          ('DMS',        1., parse_dms, format_dms),
+            'radians':      ('radians',    180./3.141592653589,
+                                           parse_dms, None),
         }
     },
-    'longitude': { # Degrees for longitude
+    'longitude': { # Longitude on a body or ring
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,                  None, None),
-            'hourangle':    ('hour angle', 360./24.,            None, None),
-            'radians':      ('radians',    180./3.141592653589, None, None),
+            'degrees':      ('degrees',    1., parse_dms, None),
+            'dms':          ('DMS',        1., parse_dms, format_dms),
+            'radians':      ('radians',    180./3.141592653589,
+                                           parse_dms, None),
         }
     },
-    'hour_angle': { # Degrees for hour angle
+    'hour_angle': { # Hour angle; includes right ascension
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,                  None, None),
-            'hourangle':    ('hour angle', 360./24.,            None, None),
-            'radians':      ('radians',    180./3.141592653589, None, None),
+            'degrees':      ('degrees',    1.,       parse_dms_hms, None),
+            'dms':          ('DMS',        1.,       parse_dms,     format_dms),
+            'hours':        ('hours',      360./24., parse_hms_dms, None),
+            'hms':          ('HMS',        1.,       parse_hms,     format_hms),
+            'radians':      ('radians',    180./3.141592653589,
+                                           parse_dms_hms, None),
         }
     },
     'distance_ring': {
@@ -1008,17 +1112,18 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'km',
         'conversions': {
-            'km':           ('km',         1,      None, None),
-            'm':            ('m',          1e-3,   None, None),
+            'km':           ('km',         1,             None, None),
+            'm':            ('m',          1e-3,          None, None),
+            'au':           ('AU',         149597870.700, None, None)
         }
     },
     'distance_resolution': {
         'display_search': True,
         'display_result': True,
-        'default': 'km/pixel',
+        'default': 'km_pixel',
         'conversions': {
-            'km/pixel':     ('km/pixel', 1,    None, None),
-            'm/pixel':      ('m/pixel',  1e-3, None, None),
+            'km_pixel':     ('km/pixel', 1,    None, None),
+            'm_pixel':      ('m/pixel',  1e-3, None, None),
         }
     },
     'wavelength': {
@@ -1035,25 +1140,30 @@ UNIT_FORMAT_DB = {
     'wavelength_resolution': {
         'display_search': True,
         'display_result': True,
-        'default': 'microns/pixel',
+        'default': 'microns_pixel',
         'conversions': {
-            'microns/pixel':      ('microns/pixel',   1,    None, None),
-            'angstroms/pixel':    ('angstroms/pixel', 1e-4, None, None),
-            'nm/pixel':           ('nm/pixel',        1e-3, None, None),
-            'cm/pixel':           ('cm/pixel',        1e4,  None, None),
+            'microns_pixel':      ('microns/pixel',   1,    None, None),
+            'angstroms_pixel':    ('angstroms/pixel', 1e-4, None, None),
+            'nm_pixel':           ('nm/pixel',        1e-3, None, None),
+            'cm_pixel':           ('cm/pixel',        1e4,  None, None),
         }
     },
-    'duration': { # Generic seconds for duration
+    'wavenumber': {
         'display_search': True,
         'display_result': True,
-        'default': 'seconds',
+        'default': '1_cm',
         'conversions': {
-            'seconds':      ('secs',    1,           None, None),
-            'microseconds': ('usecs',   0.000001,    None, None),
-            'milliseconds': ('msecs',   0.001,       None, None),
-            'minutes':      ('minutes', 60.,         None, None),
-            'hours':        ('hours',   60.*60.,     None, None),
-            'days':         ('days',    60.*60.*24., None, None),
+            '1_cm':         ('cm^-1', 1.,   None, None),
+            '1_m':          ('m^-1',  1e-2, None, None),
+        }
+    },
+    'wavenumber_resolution': {
+        'display_search': True,
+        'display_result': True,
+        'default': '1_cm_pixel',
+        'conversions': {
+            '1_cm_pixel':  ('cm^-1/pixel', 1.,   None, None),
+            '1_m_pixel':   ('m^-1/pixel',  1e-2, None, None),
         }
     },
 }
@@ -1068,6 +1178,7 @@ def convert_to_default_unit(val, unit_id, unit):
         raise KeyError
     if val is None or unit_id is None or unit is None:
         return val
+    unit = unit.lower()
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
     if default_unit == unit:
         return val
@@ -1082,6 +1193,7 @@ def convert_from_default_unit(val, unit_id, unit):
         raise KeyError
     if val is None or unit_id is None or unit is None:
         return val
+    unit = unit.lower()
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
     if default_unit == unit:
         return val
@@ -1115,6 +1227,7 @@ def get_unit_display_names(unit_id):
 
 def get_unit_display_name(unit_id, unit):
     "Get the display name for a given unit_id and unit."
+    unit = unit.lower()
     return UNIT_FORMAT_DB[unit_id]['conversions'][unit][0]
 
 def is_valid_unit_id(unit_id):
@@ -1123,6 +1236,7 @@ def is_valid_unit_id(unit_id):
 
 def is_valid_unit(unit_id, unit):
     "Check if a unit is a valid unit for unit_id."
+    unit = unit.lower()
     return unit in UNIT_FORMAT_DB[unit_id]['conversions']
 
 def get_default_unit(unit_id):
@@ -1156,6 +1270,7 @@ def adjust_format_string_for_units(numerical_format, unit_id, unit):
     if (not numerical_format.startswith('.') or
         not numerical_format.endswith('f')):
         return numerical_format
+    unit = unit.lower()
     default_unit = UNIT_FORMAT_DB[unit_id]['default']
     if default_unit == unit:
         return numerical_format
@@ -1179,6 +1294,7 @@ def format_unit_value(val, numerical_format, unit_id, unit,
     if unit_id is not None:
         if unit is None:
             unit = get_default_unit(unit_id)
+        unit = unit.lower()
         if convert_to_default:
             val = convert_from_default_unit(val, unit_id, unit)
         format_func = UNIT_FORMAT_DB[unit_id]['conversions'][unit][3]
@@ -1204,10 +1320,13 @@ def _clean_numeric_field(s):
     return clean_func(s)
 
 def parse_unit_value(val, numerical_format, unit_id, unit):
+    if val is None or val == '':
+        return None
     parse_func = None
     if unit_id is not None:
         if unit is None:
             unit = get_default_unit(unit_id)
+        unit = unit.lower()
         (display_name, conversion_factor, parse_func,
          display_func) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
     if parse_func is None:
@@ -1215,8 +1334,10 @@ def parse_unit_value(val, numerical_format, unit_id, unit):
         if numerical_format and numerical_format[-1] == 'd':
             parse_func = int
         val = _clean_numeric_field(val)
-    if not val:
-        return None
+        ret = parse_func(val)
+        if not math.isfinite(ret):
+            raise ValueError
+        return ret
     return parse_func(val)
 
 def parse_form_type(s):

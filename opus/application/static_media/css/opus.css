@@ -2716,7 +2716,7 @@ input.STRING {
 make sure it can be shrunk more when screen is shrinking (before reaching to
 the breakpoint at 940px) */
 input.RANGE {
-    width: 25%;
+    width: 27%;
 }
 
 /* Style placeholder to have "..." when text is overflow */
