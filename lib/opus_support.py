@@ -10,6 +10,7 @@
 
 import math
 import numpy as np
+import re
 import unittest
 
 import julian # From pds-tools
@@ -110,6 +111,7 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
     fmt = '%0' + str(ndigits) + 'd' + sep + '%0' + str(ndigits2) + 'd'
     return fmt % (hours, minutes)
 
+
 ################################################################################
 ################################################################################
 # GALILEO
@@ -130,7 +132,7 @@ def parse_galileo_sclk(sclk):
 
     return _parse_two_field_sclk(sclk, 8, '.', 91, 'Galileo')
 
-def format_galileo_sclk(value):
+def format_galileo_sclk(value, *args):
     """Convert a number into a valid Galileo clock string.
     """
 
@@ -246,7 +248,7 @@ def parse_new_horizons_sclk(sclk):
 
     return value
 
-def format_new_horizons_sclk(value):
+def format_new_horizons_sclk(value, *args):
     """Convert a number into a valid New Horizons clock string.
     """
 
@@ -354,7 +356,7 @@ def parse_cassini_sclk(sclk):
 
     return _parse_two_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
-def format_cassini_sclk(value):
+def format_cassini_sclk(value, *args):
     """Convert a number into a valid Cassini clock string.
     """
 
@@ -467,7 +469,7 @@ def parse_cassini_orbit(orbit):
     except KeyError:
         raise ValueError('Invalid Cassini orbit %s' % orbit)
 
-def format_cassini_orbit(value):
+def format_cassini_orbit(value, *args):
     """Convert an internal number for a Cassini orbit to its displayed value."""
 
     if value >= 3:
@@ -624,7 +626,7 @@ def parse_voyager_sclk(sclk, planet=None):
     # Return in units of FDS hours
     return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
 
-def format_voyager_sclk(value, sep=':', fields=3):
+def format_voyager_sclk(value, *args, sep=':', fields=3):
     """Convert a number in units of FDS hours into a valid Voyager clock string.
     """
 
@@ -789,13 +791,13 @@ def parse_time(iso):
         raise ValueError('Invalid time syntax: '+iso)
     return julian.tai_from_day(day) + sec
 
-def format_time_ymd(tai):
+def format_time_ymd(tai, *args):
     return julian.iso_from_tai(tai, ymd=True, digits=3)
 
-def format_time_ydoy(tai):
+def format_time_ydoy(tai, *args):
     return julian.iso_from_tai(tai, ymd=False, digits=3)
 
-def format_time_jd(tai):
+def format_time_jd(tai, *args):
     (day, sec) = julian.day_sec_from_tai(tai)
     jd = julian.jd_from_day_sec(day, sec)
     # We want seconds at a resolution of .001
@@ -803,14 +805,14 @@ def format_time_jd(tai):
     # So we want 5+3=8 decimal places
     return 'JD%.8f' % jd
 
-def format_time_jed(tai):
+def format_time_jed(tai, *args):
     jed = julian.jed_from_tai(tai)
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return 'JED%.8f' % jed
 
-def format_time_mjd(tai):
+def format_time_mjd(tai, *args):
     (day, sec) = julian.day_sec_from_tai(tai)
     mjd = julian.mjd_from_day_sec(day, sec)
     # We want seconds at a resolution of .001
@@ -818,14 +820,14 @@ def format_time_mjd(tai):
     # So we want 5+3=8 decimal places
     return 'MJD%.8f' % mjd
 
-def format_time_mjed(tai):
+def format_time_mjed(tai, *args):
     mjed = julian.mjed_from_tai(tai)
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return 'MJED%.8f' % mjed
 
-def format_time_et(tai):
+def format_time_et(tai, *args):
     et = julian.tdb_from_tai(tai)
     return '%.3f' % et
 
@@ -912,41 +914,402 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(format_time_jed(parse_time('JED123456789.123')),
                          'JED123456789.12300000')
 
+
 ################################################################################
 ################################################################################
 # ANGLE CONVERSION
 ################################################################################
 
-def parse_dms_hms(val):
-    # "x x x" defaults to dms
-    return parse_dms(val)
+def parse_dms_hms(s):
+    """Parse DMS, HMS, or single number, but "x x x" defaults to DMS."""
+    return _parse_dms_hms(s, allow_dms=True, allow_hms=True,
+                          default='dms')
 
-def parse_hms_dms(val):
-    # "x x x" defaults to hms
-    return parse_hms(val)
+def parse_hms_dms(s):
+    """Parse DMS, HMS, or single number, but "x x x" defaults to HMS."""
+    return _parse_dms_hms(s, allow_dms=True, allow_hms=True,
+                          default='hms')
 
-def parse_dms(val):
-    # "x x x" defaults to dms
-    val = _clean_numeric_field(val)
-    ret = float(val)
+def parse_dms(s):
+    """Parse a DMS string or single number."""
+    return _parse_dms_hms(s, allow_dms=True, allow_hms=False,
+                          default='dms')
+
+def parse_hms(s):
+    """Parse an HMS string or single number."""
+    return _parse_dms_hms(s, allow_dms=False, allow_hms=True,
+                          default='hms')
+
+def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
+    s = s.strip()
+    # '' and variants => s
+    s = s.replace("''", 's').replace('"', 's').replace(chr(8243), 's')
+    # ' and variants => m
+    s = s.replace("'", 'm').replace(chr(8242), 'm')
+    # deg symbol => d
+    s = s.replace(chr(176), 'd')
+
+    format_types = []
+    if allow_dms:
+        format_types.append(('d', 1))
+    if allow_hms:
+        format_types.append(('h', 15))
+    for format_char, format_factor in format_types:
+        # We allow exponential notation in the first position
+        match = re.fullmatch(r'(|[+-]) *(|\d+(|e(|\+)\d+)(|\.\d*)'+format_char+
+                             r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
+        if match is None and format_char == default[0]:
+            # Check for just "N N N" if we are looking at the default format
+            match = re.fullmatch(r'(|[+-]) *(\d+)()() +(\d+)() +(\d+(|.\d*))', s)
+        if match:
+            neg = match[1]
+            degrees_hours = match[2]
+            minute = match[5]
+            second = match[7]
+            force_dh_int = False
+            force_m_int = False
+            val = 0
+            if second:
+                second = second.strip('s')
+                # Only "second" can have a fractional part if it's provided
+                force_m_int = True
+                force_dh_int = True
+                second = float(second)
+                if not math.isfinite(second) or second < 0 or second >= 60:
+                    raise ValueError
+                val += second / 3600
+            if minute:
+                minute = minute.strip('m')
+                # Only "minute" can have a fractional part if second is not
+                # provided
+                force_dh_int = True
+                minute = float(minute)
+                if force_m_int:
+                    if minute != int(minute):
+                        raise ValueError
+                if not math.isfinite(minute) or minute < 0 or minute >= 60:
+                    raise ValueError
+                val += minute / 60
+            if degrees_hours:
+                degrees_hours = degrees_hours.strip(format_char)
+                degrees_hours = float(degrees_hours)
+                if force_dh_int:
+                    if degrees_hours != int(degrees_hours):
+                        raise ValueError
+                if not math.isfinite(degrees_hours):
+                    raise ValueError
+                val += degrees_hours
+            if neg == '-':
+                val = -val
+            return val * format_factor
+
+    # We don't want to allow numbers with spaces in them because that will cause
+    # potential ambiguity with the "x x x" DMS/HMS format.
+    s = _clean_numeric_field(s, compress_spaces=False)
+    ret = float(s)
     if not math.isfinite(ret):
-        return None
+        raise ValueError
+
+    if default == 'hms':
+        ret *= 15
+
     return ret
 
-def parse_hms(val):
-    # "x x x" defaults to dms
-    val = _clean_numeric_field(val)
-    ret = float(val)
-    if not math.isfinite(ret):
-        return None
+
+def format_dms_hms(val, unit_id, unit, numerical_format, keep_trailing_zeros):
+    if unit == 'hours' or unit == 'hms':
+        # Just do the normal numeric formatting, but divide by 15 first to be
+        # in units of hours
+        val /= 15
+
+    # numerical_format is in degrees, regardless of whether val is in degrees
+    # or hours.
+    # For DMS, our fractional amount is in seconds, which is 1/3600 degree.
+    # Round it to 1/1000 to be conservative, which is 3 decimal
+    # places. Thus we should subtract 3 from the numerical_format size.
+    # For HMS, our fractional amount is in seconds (but val is in hours), which
+    # is 1/3600*15=1/240 degree. Round it to 1/100 to be conservative, which is
+    # 2 decimal places. Thus we should subtract 2 from the numerical_format
+    # size.
+    # For plain "hour", we need to add two digits to account for the factor of
+    # 15.
+    # For plain "radians", it's 2 digits for the factor of 57.
+    if unit == 'degrees':
+        subtract_amt = 0
+    elif unit == 'dms':
+        subtract_amt = 3
+    elif unit == 'hms':
+        subtract_amt = 2
+    elif unit == 'hours':
+        subtract_amt = -2
+    elif unit == 'radians':
+        subtract_amt = -2
+
+    new_dec = max(int(numerical_format[1:-1])-subtract_amt, 0)
+
+    if unit in ['degrees', 'radians', 'hours']:
+        # Plain numeric formatting
+        new_format = f'%.{new_dec}f'
+        if abs(val) >= 1e8:
+            new_format = new_format.replace('f', 'e')
+        ret = new_format % val
+        if not keep_trailing_zeros and '.' in ret:
+            ret = ret.rstrip('0')
+            ret = ret.rstrip('.')
+        return ret
+
+    # For DMS or HMS, the new format is just for the seconds, so we want to have
+    # 2 digits with leading zeroes as necessary
+    if new_dec == 0:
+        new_format = '02d'
+    else:
+        new_format = f'0{new_dec+3}.{new_dec}f'
+
+    val_sec = val * 3600 # Do all the work in seconds for better rounding
+    neg = val_sec < 0
+    val_sec = abs(val_sec)
+    # Round the input number to the given precision
+    prec = 10**new_dec
+    val_sec = np.round(val_sec * prec) / prec
+    dh = int(val_sec // 3600)
+    val_sec = val_sec-dh*3600
+    m = min(int(val_sec // 60), 59)
+    val_sec = val_sec-m*60
+
+    leading_char = 'h'
+    if unit == 'dms':
+        leading_char = 'd'
+    leading_fmt = 'd'
+    if abs(val) >= 1e8:
+        leading_fmt = '.0e'
+    full_format = f'%{leading_fmt}{leading_char} %02dm %0{new_format}'
+    ret = full_format % (dh, m, val_sec)
+    if not keep_trailing_zeros and '.' in ret:
+        ret = ret.rstrip('0')
+        ret = ret.rstrip('.')
+    ret += 's'
+    if neg:
+        ret = '-' + ret
     return ret
 
-def format_dms(val):
-    return '%f' % val
+class TimeTest(unittest.TestCase):
+    def test_parse_hms(self):
+        "HMS parse"
+        self.assertEqual(parse_hms('0h 0m 0s'), 0*15)
+        self.assertEqual(parse_hms('1h 0m 0s'), 1*15)
+        self.assertEqual(parse_hms('0h 30m 0s'), 0.5*15)
+        self.assertEqual(parse_hms('0h 0m 36s'), 0.01*15)
+        self.assertEqual(parse_hms('23h 30m 36s'), 23.51*15)
+        self.assertEqual(parse_hms('23h 30\' 36"'), 23.51*15)
+        self.assertEqual(parse_hms('23h 30\' 36\'\''), 23.51*15)
+        self.assertEqual(parse_hms('+23h 30m 36s'), 23.51*15)
+        self.assertEqual(parse_hms(' + 23h  30m 36s'), 23.51*15)
+        self.assertEqual(parse_hms('-23h 30m 36s'), -23.51*15)
+        self.assertEqual(parse_hms(' - 23h  30m 36s'), -23.51*15)
+        with self.assertRaises(ValueError):
+            parse_hms('23.1h 30m 36s')
+        with self.assertRaises(ValueError):
+            parse_hms('23h 30.123m 36s')
+        with self.assertRaises(ValueError):
+            parse_hms('30.123m 36s')
+        with self.assertRaises(ValueError):
+            parse_hms('23d 30m 36s')
+        self.assertEqual(parse_hms('23.h 30.m 36.36s'), 23.5101*15)
+        self.assertEqual(parse_hms('23.h   30.m   36.36s'), 23.5101*15)
+        self.assertEqual(parse_hms('23.h30.m36.36s'), 23.5101*15)
+        self.assertEqual(parse_hms('23.000h 30.000m 36.36000s'), 23.5101*15)
+        self.assertEqual(parse_hms('0h 0m'), 0*15)
+        self.assertEqual(parse_hms('0h 0.30m'), 0.005*15)
+        self.assertEqual(parse_hms('0h 0s'), 0*15)
+        self.assertEqual(parse_hms('0h 36.36s'), 0.0101*15)
+        self.assertEqual(parse_hms('0m 0s'), 0*15)
+        self.assertEqual(parse_hms('10h'), 10*15)
+        self.assertEqual(parse_hms('10.123h'), 10.123*15)
+        self.assertEqual(parse_hms('0m'), 0*15)
+        self.assertEqual(parse_hms('30m'), 0.5*15)
+        self.assertEqual(parse_hms('30.30m'), 0.505*15)
+        self.assertEqual(parse_hms('36s'), 0.01*15)
+        self.assertEqual(parse_hms('36.36s'), 0.0101*15)
+        with self.assertRaises(ValueError):
+            parse_hms('60m')
+        with self.assertRaises(ValueError):
+            parse_hms('1234m')
+        with self.assertRaises(ValueError):
+            parse_hms('60s')
+        with self.assertRaises(ValueError):
+            parse_hms('1234s')
+        self.assertEqual(parse_hms('0 0 0'), 0*15)
+        self.assertEqual(parse_hms('1 30 36.36'), 1.5101*15)
+        with self.assertRaises(ValueError):
+            parse_hms('12 23')
+        self.assertEqual(parse_hms('123.456'), 123.456*15)
+        self.assertEqual(parse_hms('1000000000h 0m 0s'), 1000000000*15)
+        self.assertEqual(parse_hms('1e+9h 0m 0s'), 1000000000*15)
+        self.assertEqual(parse_hms('1e+0009h 0m 0s'), 1000000000*15)
 
-def format_hms(val):
-    return '%f' % val
+    def test_parse_dms(self):
+        "DMS parse"
+        self.assertEqual(parse_dms('0d 0m 0s'), 0)
+        self.assertEqual(parse_dms('1d 0m 0s'), 1)
+        self.assertEqual(parse_dms('0d 30m 0s'), 0.5)
+        self.assertEqual(parse_dms('0d 0m 36s'), 0.01)
+        self.assertEqual(parse_dms('23d 30m 36s'), 23.51)
+        self.assertEqual(parse_dms('23d 30\' 36"'), 23.51)
+        self.assertEqual(parse_dms('23d 30\' 36\'\''), 23.51)
+        self.assertEqual(parse_dms('+23d 30m 36s'), 23.51)
+        self.assertEqual(parse_dms(' + 23d  30m 36s'), 23.51)
+        self.assertEqual(parse_dms('-23d 30m 36s'), -23.51)
+        self.assertEqual(parse_dms(' - 23d  30m 36s'), -23.51)
+        with self.assertRaises(ValueError):
+            parse_dms('23.1d 30m 36s')
+        with self.assertRaises(ValueError):
+            parse_dms('23d 30.123m 36s')
+        with self.assertRaises(ValueError):
+            parse_dms('30.123m 36s')
+        with self.assertRaises(ValueError):
+            parse_dms('23h 30m 36s')
+        self.assertEqual(parse_dms('23.d 30.m 36.36s'), 23.5101)
+        self.assertEqual(parse_dms('23.d   30.m   36.36s'), 23.5101)
+        self.assertEqual(parse_dms('23.d30.m36.36s'), 23.5101)
+        self.assertEqual(parse_dms('23.000d 30.000m 36.36000s'), 23.5101)
+        self.assertEqual(parse_dms('0d 0m'), 0)
+        self.assertEqual(parse_dms('0d 0.30m'), 0.005)
+        self.assertEqual(parse_dms('0d 0s'), 0)
+        self.assertEqual(parse_dms('0d 36.36s'), 0.0101)
+        self.assertEqual(parse_dms('0m 0s'), 0)
+        self.assertEqual(parse_dms('10d'), 10)
+        self.assertEqual(parse_dms('10.123d'), 10.123)
+        self.assertEqual(parse_dms('0m'), 0)
+        self.assertEqual(parse_dms('30m'), 0.5)
+        self.assertEqual(parse_dms('30.30m'), 0.505)
+        self.assertEqual(parse_dms('36s'), 0.01)
+        self.assertEqual(parse_dms('36.36s'), 0.0101)
+        with self.assertRaises(ValueError):
+            parse_dms('60m')
+        with self.assertRaises(ValueError):
+            parse_dms('1234m')
+        with self.assertRaises(ValueError):
+            parse_dms('60s')
+        with self.assertRaises(ValueError):
+            parse_dms('1234s')
+        self.assertEqual(parse_dms('0 0 0'), 0)
+        self.assertEqual(parse_dms('1 30 36.36'), 1.5101)
+        with self.assertRaises(ValueError):
+            parse_dms('12 23')
+        self.assertEqual(parse_dms('123.456'), 123.456)
+        self.assertEqual(parse_dms('1000000000d 0m 0s'), 1000000000)
+        self.assertEqual(parse_dms('1e+9d 0m 0s'), 1000000000)
+        self.assertEqual(parse_dms('1e+0009d 0m 0s'), 1000000000)
 
+    def test_parse_dms_hms(self):
+        "DMS_HMS parse"
+        self.assertEqual(parse_dms_hms('1d 30m 36s'), 1.51)
+        self.assertEqual(parse_dms_hms('1h 30m 36s'), 1.51*15)
+        self.assertEqual(parse_dms_hms('1 30 36'), 1.51)
+        self.assertEqual(parse_dms_hms('1.5'), 1.5)
+
+    def test_parse_hms_dms(self):
+        "DMS_HMS parse"
+        self.assertEqual(parse_hms_dms('1d 30m 36s'), 1.51)
+        self.assertEqual(parse_hms_dms('1h 30m 36s'), 1.51*15)
+        self.assertEqual(parse_hms_dms('1 30 36'), 1.51*15)
+        self.assertEqual(parse_hms_dms('1.5'), 1.5*15)
+
+    def test_format_dms_hms(self):
+        "DMS_HMS format"
+        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', True),
+                         '0.000')
+        self.assertEqual(format_dms_hms(0, None, 'degrees', '.3f', False),
+                         '0')
+        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f',
+                                        True), '123.400')
+        self.assertEqual(format_dms_hms(123.4, None, 'degrees', '.3f',
+                                        False), '123.4')
+        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f',
+                                        True), '123.457')
+        self.assertEqual(format_dms_hms(123.456789, None, 'degrees', '.3f',
+                                        False), '123.457')
+        self.assertEqual(format_dms_hms(-123.456789, None, 'degrees', '.3f',
+                                        False), '-123.457')
+        self.assertEqual(format_dms_hms(1e7, None, 'degrees', '.3f',
+                                        False), '10000000')
+        self.assertEqual(format_dms_hms(1e8, None, 'degrees', '.3f',
+                                        False), '1.000e+08')
+
+        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', True),
+                         '0.00000')
+        self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', False),
+                         '0')
+        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f',
+                                        True), '8.12400')
+        self.assertEqual(format_dms_hms(121.86, None, 'hours', '.3f',
+                                        False), '8.124')
+        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f',
+                                        True), '8.23045')
+        self.assertEqual(format_dms_hms(123.456789, None, 'hours', '.3f',
+                                        False), '8.23045')
+        self.assertEqual(format_dms_hms(-123.456789, None, 'hours', '.3f',
+                                        False), '-8.23045')
+
+        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', True),
+                         '0.00000')
+        self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', False),
+                         '0')
+        self.assertEqual(format_dms_hms(1e7, None, 'radians', '.3f',
+                                        False), '10000000')
+        self.assertEqual(format_dms_hms(1e8, None, 'radians', '.3f',
+                                        False), '1.00000e+08')
+
+        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', False),
+                         '0d 00m 00s')
+        self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', True),
+                         '0d 00m 00.000s')
+        self.assertEqual(format_dms_hms(0.0001, None, 'dms', '.6f', False),
+                         '0d 00m 00.36s')
+        self.assertEqual(format_dms_hms(0.0001, None, 'dms', '.6f', True),
+                         '0d 00m 00.360s')
+        self.assertEqual(format_dms_hms(-0.0001, None, 'dms', '.6f', False),
+                         '-0d 00m 00.36s')
+        self.assertEqual(format_dms_hms(-0.0001, None, 'dms', '.6f', True),
+                         '-0d 00m 00.360s')
+        self.assertEqual(format_dms_hms(700, None, 'dms', '.6f', False),
+                         '700d 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999987, None, 'dms', '.6f',
+                                        False), '700d 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999986, None, 'dms', '.6f',
+                                        False), '699d 59m 59.999s')
+        self.assertEqual(format_dms_hms(-699.99999986, None, 'dms', '.6f',
+                                        False), '-699d 59m 59.999s')
+        self.assertEqual(format_dms_hms(1e7, None, 'dms', '.3f',
+                                        False), '10000000d 00m 00s')
+        self.assertEqual(format_dms_hms(1e8, None, 'dms', '.3f',
+                                        False), '1e+08d 00m 00s')
+
+
+        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', False),
+                         '0h 00m 00s')
+        self.assertEqual(format_dms_hms(0, None, 'hms', '.6f', True),
+                         '0h 00m 00.0000s')
+        self.assertEqual(format_dms_hms(0.0001*15, None, 'hms', '.6f', False),
+                         '0h 00m 00.36s')
+        self.assertEqual(format_dms_hms(0.0001*15, None, 'hms', '.6f', True),
+                         '0h 00m 00.3600s')
+        self.assertEqual(format_dms_hms(-0.0001*15, None, 'hms', '.6f', False),
+                         '-0h 00m 00.36s')
+        self.assertEqual(format_dms_hms(-0.0001*15, None, 'hms', '.6f', True),
+                         '-0h 00m 00.3600s')
+        self.assertEqual(format_dms_hms(700*15, None, 'hms', '.6f', False),
+                         '700h 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999987*15, None, 'hms', '.5f',
+                                        False), '700h 00m 00s')
+        self.assertEqual(format_dms_hms(699.99999986*15, None, 'hms', '.5f',
+                                        False), '699h 59m 59.999s')
+        self.assertEqual(format_dms_hms(-699.99999986*15, None, 'hms', '.5f',
+                                        False), '-699h 59m 59.999s')
+        self.assertEqual(format_dms_hms(1e7*15, None, 'hms', '.3f',
+                                        False), '10000000h 00m 00s')
+        self.assertEqual(format_dms_hms(1e8*15, None, 'hms', '.3f',
+                                        False), '1e+08h 00m 00s')
 
 ################################################################################
 ################################################################################
@@ -1065,7 +1428,7 @@ UNIT_FORMAT_DB = {
         'default': 'degrees',
         'conversions': {
             'degrees':      ('degrees',    1., parse_dms, None),
-            'dms':          ('DMS',        1., parse_dms, format_dms),
+            'dms':          ('DMS',        1., parse_dms, format_dms_hms),
             'radians':      ('radians',    180./3.141592653589,
                                            parse_dms, None),
         }
@@ -1076,22 +1439,28 @@ UNIT_FORMAT_DB = {
         'default': 'degrees',
         'conversions': {
             'degrees':      ('degrees',    1., parse_dms, None),
-            'dms':          ('DMS',        1., parse_dms, format_dms),
+            'dms':          ('DMS',        1., parse_dms, format_dms_hms),
             'radians':      ('radians',    180./3.141592653589,
                                            parse_dms, None),
         }
     },
+    # We do something unusual for hour_angle, since we need people to be
+    # able to type in a number in either "dms" or "hms" format at any time and
+    # have it do the right thing. As a result, we can't use the *15 unit
+    # conversion factor, and we need a special format routine for hours as
+    # a floating point number (which divides by 15) rather than using the normal
+    # number conversion.
     'hour_angle': { # Hour angle; includes right ascension
         'display_search': True,
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,       parse_dms_hms, None),
-            'dms':          ('DMS',        1.,       parse_dms,     format_dms),
-            'hours':        ('hours',      360./24., parse_hms_dms, None),
-            'hms':          ('HMS',        1.,       parse_hms,     format_hms),
+            'degrees':      ('degrees',    1.,  parse_dms_hms, format_dms_hms),
+            'dms':          ('DMS',        1.,  parse_dms_hms, format_dms_hms),
+            'hours':        ('hours',      1.,  parse_hms_dms, format_dms_hms),
+            'hms':          ('HMS',        1.,  parse_hms_dms, format_dms_hms),
             'radians':      ('radians',    180./3.141592653589,
-                                           parse_dms_hms, None),
+                                           parse_dms_hms, format_dms_hms),
         }
     },
     'distance_ring': {
@@ -1301,7 +1670,7 @@ def format_unit_value(val, numerical_format, unit_id, unit,
     if format_func is None:
         if numerical_format is None:
             return str(val)
-        if abs(val) > 1e8:
+        if abs(val) >= 1e8:
             numerical_format = numerical_format.replace('f', 'e')
         new_format = adjust_format_string_for_units(numerical_format,
                                                     unit_id, unit)
@@ -1309,18 +1678,22 @@ def format_unit_value(val, numerical_format, unit_id, unit,
         if not keep_trailing_zeros and '.' in ret:
             ret = ret.rstrip('0').rstrip('.')
         return ret
-    return format_func(val)
+    return format_func(val, unit_id, unit, numerical_format,
+                       keep_trailing_zeros)
 
-def _clean_numeric_field(s):
+def _clean_numeric_field(s, compress_spaces=True):
     def clean_func(x):
-        return x.replace(' ', '').replace(',', '').replace('_','')
+        ret = x.replace(',', '').replace('_','')
+        if compress_spaces:
+            ret = ret.replace(' ', '')
+        return ret
     if isinstance(s, (list, tuple)):
         return [clean_func(z) for z in s]
 
     return clean_func(s)
 
-def parse_unit_value(val, numerical_format, unit_id, unit):
-    if val is None or val == '':
+def parse_unit_value(s, numerical_format, unit_id, unit):
+    if s is None or s == '':
         return None
     parse_func = None
     if unit_id is not None:
@@ -1333,12 +1706,12 @@ def parse_unit_value(val, numerical_format, unit_id, unit):
         parse_func = float
         if numerical_format and numerical_format[-1] == 'd':
             parse_func = int
-        val = _clean_numeric_field(val)
-        ret = parse_func(val)
+        s = _clean_numeric_field(s)
+        ret = parse_func(s)
         if not math.isfinite(ret):
             raise ValueError
         return ret
-    return parse_func(val)
+    return parse_func(s)
 
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.

@@ -652,7 +652,7 @@ def url_to_search_params(request_get, allow_errors=False,
         sourceunit_slug = 'sourceunit-'+slug_no_num+clause_num_str
         # sourceunit_val will be None if sourceunit_slug doesn't exist
         # in URL
-        sourceunit_val = None
+        sourceunit_val = unit_val
         if sourceunit_slug in request_get:
             sourceunit_val = request_get[sourceunit_slug].lower()
             if (valid_units is None or

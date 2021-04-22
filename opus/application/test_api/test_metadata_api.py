@@ -597,10 +597,22 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"min": "192.007002", "max": "242.282082", "nulls": 0, "units": "degrees"}
         self._run_json_equal(url, expected)
 
+    def test__api_meta_range_endpoints_right_ascension_VGISS_dms(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS dms"
+        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=dms'
+        expected = {"min": "192d 00m 25.207s", "max": "242d 16m 55.495s", "nulls": 0, "units": "dms"}
+        self._run_json_equal(url, expected)
+
     def test__api_meta_range_endpoints_right_ascension_VGISS_hours(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hours"
         url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hours'
         expected = {"min": "12.8004668", "max": "16.1521388", "nulls": 0, "units": "hours"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_hms(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hms"
+        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hms'
+        expected = {"min": "12h 48m 01.6805s", "max": "16h 09m 07.6997s", "nulls": 0, "units": "hms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_right_ascension_VGISS_radians(self):
@@ -608,8 +620,6 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=radians'
         expected = {"min": "3.35115437", "max": "4.22862005", "nulls": 0, "units": "radians"}
         self._run_json_equal(url, expected)
-
-# XXXXXXXX ADD MORE UNIT TESTS HERE XXXXXXXXX
 
     # Image / Pixel Size (integer return)
     def test__api_meta_range_endpoints_greaterpixelsize_COISS(self):

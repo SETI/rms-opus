@@ -319,6 +319,12 @@ def api_get_widget(request, **kwargs):
                     +'</ul>')
 
         else: # param is constrained
+            initial_unit = None
+            if 'units' in extras:
+                units = extras['units']
+                if param_qualified_name_no_num in units:
+                    initial_unit = units[param_qualified_name_no_num][0]
+
             key = 0
             while key<length:
                 try:
@@ -326,7 +332,8 @@ def api_get_widget(request, **kwargs):
                                                 selections[param1][key],
                                                 form_type_format,
                                                 form_type_unit_id,
-                                                None)
+                                                initial_unit,
+                                                convert_to_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
@@ -334,7 +341,8 @@ def api_get_widget(request, **kwargs):
                                                 selections[param2][key],
                                                 form_type_format,
                                                 form_type_unit_id,
-                                                None)
+                                                initial_unit,
+                                                convert_to_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 
