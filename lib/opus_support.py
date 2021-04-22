@@ -960,12 +960,12 @@ def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
                              r') *(|\d+(|\.\d*)m) *(|\d+(|\.\d*)s)', s)
         if match is None and format_char == default[0]:
             # Check for just "N N N" if we are looking at the default format
-            match = re.fullmatch(r'(|[+-]) *(\d+)()() +(\d+)() +(\d+(|.\d*))', s)
+            match = re.fullmatch(r'(|[+-]) *(\d+)()()() +(\d+)() +(\d+(|.\d*))', s)
         if match:
             neg = match[1]
             degrees_hours = match[2]
-            minute = match[5]
-            second = match[7]
+            minute = match[6]
+            second = match[8]
             force_dh_int = False
             force_m_int = False
             val = 0
