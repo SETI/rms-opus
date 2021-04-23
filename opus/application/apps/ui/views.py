@@ -458,7 +458,6 @@ def api_get_widget(request, **kwargs):
     for cat in ranges:
         default_format = cat['format']
         for item in cat['ranges']:
-            unit_id = item['unit']
             val1 = float(item['field1'])
             val2 = float(item['field2'])
             new_unit, new_val1, new_val2 = [], [], []

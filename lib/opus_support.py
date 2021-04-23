@@ -941,7 +941,7 @@ def parse_hms(s):
                           default='hms')
 
 def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
-    s = s.strip()
+    s = s.lower().strip()
     # '' and variants => s
     s = s.replace("''", 's').replace('"', 's').replace(chr(8243), 's')
     # ' and variants => m
@@ -1106,8 +1106,11 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_hms(' + 23h  30m 36s'), 23.51*15)
         self.assertEqual(parse_hms('-23h 30m 36s'), -23.51*15)
         self.assertEqual(parse_hms(' - 23h  30m 36s'), -23.51*15)
+        self.assertEqual(parse_hms('23H 30M 36S'), 23.51*15)
         with self.assertRaises(ValueError):
             parse_hms('23.1h 30m 36s')
+        with self.assertRaises(ValueError):
+            parse_hms('23.1h 30m')
         with self.assertRaises(ValueError):
             parse_hms('23h 30.123m 36s')
         with self.assertRaises(ValueError):
@@ -1160,8 +1163,11 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms(' + 23d  30m 36s'), 23.51)
         self.assertEqual(parse_dms('-23d 30m 36s'), -23.51)
         self.assertEqual(parse_dms(' - 23d  30m 36s'), -23.51)
+        self.assertEqual(parse_dms('23D 30M 36S'), 23.51)
         with self.assertRaises(ValueError):
             parse_dms('23.1d 30m 36s')
+        with self.assertRaises(ValueError):
+            parse_dms('23.1d 30m')
         with self.assertRaises(ValueError):
             parse_dms('23d 30.123m 36s')
         with self.assertRaises(ValueError):
@@ -1200,6 +1206,7 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms('1000000000d 0m 0s'), 1000000000)
         self.assertEqual(parse_dms('1e+9d 0m 0s'), 1000000000)
         self.assertEqual(parse_dms('1e+0009d 0m 0s'), 1000000000)
+        self.assertEqual(parse_dms('1E+0009d 0m 0s'), 1000000000)
 
     def test_parse_dms_hms(self):
         "DMS_HMS parse"

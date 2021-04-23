@@ -60,8 +60,7 @@ from tools.app_utils import (csv_response,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
 
-from opus_support import (convert_from_default_unit,
-                          format_unit_value,
+from opus_support import (format_unit_value,
                           get_default_unit,
                           get_valid_units,
                           is_valid_unit,

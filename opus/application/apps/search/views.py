@@ -13,7 +13,6 @@
 import hashlib
 import json
 import logging
-import math
 import re
 import regex    # This is used instead of "re" because it's closer to the ICU
                 # regex library used by MySQL

@@ -21,8 +21,6 @@ from search.models import ObsGeneral
 
 import settings
 
-import opus_support
-
 import logging
 log = logging.getLogger(__name__)
 
