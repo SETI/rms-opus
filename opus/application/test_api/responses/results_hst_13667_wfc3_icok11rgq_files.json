@@ -1,0 +1,114 @@
+{
+    "data": {
+        "hst-13667-wfc3-icok11rgq": {
+            "hst_text": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.ASC",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+            ],
+            "hst_tiff": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.TIF",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+            ],
+            "hst_raw": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+            ],
+            "hst_calib": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_FLT.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+            ],
+            "hst_drizzled": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_DRZ.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_index.lbl"
+            ],
+            "hstfiles_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_hstfiles.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_hstfiles.lbl"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_full.jpg"
+            ]
+        }
+    },
+    "versions": {
+        "hst-13667-wfc3-icok11rgq": {
+            "Current": {
+                "hst_text": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.ASC",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_tiff": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.TIF",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_raw": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_FLT.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_drizzled": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_DRZ.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_index.lbl"
+                ],
+                "hstfiles_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_hstfiles.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/HSTIx_xxxx/HSTI1_3667/HSTI1_3667_hstfiles.lbl"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/HSTIx_xxxx/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_full.jpg"
+                ]
+            },
+            "1.0": {
+                "hst_text": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.ASC",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_tiff": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.TIF",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_raw": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_RAW.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_calib": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_FLT.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ],
+                "hst_drizzled": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ_DRZ.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_3667/DATA/VISIT_11/ICOK11RGQ.LBL"
+                ]
+            }
+        }
+    }
+}

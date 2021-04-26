@@ -672,25 +672,25 @@ class ApiResultsTests(TestCase, ApiTestHelper):
             ######### /api/files API TESTS #########
             ########################################
 
-    def test__api_files_COISS_no_versions_w1866145657(self):
-        "[test_results_api.py] /api/files: COISS no versions w1866145657"
+    def test__api_files_COISS_versions_w1866145657(self):
+        "[test_results_api.py] /api/files: COISS versions w1866145657"
         url = '/api/files/co-iss-w1866145657.json'
-        self._run_json_equal_file(url, 'api_files_COISS_no_versions_w1866145657.json')
+        self._run_json_equal_file(url, 'api_files_COISS_versions_w1866145657.json')
 
     def test__api_files_COISS_versions_n1461112307(self):
         "[test_results_api.py] /api/files: COISS versions n1461112307"
         url = '/api/files/co-iss-n1461112307.json'
         self._run_json_equal_file(url, 'api_files_COISS_versions_n1461112307.json')
 
-    def test__api_files_COVIMS_no_versions_v1487539692_ir(self):
-        "[test_results_api.py] /api/files: COVIMS no versions v1487539692_ir"
+    def test__api_files_COVIMS_versions_v1487539692_ir(self):
+        "[test_results_api.py] /api/files: COVIMS versions v1487539692_ir"
         url = '/api/files/co-vims-v1487539692_ir.json'
-        self._run_json_equal_file(url, 'api_files_COVIMS_no_versions_v1487539692_ir.json')
+        self._run_json_equal_file(url, 'api_files_COVIMS_versions_v1487539692_ir.json')
 
-    def test__api_files_COVIMS_no_versions_v1487539692_vis(self):
-        "[test_results_api.py] /api/files: COVIMS no versions v1487539692_vis"
+    def test__api_files_COVIMS_versions_v1487539692_vis(self):
+        "[test_results_api.py] /api/files: COVIMS versions v1487539692_vis"
         url = '/api/files/co-vims-v1487539692_vis.json'
-        self._run_json_equal_file(url, 'api_files_COVIMS_no_versions_v1487539692_vis.json')
+        self._run_json_equal_file(url, 'api_files_COVIMS_versions_v1487539692_vis.json')
 
     def test__api_files_GOSSI_versions_c0368388622(self):
         "[test_results_api.py] /api/files: GOSSI versions c0368388622"

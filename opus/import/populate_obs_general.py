@@ -6,7 +6,6 @@
 
 import json
 import os
-import traceback
 
 import pdsfile
 
@@ -118,17 +117,27 @@ def populate_obs_general_preview_images(**kwargs):
     general_row = metadata['obs_general_row']
     file_spec = general_row['primary_file_spec']
 
-    # XXX
+    # The PDS3 filespec is often the .LBL file, but from_filespec doesn't
+    # handle .LBL files because ViewMaster needs to distinguish between
+    # .LBL and whatever the data file extension is. So we do the conversion
+    # here.
     if file_spec.startswith('NH'):
         file_spec = file_spec.replace('.lbl', '.fit')
         file_spec = file_spec.replace('.LBL', '.FIT')
+    elif file_spec.startswith('COUVIS_0'):
+        file_spec = file_spec.replace('.LBL', '.DAT')
+    elif (file_spec.startswith('VGISS_5') or
+          file_spec.startswith('VGISS_6') or
+          file_spec.startswith('VGISS_7') or
+          file_spec.startswith('VGISS_8')):
+        file_spec = file_spec.replace('.LBL', '.IMG')
+    elif file_spec.startswith('CORSS_8'):
+        file_spec = file_spec.replace('.LBL', '.TAB')
     elif file_spec.startswith('COUVIS_8'):
         file_spec = file_spec.replace('.LBL', '.TAB')
-    elif file_spec.startswith('COUVIS'):
-        file_spec = file_spec.replace('.LBL', '.DAT')
-    elif file_spec.startswith('VGISS'):
-        file_spec = file_spec.replace('.LBL', '.IMG')
-    elif file_spec.startswith('CORSS'):
+    elif file_spec.startswith('COVIMS_8'):
+        file_spec = file_spec.replace('.LBL', '.TAB')
+    elif file_spec.startswith('EBROCC'):
         file_spec = file_spec.replace('.LBL', '.TAB')
 
     pdsf = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
@@ -137,12 +146,6 @@ def populate_obs_general_preview_images(**kwargs):
     except ValueError as e:
         import_util.log_nonrepeating_warning(
             f'ViewSet threw ValueError for "{file_spec}": {e}')
-        if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
-            trace_str = traceback.format_exception(
-                                            *pdsfile.PdsFile.LAST_EXC_INFO)
-            import_util.log_nonrepeating_warning(
-                'PdsFile had internal error: '+''.join(trace_str))
-            pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
         viewset = None
 
     if viewset:
