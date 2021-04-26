@@ -333,7 +333,7 @@ def api_get_widget(request, **kwargs):
                                                 form_type_format,
                                                 form_type_unit_id,
                                                 initial_unit,
-                                                convert_to_default=False)
+                                                convert_from_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
@@ -342,7 +342,7 @@ def api_get_widget(request, **kwargs):
                                                 form_type_format,
                                                 form_type_unit_id,
                                                 initial_unit,
-                                                convert_to_default=False)
+                                                convert_from_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 

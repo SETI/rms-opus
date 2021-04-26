@@ -649,8 +649,8 @@ def url_to_search_params(request_get, allow_errors=False,
         # Use the original slug name here since we hope if someone says
         # XXX=5 then they also say sourceunit-XXX=msec
         sourceunit_slug = 'sourceunit-'+slug_no_num+clause_num_str
-        # sourceunit_val will be None if sourceunit_slug doesn't exist
-        # in URL
+        # sourceunit_val will be the same as unit_val if sourceunit_slug doesn't
+        # exist in the URL
         sourceunit_val = unit_val
         if sourceunit_slug in request_get:
             sourceunit_val = request_get[sourceunit_slug].lower()
@@ -733,7 +733,14 @@ def url_to_search_params(request_get, allow_errors=False,
                     if value:
                         try:
                             # Convert the strings into the internal
-                            # representation if necessary
+                            # representation if necessary. If there is not
+                            # sourceunit slug, then sourceunit and unit are the
+                            # same and we parse the value in that unit and then
+                            # convert it to and back from default (which should
+                            # do nothing). If they are different, then we parse
+                            # the value as sourceunit, convert it to default as
+                            # sourceunit, and convert it back to unit to do the
+                            # unit conversion.
                             new_value = parse_unit_value(value,
                                                          form_type_format,
                                                          form_type_unit_id,
@@ -770,7 +777,7 @@ def url_to_search_params(request_get, allow_errors=False,
                                                     new_value, form_type_format,
                                                     form_type_unit_id,
                                                     unit_val,
-                                                    convert_to_default=False)
+                                                    convert_from_default=False)
                         except ValueError as e:
                             new_value = None
                             if not allow_errors:

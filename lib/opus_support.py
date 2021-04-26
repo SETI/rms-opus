@@ -15,6 +15,8 @@ import unittest
 
 import julian # From pds-tools
 
+DEG_RAD = np.degrees(1)
+
 ################################################################################
 # General routines for handling a spacecraft clock where:
 #   - there are exactly two fields
@@ -127,12 +129,12 @@ def _format_two_field_sclk(value, ndigits, sep, modval, scname):
 # our archive.
 ################################################################################
 
-def parse_galileo_sclk(sclk):
+def parse_galileo_sclk(sclk, **kwargs):
     """Convert a Galileo clock string to a numeric value."""
 
     return _parse_two_field_sclk(sclk, 8, '.', 91, 'Galileo')
 
-def format_galileo_sclk(value, *args):
+def format_galileo_sclk(value, **kwargs):
     """Convert a number into a valid Galileo clock string.
     """
 
@@ -223,7 +225,7 @@ class GalileoTest(unittest.TestCase):
 # count does not roll over between partitions.
 ################################################################################
 
-def parse_new_horizons_sclk(sclk):
+def parse_new_horizons_sclk(sclk, **kwargs):
     """Convert a New Horizons clock string to a numeric value."""
 
     original_sclk = sclk
@@ -248,7 +250,7 @@ def parse_new_horizons_sclk(sclk):
 
     return value
 
-def format_new_horizons_sclk(value, *args):
+def format_new_horizons_sclk(value, **kwargs):
     """Convert a number into a valid New Horizons clock string.
     """
 
@@ -351,12 +353,12 @@ class NewHorizonsTest(unittest.TestCase):
 # separator is always a dot.
 ################################################################################
 
-def parse_cassini_sclk(sclk):
+def parse_cassini_sclk(sclk, **kwargs):
     """Convert a Cassini clock string to a numeric value."""
 
     return _parse_two_field_sclk(sclk, 10, '.', 256, 'Cassini')
 
-def format_cassini_sclk(value, *args):
+def format_cassini_sclk(value, **kwargs):
     """Convert a number into a valid Cassini clock string.
     """
 
@@ -450,7 +452,7 @@ class CassiniTest(unittest.TestCase):
 CASSINI_ORBIT_NUMBER = {'A':0, 'B':1, 'C':2}
 CASSINI_ORBIT_NAME = {-1:'000', 0:'00A', 1:'00B', 2:'00C'}
 
-def parse_cassini_orbit(orbit):
+def parse_cassini_orbit(orbit, **kwargs):
     """Convert Cassini orbit name to an integer."""
 
     try:
@@ -469,7 +471,7 @@ def parse_cassini_orbit(orbit):
     except KeyError:
         raise ValueError('Invalid Cassini orbit %s' % orbit)
 
-def format_cassini_orbit(value, *args):
+def format_cassini_orbit(value, **kwargs):
     """Convert an internal number for a Cassini orbit to its displayed value."""
 
     if value >= 3:
@@ -546,7 +548,7 @@ class CassiniOrbitTest(unittest.TestCase):
 VOYAGER_PLANET_NAMES = {5:'Jupiter', 6:'Saturn', 7:'Uranus', 8:'Neptune'}
 VOYAGER_PLANET_PARTITIONS = {5:2, 6:2, 7:3, 8:4}
 
-def parse_voyager_sclk(sclk, planet=None):
+def parse_voyager_sclk(sclk, planet=None, **kwargs):
     """Convert a Voyager clock string (FDS) to a numeric value.
 
     Typically, a partition number is not specified for FDS counts. However, if
@@ -626,7 +628,7 @@ def parse_voyager_sclk(sclk, planet=None):
     # Return in units of FDS hours
     return ints[0] + (ints[1] + (ints[2]-1) / 800.) / 60.
 
-def format_voyager_sclk(value, *args, sep=':', fields=3):
+def format_voyager_sclk(value, sep=':', fields=3, **kwargs):
     """Convert a number in units of FDS hours into a valid Voyager clock string.
     """
 
@@ -774,7 +776,7 @@ class VoyagerTest(unittest.TestCase):
 # TIME CONVERSION
 ################################################################################
 
-def parse_time(iso):
+def parse_time(iso, **kwargs):
     iso = str(iso)
     try: # ET is just a floating point number
         et = float(iso)
@@ -791,13 +793,13 @@ def parse_time(iso):
         raise ValueError('Invalid time syntax: '+iso)
     return julian.tai_from_day(day) + sec
 
-def format_time_ymd(tai, *args):
+def format_time_ymd(tai, **kwargs):
     return julian.iso_from_tai(tai, ymd=True, digits=3)
 
-def format_time_ydoy(tai, *args):
+def format_time_ydoy(tai, **kwargs):
     return julian.iso_from_tai(tai, ymd=False, digits=3)
 
-def format_time_jd(tai, *args):
+def format_time_jd(tai, **kwargs):
     (day, sec) = julian.day_sec_from_tai(tai)
     jd = julian.jd_from_day_sec(day, sec)
     # We want seconds at a resolution of .001
@@ -805,14 +807,14 @@ def format_time_jd(tai, *args):
     # So we want 5+3=8 decimal places
     return 'JD%.8f' % jd
 
-def format_time_jed(tai, *args):
+def format_time_jed(tai, **kwargs):
     jed = julian.jed_from_tai(tai)
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return 'JED%.8f' % jed
 
-def format_time_mjd(tai, *args):
+def format_time_mjd(tai, **kwargs):
     (day, sec) = julian.day_sec_from_tai(tai)
     mjd = julian.mjd_from_day_sec(day, sec)
     # We want seconds at a resolution of .001
@@ -820,14 +822,14 @@ def format_time_mjd(tai, *args):
     # So we want 5+3=8 decimal places
     return 'MJD%.8f' % mjd
 
-def format_time_mjed(tai, *args):
+def format_time_mjed(tai, **kwargs):
     mjed = julian.mjed_from_tai(tai)
     # We want seconds at a resolution of .001
     # There are 86400 seconds in a day, which is roughly 100,000
     # So we want 5+3=8 decimal places
     return 'MJED%.8f' % mjed
 
-def format_time_et(tai, *args):
+def format_time_et(tai, **kwargs):
     et = julian.tdb_from_tai(tai)
     return '%.3f' % et
 
@@ -920,27 +922,33 @@ class TimeTest(unittest.TestCase):
 # ANGLE CONVERSION
 ################################################################################
 
-def parse_dms_hms(s):
+def parse_dms_hms(s, conversion_factor=1):
     """Parse DMS, HMS, or single number, but "x x x" defaults to DMS."""
-    return _parse_dms_hms(s, allow_dms=True, allow_hms=True,
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='dms')
 
-def parse_hms_dms(s):
+def parse_hms_dms(s, conversion_factor=1):
     """Parse DMS, HMS, or single number, but "x x x" defaults to HMS."""
-    return _parse_dms_hms(s, allow_dms=True, allow_hms=True,
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='hms')
 
-def parse_dms(s):
+def parse_dms(s, conversion_factor=1):
     """Parse a DMS string or single number."""
-    return _parse_dms_hms(s, allow_dms=True, allow_hms=False,
+    return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
                           default='dms')
 
-def parse_hms(s):
+def parse_hms(s, conversion_factor=1):
     """Parse an HMS string or single number."""
-    return _parse_dms_hms(s, allow_dms=False, allow_hms=True,
+    return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
                           default='hms')
 
-def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
+def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
+                   default='dms'):
+    """Parse a DMS or HMS or "x x x" or plain number."""
+    # Note: conversion_factor is used here for unit=radians. In that case if
+    # the user enters something like "1d" it needs to be interpreted as degrees
+    # and converted to radians. But if the user just types a single number, that
+    # should be interpreted as radians directly.
     s = s.lower().strip()
     # '' and variants => s
     s = s.replace("''", 's').replace('"', 's').replace(chr(8243), 's')
@@ -1001,7 +1009,7 @@ def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
                 val += degrees_hours
             if neg == '-':
                 val = -val
-            return val * format_factor
+            return val * format_factor / conversion_factor
 
     # We don't want to allow numbers with spaces in them because that will cause
     # potential ambiguity with the "x x x" DMS/HMS format.
@@ -1010,13 +1018,17 @@ def _parse_dms_hms(s, allow_dms=True, allow_hms=True, default='dms'):
     if not math.isfinite(ret):
         raise ValueError
 
+    # Note: It is very important that parse_hms_dms is NOT USED for things like
+    # units == 'radians' because this factor of 15 will be applied
+    # inappropriately
     if default == 'hms':
         ret *= 15
 
     return ret
 
 
-def format_dms_hms(val, unit_id, unit, numerical_format, keep_trailing_zeros):
+def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
+                   keep_trailing_zeros=False):
     if unit == 'hours' or unit == 'hms':
         # Just do the normal numeric formatting, but divide by 15 first to be
         # in units of hours
@@ -1149,6 +1161,10 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_hms('1000000000h 0m 0s'), 1000000000*15)
         self.assertEqual(parse_hms('1e+9h 0m 0s'), 1000000000*15)
         self.assertEqual(parse_hms('1e+0009h 0m 0s'), 1000000000*15)
+        self.assertEqual(parse_hms('123.456', conversion_factor=2),
+                         123.456*15)
+        self.assertEqual(parse_hms('123.456h', conversion_factor=2),
+                         123.456*15/2)
 
     def test_parse_dms(self):
         "DMS parse"
@@ -1207,6 +1223,8 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms('1e+9d 0m 0s'), 1000000000)
         self.assertEqual(parse_dms('1e+0009d 0m 0s'), 1000000000)
         self.assertEqual(parse_dms('1E+0009d 0m 0s'), 1000000000)
+        self.assertEqual(parse_dms('123.456', conversion_factor=2), 123.456)
+        self.assertEqual(parse_dms('123.456d', conversion_factor=2), 123.456/2)
 
     def test_parse_dms_hms(self):
         "DMS_HMS parse"
@@ -1214,13 +1232,21 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(parse_dms_hms('1h 30m 36s'), 1.51*15)
         self.assertEqual(parse_dms_hms('1 30 36'), 1.51)
         self.assertEqual(parse_dms_hms('1.5'), 1.5)
+        self.assertEqual(parse_dms_hms('1.5', conversion_factor=2), 1.5)
+        self.assertEqual(parse_dms_hms('1 30 36', conversion_factor=2), 1.51/2)
+        self.assertEqual(parse_dms_hms('1.5d', conversion_factor=2), 1.5/2)
+        self.assertEqual(parse_dms_hms('1.5h', conversion_factor=2), 1.5*15/2)
 
     def test_parse_hms_dms(self):
         "DMS_HMS parse"
         self.assertEqual(parse_hms_dms('1d 30m 36s'), 1.51)
         self.assertEqual(parse_hms_dms('1h 30m 36s'), 1.51*15)
-        self.assertEqual(parse_hms_dms('1 30 36'), 1.51*15)
         self.assertEqual(parse_hms_dms('1.5'), 1.5*15)
+        self.assertEqual(parse_hms_dms('1 30 36'), 1.51*15)
+        self.assertEqual(parse_hms_dms('1 30 36', conversion_factor=2),
+                                       1.51*15/2)
+        self.assertEqual(parse_hms_dms('1.5d', conversion_factor=2), 1.5/2)
+        self.assertEqual(parse_hms_dms('1.5h', conversion_factor=2), 1.5*15/2)
 
     def test_format_dms_hms(self):
         "DMS_HMS format"
@@ -1425,8 +1451,8 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,                  None, None),
-            'radians':      ('radians',    180./3.141592653589, None, None),
+            'degrees':      ('degrees',    1.,      None, None),
+            'radians':      ('radians',    DEG_RAD, None, None),
         }
     },
     'latitude': { # Latitude on a body; includes declination
@@ -1434,10 +1460,9 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1., parse_dms, None),
-            'dms':          ('DMS',        1., parse_dms, format_dms_hms),
-            'radians':      ('radians',    180./3.141592653589,
-                                           parse_dms, None),
+            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms),
+            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms),
+            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms),
         }
     },
     'longitude': { # Longitude on a body or ring
@@ -1445,10 +1470,9 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1., parse_dms, None),
-            'dms':          ('DMS',        1., parse_dms, format_dms_hms),
-            'radians':      ('radians',    180./3.141592653589,
-                                           parse_dms, None),
+            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms),
+            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms),
+            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms),
         }
     },
     # We do something unusual for hour_angle, since we need people to be
@@ -1466,7 +1490,7 @@ UNIT_FORMAT_DB = {
             'dms':          ('DMS',        1.,  parse_dms_hms, format_dms_hms),
             'hours':        ('hours',      1.,  parse_hms_dms, format_dms_hms),
             'hms':          ('HMS',        1.,  parse_hms_dms, format_dms_hms),
-            'radians':      ('radians',    180./3.141592653589,
+            'radians':      ('radians',    DEG_RAD,
                                            parse_dms_hms, format_dms_hms),
         }
     },
@@ -1662,7 +1686,7 @@ def adjust_format_string_for_units(numerical_format, unit_id, unit):
     return '.' + str(dec) + 'f'
 
 def format_unit_value(val, numerical_format, unit_id, unit,
-                      keep_trailing_zeros=False, convert_to_default=True):
+                      keep_trailing_zeros=False, convert_from_default=True):
     "Format a value based on the unit_id and specific unit."
     if val is None or isinstance(val, str):
         return val
@@ -1671,7 +1695,7 @@ def format_unit_value(val, numerical_format, unit_id, unit,
         if unit is None:
             unit = get_default_unit(unit_id)
         unit = unit.lower()
-        if convert_to_default:
+        if convert_from_default:
             val = convert_from_default_unit(val, unit_id, unit)
         format_func = UNIT_FORMAT_DB[unit_id]['conversions'][unit][3]
     if format_func is None:
@@ -1685,8 +1709,9 @@ def format_unit_value(val, numerical_format, unit_id, unit,
         if not keep_trailing_zeros and '.' in ret:
             ret = ret.rstrip('0').rstrip('.')
         return ret
-    return format_func(val, unit_id, unit, numerical_format,
-                       keep_trailing_zeros)
+    return format_func(val, unit_id=unit_id, unit=unit,
+                       numerical_format=numerical_format,
+                       keep_trailing_zeros=keep_trailing_zeros)
 
 def _clean_numeric_field(s, compress_spaces=True):
     def clean_func(x):
@@ -1718,7 +1743,9 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
         if not math.isfinite(ret):
             raise ValueError
         return ret
-    return parse_func(s)
+    # We only adjust for the conversion factor for non-standard parsers, because
+    # those are ones that might specify an explicit unit (like "1d" for radians)
+    return parse_func(s, conversion_factor=conversion_factor)
 
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
