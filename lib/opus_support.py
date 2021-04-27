@@ -17,6 +17,11 @@ import julian # From pds-tools
 
 DEG_RAD = np.degrees(1)
 
+# We limit the available times because julian doesn't support parsing dates
+# outside of this range
+MIN_TIME = -31556908800 # 1000-01-01T00:00:00
+MAX_TIME =  31556995236 # 2999-12-31T23:59:59
+
 ################################################################################
 # General routines for handling a spacecraft clock where:
 #   - there are exactly two fields
@@ -802,7 +807,10 @@ def parse_time(iso, unit=None, **kwargs):
         raise ValueError('Invalid time syntax: '+iso)
     if time_type != 'UTC':
         raise ValueError('Invalid time syntax: '+iso)
-    return julian.tai_from_day(day) + sec
+    ret = julian.tai_from_day(day) + sec
+    if ret < MIN_TIME or ret > MAX_TIME:
+        raise ValueError
+    return ret
 
 def format_time_ymd(tai, **kwargs):
     return julian.iso_from_tai(tai, ymd=True, digits=3)
@@ -1880,7 +1888,7 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
                 for suffix in trial_suffix_list:
                     sorted_suffixes.append((suffix, trial_unit, trial_conversion))
             sorted_suffixes.sort(key=lambda x: -len(x[0]))
-            for trial_suffix , trial_unit, trial_conversion in sorted_suffixes:
+            for trial_suffix, trial_unit, trial_conversion in sorted_suffixes:
                 if s.endswith(trial_suffix):
                     force_unit = trial_unit
                     # Strip off the unit name from the number
