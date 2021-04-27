@@ -37,10 +37,10 @@
         "wavelength2": "0.975",
         "waveres1": "0.575",
         "waveres2": "0.575",
-        "waveno1": "10256.41",
+        "waveno1": "10256.4102564",
         "waveno2": "25000",
-        "wavenores1": "14743.58974",
-        "wavenores2": "14743.58974",
+        "wavenores1": "14743.58974359",
+        "wavenores2": "14743.58974359",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"

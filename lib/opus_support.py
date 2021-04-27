@@ -776,13 +776,24 @@ class VoyagerTest(unittest.TestCase):
 # TIME CONVERSION
 ################################################################################
 
-def parse_time(iso, **kwargs):
+def parse_time(iso, unit=None, **kwargs):
     iso = str(iso)
-    try: # ET is just a floating point number
+    try:
+        # For raw numbers, try to use the current unit to figure out what
+        # to do
         et = float(iso)
         if not math.isfinite(et):
             raise ValueError('Invalid time syntax: '+iso)
-        return julian.tai_from_tdb(et)
+        if unit == 'et':
+            return julian.tai_from_tdb(et)
+        elif unit == 'jd':
+            iso = 'JD' + iso
+        elif unit == 'jed':
+            iso = 'JED' + iso
+        elif unit == 'mjd':
+            iso = 'MJD' + iso
+        elif unit == 'mjed':
+            iso = 'MJED' + iso
     except:
         pass
     try:
@@ -922,22 +933,22 @@ class TimeTest(unittest.TestCase):
 # ANGLE CONVERSION
 ################################################################################
 
-def parse_dms_hms(s, conversion_factor=1):
+def parse_dms_hms(s, conversion_factor=1, **kwargs):
     """Parse DMS, HMS, or single number, but "x x x" defaults to DMS."""
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='dms')
 
-def parse_hms_dms(s, conversion_factor=1):
+def parse_hms_dms(s, conversion_factor=1, **kwargs):
     """Parse DMS, HMS, or single number, but "x x x" defaults to HMS."""
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=True,
                           default='hms')
 
-def parse_dms(s, conversion_factor=1):
+def parse_dms(s, conversion_factor=1, **kwargs):
     """Parse a DMS string or single number."""
     return _parse_dms_hms(s, conversion_factor, allow_dms=True, allow_hms=False,
                           default='dms')
 
-def parse_hms(s, conversion_factor=1):
+def parse_hms(s, conversion_factor=1, **kwargs):
     """Parse an HMS string or single number."""
     return _parse_dms_hms(s, conversion_factor, allow_dms=False, allow_hms=True,
                           default='hms')
@@ -1029,6 +1040,7 @@ def _parse_dms_hms(s, conversion_factor=1, allow_dms=True, allow_hms=True,
 
 def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
                    keep_trailing_zeros=False):
+    """Format a number as DMS or HMS or a single number as appropriate."""
     if unit == 'hours' or unit == 'hms':
         # Just do the normal numeric formatting, but divide by 15 first to be
         # in units of hours
@@ -1379,7 +1391,7 @@ UNIT_FORMAT_DB = {
         'default': 'range_cassini_sclk',
         'conversions': {
             'range_cassini_sclk': (None, 1,
-                                   parse_cassini_sclk, format_cassini_sclk)
+                                   parse_cassini_sclk, format_cassini_sclk, [])
         }
     },
     'range_galileo_sclk': {
@@ -1388,7 +1400,7 @@ UNIT_FORMAT_DB = {
         'default': 'range_galileo_sclk',
         'conversions': {
             'range_galileo_sclk': (None, 1,
-                                   parse_galileo_sclk, format_galileo_sclk)
+                                   parse_galileo_sclk, format_galileo_sclk, [])
         }
     },
     'range_new_horizons_sclk': {
@@ -1398,7 +1410,7 @@ UNIT_FORMAT_DB = {
         'conversions': {
             'range_new_horizons_sclk': (None, 1,
                                         parse_new_horizons_sclk,
-                                        format_new_horizons_sclk)
+                                        format_new_horizons_sclk, [])
         }
     },
     'range_voyager_sclk': {
@@ -1407,7 +1419,7 @@ UNIT_FORMAT_DB = {
         'default': 'range_voyager_sclk',
         'conversions': {
             'range_voyager_sclk': (None, 1,
-                                   parse_voyager_sclk, format_voyager_sclk)
+                                   parse_voyager_sclk, format_voyager_sclk, [])
         }
     },
     'range_cassini_rev_no': {
@@ -1416,7 +1428,8 @@ UNIT_FORMAT_DB = {
         'default': 'range_cassini_rev_no',
         'conversions': {
             'range_cassini_rev_no': (None, 1,
-                                     parse_cassini_orbit, format_cassini_orbit)
+                                     parse_cassini_orbit, format_cassini_orbit,
+                                     [])
         }
     },
     'datetime': {
@@ -1424,13 +1437,13 @@ UNIT_FORMAT_DB = {
         'display_result': False,
         'default': 'ymdhms',
         'conversions': {
-            'ymdhms':       ('YMDhms',   1, parse_time, format_time_ymd),
-            'ydhms':        ('YDhms',    1, parse_time, format_time_ydoy),
-            'jd':           ('JD',       1, parse_time, format_time_jd),
-            'jed':          ('JED',      1, parse_time, format_time_jed),
-            'mjd':          ('MJD',      1, parse_time, format_time_mjd),
-            'mjed':         ('MJED',     1, parse_time, format_time_mjed),
-            'et':           ('SPICE ET', 1, parse_time, format_time_et)
+            'ymdhms':       ('YMDhms',   1, parse_time, format_time_ymd,  []),
+            'ydhms':        ('YDhms',    1, parse_time, format_time_ydoy, []),
+            'jd':           ('JD',       1, parse_time, format_time_jd,   []),
+            'jed':          ('JED',      1, parse_time, format_time_jed,  []),
+            'mjd':          ('MJD',      1, parse_time, format_time_mjd,  []),
+            'mjed':         ('MJED',     1, parse_time, format_time_mjed, []),
+            'et':           ('SPICE ET', 1, parse_time, format_time_et,   [])
         }
     },
     'duration': { # Difference between two datetimes
@@ -1438,12 +1451,20 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'seconds',
         'conversions': {
-            'seconds':      ('secs',    1,           None, None),
-            'microseconds': ('usecs',   0.000001,    None, None),
-            'milliseconds': ('msecs',   0.001,       None, None),
-            'minutes':      ('minutes', 60.,         None, None),
-            'hours':        ('hours',   60.*60.,     None, None),
-            'days':         ('days',    60.*60.*24., None, None),
+            'seconds':      ('secs',    1,           None, None,
+                             ['s', 'sec', 'secs', 'second', 'seconds']),
+            'microseconds': ('usecs',   0.000001,    None, None,
+                             ['us', 'usec', 'usecs', 'microsecond',
+                              'microseconds']),
+            'milliseconds': ('msecs',   0.001,       None, None,
+                             ['ms', 'msec', 'msecs', 'millisecond',
+                              'milliseconds']),
+            'minutes':      ('minutes', 60.,         None, None,
+                             ['min', 'mins', 'minute', 'minutes']),
+            'hours':        ('hours',   60.*60.,     None, None,
+                             ['h', 'hr', 'hrs', 'hour', 'hours']),
+            'days':         ('days',    60.*60.*24., None, None,
+                             ['d', 'day', 'days']),
         }
     },
     'generic_angle': { # Generic degrees, like lighting geometry
@@ -1451,8 +1472,10 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      None, None),
-            'radians':      ('radians',    DEG_RAD, None, None),
+            'degrees':      ('degrees',    1.,      None, None,
+                             ['d', 'deg', 'degs', 'degree', 'degrees']),
+            'radians':      ('radians',    DEG_RAD, None, None,
+                             ['r', 'rad', 'rads', 'radians']),
         }
     },
     'latitude': { # Latitude on a body; includes declination
@@ -1460,9 +1483,12 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms),
-            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms),
-            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms),
+            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms,
+                             []),
+            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms,
+                             []),
+            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms,
+                             []),
         }
     },
     'longitude': { # Longitude on a body or ring
@@ -1470,9 +1496,12 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms),
-            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms),
-            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms),
+            'degrees':      ('degrees',    1.,      parse_dms, format_dms_hms,
+                             []),
+            'dms':          ('DMS',        1.,      parse_dms, format_dms_hms,
+                             []),
+            'radians':      ('radians',    DEG_RAD, parse_dms, format_dms_hms,
+                             []),
         }
     },
     # We do something unusual for hour_angle, since we need people to be
@@ -1486,12 +1515,17 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'degrees',
         'conversions': {
-            'degrees':      ('degrees',    1.,  parse_dms_hms, format_dms_hms),
-            'dms':          ('DMS',        1.,  parse_dms_hms, format_dms_hms),
-            'hours':        ('hours',      1.,  parse_hms_dms, format_dms_hms),
-            'hms':          ('HMS',        1.,  parse_hms_dms, format_dms_hms),
+            'degrees':      ('degrees',    1.,  parse_dms_hms, format_dms_hms,
+                             []),
+            'dms':          ('DMS',        1.,  parse_dms_hms, format_dms_hms,
+                             []),
+            'hours':        ('hours',      1.,  parse_hms_dms, format_dms_hms,
+                             []),
+            'hms':          ('HMS',        1.,  parse_hms_dms, format_dms_hms,
+                             []),
             'radians':      ('radians',    DEG_RAD,
-                                           parse_dms_hms, format_dms_hms),
+                                           parse_dms_hms, format_dms_hms,
+                             []),
         }
     },
     'distance_ring': {
@@ -1499,12 +1533,18 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'km',
         'conversions': {
-            'km':           ('km',         1,      None, None),
-            'm':            ('m',          1e-3,   None, None),
-            'jupiterradii': ('Rj (71492)', 71492., None, None),
-            'saturnradii':  ('Rs (60330)', 60330., None, None),
-            'neptuneradii': ('Rn (25225)', 25225., None, None),
-            'uranusradii':  ('Ru (25559)', 25559., None, None),
+            'km':           ('km',         1,      None, None,
+                             ['km', 'kms', 'kilometer', 'kilometers']),
+            'm':            ('m',          1e-3,   None, None,
+                             ['m', 'ms', 'meter', 'meters']),
+            'jupiterradii': ('Rj (71492)', 71492., None, None,
+                             ['rj(71492)', 'rj']),
+            'saturnradii':  ('Rs (60330)', 60330., None, None,
+                             ['rs(60330)', 'rs']),
+            'neptuneradii': ('Rn (25225)', 25225., None, None,
+                             ['rn(25225)', 'rn']),
+            'uranusradii':  ('Ru (25559)', 25559., None, None,
+                             ['ru(25559)', 'ru']),
         }
     },
     'distance': {
@@ -1512,9 +1552,12 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'km',
         'conversions': {
-            'km':           ('km',         1,             None, None),
-            'm':            ('m',          1e-3,          None, None),
-            'au':           ('AU',         149597870.700, None, None)
+            'km':           ('km',         1,             None, None,
+                             ['km', 'kms', 'kilometer', 'kilometers']),
+            'm':            ('m',          1e-3,          None, None,
+                             ['m', 'ms', 'meter', 'meters']),
+            'au':           ('AU',         149597870.700, None, None,
+                             ['au'])
         }
     },
     'distance_resolution': {
@@ -1522,8 +1565,26 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'km_pixel',
         'conversions': {
-            'km_pixel':     ('km/pixel', 1,    None, None),
-            'm_pixel':      ('m/pixel',  1e-3, None, None),
+            'km_pixel':     ('km/pixel', 1,    None, None,
+                             ['km/p', 'km/pix', 'km/pixel', 'kmperpix',
+                              'kmperpixel',
+                              'kms/p', 'kms/pix', 'kms/pixel', 'kmsperpix',
+                              'kmsperpixel',
+                              'kilometer/p', 'kilometer/pix', 'kilometer/pixel',
+                              'kilometerperpix', 'kilometerperpixel',
+                              'kilometers/p', 'kilometers/pix',
+                              'kilometers/pixel', 'kilometersperpix',
+                              'kilometersperpixel']),
+            'm_pixel':      ('m/pixel',  1e-3, None, None,
+                             ['m/p', 'm/pix', 'm/pixel', 'mperpix',
+                              'mperpixel',
+                              'ms/p', 'ms/pix', 'ms/pixel', 'msperpix',
+                              'msperpixel',
+                              'meter/p', 'meter/pix', 'meter/pixel',
+                              'meterperpix', 'meterperpixel',
+                              'meters/p', 'meters/pix',
+                              'meters/pixel', 'metersperpix',
+                              'metersperpixel']),
         }
     },
     'wavelength': {
@@ -1531,10 +1592,16 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'microns',
         'conversions': {
-            'microns':      ('microns',   1.,   None, None),
-            'angstroms':    ('angstroms', 1e-4, None, None),
-            'nm':           ('nm',        1e-3, None, None),
-            'cm':           ('cm',        1e4,  None, None),
+            'microns':      ('microns',   1.,   None, None,
+                             ['um', 'umeter', 'umeters',
+                              'micron', 'microns',
+                              'micrometer', 'micrometers']),
+            'angstroms':    ('angstroms', 1e-4, None, None,
+                             ['ang', 'angstrom', 'angstroms']),
+            'nm':           ('nm',        1e-3, None, None,
+                             ['nm', 'nanometer', 'nanometers']),
+            'cm':           ('cm',        1e4,  None, None,
+                             ['cm', 'centimeter', 'centimeters']),
         }
     },
     'wavelength_resolution': {
@@ -1542,10 +1609,46 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': 'microns_pixel',
         'conversions': {
-            'microns_pixel':      ('microns/pixel',   1,    None, None),
-            'angstroms_pixel':    ('angstroms/pixel', 1e-4, None, None),
-            'nm_pixel':           ('nm/pixel',        1e-3, None, None),
-            'cm_pixel':           ('cm/pixel',        1e4,  None, None),
+            'microns_pixel':      ('microns/pixel',   1,    None, None,
+                                   ['um/p', 'um/pix', 'um/pixel', 'umperpix',
+                                    'umperpixel',
+                                    'micron/p', 'micron/pix', 'micron/pixel',
+                                    'micronperpix', 'micronperpixel',
+                                    'microns/p', 'microns/pix', 'microns/pixel',
+                                    'micronsperpix', 'micronsperpixel',
+                                    'micrometer/p', 'micrometer/pix',
+                                    'micrometer/pixel',
+                                    'micrometerperpix', 'micrometerperpixel',
+                                    'micrometers/p', 'micrometers/pix',
+                                    'micrometers/pixel', 'micrometersperpix',
+                                    'micrometersperpixel']),
+            'angstroms_pixel':    ('angstroms/pixel', 1e-4, None, None,
+                                   ['ang/p', 'ang/pix', 'ang/pixel',
+                                    'angperpix', 'angperpixel',
+                                    'angstrom/p', 'angstrom/pix',
+                                    'angstrom/pixel',
+                                    'angstromperpix', 'angstromperpixel',
+                                    'angstroms/p', 'angstroms/pix',
+                                    'angstroms/pixel',
+                                    'angstromsperpix', 'angstromsperpixel']),
+            'nm_pixel':           ('nm/pixel',        1e-3, None, None,
+                                   ['nm/p', 'nm/pix', 'nm/pixel', 'nmperpix',
+                                    'nmperpixel',
+                                    'nanometer/p', 'nanometer/pix',
+                                    'nanometer/pixel',
+                                    'nanometerperpix', 'nanometerperpixel',
+                                    'nanometers/p', 'nanometers/pix',
+                                    'nanometers/pixel', 'nanometersperpix',
+                                    'nanometersperpixel']),
+            'cm_pixel':           ('cm/pixel',        1e4,  None, None,
+                                   ['cm/p', 'cm/pix', 'cm/pixel', 'cmperpix',
+                                    'cmperpixel',
+                                    'centimeter/p', 'centimeter/pix',
+                                    'centimeter/pixel',
+                                    'centimeterperpix', 'centimeterperpixel',
+                                    'centimeters/p', 'centimeters/pix',
+                                    'centimeters/pixel', 'centimetersperpix',
+                                    'centimetersperpixel']),
         }
     },
     'wavenumber': {
@@ -1553,8 +1656,10 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': '1_cm',
         'conversions': {
-            '1_cm':         ('cm^-1', 1.,   None, None),
-            '1_m':          ('m^-1',  1e-2, None, None),
+            '1_cm':         ('cm^-1', 1.,   None, None,
+                             ['1/cm', 'cm^-1', 'cm**-1']),
+            '1_m':          ('m^-1',  1e-2, None, None,
+                             ['1/m', 'm^-1', 'm**-1']),
         }
     },
     'wavenumber_resolution': {
@@ -1562,8 +1667,26 @@ UNIT_FORMAT_DB = {
         'display_result': True,
         'default': '1_cm_pixel',
         'conversions': {
-            '1_cm_pixel':  ('cm^-1/pixel', 1.,   None, None),
-            '1_m_pixel':   ('m^-1/pixel',  1e-2, None, None),
+            '1_cm_pixel':  ('cm^-1/pixel', 1.,   None, None,
+                            ['1/cm/p', '1/cm/pix', '1/cm/pixel', '1/cmperpix',
+                             '1/cmperpixel',
+                             '1/centimeter/p', '1/centimeter/pix',
+                             '1/centimeter/pixel',
+                             '1/centimeterperpix', '1/centimeterperpixel',
+                             'cm^-1/p', 'cm^-1/pix', 'cm^-1/pixel',
+                             'cm^-1perpix', 'cm^-1perpixel'
+                             'cm**-1/p', 'cm**-1/pix', 'cm**-1/pixel',
+                             'cm**-1perpix', 'cm**-1perpixel']),
+            '1_m_pixel':   ('m^-1/pixel',  1e-2, None, None,
+                            ['1/m/p', '1/m/pix', '1/m/pixel', '1/mperpix',
+                             '1/mperpixel',
+                             '1/meter/p', '1/meter/pix',
+                             '1/meter/pixel',
+                             '1/meterperpix', '1/meterperpixel',
+                             'm^-1/p', 'm^-1/pix', 'm^-1/pixel',
+                             'm^-1perpix', 'm^-1perpixel'
+                             'm**-1/p', 'm**-1/pix', 'm**-1/pixel',
+                             'm**-1perpix', 'm**-1perpixel']),
         }
     },
 }
@@ -1715,7 +1838,7 @@ def format_unit_value(val, numerical_format, unit_id, unit,
 
 def _clean_numeric_field(s, compress_spaces=True):
     def clean_func(x):
-        ret = x.replace(',', '').replace('_','')
+        ret = x.lower().replace(',', '').replace('_','')
         if compress_spaces:
             ret = ret.replace(' ', '')
         return ret
@@ -1725,6 +1848,7 @@ def _clean_numeric_field(s, compress_spaces=True):
     return clean_func(s)
 
 def parse_unit_value(s, numerical_format, unit_id, unit):
+    """Parse a string given the unit and numerical format."""
     if s is None or s == '':
         return None
     parse_func = None
@@ -1733,19 +1857,50 @@ def parse_unit_value(s, numerical_format, unit_id, unit):
             unit = get_default_unit(unit_id)
         unit = unit.lower()
         (display_name, conversion_factor, parse_func,
-         display_func) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
+         display_func, _) = UNIT_FORMAT_DB[unit_id]['conversions'][unit]
     if parse_func is None:
+        # Direct numeric conversion with no special parsing
+        # Choose between float or int parsing
         parse_func = float
         if numerical_format and numerical_format[-1] == 'd':
             parse_func = int
+
+        # Clean the string, including converting to lower case and eliminating
+        # spaces
         s = _clean_numeric_field(s)
-        ret = parse_func(s)
+        force_unit = None
+        if unit_id:
+            # Look for an overriding unit name suffix, like "1 km"
+            conversions = UNIT_FORMAT_DB[unit_id]['conversions']
+            # Build a list of all possible suffixes. Sort the possible suffixes
+            # by descending length so that we find, for example, "km" before "m"
+            sorted_suffixes = []
+            for trial_unit, trial_conversion in conversions.items():
+                trial_suffix_list = trial_conversion[4]
+                for suffix in trial_suffix_list:
+                    sorted_suffixes.append((suffix, trial_unit, trial_conversion))
+            sorted_suffixes.sort(key=lambda x: -len(x[0]))
+            for trial_suffix , trial_unit, trial_conversion in sorted_suffixes:
+                if s.endswith(trial_suffix):
+                    force_unit = trial_unit
+                    # Strip off the unit name from the number
+                    s = s[:-len(trial_suffix)]
+                    break
+        ret = parse_func(s) # Parse the int or float
         if not math.isfinite(ret):
             raise ValueError
+        if force_unit is not None:
+            ret = convert_to_default_unit(ret, unit_id, force_unit)
+            ret = convert_from_default_unit(ret, unit_id, unit)
         return ret
+
     # We only adjust for the conversion factor for non-standard parsers, because
     # those are ones that might specify an explicit unit (like "1d" for radians)
-    return parse_func(s, conversion_factor=conversion_factor)
+    # but we wouldn't have caught it as part of the generic numeric processing
+    # above
+    return parse_func(s, conversion_factor=conversion_factor,
+                      numerical_format=numerical_format,
+                      unit_id=unit_id, unit=unit)
 
 def parse_form_type(s):
     """Parse the ParamInfo FORM_TYPE with its subfields.
