@@ -55,7 +55,8 @@ from tools.app_utils import (cols_to_slug_list,
 from tools.file_utils import (get_pds_preview_images,
                               get_pds_products)
 
-from opus_support import (display_unit_ever,
+from opus_support import (display_search_unit,
+                          display_unit_ever,
                           format_unit_value,
                           get_default_unit,
                           get_unit_display_names,
@@ -469,6 +470,10 @@ def api_get_widget(request, **kwargs):
                                                   form_type_unit_id, unit))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
+    # If we don't want to display this group of units on the search tab, then
+    # don't pass it to the template
+    if not display_search_unit(form_type_unit_id):
+        units = None
     template = "ui/widget.html"
     context = {
         "slug": slug,
