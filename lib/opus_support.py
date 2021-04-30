@@ -1085,9 +1085,8 @@ def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
         if abs(val) >= 1e8:
             new_format = new_format.replace('f', 'e')
         ret = new_format % val
-        if not keep_trailing_zeros and '.' in ret:
-            ret = ret.rstrip('0')
-            ret = ret.rstrip('.')
+        if not keep_trailing_zeros:
+            ret = _strip_trailing_zeros(ret)
         return ret
 
     # For DMS or HMS, the new format is just for the seconds, so we want to have
@@ -1116,9 +1115,8 @@ def format_dms_hms(val, unit_id=None, unit=None, numerical_format=None,
         leading_fmt = '.0e'
     full_format = f'%{leading_fmt}{leading_char} %02dm %0{new_format}'
     ret = full_format % (dh, m, val_sec)
-    if not keep_trailing_zeros and '.' in ret:
-        ret = ret.rstrip('0')
-        ret = ret.rstrip('.')
+    if not keep_trailing_zeros:
+        ret = _strip_trailing_zeros(ret)
     ret += 's'
     if neg:
         ret = '-' + ret
@@ -1287,7 +1285,9 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(format_dms_hms(1e7, None, 'degrees', '.3f',
                                         False), '10000000')
         self.assertEqual(format_dms_hms(1e8, None, 'degrees', '.3f',
-                                        False), '1.000e+08')
+                                        False), '1e+08')
+        self.assertEqual(format_dms_hms(1.01e8, None, 'degrees', '.3f',
+                                        False), '1.01e+08')
 
         self.assertEqual(format_dms_hms(0, None, 'hours', '.3f', True),
                          '0.00000')
@@ -1303,6 +1303,10 @@ class TimeTest(unittest.TestCase):
                                         False), '8.23045')
         self.assertEqual(format_dms_hms(-123.456789, None, 'hours', '.3f',
                                         False), '-8.23045')
+        self.assertEqual(format_dms_hms(15e8, None, 'hours', '.3f',
+                                        False), '1e+08')
+        self.assertEqual(format_dms_hms(15.15e8, None, 'hours', '.3f',
+                                        False), '1.01e+08')
 
         self.assertEqual(format_dms_hms(0, None, 'radians', '.3f', True),
                          '0.00000')
@@ -1311,7 +1315,9 @@ class TimeTest(unittest.TestCase):
         self.assertEqual(format_dms_hms(1e7, None, 'radians', '.3f',
                                         False), '10000000')
         self.assertEqual(format_dms_hms(1e8, None, 'radians', '.3f',
-                                        False), '1.00000e+08')
+                                        False), '1e+08')
+        self.assertEqual(format_dms_hms(1.01e8, None, 'radians', '.3f',
+                                        False), '1.01e+08')
 
         self.assertEqual(format_dms_hms(0, None, 'dms', '.6f', False),
                          '0d 00m 00s')
@@ -1837,12 +1843,23 @@ def format_unit_value(val, numerical_format, unit_id, unit,
         new_format = adjust_format_string_for_units(numerical_format,
                                                     unit_id, unit)
         ret = ('{:'+new_format+'}').format(val)
-        if not keep_trailing_zeros and '.' in ret:
-            ret = ret.rstrip('0').rstrip('.')
+        if not keep_trailing_zeros:
+            ret = _strip_trailing_zeros(ret)
         return ret
     return format_func(val, unit_id=unit_id, unit=unit,
                        numerical_format=numerical_format,
                        keep_trailing_zeros=keep_trailing_zeros)
+
+def _strip_trailing_zeros(s):
+    if re.fullmatch(r'.*\.\d*0*', s):
+        # Strip trailing .000s from NNN.DDDZZZ
+        s = s.rstrip('0').rstrip('.')
+    elif re.fullmatch(r'.*\.\d*0*e[+-]\d+', s):
+        # Strip trailing .000s from the mantissa part of NNN.DDDZZZe+EEE
+        s1, s2 = s.split('e')
+        s1 = s1.rstrip('0').rstrip('.')
+        s = s1+'e'+s2
+    return s
 
 def _clean_numeric_field(s, compress_spaces=True):
     def clean_func(x):
