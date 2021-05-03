@@ -57,14 +57,13 @@
         "pi_disp_order": 30,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE:range_time",
+        "pi_form_type": "RANGE:datetime",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
         "pi_label_results": "Earth Received Time",
         "pi_slug": "VOYAGERert",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from VGISS label"
     },
     {
@@ -95,7 +94,6 @@
         "pi_slug": "VOYAGERspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from VGISS label"
     },
     {
@@ -123,7 +121,6 @@
         "pi_slug": "VOYAGERspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from VGISS label"
     },
     {
@@ -149,7 +146,6 @@
         "pi_slug": "VOYAGERmissionphasename",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from VGISS label"
     },
     {

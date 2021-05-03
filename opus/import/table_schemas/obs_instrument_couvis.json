@@ -63,7 +63,6 @@
         "pi_slug": "COUVISobservationtype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,   "CALIB",   "CALIB", "010", "Y", null],
@@ -96,7 +95,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.4f:duration",
         "pi_intro": null,
         "pi_label": "Integration Duration",
         "pi_label_results": "Integration Duration",
@@ -104,7 +103,6 @@
         "pi_slug": "COUVISintegrationduration",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": "seconds",
         "comments": "Definition is from COUVIS label"
     },
     {
@@ -133,7 +131,6 @@
         "pi_slug": "COUVIScompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,  "8_BIT",  "8_BIT", "010", "Y", null],
@@ -166,7 +163,6 @@
         "pi_slug": "COUVISoccultationportstate",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0,   "OPEN",   "Open", "010", "Y", null],
@@ -200,7 +196,6 @@
         "pi_slug": "COUVISslitstate",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label",
         "mult_options": [
               [   0, "HIGH_RESOLUTION", "High Resolution", "010", "Y", null],
@@ -234,7 +229,6 @@
         "pi_slug": "COUVIStestpulsestate",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label"
     },
     {
@@ -265,7 +259,6 @@
         "pi_slug": "COUVISdwelltime",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS label"
     },
     {
@@ -292,7 +285,6 @@
         "pi_slug": "COUVISchannel",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0, "EUV",   "EUV", "010", "Y", null],
               [   1, "FUV",   "FUV", "020", "Y", null],
@@ -329,7 +321,6 @@
         "pi_slug": "COUVISband1",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -361,7 +352,6 @@
         "pi_slug": "COUVISband2",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -393,7 +383,6 @@
         "pi_slug": "COUVISbandbin",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -428,7 +417,6 @@
         "pi_slug": "COUVISline1",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -460,7 +448,6 @@
         "pi_slug": "COUVISline2",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -492,7 +479,6 @@
         "pi_slug": "COUVISlinebin",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {
@@ -524,7 +510,6 @@
         "pi_slug": "COUVISsamples",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COUVIS supplemental label"
     },
     {

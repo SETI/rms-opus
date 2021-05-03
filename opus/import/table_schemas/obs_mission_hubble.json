@@ -74,8 +74,7 @@
         "pi_old_slug": "STSCIGROUPID",
         "pi_slug": "HSTstscigroupid",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "hst_proposal_id",
@@ -100,8 +99,7 @@
         "pi_old_slug": "HSTPROPOSALID",
         "pi_slug": "HSTproposalid",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "hst_pi_name",
@@ -126,8 +124,7 @@
         "pi_old_slug": "HSTPINAME",
         "pi_slug": "HSTpiname",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "detector_id",
@@ -153,17 +150,19 @@
         "pi_slug": "HSTdetector",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
-        "xxxmult_options": [
-              [   0,      "HRC",       "ACS-HRC", "010", "Y", null],
-              [   1,      "SBC",       "ACS-SBC", "020", "Y", null],
-              [   2,      "WFC",      "ACS-WFC3", "030", "Y", null],
-              [   3,       "IR",       "WFC3-IR", "040", "Y", null],
-              [   4,     "UVIS",     "WFC3-UVIS", "050", "Y", null],
-              [   5,    "WFPC2",         "WFPC2", "060", "Y", null],
-              [   6,      "CCD",      "STIS-CCD", "070", "Y", null],
-              [   7, "FUV-MAMA", "STIS-FUV-MAMA", "080", "Y", null],
-              [   8,  "UNKNOWN",       "Unknown", "090", "Y", null]
+        "mult_options": [
+              [   0,           "HRC",       "ACS-HRC", "010", "Y", null],
+              [   1,           "SBC",       "ACS-SBC", "020", "Y", null],
+              [   2,           "WFC",       "ACS-WFC", "030", "Y", null],
+              [   3,   "NICMOS-NIC1",   "NICMOS-NIC1", "040", "Y", null],
+              [   4,   "NICMOS-NIC2",   "NICMOS-NIC2", "050", "Y", null],
+              [   5,   "NICMOS-NIC3",   "NICMOS-NIC3", "060", "Y", null],
+              [   6,      "STIS-CCD",      "STIS-CCD", "070", "Y", null],
+              [   7, "STIS-FUV-MAMA", "STIS-FUV-MAMA", "080", "Y", null],
+              [   8, "STIS-NUV-MAMA", "STIS-NUV-MAMA", "090", "Y", null],
+              [   9,       "WFC3-IR",       "WFC3-IR", "100", "Y", null],
+              [  10,     "WFC3-UVIS",     "WFC3-UVIS", "110", "Y", null],
+              [  11,       "UNKNOWN",       "Unknown", "120", "Y", null]
           ]
     },
     {
@@ -185,15 +184,14 @@
         "pi_disp_order": 180,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE:range_time",
+        "pi_form_type": "RANGE:datetime",
         "pi_intro": null,
         "pi_label": "Publication Date",
         "pi_label_results": "Publication Date",
         "pi_old_slug": "PUBLICATIONDATE",
         "pi_slug": "HSTpublicationdate",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "hst_target_name",
@@ -218,8 +216,7 @@
         "pi_old_slug": "HSTTARGETNAME",
         "pi_slug": "HSTtargetname",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "fine_guidance_system_lock_type",
@@ -245,7 +242,6 @@
         "pi_slug": "HSTfineguidancesystemlocktype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0,    "COARSE",    "Coarse", "010", "Y", null],
               [   1,      "FINE",      "Fine", "020", "Y", null],
@@ -277,8 +273,7 @@
         "pi_old_slug": "missionhubbleFILTERNAME",
         "pi_slug": "HSTfilter",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "filter_type",
@@ -303,7 +298,6 @@
         "pi_slug": "HSTfiltertype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0, "LP",      "Long Pass", "010", "Y", null],
               [   1,  "X", "Extremely Wide", "020", "Y", null],
@@ -338,8 +332,7 @@
         "pi_old_slug": "missionhubbleAPERTURETYPE",
         "pi_slug": "HSTaperturetype",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "proposed_aperture_type",
@@ -364,8 +357,7 @@
         "pi_old_slug": null,
         "pi_slug": "HSTproposedaperturetype",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "exposure_type",
@@ -390,7 +382,6 @@
         "pi_slug": "HSTexposuretype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0,   "EXCESSIVE DOWNTIME",   "Excessive Downtime", "010", "Y", null],
               [   1,        "INDETERMINATE",        "Indeterminate", "020", "Y", null],
@@ -423,7 +414,6 @@
         "pi_slug": "HSTgainmode",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0,  "A2D0",  "A2D0", "010", "Y", null],
               [   1,  "A2D1",  "A2D1", "020", "Y", null],
@@ -457,7 +447,6 @@
         "pi_slug": "HSTinstrumentmode",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0,      "ACCUM",      "ACCUM", "010", "Y", null],
               [   1, "MULTIACCUM", "MULTIACCUM", "020", "Y", null],
@@ -491,8 +480,7 @@
         "pi_old_slug": "missionhubblePC1FLAG",
         "pi_slug": "HSTpc1flag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "wf2_flag",
@@ -516,8 +504,7 @@
         "pi_old_slug": "missionhubbleWF2FLAG",
         "pi_slug": "HSTwf2flag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "wf3_flag",
@@ -541,8 +528,7 @@
         "pi_old_slug": "missionhubbleWF3FLAG",
         "pi_slug": "HSTwf3flag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "wf4_flag",
@@ -566,8 +552,7 @@
         "pi_old_slug": "missionhubbleWF4FLAG",
         "pi_slug": "HSTwf4flag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "targeted_detector_id",
@@ -593,7 +578,6 @@
         "pi_slug": "HSTtargeteddetector",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "mult_options": [
               [   0, "PC1", "PC1", "010", "Y", null],
               [   1, "WF2", "WF2", "020", "Y", null],
@@ -625,8 +609,7 @@
         "pi_old_slug": null,
         "pi_slug": "HSTopticalelement",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "pi_category_name": "obs_mission_hubble",
