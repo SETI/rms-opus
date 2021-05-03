@@ -19,7 +19,17 @@ var o_detail = {
         });
 
         $("#detail").on("click", "a[data-action]", function() {
-            switch($(this).data("action")) {
+            let action = $(this).data("action");
+            switch(action) {
+                case "add":
+                case "remove":
+                    let opusId = $(this).data("id");
+                    if (opusId) {
+                        o_browse.reloadObservationData = true; 
+                        o_cart.reloadObservationData = true;
+                        o_cart.editAndHighlightObs([], opusId, action);
+                    }
+                    break;
                 case "downloadData":
                     $(this).attr("href", `/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
                     break;
@@ -47,6 +57,10 @@ var o_detail = {
         }
 
         $(detailSelector).html(opus.spinner);
+        // info for adding/removing from cart
+        let action = (o_cart.isIn(opusId) ? "" : "remove");
+        let buttonInfo = o_browse.cartButtonInfo(action);
+        action = buttonInfo["#browse"].rangeTitle.split(" ")[0];
 
         $(detailSelector).load("/opus/__initdetail/" + opusId + ".html",
             function(response, status, xhr) {
@@ -59,6 +73,7 @@ var o_detail = {
                     $(detailSelector).html(html).fadeIn();
                     return;
                 }
+                $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${action}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon} fa-xs"></i></a>`);
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast

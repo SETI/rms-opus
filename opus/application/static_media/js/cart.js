@@ -805,6 +805,12 @@ var o_cart = {
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
+                if (opus.getCurrentTab() === "detail") {
+                    let buttonInfo = o_browse.cartButtonInfo(action);
+                    action = buttonInfo["#browse"].rangeTitle.split(" ")[0];
+                    opusId = $(".op-detail-cart a").data("id");
+                    $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${action}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon} fa-xs"></i></a>`);
+                }
             }
             o_cart.updateCartStatus(statusData);
             o_browse.hidePageLoaderSpinner();
