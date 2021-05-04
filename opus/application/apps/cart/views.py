@@ -507,7 +507,7 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_id=None):
+def api_create_download(request, opus_id=None, hierarchical_struct=False):
     r"""Creates a zip file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
@@ -644,7 +644,29 @@ def api_create_download(request, opus_id=None):
     url_fp = open(url_file_name, 'w')
 
     errors = []
+    # Store the files' logical paths added to the zip file.
     added = []
+
+    # Loop through files first to create a dictionary keyed by basenames. Each
+    # key has a list of paths pointing to itself. If there are multiple paths
+    # for a key, then it means these paths are not duplicated and need to be
+    # stored with hierarchy tree in the zip file.
+    files_info = {}
+    for f_opus_id in files:
+        if 'Current' not in files[f_opus_id]:
+            continue
+        files_version = files[f_opus_id]['Current']
+        for product_type in files_version:
+            for file_data in files_version[product_type]:
+                path = file_data['path']
+                pretty_name = path.split('/')[-1]
+                logical_path = path[path.index('/holdings')+9:]
+                if pretty_name not in files_info:
+                    files_info[pretty_name] = [logical_path]
+                else:
+                    files_info[pretty_name].append(logical_path)
+
+
     for f_opus_id in files:
         if 'Current' not in files[f_opus_id]:
             continue
@@ -666,10 +688,15 @@ def api_create_download(request, opus_id=None):
                           +f'{checksum},{size}')
                 manifest_fp.write(mdigest+'\n')
 
-                if pretty_name not in added:
+                if logical_path not in added:
                     # chksum_fp.write(digest+'\n')
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
+                    # If hierarchical_struct is True or there are multiple paths
+                    # for the same file basename, we store files with hierarchy
+                    # tree in the zip file.
+                    if hierarchical_struct or len(files_info[pretty_name]) > 1:
+                        filename = logical_path
                     if not url_file_only:
                         try:
                             zip_file.write(path, arcname=filename)
@@ -680,7 +707,7 @@ def api_create_download(request, opus_id=None):
                                       f_opus_id, product_type, path,
                                       pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
-                    added.append(pretty_name)
+                    added.append(logical_path)
 
     # Write errors to manifest file
     if errors:
