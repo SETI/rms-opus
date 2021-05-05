@@ -346,6 +346,11 @@ var o_cart = {
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
+
+        // Check if the hierarchical checkbox is selected.
+        let hierarchical = $(".op-download-hierarchical-structure input").prop("checked") ? 1 : 0;
+        url += `&hierarchical=${hierarchical}`;
+
         $.ajax({
             url: url,
             dataType: "json",

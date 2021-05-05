@@ -507,7 +507,7 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_id=None, hierarchical_struct=False):
+def api_create_download(request, opus_id=None):
     r"""Creates a zip file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
@@ -516,6 +516,8 @@ def api_create_download(request, opus_id=None, hierarchical_struct=False):
         or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
+               hierarchical=0 (optional) means files in zip are not stored with
+               hierarchy tree
     """
     api_code = enter_api_call('api_create_download', request)
 
@@ -651,6 +653,7 @@ def api_create_download(request, opus_id=None, hierarchical_struct=False):
     # key has a list of paths pointing to itself. If there are multiple paths
     # for a key, then it means these paths are not duplicated and need to be
     # stored with hierarchy tree in the zip file.
+    hierarchical_struct = int(request.GET.get('hierarchical', 0))
     files_info = {}
     for f_opus_id in files:
         if 'Current' not in files[f_opus_id]:
@@ -692,7 +695,7 @@ def api_create_download(request, opus_id=None, hierarchical_struct=False):
                     # chksum_fp.write(digest+'\n')
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
-                    # If hierarchical_struct is True or there are multiple paths
+                    # If hierarchical_struct is 1 or there are multiple paths
                     # for the same file basename, we store files with hierarchy
                     # tree in the zip file.
                     if hierarchical_struct or len(files_info[pretty_name]) > 1:
