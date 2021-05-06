@@ -1,5 +1,5 @@
 # opus/application/test_api/api_test_helper.py
-
+from io import BytesIO
 import json
 import zipfile
 
@@ -172,11 +172,15 @@ class ApiTestHelper:
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
-        jdata = json.loads(response.content)
-        file = jdata['filename']
-        filename = file[file.rindex('/'):]
-        path = settings.TAR_FILE_PATH + filename
-        zip_file = zipfile.ZipFile(path, mode='r')
+        if '__cart/download.json' in url:
+            jdata = json.loads(response.content)
+            file = jdata['filename']
+            filename = file[file.rindex('/'):]
+            path = settings.TAR_FILE_PATH + filename
+            zip_file = zipfile.ZipFile(path, mode='r')
+        elif '__api/download/' in url:
+            binary_stream = BytesIO(response.content)
+            zip_file = zipfile.ZipFile(binary_stream, mode='r')
         resp = zip_file.namelist()
         resp.sort()
         expected.sort()

@@ -2446,16 +2446,24 @@ class ApiCartTests(TestCase, ApiTestHelper):
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
         self._run_zip_equal(url, expected)
 
+            #########################################################
+            ######### /api/download/<opusid>.zip: API TESTS #########
+            #########################################################
+    def test__api_download_no_hierarchical(self):
+        "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
+        url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
+        expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
+        self._run_zip_equal(url, expected)
+
+    def test__api_download_hierarchical(self):
+        "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & hierarchical"
+        url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
+        expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
+        self._run_zip_equal(url, expected)
+
 
             ################################################
             ######### /__cart/view.html: API TESTS #########
             ################################################
-
-    # XXX Need to implement tests
-
-
-            #########################################################
-            ######### /api/download/<opusid>.zip: API TESTS #########
-            #########################################################
 
     # XXX Need to implement tests
