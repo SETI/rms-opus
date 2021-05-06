@@ -1,6 +1,7 @@
 # opus/application/test_api/api_test_helper.py
 
 import json
+import zipfile
 
 import settings
 
@@ -166,3 +167,21 @@ class ApiTestHelper:
         print('Expected:')
         print(expected)
         self.assertEqual(resp, expected)
+
+    def _run_zip_equal(self, url, expected):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        jdata = json.loads(response.content)
+        file = jdata['filename']
+        filename = file[file.rindex('/'):]
+        path = settings.TAR_FILE_PATH + filename
+        zip_file = zipfile.ZipFile(path, mode='r')
+        resp = zip_file.namelist()
+        resp.sort()
+        expected.sort()
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        self.assertListEqual(resp, expected)

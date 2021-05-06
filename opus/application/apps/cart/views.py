@@ -666,7 +666,7 @@ def api_create_download(request, opus_id=None):
                 logical_path = path[path.index('/holdings')+9:]
                 if pretty_name not in files_info:
                     files_info[pretty_name] = [logical_path]
-                else:
+                elif logical_path not in files_info[pretty_name]:
                     files_info[pretty_name].append(logical_path)
 
 
