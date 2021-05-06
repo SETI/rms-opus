@@ -669,7 +669,6 @@ def api_create_download(request, opus_id=None):
                 elif logical_path not in files_info[pretty_name]:
                     files_info[pretty_name].append(logical_path)
 
-
     for f_opus_id in files:
         if 'Current' not in files[f_opus_id]:
             continue

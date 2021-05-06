@@ -13,10 +13,6 @@
                     <span id="op-total-download-count">{{ total_download_count|intcomma }}</span>
                 </p>
             </div>
-            <div class="op-download-hierarchical-structure">
-                <input type="checkbox">
-                <span>Hierarchical</span>
-            </div>
             <div class="op-download-options
                     {% if count < 1 %}
                         op-button-disabled
@@ -37,13 +33,10 @@
                 </li>
             </div>
             <h1 class="op-download-options-title">Download Options</h1>
-            <!-- <h1 class="op-download-options-title">Download Options
-                <span class="op-download-hierarchical-structure">
-                    <input type="checkbox" value="1">
-                    <span>Hierarchical</span>
-                </span>
-
-            </h1> -->
+            <div class="op-download-hierarchical-structure">
+                <input type="checkbox">
+                <span>Hierarchical</span>
+            </div>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
             <div class="op-product-types-select-btn-group mb-3">
                 <button class="op-cart-select-all-btn btn btn-sm btn-primary

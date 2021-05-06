@@ -2914,6 +2914,12 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
+/* This is to have hierarchical checkbox to fit in at the bottom of "Download
+Options" */
+.op-download-options-title {
+    margin-bottom: 0 !important
+}
+
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */
 /* NOTE: Current breakpoints are width: 700px & height: 400px, these have to  */
@@ -3216,6 +3222,12 @@ when wrapping into the 2nd line */
     /* Hide "Download Options" in download panel when screen is short (cart tab) */
     .op-download-options-title {
         display: none !important;
+    }
+
+    /* Make sure when "Download Options" is gone, we create some space to between
+    the checkbox and download buttons */
+    .op-download-hierarchical-structure {
+        margin-top: 0.25rem;
     }
 }
 
