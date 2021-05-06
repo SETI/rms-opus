@@ -44,12 +44,10 @@ from tools.app_utils import (cols_to_slug_list,
                              convert_ring_obs_id_to_opus_id,
                              enter_api_call,
                              exit_api_call,
-                             format_metadata_number_or_func,
                              get_git_version,
                              get_mult_name,
                              get_reqno,
                              json_response,
-                             parse_form_type,
                              strip_numeric_suffix,
                              throw_random_http404_error,
                              HTTP404_BAD_OR_MISSING_REQNO,
@@ -57,7 +55,13 @@ from tools.app_utils import (cols_to_slug_list,
 from tools.file_utils import (get_pds_preview_images,
                               get_pds_products)
 
-import opus_support
+from opus_support import (display_search_unit,
+                          display_unit_ever,
+                          format_unit_value,
+                          get_default_unit,
+                          get_unit_display_names,
+                          get_valid_units,
+                          parse_form_type)
 
 import logging
 log = logging.getLogger(__name__)
@@ -251,8 +255,8 @@ def api_get_widget(request, **kwargs):
         exit_api_call(api_code, Http404)
         raise Http404
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
     param_qualified_name = param_info.param_qualified_name()
 
     tooltip = param_info.get_tooltip()
@@ -316,20 +320,30 @@ def api_get_widget(request, **kwargs):
                     +'</ul>')
 
         else: # param is constrained
+            initial_unit = None
+            if 'units' in extras:
+                units = extras['units']
+                if param_qualified_name_no_num in units:
+                    initial_unit = units[param_qualified_name_no_num][0]
+
             key = 0
             while key<length:
                 try:
-                    form_vals[slug1] = format_metadata_number_or_func(
+                    form_vals[slug1] = format_unit_value(
                                                 selections[param1][key],
-                                                form_type_func,
-                                                form_type_format)
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                initial_unit,
+                                                convert_from_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
-                    form_vals[slug2] = format_metadata_number_or_func(
+                    form_vals[slug2] = format_unit_value(
                                                 selections[param2][key],
-                                                form_type_func,
-                                                form_type_format)
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                initial_unit,
+                                                convert_from_default=False)
                 except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 
@@ -436,30 +450,30 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    units = opus_support.get_display_names(param_info.units)
-    valid_units = opus_support.get_valid_units(param_info.units)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
+    units = get_unit_display_names(form_type_unit_id)
+    valid_units = get_valid_units(form_type_unit_id)
     ranges = param_info.get_ranges_info()
 
     for cat in ranges:
         default_format = cat['format']
         for item in cat['ranges']:
-            default_unit = item['unit']
             val1 = float(item['field1'])
             val2 = float(item['field2'])
             new_unit, new_val1, new_val2 = [], [], []
             for unit in valid_units:
-                new_format = opus_support.adjust_format_string_for_units(
-                        default_format, default_unit, unit)
-                new_format = '{:' + new_format + '}'
                 new_unit.append(unit)
-                v1 = opus_support.convert_from_default_unit(
-                                               val1, default_unit, unit)
-                new_val1.append(new_format.format(v1))
-                v2 = opus_support.convert_from_default_unit(
-                                               val2, default_unit, unit)
-                new_val2.append(new_format.format(v2))
+                new_val1.append(format_unit_value(val1, default_format,
+                                                  form_type_unit_id, unit))
+                new_val2.append(format_unit_value(val2, default_format,
+                                                  form_type_unit_id, unit))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
+    # If we don't want to display this group of units on the search tab, then
+    # don't pass it to the template
+    if not display_search_unit(form_type_unit_id):
+        units = None
     template = "ui/widget.html"
     context = {
         "slug": slug,
@@ -729,8 +743,8 @@ def api_normalize_url(request):
                    +'" is not searchable; it has been removed.')
             msg_list.append(msg)
             continue
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(pi_searchable.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi_searchable.form_type)
 
         is_range = form_type in settings.RANGE_FORM_TYPES
         is_mult = form_type in settings.MULT_FORM_TYPES
@@ -903,8 +917,17 @@ def api_normalize_url(request):
 
         ### Handle units ###
 
-        unit_default = pi.units
-        valid_units = opus_support.get_valid_units(pi.units)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi.form_type)
+        valid_units = get_valid_units(form_type_unit_id)
+        # For our purpose, a unit_id that is never shown to the user (not
+        # during search and not during results) is not actually a valid unit
+        # and should never have a unit-X slug. This happens for things like
+        # SCLK fields which just use the units infrastructure to convert
+        # database fields to fancy strings.
+        if not display_unit_ever(form_type_unit_id):
+            valid_units = None
+        unit_default = get_default_unit(form_type_unit_id)
 
         # It really only makes sense to look for a unit field if there's a
         # reason one would be present, but if the user gave us one anyway,
@@ -966,7 +989,7 @@ def api_normalize_url(request):
                            +'been used.')
                 msg_list.append(msg)
                 unit_val = units_by_slug[unit_slug]
-        else:
+        elif unit_slug:
             units_by_slug[unit_slug] = unit_val
 
         # Now normalize all the values

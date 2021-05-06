@@ -73,8 +73,7 @@
         "pi_label_results": "Multiple Target List",
         "pi_slug": "surfacegeometrytargetlist",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "put_mults_here": true

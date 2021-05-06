@@ -38,9 +38,9 @@
         "waveres1": "0.05",
         "waveres2": "0.05",
         "waveno1": "15625",
-        "waveno2": "16949.2",
-        "wavenores1": "1324.153",
-        "wavenores2": "1324.153",
+        "waveno2": "16949.1525424",
+        "wavenores1": "1324.152542373",
+        "wavenores2": "1324.152542373",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"
