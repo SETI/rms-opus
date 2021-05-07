@@ -516,7 +516,7 @@ def api_create_download(request, opus_id=None):
         or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
-               hierarchical=0 (optional) means files in zip are not stored with
+               hierarchical=1 (optional) means files in zip are stored with
                hierarchy tree
     """
     api_code = enter_api_call('api_create_download', request)

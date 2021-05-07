@@ -2914,10 +2914,15 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
-/* This is to have hierarchical checkbox to fit in at the bottom of "Download
-Options" */
+/* This is to have "Flat zip file structure" checkbox to fit in at the bottom of
+"Download Options" */
 .op-download-options-title {
     margin-bottom: 0 !important
+}
+
+/* Make "Select all product types" and "Deselect all product types" more visible */
+.op-cart-select-all-btn, .op-cart-deselect-all-btn {
+    font-weight: 600;
 }
 
 /* ************************************************************************** */
@@ -3224,9 +3229,9 @@ Options" */
         display: none !important;
     }
 
-    /* Make sure when "Download Options" is gone, we create some space to between
+    /* Make sure when "Download Options" is gone, we create some space between
     the checkbox and download buttons */
-    .op-download-hierarchical-structure {
+    .op-download-flat-zip-file-structure {
         margin-top: 0.25rem;
     }
 }

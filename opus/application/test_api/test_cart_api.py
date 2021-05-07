@@ -2377,7 +2377,10 @@ class ApiCartTests(TestCase, ApiTestHelper):
             ######### /__cart/download.json: API TESTS #########
             ####################################################
     def test__api_cart_download_single_no_hierarchical(self):
-        "[test_cart_api.py] /__cart/download.json: single opus id  & no hierarchical"
+        "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2387,6 +2390,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
 
     def test__api_cart_download_single_hierarchical(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2397,6 +2403,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_no_hierarchical(self):
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & no hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2410,6 +2419,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_hierarchical(self):
         "[test_cart_api.py] /__cart/download.json: multiple opus ids with duplicated files & hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2423,6 +2435,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_no_hierarchical(self):
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & no hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2436,6 +2451,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_hierarchical(self):
         "[test_cart_api.py] /__cart/download.json: multiple opus ids without duplicated files & hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
         expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
         self._run_json_equal(url, expected)
@@ -2451,15 +2469,21 @@ class ApiCartTests(TestCase, ApiTestHelper):
             #########################################################
     def test__api_download_no_hierarchical(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_zip_equal(url, expected)
+        self._run_zip_equal(url, expected, response_type='binary')
 
     def test__api_download_hierarchical(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & hierarchical"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_zip_equal(url, expected)
+        self._run_zip_equal(url, expected, response_type='binary')
 
 
             ################################################
