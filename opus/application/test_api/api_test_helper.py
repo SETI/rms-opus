@@ -176,10 +176,10 @@ class ApiTestHelper:
         if response_type == 'json':
             jdata = json.loads(response.content)
             file = jdata['filename']
-            filename = file.replace(settings.TAR_FILE_URL_PATH, '')
-            path = settings.TAR_FILE_PATH + filename
+            path = file.replace(settings.TAR_FILE_URL_PATH,
+                                    settings.TAR_FILE_PATH)
             zip_file = zipfile.ZipFile(path, mode='r')
-        elif response_type == 'binary':
+        else:
             binary_stream = BytesIO(response.content)
             zip_file = zipfile.ZipFile(binary_stream, mode='r')
         resp = zip_file.namelist()
