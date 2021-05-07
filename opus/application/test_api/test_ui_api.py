@@ -51,10 +51,10 @@ class ApiUITests(TestCase, ApiTestHelper):
             slug_data.update(slug_dict)
         print('Got:')
         print(slug_data)
+        print(jdata['msg'])
         print('Expected:')
         print(expected)
-        print('Message:')
-        print(jdata['msg'])
+        print(msg_contains)
         self.assertEqual(expected, slug_data)
         if msg_contains:
             self.assertTrue(jdata['msg'] is not None and
@@ -1698,7 +1698,7 @@ class ApiUITests(TestCase, ApiTestHelper):
         # _1 is 12
         # _12 is 22
         # qtype_20 is None
-        url = '/__normalizeurl.json?widgets=rightasc&rightasc1_01=21.&rightasc2_01=11.&rightasc2_02=12.&qtype-rightasc_02=only&rightasc1_12=22.&qtype-rightasc_20=all&unit-rightasc_01=radians&unit-rightasc_20=hourangle'
+        url = '/__normalizeurl.json?widgets=rightasc&rightasc1_01=21.&rightasc2_01=11.&rightasc2_02=12.&qtype-rightasc_02=only&rightasc1_12=22.&qtype-rightasc_20=all&unit-rightasc_01=radians&unit-rightasc_20=fred'
         new_slugs['rightasc1_01'] = '21'
         new_slugs['rightasc2_01'] = '11'
         new_slugs['rightasc2_02'] = '12'
@@ -2510,6 +2510,12 @@ class ApiUITests(TestCase, ApiTestHelper):
         "[test_ui_api.py] /__normalizeurl: real 8"
         url = '/__normalizeurl.json?qtype-RINGGEOringradius=any&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&mission=Voyager&qtype-volumeid=contains&wavelength1_01=0.5750&wavelength2_01=0.5850&qtype-wavelength_01=any&wavelength1_02=30.0000&wavelength2_02=300.0000&qtype-wavelength_02=any&wavelength2_03=300.0000&qtype-wavelength_03=any&wavelength1_04=0.7500&wavelength2_04=300.0000&qtype-wavelength_04=any&qtype-wavelength_05=any&qtype-wavelength_06=any&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail='
         expected = {"new_url": "mission=Voyager&qtype-RINGGEOringradius=any&unit-RINGGEOringradius=km&qtype-volumeid=contains&qtype-VOYAGERspacecraftclockcount_01=any&VOYAGERspacecraftclockcount1_02=00004:00:001&VOYAGERspacecraftclockcount2_02=00005:00:001&qtype-VOYAGERspacecraftclockcount_02=any&qtype-VOYAGERspacecraftclockcount_03=any&wavelength1_01=0.575&wavelength2_01=0.585&qtype-wavelength_01=any&unit-wavelength_01=microns&wavelength1_02=30&wavelength2_02=300&qtype-wavelength_02=any&unit-wavelength_02=microns&wavelength2_03=300&qtype-wavelength_03=any&unit-wavelength_03=microns&wavelength1_04=0.75&wavelength2_04=300&qtype-wavelength_04=any&unit-wavelength_04=microns&qtype-wavelength_05=any&unit-wavelength_05=microns&qtype-wavelength_06=any&unit-wavelength_06=microns&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"mission": "Voyager"}, {"qtype-RINGGEOringradius": "any"}, {"unit-RINGGEOringradius": "km"}, {"qtype-volumeid": "contains"}, {"qtype-VOYAGERspacecraftclockcount_01": "any"}, {"VOYAGERspacecraftclockcount1_02": "00004:00:001"}, {"VOYAGERspacecraftclockcount2_02": "00005:00:001"}, {"qtype-VOYAGERspacecraftclockcount_02": "any"}, {"qtype-VOYAGERspacecraftclockcount_03": "any"}, {"wavelength1_01": "0.575"}, {"wavelength2_01": "0.585"}, {"qtype-wavelength_01": "any"}, {"unit-wavelength_01": "microns"}, {"wavelength1_02": "30"}, {"wavelength2_02": "300"}, {"qtype-wavelength_02": "any"}, {"unit-wavelength_02": "microns"}, {"wavelength2_03": "300"}, {"qtype-wavelength_03": "any"}, {"unit-wavelength_03": "microns"}, {"wavelength1_04": "0.75"}, {"wavelength2_04": "300"}, {"qtype-wavelength_04": "any"}, {"unit-wavelength_04": "microns"}, {"qtype-wavelength_05": "any"}, {"unit-wavelength_05": "microns"}, {"qtype-wavelength_06": "any"}, {"unit-wavelength_06": "microns"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "VOYAGERspacecraftclockcount,mission,volumeid,RINGGEOringradius,observationduration,wavelength,planet,target"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
+        self._run_json_equal(url, expected)
+
+    def test__api_normalizeurl_real_9(self):
+        "[test_ui_api.py] /__normalizeurl: real 9"
+        url = '/opus/__normalizeurl.json?surfacegeometrytargetname=Triton&SURFACEGEOtriton_centerresolution2_102=70&unit-SURFACEGEOtriton_centerresolution_102=km%2Fpixel&time1_101=1989-08-16T00:00:00.000&time2_101=1989-08-26T00:00:00.000&qtype-time_101=any&reqno=68'
+        expected = {"new_url": "surfacegeometrytargetname=Triton&SURFACEGEOtriton_centerresolution2=70&unit-SURFACEGEOtriton_centerresolution=km_pixel&time1=1989-08-16T00:00:00.000&time2=1989-08-26T00:00:00.000&qtype-time=any&unit-time=ymdhms&cols=opusid,instrument,planet,target,time1,observationduration&widgets=SURFACEGEOtriton_centerresolution,surfacegeometrytargetname,time&order=time1,opusid&view=search&browse=gallery&cart_browse=gallery&startobs=1&cart_startobs=1&detail=", "new_slugs": [{"surfacegeometrytargetname": "Triton"}, {"SURFACEGEOtriton_centerresolution2": "70"}, {"unit-SURFACEGEOtriton_centerresolution": "km_pixel"}, {"time1": "1989-08-16T00:00:00.000"}, {"time2": "1989-08-26T00:00:00.000"}, {"qtype-time": "any"}, {"unit-time": "ymdhms"}, {"cols": "opusid,instrument,planet,target,time1,observationduration"}, {"widgets": "SURFACEGEOtriton_centerresolution,surfacegeometrytargetname,time"}, {"order": "time1,opusid"}, {"view": "search"}, {"browse": "gallery"}, {"cart_browse": "gallery"}, {"startobs": 1}, {"cart_startobs": 1}, {"detail": ""}], "msg": None}
         self._run_json_equal(url, expected)
 
 # http://pds-rings-tools.seti.org/#/planet=Saturn&typeid=Image&missionid=Voyager&timesec1=1980-09-27T02:16&timesec2=1980-09-28T02:17&qtype-volumeid=contains&view=detail&browse=gallery&colls_browse=gallery&page=1&gallery_data_viewer=true&limit=100&order=time1&cols=ringobsid,planet,target,phase1,phase2,time1,time2&widgets=timesec1&widgets2=&detail=S_IMG_VG1_ISS_3353709_N
