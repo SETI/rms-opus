@@ -2920,10 +2920,6 @@ when wrapping into the 2nd line */
     margin-bottom: 0 !important
 }
 
-/* Make "Select all product types" and "Deselect all product types" more visible */
-.op-cart-select-all-btn, .op-cart-deselect-all-btn {
-    font-weight: 600;
-}
 
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */
