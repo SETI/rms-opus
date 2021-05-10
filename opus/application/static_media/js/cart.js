@@ -346,6 +346,10 @@ var o_cart = {
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
+
+        // Check if the "Flat zip file structure" is selected.
+        let hierarchical = $(".op-download-flat-zip-file-structure input").prop("checked") ? 0 : 1;
+        url += `&hierarchical=${hierarchical}`;
         $.ajax({
             url: url,
             dataType: "json",
