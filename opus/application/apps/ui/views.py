@@ -873,7 +873,7 @@ def api_normalize_url(request):
         # Note if we were already looking at the qtype, this will just
         # find it again.
         qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
-        old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        old_qtype_slug = qtype_slug
         found_qtype = False
         if qtype_slug+clause_num_str in original_slugs:
             found_qtype = qtype_slug+clause_num_str
@@ -888,16 +888,13 @@ def api_normalize_url(request):
             handled_slugs.append('qtype-'
                                  +strip_numeric_suffix(pi.slug)
                                  +clause_num_str)
-            if (valid_qtypes and
-                original_slugs[old_qtype_slug+clause_num_str]
-                    not in valid_qtypes):
+            qtype_val = original_slugs[old_qtype_slug+clause_num_str]
+            if valid_qtypes and qtype_val not in valid_qtypes:
                 msg = ('Query type "'+escape(orig_slug)
                        +'" has an illegal value; '
                        +'it has been set to the default.')
                 msg_list.append(msg)
                 qtype_val = qtype_default
-            else:
-                qtype_val = original_slugs[old_qtype_slug+clause_num_str]
         elif qtype_default:
             # Force a default qtype
             qtype_val = qtype_default
@@ -936,7 +933,7 @@ def api_normalize_url(request):
         # Note if we were already looking at the unit, this will just
         # find it again.
         unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
-        old_unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
+        old_unit_slug = unit_slug
         found_unit = False
         if unit_slug+clause_num_str in original_slugs:
             found_unit = unit_slug+clause_num_str
@@ -951,16 +948,17 @@ def api_normalize_url(request):
             handled_slugs.append('unit-'
                                  +strip_numeric_suffix(pi.slug)
                                  +clause_num_str)
-            if (valid_units and
-                original_slugs[old_unit_slug+clause_num_str]
-                    not in valid_units):
+            unit_val = original_slugs[old_unit_slug+clause_num_str]
+            # Silently replace old units with new versions
+            unit_val = unit_val.replace('/', '_')
+            if unit_val == 'hourangle':
+                unit_val = 'hours'
+            if valid_units and unit_val not in valid_units:
                 msg = ('Unit "'+escape(found_unit)
                        +'" has an illegal value; '
                        +'it has been set to the default.')
                 msg_list.append(msg)
                 unit_val = unit_default
-            else:
-                unit_val = original_slugs[old_unit_slug+clause_num_str]
         elif unit_default:
             # Force a default unit
             unit_val = unit_default
