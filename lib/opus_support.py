@@ -1947,7 +1947,25 @@ def parse_form_type(s):
 
     return form_type, form_type_format, form_type_unit
 
+def get_single_parse_function(form_type_unit_id):
+    range_func = None
+    if form_type_unit_id and not display_unit_ever(form_type_unit_id):
+        default_unit = get_default_unit(form_type_unit_id)
+        range_func = (UNIT_FORMAT_DB[form_type_unit_id]
+                                    ['conversions']
+                                    [default_unit]
+                                    [2])
+    return range_func
 
+def get_single_format_function(form_type_unit_id):
+    range_func = None
+    if form_type_unit_id and not display_unit_ever(form_type_unit_id):
+        default_unit = get_default_unit(form_type_unit_id)
+        range_func = (UNIT_FORMAT_DB[form_type_unit_id]
+                                    ['conversions']
+                                    [default_unit]
+                                    [3])
+    return range_func
 
 
 if __name__ == '__main__':

@@ -9,7 +9,11 @@ import os
 
 import pdsfile
 
-import opus_support
+# import opus_support
+from opus_support import (
+    get_single_parse_function,
+    get_single_format_function
+)
 
 from config_data import *
 import do_cart
@@ -431,12 +435,10 @@ def update_mult_table(table_name, field_name, table_column, val, label,
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
-        form_type = table_column['pi_form_type']
-        range_func = None
-        if form_type is not None and form_type.startswith('GROUP:'):
-            range_func_name = form_type.replace('GROUP:', '')
-            if range_func_name in opus_support.RANGE_FUNCTIONS:
-                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
+        (form_type, form_type_format,
+         form_type_unit_id) = opus_support.parse_form_type(
+                            table_column['pi_form_type'])
+        range_func = get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
         all_numeric = True
