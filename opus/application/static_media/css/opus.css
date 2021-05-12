@@ -2143,13 +2143,22 @@ to the left pane when screen is getting too wide */
 @media (max-width: 767px) {
     /* Set detail image size when it's above the left pane */
     .op-detail-img img {
-        width: 150px;
         height: 150px;
     }
 
     /* Reduce the top space above the detail image when screen */
     .op-detail-img {
         padding-top: 0 !important;
+    }
+}
+
+@media (max-width: 767px) and (max-height: 450px) {
+    .op-detail-img {
+        margin-bottom: -1em;
+    }
+    
+    .op-detail-img img {
+        height: 100px;
     }
 }
 
@@ -3245,26 +3254,13 @@ when screen is narrow (cart tab) */
     flex-direction: column
 }
 
-@media (max-height: 615px) {
+@media (max-height: 400px) {
     /* Keep detail image stay at the right of the page when screen is narrow
     (detail tab) */
     .op-detail-content {
         flex-wrap: nowrap;
     }
 
-    /* Reduce the spaces around "Observation Detail" (detail tab) */
-    .op-detail-metadata h1, .op-detail-metadata-header h1 {
-        margin-top: 0.2em;
-        margin-bottom: 0.2em;
-    }
-
-    /* Reduce the spaces around "OPUS ID" in detail tab */
-    .op-detail-metadata p, .op-detail-metadata-header p {
-        margin-bottom: 0.2em;
-    }
-}
-
-@media (max-height: 400px) {
     /* The followings are to move "Download Data" button to the same line as
     cart actions nav buttons  (cart tab) */
     .op-cart-actions-group {
@@ -3281,6 +3277,20 @@ when screen is narrow (cart tab) */
         padding: 0;
     }
 }
+
+@media (max-height: 615px) {
+    /* Reduce the spaces around "Observation Detail" (detail tab) */
+    .op-detail-metadata h1, .op-detail-metadata-header h1 {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+    }
+
+    /* Reduce the spaces around "OPUS ID" in detail tab */
+    .op-detail-metadata p, .op-detail-metadata-header p {
+        margin-bottom: 0.2em;
+    }
+}
+
 
 /* Make sure image always stays at the left in metadata modal */
 #galleryViewContents .row {
