@@ -516,6 +516,8 @@ def api_create_download(request, opus_id=None):
         or: [__]api/download/(?P<opus_id>[-\w]+).zip
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
+               hierarchical=1 (optional) means files in zip are stored with
+               hierarchy tree
     """
     api_code = enter_api_call('api_create_download', request)
 
@@ -644,7 +646,29 @@ def api_create_download(request, opus_id=None):
     url_fp = open(url_file_name, 'w')
 
     errors = []
+    # Store the files' logical paths added to the zip file.
     added = []
+
+    # Loop through files first to create a dictionary keyed by basenames. Each
+    # key has a list of paths pointing to itself. If there are multiple paths
+    # for a key, then it means these paths are not duplicated and need to be
+    # stored with hierarchy tree in the zip file.
+    hierarchical_struct = int(request.GET.get('hierarchical', 0))
+    files_info = {}
+    for f_opus_id in files:
+        if 'Current' not in files[f_opus_id]:
+            continue
+        files_version = files[f_opus_id]['Current']
+        for product_type in files_version:
+            for file_data in files_version[product_type]:
+                path = file_data['path']
+                pretty_name = path.split('/')[-1]
+                logical_path = path[path.index('/holdings')+9:]
+                if pretty_name not in files_info:
+                    files_info[pretty_name] = [logical_path]
+                elif logical_path not in files_info[pretty_name]:
+                    files_info[pretty_name].append(logical_path)
+
     for f_opus_id in files:
         if 'Current' not in files[f_opus_id]:
             continue
@@ -666,10 +690,15 @@ def api_create_download(request, opus_id=None):
                           +f'{checksum},{size}')
                 manifest_fp.write(mdigest+'\n')
 
-                if pretty_name not in added:
+                if logical_path not in added:
                     # chksum_fp.write(digest+'\n')
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
+                    # If hierarchical_struct is 1 or there are multiple paths
+                    # for the same file basename, we store files with hierarchy
+                    # tree in the zip file.
+                    if hierarchical_struct or len(files_info[pretty_name]) > 1:
+                        filename = logical_path
                     if not url_file_only:
                         try:
                             zip_file.write(path, arcname=filename)
@@ -680,7 +709,7 @@ def api_create_download(request, opus_id=None):
                                       f_opus_id, product_type, path,
                                       pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
-                    added.append(pretty_name)
+                    added.append(logical_path)
 
     # Write errors to manifest file
     if errors:

@@ -67,7 +67,6 @@
         "pi_slug": "GALILEOorbitnumber",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0,  "0" ,  "0",    0, "Y", null],
               [   1,  "1",  "G1", "010", "Y", null],
@@ -137,7 +136,6 @@
         "pi_slug": "GALILEOspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label. XXX This won't work for NIMS because it's called NATIVE_START_TIME there, so it will need to be a function."
     },
     {
@@ -166,8 +164,7 @@
         "pi_old_slug": "missiongalileospacecraftclockcount2",
         "pi_slug": "GALILEOspacecraftclockcount2",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "put_mults_here": true

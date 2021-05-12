@@ -2733,7 +2733,7 @@ input.STRING {
 make sure it can be shrunk more when screen is shrinking (before reaching to
 the breakpoint at 940px) */
 input.RANGE {
-    width: 25%;
+    width: 27%;
 }
 
 /* Style placeholder to have "..." when text is overflow */
@@ -2926,6 +2926,13 @@ when wrapping into the 2nd line */
     padding-left: 0.2rem;
     padding-right: 0.2rem;
 }
+
+/* This is to have "Flat zip file structure" checkbox to fit in at the bottom of
+"Download Options" */
+.op-download-options-title {
+    margin-bottom: 0 !important
+}
+
 
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */
@@ -3229,6 +3236,12 @@ when wrapping into the 2nd line */
     /* Hide "Download Options" in download panel when screen is short (cart tab) */
     .op-download-options-title {
         display: none !important;
+    }
+
+    /* Make sure when "Download Options" is gone, we create some space between
+    the checkbox and download buttons */
+    .op-download-flat-zip-file-structure {
+        margin-top: 0.25rem;
     }
 }
 

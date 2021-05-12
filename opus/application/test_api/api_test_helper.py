@@ -1,6 +1,8 @@
 # opus/application/test_api/api_test_helper.py
-
+from io import BytesIO
 import json
+import os
+import zipfile
 
 import settings
 
@@ -166,3 +168,29 @@ class ApiTestHelper:
         print('Expected:')
         print(expected)
         self.assertEqual(resp, expected)
+
+    def _run_zip_equal(self, url, expected, response_type='json'):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        if response_type == 'json':
+            jdata = json.loads(response.content)
+            file = jdata['filename']
+            path = file.replace(settings.TAR_FILE_URL_PATH,
+                                    settings.TAR_FILE_PATH)
+            zip_file = zipfile.ZipFile(path, mode='r')
+        else:
+            binary_stream = BytesIO(response.content)
+            zip_file = zipfile.ZipFile(binary_stream, mode='r')
+        resp = zip_file.namelist()
+        resp.sort()
+        expected.sort()
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        self.assertListEqual(resp, expected)
+        # Remove the .zip stored under settings.TAR_FILE_PATH
+        zip_file_path = zip_file.filename
+        if zip_file_path and os.path.exists(zip_file_path):
+            os.remove(zip_file_path)

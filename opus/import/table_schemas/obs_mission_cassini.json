@@ -77,8 +77,7 @@
         "pi_old_slug": "obsname",
         "pi_slug": "CASSINIobsname",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "rev_no",
@@ -105,7 +104,6 @@
         "pi_slug": "CASSINIrevno",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": ""
     },
     {
@@ -135,7 +133,6 @@
         "pi_slug": "CASSINIrevnoint",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": ""
     },
     {
@@ -162,7 +159,6 @@
         "pi_slug": "CASSINIisprime",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": ""
     },
     {
@@ -189,7 +185,6 @@
         "pi_slug": "CASSINIprimeinst",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "",
         "mult_options": [
               [   0,  "CIRS",    "CIRS", "010", "Y", null],
@@ -231,7 +226,6 @@
         "pi_slug": "CASSINIspacecraftclockcount1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
@@ -261,7 +255,6 @@
         "pi_slug": "CASSINIspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
@@ -286,7 +279,7 @@
         "pi_disp_order": 100,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE:range_time",
+        "pi_form_type": "RANGE:datetime",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
         "pi_label_results": "Earth Received Start Time",
@@ -294,7 +287,6 @@
         "pi_slug": "CASSINIert1",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
@@ -316,7 +308,7 @@
         "pi_disp_order": 101,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE:range_time",
+        "pi_form_type": "RANGE:datetime",
         "pi_intro": null,
         "pi_label": "Earth Received Time",
         "pi_label_results": "Earth Received Stop Time",
@@ -324,7 +316,6 @@
         "pi_slug": "CASSINIert2",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
@@ -350,7 +341,6 @@
         "pi_slug": "CASSINItargetcode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": ""
     },
     {
@@ -376,7 +366,6 @@
         "pi_slug": "CASSINItargetname",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": ""
     },
     {
@@ -401,8 +390,7 @@
         "pi_old_slug": "activityname",
         "pi_slug": "CASSINIactivityname",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "mission_phase_name",
@@ -427,7 +415,6 @@
         "pi_slug": "CASSINImissionphasename",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
@@ -452,7 +439,6 @@
         "pi_slug": "CASSINIsequenceid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from COISS label"
     },
     {
