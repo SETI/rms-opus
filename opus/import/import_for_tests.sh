@@ -20,6 +20,8 @@ python main_opus_import.py --do-all-import GO_0017 $1
 python main_opus_import.py --do-all-import VGISS_6210,VGISS_8201 $1
 python main_opus_import.py --do-all-import HSTI1_3667,HSTI1_1559,HSTJ0_9975,HSTJ1_1085,HSTN0_7181,HSTO0_7316,HSTU0_5642 $1
 python main_opus_import.py --do-all-import NHPELO_2001,NHLAMV_1001,NHJUMV_2001 $1
+# python main_opus_import.py --import-check-duplicate-id --do-all-import NHPELO_2001,NHPELO_1001,NHLAMV_2001,NHLAMV_1001,NHJUMV_2001,NHJUMV_1001 $1
+# python main_opus_import.py --do-all-import --import-check-duplicate-id NEWHORIZONS $1 --exclude-volumes NHKCLO1001,NHKCLO_2001,NHKELO_1001,NHKELO_2001,NHKCMV1001,NHKCMV_2001,NHKEMV_1001,NHKEMV_2001
 python main_opus_import.py --do-all-import EBROCC_0001 $1
 python main_opus_import.py --do-all-import CORSS_8001 $1
 python main_opus_import.py --do-all-import COUVIS_8001 $1
