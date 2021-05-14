@@ -359,33 +359,33 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     # Other return formats
-    def test__api_meta_mults_NHPELO_2001_json(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target"
-        url = '/api/meta/mults/target.json?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_json(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target"
+        url = '/api/meta/mults/target.json?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = {"field_id": "target", "mults": {"2002 MS4": 60, "2010 JJ124": 90, "Arawn": 290, "Calibration": 6, "Charon": 490, "Chiron": 90, "HD 205905": 10, "HD 37962": 10, "Hydra": 143, "Ixion": 60,
                     "Kerberos": 10, "NGC 3532": 45, "Nix": 102, "Pluto": 5265, "Quaoar": 96, "Styx": 6}}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_csv(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target csv"
-        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_csv(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target csv"
+        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = b'2002 MS4,2010 JJ124,Arawn,Calibration,Charon,Chiron,HD 205905,HD 37962,Hydra,Ixion,Kerberos,NGC 3532,Nix,Pluto,Quaoar,Styx\n60,90,290,6,490,90,10,10,143,60,10,45,102,5265,96,6\n'
         self._run_csv_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_html(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target html"
-        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_html(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target html"
+        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = b'<dl>\n<dt>2002 MS4</dt><dd>60</dd>\n<dt>2010 JJ124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>HD 205905</dt><dd>10</dd>\n<dt>HD 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>NGC 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_csv_internal(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target csv internal"
-        url = '/__api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_csv_internal(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target csv internal"
+        url = '/__api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         self._run_status_equal(url, 404)
 
-    def test__api_meta_mults_NHPELO_2001_html_internal(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target html internal"
-        url = '/__api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_html_internal(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target html internal"
+        url = '/__api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         self._run_status_equal(url, 404)
 
     # reqno
@@ -415,15 +415,15 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 404,
                 HTTP404_BAD_OR_MISSING_REQNO('/__api/meta/mults/target.json'))
 
-    def test__api_meta_mults_NHPELO_2001_csv_reqno(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target reqno csv"
-        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=NaN'
+    def test__api_meta_mults_NHPELO_1001_csv_reqno(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target reqno csv"
+        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001&reqno=NaN'
         expected = b'2002 MS4,2010 JJ124,Arawn,Calibration,Charon,Chiron,HD 205905,HD 37962,Hydra,Ixion,Kerberos,NGC 3532,Nix,Pluto,Quaoar,Styx\n60,90,290,6,490,90,10,10,143,60,10,45,102,5265,96,6\n'
         self._run_csv_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_html_reqno(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target reqno html"
-        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=5'
+    def test__api_meta_mults_NHPELO_1001_html_reqno(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target reqno html"
+        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001&reqno=5'
         expected = b'<dl>\n<dt>2002 MS4</dt><dd>60</dd>\n<dt>2010 JJ124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>HD 205905</dt><dd>10</dd>\n<dt>HD 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>NGC 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
