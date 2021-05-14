@@ -10,10 +10,7 @@ import os
 import pdsfile
 
 # import opus_support
-from opus_support import (
-    get_single_parse_function,
-    get_single_format_function
-)
+from opus_support import get_single_parse_function
 
 from config_data import *
 import do_cart
