@@ -367,9 +367,9 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         self._run_json_equal_file(url, "results_go_ssi_c0359986600_files.json")
 
     def test__results_contents_go_ssi_c0368977800_metadata(self):
-    "[test_results_contents.py] go-ssi-c0368977800 metadata"
-    url = "/api/metadata_v2/go-ssi-c0368977800.json"
-    self._run_json_equal_file(url, "results_go_ssi_c0368977800_metadata.json")
+        "[test_results_contents.py] go-ssi-c0368977800 metadata"
+        url = "/api/metadata_v2/go-ssi-c0368977800.json"
+        self._run_json_equal_file(url, "results_go_ssi_c0368977800_metadata.json")
 
     def test__results_contents_go_ssi_c0368977800_files(self):
         "[test_results_contents.py] go-ssi-c0368977800 files"
