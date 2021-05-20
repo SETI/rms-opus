@@ -16,6 +16,6 @@ urlpatterns = [
     url(r'^__cart/(?P<action>add|remove|addrange|removerange|addall).json$', api_edit_cart),
     url(r'^__cart/reset.json$', api_reset_session),
     url(r'^__cart/download.json$', api_create_download),
-    url(r'^api/download/(?P<opus_id>[-\w]+).zip$', api_create_download),
-    url(r'^__api/download/(?P<opus_id>[-\w]+).zip$', api_create_download),
+    url(r'^api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)$', api_create_download),
+    url(r'^__api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)$', api_create_download),
 ]

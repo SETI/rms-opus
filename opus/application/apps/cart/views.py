@@ -19,6 +19,7 @@ import csv
 import logging
 import os
 import time
+import tarfile
 import zipfile
 
 import settings
@@ -128,6 +129,7 @@ def api_view_cart(request):
 
     info['count'] = count
     info['recycled_count'] = recycled_count
+    info['format'] = settings.DOWNLOAD_FORMAT.keys()
 
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
@@ -507,13 +509,13 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_id=None):
+def api_create_download(request, opus_id=None, fmt=None):
     r"""Creates a zip file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
 
     Format: __cart/download.json
-        or: [__]api/download/(?P<opus_id>[-\w]+).zip
+        or: [__]api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)
     Arguments: types=<PRODUCT_TYPES>
                urlonly=1 (optional) means to not zip the actual data products
                hierarchical=1 (optional) means files in zip are stored with
@@ -523,7 +525,7 @@ def api_create_download(request, opus_id=None):
 
     if not request or request.GET is None:
         if opus_id:
-            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.zip'))
+            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.{fmt}'))
         else:
             ret = Http404(HTTP404_NO_REQUEST('/__cart/download.json'))
         exit_api_call(api_code, ret)
@@ -591,13 +593,18 @@ def api_create_download(request, opus_id=None):
                              product_types=product_types)
 
     file_type = 'url' if url_file_only else 'data'
-    zip_base_file_name = download_filename(opus_id, file_type) + '.zip'
-    zip_root = zip_base_file_name.split('.')[0]
-    zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
-    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{zip_root}.csv'
-    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
-    url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
+
+    # If file format is not specified, set zip as the default format.
+    if not fmt:
+        fmt = request.GET.get('fmt', 'zip')
+
+    cmp_base_file_name = download_filename(opus_id, file_type) + f'.{fmt}'
+    cmp_root = cmp_base_file_name.split('.')[0]
+    cmp_file_name = settings.TAR_FILE_PATH + cmp_base_file_name
+    # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{cmp_root}.txt'
+    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{cmp_root}.csv'
+    csv_file_name = settings.TAR_FILE_PATH + f'csv_{cmp_root}.txt'
+    url_file_name = settings.TAR_FILE_PATH + f'url_{cmp_root}.txt'
 
     _create_csv_file(request, csv_file_name, opus_id, api_code=api_code)
 
@@ -632,12 +639,21 @@ def api_create_download(request, opus_id=None):
             return ret
         request.session['cum_download_size'] = int(cum_download_size)
 
+    mime_type = settings.DOWNLOAD_FORMAT[fmt][0]
+    write_mode = settings.DOWNLOAD_FORMAT[fmt][1]
     # Add each file to the new zip file and create a manifest too
     if return_directly:
-        response = HttpResponse(content_type='application/zip')
-        zip_file = zipfile.ZipFile(response, mode='w')
+        response = HttpResponse(content_type=mime_type)
+        if fmt == 'zip':
+            cmp_file = zipfile.ZipFile(response, mode=write_mode)
+        else:
+            cmp_file = tarfile.open(mode=write_mode, fileobj=response)
     else:
-        zip_file = zipfile.ZipFile(zip_file_name, mode='w')
+        if fmt == 'zip':
+            cmp_file = zipfile.ZipFile(cmp_file_name, mode=write_mode)
+        else:
+            cmp_file = tarfile.open(name=cmp_file_name, mode=write_mode)
+
     # chksum_fp = open(chksum_file_name, 'w')
     manifest_fp = open(manifest_file_name, 'w')
     manifest_fp.write('OPUS ID,Product Category,Product Type,'
@@ -701,7 +717,10 @@ def api_create_download(request, opus_id=None):
                         filename = logical_path
                     if not url_file_only:
                         try:
-                            zip_file.write(path, arcname=filename)
+                            if fmt == 'zip':
+                                cmp_file.write(path, arcname=filename)
+                            else:
+                                cmp_file.add(path, arcname=filename)
                         except Exception as e:
                             log.error('api_create_download threw exception '+
                                       'for opus_id %s, product_type %s, '+
@@ -721,21 +740,26 @@ def api_create_download(request, opus_id=None):
     manifest_fp.close()
     # chksum_fp.close()
     url_fp.close()
-    # zip_file.write(chksum_file_name, arcname='checksum.txt')
-    zip_file.write(manifest_file_name, arcname='manifest.csv')
-    zip_file.write(csv_file_name, arcname='data.csv')
-    zip_file.write(url_file_name, arcname='urls.txt')
-    zip_file.close()
+    # cmp_file.write(chksum_file_name, arcname='checksum.txt')
+    if fmt == 'zip':
+        cmp_file.write(manifest_file_name, arcname='manifest.csv')
+        cmp_file.write(csv_file_name, arcname='data.csv')
+        cmp_file.write(url_file_name, arcname='urls.txt')
+    else:
+        cmp_file.add(manifest_file_name, arcname='manifest.csv')
+        cmp_file.add(csv_file_name, arcname='data.csv')
+        cmp_file.add(url_file_name, arcname='urls.txt')
+    cmp_file.close()
 
     # os.remove(chksum_file_name)
     os.remove(csv_file_name)
     os.remove(url_file_name)
 
     if return_directly:
-        response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
+        response['Content-Disposition'] = f'attachment; filename={cmp_base_file_name}'
         ret = response
     else:
-        zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
+        zip_url = settings.TAR_FILE_URL_PATH + cmp_base_file_name
         ret = json_response({'filename': zip_url})
 
     exit_api_call(api_code, '<Encoded zip file>')
