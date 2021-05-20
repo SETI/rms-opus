@@ -3,6 +3,7 @@ from io import BytesIO
 import json
 import os
 import zipfile
+import tarfile
 
 import settings
 
@@ -169,20 +170,39 @@ class ApiTestHelper:
         print(expected)
         self.assertEqual(resp, expected)
 
-    def _run_zip_equal(self, url, expected, response_type='json'):
+    def _run_cmp_file_equal(self, url, expected,
+                            response_type='json', fmt='zip'):
         print(url)
         response = self._get_response(url)
         self.assertEqual(response.status_code, 200)
+        compressed_file_path = None
         if response_type == 'json':
             jdata = json.loads(response.content)
             file = jdata['filename']
             path = file.replace(settings.TAR_FILE_URL_PATH,
                                     settings.TAR_FILE_PATH)
-            zip_file = zipfile.ZipFile(path, mode='r')
+            read_mode = settings.DOWNLOAD_FORMAT[fmt][2]
+            compressed_file_path = path
+            if fmt == 'zip':
+                compressed_file = zipfile.ZipFile(path, mode=read_mode)
+            else:
+                compressed_file = tarfile.open(name=path, mode=read_mode)
         else:
             binary_stream = BytesIO(response.content)
-            zip_file = zipfile.ZipFile(binary_stream, mode='r')
-        resp = zip_file.namelist()
+            read_mode = settings.DOWNLOAD_FORMAT[fmt][2]
+            file = response.headers['Content-Disposition']
+            compressed_file_path = (settings.TAR_FILE_PATH
+                                    + file[file.index('=')+1::])
+            if fmt == 'zip':
+                compressed_file = zipfile.ZipFile(binary_stream, mode=read_mode)
+            else:
+                compressed_file = tarfile.open(mode=read_mode,
+                                               fileobj=binary_stream)
+        if fmt == 'zip':
+            resp = compressed_file.namelist()
+        else:
+            resp = compressed_file.getnames()
+
         resp.sort()
         expected.sort()
         print('Got:')
@@ -190,7 +210,7 @@ class ApiTestHelper:
         print('Expected:')
         print(expected)
         self.assertListEqual(resp, expected)
-        # Remove the .zip stored under settings.TAR_FILE_PATH
-        zip_file_path = zip_file.filename
-        if zip_file_path and os.path.exists(zip_file_path):
-            os.remove(zip_file_path)
+
+        # Remove the compressed file stored under settings.TAR_FILE_PATH
+        if compressed_file_path and os.path.exists(compressed_file_path):
+            os.remove(compressed_file_path)

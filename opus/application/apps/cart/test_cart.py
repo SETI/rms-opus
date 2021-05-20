@@ -150,4 +150,4 @@ class cartTests(TestCase):
         request.GET = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/download/testopusid.zip'):
-            api_create_download(request, 'testopusid')
+            api_create_download(request, 'testopusid', 'zip')

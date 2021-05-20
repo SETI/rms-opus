@@ -363,9 +363,9 @@ TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 OPUS_FILE_VERSION = ''
 
 # OPUS supported cart download format, a dictionary keyed by format, and MIME
-# type & write mode corresponding to each format.
+# type & accessing (w/r) modes corresponding to each format.
 DOWNLOAD_FORMAT = {
-    'zip': ('application/zip', 'w'),
-    'tar': ('application/x-tar', 'w'),
-    'tgz': ('application/gzip', 'w:gz'), # same as .tar.gz, we will use .tgz here
+    'zip': ('application/zip', 'w', 'r'),
+    'tar': ('application/x-tar', 'w', 'r'),
+    'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
 }

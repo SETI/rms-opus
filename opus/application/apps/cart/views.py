@@ -759,8 +759,8 @@ def api_create_download(request, opus_id=None, fmt=None):
         response['Content-Disposition'] = f'attachment; filename={cmp_base_file_name}'
         ret = response
     else:
-        zip_url = settings.TAR_FILE_URL_PATH + cmp_base_file_name
-        ret = json_response({'filename': zip_url})
+        cmp_url = settings.TAR_FILE_URL_PATH + cmp_base_file_name
+        ret = json_response({'filename': cmp_url})
 
     exit_api_call(api_code, '<Encoded zip file>')
     return ret
