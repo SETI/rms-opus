@@ -129,7 +129,7 @@ def api_view_cart(request):
 
     info['count'] = count
     info['recycled_count'] = recycled_count
-    info['format'] = settings.DOWNLOAD_FORMAT.keys()
+    info['format'] = settings.DOWNLOAD_FORMATS.keys()
 
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
@@ -639,8 +639,8 @@ def api_create_download(request, opus_id=None, fmt=None):
             return ret
         request.session['cum_download_size'] = int(cum_download_size)
 
-    mime_type = settings.DOWNLOAD_FORMAT[fmt][0]
-    write_mode = settings.DOWNLOAD_FORMAT[fmt][1]
+    mime_type = settings.DOWNLOAD_FORMATS[fmt][0]
+    write_mode = settings.DOWNLOAD_FORMATS[fmt][1]
     # Add each file to the new zip file and create a manifest too
     if return_directly:
         response = HttpResponse(content_type=mime_type)

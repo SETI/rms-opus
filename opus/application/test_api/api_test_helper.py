@@ -181,7 +181,7 @@ class ApiTestHelper:
             file = jdata['filename']
             path = file.replace(settings.TAR_FILE_URL_PATH,
                                     settings.TAR_FILE_PATH)
-            read_mode = settings.DOWNLOAD_FORMAT[fmt][2]
+            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             compressed_file_path = path
             if fmt == 'zip':
                 compressed_file = zipfile.ZipFile(path, mode=read_mode)
@@ -189,7 +189,7 @@ class ApiTestHelper:
                 compressed_file = tarfile.open(name=path, mode=read_mode)
         else:
             binary_stream = BytesIO(response.content)
-            read_mode = settings.DOWNLOAD_FORMAT[fmt][2]
+            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
             file = response.headers['Content-Disposition']
             compressed_file_path = (settings.TAR_FILE_PATH
                                     + file[file.index('=')+1::])
