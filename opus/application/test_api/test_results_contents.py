@@ -675,3 +675,323 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] co-vims-occ-2014-175-l2pup-e files"
         url = "/api/files/co-vims-occ-2014-175-l2pup-e.json"
         self._run_json_equal_file(url, "results_co_vims_occ_2014_175_l2pup_e_files.json")
+
+    def test__results_contents_co_cirs_0408010657_fp3_images(self):
+        "[test_results_contents.py] co-cirs-0408010657-fp3 images"
+        url = "/api/images.json?opusid=co-cirs-0408010657-fp3"
+        self._run_json_equal_file(url, "results_co_cirs_0408010657_fp3_images.json")
+
+    def test__results_contents_co_cirs_0408031652_fp1_images(self):
+        "[test_results_contents.py] co-cirs-0408031652-fp1 images"
+        url = "/api/images.json?opusid=co-cirs-0408031652-fp1"
+        self._run_json_equal_file(url, "results_co_cirs_0408031652_fp1_images.json")
+
+    def test__results_contents_co_cirs_0408041543_fp3_images(self):
+        "[test_results_contents.py] co-cirs-0408041543-fp3 images"
+        url = "/api/images.json?opusid=co-cirs-0408041543-fp3"
+        self._run_json_equal_file(url, "results_co_cirs_0408041543_fp3_images.json")
+
+    def test__results_contents_co_cirs_0408152208_fp3_images(self):
+        "[test_results_contents.py] co-cirs-0408152208-fp3 images"
+        url = "/api/images.json?opusid=co-cirs-0408152208-fp3"
+        self._run_json_equal_file(url, "results_co_cirs_0408152208_fp3_images.json")
+
+    def test__results_contents_co_cirs_0408161433_fp4_images(self):
+        "[test_results_contents.py] co-cirs-0408161433-fp4 images"
+        url = "/api/images.json?opusid=co-cirs-0408161433-fp4"
+        self._run_json_equal_file(url, "results_co_cirs_0408161433_fp4_images.json")
+
+    def test__results_contents_co_cirs_0408220524_fp4_images(self):
+        "[test_results_contents.py] co-cirs-0408220524-fp4 images"
+        url = "/api/images.json?opusid=co-cirs-0408220524-fp4"
+        self._run_json_equal_file(url, "results_co_cirs_0408220524_fp4_images.json")
+
+    def test__results_contents_co_iss_n1460961193_images(self):
+        "[test_results_contents.py] co-iss-n1460961193 images"
+        url = "/api/images.json?opusid=co-iss-n1460961193"
+        self._run_json_equal_file(url, "results_co_iss_n1460961193_images.json")
+
+    def test__results_contents_co_iss_n1461527506_images(self):
+        "[test_results_contents.py] co-iss-n1461527506 images"
+        url = "/api/images.json?opusid=co-iss-n1461527506"
+        self._run_json_equal_file(url, "results_co_iss_n1461527506_images.json")
+
+    def test__results_contents_co_iss_n1461810160_images(self):
+        "[test_results_contents.py] co-iss-n1461810160 images"
+        url = "/api/images.json?opusid=co-iss-n1461810160"
+        self._run_json_equal_file(url, "results_co_iss_n1461810160_images.json")
+
+    def test__results_contents_co_iss_n1462660850_images(self):
+        "[test_results_contents.py] co-iss-n1462660850 images"
+        url = "/api/images.json?opusid=co-iss-n1462660850"
+        self._run_json_equal_file(url, "results_co_iss_n1462660850_images.json")
+
+    def test__results_contents_co_iss_n1463306217_images(self):
+        "[test_results_contents.py] co-iss-n1463306217 images"
+        url = "/api/images.json?opusid=co-iss-n1463306217"
+        self._run_json_equal_file(url, "results_co_iss_n1463306217_images.json")
+
+    def test__results_contents_co_iss_n1481652288_images(self):
+        "[test_results_contents.py] co-iss-n1481652288 images"
+        url = "/api/images.json?opusid=co-iss-n1481652288"
+        self._run_json_equal_file(url, "results_co_iss_n1481652288_images.json")
+
+    def test__results_contents_co_iss_n1481663213_images(self):
+        "[test_results_contents.py] co-iss-n1481663213 images"
+        url = "/api/images.json?opusid=co-iss-n1481663213"
+        self._run_json_equal_file(url, "results_co_iss_n1481663213_images.json")
+
+    def test__results_contents_co_iss_n1481666413_images(self):
+        "[test_results_contents.py] co-iss-n1481666413 images"
+        url = "/api/images.json?opusid=co-iss-n1481666413"
+        self._run_json_equal_file(url, "results_co_iss_n1481666413_images.json")
+
+    def test__results_contents_co_iss_n1482859953_images(self):
+        "[test_results_contents.py] co-iss-n1482859953 images"
+        url = "/api/images.json?opusid=co-iss-n1482859953"
+        self._run_json_equal_file(url, "results_co_iss_n1482859953_images.json")
+
+    def test__results_contents_co_iss_w1481834905_images(self):
+        "[test_results_contents.py] co-iss-w1481834905 images"
+        url = "/api/images.json?opusid=co-iss-w1481834905"
+        self._run_json_equal_file(url, "results_co_iss_w1481834905_images.json")
+
+    def test__results_contents_co_uvis_euv2001_001_05_59_images(self):
+        "[test_results_contents.py] co-uvis-euv2001_001_05_59 images"
+        url = "/api/images.json?opusid=co-uvis-euv2001_001_05_59"
+        self._run_json_equal_file(url, "results_co_uvis_euv2001_001_05_59_images.json")
+
+    def test__results_contents_co_uvis_euv2001_002_12_27_images(self):
+        "[test_results_contents.py] co-uvis-euv2001_002_12_27 images"
+        url = "/api/images.json?opusid=co-uvis-euv2001_002_12_27"
+        self._run_json_equal_file(url, "results_co_uvis_euv2001_002_12_27_images.json")
+
+    def test__results_contents_co_uvis_euv2001_010_20_59_images(self):
+        "[test_results_contents.py] co-uvis-euv2001_010_20_59 images"
+        url = "/api/images.json?opusid=co-uvis-euv2001_010_20_59"
+        self._run_json_equal_file(url, "results_co_uvis_euv2001_010_20_59_images.json")
+
+    def test__results_contents_co_uvis_fuv2001_013_06_07_images(self):
+        "[test_results_contents.py] co-uvis-fuv2001_013_06_07 images"
+        url = "/api/images.json?opusid=co-uvis-fuv2001_013_06_07"
+        self._run_json_equal_file(url, "results_co_uvis_fuv2001_013_06_07_images.json")
+
+    def test__results_contents_co_uvis_hdac2001_022_04_45_images(self):
+        "[test_results_contents.py] co-uvis-hdac2001_022_04_45 images"
+        url = "/api/images.json?opusid=co-uvis-hdac2001_022_04_45"
+        self._run_json_equal_file(url, "results_co_uvis_hdac2001_022_04_45_images.json")
+
+    def test__results_contents_co_uvis_hsp2001_087_04_00_images(self):
+        "[test_results_contents.py] co-uvis-hsp2001_087_04_00 images"
+        url = "/api/images.json?opusid=co-uvis-hsp2001_087_04_00"
+        self._run_json_equal_file(url, "results_co_uvis_hsp2001_087_04_00_images.json")
+
+    def test__results_contents_co_vims_v1484504730_vis_images(self):
+        "[test_results_contents.py] co-vims-v1484504730_vis images"
+        url = "/api/images.json?opusid=co-vims-v1484504730_vis"
+        self._run_json_equal_file(url, "results_co_vims_v1484504730_vis_images.json")
+
+    def test__results_contents_co_vims_v1484580518_vis_images(self):
+        "[test_results_contents.py] co-vims-v1484580518_vis images"
+        url = "/api/images.json?opusid=co-vims-v1484580518_vis"
+        self._run_json_equal_file(url, "results_co_vims_v1484580518_vis_images.json")
+
+    def test__results_contents_co_vims_v1484860325_ir_images(self):
+        "[test_results_contents.py] co-vims-v1484860325_ir images"
+        url = "/api/images.json?opusid=co-vims-v1484860325_ir"
+        self._run_json_equal_file(url, "results_co_vims_v1484860325_ir_images.json")
+
+    def test__results_contents_co_vims_v1485757341_ir_images(self):
+        "[test_results_contents.py] co-vims-v1485757341_ir images"
+        url = "/api/images.json?opusid=co-vims-v1485757341_ir"
+        self._run_json_equal_file(url, "results_co_vims_v1485757341_ir_images.json")
+
+    def test__results_contents_co_vims_v1485803787_ir_images(self):
+        "[test_results_contents.py] co-vims-v1485803787_ir images"
+        url = "/api/images.json?opusid=co-vims-v1485803787_ir"
+        self._run_json_equal_file(url, "results_co_vims_v1485803787_ir_images.json")
+
+    def test__results_contents_co_vims_v1487262184_ir_images(self):
+        "[test_results_contents.py] co-vims-v1487262184_ir images"
+        url = "/api/images.json?opusid=co-vims-v1487262184_ir"
+        self._run_json_equal_file(url, "results_co_vims_v1487262184_ir_images.json")
+
+    def test__results_contents_co_vims_v1490874999_001_vis_images(self):
+        "[test_results_contents.py] co-vims-v1490874999_001_vis images"
+        url = "/api/images.json?opusid=co-vims-v1490874999_001_vis"
+        self._run_json_equal_file(url, "results_co_vims_v1490874999_001_vis_images.json")
+
+    def test__results_contents_go_ssi_c0347769100_images(self):
+        "[test_results_contents.py] go-ssi-c0347769100 images"
+        url = "/api/images.json?opusid=go-ssi-c0347769100"
+        self._run_json_equal_file(url, "results_go_ssi_c0347769100_images.json")
+
+    def test__results_contents_go_ssi_c0349673988_images(self):
+        "[test_results_contents.py] go-ssi-c0349673988 images"
+        url = "/api/images.json?opusid=go-ssi-c0349673988"
+        self._run_json_equal_file(url, "results_go_ssi_c0349673988_images.json")
+
+    def test__results_contents_go_ssi_c0349761213_images(self):
+        "[test_results_contents.py] go-ssi-c0349761213 images"
+        url = "/api/images.json?opusid=go-ssi-c0349761213"
+        self._run_json_equal_file(url, "results_go_ssi_c0349761213_images.json")
+
+    def test__results_contents_go_ssi_c0359986600_images(self):
+        "[test_results_contents.py] go-ssi-c0359986600 images"
+        url = "/api/images.json?opusid=go-ssi-c0359986600"
+        self._run_json_equal_file(url, "results_go_ssi_c0359986600_images.json")
+
+    def test__results_contents_go_ssi_c0368977800_images(self):
+        "[test_results_contents.py] go-ssi-c0368977800 images"
+        url = "/api/images.json?opusid=go-ssi-c0368977800"
+        self._run_json_equal_file(url, "results_go_ssi_c0368977800_images.json")
+
+    def test__results_contents_hst_05642_wfpc2_u2fi0c05t_images(self):
+        "[test_results_contents.py] hst-05642-wfpc2-u2fi0c05t images"
+        url = "/api/images.json?opusid=hst-05642-wfpc2-u2fi0c05t"
+        self._run_json_equal_file(url, "results_hst_05642_wfpc2_u2fi0c05t_images.json")
+
+    def test__results_contents_hst_05642_wfpc2_u2fi0o0bt_images(self):
+        "[test_results_contents.py] hst-05642-wfpc2-u2fi0o0bt images"
+        url = "/api/images.json?opusid=hst-05642-wfpc2-u2fi0o0bt"
+        self._run_json_equal_file(url, "results_hst_05642_wfpc2_u2fi0o0bt_images.json")
+
+    def test__results_contents_hst_05642_wfpc2_u2fi1901t_images(self):
+        "[test_results_contents.py] hst-05642-wfpc2-u2fi1901t images"
+        url = "/api/images.json?opusid=hst-05642-wfpc2-u2fi1901t"
+        self._run_json_equal_file(url, "results_hst_05642_wfpc2_u2fi1901t_images.json")
+
+    def test__results_contents_hst_07181_nicmos_n4uc01b0q_images(self):
+        "[test_results_contents.py] hst-07181-nicmos-n4uc01b0q images"
+        url = "/api/images.json?opusid=hst-07181-nicmos-n4uc01b0q"
+        self._run_json_equal_file(url, "results_hst_07181_nicmos_n4uc01b0q_images.json")
+
+    def test__results_contents_hst_07181_nicmos_n4uc01cjq_images(self):
+        "[test_results_contents.py] hst-07181-nicmos-n4uc01cjq images"
+        url = "/api/images.json?opusid=hst-07181-nicmos-n4uc01cjq"
+        self._run_json_equal_file(url, "results_hst_07181_nicmos_n4uc01cjq_images.json")
+
+    def test__results_contents_hst_07316_stis_o57h02joq_images(self):
+        "[test_results_contents.py] hst-07316-stis-o57h02joq images"
+        url = "/api/images.json?opusid=hst-07316-stis-o57h02joq"
+        self._run_json_equal_file(url, "results_hst_07316_stis_o57h02joq_images.json")
+
+    def test__results_contents_hst_07316_stis_o57h02010_images(self):
+        "[test_results_contents.py] hst-07316-stis-o57h02010 images"
+        url = "/api/images.json?opusid=hst-07316-stis-o57h02010"
+        self._run_json_equal_file(url, "results_hst_07316_stis_o57h02010_images.json")
+
+    def test__results_contents_hst_09975_acs_j8n460zvq_images(self):
+        "[test_results_contents.py] hst-09975-acs-j8n460zvq images"
+        url = "/api/images.json?opusid=hst-09975-acs-j8n460zvq"
+        self._run_json_equal_file(url, "results_hst_09975_acs_j8n460zvq_images.json")
+
+    def test__results_contents_hst_11085_acs_j9xe05011_images(self):
+        "[test_results_contents.py] hst-11085-acs-j9xe05011 images"
+        url = "/api/images.json?opusid=hst-11085-acs-j9xe05011"
+        self._run_json_equal_file(url, "results_hst_11085_acs_j9xe05011_images.json")
+
+    def test__results_contents_hst_11559_wfc3_ib4v22gxq_images(self):
+        "[test_results_contents.py] hst-11559-wfc3-ib4v22gxq images"
+        url = "/api/images.json?opusid=hst-11559-wfc3-ib4v22gxq"
+        self._run_json_equal_file(url, "results_hst_11559_wfc3_ib4v22gxq_images.json")
+
+    def test__results_contents_hst_13667_wfc3_icok28ihq_images(self):
+        "[test_results_contents.py] hst-13667-wfc3-icok28ihq images"
+        url = "/api/images.json?opusid=hst-13667-wfc3-icok28ihq"
+        self._run_json_equal_file(url, "results_hst_13667_wfc3_icok28ihq_images.json")
+
+    def test__results_contents_hst_13667_wfc3_icok11rgq_images(self):
+        "[test_results_contents.py] hst-13667-wfc3-icok11rgq images"
+        url = "/api/images.json?opusid=hst-13667-wfc3-icok11rgq"
+        self._run_json_equal_file(url, "results_hst_13667_wfc3_icok11rgq_images.json")
+
+    def test__results_contents_nh_lorri_lor_0299075349_images(self):
+        "[test_results_contents.py] nh-lorri-lor_0299075349 images"
+        url = "/api/images.json?opusid=nh-lorri-lor_0299075349"
+        self._run_json_equal_file(url, "results_nh_lorri_lor_0299075349_images.json")
+
+    def test__results_contents_nh_lorri_lor_0329817268_images(self):
+        "[test_results_contents.py] nh-lorri-lor_0329817268 images"
+        url = "/api/images.json?opusid=nh-lorri-lor_0329817268"
+        self._run_json_equal_file(url, "results_nh_lorri_lor_0329817268_images.json")
+
+    def test__results_contents_nh_lorri_lor_0330787458_images(self):
+        "[test_results_contents.py] nh-lorri-lor_0330787458 images"
+        url = "/api/images.json?opusid=nh-lorri-lor_0330787458"
+        self._run_json_equal_file(url, "results_nh_lorri_lor_0330787458_images.json")
+
+    def test__results_contents_nh_mvic_mc0_0032528036_images(self):
+        "[test_results_contents.py] nh-mvic-mc0_0032528036 images"
+        url = "/api/images.json?opusid=nh-mvic-mc0_0032528036"
+        self._run_json_equal_file(url, "results_nh_mvic_mc0_0032528036_images.json")
+
+    def test__results_contents_nh_mvic_mc1_0005261846_images(self):
+        "[test_results_contents.py] nh-mvic-mc1_0005261846 images"
+        url = "/api/images.json?opusid=nh-mvic-mc1_0005261846"
+        self._run_json_equal_file(url, "results_nh_mvic_mc1_0005261846_images.json")
+
+    def test__results_contents_nh_mvic_mp1_0012448104_images(self):
+        "[test_results_contents.py] nh-mvic-mp1_0012448104 images"
+        url = "/api/images.json?opusid=nh-mvic-mp1_0012448104"
+        self._run_json_equal_file(url, "results_nh_mvic_mp1_0012448104_images.json")
+
+    def test__results_contents_vg_iss_2_s_c4360353_images(self):
+        "[test_results_contents.py] vg-iss-2-s-c4360353 images"
+        url = "/api/images.json?opusid=vg-iss-2-s-c4360353"
+        self._run_json_equal_file(url, "results_vg_iss_2_s_c4360353_images.json")
+
+    def test__results_contents_mcd27m_iirar_occ_1989_184_28sgr_i_images(self):
+        "[test_results_contents.py] mcd27m-iirar-occ-1989-184-28sgr-i images"
+        url = "/api/images.json?opusid=mcd27m-iirar-occ-1989-184-28sgr-i"
+        self._run_json_equal_file(url, "results_mcd27m_iirar_occ_1989_184_28sgr_i_images.json")
+
+    def test__results_contents_eso1m_apph_occ_1989_184_28sgr_e_images(self):
+        "[test_results_contents.py] eso1m-apph-occ-1989-184-28sgr-e images"
+        url = "/api/images.json?opusid=eso1m-apph-occ-1989-184-28sgr-e"
+        self._run_json_equal_file(url, "results_eso1m_apph_occ_1989_184_28sgr_e_images.json")
+
+    def test__results_contents_lick1m_ccdc_occ_1989_184_28sgr_i_images(self):
+        "[test_results_contents.py] lick1m-ccdc-occ-1989-184-28sgr-i images"
+        url = "/api/images.json?opusid=lick1m-ccdc-occ-1989-184-28sgr-i"
+        self._run_json_equal_file(url, "results_lick1m_ccdc_occ_1989_184_28sgr_i_images.json")
+
+    def test__results_contents_co_rss_occ_2005_123_rev007_k26_i_images(self):
+        "[test_results_contents.py] co-rss-occ-2005-123-rev007-k26-i images"
+        url = "/api/images.json?opusid=co-rss-occ-2005-123-rev007-k26-i"
+        self._run_json_equal_file(url, "results_co_rss_occ_2005_123_rev007_k26_i_images.json")
+
+    def test__results_contents_co_rss_occ_2008_217_rev079c_s63_i_images(self):
+        "[test_results_contents.py] co-rss-occ-2008-217-rev079c-s63-i images"
+        url = "/api/images.json?opusid=co-rss-occ-2008-217-rev079c-s63-i"
+        self._run_json_equal_file(url, "results_co_rss_occ_2008_217_rev079c_s63_i_images.json")
+
+    def test__results_contents_co_rss_occ_2010_170_rev133_x34_e_images(self):
+        "[test_results_contents.py] co-rss-occ-2010-170-rev133-x34-e images"
+        url = "/api/images.json?opusid=co-rss-occ-2010-170-rev133-x34-e"
+        self._run_json_equal_file(url, "results_co_rss_occ_2010_170_rev133_x34_e_images.json")
+
+    def test__results_contents_co_uvis_occ_2005_139_126tau_e_images(self):
+        "[test_results_contents.py] co-uvis-occ-2005-139-126tau-e images"
+        url = "/api/images.json?opusid=co-uvis-occ-2005-139-126tau-e"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2005_139_126tau_e_images.json")
+
+    def test__results_contents_co_uvis_occ_2005_175_126tau_i_images(self):
+        "[test_results_contents.py] co-uvis-occ-2005-175-126tau-i images"
+        url = "/api/images.json?opusid=co-uvis-occ-2005-175-126tau-i"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2005_175_126tau_i_images.json")
+
+    def test__results_contents_co_uvis_occ_2009_015_gamcas_e_images(self):
+        "[test_results_contents.py] co-uvis-occ-2009-015-gamcas-e images"
+        url = "/api/images.json?opusid=co-uvis-occ-2009-015-gamcas-e"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2009_015_gamcas_e_images.json")
+
+    def test__results_contents_co_vims_occ_2006_204_alpori_i_images(self):
+        "[test_results_contents.py] co-vims-occ-2006-204-alpori-i images"
+        url = "/api/images.json?opusid=co-vims-occ-2006-204-alpori-i"
+        self._run_json_equal_file(url, "results_co_vims_occ_2006_204_alpori_i_images.json")
+
+    def test__results_contents_co_vims_occ_2014_175_l2pup_e_images(self):
+        "[test_results_contents.py] co-vims-occ-2014-175-l2pup-e images"
+        url = "/api/images.json?opusid=co-vims-occ-2014-175-l2pup-e"
+        self._run_json_equal_file(url, "results_co_vims_occ_2014_175_l2pup_e_images.json")
