@@ -2654,9 +2654,9 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 404,
                                HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT('xxx', '/__cart/download.json'))
 
-            #########################################################
-            ######### /api/download/<opusid>.<fmt>: API TESTS #######
-            #########################################################
+            ###########################################################
+            ######### /api/download/<opusid>.<fmt>: API TESTS #########
+            ###########################################################
     def test__api_download_no_hierarchical_zip(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
         url = '/__cart/reset.json?reqno=42'
