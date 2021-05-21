@@ -19,8 +19,8 @@
 "https://opus.pds-rings.seti.org/#/targetclass=Irregular+Satellite",50407,Target Class Irregular Satellite
 "https://opus.pds-rings.seti.org/#/targetclass=Ring",291265,Target Class Ring
 "https://opus.pds-rings.seti.org/#/targetclass=Sky",146059,Target Class Sky
-"https://opus.pds-rings.seti.org/#/targetclass=Calibration",5284,Target Class Calibration
-"https://opus.pds-rings.seti.org/#/targetclass=Other",176348,Target Class Other
+"https://opus.pds-rings.seti.org/#/targetclass=Calibration",5280,Target Class Calibration
+"https://opus.pds-rings.seti.org/#/targetclass=Other",176352,Target Class Other
 
 "https://opus.pds-rings.seti.org/#/mission=Cassini",1411959,Mission Cassini
 "https://opus.pds-rings.seti.org/#/mission=Galileo",3846,Mission Galileo
@@ -67,10 +67,10 @@
 "https://opus.pds-rings.seti.org/#/observationtype=Spectral+Time+Series",24950,Observation Type Spectral Time Series
 "https://opus.pds-rings.seti.org/#/observationtype=Occultation+Profile",741,Observation Type Occultation Profile
 
-"https://opus.pds-rings.seti.org/#/quantity=Reflectivity",1246703,Measurement Quantity Reflectivity
+"https://opus.pds-rings.seti.org/#/quantity=Reflectivity",1245468,Measurement Quantity Reflectivity
 "https://opus.pds-rings.seti.org/#/quantity=Thermal+Emission",24950,Measurement Quantity Thermal Emission
 "https://opus.pds-rings.seti.org/#/quantity=Optical+Depth",21598,Measurement Quantity Optical Depth
-"https://opus.pds-rings.seti.org/#/quantity=Emission",232632,Measurement Quantity Emission
+"https://opus.pds-rings.seti.org/#/quantity=Emission",233867,Measurement Quantity Emission
 
 "https://opus.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOphase1=160&RINGGEOphase2=",=1489,COISS images of Enceladus at high phase angle
 "https://opus.pds-rings.seti.org/#/target=ENCELADUS&instrument=Cassini+ISS&RINGGEOemission1=160&RINGGEOemission2=",=288,COISS images of Enceladus at high emission angle
@@ -117,7 +117,7 @@
 "https://opus.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+VIMS&wavelength1=0.4&wavelength2=0.8",=123,"Venus with cassini UVIS, wavelength constrained"
 "https://opus.pds-rings.seti.org/#/target=Venus&mission=Cassini&instrument=Cassini+ISS&wavelength1=0.70&wavelength2=0.75",=4,"Venus with cassini ISS, wavelength constrained"
 
-"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",57590,Surface Geo Jupiter
+"https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=JUPITER",57622,Surface Geo Jupiter
 "https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN",1244041,Surfae Geo Saturn
 "https://opus.pds-rings.seti.org/#/surfacegeometrytargetname=SATURN&planet=Saturn",1242181,Surface Geo Saturn with Intended Target Saturn
 "https://opus.pds-rings.seti.org/#/planet=Jupiter&target=Jupiter+Rings&rightasc1=5&rightasc2=120&declination1=10&declination2=25&RINGGEOphase1=135&RINGGEOphase2=140",122,
