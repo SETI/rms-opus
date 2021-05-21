@@ -11,7 +11,8 @@ from tools.app_utils import (HTTP404_BAD_OR_MISSING_RANGE,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_BAD_RECYCLEBIN,
                              HTTP404_MISSING_OPUS_ID,
-                             HTTP404_SEARCH_PARAMS_INVALID)
+                             HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT)
 
 from api_test_helper import ApiTestHelper
 
@@ -2386,7 +2387,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_no_hierarchical_tar(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tar"
@@ -2398,7 +2399,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     def test__api_cart_download_single_no_hierarchical_tgz(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & no hierarchical & fmt=tgz"
@@ -2410,7 +2411,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'prefix2.fmt', 'tlmtab.fmt', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
 
     def test__api_cart_download_single_hierarchical_zip(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=zip"
@@ -2422,7 +2423,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     def test__api_cart_download_single_hierarchical_tar(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=tar"
@@ -2434,7 +2435,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
         expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     def test__api_cart_download_single_hierarchical_tgz(self):
         "[test_cart_api.py] /__cart/download.json: single opus id & hierarchical & fmt=tgz"
@@ -2446,7 +2447,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
         expected = ['volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'manifest.csv', 'data.csv', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_no_hierarchical_zip(self):
@@ -2462,7 +2463,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_no_hierarchical_tar(self):
@@ -2478,7 +2479,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
         expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_no_hierarchical_tgz(self):
@@ -2494,7 +2495,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
         expected = ['N1460973661_1.IMG', 'N1460973661_1.LBL', 'N1460973661_1_CALIB.IMG', 'N1460973661_1_CALIB.LBL', 'N1460973661_1_full.png', 'N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_hierarchical_zip(self):
@@ -2510,7 +2511,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_hierarchical_tar(self):
@@ -2526,7 +2527,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the same volume) with duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_duplicated_hierarchical_tgz(self):
@@ -2542,7 +2543,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1_full.png', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460973661_1.LBL', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_no_hierarchical_zip(self):
@@ -2558,7 +2559,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tar(self):
@@ -2574,7 +2575,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tar'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_no_hierarchical_tgz(self):
@@ -2590,7 +2591,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=tgz'
         expected = ['N1462840881_1.IMG', 'N1462840881_1.LBL', 'N1462840881_1_CALIB.IMG', 'N1462840881_1_CALIB.LBL', 'N1462840881_1_full.png', 'N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_hierarchical_zip(self):
@@ -2606,7 +2607,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected)
+        self._run_archive_file_equal(url, expected)
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_hierarchical_tar(self):
@@ -2622,7 +2623,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tar'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tar')
+        self._run_archive_file_equal(url, expected, fmt='tar')
 
     # Two opus ids (from the different volumes) with not duplicated prefix2.fmt & tlmtab.fmt
     def test__api_cart_download_multiple_no_duplicated_hierarchical_tgz(self):
@@ -2638,10 +2639,23 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=1&fmt=tgz'
         expected = ['calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_CALIB.LBL', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1_full.png', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.IMG', 'volumes/COISS_2xxx/COISS_2002/data/1462783195_1462915477/N1462840881_1.LBL', 'volumes/COISS_2xxx/COISS_2002/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2002/label/tlmtab.fmt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, fmt='tgz')
+        self._run_archive_file_equal(url, expected, fmt='tgz')
+
+    # Unsupported format
+    def test__api_cart_download_unsupported_format(self):
+        "[test_cart_api.py] /__cart/download.json: fmt=xxx not supported"
+        url = '/__cart/reset.json?reqno=42'
+        expected = {'recycled_count': 0, 'count': 0, 'reqno': 42}
+        self._run_json_equal(url, expected)
+        url = '/__cart/add.json?opusid=co-iss-n1462840881&reqno=456'
+        expected = {'recycled_count': 0, 'count': 1, 'error': False, 'reqno': 456}
+        self._run_json_equal(url, expected)
+        url = '/__cart/download.json?types=coiss_raw,coiss_calib,browse_full&hierarchical=0&fmt=xxx'
+        self._run_status_equal(url, 404,
+                               HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT('xxx', '/__cart/download.json'))
 
             #########################################################
-            ######### /api/download/<opusid>.<fmt>: API TESTS #########
+            ######### /api/download/<opusid>.<fmt>: API TESTS #######
             #########################################################
     def test__api_download_no_hierarchical_zip(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & no hierarchical"
@@ -2650,7 +2664,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, response_type='binary')
+        self._run_archive_file_equal(url, expected, response_type='binary')
 
     def test__api_download_no_hierarchical_tar(self):
         "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & no hierarchical"
@@ -2659,7 +2673,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, response_type='binary', fmt='tar')
+        self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
     def test__api_download_no_hierarchical_tgz(self):
         "[test_cart_api.py] /__api/download/<opusid>.tgz: one opus id & no hierarchical"
@@ -2668,7 +2682,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tgz?types=coiss_raw,coiss_calib,browse_full&hierarchical=0'
         expected = ['N1481265970_1.IMG', 'N1481265970_1.LBL', 'N1481265970_1_CALIB.IMG', 'N1481265970_1_CALIB.LBL', 'N1481265970_1_full.png', 'data.csv', 'manifest.csv', 'prefix2.fmt', 'tlmtab.fmt', 'urls.txt']
-        self._run_cmp_file_equal(url, expected, response_type='binary', fmt='tgz')
+        self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')
 
     def test__api_download_hierarchical_zip(self):
         "[test_cart_api.py] /__api/download/<opusid>.zip: one opus id & hierarchical"
@@ -2677,7 +2691,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.zip?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, response_type='binary')
+        self._run_archive_file_equal(url, expected, response_type='binary')
 
     def test__api_download_hierarchical_tar(self):
         "[test_cart_api.py] /__api/download/<opusid>.tar: one opus id & hierarchical"
@@ -2686,7 +2700,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tar?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, response_type='binary', fmt='tar')
+        self._run_archive_file_equal(url, expected, response_type='binary', fmt='tar')
 
     def test__api_download_hierarchical_tgz(self):
         "[test_cart_api.py] /__api/download/<opusid>.tgz: one opus id & hierarchical"
@@ -2695,7 +2709,7 @@ class ApiCartTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
         url = '/__api/download/co-iss-n1481265970.tgz?types=coiss_raw,coiss_calib,browse_full&hierarchical=1'
         expected = ['calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.IMG', 'calibrated/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_CALIB.LBL', 'data.csv', 'manifest.csv', 'previews/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1_full.png', 'urls.txt', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.IMG', 'volumes/COISS_2xxx/COISS_2008/data/1481264980_1481267140/N1481265970_1.LBL', 'volumes/COISS_2xxx/COISS_2008/label/prefix2.fmt', 'volumes/COISS_2xxx/COISS_2008/label/tlmtab.fmt']
-        self._run_cmp_file_equal(url, expected, response_type='binary', fmt='tgz')
+        self._run_archive_file_equal(url, expected, response_type='binary', fmt='tgz')
 
 
             ################################################
