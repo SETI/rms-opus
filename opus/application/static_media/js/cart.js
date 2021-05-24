@@ -611,6 +611,12 @@ var o_cart = {
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
             opus.prefs.cart_startobs = 1;
+            let detailCartElem = $(".op-detail-cart a");
+            if (detailCartElem.length > 0) {
+                detailCartElem.data("action", "add");
+                detailCartElem.attr("title", "Add to cart");
+                detailCartElem.find("i").attr("class", "fas fa-cart-plus fa-xs");
+            }
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
