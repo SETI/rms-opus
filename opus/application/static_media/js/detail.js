@@ -117,6 +117,12 @@ var o_detail = {
         o_detail.adjustDetailHeight();
     },
 
+    showDetailInNav: function() {
+        if (opus.prefs.detail !== "") {
+            $("#op-main-nav .nav-link .op-selected-detail").text(`\(${opus.prefs.detail}\)`);
+        }
+    },
+
     adjustDetailHeight: function() {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();

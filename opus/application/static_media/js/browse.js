@@ -1242,6 +1242,15 @@ var o_browse = {
 
     showDetail: function(e, opusId) {
         o_browse.hideMenus();
+
+        // if the item is selected as 'detail', add the icon in the corner
+        // hide all first... this will hide both on browse and cart
+        $(`.op-thumbnail-container .op-detail-overlay`).addClass("op-hide-element");
+        let elem = $(`[data-id='${opusId}'] .op-detail-overlay`);
+        if (elem.length > 0) {
+            elem.removeClass("op-hide-element");
+        }
+
         let url = o_browse.getDetailURL(opusId);
         if (e.handleObj.origType === "contextmenu") {
             // handles command click to open in new tab
@@ -1488,6 +1497,10 @@ var o_browse = {
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')}" title="${mainTitle}">`;
                 galleryHtml += '<p class="content-text"><i class="fas fa-recycle fa-4x text-success" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
+
+                // detail overlay
+                let hideDetail = (opus.prefs.detail === opusId ?  "" : "op-hide-element");
+                galleryHtml += `<div class="op-detail-overlay text-success ${hideDetail}"></div>`;
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;

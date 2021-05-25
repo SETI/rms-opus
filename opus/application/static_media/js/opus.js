@@ -520,6 +520,7 @@ var opus = {
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
 
+        o_detail.showDetailInNav();
         switch(opus.prefs.view) {
             case "search":
                 window.scrollTo(0,0);
