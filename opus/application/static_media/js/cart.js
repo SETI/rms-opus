@@ -349,7 +349,9 @@ var o_cart = {
 
         // Check if the "Flat zip file structure" is selected.
         let hierarchical = $(".op-download-flat-zip-file-structure input").prop("checked") ? 0 : 1;
-        url += `&hierarchical=${hierarchical}`;
+        // Check download file format.
+        let fmt = $(".op-download-format option:selected").val();
+        url += `&hierarchical=${hierarchical}&fmt=${fmt}`;
         $.ajax({
             url: url,
             dataType: "json",

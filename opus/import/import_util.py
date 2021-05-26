@@ -154,7 +154,13 @@ def yield_import_volume_ids(arguments):
         for volume_desc in volume_descs:
             volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
             if volume_pdsfile.is_volset_dir:
-                new_voldescs += volume_pdsfile.childnames
+                childnames = volume_pdsfile.childnames
+                # Make sure 2001 is imported first and then 1001 second for each
+                # New Horizon volume. That way, the primary filespec will be
+                # raw in OPUS (same as pdsfile).
+                if volume_pdsfile.volset.startswith("NH"):
+                    childnames.reverse()
+                new_voldescs += childnames
             else:
                 new_voldescs.append(volume_desc)
         # Now actually return the volume_ids

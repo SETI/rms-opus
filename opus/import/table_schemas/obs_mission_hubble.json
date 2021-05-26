@@ -151,9 +151,9 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "mult_options": [
-              [   0,           "HRC",       "ACS-HRC", "010", "Y", null],
-              [   1,           "SBC",       "ACS-SBC", "020", "Y", null],
-              [   2,           "WFC",       "ACS-WFC", "030", "Y", null],
+              [   0,       "ACS-HRC",       "ACS-HRC", "010", "Y", null],
+              [   1,       "ACS-SBC",       "ACS-SBC", "020", "Y", null],
+              [   2,       "ACS-WFC",       "ACS-WFC", "030", "Y", null],
               [   3,   "NICMOS-NIC1",   "NICMOS-NIC1", "040", "Y", null],
               [   4,   "NICMOS-NIC2",   "NICMOS-NIC2", "050", "Y", null],
               [   5,   "NICMOS-NIC3",   "NICMOS-NIC3", "060", "Y", null],
