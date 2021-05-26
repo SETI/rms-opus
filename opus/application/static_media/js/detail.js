@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_hash, opus, o_browse, o_cart */
+/* globals o_hash, opus, o_browse, o_cart, o_utils */
 
 /* jshint varstmt: false */
 var o_detail = {
