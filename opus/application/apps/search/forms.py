@@ -6,8 +6,9 @@ from search.views import get_param_info_by_slug, is_single_column_range
 from paraminfo.models import ParamInfo
 from tools.app_utils import (get_mult_name,
                              get_numeric_suffix,
-                             parse_form_type,
                              strip_numeric_suffix)
+
+from opus_support import parse_form_type
 
 import logging
 log = logging.getLogger(__name__)
@@ -90,8 +91,8 @@ class SearchForm(forms.Form):
             except ParamInfo.DoesNotExist:
                 continue    # this is not a query param, probably a qtype, move along
 
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(param_info.form_type)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(param_info.form_type)
 
             if form_type == 'STRING':
                 choices = ((x,x) for x in settings.STRING_QTYPES)

@@ -17,11 +17,11 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "NHPELO_2001",
-        "datasetid": "NH-P-LORRI-3-PLUTO-V3.0",
-        "productid": "LOR_0329817268_0X630_SCI",
+        "volumeid": "NHPELO_1001",
+        "datasetid": "NH-P-LORRI-2-PLUTO-V3.0",
+        "productid": "LOR_0329817268_0X630_ENG",
         "productcreationtime": "2017-09-21T00:00:00.000",
-        "primaryfilespec": "NHPELO_2001/data/20160703_032981/lor_0329817268_0x630_sci.lbl",
+        "primaryfilespec": "NHPELO_1001/data/20160703_032981/lor_0329817268_0x630_eng.lbl",
         "opusid": "nh-lorri-lor_0329817268",
         "note": "LORRI CALIBRATION TEST"
     },
@@ -37,10 +37,10 @@
         "wavelength2": "0.85",
         "waveres1": "0.5",
         "waveres2": "0.5",
-        "waveno1": "11764.7",
-        "waveno2": "28571.4",
-        "wavenores1": "16806.723",
-        "wavenores2": "16806.723",
+        "waveno1": "11764.7058824",
+        "waveno2": "28571.4285714",
+        "wavenores1": "16806.722689076",
+        "wavenores2": "16806.722689076",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"

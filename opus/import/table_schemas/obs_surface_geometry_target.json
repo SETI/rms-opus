@@ -73,7 +73,7 @@
         "pi_disp_order": 400,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Observed Planetocentric Latitude",
         "pi_label_results": "Observed Planetocentric Latitude (Min)",
@@ -81,7 +81,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_planetocentriclatitude1",
         "pi_sub_heading": "Planetocentric Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -103,7 +102,7 @@
         "pi_disp_order": 401,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Observed Planetocentric Latitude",
         "pi_label_results": "Observed Planetocentric Latitude (Max)",
@@ -111,7 +110,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_planetocentriclatitude2",
         "pi_sub_heading": "Planetocentric Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -136,7 +134,7 @@
         "pi_disp_order": 300,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Observed Planetographic Latitude",
         "pi_label_results": "Observed Planetographic Latitude (Min)",
@@ -144,7 +142,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_planetographiclatitude1",
         "pi_sub_heading": "Planetographic Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -166,7 +163,7 @@
         "pi_disp_order": 301,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Observed Planetographic Latitude",
         "pi_label_results": "Observed Planetographic Latitude (Max)",
@@ -174,7 +171,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_planetographiclatitude2",
         "pi_sub_heading": "Planetographic Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -199,7 +195,7 @@
         "pi_disp_order": 500,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Observed IAU West Longitude",
         "pi_label_results": "Observed IAU West Longitude (Min)",
@@ -207,7 +203,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUwestlongitude1",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -229,7 +224,7 @@
         "pi_disp_order": 501,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": null,
         "pi_label": "Observed IAU West Longitude",
         "pi_label_results": "Observed IAU West Longitude (Max)",
@@ -237,7 +232,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_IAUwestlongitude2",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -288,7 +282,7 @@
         "pi_disp_order": 740,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:hour_angle",
         "pi_intro": "Because local time wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Observed Local Hour Angle",
         "pi_label_results": "Observed Local Hour Angle (Min)",
@@ -296,7 +290,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_solarhourangle1",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -318,7 +311,7 @@
         "pi_disp_order": 741,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:hour_angle",
         "pi_intro": null,
         "pi_label": "Observed Local Hour Angle",
         "pi_label_results": "Observed Local Hour Angle (Max)",
@@ -326,7 +319,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_solarhourangle2",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -377,7 +369,7 @@
         "pi_disp_order": 530,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Longitude WRT Observer",
         "pi_label_results": "Longitude WRT Observer (Min)",
@@ -385,7 +377,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_observerlongitude1",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -407,7 +398,7 @@
         "pi_disp_order": 540,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": null,
         "pi_label": "Longitude WRT Observer",
         "pi_label_results": "Longitude WRT Observer (Max)",
@@ -415,7 +406,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_observerlongitude2",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -466,7 +456,7 @@
         "pi_disp_order": 620,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.5f",
+        "pi_form_type": "RANGE%.5f:distance_resolution",
         "pi_intro": null,
         "pi_label": "Finest Observed Resolution",
         "pi_label_results": "Finest Observed Resolution (Min)",
@@ -474,7 +464,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_finestresolution1",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km/pixel",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -496,7 +485,7 @@
         "pi_disp_order": 621,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.5f",
+        "pi_form_type": "RANGE%.5f:distance_resolution",
         "pi_intro": null,
         "pi_label": "Finest Observed Resolution",
         "pi_label_results": "Finest Observed Resolution (Max)",
@@ -504,7 +493,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_finestresolution2",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km/pixel",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -530,7 +518,7 @@
         "pi_disp_order": 630,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.5f",
+        "pi_form_type": "RANGE%.5f:distance_resolution",
         "pi_intro": null,
         "pi_label": "Coarsest Observed Resolution",
         "pi_label_results": "Coarsest Observed Resolution (Min)",
@@ -538,7 +526,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_coarsestresolution1",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km/pixel",
         "comments": "Definition is from SURFACE_GEO label file. Val_max is set to be ~7 times the diameter of Jupiter for sanity."
     },
     {
@@ -561,7 +548,7 @@
         "pi_disp_order": 631,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.5f",
+        "pi_form_type": "RANGE%.5f:distance_resolution",
         "pi_intro": null,
         "pi_label": "Coarsest Observed Resolution",
         "pi_label_results": "Coarsest Observed Resolution (Max)",
@@ -569,7 +556,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_coarsestresolution2",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km/pixel",
         "comments": "Definition is from SURFACE_GEO label file.  Val_max is set to be ~7 times the diameter of Jupiter for sanity."
     },
     {
@@ -594,7 +580,7 @@
         "pi_disp_order": 600,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:distance",
         "pi_intro": null,
         "pi_label": "Observed Distance to Surface",
         "pi_label_results": "Observed Distance to Surface (Min)",
@@ -602,7 +588,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_rangetobody1",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -624,7 +609,7 @@
         "pi_disp_order": 601,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:distance",
         "pi_intro": null,
         "pi_label": "Observed Distance to Surface",
         "pi_label_results": "Observed Distance to Surface (Max)",
@@ -632,7 +617,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_rangetobody2",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -657,7 +641,7 @@
         "pi_disp_order": 710,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Phase Angle",
         "pi_label_results": "Observed Phase Angle (Min)",
@@ -665,7 +649,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_phase1",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -687,7 +670,7 @@
         "pi_disp_order": 711,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Phase Angle",
         "pi_label_results": "Observed Phase Angle (Max)",
@@ -695,7 +678,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_phase2",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -720,7 +702,7 @@
         "pi_disp_order": 720,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Incidence Angle",
         "pi_label_results": "Observed Incidence Angle (Min)",
@@ -728,7 +710,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_incidence1",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -750,7 +731,7 @@
         "pi_disp_order": 721,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Incidence Angle",
         "pi_label_results": "Observed Incidence Angle (Max)",
@@ -758,7 +739,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_incidence2",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -783,7 +763,7 @@
         "pi_disp_order": 730,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Emission Angle",
         "pi_label_results": "Observed Emission Angle (Min)",
@@ -791,7 +771,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_emission1",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -813,7 +792,7 @@
         "pi_disp_order": 731,
         "pi_display": 0,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Observed Emission Angle",
         "pi_label_results": "Observed Emission Angle (Max)",
@@ -821,7 +800,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_emission2",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -843,7 +821,7 @@
         "pi_disp_order": 410,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Sub-Solar Planetocentric Latitude",
         "pi_label_results": "Sub-Solar Planetocentric Latitude",
@@ -851,7 +829,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subsolarplanetocentriclatitude",
         "pi_sub_heading": "Planetocentric Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -873,7 +850,7 @@
         "pi_disp_order": 310,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Sub-Solar Planetographic Latitude",
         "pi_label_results": "Sub-Solar Planetographic Latitude",
@@ -881,7 +858,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subsolarplanetographiclatitude",
         "pi_sub_heading": "Planetographic Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -903,7 +879,7 @@
         "pi_disp_order": 420,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Sub-Observer Planetocentric Latitude",
         "pi_label_results": "Sub-Observer Planetocentric Latitude",
@@ -911,7 +887,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subobserverplanetocentriclatitude",
         "pi_sub_heading": "Planetocentric Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -933,7 +908,7 @@
         "pi_disp_order": 320,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:latitude",
         "pi_intro": null,
         "pi_label": "Sub-Observer Planetographic Latitude",
         "pi_label_results": "Sub-Observer Planetographic Latitude",
@@ -941,7 +916,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subobserverplanetographiclatitude",
         "pi_sub_heading": "Planetographic Latitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -963,7 +937,7 @@
         "pi_disp_order": 510,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Sub-Solar IAU West Longitude",
         "pi_label_results": "Sub-Solar IAU West Longitude",
@@ -971,7 +945,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subsolarIAUlongitude",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -993,7 +966,7 @@
         "pi_disp_order": 520,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "LONG%.3f",
+        "pi_form_type": "LONG%.3f:longitude",
         "pi_intro": "Because longitude wraps around, both min and max must be specified for a meaningful result",
         "pi_label": "Sub-Observer IAU West Longitude",
         "pi_label_results": "Sub-Observer IAU West Longitude",
@@ -1001,7 +974,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_subobserverIAUlongitude",
         "pi_sub_heading": "Longitude",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -1023,7 +995,7 @@
         "pi_disp_order": 640,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.5f",
+        "pi_form_type": "RANGE%.5f:distance_resolution",
         "pi_intro": null,
         "pi_label": "Body Center Resolution",
         "pi_label_results": "Body Center Resolution",
@@ -1031,7 +1003,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_centerresolution",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km/pixel",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -1053,7 +1024,7 @@
         "pi_disp_order": 610,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:distance",
         "pi_intro": null,
         "pi_label": "Body Center Distance",
         "pi_label_results": "Body Center Distance",
@@ -1061,7 +1032,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_centerdistance",
         "pi_sub_heading": "Distance & Resolution",
         "pi_tooltip": "",
-        "pi_units": "km",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {
@@ -1083,7 +1053,7 @@
         "pi_disp_order": 700,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.3f",
+        "pi_form_type": "RANGE%.3f:generic_angle",
         "pi_intro": null,
         "pi_label": "Phase Angle at Body Center",
         "pi_label_results": "Phase Angle at Body Center",
@@ -1091,7 +1061,6 @@
         "pi_slug": "SURFACEGEO<SLUGTARGET>_centerphaseangle",
         "pi_sub_heading": "Lighting Geometry",
         "pi_tooltip": "",
-        "pi_units": "degrees",
         "comments": "Definition is from SURFACE_GEO label file."
     },
     {

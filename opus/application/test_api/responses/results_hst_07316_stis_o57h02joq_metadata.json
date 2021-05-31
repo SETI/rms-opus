@@ -33,14 +33,14 @@
         "imagetype": "Frame"
     },
     "Wavelength Constraints": {
-        "wavelength1": "5.49",
-        "wavelength2": "9.99",
-        "waveres1": "1.092",
-        "waveres2": "1.092",
-        "waveno1": "1001",
-        "waveno2": "1821.5",
-        "wavenores1": "109.419",
-        "wavenores2": "362.308",
+        "wavelength1": "0.549",
+        "wavelength2": "0.999",
+        "waveres1": "0.1092",
+        "waveres2": "0.1092",
+        "waveno1": "10010.01001",
+        "waveno2": "18214.9362477",
+        "wavenores1": "1094.187280373",
+        "wavenores2": "3623.080215394",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"

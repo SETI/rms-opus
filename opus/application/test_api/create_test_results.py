@@ -36,6 +36,7 @@ if __name__ == "__main__":
         # 'go-ssi-c0349673988',
         # 'go-ssi-c0349761213',
         # 'go-ssi-c0359986600',
+        # 'go-ssi-c0368977800',
         # 'hst-05642-wfpc2-u2fi0c05t',
         # 'hst-05642-wfpc2-u2fi0o0bt',
         # 'hst-05642-wfpc2-u2fi1901t',
@@ -95,4 +96,16 @@ if __name__ == "__main__":
         r = session.get(url)
         j = json.loads(r.text.replace('"NULL"', 'null'))
         with open(f'responses/results_{clean_opus_id}_files.json', 'w') as fp:
+            fp.write(json.dumps(j, indent=4))
+
+        print(f'    def test__results_contents_{clean_opus_id}_images(self):')
+        print(f'        "[test_results_contents.py] {opus_id} images"')
+        print(f'        url = "/api/images.json?opusid={opus_id}"')
+        print(f'        self._run_json_equal_file(url, "results_{clean_opus_id}_images.json")')
+        print()
+
+        url = f'http://127.0.0.1:8000/api/images.json?opusid={opus_id}'
+        r = session.get(url)
+        j = json.loads(r.text.replace('"NULL"', 'null'))
+        with open(f'responses/results_{clean_opus_id}_images.json', 'w') as fp:
             fp.write(json.dumps(j, indent=4))

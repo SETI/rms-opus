@@ -2130,6 +2130,10 @@ even when screen is narrow */
     max-width: 800px;
 }
 
+.op-detail-metadata-header h1 {
+    margin-bottom: 0.2em;
+}
+
 /* Add this class to set ps container overflow to scroll, this is part of
 the workaround for ctrl + F search scroll to work with perfect scrollbar */
 .op-enable-default-scrolling {
@@ -2199,16 +2203,51 @@ to the left pane when screen is getting too wide */
     max-width: 1800px;
 }
 
+@media (max-height: 400px) {
+    /* Keep detail image stay at the right of the page when screen is narrow
+    (detail tab) */
+    .op-detail-content {
+        flex-wrap: nowrap;
+    }
+}
+
 @media (max-width: 767px) {
+    /* Move the detail image on top of the left pane */
+    .op-detail-content {
+        flex-wrap: wrap-reverse;
+    }
+
     /* Set detail image size when it's above the left pane */
     .op-detail-img img {
-        width: 150px;
         height: 150px;
     }
 
     /* Reduce the top space above the detail image when screen */
     .op-detail-img {
         padding-top: 0 !important;
+    }
+}
+
+@media (max-width: 767px) and (max-height: 450px) {
+    .op-detail-img {
+        margin-bottom: -1em;
+    }
+
+    .op-detail-img img {
+        height: 100px;
+    }
+}
+
+@media (max-height: 615px) {
+    /* Reduce the spaces around "Observation Detail" (detail tab) */
+    .op-detail-metadata h1, .op-detail-metadata-header h1 {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+    }
+
+    /* Reduce the spaces around "OPUS ID" in detail tab */
+    .op-detail-metadata p, .op-detail-metadata-header p {
+        margin-bottom: 0.2em;
     }
 }
 
@@ -2783,7 +2822,7 @@ input.STRING {
 make sure it can be shrunk more when screen is shrinking (before reaching to
 the breakpoint at 940px) */
 input.RANGE {
-    width: 25%;
+    width: 27%;
 }
 
 /* Style placeholder to have "..." when text is overflow */
@@ -2977,6 +3016,13 @@ when wrapping into the 2nd line */
     padding-right: 0.2rem;
 }
 
+/* This is to have "Flat zip file structure" checkbox to fit in at the bottom of
+"Download Options" */
+.op-download-options-title {
+    margin-bottom: 0 !important
+}
+
+
 /* ************************************************************************** */
 /* The followings are for mobile support (width: 550px and height: 270px)     */
 /* NOTE: Current breakpoints are width: 700px & height: 400px, these have to  */
@@ -3082,7 +3128,7 @@ when wrapping into the 2nd line */
 
     /* Reduce the font-size of category headers to 75% */
     /* Original font-size 2.1875rem */
-    .op-detail-metadata h1 {
+    .op-detail-metadata h1, .op-detail-metadata-header h1 {
         font-size: 1.64rem;
     }
 
@@ -3285,6 +3331,12 @@ when wrapping into the 2nd line */
     .op-download-options-title {
         display: none !important;
     }
+
+    /* Make sure when "Download Options" is gone, we create some space between
+    the checkbox and download buttons */
+    .op-download-flat-zip-file-structure {
+        margin-top: 0.25rem;
+    }
 }
 
 /* Bypass .col-sm-1 breakpoint to have pretty table display in download panel
@@ -3296,13 +3348,6 @@ when screen is narrow (cart tab) */
     }
 }
 
-@media (max-width: 768px) {
-    /* Move the detail image on top of the left pane */
-    .op-detail-content {
-        flex-wrap: wrap-reverse;
-    }
-}
-
 /* Group cart actions nav buttons & download panel button together */
 .op-cart-actions-group {
     display: flex;
@@ -3310,23 +3355,6 @@ when screen is narrow (cart tab) */
 }
 
 @media (max-height: 400px) {
-    /* Keep detail image stay at the right of the page when screen is narrow
-    (detail tab) */
-    .op-detail-content {
-        flex-wrap: nowrap;
-    }
-
-    /* Reduce the spaces around "Observation Detail" (detail tab) */
-    .op-detail-metadata h1 {
-        margin-top: 0.2em;
-        margin-bottom: 0.2em;
-    }
-
-    /* Reduce the spaces around "OPUS ID" in detail tab */
-    .op-detail-metadata p {
-        margin-bottom: 0.2em;
-    }
-
     /* The followings are to move "Download Data" button to the same line as
     cart actions nav buttons  (cart tab) */
     .op-cart-actions-group {
@@ -3347,7 +3375,7 @@ when screen is narrow (cart tab) */
 @media (max-width: 768px) and (max-height: 400px) {
     /* Make observation detail area shrinkable when screen is short & narrow
     (detail tab) */
-    .op-detail-metadata {
+    .op-detail-metadata, .op-detail-metadata-header {
         padding-right: 1em !important;
         min-width: 100%;
     }

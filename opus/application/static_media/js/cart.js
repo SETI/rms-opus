@@ -346,6 +346,12 @@ var o_cart = {
         let add_to_url = o_cart.getDownloadFiltersChecked();
         let url = "/opus/__cart/download.json?" + add_to_url + "&" + o_hash.getHash();
         url += (type == "create_zip_url_file" ? "&urlonly=1" : "");
+
+        // Check if the "Flat zip file structure" is selected.
+        let hierarchical = $(".op-download-flat-zip-file-structure input").prop("checked") ? 0 : 1;
+        // Check download file format.
+        let fmt = $(".op-download-format option:selected").val();
+        url += `&hierarchical=${hierarchical}&fmt=${fmt}`;
         $.ajax({
             url: url,
             dataType: "json",
@@ -607,6 +613,12 @@ var o_cart = {
             o_browse.reloadObservationData = true;
             o_cart.observationData = {};
             opus.prefs.cart_startobs = 1;
+            let detailCartElem = $(".op-detail-cart a");
+            if (detailCartElem.length > 0) {
+                detailCartElem.data("action", "add");
+                detailCartElem.attr("title", "Add to cart");
+                detailCartElem.find("i").attr("class", "fas fa-cart-plus fa-xs");
+            }
             opus.changeTab("cart");
             o_utils.enableUserInteraction();
         });
@@ -805,6 +817,12 @@ var o_cart = {
                     $("input[name="+opusId+"]").prop("checked", checked);
                     o_browse.updateCartIcon(opusId, status);
                 });
+                if (opus.getCurrentTab() === "detail") {
+                    let buttonInfo = o_browse.cartButtonInfo(action);
+                    let newAction = buttonInfo["#browse"].rangeTitle.split(" ")[0];
+                    let opusId = $(".op-detail-cart a").data("id");
+                    $(".op-detail-cart").html(`<a href="#" data-icon="cart" data-action="${newAction}" data-id="${opusId}" title="${buttonInfo["#browse"].title}"><i class="${buttonInfo["#browse"].icon} fa-xs"></i></a>`);
+                }
             }
             o_cart.updateCartStatus(statusData);
             o_browse.hidePageLoaderSpinner();

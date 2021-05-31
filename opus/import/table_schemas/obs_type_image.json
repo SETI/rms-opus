@@ -75,7 +75,6 @@
         "pi_slug": "imagetype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0, "FRAM",       "Frame",   "010", "Y", null],
               [   1, "RAST", "Raster Scan",   "020", "Y", null],
@@ -99,14 +98,13 @@
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.4f:duration",
         "pi_intro": null,
         "pi_label": "Exposure Duration",
         "pi_label_results": "Exposure Duration",
         "pi_slug": "duration",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": "seconds",
         "comments": "For units format, VGISS_*_index.lbl is F9.4 so we round up to .4f."
     },
     {
@@ -131,8 +129,7 @@
         "pi_label_results": "Intensity Levels",
         "pi_slug": "levels",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "greater_pixel_size",
@@ -158,8 +155,7 @@
         "pi_label_results": "Greater Size in Pixels",
         "pi_slug": "greaterpixelsize",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "lesser_pixel_size",
@@ -185,8 +181,7 @@
         "pi_label_results": "Lesser Size in Pixels",
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "put_mults_here": true

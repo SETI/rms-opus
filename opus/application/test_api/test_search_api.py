@@ -258,13 +258,13 @@ class ApiSearchTests(TestCase, ApiTestHelper):
     def test__api_normalizeinput_float_exponent1(self):
         "[test_search_api.py] /api/normalizeinput: float mixed delimiters"
         url = '/__api/normalizeinput.json?rightasc1=1.123e12&reqno=123'
-        expected = {"rightasc1": "1.123000e+12", "reqno": 123}
+        expected = {"rightasc1": "1.123e+12", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_exponent2(self):
         "[test_search_api.py] /api/normalizeinput: float mixed delimiters"
         url = '/__api/normalizeinput.json?rightasc1=1123000000000&reqno=123'
-        expected = {"rightasc1": "1.123000e+12", "reqno": 123}
+        expected = {"rightasc1": "1.123e+12", "reqno": 123}
         self._run_json_equal(url, expected)
 
     def test__api_normalizeinput_float_bad_val1(self):

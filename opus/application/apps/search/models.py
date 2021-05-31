@@ -6975,7 +6975,6 @@ class ZZParamInfo(models.Model):
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
-    units = models.CharField(max_length=75, blank=True, null=True)
     intro = models.CharField(max_length=1023, blank=True, null=True)
     tooltip = models.CharField(max_length=255, blank=True, null=True)
     dict_context = models.CharField(max_length=255, blank=True, null=True)

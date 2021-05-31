@@ -64,7 +64,6 @@
         "pi_slug": "GOSSIobservationid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label."
     },
     {
@@ -90,7 +89,6 @@
         "pi_slug": "GOSSIimageid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label."
     },
     {
@@ -118,7 +116,6 @@
         "pi_slug": "GOSSIfilter",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,    "CLEAR",                        "Clear", "010", "Y", null],
@@ -157,7 +154,6 @@
         "pi_slug": "GOSSIfilternumber",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label."
     },
     {
@@ -184,7 +180,6 @@
         "pi_slug": "GOSSIgainmode",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,  "10K",  "10K", "010", "Y", null],
@@ -218,7 +213,6 @@
         "pi_slug": "GOSSIframeduration",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label."
     },
     {
@@ -245,7 +239,6 @@
         "pi_slug": "GOSSIobstruction",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "Definition is from GOSSI label.",
         "mult_options": [
               [   0,          "POSSIBLE",          "Possible", "010", "Y", null],
@@ -277,7 +270,6 @@
         "pi_slug": "GOSSIcompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "comments": "The definition for COMPRESSION_TYPE in the GOSSI label says nothing useful so we use the PSDD one.",
         "mult_options": [
               [   0,        "BARC RATE CONTROL",                     "BARC", "010", "Y", null],

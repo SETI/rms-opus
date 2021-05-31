@@ -59,12 +59,10 @@ from tools.app_utils import (cols_to_slug_list,
                              download_filename,
                              enter_api_call,
                              exit_api_call,
-                             format_metadata_number_or_func,
                              get_mult_name,
                              get_reqno,
                              get_session_id,
                              json_response,
-                             parse_form_type,
                              throw_random_http404_error,
                              throw_random_http500_error,
                              HTTP404_BAD_LIMIT,
@@ -86,6 +84,9 @@ from tools.app_utils import (cols_to_slug_list,
 from tools.db_utils import (query_table_for_opus_id,
                             lookup_pretty_value_for_mult)
 from tools.file_utils import get_pds_preview_images, get_pds_products
+
+from opus_support import (format_unit_value,
+                          parse_form_type)
 
 log = logging.getLogger(__name__)
 
@@ -637,8 +638,8 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                     # the slug to get the metadata result later.
                     param_info.referred_slug = referred_slug
 
-                (form_type, form_type_func,
-                 form_type_format) = parse_form_type(param_info.form_type)
+                (form_type, form_type_format,
+                 form_type_unit_id) = parse_form_type(param_info.form_type)
 
                 if (form_type in settings.MULT_FORM_TYPES and
                     not return_db_names):
@@ -664,13 +665,15 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                             form_type != 'STRING'):
                             result = None
                     elif (result is None and fmt != 'json' and
-                        form_type != 'STRING'):
+                          form_type != 'STRING'):
                         result = 'N/A'
                     else:
-                        # Format result depending on its form_type_format
-                        result = format_metadata_number_or_func(result,
-                                                                form_type_func,
-                                                                form_type_format)
+                        # Result is returned in proper format in the default
+                        # unit
+                        result = format_unit_value(result,
+                                                   form_type_format,
+                                                   form_type_unit_id,
+                                                   None)
 
                 if fmt == 'csv':
                     index = param_info.fully_qualified_label_results()
@@ -1377,8 +1380,8 @@ def get_search_results_chunk(request, use_cart=None,
             table = 'obs_general'
             column = 'obs_general.opus_id'
         tables.add(table)
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(pi.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi.form_type)
         if form_type in settings.MULT_FORM_TYPES:
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
@@ -1387,7 +1390,7 @@ def get_search_results_chunk(request, use_cart=None,
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
-        form_type_formats.append((form_type_format, form_type_func))
+        form_type_formats.append((form_type_format, form_type_unit_id))
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -1690,12 +1693,15 @@ def get_search_results_chunk(request, use_cart=None,
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
-    for idx, (form_type_format, form_type_func) in enumerate(form_type_formats):
+    for idx, (form_type_format, form_type_unit_id) in enumerate(form_type_formats):
         for entry in results:
             if entry[idx] != 'N/A':
-                entry[idx] = format_metadata_number_or_func(entry[idx],
-                                                            form_type_func,
-                                                            form_type_format)
+                # Result is returned in proper format converted to
+                # the given unit
+                entry[idx] = format_unit_value(entry[idx],
+                                               form_type_format,
+                                               form_type_unit_id,
+                                               None)
 
     aux_dict = {}
     if return_opusids:

@@ -17,11 +17,11 @@
         "declination2": null
     },
     "PDS Constraints": {
-        "volumeid": "NHJUMV_2001",
-        "datasetid": "NH-J-MVIC-3-JUPITER-V2.0",
-        "productid": "MC0_0032528036_0X536_SCI_1",
-        "productcreationtime": "2009-02-27T03:23:48.000",
-        "primaryfilespec": "NHJUMV_2001/data/20070131_003252/mc0_0032528036_0x536_sci_1.lbl",
+        "volumeid": "NHJUMV_1001",
+        "datasetid": "NH-J-MVIC-2-JUPITER-V2.0",
+        "productid": "MC0_0032528036_0X536_ENG_1",
+        "productcreationtime": "2009-02-27T03:12:24.000",
+        "primaryfilespec": "NHJUMV_1001/data/20070131_003252/mc0_0032528036_0x536_eng_1.lbl",
         "opusid": "nh-mvic-mc0_0032528036",
         "note": null
     },
@@ -37,10 +37,10 @@
         "wavelength2": "0.975",
         "waveres1": "0.575",
         "waveres2": "0.575",
-        "waveno1": "10256.4",
+        "waveno1": "10256.4102564",
         "waveno2": "25000",
-        "wavenores1": "14743.59",
-        "wavenores2": "14743.59",
+        "wavenores1": "14743.58974359",
+        "wavenores2": "14743.58974359",
         "specflag": "No",
         "specsize": null,
         "polarizationtype": "None"

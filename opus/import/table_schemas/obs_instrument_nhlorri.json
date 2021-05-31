@@ -63,7 +63,6 @@
         "pi_slug": "NHLORRIinstrumentcompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0,  "LOSSLESS",       "Lossless", "010", "Y", null],
@@ -95,7 +94,6 @@
         "pi_slug": "NHLORRIbinningmode",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0, "1x1", "1x1", "010", "Y", null],

@@ -43,11 +43,9 @@ from search.views import (get_param_info_by_slug,
 from tools.app_utils import (csv_response,
                              enter_api_call,
                              exit_api_call,
-                             format_metadata_number_or_func,
                              get_mult_name,
                              get_reqno,
                              json_response,
-                             parse_form_type,
                              strip_numeric_suffix,
                              throw_random_http404_error,
                              throw_random_http500_error,
@@ -62,7 +60,11 @@ from tools.app_utils import (csv_response,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
 
-import opus_support
+from opus_support import (format_unit_value,
+                          get_default_unit,
+                          get_valid_units,
+                          is_valid_unit,
+                          parse_form_type)
 
 log = logging.getLogger(__name__)
 
@@ -397,8 +399,11 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
         exit_api_call(api_code, ret)
         raise ret
 
-    units = request.GET.get('units', param_info.units)
-    if (not opus_support.is_valid_unit(param_info.units, units) or
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
+    units = request.GET.get('units', get_default_unit(form_type_unit_id))
+    if ((form_type_unit_id and
+         not is_valid_unit(form_type_unit_id, units)) or
         throw_random_http404_error()):
         log.error('get_range_endpoints: Bad units "%s" for '+
                   'slug %s', str(units), str(slug))
@@ -408,10 +413,8 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
 
     param_name = param_info.name # Just name
     param_qualified_name = param_info.param_qualified_name() # category.name
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
-    form_type_format = opus_support.adjust_format_string_for_units(
-            form_type_format, param_info.units, units)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
     try:
         table_model = apps.get_model('search',
@@ -508,22 +511,18 @@ def api_get_range_endpoints(request, slug, fmt, internal=False):
             range_endpoints['nulls'] = (results.all().extra(where=[where])
                                                      .count())
 
-        range_endpoints['min'] = opus_support.convert_from_default_unit(
-                                            range_endpoints['min'],
-                                            param_info.units,
-                                            units)
-        range_endpoints['max'] = opus_support.convert_from_default_unit(
-                                            range_endpoints['max'],
-                                            param_info.units,
-                                            units)
-        range_endpoints['min'] = format_metadata_number_or_func(
+        # The returned range endpoints are converted to the destination
+        # unit
+        range_endpoints['min'] = format_unit_value(
                                                 range_endpoints['min'],
-                                                form_type_func,
-                                                form_type_format)
-        range_endpoints['max'] = format_metadata_number_or_func(
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                units)
+        range_endpoints['max'] = format_unit_value(
                                                 range_endpoints['max'],
-                                                form_type_func,
-                                                form_type_format)
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                units)
 
         cache.set(cache_key, range_endpoints)
 
@@ -750,8 +749,8 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                 entry['field_id'] = f.slug
                 entry['category'] = table_name.label
             f_type = None
-            (form_type, form_type_func,
-             form_type_format) = parse_form_type(f.form_type)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(f.form_type)
             if form_type in settings.RANGE_FORM_TYPES:
                 if form_type == 'LONG':
                     f_type = 'range_longitude'
@@ -762,9 +761,9 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
                         f_type = 'range_float'
                     else:
                         log.warning('Unparseable form type '+str(f.form_type))
-                elif form_type_func == 'range_time':
+                elif form_type_unit_id == 'datetime':
                     f_type = 'range_time'
-                elif form_type_func is not None:
+                elif form_type_unit_id is not None:
                     f_type = 'range_special'
             elif form_type in settings.MULT_FORM_TYPES:
                 f_type = 'multiple'
@@ -777,8 +776,10 @@ def get_fields_info(fmt, request, api_code, slug=None, collapse=False):
             entry['search_label'] = f.label
             entry['full_label'] = f.body_qualified_label_results()
             entry['full_search_label'] = f.body_qualified_label()
-            entry['default_units'] = f.units
-            entry['available_units'] = opus_support.get_valid_units(f.units)
+            (form_type, form_type_format,
+             form_type_unit_id) = parse_form_type(f.form_type)
+            entry['default_units'] = get_default_unit(form_type_unit_id)
+            entry['available_units'] = get_valid_units(form_type_unit_id)
             if f.old_slug and collapse: # Backwards compatibility
                 entry['old_slug'] = f.old_slug.replace('saturn', '<TARGET>')
             else:

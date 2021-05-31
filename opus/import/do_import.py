@@ -9,7 +9,8 @@ import os
 
 import pdsfile
 
-import opus_support
+from opus_support import (get_single_parse_function,
+                          parse_form_type)
 
 from config_data import *
 import do_cart
@@ -431,12 +432,10 @@ def update_mult_table(table_name, field_name, table_column, val, label,
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
-        form_type = table_column['pi_form_type']
-        range_func = None
-        if form_type is not None and form_type.startswith('GROUP:'):
-            range_func_name = form_type.replace('GROUP:', '')
-            if range_func_name in opus_support.RANGE_FUNCTIONS:
-                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(
+                            table_column['pi_form_type'])
+        parse_func = get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
         all_numeric = True
@@ -459,23 +458,23 @@ def update_mult_table(table_name, field_name, table_column, val, label,
         # None always comes before that.
         # Yes comes before No. On comes before Off.
         if label in [None, 'NULL', 'Null']:
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzz' + str(label)
         elif label == 'N/A':
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzy' + str(label)
         elif label in ['NONE', 'None']:
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzx' + str(label)
-        elif range_func:
+        elif parse_func:
             try:
-                disp_order = '%030.9f' % range_func(str(val))
+                disp_order = '%030.9f' % parse_func(str(val))
             except Exception as e:
                 import_util.log_nonrepeating_error(
 f'Unable to parse "{label}" for type "range_func_name": {e}')

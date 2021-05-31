@@ -33,6 +33,24 @@
                 </li>
             </div>
             <h1 class="op-download-options-title">Download Options</h1>
+            <div class="row no-gutters op-download-flat-zip-file-structure">
+                <div class="row no-gutters col-7">
+                    <div class="col col-sm-1">
+                        <input type="checkbox" checked>
+                    </div>
+                    <div class="col col-sm-1">
+                        <i class="fas fa-info-circle" title="If unchecked, download products will be added to the zip file using the same directory structure used by the PDS RMS archive. If checked, all download products will be placed in the root directory of the zip file, unless there is an ambiguity caused by multiple files that have the same base filename. In that case those files only will be added using the full directory structure."></i>
+                    </div>
+                    <div class="col col-lg">Flat file structure</div>
+                </div>
+                <div class="col">File format:&nbsp;
+                    <select class="op-download-format" tabindex="0">
+                        {% for fmt in format %}
+                            <option value="{{ fmt }}">{{ fmt }}</option>
+                        {% endfor %}
+                    <select>
+                </div>
+            </div>
             <p class="m-0 mb-1">Select which product types to include in downloads:</p>
             <div class="op-product-types-select-btn-group mb-3">
                 <button class="op-cart-select-all-btn btn btn-sm btn-primary
