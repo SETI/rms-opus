@@ -6,11 +6,11 @@
 
 import csv
 import os
-import traceback
 
 import pdsfile
 
-import opus_support
+from opus_support import (get_single_parse_function,
+                          parse_form_type)
 
 from config_data import *
 import do_cart
@@ -208,7 +208,8 @@ def create_tables_for_import(volume_id, namespace):
 
         # Create the referenced mult_ tables
         for table_column in table_schema:
-            if table_column.get('put_mults_here', False):
+            if (table_column.get('put_mults_here', False) or
+                table_column.get('pi_referred_slug', False)):
                 continue
             field_name = table_column['field_name']
             pi_form_type = table_column.get('pi_form_type', None)
@@ -353,8 +354,6 @@ def read_or_create_mult_table(mult_table_name, table_column):
     if mult_table_name in _MULT_TABLE_CACHE:
         return _MULT_TABLE_CACHE[mult_table_name]
 
-    use_mult_table_name = None
-
     if 'mult_options' in table_column:
         if not impglobals.ARGUMENTS.import_suppress_mult_messages:
             impglobals.LOGGER.log('debug',
@@ -433,12 +432,10 @@ def update_mult_table(table_name, field_name, table_column, val, label,
     if disp_order is None:
         # No disp_order specified, so make one up
         # Update the display_order
-        form_type = table_column['pi_form_type']
-        range_func = None
-        if form_type is not None and form_type.startswith('GROUP:'):
-            range_func_name = form_type.replace('GROUP:', '')
-            if range_func_name in opus_support.RANGE_FUNCTIONS:
-                range_func = opus_support.RANGE_FUNCTIONS[range_func_name][1]
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(
+                            table_column['pi_form_type'])
+        parse_func = get_single_parse_function(form_type_unit_id)
 
         # See if all values in the mult table are numeric
         all_numeric = True
@@ -461,23 +458,23 @@ def update_mult_table(table_name, field_name, table_column, val, label,
         # None always comes before that.
         # Yes comes before No. On comes before Off.
         if label in [None, 'NULL', 'Null']:
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzz' + str(label)
         elif label == 'N/A':
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzy' + str(label)
         elif label in ['NONE', 'None']:
-            if range_func is not None:
+            if parse_func is not None:
                 disp_order = label
             else:
                 disp_order = 'zzx' + str(label)
-        elif range_func:
+        elif parse_func:
             try:
-                disp_order = '%030.9f' % range_func(str(val))
+                disp_order = '%030.9f' % parse_func(str(val))
             except Exception as e:
                 import_util.log_nonrepeating_error(
 f'Unable to parse "{label}" for type "range_func_name": {e}')
@@ -587,7 +584,7 @@ def import_one_volume(volume_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
-    if not volume_pdsfile.is_volume():
+    if not volume_pdsfile.is_volume:
         impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
         impglobals.CURRENT_VOLUME_ID = None
@@ -632,7 +629,7 @@ def import_one_volume(volume_id):
                 vol_prefix = basename.replace('_raw_image_index.lbl', '')
                 vol_prefix = vol_prefix.replace('_RAW_IMAGE_INDEX.LBL', '')
                 impglobals.LOGGER.log('debug',
-                    f'Using RAW_IMAGE_INDEX metadata version of main index: '+
+                    'Using RAW_IMAGE_INDEX metadata version of main index: '+
                     f'{volume_label_path}')
                 break
 
@@ -642,7 +639,7 @@ def import_one_volume(volume_id):
                 if basename.upper() == 'OBSINDEX.LBL':
                     volume_label_path = os.path.join(path, basename)
                     impglobals.LOGGER.log('debug',
-                        f'Using OBSINDEX version of main index: '+
+                        'Using OBSINDEX version of main index: '+
                         f'{volume_label_path}')
                     break
 
@@ -721,18 +718,6 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     impglobals.LOGGER.log('info',
                f'OBSERVATIONS: {len(obs_rows)} in {volume_label_path}')
 
-    # This is used to make all ground-based observations look like they were
-    # done by a single instrument to make writing the populate_* functions
-    # easier.
-    func_instrument_name = instrument_name
-    if instrument_name is None:
-        # There could be multiple instruments in a single volume, in which case
-        # we need to look in the index labelself.
-        # We assume this only happens for ground-based instruments.
-        instrument_name = (obs_label_dict['INSTRUMENT_HOST_ID']
-                           +obs_label_dict['INSTRUMENT_ID'])
-        func_instrument_name = 'GB'
-
     metadata = {}
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
@@ -774,8 +759,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 else:
                     # The pdstable.py module can't read non-fixed-length records
                     # so we fake it up ourselves here.
-                    table_filename = (assoc_label_path.replace('.LBL', '.TAB')
-                                      .replace('.lbl', '.tab'))
+                    table_filename = (assoc_label_path.replace('.LBL', '.CSV')
+                                      .replace('.lbl', '.csv'))
                     assoc_rows = []
                     assoc_label_dict = {} # Not used
                     with open(table_filename, 'r') as table_file:
@@ -786,7 +771,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             row_dict = {'VOLUME_ID': csv_volume.strip(),
                                         'FILE_SPECIFICATION_NAME':
                                                      csv_filespec.strip(),
-                                        'RING_OBSERVATION_ID':
+                                        'OPUS_ID':
                                                      csv_ringobsid.strip(),
                                         'TARGET_LIST': csv_targets}
                             assoc_rows.append(row_dict)
@@ -833,41 +818,38 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             break
                         geo_full_file_spec = geo_vol+'/'+geo_file_spec
                         geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_file_spec)
+                                                geo_full_file_spec,
+                                                fix_case=True)
                         key = geo_pdsfile.opus_id
-                        if key is None:
+                        if not key:
                             import_util.log_nonrepeating_error(
             f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
                         key = key.replace('.', '-')
-                        # WARNING: HACK FOR VIMS XXX
+                        # WARNING: HACK FOR VIMS
                         # The current VIMS geo and inventory tables have entries
                         # for VIS and IR but the only way to distinguish
-                        # between them is to look at the deprecated
-                        # RING_OBSERVATION_ID. When Mark fixes this,
-                        # there will be a sub-instrument column of some
-                        # kind to use instead.
+                        # between them is to look at the OPUS_ID field.
                         if geo_vol.startswith('COVIMS'):
-                            ring_obs_id = row.get('RING_OBSERVATION_ID',
-                                                  None)
-                            if ring_obs_id is None:
+                            opus_id = row.get('OPUS_ID', None)
+                            if opus_id is None:
                                 import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing RING_OBSERVATION_ID field')
+                f'{assoc_label_path} is missing OPUS_ID field')
                                 break
-                            if ring_obs_id.endswith('IR'):
+                            if opus_id.endswith('ir'):
                                 key += '_ir'
-                            elif ring_obs_id.endswith('VIS'):
+                            elif opus_id.endswith('vis'):
                                 key += '_vis'
                             else:
                                 import_util.log_nonrepeating_error(
-                 f'{assoc_label_path} has bad RING_OBSERVATION_ID for '+
+                 f'{assoc_label_path} has bad OPUS_ID for '+
                  f'file_spec "{geo_full_file_spec}"')
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
-                            # RING_GEO is easy - there is at most a single entry
-                            # per observation, so we just create a dictionary
-                            # keyed by opus_id.
+                            # RING_GEO and INVENTORY are easy - there is at most
+                            # a single entry per observation, so we just create
+                            # a dictionary keyed by opus_id.
                             assoc_dict[key] = row
                         elif assoc_type == 'body_surface_geo':
                             # SURFACE_GEO is more complicated, because there can
@@ -999,6 +981,18 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
+        # The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
+        # (thanks VIMS team) but that's how we match across (supplemental) index
+        # files, so it's easier just to fake one here rather than special-case
+        # all the uses of FILE_SPECIFICATION_NAME later.
+        if volset == 'COVIMS_0xxx':
+            vims_filename = index_row['FILE_NAME']
+            vims_path = index_row['PATH_NAME']
+            if vims_path[0] == '/':
+                vims_path = vims_path[1:]
+            filespec = vims_path + '/' + vims_filename.replace('.qub', '.lbl')
+            index_row['FILE_SPECIFICATION_NAME'] = filespec
+
         if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
             # Match up the FILENAME with the key we generated earlier
             couvis_filename = index_row['FILE_NAME'].upper()
@@ -1037,11 +1031,30 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
+        # This is used to make all ground-based observations look like they were
+        # done by a single instrument to make writing the populate_* functions
+        # easier.
+        func_instrument_name = instrument_name
+        derived_instrument_name = instrument_name
+        if instrument_name is None:
+            # There could be multiple instruments in a single index file.
+            # We assume this only happens for ground-based instruments.
+            if ('supp_index_row' not in metadata or
+                metadata['supp_index_row'] is None):
+                filename = index_row['FILE_SPECIFICATION_NAME'].upper()
+                import_util.log_nonrepeating_error(
+                    f'Missing supplemental index information for "{filename}"'
+                )
+            else:
+                supp_index_row = metadata['supp_index_row']
+                derived_instrument_name = (supp_index_row['INSTRUMENT_HOST_ID']
+                                           +supp_index_row['INSTRUMENT_ID'])
+                func_instrument_name = 'GB'
+
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
         # might include both VIS and IR entries. Build up a list of such entries
         # here and then process the row as many times as necessary.
-
         if volset == 'COVIMS_0xxx':
             phase_names = []
             if index_row['VIS_SAMPLING_MODE_ID'] != 'N/A':
@@ -1069,7 +1082,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     continue
                 row = import_observation_table(volume_id,
                                                volset,
-                                               instrument_name,
+                                               derived_instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
                                                volume_type,
@@ -1110,6 +1123,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             # Handle obs_surface_geometry_name and
             # obs_surface_geometry__<TARGET>
 
+            target_dict = {}
             if 'body_surface_geo' in metadata:
                 surface_geo_dict = metadata['body_surface_geo']
                 for table_name in table_names_in_order:
@@ -1141,7 +1155,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
                         row = import_observation_table(volume_id,
                                                        volset,
-                                                       instrument_name,
+                                                       derived_instrument_name,
                                                        func_instrument_name,
                                                        mission_abbrev,
                                                        volume_type,
@@ -1151,7 +1165,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
                             impglobals.LOGGER.log('debug',
-                f'Creating surface geo table for new target {new_target_name}')
+                f'Creating surface geo table for new target {target_name}')
                         table_rows[new_table_name].append(row)
 
             # Handle obs_surface_geometry
@@ -1164,6 +1178,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 if opus_id in inventory:
                     surface_target_list = inventory[opus_id]['TARGET_LIST']
             metadata['inventory_list'] = surface_target_list
+            metadata['used_surface_geo_targets'] = list(target_dict.keys())
 
             for table_name in table_names_in_order:
                 if table_name != 'obs_surface_geometry':
@@ -1174,7 +1189,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
                 row = import_observation_table(volume_id,
                                                volset,
-                                               instrument_name,
+                                               derived_instrument_name,
                                                func_instrument_name,
                                                mission_abbrev,
                                                volume_type,
@@ -1255,7 +1270,6 @@ def import_observation_table(volume_id,
                              table_schema,
                              metadata):
     "Import the data from a row from a PDS file into a single table."
-    index_row = metadata['index_row']
     new_row = {}
 
     # So it can be accessed by populate_*
@@ -1278,7 +1292,8 @@ def import_observation_table(volume_id,
     # type is a GROUP-type.
 
     for table_column in ordered_columns:
-        if table_column.get('put_mults_here', False):
+        if (table_column.get('put_mults_here', False) or
+            table_column.get('pi_referred_slug', False)):
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']
@@ -1333,7 +1348,7 @@ def import_observation_table(volume_id,
                             # If we don't have ring_geo for this volume, don't
                             # bitch about it because we already did earlier.
                             error_list.append(
-                                f'Unknown internal metadata name '+
+                                'Unknown internal metadata name '+
                                 f'"{data_source_cmd_param}"'+
                                 f' while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1341,13 +1356,13 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[data_source_cmd_param+'_row']
                     if ref_index_row is None:
                         import_util.log_nonrepeating_warning(
-                            f'Missing row in metadata file '+
+                            'Missing row in metadata file '+
                             f'"{data_source_cmd_param}"')
                         processed = True
                         break
                     if data_source_data not in ref_index_row:
                         error_list.append(
-                                f'Unknown referenced column '+
+                                'Unknown referenced column '+
                                 f'"{data_source_data}" '+
                                 f'while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1368,7 +1383,7 @@ def import_observation_table(volume_id,
                             # If we don't have ring_geo for this volume, don't
                             # bitch about it because we already did earlier.
                             error_list.append(
-                                f'Unknown internal metadata name '+
+                                'Unknown internal metadata name '+
                                 f'"{ref_index_name}"'+
                                 f' while processing column "{field_name}" in '+
                                 f'table "{table_name}"')
@@ -1376,13 +1391,13 @@ def import_observation_table(volume_id,
                     ref_index_row = metadata[ref_index_name+'_row']
                     if ref_index_row is None:
                         import_util.log_nonrepeating_warning(
-                            f'Missing row in metadata file '+
+                            'Missing row in metadata file '+
                             f'"{data_source_cmd_param}"')
                         processed = True
                         break
                     if data_source_data not in ref_index_row:
                         error_list.append(
-                                f'Unknown referenced column '+
+                                'Unknown referenced column '+
                                 f'"{data_source_data}" '+
                                 f'while processing table "{table_name}"')
                         continue
@@ -1470,7 +1485,7 @@ def import_observation_table(volume_id,
             if notnull:
                 import_util.log_nonrepeating_error(
                     f'Column "{field_name}" in table "{table_name}" '+
-                    f'has NULL value but NOT NULL is set')
+                    'has NULL value but NOT NULL is set')
         else:
             if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -1490,7 +1505,7 @@ def import_observation_table(volume_id,
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+
                         f'has FLAG type but value "{column_val}" is not '+
-                        f'a valid flag value')
+                        'a valid flag value')
                     column_val = None
             if field_type.startswith('char'):
                 field_size = int(field_type[4:])
@@ -1537,7 +1552,7 @@ def import_observation_table(volume_id,
                         import_util.log_nonrepeating_error(
                             f'Caught sentinel value {the_val} for column '+
                             f'"{field_name}" that was missed'+
-                            f' by the PDS label!')
+                            ' by the PDS label!')
                 if column_val is not None and the_val is not None:
                     val_min = table_column.get('val_min', None)
                     val_max = table_column.get('val_max', None)
@@ -1548,7 +1563,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has minimum value '+
                                    f'{val_min} but {column_val} is too small -'+
-                                   f' substituting NULL')
+                                   ' substituting NULL')
                             impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
@@ -1561,7 +1576,7 @@ def import_observation_table(volume_id,
                             msg = (f'Column "{field_name}" in table '+
                                    f'"{table_name}" has maximum value {val_max}'+
                                    f' but {column_val} is too large - '+
-                                   f'substituting NULL')
+                                   'substituting NULL')
                             impglobals.LOGGER.log('debug', msg)
                         else:
                             msg = (f'Column "{field_name}" in table '+
@@ -1606,7 +1621,7 @@ def import_observation_table(volume_id,
                 if (ring_geo is None and
                     impglobals.ARGUMENTS.import_report_missing_ring_geo):
                     impglobals.LOGGER.log('warning',
-                        f'RING GEO metadata available but missing for '+
+                        'RING GEO metadata available but missing for '+
                         f'opus_id "{opus_id}"')
             if 'body_surface_geo' in metadata:
                 body_geo = metadata['body_surface_geo'].get(opus_id)
@@ -1645,37 +1660,35 @@ def import_run_field_function(func_name_suffix, volume_id,
                        table_name=table_name, table_schema=table_schema,
                        metadata=metadata))
 
-def _check_for_pdsfile_exception():
-    if pdsfile.PdsFile.LAST_EXC_INFO != (None, None, None):
-        trace_str = traceback.format_exception(*pdsfile.PdsFile.LAST_EXC_INFO)
-        import_util.log_nonrepeating_error('PdsFile had internal error: '
-                                           +''.join(trace_str))
-        pdsfile.PdsFile.LAST_EXC_INFO = (None, None, None)
-
 def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                                   instrument_id):
     rows = []
 
     try:
-        pdsf = pdsfile.PdsFile.from_filespec(filespec)
-        _check_for_pdsfile_exception()
+        pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(
                                     f'Failed to convert file_spec "{file_spec}"')
         return
 
     products = pdsf.opus_products()
-    _check_for_pdsfile_exception()
     if '' in products:
         file_list_str = '  '.join([x.abspath for x in products[''][0]])
-        import_util.log_nonrepeating_warning(
-                  f'Empty opus_product key for files: '+
-                  file_list_str)
+        if impglobals.ARGUMENTS.import_report_empty_products:
+            import_util.log_nonrepeating_warning(
+                      'Empty opus_product key for files: '+
+                      file_list_str)
         del products['']
-        _check_for_pdsfile_exception()
     # Keep a running list of all products by type, sorted by version
     for product_type in products:
-        (category, sort_order_num, short_name, full_name) = product_type
+        (category, sort_order_num, short_name,
+         full_name, default_checked) = product_type
+
+        # We will skip all the diagrams of COUVIS_8xxx for now.
+        if (volume_id.startswith('COUVIS_8') and
+            full_name.find('Browse Diagram') != -1):
+            continue
+
         if category == 'standard':
             pref = 'ZZZZZ1'
         elif category == 'metadata':
@@ -1694,14 +1707,62 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
             pref = pref.upper()
         sort_order = pref + ('%03d' % sort_order_num)
         list_of_sublists = products[product_type]
+
+        skip_current_product_type = False
+
         for sublist in list_of_sublists:
+            if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                skip_current_product_type):
+                break
             for file_num, file in enumerate(sublist):
                 version_number = sublist[0].version_rank
                 version_name = sublist[0].version_id
                 if version_name == '':
                     version_name = 'Current'
                 logical_path = file.logical_path
-                url = file.url
+
+                # For an index file, we check to see if this observation is
+                # present. If not, we don't include the index file in the
+                # results.
+                if (not impglobals.ARGUMENTS.import_dont_use_row_files and
+                    file.is_index):
+                    basename = filespec.split('/')[-1]
+                    selection = basename.split('.')[0]
+                    try:
+                        file.find_selected_row_key(selection, '=',
+                                                   exact_match=True)
+                    except KeyError:
+                        # can't find the row, we skip this product_type
+                        skip_current_product_type = True
+                        break
+                    except OSError as e:
+                        # selection is partially matched, we skip this
+                        # product_type
+                        import_util.log_warning(
+                            f'{e} - {selection} is partially matched and ' +
+                            'does not exist in the table.')
+                        skip_current_product_type = True
+                        break
+                elif ('_summary.tab' in logical_path or
+                      '_index.tab' in logical_path or
+                      '_hstfiles.tab' in logical_path):
+                    # if an index file has no files in shelves/index
+                    import_util.log_nonrepeating_warning(
+                        f'Volume "{volume_id}" is missing row files under '+
+                        f'shelves/index for {logical_path}')
+
+                # Check if corresponding shelves/info files exist, if not, we
+                # skip the file.
+                try:
+                    file.shelf_lookup('info')
+                except OSError:
+                    import_util.log_nonrepeating_warning(
+                        'Missing corresponding ' +
+                        f'shelves/info for {file.abspath}')
+                    continue
+
+                # The following info are obtained from _info (from shelves/info)
+                url = file.url.strip('/')
                 checksum = file.checksum
                 size = file.size_bytes
                 width = file.width or None
@@ -1731,13 +1792,13 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                        'checksum': checksum,
                        'size': size,
                        'width': width,
-                       'height': height
-                      }
+                       'height': height,
+                       'default_checked': default_checked,
+                       }
                 rows.append(row)
                 if size == 0:
                     import_util.log_nonrepeating_warning(
                         f'File has zero size: {opus_id} {logical_path}')
-                _check_for_pdsfile_exception()
 
     return rows
 
@@ -1800,7 +1861,7 @@ def do_import_steps():
         if (impglobals.ARGUMENTS.drop_cache_tables or
             impglobals.ARGUMENTS.create_cart):
             impglobals.LOGGER.open(
-                f'Cleaning up OPUS/Django tables',
+                'Cleaning up OPUS/Django tables',
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,
                         'debug': impglobals.ARGUMENTS.log_debug_limit})
 

@@ -37,10 +37,10 @@
     "wavelength2": "0.45",
     "waveres1": "0.1",
     "waveres2": "0.1",
-    "waveno1": "22222.2",
-    "waveno2": "28571.4",
-    "wavenores1": "6349.206",
-    "wavenores2": "6349.206",
+    "waveno1": "22222.2222222",
+    "waveno2": "28571.4285714",
+    "wavenores1": "6349.206349206",
+    "wavenores2": "6349.206349206",
     "specflag": "No",
     "specsize": null,
     "polarizationtype": "None"
@@ -55,7 +55,13 @@
     "occdepth2": null,
     "occwlband": null,
     "occsource": null,
-    "occreceiverhost": null
+    "occreceiverhost": null,
+    "RINGGEOobserverringopeningangle1": "10.753",
+    "RINGGEOobserverringopeningangle2": "10.753",
+    "RINGGEOringradius1": "60366.558",
+    "RINGGEOringradius2": "561518.661",
+    "RINGGEOsolarringopeningangle1": "7.871",
+    "RINGGEOsolarringopeningangle2": "7.871"
   },
   "Surface Geometry Constraints": {
     "surfacegeometrytargetlist": "Saturn,Tethys"
@@ -208,6 +214,7 @@
     "VGISSscanmode": "3:1",
     "VGISSimageid": "1388S2-014",
     "VGISSusablelines": "800",
-    "VGISSusablesamples": "800"
+    "VGISSusablesamples": "800",
+    "duration": "2.88"
   }
 }

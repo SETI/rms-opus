@@ -8,12 +8,9 @@
 #   time_sec1/2 must come before observation_duration
 #   planet_id must come before opus_id
 
-import os
-
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -41,11 +38,8 @@ def populate_obs_general_COVIMS_opus_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name'].lower()
     file_spec = _COVIMS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -111,7 +105,7 @@ def populate_obs_pds_COVIMS_primary_file_spec_OBS(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COVIMS_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-E/V/J/S-VIMS-2-QUBE-V1.0"
 def populate_obs_pds_COVIMS_data_set_id_OBS(**kwargs):
@@ -388,7 +382,7 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2_OBS(**kwargs):
     if sc1 is not None and sc_cvt < sc1:
         import_util.log_warning(
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +f'are in the wrong order - setting to count1')
+    +'are in the wrong order - setting to count1')
         sc_cvt = sc1
 
     return sc_cvt

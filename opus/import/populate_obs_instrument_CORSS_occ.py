@@ -7,7 +7,6 @@
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -16,6 +15,7 @@ from populate_util import *
 
 _DSN_NAMES = {
     14: 'Goldstone 14m',
+    15: 'Goldstone 34m',
     24: 'Goldstone 34m',
     25: 'Goldstone 34m',
     26: 'Goldstone 34m',
@@ -45,11 +45,8 @@ def _CORSS_file_spec_helper(**kwargs):
 
 def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
     file_spec = _CORSS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -125,7 +122,7 @@ def populate_obs_pds_CORSS_primary_file_spec_OCC(**kwargs):
     return _CORSS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_CORSS_product_creation_time_OCC(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-SR-RSS-4/5-OCC-V2.0"
 def populate_obs_pds_CORSS_data_set_id_OCC(**kwargs):
@@ -175,14 +172,14 @@ def populate_obs_wavelength_CORSS_wavelength1_OCC(**kwargs):
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
-    return wl
+    return wl * 10000 # cm -> micron
 
 def populate_obs_wavelength_CORSS_wavelength2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
-    return wl
+    return wl * 10000 # cm -> micron
 
 def populate_obs_wavelength_CORSS_wave_res1_OCC(**kwargs):
     return None
@@ -370,60 +367,56 @@ def populate_obs_ring_geometry_CORSS_phase2_OCC(**kwargs):
 def populate_obs_ring_geometry_CORSS_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
 def populate_obs_ring_geometry_CORSS_incidence2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
 def populate_obs_ring_geometry_CORSS_north_based_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
 def populate_obs_ring_geometry_CORSS_north_based_incidence2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
 def populate_obs_ring_geometry_CORSS_emission1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
 def populate_obs_ring_geometry_CORSS_emission2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = import_util.safe_column(index_row,
-                                  'MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE')
+    inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
 def populate_obs_ring_geometry_CORSS_north_based_emission1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90-el
 
 def populate_obs_ring_geometry_CORSS_north_based_emission2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return 90-el
 
@@ -452,30 +445,58 @@ populate_obs_ring_geometry_CORSS_center_north_based_emission2_OCC = \
 def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_elevation1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_CORSS_observer_ring_elevation2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_ELEVATION')
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
+
+    return -el
 
 def populate_obs_ring_geometry_CORSS_ring_intercept_time1_OCC(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
@@ -528,7 +549,7 @@ def populate_obs_mission_cassini_CORSS_ert2_OCC(**kwargs):
     if start_time_sec is not None and ert_sec < start_time_sec:
         import_util.log_warning(
             f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-            +f'are in the wrong order - setting to ert1')
+            +'are in the wrong order - setting to ert1')
         ert_sec = start_time_sec
 
     return ert_sec
@@ -569,7 +590,7 @@ def populate_obs_mission_cassini_CORSS_spacecraft_clock_count2_OCC(**kwargs):
     if sc1 is not None and sc_cvt < sc1:
         import_util.log_warning(
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +f'are in the wrong order - setting to count1')
+    +'are in the wrong order - setting to count1')
         sc_cvt = sc1
 
     return sc_cvt

@@ -639,7 +639,7 @@ data.csv
 manifest.csv
 urls.txt
 VGISS_6210_inventory.lbl
-VGISS_6210_inventory.tab
+VGISS_6210_inventory.csv
 VGISS_6210_moon_summary.lbl
 VGISS_6210_moon_summary.tab
 VGISS_6210_ring_summary.lbl
@@ -731,26 +731,26 @@ Example (see [`api/files/[opusid].json`](#fileopusidjson) for more):
   "data": {
     "co-iss-n1867599811": {
       "coiss_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1.LBL",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
       ],
       "coiss_calib": [
-        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
-        "https://pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.IMG",
+        "https://opus.pds-rings.seti.org/holdings/calibrated/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867599811_1_CALIB.LBL"
       ],
       "coiss_thumb": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/extras/thumbnail/1867558636_1867602962/N1867599811_1.IMG.jpeg_small"
       ],
       [...]
     },
     "co-iss-n1867600166": {
       "coiss_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
-        "https://pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/data/1867558636_1867602962/N1867600166_1.LBL",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/prefix3.fmt",
+        "https://opus.pds-rings.seti.org/holdings/volumes/COISS_2xxx/COISS_2111/label/tlmtab.fmt"
       ],
       [...]
   },
@@ -800,16 +800,16 @@ Examples:
   "data": {
     "vg-iss-2-s-c4360022": {
       "vgiss_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
       ],
       "vgiss_cleaned": [
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
       ],
       "vgiss_calib": [
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
       ],
       [...]
     }
@@ -818,16 +818,16 @@ Examples:
     "vg-iss-2-s-c4360022": {
       "Current": {
         "vgiss_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_RAW.LBL"
         ],
         "vgiss_cleaned": [
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CLEANED.LBL"
         ],
         "vgiss_calib": [
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_CALIB.LBL"
         ],
         [...]
       }
@@ -847,10 +847,10 @@ Examples:
   "data": {
     "go-ssi-c0349632000": {
       "gossi_raw": [
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-        "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+        "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+        "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+        "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
       ]
     }
   },
@@ -858,18 +858,18 @@ Examples:
     "go-ssi-c0349632000": {
       "1": {
         "gossi_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/G1/GANYMEDE/C034963/2000R.LBL",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx_v1/GO_0017/LABEL/RTLMTAB.FMT"
         ]
       },
       "Current": {
         "gossi_raw": [
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
-          "https://pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.IMG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/G1/GANYMEDE/C0349632000R.LBL",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RLINEPRX.FMT",
+          "https://opus.pds-rings.seti.org/holdings/volumes/GO_0xxx/GO_0017/LABEL/RTLMTAB.FMT"
         ]
       }
     }
@@ -888,12 +888,12 @@ Examples:
   "data": {
     "hst-11559-wfc3-ib4v19rp": {
       "hst_calib": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
       ],
       "hst_drizzled": [
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-        "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+        "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+        "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
       ]
     }
   },
@@ -901,32 +901,32 @@ Examples:
     "hst-11559-wfc3-ib4v19rp": {
       "Current": {
         "hst_calib": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ],
         "hst_drizzled": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ]
       },
       "1.1": {
         "hst_calib": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ],
         "hst_drizzled": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.1/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ]
       },
       "1.0": {
         "hst_calib": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_FLT.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ],
         "hst_drizzled": [
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
-          "https://pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ_DRZ.JPG",
+          "https://opus.pds-rings.seti.org/holdings/volumes/HSTIx_xxxx_v1.0/HSTI1_1559/DATA/VISIT_19/IB4V19RPQ.LBL"
         ]
       }
     }
@@ -1015,12 +1015,12 @@ Examples:
   "data": [
     {
       "opusid": "co-iss-n1460962327",
-      "thumb_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
+      "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_thumb.jpg",
       "thumb_alt_text": "N1460962327_1_thumb.jpg",
       "thumb_size_bytes": 864,
       "thumb_width": 100,
       "thumb_height": 100,
-      "small_url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
+      "small_url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_small.jpg",
       "small_alt_text": "N1460962327_1_small.jpg",
       "small_size_bytes": 1729,
       "small_width": 256,
@@ -1052,7 +1052,7 @@ Examples:
       "size_bytes": 4971,
       "width": 512,
       "height": 512,
-      "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
+      "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg"
     },
     {
       "opusid": "co-iss-n1460962415",
@@ -1060,7 +1060,7 @@ Examples:
       "size_bytes": 4991,
       "width": 512,
       "height": 512,
-      "url": "https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
+      "url": "https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg"
     }
   ]
 }
@@ -1081,7 +1081,7 @@ Examples:
       "size_bytes": 24607,
       "width": 800,
       "height": 800,
-      "url": "https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
+      "url": "https://opus.pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg"
     }
   ]
 }
@@ -1101,8 +1101,8 @@ Example:
 
 %CODE%
 OPUS ID,Thumb URL,Small URL,Med URL,Full URL
-co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
-co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
+co-iss-n1460962327,https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_full.png
+co-iss-n1460962415,https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_full.png
 %ENDCODE%
 
 * Retrieve information in CSV format about medium-size images for observations 10-11 from Cassini ISS volume COISS_2002.
@@ -1113,8 +1113,8 @@ co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS
 
 %CODE%
 OPUS ID,URL
-co-iss-n1460962327,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
-co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
+co-iss-n1460962327,https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg
+co-iss-n1460962415,https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg
 %ENDCODE%
 
 * Retrieve information in CSV format about the full-size image for OPUS ID vg-iss-2-s-c4360022.
@@ -1125,7 +1125,7 @@ co-iss-n1460962415,https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS
 
 %CODE%
 OPUS ID,URL
-vg-iss-2-s-c4360022,https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
+vg-iss-2-s-c4360022,https://opus.pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg
 %ENDCODE%
 
 #### HTML Return Format
@@ -1144,10 +1144,10 @@ Example:
 
     <ul>
     <li>
-    <img id="med__co-iss-n1460962327" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
+    <img id="med__co-iss-n1460962327" src="https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962327_1_med.jpg">
     </li>
     <li>
-    <img id="med__co-iss-n1460962415" src="https://pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
+    <img id="med__co-iss-n1460962415" src="https://opus.pds-rings.seti.org/holdings/previews/COISS_2xxx/COISS_2002/data/1460960653_1461048959/N1460962415_1_med.jpg">
     </li>
     </ul>
 %ENDCLASS%
@@ -1162,7 +1162,7 @@ Example:
 
     <ul>
     <li>
-    <img id="full__vg-iss-2-s-c4360022" src="https://pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
+    <img id="full__vg-iss-2-s-c4360022" src="https://opus.pds-rings.seti.org/holdings/previews/VGISS_6xxx/VGISS_6210/DATA/C43600XX/C4360022_full.jpg">
     </li>
     </ul>
 %ENDCLASS%
@@ -1655,23 +1655,23 @@ Example:
   {
     "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image",
+    "description": "Raw Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image",
+    "description": "Calibrated Image",
+    "version_number": 999999,
+    "version_name": "Current"
+  },
+  {
+    "category": "Cassini ISS",
+    "product_type": "coiss_calib",
+    "description": "Calibrated Image",
     "version_number": 10000,
     "version_name": "1.0"
-  },
-  {
-    "category": "Cassini ISS",
-    "product_type": "coiss_calib",
-    "description": "Calibrated image",
-    "version_number": 999999,
-    "version_name": "Current"
   },
   [...]
 ]
@@ -1716,21 +1716,21 @@ Example:
   {
     "category": "Cassini ISS",
     "product_type": "coiss_raw",
-    "description": "Raw image",
+    "description": "Raw Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_calib",
-    "description": "Calibrated image",
+    "description": "Calibrated Image",
     "version_number": 999999,
     "version_name": "Current"
   },
   {
     "category": "Cassini ISS",
     "product_type": "coiss_thumb",
-    "description": "Extra preview (thumbnail)",
+    "description": "Extra Preview (thumbnail)",
     "version_number": 999999,
     "version_name": "Current"
   },
@@ -1775,6 +1775,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | `true` if this field is not native to this category but has been linked from its normal location |
 
 `type` can be one of: `multiple`, `string`, `range_integer`, `range_float`,
 `range_longitude`, `range_time`, or `range_special`.
@@ -1790,53 +1791,71 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
-    },
-    [...]
-    "rightasc1": {
-      "label": "Right Ascension (Min)",
-      "search_label": "Right Ascension",
-      "full_label": "Right Ascension (Min)",
-      "full_search_label": "Right Ascension [General]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "General Constraints",
-      "field_id": "rightasc1"
-    },
-    "rightasc2": {
-      "label": "Right Ascension (Max)",
-      "search_label": "Right Ascension",
+    "General Constraints": {
+      "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
+      },
+      [...]
+      "rightasc1": {
+        "field_id": "rightasc1",
+        "category": "General Constraints",
+        "type": "range_longitude",
+        "label": "Right Ascension (Min)",
+        "search_label": "Right Ascension",
+        "full_label": "Right Ascension (Min)",
+        "full_search_label": "Right Ascension [General]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": null,
+        "slug": "rightasc1",
+        "linked": false
+      },
+      "rightasc2": {
+        "field_id": "rightasc2",
+        "category": "General Constraints",
+        [...]
+      },
       [...]
     },
     [...]
-    "SURFACEGEOumbriel_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
-      "full_search_label": "Observed Planetographic Latitude [Umbriel]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Umbriel Surface Geometry Constraints",
-      "field_id": "SURFACEGEOumbriel_planetographiclatitude1"
-    },
-    "SURFACEGEOumbriel_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
+    "Umbriel Surface Geometry Constraints": {
+      "SURFACEGEOumbriel_planetographiclatitude1": {
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude1",
+        "category": "Umbriel Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Umbriel]",
+        "full_search_label": "Observed Planetographic Latitude [Umbriel]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEOumbrielplanetographiclatitude1",
+        "slug": "SURFACEGEOumbriel_planetographiclatitude1",
+        "linked": false
+      },
+      "SURFACEGEOumbriel_planetographiclatitude2": {
+        "field_id": "SURFACEGEOumbriel_planetographiclatitude2",
+        [...]
+      },
       [...]
     },
     [...]
@@ -1854,35 +1873,46 @@ Examples:
 {
   "data": {
     [...]
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
-      "label": "Observed Planetographic Latitude (Min)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1"
+    "&lt;TARGET&gt; Surface Geometry Constraints": {
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Min)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Min) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude1",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude1",
+        "linked": false
+      },
+      "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
+        "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "category": "&lt;TARGET&gt; Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Observed Planetographic Latitude (Max)",
+        "search_label": "Observed Planetographic Latitude",
+        "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
+        "full_search_label": "Observed Planetographic Latitude [Saturn]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEO&lt;TARGET&gt;planetographiclatitude2",
+        "slug": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2",
+        "linked": false
+      },
+      [...]
     },
-    "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2": {
-      "label": "Observed Planetographic Latitude (Max)",
-      "search_label": "Observed Planetographic Latitude",
-      "full_label": "Observed Planetographic Latitude (Max) [Saturn]",
-      "full_search_label": "Observed Planetographic Latitude [Saturn]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "&lt;TARGET&gt; Surface Geometry Constraints",
-      "field_id": "SURFACEGEO&lt;TARGET&gt;_planetographiclatitude2"
-    },
-  [...]
+    [...]
   }
 }
 %ENDCODE%
@@ -1895,19 +1925,19 @@ Example:
 
 * Retrieve information about all fields in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
-target,General Constraints,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
+target,General Constraints,multiple,Intended Target Name,Intended Target Name,Intended Target Name [General],Intended Target Name,,,,0
 [...]
-rightasc1,General Constraints,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),,"['degrees', 'hourangle', 'radians']"
-rightasc2,General Constraints,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),,"['degrees', 'hourangle', 'radians']"
-declination1,General Constraints,Declination,Declination (Min),Declination [General],Declination (Min),,"['degrees', 'hourangle', 'radians']"
-declination2,General Constraints,Declination,Declination (Max),Declination [General],Declination (Max),,"['degrees', 'hourangle', 'radians']"
+rightasc1,General Constraints,range_longitude,Right Ascension,Right Ascension (Min),Right Ascension [General],Right Ascension (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+rightasc2,General Constraints,range_longitude,Right Ascension,Right Ascension (Max),Right Ascension [General],Right Ascension (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination1,General Constraints,range_float,Declination,Declination (Min),Declination [General],Declination (Min),degrees,"['degrees', 'hourangle', 'radians']",,0
+declination2,General Constraints,range_float,Declination,Declination (Max),Declination [General],Declination (Max),degrees,"['degrees', 'hourangle', 'radians']",,0
 [...]
 %ENDCODE%
 
@@ -1945,6 +1975,7 @@ The return value is a JSON object containing this field:
 | `full_label` | The field name with Min/Max qualifiers (as appropriate) but with the category name |
 | `available_units` | The units that can be used for searching with this field |
 | `default_units` | The default units when none is specified |
+| `linked` | Always `false` because this API call returns information about the field's native category |
 
 Examples:
 
@@ -1957,15 +1988,21 @@ Examples:
 %CODE%
 {
   "data": {
-    "planet": {
-      "label": "Planet",
-      "search_label": "Planet",
-      "full_label": "Planet",
-      "full_search_label": "Planet [General]",
-      "default_units": null,
-      "available_units": null,
-      "category": "General Constraints",
-      "field_id": "planet"
+    "General Constraints": {
+      "planet": {
+        "field_id": "planet",
+        "category": "General Constraints",
+        "type": "multiple",
+        "label": "Planet",
+        "search_label": "Planet",
+        "full_label": "Planet",
+        "full_search_label": "Planet [General]",
+        "default_units": null,
+        "available_units": null,
+        "old_slug": null,
+        "slug": "planet",
+        "linked": false
+      }
     }
   }
 }
@@ -1980,19 +2017,25 @@ Examples:
 %CODE%
 {
   "data": {
-    "SURFACEGEOrhea_centerphaseangle": {
-      "label": "Phase Angle at Body Center",
-      "search_label": "Phase Angle at Body Center",
-      "full_label": "Phase Angle at Body Center [Rhea]",
-      "full_search_label": "Phase Angle at Body Center [Rhea]",
-      "default_units": "degrees",
-      "available_units": [
-        "degrees",
-        "hourangle",
-        "radians"
-      ],
-      "category": "Rhea Surface Geometry Constraints",
-      "field_id": "SURFACEGEOrhea_centerphaseangle"
+    "Rhea Surface Geometry Constraints": {
+      "SURFACEGEOrhea_centerphaseangle": {
+        "field_id": "SURFACEGEOrhea_centerphaseangle",
+        "category": "Rhea Surface Geometry Constraints",
+        "type": "range_float",
+        "label": "Phase Angle at Body Center",
+        "search_label": "Phase Angle at Body Center",
+        "full_label": "Phase Angle at Body Center [Rhea]",
+        "full_search_label": "Phase Angle at Body Center [Rhea]",
+        "default_units": "degrees",
+        "available_units": [
+          "degrees",
+          "hourangle",
+          "radians"
+        ],
+        "old_slug": "SURFACEGEOrheacenterphaseangle",
+        "slug": "SURFACEGEOrhea_centerphaseangle",
+        "linked": false
+      }
     }
   }
 }
@@ -2006,13 +2049,13 @@ Example:
 
 * Retrieve information about the `planet` field in CSV format.
 
-    %EXTLINK%%HOST%/opus/api/fields.json%ENDEXTLINK%
+    %EXTLINK%%HOST%/opus/api/fields/planet.csv%ENDEXTLINK%
 
     Return value:
 
 %CODE%
-Field ID,Category,Search Label,Results Label,Full Search Label,Full Results Label,Old Field ID,Units
-planet,General Constraints,Planet,Planet,Planet [General],Planet,,
+Field ID,Category,Type,Search Label,Results Label,Full Search Label,Full Results Label,Default Units,Available Units,Old Field ID,Linked
+planet,General Constraints,multiple,Planet,Planet,Planet [General],Planet,,,,0
 %ENDCODE%
 
 --------------------------------------------------------------------------------

@@ -1,8 +1,5 @@
 from functools import lru_cache
 
-import csv
-import numpy as np
-
 try:
     import MySQLdb
     MYSQLDB_AVAILABLE = True
@@ -45,7 +42,7 @@ class ImportDBMySQL(ImportDBSuper):
             except MySQLdb.Error as e:
                 if self.logger:
                     self.logger.log('fatal',
-                            f'Unable to connect to MySQL server '
+                            'Unable to connect to MySQL server '
                            +f'"{self.db_hostname}": {e.args[1]}')
                 raise ImportDBException(e)
 
@@ -316,7 +313,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
         if auto_create_mults:
             mult_schema = []
             for column in schema:
-                if column.get('put_mults_here', False):
+                if (column.get('put_mults_here', False) or
+                    column.get('pi_referred_slug', None)):
                     continue
                 pi_form_type = column.get('pi_form_type', None)
                 if pi_form_type is not None and pi_form_type.find(':') != -1:
@@ -337,6 +335,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='{self.db_schema}' AND
                 mult_schema.append(entry)
             new_schema = []
             for column in schema:
+                if column.get('pi_referred_slug', False):
+                    continue
                 if column.get('put_mults_here', False):
                     new_schema += mult_schema
                 else:

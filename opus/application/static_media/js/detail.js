@@ -5,7 +5,7 @@
 /* jshint varstmt: true */
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
-/* globals o_hash, opus */
+/* globals o_hash, opus, o_browse, o_cart, o_utils */
 
 /* jshint varstmt: false */
 var o_detail = {
@@ -19,7 +19,18 @@ var o_detail = {
         });
 
         $("#detail").on("click", "a[data-action]", function() {
-            switch($(this).data("action")) {
+            let action = $(this).data("action");
+            switch(action) {
+                case "add":
+                case "remove":
+                    let opusId = $(this).data("id");
+                    if (opusId) {
+                        o_browse.reloadObservationData = true;
+                        o_cart.reloadObservationData = true;
+                        o_utils.disableUserInteraction();
+                        o_cart.editAndHighlightObs([], opusId, action);
+                    }
+                    break;
                 case "downloadData":
                     $(this).attr("href", `/opus/__api/download/${opusId}.zip?cols=${opus.prefs.cols.join()}`);
                     break;
@@ -121,15 +132,16 @@ var o_detail = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
+        let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header p").outerHeight(true);
         // When detail image is moved to the top of detail left pane, we have to
         // account for the height of detail image as well when calculating the containerHeight
         let detailImgHeight = 0;
-        if ($(".op-detail-img").length && $(".op-detail-metadata").length) {
-            detailImgHeight = ($(".op-detail-img").offset().top !== $(".op-detail-metadata").offset().top ?
+        if ($(".op-detail-img").length && $(".op-detail-metadata-container").length) {
+            detailImgHeight = ($(".op-detail-img").offset().top !== $(".op-detail-metadata-container").offset().top ?
                                $(".op-detail-img").outerHeight() : 0);
         }
         let containerHeight = ($(window).height() - footerHeight - mainNavHeight -
-                               detailTabPaddingTop - detailImgHeight);
+                               detailHeaderHeight - detailTabPaddingTop - detailImgHeight);
 
         if (o_detail.detailPageScrollbar) {
             $(".op-detail-metadata").height(containerHeight);

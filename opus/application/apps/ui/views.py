@@ -4,7 +4,7 @@
 #
 # The (private) API interface for returning things for the main UI.
 #
-#    Format: __lastblogupdate.json
+#    Format: __notifications.json
 #    Format: __menu.json
 #    Format: __metadata_selector.json
 #    Format: __widget/(?P<slug>[-\w]+).html
@@ -19,6 +19,7 @@
 from collections import OrderedDict
 
 import settings
+import os
 
 from django.apps import apps
 from django.core.exceptions import FieldError, ObjectDoesNotExist
@@ -31,6 +32,7 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
+from cart.models import Cart
 from dictionary.models import Definitions
 from paraminfo.models import ParamInfo
 from results.views import get_triggered_tables
@@ -46,15 +48,22 @@ from tools.app_utils import (cols_to_slug_list,
                              get_git_version,
                              get_mult_name,
                              get_reqno,
+                             get_session_id,
                              json_response,
-                             parse_form_type,
                              strip_numeric_suffix,
                              throw_random_http404_error,
+                             HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_NO_REQUEST)
 from tools.file_utils import (get_pds_preview_images,
                               get_pds_products)
 
-import opus_support
+from opus_support import (display_search_unit,
+                          display_unit_ever,
+                          format_unit_value,
+                          get_default_unit,
+                          get_unit_display_names,
+                          get_valid_units,
+                          parse_form_type)
 
 import logging
 log = logging.getLogger(__name__)
@@ -75,25 +84,32 @@ class main_site(TemplateView):
             settings.OPUS_FILE_VERSION = get_git_version()
         context['VERSION_SUFFIX'] = '?version='+settings.OPUS_FILE_VERSION
         context['allow_fallback'] = True
+        try:
+            chat_key = settings.CHAT_KEY
+        except:
+            chat_key = None
+        context['chat_key'] = chat_key
         return context
 
 @never_cache
-def api_last_blog_update(request):
-    """Return the date of the last blog update.
+def api_notifications(request):
+    """Return the HTML for any pending notifications and the date of the last
+       blog update.
 
     This is a PRIVATE API.
 
-    Format: __lastblogupdate.json
+    Format: __notifications.json
 
     JSON return:
-        {'lastupdate': '2019-01-31'}
-      or if none available:
-        {'lastupdate': None}
+        {'lastupdate': '2019-01-31',               (or if none available 'None')
+         'notification': '<html code>',            (or if none available 'None')
+         'notification_mdate': '<file mod str>'    (ie: 1614648616.5189033)
+        }
     """
-    api_code = enter_api_call('api_last_blog_update', request)
+    api_code = enter_api_call('api_notifications', request)
 
     if not request or request.GET is None:
-        ret = Http404(HTTP404_NO_REQUEST('/__lastblogupdate.json'))
+        ret = Http404(HTTP404_NO_REQUEST('/__notifications.json'))
         exit_api_call(api_code, ret)
         raise ret
 
@@ -101,14 +117,38 @@ def api_last_blog_update(request):
     try:
         with open(settings.OPUS_LAST_BLOG_UPDATE_FILE, 'r') as fp:
             lastupdate = fp.read().strip()
+            if not lastupdate:
+                lastupdate = None
     except:
         try:
-            log.error('api_last_blog_update: Failed to read file "%s"',
+            log.error('api_notifications: Failed to read file "%s"',
                       settings.OPUS_LAST_BLOG_UPDATE_FILE)
         except:
-            log.error('api_last_blog_update: Failed to read file UNKNOWN')
+            log.error('api_notifications: OPUS_LAST_BLOG_UPDATE_FILE not set')
 
-    ret = json_response({'lastupdate': lastupdate})
+    notification = None
+    notification_modify = None
+    try:
+        with open(settings.OPUS_NOTIFICATION_FILE, 'r') as fp:
+            notification = fp.read().strip()
+            if not notification:
+                notification = None
+            try:
+                notification_modify = os.path.getmtime(
+                                       settings.OPUS_NOTIFICATION_FILE)
+            except:
+                log.error('api_notification: Failed to read the modify date of '
+                          'file "%s"', settings.OPUS_NOTIFICATION_FILE)
+    except:
+        try:
+            log.debug('api_notifications: Failed to read file "%s"',
+                      settings.OPUS_NOTIFICATION_FILE)
+        except:
+            log.debug('api_notifications: OPUS_NOTIFICATION_FILE not set')
+
+    ret = json_response({'lastupdate': lastupdate,
+                         'notification': notification,
+                         'notification_mdate': notification_modify})
 
     exit_api_call(api_code, ret)
     return ret
@@ -185,8 +225,10 @@ def api_get_metadata_selector(request):
     menu_context['all_slugs_info'] = col_slugs_info
     menu_context['which'] = 'selector'
     menu_template = get_template('ui/select_metadata.html')
+    add_field_menu_template = get_template('ui/add_field.html')
     html = menu_template.render(menu_context)
-    ret = json_response({'html': html, 'reqno': reqno})
+    add_field_html = add_field_menu_template.render(menu_context)
+    ret = json_response({'html': html, 'add_field_html': add_field_html, 'reqno': reqno})
 
     exit_api_call(api_code, ret)
     return ret
@@ -205,7 +247,6 @@ def api_get_widget(request, **kwargs):
     api_code = enter_api_call('api_get_widget', request, kwargs)
 
     slug = strip_numeric_suffix(kwargs['slug'])
-    fmt = 'html'
     form = ''
 
     param_info = get_param_info_by_slug(slug, 'widget')
@@ -216,8 +257,8 @@ def api_get_widget(request, **kwargs):
         exit_api_call(api_code, Http404)
         raise Http404
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
     param_qualified_name = param_info.param_qualified_name()
 
     tooltip = param_info.get_tooltip()
@@ -251,8 +292,6 @@ def api_get_widget(request, **kwargs):
         if param_qualified_name_no_num in qtypes:
             initial_qtype = qtypes[param_qualified_name_no_num][0]
 
-    search_form = param_info.category_name
-
     if form_type in settings.RANGE_FORM_TYPES:
         auto_id = False
 
@@ -267,10 +306,14 @@ def api_get_widget(request, **kwargs):
 
         # find length of longest list of selections for either param1 or param2,
         # tells us how many times to go through loop below
-        try: len1 = len(selections[param1])
-        except: len1 = 0
-        try: len2 = len(selections[param2])
-        except: len2 = 0
+        try:
+            len1 = len(selections[param1])
+        except:
+            len1 = 0
+        try:
+            len2 = len(selections[param2])
+        except:
+            len2 = 0
         length = len1 if len1 > len2 else len2
 
         if not length: # param is not constrained
@@ -279,27 +322,31 @@ def api_get_widget(request, **kwargs):
                     +'</ul>')
 
         else: # param is constrained
-            if form_type_func is None:
-                if form_type_format == 'd':
-                    func = int
-                else:
-                    func = float
-            else:
-                if form_type_func in opus_support.RANGE_FUNCTIONS:
-                    func = opus_support.RANGE_FUNCTIONS[form_type_func][0]
-                else:
-                    log.error('Unknown RANGE function "%s"',
-                              form_type_func)
-                    func = float
+            initial_unit = None
+            if 'units' in extras:
+                units = extras['units']
+                if param_qualified_name_no_num in units:
+                    initial_unit = units[param_qualified_name_no_num][0]
+
             key = 0
             while key<length:
                 try:
-                  form_vals[slug1] = func(selections[param1][key])
-                except (IndexError, KeyError, ValueError, TypeError) as e:
+                    form_vals[slug1] = format_unit_value(
+                                                selections[param1][key],
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                initial_unit,
+                                                convert_from_default=False)
+                except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug1] = None
                 try:
-                    form_vals[slug2] = func(selections[param2][key])
-                except (IndexError, KeyError, ValueError, TypeError) as e:
+                    form_vals[slug2] = format_unit_value(
+                                                selections[param2][key],
+                                                form_type_format,
+                                                form_type_unit_id,
+                                                initial_unit,
+                                                convert_from_default=False)
+                except (IndexError, KeyError, ValueError, TypeError):
                     form_vals[slug2] = None
 
                 extra_str = ''
@@ -356,28 +403,30 @@ def api_get_widget(request, **kwargs):
                 new_values.append(val)
             form_vals = {slug: new_values}
 
+        # XXX It's horrible that this whole section is inside a try/except
         try:
-            grouping = model.objects.distinct().values('grouping')
+            _ = model.objects.distinct().values('grouping')
             grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
             grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
             for group_info in grouping_model.objects.order_by('disp_order'):
                 gvalue = group_info.value
                 glabel = group_info.label if group_info.label else 'Other'
-                if glabel == 'NULL': glabel = 'Other'
+                if glabel == 'NULL':
+                    glabel = 'Other'
                 if model.objects.filter(grouping=gvalue)[0:1]:
-                    form +=  ("\n\n"
-                              +'<div class="mult_group_label_container'
-                              +' mult_group_' + str(glabel) + '">'
-                              +'<span class="indicator fa fa-plus">'
-                              +'</span>'
-                              +'<span class="mult_group_label">'
-                              +str(glabel) + '</span></div>'
-                              +'<ul class="mult_group"'
-                              +' data-group=' + str(glabel) + '>'
-                              +SearchForm(form_vals,
-                                          auto_id = '%s_' + str(gvalue),
-                                          grouping=gvalue).as_ul()
-                              +'</ul>');
+                    form += ("\n\n"
+                             +'<div class="mult_group_label_container'
+                             +' mult_group_' + str(glabel) + '">'
+                             +'<span class="indicator fa fa-plus">'
+                             +'</span>'
+                             +'<span class="mult_group_label">'
+                             +str(glabel) + '</span></div>'
+                             +'<ul class="mult_group"'
+                             +' data-group=' + str(glabel) + '>'
+                             +SearchForm(form_vals,
+                                         auto_id='%s_' + str(gvalue),
+                                         grouping=gvalue).as_ul()
+                             +'</ul>')
 
         except FieldError:
             # this model does not have grouping
@@ -403,31 +452,30 @@ def api_get_widget(request, **kwargs):
 
     label = param_info.body_qualified_label()
     intro = param_info.intro
-    units = opus_support.get_display_names(param_info.units)
-    valid_units = opus_support.get_valid_units(param_info.units)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
+    units = get_unit_display_names(form_type_unit_id)
+    valid_units = get_valid_units(form_type_unit_id)
     ranges = param_info.get_ranges_info()
-    test_ranges = param_info.get_ranges_info()
 
     for cat in ranges:
         default_format = cat['format']
         for item in cat['ranges']:
-            default_unit = item['unit']
             val1 = float(item['field1'])
             val2 = float(item['field2'])
             new_unit, new_val1, new_val2 = [], [], []
             for unit in valid_units:
-                new_format = opus_support.adjust_format_string_for_units(
-                        default_format, default_unit, unit)
-                new_format = '{:' + new_format + '}'
                 new_unit.append(unit)
-                v1 = opus_support.convert_from_default_unit(
-                                               val1, default_unit, unit)
-                new_val1.append(new_format.format(v1))
-                v2 = opus_support.convert_from_default_unit(
-                                               val2, default_unit, unit)
-                new_val2.append(new_format.format(v2))
+                new_val1.append(format_unit_value(val1, default_format,
+                                                  form_type_unit_id, unit))
+                new_val2.append(format_unit_value(val2, default_format,
+                                                  form_type_unit_id, unit))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
+    # If we don't want to display this group of units on the search tab, then
+    # don't pass it to the template
+    if not display_search_unit(form_type_unit_id):
+        units = None
     template = "ui/widget.html"
     context = {
         "slug": slug,
@@ -449,7 +497,7 @@ def api_get_widget(request, **kwargs):
 
 @never_cache
 def api_init_detail_page(request, **kwargs):
-    """Render the top part of the Details tab.
+    r"""Render the top part of the Details tab.
 
     This is a PRIVATE API.
 
@@ -465,8 +513,6 @@ def api_init_detail_page(request, **kwargs):
     """
     api_code = enter_api_call('api_get_data', request, kwargs)
 
-    slugs = request.GET.get('cols', False)
-
     opus_id = kwargs['opus_id']
 
     try:
@@ -476,6 +522,26 @@ def api_init_detail_page(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
     instrument_id = obs_general.instrument_id
+    filespec = obs_general.primary_file_spec
+    selection = filespec.split('/')[-1].split('.')[0]
+
+    # See if this opus_id is in the cart
+    in_cart = True
+    try:
+        session_id = get_session_id(request)
+        Cart.objects.get(opus_id=opus_id, session_id=session_id, recycled=0)
+    except ObjectDoesNotExist:
+        in_cart = False
+
+    cart = {}
+    if in_cart:
+        cart['action'] = 'remove'
+        cart['title'] = 'Remove from cart'
+        cart['icon_class'] = 'far fa-trash-alt'
+    else:
+        cart['action'] = 'add'
+        cart['title'] = 'Add to cart'
+        cart['icon_class'] = 'fas fa-cart-plus'
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
@@ -507,6 +573,7 @@ def api_init_detail_page(request, **kwargs):
     new_products = OrderedDict()
     for version in products:
         new_products[version] = OrderedDict()
+
         for product_type in products[version]:
             file_list = products[version][product_type]
             product_info = {}
@@ -521,7 +588,9 @@ def api_init_detail_page(request, **kwargs):
                         break
                 if tab_url:
                     tab_url = tab_url.replace('holdings', 'viewmaster')
-                    tab_url += '/'+opus_id.split('-')[-1]
+                    tab_url += '/'+selection
+                    tab_url = tab_url.replace(settings.PRODUCT_HTTP_PATH,
+                                              settings.VIEWMASTER_ROOT_PATH)
                 product_info['product_link'] = tab_url
             else:
                 product_info['product_link'] = None
@@ -548,7 +617,8 @@ def api_init_detail_page(request, **kwargs):
         'preview_guide_url': preview_guide_url,
         'products': new_products,
         'opus_id': opus_id,
-        'instrument_id': instrument_id
+        'instrument_id': instrument_id,
+        'cart': cart
     }
     ret = render(request, 'ui/detail.html', context)
     exit_api_call(api_code, ret)
@@ -694,8 +764,8 @@ def api_normalize_url(request):
                    +'" is not searchable; it has been removed.')
             msg_list.append(msg)
             continue
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(pi_searchable.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi_searchable.form_type)
 
         is_range = form_type in settings.RANGE_FORM_TYPES
         is_mult = form_type in settings.MULT_FORM_TYPES
@@ -824,7 +894,7 @@ def api_normalize_url(request):
         # Note if we were already looking at the qtype, this will just
         # find it again.
         qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
-        old_qtype_slug = 'qtype-' + strip_numeric_suffix(pi.slug)
+        old_qtype_slug = qtype_slug
         found_qtype = False
         if qtype_slug+clause_num_str in original_slugs:
             found_qtype = qtype_slug+clause_num_str
@@ -839,16 +909,13 @@ def api_normalize_url(request):
             handled_slugs.append('qtype-'
                                  +strip_numeric_suffix(pi.slug)
                                  +clause_num_str)
-            if (valid_qtypes and
-                original_slugs[old_qtype_slug+clause_num_str]
-                    not in valid_qtypes):
+            qtype_val = original_slugs[old_qtype_slug+clause_num_str]
+            if valid_qtypes and qtype_val not in valid_qtypes:
                 msg = ('Query type "'+escape(orig_slug)
                        +'" has an illegal value; '
                        +'it has been set to the default.')
                 msg_list.append(msg)
                 qtype_val = qtype_default
-            else:
-                qtype_val = original_slugs[old_qtype_slug+clause_num_str]
         elif qtype_default:
             # Force a default qtype
             qtype_val = qtype_default
@@ -868,8 +935,17 @@ def api_normalize_url(request):
 
         ### Handle units ###
 
-        unit_default = pi.units
-        valid_units = opus_support.get_valid_units(pi.units)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi.form_type)
+        valid_units = get_valid_units(form_type_unit_id)
+        # For our purpose, a unit_id that is never shown to the user (not
+        # during search and not during results) is not actually a valid unit
+        # and should never have a unit-X slug. This happens for things like
+        # SCLK fields which just use the units infrastructure to convert
+        # database fields to fancy strings.
+        if not display_unit_ever(form_type_unit_id):
+            valid_units = None
+        unit_default = get_default_unit(form_type_unit_id)
 
         # It really only makes sense to look for a unit field if there's a
         # reason one would be present, but if the user gave us one anyway,
@@ -878,7 +954,7 @@ def api_normalize_url(request):
         # Note if we were already looking at the unit, this will just
         # find it again.
         unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
-        old_unit_slug = 'unit-' + strip_numeric_suffix(pi.slug)
+        old_unit_slug = unit_slug
         found_unit = False
         if unit_slug+clause_num_str in original_slugs:
             found_unit = unit_slug+clause_num_str
@@ -893,16 +969,17 @@ def api_normalize_url(request):
             handled_slugs.append('unit-'
                                  +strip_numeric_suffix(pi.slug)
                                  +clause_num_str)
-            if (valid_units and
-                original_slugs[old_unit_slug+clause_num_str]
-                    not in valid_units):
+            unit_val = original_slugs[old_unit_slug+clause_num_str]
+            # Silently replace old units with new versions
+            unit_val = unit_val.replace('/', '_')
+            if unit_val == 'hourangle':
+                unit_val = 'hours'
+            if valid_units and unit_val not in valid_units:
                 msg = ('Unit "'+escape(found_unit)
                        +'" has an illegal value; '
                        +'it has been set to the default.')
                 msg_list.append(msg)
                 unit_val = unit_default
-            else:
-                unit_val = original_slugs[old_unit_slug+clause_num_str]
         elif unit_default:
             # Force a default unit
             unit_val = unit_default
@@ -911,11 +988,11 @@ def api_normalize_url(request):
             unit_slug = None
 
         if found_unit and not valid_units:
-                # We have a unit for a field that doesn't allow units!
-                msg = ('Search term "'+escape(found_unit)+'" is a unit for '
-                       +'a field that does not allow units; '
-                       +'it has been ignored.')
-                msg_list.append(msg)
+            # We have a unit for a field that doesn't allow units!
+            msg = ('Search term "'+escape(found_unit)+'" is a unit for '
+                   +'a field that does not allow units; '
+                   +'it has been ignored.')
+            msg_list.append(msg)
 
         if unit_slug in units_by_slug:
             if unit_val != units_by_slug[unit_slug]:
@@ -931,7 +1008,7 @@ def api_normalize_url(request):
                            +'been used.')
                 msg_list.append(msg)
                 unit_val = units_by_slug[unit_slug]
-        else:
+        elif unit_slug:
             units_by_slug[unit_slug] = unit_val
 
         # Now normalize all the values
@@ -1325,7 +1402,7 @@ def api_normalize_url(request):
                        +'OPUS_ID ('+opus_id+'); it has been converted for you.')
                 msg_list.append(msg)
             try:
-                obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+                _ = ObsGeneral.objects.get(opus_id=opus_id)
             except ObjectDoesNotExist:
                 msg = ('The OPUS_ID specified for the "detail" tab '
                        +'was not found in the current database; '
@@ -1418,9 +1495,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     "Return the categories in the search tab or metadata selector."
     labels_view = 'selector' if labels_view == 'selector' else 'search'
     if labels_view == 'search':
-        filter = "display"
+        filter_ = "display"
     else:
-        filter = "display_results"
+        filter_ = "display_results"
 
     if search_slugs_info:
         expanded_cats = ['search_fields']
@@ -1447,7 +1524,7 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     divs = (TableNames.objects.filter(display='Y',
                                       table_name__in=triggered_tables)
                                .order_by('disp_order'))
-    params = (ParamInfo.objects.filter(**{filter:1,
+    params = (ParamInfo.objects.filter(**{filter_:1,
                                           "category_name__in":triggered_tables})
                                .order_by('disp_order'))
 
@@ -1468,12 +1545,9 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
     menu_data = {}
     menu_data['labels_view'] = labels_view
 
-    obs_surface_geometry_div = None
     obs_surface_geometry_name_div = None
     for d in divs:
-        if d.table_name == 'obs_surface_geometry':
-            obs_surface_geometry_div = d
-        elif d.table_name == 'obs_surface_geometry_name':
+        if d.table_name == 'obs_surface_geometry_name':
             obs_surface_geometry_name_div = d
 
     for d in divs:
@@ -1517,10 +1591,17 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
                     sub_head_tuple = (sub_head, 'collapsed', '')
 
                 all_param_info = (ParamInfo.objects
-                                  .filter(**{filter:1,
+                                  .filter(**{filter_:1,
                                              'category_name': d.table_name,
                                              'sub_heading': sub_head}))
                 for p in all_param_info:
+                    # If referred_slug exists, we will look up the param info
+                    # based on the referred_slug.
+                    if p.referred_slug is not None:
+                        p = get_param_info_by_slug(p.referred_slug, 'col')
+                        p.label = p.body_qualified_label()
+                        p.label_results = p.body_qualified_label_results(True)
+
                     if labels_view == 'search':
                         if p.slug[-1] == '2':
                             # We can just skip these because we never use them
@@ -1535,8 +1616,20 @@ def _get_menu_labels(request, labels_view, search_slugs_info=None):
         else:
             # this div has no sub headings
             menu_data[table_name]['has_sub_heading'] = False
-            for p in ParamInfo.objects.filter(**{filter:1,
+            for p in ParamInfo.objects.filter(**{filter_:1,
                                                 'category_name': d.table_name}):
+
+                # If referred_slug exists, we will put that referred_slug
+                # under the current category.
+                if p.referred_slug is not None:
+                    referred_slug = p.referred_slug
+                    p = get_param_info_by_slug(referred_slug, 'col')
+                    p.label = p.body_qualified_label()
+                    p.label_results = p.body_qualified_label_results(True)
+                    # assign referred_slug used to determine if an icon should
+                    # be appended at the end of a menu item.
+                    p.referred_slug = referred_slug
+
                 # On the search tab, we don't need the trailing 1 & 2 for
                 # data-slug in the Select Metadata modal we do.
                 if labels_view == 'search':

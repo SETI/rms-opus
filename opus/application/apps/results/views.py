@@ -56,22 +56,25 @@ from search.views import (get_param_info_by_slug,
 from tools.app_utils import (cols_to_slug_list,
                              convert_ring_obs_id_to_opus_id,
                              csv_response,
+                             download_filename,
                              enter_api_call,
                              exit_api_call,
-                             format_metadata_number_or_func,
                              get_mult_name,
                              get_reqno,
                              get_session_id,
                              json_response,
-                             parse_form_type,
                              throw_random_http404_error,
                              throw_random_http500_error,
                              HTTP404_BAD_LIMIT,
+                             HTTP404_BAD_OFFSET,
                              HTTP404_BAD_OR_MISSING_REQNO,
+                             HTTP404_BAD_PAGENO,
+                             HTTP404_BAD_STARTOBS,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
                              HTTP404_UNKNOWN_CATEGORY,
+                             HTTP404_UNKNOWN_FORMAT,
                              HTTP404_UNKNOWN_OPUS_ID,
                              HTTP404_UNKNOWN_RING_OBS_ID,
                              HTTP404_UNKNOWN_SLUG,
@@ -81,6 +84,9 @@ from tools.app_utils import (cols_to_slug_list,
 from tools.db_utils import (query_table_for_opus_id,
                             lookup_pretty_value_for_mult)
 from tools.file_utils import get_pds_preview_images, get_pds_products
+
+from opus_support import (format_unit_value,
+                          parse_form_type)
 
 log = logging.getLogger(__name__)
 
@@ -262,7 +268,7 @@ def api_get_data_and_images(request):
             'columns_no_units': labels_no_units,
             'total_obs_count':  count,
             'reqno':            reqno
-           }
+            }
 
     if page_no is not None:
         data['page_no'] = page_no # Bakwards compatibility
@@ -338,8 +344,6 @@ def api_get_data(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    session_id = get_session_id(request)
-
     cols = request.GET.get('cols', settings.DEFAULT_COLUMNS)
 
     labels = labels_for_slugs(cols_to_slug_list(cols))
@@ -380,7 +384,8 @@ def api_get_data(request, fmt):
         csv_data = []
         csv_data.append(labels)
         csv_data.extend(page)
-        ret = csv_response('data', csv_data)
+        csv_filename = download_filename(None, 'data')
+        ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data}
         ret = render(request, 'results/data.html', context)
@@ -398,7 +403,7 @@ def api_get_data(request, fmt):
 
 @never_cache
 def api_get_metadata(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
@@ -428,7 +433,7 @@ def api_get_metadata(request, opus_id, fmt):
 
 @never_cache
 def api_get_metadata_v2(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PUBLIC API.
 
@@ -453,7 +458,7 @@ def api_get_metadata_v2(request, opus_id, fmt):
                         'api_get_metadata_v2', False, False)
 
 def api_get_metadata_v2_internal(request, opus_id, fmt):
-    """Return all metadata, sorted by category, for this opus_id.
+    r"""Return all metadata, sorted by category, for this opus_id.
 
     This is a PRIVATE API.
 
@@ -490,7 +495,6 @@ def api_get_metadata_v2_internal(request, opus_id, fmt):
 
 def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     api_code = enter_api_call(api_name, request)
-
     if not request or request.GET is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
@@ -545,8 +549,10 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
     cats = request.GET.get('cats', False)
     url_cols = request.GET.get('url_cols', False)
 
-    data = OrderedDict()     # Holds data struct to be returned
-    all_info = OrderedDict() # Holds all the param info objects
+    # Holds data struct to be returned
+    data = OrderedDict()
+    # Holds all the param info objects keyed by table label
+    data_all_info = OrderedDict()
 
     if cats == '':
         all_tables = []
@@ -575,6 +581,7 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
         table_label = table.label
         table_name = table.table_name
         model_name = ''.join(table_name.title().split('_'))
+        all_info = OrderedDict() # Holds all the param info objects
 
         # Make a list of all slugs and another of all param_names in this table
         param_info_list = list(ParamInfo.objects
@@ -582,11 +589,24 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                        display_results=1)
                                .order_by('disp_order'))
         if param_info_list:
+            all_param_names = []
             for param_info in param_info_list:
+                if param_info.referred_slug is not None:
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results(True))
+                    param_info.referred_slug = referred_slug
+                else:
+                    all_param_names.append(param_info.name)
+
                 if return_db_names:
                     all_info[param_info.name] = param_info
                 else:
                     all_info[param_info.slug] = param_info
+            # Store all param info objects for current table
+            data_all_info[table_label] = all_info
 
             try:
                 results = query_table_for_opus_id(table_name, opus_id)
@@ -599,7 +619,6 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 exit_api_call(api_code, ret)
                 return ret
 
-            all_param_names = [p.name for p in param_info_list]
             result_vals = results.values(*all_param_names)
             if not result_vals:
                 # This is normal - we're looking at ALL tables so many won't
@@ -608,8 +627,19 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
             result_vals = result_vals[0]
             ordered_results = OrderedDict()
             for param_info in param_info_list:
-                (form_type, form_type_func,
-                 form_type_format) = parse_form_type(param_info.form_type)
+                if param_info.referred_slug is not None:
+                    referred_slug = param_info.referred_slug
+                    param_info = get_param_info_by_slug(referred_slug, 'col')
+                    param_info.label = param_info.body_qualified_label()
+                    param_info.label_results = (
+                                param_info.body_qualified_label_results(True))
+                    # Assign referred_slug. This will be used to determine if
+                    # the param info is from referred_slug, and we will use
+                    # the slug to get the metadata result later.
+                    param_info.referred_slug = referred_slug
+
+                (form_type, form_type_format,
+                 form_type_unit_id) = parse_form_type(param_info.form_type)
 
                 if (form_type in settings.MULT_FORM_TYPES and
                     not return_db_names):
@@ -619,15 +649,31 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                                                           mult_val,
                                                          cvt_null=(fmt!='json'))
                 else:
-                    result = result_vals[param_info.name]
-                    if (result is None and fmt != 'json' and
-                        form_type != 'STRING'):
+                    result = result_vals.get(param_info.name, None)
+                    # If this is the param info from referred_slug, we will get
+                    # the result data from _get_metadata_by_slugs.
+                    if result is None and param_info.referred_slug:
+                        r_data = _get_metadata_by_slugs(
+                                                    request, opus_id,
+                                                    param_info.referred_slug,
+                                                    'raw_data',
+                                                    return_db_names,
+                                                    internal,
+                                                    api_code)
+                        result = r_data[0].get(param_info.referred_slug, None)
+                        if (result == 'N/A' and fmt == 'json' and
+                            form_type != 'STRING'):
+                            result = None
+                    elif (result is None and fmt != 'json' and
+                          form_type != 'STRING'):
                         result = 'N/A'
                     else:
-                        # Format result depending on its form_type_format
-                        result = format_metadata_number_or_func(result,
-                                                                form_type_func,
-                                                                form_type_format)
+                        # Result is returned in proper format in the default
+                        # unit
+                        result = format_unit_value(result,
+                                                   form_type_format,
+                                                   form_type_unit_id,
+                                                   None)
 
                 if fmt == 'csv':
                     index = param_info.fully_qualified_label_results()
@@ -651,10 +697,11 @@ def get_metadata(request, opus_id, fmt, api_name, return_db_names, internal):
                 row_data.append(v)
             csv_data.append(row_title)
             csv_data.append(row_data)
-        ret = csv_response(opus_id, csv_data)
+        csv_filename = download_filename(opus_id, 'metadata')
+        ret = csv_response(csv_filename, csv_data)
     elif fmt == 'html':
         context = {'data': data,
-                   'all_info': all_info,
+                   'data_all_info': data_all_info,
                    'url_cols': url_cols}
         if internal:
             ret = render(request, 'results/detail_metadata_internal.html',
@@ -690,7 +737,7 @@ def api_get_images_by_size(request, size, fmt):
     """
     api_code = enter_api_call('api_get_images_by_size', request)
 
-    ret = _api_get_images(request, fmt, api_code, size, True)
+    ret = _api_get_images(request, fmt, api_code, size, True, None)
 
     exit_api_call(api_code, ret)
     return ret
@@ -711,14 +758,14 @@ def api_get_images(request, fmt):
     """
     api_code = enter_api_call('api_get_images', request)
 
-    ret = _api_get_images(request, fmt, api_code, None, True)
+    ret = _api_get_images(request, fmt, api_code, None, True, None)
 
     exit_api_call(api_code, ret)
     return ret
 
 @never_cache
 def api_get_image(request, opus_id, size, fmt):
-    """Return info about a preview image for the given opus_id and size.
+    r"""Return info about a preview image for the given opus_id and size.
 
     This is a PUBLIC API.
 
@@ -733,12 +780,12 @@ def api_get_image(request, opus_id, size, fmt):
         request.GET = request.GET.copy()
         request.GET['opusid'] = opus_id
         request.GET['qtype-opusid'] = 'matches'
-    ret = _api_get_images(request, fmt, api_code, size, False)
+    ret = _api_get_images(request, fmt, api_code, size, False, opus_id)
 
     exit_api_call(api_code, ret)
     return ret
 
-def _api_get_images(request, fmt, api_code, size, include_search):
+def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
     if not request or request.GET is None:
         # This could technically be the wrong string for the error message,
         # but since this can never actually happen outside of testing we
@@ -851,7 +898,8 @@ def _api_get_images(request, fmt, api_code, size, include_search):
                 csv_data.append(row)
             else:
                 csv_data.append([image['opus_id'], image['url']])
-        ret = csv_response('data', csv_data, column_names=columns)
+        csv_filename = download_filename(opus_id, 'images')
+        ret = csv_response(csv_filename, csv_data, column_names=columns)
     elif fmt == 'html':
         context = {'data': image_list,
                    'size': size}
@@ -869,7 +917,7 @@ def _api_get_images(request, fmt, api_code, size, include_search):
 
 @never_cache
 def api_get_files(request, opus_id=None):
-    """Return all files for a given opus_id or search results.
+    r"""Return all files for a given opus_id or search results.
 
     This is a PUBLIC API.
 
@@ -958,7 +1006,7 @@ def api_get_files(request, opus_id=None):
 
 @never_cache
 def api_get_categories_for_opus_id(request, opus_id):
-    """Return a JSON list of all categories (tables) this opus_id appears in.
+    r"""Return a JSON list of all categories (tables) this opus_id appears in.
 
     This is a PUBLIC API.
 
@@ -1058,7 +1106,7 @@ def api_get_categories_for_search(request):
 
 @never_cache
 def api_get_product_types_for_opus_id(request, opus_id):
-    """Return a JSON list of all product types available for this opus_id.
+    r"""Return a JSON list of all product types available for this opus_id.
 
     This is a PUBLIC API.
 
@@ -1099,7 +1147,8 @@ def api_get_product_types_for_opus_id(request, opus_id):
     sql += q('obs_files')+'.'+q('opus_id')+' = %s'
     values.append(opus_id)
     sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' DESC'
 
     log.debug('get_product_types_for_opus_id SQL: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -1176,7 +1225,8 @@ def api_get_product_types_for_search(request):
         sql += ' ON '+q('obs_files')+'.'+q('obs_general_id')+'='
         sql += q(user_query_table)+'.'+q('id')
     sql += ' ORDER BY '
-    sql += q('obs_files')+'.'+q('sort_order')
+    sql += q('obs_files')+'.'+q('sort_order')+', '
+    sql += q('obs_files')+'.'+q('version_number')+' DESC'
 
     log.debug('get_product_types_for_search SQL: %s %s', sql, values)
     cursor.execute(sql, values)
@@ -1330,8 +1380,8 @@ def get_search_results_chunk(request, use_cart=None,
             table = 'obs_general'
             column = 'obs_general.opus_id'
         tables.add(table)
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(pi.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(pi.form_type)
         if form_type in settings.MULT_FORM_TYPES:
             # For a mult field, we will have to join in the mult table
             # and put the mult column here
@@ -1340,7 +1390,7 @@ def get_search_results_chunk(request, use_cart=None,
             column_names.append(mult_table+'.label')
         else:
             column_names.append(column)
-        form_type_formats.append((form_type_format, form_type_func))
+        form_type_formats.append((form_type_format, form_type_unit_id))
 
     added_extra_columns = 0
     tables.add('obs_general') # We must have obs_general since it owns the ids
@@ -1625,6 +1675,7 @@ def get_search_results_chunk(request, use_cart=None,
     if return_cart_states:
         # For retrieving cart states
         coll_index = column_names.index('cart.recycled')
+
         def _recycled_mapping(x):
             if x is None:
                 return False # Not in cart at all
@@ -1642,12 +1693,15 @@ def get_search_results_chunk(request, use_cart=None,
     results = [[x if x is not None else 'N/A' for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
-    for idx, (form_type_format, form_type_func) in enumerate(form_type_formats):
+    for idx, (form_type_format, form_type_unit_id) in enumerate(form_type_formats):
         for entry in results:
             if entry[idx] != 'N/A':
-                entry[idx] = format_metadata_number_or_func(entry[idx],
-                                                            form_type_func,
-                                                            form_type_format)
+                # Result is returned in proper format converted to
+                # the given unit
+                entry[idx] = format_unit_value(entry[idx],
+                                               form_type_format,
+                                               form_type_unit_id,
+                                               None)
 
     aux_dict = {}
     if return_opusids:
@@ -1691,7 +1745,8 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
         raise ret
 
     if fmt == 'csv':
-        return csv_response(opus_id, page, labels)
+        csv_filename = download_filename(opus_id, 'metadata')
+        return csv_response(csv_filename, page, labels)
 
     url_cols = request.GET.get('url_cols', False)
 
@@ -1720,6 +1775,10 @@ def _get_metadata_by_slugs(request, opus_id, cols, fmt, use_param_names,
                    'url_cols': url_cols}
         return render(request, 'results/detail_metadata_slugs.html',
                       context)
+    if fmt == 'raw_data':
+        for slug, result in zip(slug_list, page[0]):
+            data.append({slug: result})
+        return data
 
     log.error('_get_metadata_by_slugs: Unknown format "%s"', fmt)
     ret = Http404(HTTP404_UNKNOWN_FORMAT(fmt, request))

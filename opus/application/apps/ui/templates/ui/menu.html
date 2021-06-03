@@ -62,6 +62,9 @@
                                                                 {% endif %}
                                                                 <span>{{ p.label }}</span>
                                                             {% endif %}
+                                                            {% if p.referred_slug %}
+                                                                <i class="fas fa-link op-referred-link" title="{{ p.get_link_tooltip }}"></i>
+                                                            {% endif %}
                                                         </span>
                                                     </a>
                                                 </li>
@@ -107,6 +110,9 @@
                                                     <i class="fas fa-info-circle" title="{{ p.get_tooltip }}"></i>
                                                 {% endif %}
                                                 <span>{{ p.label }}</span>
+                                            {% endif %}
+                                            {% if p.referred_slug %}
+                                                <i class="fas fa-link op-referred-link" title="{{ p.get_link_tooltip }}"></i>
                                             {% endif %}
                                         </span>
                                     </a>

@@ -1,6 +1,9 @@
 # opus/application/test_api/api_test_helper.py
-
+from io import BytesIO
 import json
+import os
+import tarfile
+import zipfile
 
 import settings
 
@@ -59,7 +62,7 @@ class ApiTestHelper:
         print(expected)
         self._depth_first_remove(jdata, ignore)
         self._depth_first_remove(expected, ignore)
-        self.assertEqual(expected, jdata)
+        self.assertEqual(jdata, expected)
 
     def _run_json_equal_file(self, url, exp_file):
         print(url)
@@ -76,7 +79,7 @@ class ApiTestHelper:
         print(jdata)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, jdata)
+        self.assertEqual(jdata, expected)
 
     def _run_html_equal(self, url, expected):
         print(url)
@@ -91,7 +94,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_html_equal_file(self, url, exp_file):
         print(url)
@@ -112,7 +115,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_html_startswith(self, url, expected):
         print(url)
@@ -128,7 +131,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     @staticmethod
     def _cleanup_csv(text):
@@ -147,7 +150,7 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
 
     def _run_csv_equal_file(self, url, exp_file):
         print(url)
@@ -165,4 +168,49 @@ class ApiTestHelper:
         print(resp)
         print('Expected:')
         print(expected)
-        self.assertEqual(expected, resp)
+        self.assertEqual(resp, expected)
+
+    def _run_archive_file_equal(self, url, expected,
+                            response_type='json', fmt='zip'):
+        print(url)
+        response = self._get_response(url)
+        self.assertEqual(response.status_code, 200)
+        archive_file_path = None
+        if response_type == 'json':
+            jdata = json.loads(response.content)
+            file = jdata['filename']
+            path = file.replace(settings.TAR_FILE_URL_PATH,
+                                    settings.TAR_FILE_PATH)
+            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
+            archive_file_path = path
+            if fmt == 'zip':
+                archive_file = zipfile.ZipFile(path, mode=read_mode)
+            else:
+                archive_file = tarfile.open(name=path, mode=read_mode)
+        else:
+            binary_stream = BytesIO(response.content)
+            read_mode = settings.DOWNLOAD_FORMATS[fmt][2]
+            file = response.headers['Content-Disposition']
+            archive_file_path = (settings.TAR_FILE_PATH
+                                    + file[file.index('=')+1::])
+            if fmt == 'zip':
+                archive_file = zipfile.ZipFile(binary_stream, mode=read_mode)
+            else:
+                archive_file = tarfile.open(mode=read_mode,
+                                               fileobj=binary_stream)
+        if fmt == 'zip':
+            resp = archive_file.namelist()
+        else:
+            resp = archive_file.getnames()
+
+        resp.sort()
+        expected.sort()
+        print('Got:')
+        print(resp)
+        print('Expected:')
+        print(expected)
+        self.assertListEqual(resp, expected)
+
+        # Remove the archive file stored under settings.TAR_FILE_PATH
+        if archive_file_path and os.path.exists(archive_file_path):
+            os.remove(archive_file_path)

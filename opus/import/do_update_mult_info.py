@@ -4,8 +4,6 @@
 # Update the details of preprogrammed mult tables.
 ################################################################################
 
-import os
-
 import impglobals
 import import_util
 

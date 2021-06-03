@@ -4,7 +4,7 @@
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
 /* globals $, PerfectScrollbar */
-/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, opus */
+/* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, o_widgets, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
 const infiniteScrollUpThreshold = 100;
@@ -29,6 +29,7 @@ var o_browse = {
 
     // these vars are common w/o_cart
     reloadObservationData: true, // start over by reloading all data
+    metadataDetailEdit: false, // is the metadata detail view currently in edit mode?
     observationData: {},  // holds observation column data
     totalObsCount: undefined,
     cachedObservationFactor: 4,     // this is the factor times the screen size to determine cache size
@@ -38,6 +39,11 @@ var o_browse = {
 
     // The viewable fraction of an item's height such that it will be treated as present on the screen
     galleryImageViewableFraction: 0.8,
+
+    // A flag to determine if the sortable item sorting is happening. This
+    // will be used in mutation observer to determine if scrollbar location should
+    // be set.
+    isSortingHappening: false,
 
     // unique to o_browse
     imageSize: 100,     // default
@@ -140,24 +146,13 @@ var o_browse = {
 
         // images...
         $(".gallery").on("click", ".thumbnail, .op-recycle-overlay", function(e) {
-            // make sure selected modal thumb is unhighlighted, as clicking on this closes the modal
-            // but is not caught in time before hidden.bs to get correct opusId
-            e.preventDefault();
-            o_browse.hideMenus();
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
+        });
 
-            let opusId = $(this).parent().data("id");
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
-            }
+        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
+            let elem = $(this).parent();
+            o_browse.onGalleryOrRowClick(elem, e);
         });
 
         // data_table - clicking a table row adds to cart
@@ -177,24 +172,6 @@ var o_browse = {
                 o_cart.toggleInCart(opusId);
                 // single click stops range selection; shift click starts range
                 o_browse.undoRangeSelect();
-            }
-        });
-
-        $(".op-data-table").on("click", "td:not(:first-child)", function(e) {
-            let opusId = $(this).parent().data("id");
-            e.preventDefault();
-            o_browse.hideMenus();
-
-            // Detecting ctrl (windows) / meta (mac) key.
-            if (e.ctrlKey || e.metaKey) {
-                o_cart.toggleInCart(opusId);
-                o_browse.undoRangeSelect();
-            }
-            // Detecting shift key
-            else if (e.shiftKey) {
-                o_browse.cartShiftKeyHandler(e, opusId);
-            } else {
-                o_browse.showMetadataDetailModal(opusId);
             }
         });
 
@@ -272,6 +249,8 @@ var o_browse = {
         $(".app-body").on("hide.bs.modal", "#galleryView", function(e) {
             let namespace = o_browse.getViewInfo().namespace;
             $(namespace).find(".op-modal-show").removeClass("op-modal-show");
+            opus.metadataDetailOpusId = "";
+            o_browse.removeEditMetadataDetails();
         });
 
         $('#galleryView').on("click", "a.op-cart-toggle", function(e) {
@@ -287,10 +266,13 @@ var o_browse = {
         $('#galleryView').on("click", "a.op-prev,a.op-next", function(e) {
             let action = $(this).hasClass("op-prev") ? "prev" : "next";
             let opusId = $(this).data("id");
+            let obsNum = $(this).data("obs");
 
             if (opusId) {
+                o_browse.removeEditMetadataDetails();
                 o_browse.loadPageIfNeeded(action, opusId);
-                o_browse.updateGalleryView(opusId);
+                obsNum += (action === "prev" ? -1 : 1);
+                o_browse.updateGalleryView(opusId, obsNum);
             }
             return false;
         });
@@ -301,9 +283,151 @@ var o_browse = {
             return false;
         });
 
+        $("#galleryView").on("click", "a.op-edit-metadata-button", function(e) {
+            let action = $(this).attr("action");
+            if (action === "edit") {
+                o_browse.initEditMetadataDetails();
+            } else {
+                o_browse.removeEditMetadataDetails();
+            }
+            return false;
+        });
+
+        $(".op-select-list").on("click", ".dropdown-item", function(e) {
+            o_browse.hideMenus();
+            return false;
+        });
+
+        $("#galleryView").on("click", "a.op-metadata-detail-add", function(e) {
+            // allow the hover to work but the click appear to be disabled
+            if ($(".op-metadata-detail-add").hasClass("op-add-disabled")) {
+                return false;
+            }
+            let slug = $(this).closest("ul").data("slug");
+            // save anything that was changed via sort/trash before the dropdown is displayed
+            o_browse.onDoneUpdateMetadataDetails();
+            o_browse.showMetadataList(e);
+            $("#op-add-metadata-fields").data("slug", slug);
+
+            return false;
+        });
+
+        $("#galleryView").on("click", "a.op-metadata-detail-remove", function(e) {
+            let slug = $(this).closest("ul").data("slug");
+            o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
+            $(this).closest("ul").remove();
+            if ($("a.op-metadata-detail-remove").length <= 1) {
+                $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+            }
+            o_browse.onDoneUpdateMetadataDetails();
+            return false;
+        });
+
+        // Toggle the submenu category and avoid dropdown menu #op-add-metadata-fields from closing
+        // When clicking inside #op-add-metadata-fields.
+        $("#op-add-metadata-fields").on("click", ".op-submenu-category, .op-search-menu-category", function(e) {
+            e.stopPropagation();
+            // Prevent dropdown menu from jumping when clicking on categories with scrollbar appears
+            // and disappears.
+            e.preventDefault();
+            let collapsibleID = $(this).attr("href");
+            if (collapsibleID !== undefined) {
+                $(`${collapsibleID}`).collapse("toggle");
+                collapsibleID = collapsibleID.replace("mini", "submenu");
+                $(`${collapsibleID}`).collapse("toggle");
+            }
+        });
+
+        $("#op-add-metadata-fields .op-select-list").on("click", '.submenu li a', function(e) {
+            let slug = $(this).data('slug');
+            if (!slug) { return; }
+            let contextMenu = "#op-add-metadata-fields";
+
+            let parentSlug = $(contextMenu).data("slug");
+            let direction = $(contextMenu).data("direction");
+            let index = $.inArray(parentSlug, opus.prefs.cols);
+            if (index >= 0) {
+                if (direction === "after") {
+                    index++;
+                }
+                opus.prefs.cols.splice(index, 0, slug);
+                // save the last slug that was added so that we can make sure it is visible on scroll
+                $(contextMenu).data("last", slug);
+                $((`${contextMenu} .op-select-list a[data-slug="${slug}"]`)).hide();
+
+                o_selectMetadata.saveChanges();
+                o_selectMetadata.reRender();
+            }
+            // remove the disable in case there was only one field to start with...
+            $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
+            o_browse.hideMetadataList();
+            o_browse.hideTableMetadataTools(e);
+            return false;
+        });
+
+        // prevent drag of gallery modal while the add field menu is present
+        $("#op-add-metadata-fields").on("mousedown", function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
         // Click add all to cart icon in the first column of the browse table header
         $(".op-data-table-view").on("click", ".op-table-header-addall", function(e) {
             o_browse.confirmationBeforeAddAll();
+        });
+
+        $(".op-data-table-view").on("mouseenter", "th.op-draggable", function(e) {
+            if ($(".op-metadata-detail-add").hasClass("op-add-disabled") || o_browse.isSortingHappening) {
+                return false;
+            }
+            let slug = $(this).attr("id");
+            o_browse.showTableMetadataTools(e, slug);
+        });
+
+        $(".op-data-table-view").on("mouseleave", "th.op-draggable", function(e) {
+            let tools = $("#op-edit-field-tool");
+            if (e.pageY < Math.floor(tools.offset().top)  ||
+               (e.pageY > tools.outerHeight() + tools.offset().top) ||
+               (e.pageX < tools.offset().left) ||
+               (e.pageX > tools.outerWidth() + tools.offset().left)) {
+                o_browse.hideMetadataList(e);
+                o_browse.hideTableMetadataTools(e);
+            }
+        });
+
+        $("#op-add-metadata-fields").on("mouseleave", function(e) {
+            o_browse.hideMetadataList(e);
+            o_browse.hideTableMetadataTools(e);
+        });
+
+        $("#op-edit-field-tool").on("mouseleave", function(e) {
+            // only hide the edit metadata field tool bar if the add metadata menu is not showing
+            if (!$("#op-add-metadata-fields").hasClass("show")) {
+                o_browse.hideTableMetadataTools(e);
+            }
+        });
+
+        $("#op-edit-field-tool a").on("click", function(e) {
+            let action = $(this).data("action");
+            let slug = $("#op-edit-field-tool").data("slug");
+            switch (action) {
+                case "addBefore":
+                    $("#op-add-metadata-fields").data("slug", slug);
+                    $("#op-add-metadata-fields").data("direction", "before");
+                    o_browse.showMetadataList(e);
+                    break;
+                case "remove":
+                    o_menu.markMenuItem(`#op-add-metadata-fields .op-select-list a[data-slug="${slug}"]`, "unselect");
+                    opus.prefs.cols = opus.prefs.cols.filter(col => col !== slug);
+                    o_browse.onDoneUpdateFromTableMetadataDetails(e);
+                    break;
+                case "addAfter":
+                    $("#op-add-metadata-fields").data("slug", slug);
+                    $("#op-add-metadata-fields").data("direction", "after");
+                    o_browse.showMetadataList(e);
+                    break;
+            }
+            return false;
         });
 
         $("#op-obs-menu").on("click", '.dropdown-header',  function(e) {
@@ -378,6 +502,12 @@ var o_browse = {
                 o_browse.hideMenus();
             }
 
+            if (o_utils.ignoreArrowKeys &&
+                ((e.which || e.keyCode) == 37 || (e.which || e.keyCode) == 39)) {
+                e.preventDefault();
+                return;
+            }
+
             if ((e.which || e.keyCode) == 27) { // esc - close modals
                 o_browse.hideGalleryViewModal();
                 $("#op-select-metadata").modal('hide');
@@ -385,38 +515,81 @@ var o_browse = {
                 o_browse.undoRangeSelect();
             }
             if ($("#galleryView").hasClass("show")) {
-                /*  Catch the right/left arrow and spacebar while in the modal
-                    Up: 38
-                    Down: 40
-                    Right: 39
-                    Left: 37
-                    Space: 32 */
-
-                let detailOpusId;
-                // the || is for cross-browser support; firefox does not support keyCode
-                switch (e.which || e.keyCode) {
-                    case 32:  // spacebar
-                        if (opus.metadataDetailOpusId !== "") {
-                            o_browse.undoRangeSelect();
-                            o_cart.toggleInCart(opus.metadataDetailOpusId);
-                        }
-                        break;
-                    case 39:  // next
-                        detailOpusId = $("#galleryView").find(".op-next").data("id");
-                        o_browse.loadPageIfNeeded("next", detailOpusId);
-                        break;
-                    case 37:  // prev
-                        detailOpusId = $("#galleryView").find(".op-prev").data("id");
-                        o_browse.loadPageIfNeeded("prev", detailOpusId);
-                        break;
+                if (o_browse.pageLoaderSpinnerTimer === null) {
+                    /*  Catch the right/left arrow and spacebar while in the modal
+                        Up: 38
+                        Down: 40
+                        Right: 39
+                        Left: 37
+                        Space: 32 */
+                    let viewNamespace = opus.getViewNamespace();
+                    let offset = 0;
+                    let obsNum = $("#galleryViewContents .op-obs-direction a").data("obs");
+                    // the || is for cross-browser support; firefox does not support keyCode
+                    switch (e.which || e.keyCode) {
+                        case 32:  // spacebar
+                            if (opus.metadataDetailOpusId !== "" && opus.metadataDetailOpusId !== undefined) {
+                                o_browse.undoRangeSelect();
+                                o_cart.toggleInCart(opus.metadataDetailOpusId);
+                            }
+                            break;
+                        case 37:  // prev
+                            obsNum--;
+                            o_browse.moveToNextMetadataSlide(obsNum, "prev");
+                            break;
+                        case 39:  // next
+                            obsNum++;
+                            o_browse.moveToNextMetadataSlide(obsNum, "next");
+                            break;
+                        case 38:  // up
+                            // decrement the current obsNum by 1 if table view such that up and left behave the same for the table view,
+                            // otherwise by number of observations per row
+                            offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                            obsNum -= offset;
+                            o_browse.moveToNextMetadataSlide(obsNum, "prev");
+                            break;
+                        case 40:  // down
+                            // increment the current obsNum by 1 if table view such that down and right behave the same for the table view,
+                            // otherwise by number of observations per row
+                            offset = (o_browse.isGalleryView() ? viewNamespace.galleryBoundingRect.x : 1);
+                            obsNum += offset;
+                            o_browse.moveToNextMetadataSlide(obsNum, "next");
+                            break;
+                        default:
+                            // allow exception handling to propagate
+                            // fixes the bug that prevented click on the slide to open a full size image
+                            return true;
+                    }
                 }
-                if (detailOpusId && !$("#galleryViewContents").hasClass("op-disabled")) {
-                    o_browse.updateGalleryView(detailOpusId);
-                }
+                return false;
             }
             // don't return false here or it will snatch all the user input!
         });
     }, // end browse behaviors
+
+    onGalleryOrRowClick: function(obj, e) {
+        // make sure selected slide show modal thumb is unhighlighted, as clicking on this closes
+        // the slide show modal but is not caught in time before hidden.bs to get correct opusId
+        e.preventDefault();
+        o_browse.hideMenus();
+
+        if (obj !== null) {
+            let opusId = obj.data("id");
+            let obsNum = obj.data("obs");
+
+            // Detecting ctrl (windows) / meta (mac) key.
+            if (e.ctrlKey || e.metaKey) {
+                o_cart.toggleInCart(opusId);
+                o_browse.undoRangeSelect();
+            }
+            // Detecting shift key
+            else if (e.shiftKey) {
+                o_browse.cartShiftKeyHandler(e, opusId);
+            } else {
+                o_browse.showMetadataDetailModal(opusId, obsNum);
+            }
+        }
+    },
 
     confirmationBeforeAddAll: function() {
         /**
@@ -595,7 +768,7 @@ var o_browse = {
             // else we render 2 * o_browse.getLimit() items.
             let customizedLimitNum = obsNum === 1 ? galleryValue - 1 + 2 * o_browse.getLimit() : 3 * o_browse.getLimit();
             viewNamespace.reloadObservationData = true;
-            o_browse.loadData(view, obsNum, customizedLimitNum);
+            o_browse.loadData(view, true, obsNum, customizedLimitNum);
         }
     },
 
@@ -672,7 +845,6 @@ var o_browse = {
         let firstCachedObs = $(selector).first().data("obs");
 
         let numToDelete = 0;
-
         // When we keep resizing browser and more DOMs are deleted, infiniteScroll load will
         // trigger to load new data (previous page). During the time when infiniteScroll is
         // still loading (before all new obs are rendered), if we keep resizing and cause some
@@ -968,11 +1140,19 @@ var o_browse = {
         return false;
     },
 
-    showMetadataDetailModal: function(opusId) {
+    showMetadataDetailModal: function(opusId, obsNum) {
+        if (o_browse.pageLoaderSpinnerTimer !== null) {
+            // if the spinner is active, do not allow modal to become active
+            return;
+        }
         o_browse.loadPageIfNeeded("prev", opusId);
-        o_browse.updateGalleryView(opusId);
-        // this is to make sure modal is at its original position when open again
-        $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        o_browse.updateGalleryView(opusId, obsNum);
+        if (!$("#galleryView").hasClass("show")) {
+            // this is to make sure the gallery view/slide modal is at its original position when open again
+            // BUT if the gallery view modal was already open and the user is just
+            // clicking on a different observation, don't recenter...
+            $("#galleryView .modal-dialog").css({top: 0, left: 0});
+        }
         $("#galleryView").modal("show");
 
         // Do the fake API call to write in the Apache log files that
@@ -998,6 +1178,7 @@ var o_browse = {
 
     hideMenus: function() {
         o_browse.hideMenu();
+        o_browse.hideMetadataList();
         o_sortMetadata.hideMenu();
     },
 
@@ -1149,6 +1330,7 @@ var o_browse = {
             $(`.op-page-loading-status > .loader`).hide();
             o_browse.pageLoaderSpinnerTimer = null;
         }
+        o_utils.enableUserInteraction();
     },
 
     getViewInfo: function() {
@@ -1235,6 +1417,9 @@ var o_browse = {
         let selector = `${tab} ${contentsView}`;
         let infiniteScrollDataObj = $(selector).data("infiniteScroll").options;
 
+        let hashArray = o_hash.getHashArray();
+        let slugs = hashArray.cols.split(",");
+
         // this is the list of all observations requested from dataimages.json
         let galleryHtml = "";
         let tableHtml = "";
@@ -1280,7 +1465,7 @@ var o_browse = {
             $.each(data.page, function(index, item) {
                 let opusId = item.opusid;
                 // we have to store the relative observation number because we may not have pages in succession, this is for the slider position
-                viewNamespace.observationData[opusId] = item.metadata;	// for galleryView, store in global array
+                viewNamespace.observationData[opusId] = item.metadata;    // for galleryView, store in global array
                 let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
 
                 let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range`;
@@ -1325,7 +1510,8 @@ var o_browse = {
 
                 let tr = `<tr data-id="${opusId}" ${recycled} data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
-                    row += `<td>${cell}</td>`;
+                    let slug = slugs[index];
+                    row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
                 });
                 tableHtml += `${tr}${row}</tr>`;
             });
@@ -1406,15 +1592,17 @@ var o_browse = {
             let columnSorting = "none";
             let columnOrderPostion = "";
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
-            let orderToolTip = (opus.prefs.order.length < 9 ? "title='Click to sort on this field\nCtrl+click to append to current sort'" : "title='Too many sort fields'");
+            //let reorderTip = "Drag to reorder\n";
+            let reorderTip = "";
+            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
-                orderToolTip = "title='Change to descending sort'";
+                orderToolTip = `title='${reorderTip}Change to descending sort'`;
                 columnSorting = "asc";
                 icon =  "-down";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionAsc+1}</span>`;
             } else if (positionDesc >= 0) {
-                orderToolTip = "title='Change to ascending sort'";
+                orderToolTip = `title='${reorderTip}Change to ascending sort'`;
                 columnSorting = "desc";
                 icon = "-up";
                 columnOrderPostion = `<span class="${positionIndicatorClasses}">${positionDesc+1}</span>`;
@@ -1427,11 +1615,11 @@ var o_browse = {
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
             let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
-            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="sticky-header"><div>${columnOrdering}</div></th>`);
+            $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
 
         o_browse.initResizableColumn(tab);
-        $("body").removeClass("op-prevent-pointer-events");
+        //o_browse.initDraggableColumn(tab);
     },
 
     initResizableColumn: function(tab) {
@@ -1459,6 +1647,59 @@ var o_browse = {
                     // Make sure resizable handle is always at the right border of th
                     $(event.target).attr("style", "width: 100%");
                 }
+            },
+        });
+    },
+
+    initDraggableColumn: function(tab) {
+        function moveColumn(table, from, to) {
+            let rows = $('tr', table);
+            rows.each(function() {
+                let cols = $(this).children("td");
+                cols.eq(from).detach().insertBefore(cols.eq(to));
+            });
+        }
+
+        let borderRightWidth = "border-right-width: 15px";
+        $(`${tab} .op-data-table thead tr`).sortable({
+            items: "th.op-draggable",
+            axis: "x",
+            cursor: "grab",
+            containment: "parent",
+            tolerance: "pointer",
+            helper: function(e, ui) {
+                // maintain width of all headers while moving
+                $(e.currentTarget).find("th").each(function() {
+                    $(this).width($(this).width());
+                });
+
+                return ui.clone();
+            },
+            stop: function(e, ui) {
+                o_browse.isSortingHappening = false;
+                let columnOrder = $(this).sortable("toArray");
+
+                // only bother if something actually changed...
+                if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+                    let initialCol = opus.prefs.cols.indexOf(ui.item.attr("id")) + 2;
+                    let finalCol = columnOrder.indexOf(ui.item.attr("id")) + 2;
+                    moveColumn(".op-data-table", initialCol, finalCol);
+
+                    opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+                    o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+                    o_sortMetadata.renderSortedDataFromBeginning();
+                }
+                $(".op-data-table th:last-child").css(borderRightWidth);
+                $("tbody").animate({opacity: '1'});
+            },
+            start: function(e, ui) {
+                // There is a tiny width difference (2px) between .ui-sortable-placeholder and the helper. This will
+                // prevent the little table width shifting when sorting starts (all header texts are single line).
+                ui.placeholder.width(ui.helper.width());
+
+                $("tbody").animate({opacity: '0.1'});
+                o_browse.hideTableMetadataTools();
+                o_browse.isSortingHappening = true;
             },
         });
     },
@@ -1694,7 +1935,7 @@ var o_browse = {
         }
     },
 
-    loadData: function(view, startObs, customizedLimitNum=undefined) {
+    loadData: function(view, closeGalleryView=true, startObs=undefined, customizedLimitNum=undefined) {
         /**
          * Fetch initial data when reloading page, changing sort order,
          * or switching to browse tab after search is changed.
@@ -1754,10 +1995,10 @@ var o_browse = {
             }
         }
 
+        if (closeGalleryView) {
+            o_browse.hideGalleryViewModal();
+        }
         o_browse.showPageLoaderSpinner();
-        // if the selectedMetadata columns were updated while the galleryView slide was open,
-        // then after the load is complete, instead of hiding the galleryView slide, update the metadata.
-        let updateMetadataBox = $("#op-select-metadata").hasClass("show") && $("#galleryView").hasClass("show") ;
 
         // Note: Increment the reqno here instead of getDataURL because infiniteScroll path also uses
         // getDataURL, and we don't want to increment the reqno for the infiniteScroll URL.
@@ -1782,7 +2023,7 @@ var o_browse = {
             viewNamespace.observationData = {};
             $(`${tab} .gallery`).empty();
 
-            if (!updateMetadataBox) {
+            if (closeGalleryView) {
                 o_browse.hideGalleryViewModal();
             }
             o_browse.renderGalleryAndTable(data, this.url, view);
@@ -1888,8 +2129,13 @@ var o_browse = {
 
         let trCountFloor = viewNamespace.galleryBoundingRect.trFloor;
         if (!o_browse.isGalleryView(view) && $(`${tab} .op-data-table tbody tr[data-obs]`).length > 0) {
-            trCountFloor = o_utils.floor((height-$("th").outerHeight()) /
-                                         $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight());
+            // Note: in table view, if there is more than one row, we divide by the 2nd table tr's
+            // height because in Firefox & Safari, the first table tr's height will be 1px larger
+            // than rest of tr, and this will mess up the calculation.
+            let tableRowHeight = ($(`${tab} .op-data-table tbody tr[data-obs]`).length === 1 ?
+                                  $(`${tab} .op-data-table tbody tr[data-obs]`).outerHeight() :
+                                  $(`${tab} .op-data-table tbody tr[data-obs]`).eq(1).outerHeight());
+            trCountFloor = o_utils.floor((height-$(`${tab} .op-data-table th`).outerHeight()) / tableRowHeight);
         }
 
         let xCount = o_utils.floor(width/o_browse.imageSize);
@@ -1999,25 +2245,57 @@ var o_browse = {
         let containerHeight = $(`${tab} .gallery-contents`).height();
         $(`${tab} .op-data-table-view`).width(containerWidth);
         $(`${tab} .op-data-table-view`).height(containerHeight);
+        o_browse.hideMetadataList();
+        o_browse.hideTableMetadataTools();
         opus.getViewNamespace().tableScrollbar.update();
     },
 
     adjustBrowseDialogPS: function() {
-        let containerHeight = $("#galleryViewContents .op-metadata-details").height();
-        let browseDialogHeight = $("#galleryViewContents .op-metadata-details .contents").height();
+        if (o_browse.isSortingHappening) {
+            return;
+        }
+        let modalHeight = $("#galleryViewContents").height();
+        let modalEditHeight = $(".op-metadata-detail-edit").outerHeight(true);
+        let bottomRowHeight = $("#galleryViewContents .bottom").outerHeight(true);
+        let calculatedContainerHeight = modalHeight - modalEditHeight - bottomRowHeight;
+        let container = "#galleryViewContents .op-metadata-details";
+        let containerHeight = $(container).height(calculatedContainerHeight);
+        let browseDialogHeight = $(`#galleryViewContents .op-metadata-details .contents`).height();
+        let slug = $("#op-add-metadata-fields").data("slug");
+        if (slug !== undefined) {
+            let currentElement = $(`ul[data-slug="${slug}"] a.op-metadata-detail-add`);
+            // could have been deleted in interim, so best to check beforehand...
+            if (currentElement !== undefined && $(currentElement).position() !== undefined) {
+                let top = o_browse.adjustTopOfMetadataList(currentElement);
+                $(`#op-add-metadata-fields`).css("top", top);
+            }
+        }
 
         if (o_browse.modalScrollbar) {
+            o_browse.hideMetadataList();
             if (containerHeight > browseDialogHeight) {
-                if (!$("#galleryViewContents .op-metadata-details .ps__rail-y").hasClass("hide_ps__rail-y")) {
-                    $("#galleryViewContents .op-metadata-details .ps__rail-y").addClass("hide_ps__rail-y");
+                if (!$(`#galleryViewContents .op-metadata-details .ps__rail-y`).hasClass("hide_ps__rail-y")) {
+                    $(`#galleryViewContents .op-metadata-details .ps__rail-y`).addClass("hide_ps__rail-y");
                     o_browse.modalScrollbar.settings.suppressScrollY = true;
                 }
             } else {
-                $("#galleryViewContents .op-metadata-details .ps__rail-y").removeClass("hide_ps__rail-y");
+                $(`#galleryViewContents .op-metadata-details .ps__rail-y`).removeClass("hide_ps__rail-y");
                 o_browse.modalScrollbar.settings.suppressScrollY = false;
+                let lastAddedSlug = $("#op-add-metadata-fields").data("last");
+                if (lastAddedSlug !== undefined) {
+                    let addedElement =  $(`ul[data-slug="${lastAddedSlug}"]`);
+                    // if any part of the newly added element is not on the screen, move the scrollbar down
+                    if (!addedElement.isOnScreen($(container), 0)) {
+                        let scrollUp = $(addedElement).height() + $(container).scrollTop();
+                        $(container).scrollTop(scrollUp);
+                    }
+                }
             }
+            // X-scrolling is not allowed in metadata detail modal.
+            o_browse.modalScrollbar.settings.suppressScrollX = true;
             o_browse.modalScrollbar.update();
         }
+        $("#op-add-metadata-fields").removeData("last");
     },
 
     cartButtonInfo: function(action) {
@@ -2055,8 +2333,8 @@ var o_browse = {
         }
     },
 
-    getNextPrevHandles: function(opusId, view) {
-        let tab = opus.getViewTab(view);
+    getNextPrevHandles: function(opusId) {
+        let tab = opus.getViewTab();
         let idArray = $(`${tab} .op-thumbnail-container[data-obs]`).map(function() {
             return $(this).data("id");
         });
@@ -2069,63 +2347,252 @@ var o_browse = {
         return {"next": next, "prev": prev};
     },
 
+    showTableMetadataTools: function(e, slug) {
+        let elem = e.currentTarget;
+        let targetPosition = $(elem).offset();
+        let left = targetPosition.left;
+        let width = $(elem).outerWidth();
+        // need to adjust for the PerfectScrollbar overlaying a bit on the last field
+        let lastSlug = opus.prefs.cols[opus.prefs.cols.length - 1];
+        if (slug === lastSlug) {
+            width -= $(`.op-data-table-view .ps__thumb-y`).width();
+        }
+        let top = $(elem).offset().top +
+                  $(elem).outerHeight();
+
+        o_browse.checkForEmptyMetadataList();
+
+        $("#op-edit-field-tool").css({
+            display: "block",
+            top: top,
+            left: left,
+            width: width,
+        }).fadeIn("slow");
+
+        $("#op-edit-field-tool").data("slug", slug);
+    },
+
+    hideTableMetadataTools: function() {
+        $("#op-edit-field-tool").removeClass("show").hide();
+    },
+
+    onDoneUpdateFromTableMetadataDetails: function(e) {
+        o_utils.disableUserInteraction();
+        o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+        if (opus.prefs.cols.length <= 1) {
+            $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+        } else {
+            $("a.op-metadata-detail-remove").removeClass("op-button-disabled");
+        }
+        o_selectMetadata.saveChanges();
+        o_selectMetadata.reRender();
+        o_browse.hideMetadataList();
+        o_browse.hideTableMetadataTools();
+    },
+
+    hideMetadataList: function() {
+        $("#op-add-metadata-fields").removeClass("show").hide();
+    },
+
+    adjustTopOfMetadataList: function(elem) {
+        let top = $(elem).offset().top;
+        // if this is coming from the slideshow view, calulate the top differently
+        if ($(elem).hasClass("op-metadata-details-tools")) {
+            let galleryViewContentsHeight = $("#galleryView .modal-content").height();
+            let menuHeight = $(`#op-add-metadata-fields .op-select-list`).height();
+
+            // if the top of the dropdrown is more than half way down the list, dropup instead
+            if (top * 2 > galleryViewContentsHeight) {
+                // make sure to move the bottom to the top of the line, not the bottom
+                top -= (menuHeight + $(elem).height());
+            }
+        }
+        return top;
+    },
+
+    showMetadataList: function(e) {
+        let targetPosition = $(e.currentTarget).offset();
+        let top = o_browse.adjustTopOfMetadataList(e.currentTarget);
+        let left = targetPosition.left + Math.ceil($(".fa-plus").outerWidth());
+        let menuWidth = $("#op-add-metadata-fields").outerWidth();
+        let tableWidth = $(".op-data-table-view").outerWidth();
+        if (left + menuWidth > tableWidth) {
+            left = targetPosition.left - menuWidth;
+        }
+
+        $("#op-add-metadata-fields").css({
+            display: "block",
+            top: top,
+            left: left,
+        }).addClass("show");
+    },
+
+    onDoneUpdateMetadataDetails: function(e) {
+        o_utils.disableUserInteraction();
+        let columnOrder = $.map($(".op-metadata-details ul"), function(n, i) {
+            return $(n).data("slug");
+        });
+        // only bother if something actually changed...
+        if (!o_utils.areObjectsEqual(opus.prefs.cols, columnOrder)) {
+            opus.prefs.cols = o_utils.deepCloneObj(columnOrder);
+            o_hash.updateURLFromCurrentHash(); // This makes the changes visible to the user
+            // passing in false indicates to not close the gallery view on loadData
+            o_selectMetadata.saveChanges();
+            o_selectMetadata.reRender();
+        } else {
+            o_utils.enableUserInteraction();
+        }
+        o_browse.hideMetadataList();
+    },
+
+    initEditMetadataDetails: function() {
+        let viewNamespace = opus.getViewNamespace();
+
+        $(".op-edit-metadata-button").attr("action", "done").html(`<i class="fas fa-pencil-alt"></i> Done`);
+        $(`#galleryViewContents .op-metadata-details .contents`).sortable({
+            items: "ul",
+            cursor: "grabbing",
+            containment: "parent",
+            tolerance: "pointer",
+            helper: "clone",
+            stop: function(e, ui) {
+                o_browse.onDoneUpdateMetadataDetails();
+                o_browse.isSortingHappening = false;
+            },
+            start: function(e, ui) {
+                ui.placeholder.height(ui.helper.height());
+                o_widgets.getMaxScrollTopVal(e.target);
+                o_browse.isSortingHappening = true;
+            },
+            sort: function(e, ui) {
+                o_widgets.preventContinuousDownScrolling(e.target);
+            },
+        }).addClass("op-no-select");
+        $(".op-detail-data").fadeTo("fast", 0.15);
+        $(".op-metadata-details-tools").show();
+        $(".op-metadata-detail-edit-message").show();
+        $(".op-metadata-details").addClass("op-metadata-details-edit-enabled");
+        if ($("a.op-metadata-detail-remove").length <= 1) {
+            $("a.op-metadata-detail-remove").addClass("op-button-disabled");
+        }
+        o_browse.checkForEmptyMetadataList();
+        viewNamespace.metadataDetailEdit = true;
+    },
+
+    checkForEmptyMetadataList: function() {
+        // if there is only one metadata field left, disable the trash in both the slide show and table tools dropdown
+        if ($(".op-select-list .op-search-menu").find("li").length === 0) {
+            $(".op-metadata-detail-add").addClass("op-button-disabled");
+        } else {
+            $(".op-metadata-detail-add").removeClass("op-button-disabled");
+        }
+    },
+
+    removeEditMetadataDetails: function() {
+        let viewNamespace = opus.getViewNamespace();
+        let detailContents = $(`#galleryViewContents .op-metadata-details .contents`);
+
+        detailContents.removeClass("op-no-select");
+        $(".op-edit-metadata-button").attr("action", "edit").html(`<i class="fas fa-pencil-alt"></i> Edit`);
+        $(".op-metadata-details").removeClass("op-metadata-details-edit-enabled");
+        $(".op-metadata-details-tools").hide();
+        $(".op-metadata-detail-edit-message").hide();
+        if (detailContents.sortable("instance") !== undefined) {
+            detailContents.sortable("destroy");
+        }
+        $(".op-detail-data").fadeTo("fast", 1);
+        viewNamespace.metadataDetailEdit = false;
+    },
+
+    moveToNextMetadataSlide: function(obsNum, direction) {
+        let viewNamespace = opus.getViewNamespace();
+        if (obsNum >= 0 && obsNum <= viewNamespace.totalObsCount) {
+            let tab = opus.getViewTab();
+            let lastCachedObsNum = $(`${tab} .op-thumbnail-container`).last().data("obs");
+            let detailOpusId;
+            // Only allow the down/next arrow keys to proceed to the next row of observations if either we are at the end of total observations
+            // OR if we are not yet at the end of the cached observations and waiting for the fetch to update the DOM
+            // This is to prevent the alignment of the bottom row of the gallery view when we hit the end of the cached observations in the DOM,
+            // which causes some unsigtly momentary jumping around
+            if (lastCachedObsNum === viewNamespace.totalObsCount || obsNum + viewNamespace.galleryBoundingRect.x <= lastCachedObsNum) {
+                detailOpusId = (o_browse.isGalleryView() ? $(tab).find(`.op-thumbnail-container[data-obs='${obsNum}']`).data("id") : $(tab).find(`tr[data-obs='${obsNum}']`).data("id"));
+                o_browse.removeEditMetadataDetails();
+                o_browse.loadPageIfNeeded(direction, detailOpusId);
+                o_browse.updateGalleryView(detailOpusId, obsNum);
+            }
+        }
+    },
+
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
         let tab = opus.getViewTab();
         opus.metadataDetailOpusId = opusId;
 
         // list columns + values
-        let html = "<dl>";
+        let html = "";
+        let selectMetadataTitle = "Add metadata field after the current field";
+        let removeTool = `<li class="op-metadata-details-tools mr-2">` +
+                         `<a href="#" class="op-metadata-detail-remove" mr-2 title="Remove selected metadata field"><i class="far fa-trash-alt"></i></a></li>`;
+        let addTool = `<a href="#" class="op-metadata-details-tools op-metadata-detail-add" title="${selectMetadataTitle}" data-toggle="dropdown" role="button"><i class="fas fa-plus pr-1"> Add field here</i></a>`;
         $.each(opus.colLabels, function(index, columnLabel) {
             if (opusId === "" || viewNamespace.observationData[opusId] === undefined || viewNamespace.observationData[opusId][index] === undefined) {
                 opus.logError(`metadataboxHtml: in each, observationData may be out of sync with colLabels; opusId = ${opusId}, colLabels = ${opus.colLabels}`);
             } else {
-                let value = viewNamespace.observationData[opusId][index];
-                html += `<dt>${columnLabel}:</dt><dd>${value}</dd>`;
+                let slug = opus.prefs.cols[index];
+                let style = (viewNamespace.metadataDetailEdit ? `style="opacity: 0.15"` : "");
+                let value = `<span class="op-detail-data" ${style}>${viewNamespace.observationData[opusId][index]}</span>`;
+                html += `<ul class="list-inline mb-2" data-slug="${slug}">${removeTool}`;
+                html += `<li class="op-metadata-detail-item">`;
+                html += `<div class="op-metadata-term font-weight-bold">${columnLabel}:</div>`;
+                html += `<div class="op-metadata-data ml-0">${value}${addTool}</div>`;
+                html += `</li></ul>`;
             }
         });
-        html += "</dl>";
-        $("#galleryViewContents .contents").html(html);
+        $("#galleryViewContents .op-metadata-details .contents").html(html);
 
-        let nextPrevHandles = o_browse.getNextPrevHandles(opusId, view);
-        let action = o_cart.isIn(opusId) ? "" : "remove";
-        let buttonInfo = o_browse.cartButtonInfo(action);
+        // if it was last in edit mode, open in edit mode...
+        if (viewNamespace.metadataDetailEdit) {
+            o_browse.initEditMetadataDetails();
+        } else {
+            o_browse.removeEditMetadataDetails();
+        }
 
-        // prev/next buttons - put this in galleryView html...
-        html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
-        html += `<div class="col text-center op-obs-direction">`;
-        let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
-        let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
-        html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
-        html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
-        html += `</div>`;
-
-        // mini-menu like the hamburger on the observation/gallery page
-        html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
-        $("#galleryViewContents .bottom").html(html);
-    },
-
-    updateGalleryView: function(opusId) {
-        let tab = opus.getViewTab();
+        // update the binoculars here
         $(tab).find(".op-modal-show").removeClass("op-modal-show");
         $(tab).find(`[data-id='${opusId}'] div.op-modal-overlay`).addClass("op-modal-show");
         $(tab).find(`tr[data-id='${opusId}']`).addClass("op-modal-show");
         // if the observation is in the recycle bin, move the icon over a bit so there is not conflict w/the binoculars
         $(tab).find(`[data-id='${opusId}'] div.op-recycle-overlay`).addClass("op-modal-show");
-
-        let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
-        o_browse.updateMetaGalleryView(opusId, imageURL);
     },
 
+    updateGalleryView: function(opusId, obsNum) {
+        if (opusId) {
+            let tab = opus.getViewTab();
 
-    updateMetaGalleryView: function(opusId, imageURL) {
-        let tab = opus.getViewTab();
-        let element = (o_browse.isGalleryView() ? $(`${tab} .op-thumbnail-container[data-id=${opusId}]`) : $(`${tab} tr[data-id=${opusId}]`));
-        let obsNum = $(element).data("obs");
-        let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+            let nextPrevHandles = o_browse.getNextPrevHandles(opusId);
+            let action = o_cart.isIn(opusId) ? "" : "remove";
+            let buttonInfo = o_browse.cartButtonInfo(action);
 
-        $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
-        o_browse.metadataboxHtml(opusId);
+            // prev/next buttons - put this in galleryView html...
+            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            html += `<div class="col text-center op-obs-direction">`;
+            let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
+            let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");
+            html += `<a href="#" class="op-prev text-center ${opPrevDisabled}" data-id="${nextPrevHandles.prev}" title="Previous image: ${nextPrevHandles.prev} (left arrow key)"><i class="far fa-arrow-alt-circle-left fa-2x"></i></a>`;
+            html += `<a href="#" class="op-next ${opNextDisabled}" data-id="${nextPrevHandles.next}" title="Next image: ${nextPrevHandles.next} (right arrow key)"><i class="far fa-arrow-alt-circle-right fa-2x"></i></a>`;
+            html += `</div>`;
+
+            // mini-menu like the hamburger on the observation/gallery page
+            html += `<div class="col"><a href="#" class="menu pr-3 float-right" data-toggle="dropdown" role="button" data-id="${opusId}" title="More options"><i class="fas fa-bars fa-2x"></i></a></div>`;
+            $("#galleryViewContents .bottom").html(html);
+
+            let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
+            let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+
+            o_browse.metadataboxHtml(opusId);
+            $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview"/></a>`);
+            $("#galleryViewContents .op-obs-direction a").data("obs", obsNum);
+        }
     },
 
     clearObservationData: function(leaveStartObs) {

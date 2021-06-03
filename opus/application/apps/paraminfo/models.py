@@ -4,11 +4,13 @@ from dictionary.views import get_def_for_tooltip
 import json
 
 from search.models import TableNames
-from tools.app_utils import parse_form_type
 
 import settings
 
-import opus_support
+from opus_support import (display_result_unit,
+                          get_default_unit,
+                          get_unit_display_name,
+                          parse_form_type)
 
 class ParamInfo(models.Model):
     """
@@ -25,7 +27,7 @@ class ParamInfo(models.Model):
     label_results = models.CharField(max_length=240, blank=True, null=True)
     slug = models.CharField(max_length=255, blank=True, null=True)
     old_slug = models.CharField(max_length=255, blank=True, null=True)
-    units = models.CharField(max_length=75, blank=True, null=True)
+    referred_slug = models.CharField(max_length=255, blank=True, null=True)
     ranges = models.TextField()
     field_hints1 = models.CharField(max_length=255, blank=True, null=True)
     field_hints2 = models.CharField(max_length=255, blank=True, null=True)
@@ -60,13 +62,17 @@ class ParamInfo(models.Model):
             definition = get_def_for_tooltip(self.dict_name, self.dict_context)
         return definition
 
+    def get_link_tooltip(self):
+        table_label = (TableNames.objects
+                      .get(table_name=self.category_name).label)
+        return (f'This field is a link to one available under {table_label}. '+
+                'It is provided here for your convenience.')
+
     def body_qualified_label(self):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label is None: # pragma: no cover
             return None
 
-        append_to_label = None
-
         pretty_name = (TableNames.objects
                        .get(table_name=self.category_name).label)
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
@@ -74,17 +80,16 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name == 'Surface':
+        if (pretty_name == 'Surface' or
+            f'[{pretty_name}]' in self.label):
             return self.label
         return self.label + ' [' + pretty_name + ']'
 
-    def body_qualified_label_results(self):
+    def body_qualified_label_results(self, referred=False):
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
         if self.label_results is None:
             return None
 
-        append_to_label = None
-
         pretty_name = (TableNames.objects
                        .get(table_name=self.category_name).label)
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
@@ -92,17 +97,24 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Mission Constraints', '')
         pretty_name = pretty_name.replace(' Constraints', '')
 
-        if pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
-                           'Occultation', 'Surface']:
+        if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
+                            'Occultation', 'Surface'] and not referred):
+            return self.label_results
+        # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the
+        # label for referred slug.
+        if f'[{pretty_name}]' in self.label_results:
             return self.label_results
         return self.label_results + ' [' + pretty_name + ']'
 
     def get_units(self):
         # Put parentheses around units (units)
-        if self.units:
-            return ('('
-                    + opus_support.UNIT_CONVERSION[self.units]['display_name']
-                    + ')')
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(self.form_type)
+        if form_type_unit_id and display_result_unit(form_type_unit_id):
+            default_unit = get_default_unit(form_type_unit_id)
+            display_name = get_unit_display_name(form_type_unit_id,
+                                                 default_unit)
+            return ('(' + display_name + ')')
         else:
             return ''
 
@@ -116,13 +128,13 @@ class ParamInfo(models.Model):
         return ret
 
     def is_string(self):
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(self.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING'
 
     def is_string_or_mult(self):
-        (form_type, form_type_func,
-         form_type_format) = parse_form_type(self.form_type)
+        (form_type, form_type_format,
+         form_type_unit_id) = parse_form_type(self.form_type)
         return form_type == 'STRING' or form_type in settings.MULT_FORM_TYPES
 
     def get_ranges_info(self):

@@ -25,7 +25,6 @@ import os
 import platform
 import qrcode
 import re
-import time
 
 import oyaml as yaml # Cool package that preserves key order
 import pdfkit
@@ -100,7 +99,6 @@ def api_volumes(request, fmt):
         exit_api_call(api_code, ret)
         raise ret
 
-    data = {}
     all_volumes = OrderedDict()
     for d in (ObsGeneral.objects.values('instrument_id','volume_id')
               .order_by('instrument_id','volume_id').distinct()):
@@ -309,14 +307,15 @@ def api_api_guide(request, fmt):
         guide = guide.replace('<thead>', '<thead class="thead-dark">')
         guide = guide.replace('<td>', '<td class="op-table-padding">')
 
-    fields_dict = get_fields_info('raw', collapse=True)
+    fields_dict = get_fields_info('raw', request, api_code, collapse=True)
     fields = []
-    for field_name, field in fields_dict.items():
-        field['pretty_units'] = None
-        available_units = field['available_units']
-        if available_units:
-            field['pretty_units'] = ', '.join(available_units)
-        fields.append(field)
+    for cat, cat_data in fields_dict.items():
+        for field_name, field in cat_data.items():
+            field['pretty_units'] = None
+            available_units = field['available_units']
+            if available_units:
+                field['pretty_units'] = ', '.join(available_units)
+            fields.append(field)
 
     template_name = 'help/apiguide.html'
     if fmt == 'pdf':

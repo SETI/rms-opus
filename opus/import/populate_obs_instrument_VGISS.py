@@ -4,9 +4,6 @@
 # Routines to populate fields specific to VGISS.
 ################################################################################
 
-import numpy as np
-
-import julian
 import pdsfile
 
 import import_util
@@ -46,11 +43,8 @@ def _VGISS_file_spec_helper(**kwargs):
 
 def populate_obs_general_VGISS_opus_id_OBS(**kwargs):
     file_spec = _VGISS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -217,7 +211,6 @@ def populate_obs_type_image_VGISS_greater_pixel_size_OBS(**kwargs):
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    instrument_id = index_row['INSTRUMENT_NAME'][0]
     filter_name = index_row['FILTER_NAME']
 
     if filter_name not in _VGISS_FILTER_WAVELENGTHS:
@@ -336,7 +329,6 @@ def populate_obs_occultation_VGISS_host_OBS(**kwargs):
 def populate_obs_instrument_vgiss_camera(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    obs_general_row = metadata['obs_general_row']
     camera = index_row['INSTRUMENT_NAME']
 
     assert camera in ['NARROW ANGLE CAMERA', 'WIDE ANGLE CAMERA']

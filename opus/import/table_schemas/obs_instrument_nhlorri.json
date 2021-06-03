@@ -63,7 +63,6 @@
         "pi_slug": "NHLORRIinstrumentcompressiontype",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0,  "LOSSLESS",       "Lossless", "010", "Y", null],
@@ -95,12 +94,18 @@
         "pi_slug": "NHLORRIbinningmode",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "Definition is from NHLORRI supplemental index label",
         "mult_options": [
               [   0, "1x1", "1x1", "010", "Y", null],
               [   1, "4x4", "4x4", "020", "Y", null]
           ]
+    },
+    {
+        "pi_category_name": "obs_instrument_nhlorri",
+        "pi_referred_slug": "duration",
+        "pi_disp_order": 1000,
+        "pi_display": 1,
+        "pi_display_results": 1
     },
     {
         "put_mults_here": true

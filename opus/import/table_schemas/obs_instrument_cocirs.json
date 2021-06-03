@@ -63,7 +63,6 @@
         "pi_slug": "COCIRSdetectorid",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0, "FP1", "FP1", "010", "Y", null],
               [   1, "FP3", "FP3", "020", "Y", null],
@@ -92,8 +91,7 @@
         "pi_old_slug": "INSTRUMENTMODEBLINKINGFLAG",
         "pi_slug": "COCIRSinstrumentmodeblinkingflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "instrument_mode_even_flag",
@@ -117,8 +115,7 @@
         "pi_old_slug": "INSTRUMENTMODEEVENFLAG",
         "pi_slug": "COCIRSinstrumentmodeevenflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "instrument_mode_odd_flag",
@@ -142,8 +139,7 @@
         "pi_old_slug": "INSTRUMENTMODEODDFLAG",
         "pi_slug": "COCIRSinstrumentmodeoddflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "instrument_mode_centers_flag",
@@ -167,8 +163,7 @@
         "pi_old_slug": "INSTRUMENTMODECENTERSFLAG",
         "pi_slug": "COCIRSinstrumentmodecentersflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "instrument_mode_pairs_flag",
@@ -192,8 +187,7 @@
         "pi_old_slug": "INSTRUMENTMODEPAIRSFLAG",
         "pi_slug": "COCIRSinstrumentmodepairsflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "instrument_mode_all_flag",
@@ -217,8 +211,7 @@
         "pi_old_slug": "INSTRUMENTMODEALLFLAG",
         "pi_slug": "COCIRSinstrumentmodeallflag",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "put_mults_here": true

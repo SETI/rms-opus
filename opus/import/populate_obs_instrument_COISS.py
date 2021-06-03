@@ -11,7 +11,6 @@
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -197,11 +196,8 @@ def _COISS_file_spec_helper(**kwargs):
 
 def populate_obs_general_COISS_opus_id_OBS(**kwargs):
     file_spec = _COISS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -511,11 +507,7 @@ def populate_obs_occultation_COISS_host_OBS(**kwargs):
 def populate_obs_mission_cassini_COISS_ert1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-
-    # START_TIME isn't available for COUVIS
-    start_time = index_row.get('EARTH_RECEIVED_START_TIME', None)
-    if start_time is None or start_time == 'UNK':
-        return None
+    start_time = index_row['EARTH_RECEIVED_START_TIME']
 
     try:
         ert_sec = julian.tai_from_iso(start_time)
@@ -529,11 +521,7 @@ def populate_obs_mission_cassini_COISS_ert1_OBS(**kwargs):
 def populate_obs_mission_cassini_COISS_ert2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-
-    # STOP_TIME isn't available for COUVIS
-    stop_time = index_row.get('EARTH_RECEIVED_STOP_TIME', None)
-    if stop_time is None or stop_time == 'UNK':
-        return None
+    stop_time = index_row['EARTH_RECEIVED_STOP_TIME']
 
     try:
         ert_sec = julian.tai_from_iso(stop_time)
@@ -548,7 +536,7 @@ def populate_obs_mission_cassini_COISS_ert2_OBS(**kwargs):
     if start_time_sec is not None and ert_sec < start_time_sec:
         import_util.log_warning(
             f'cassini_ert1 ({start_time_sec}) and cassini_ert2 ({ert_sec}) '
-            +f'are in the wrong order - setting to ert1')
+            +'are in the wrong order - setting to ert1')
         ert_sec = start_time_sec
 
     return ert_sec
@@ -587,7 +575,7 @@ def populate_obs_mission_cassini_COISS_spacecraft_clock_count2_OBS(**kwargs):
     if sc1 is not None and sc_cvt < sc1:
         import_util.log_warning(
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +f'are in the wrong order - setting to count1')
+    +'are in the wrong order - setting to count1')
         sc_cvt = sc1
     else:
         index_row = metadata['index_row']
@@ -638,17 +626,6 @@ def populate_obs_instrument_coiss_combined_filter(**kwargs):
     central_wl2, fwhm2, wl2 = _COISS_wavelength_helper(
             instrument_id, 'CL1', filter2)
 
-    # Collapse the various angles of polarizer into one grand polarizer
-    # if filter1[0] == 'P':
-    #     filter1 = 'POL'
-    # elif filter1[:3] == 'IRP':
-    #     filter1 = 'IRPOL'
-    #
-    # if filter2[0] == 'P':
-    #     filter2 = 'POL'
-    # elif filter2[:3] == 'IRP':
-    #     filter2 = 'IRPOL'
-
     new_filter = None
 
     if filter1 == 'CL1' and filter2 == 'CL2':
@@ -681,25 +658,18 @@ def populate_obs_instrument_coiss_image_observation_type(**kwargs):
 
     # Sometimes they have both SCIENCE,OPNAV and OPNAV,SCIENCE so normalize
     # the order
-    has_science = obs_type.find('SCIENCE') != -1
-    has_opnav = obs_type.find('OPNAV') != -1
-    has_calib = obs_type.find('CALIBRATION') != -1
-    has_support = obs_type.find('SUPPORT') != -1
-    has_unk = obs_type.find('UNK') != -1
-    has_eng = obs_type.find('ENGINEERING') != -1
-
     ret_list = []
-    if has_science:
+    if obs_type.find('SCIENCE') != -1:
         ret_list.append('SCIENCE')
-    if has_opnav:
+    if obs_type.find('OPNAV') != -1:
         ret_list.append('OPNAV')
-    if has_calib:
+    if obs_type.find('CALIBRATION') != -1:
         ret_list.append('CALIBRATION')
-    if has_eng:
+    if obs_type.find('ENGINEERING') != -1:
         ret_list.append('ENGINEERING')
-    if has_support:
+    if obs_type.find('SUPPORT') != -1:
         ret_list.append('SUPPORT')
-    if has_unk:
+    if obs_type.find('UNK') != -1:
         ret_list.append('UNKNOWN')
 
     ret = '/'.join(ret_list)

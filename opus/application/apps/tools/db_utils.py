@@ -6,7 +6,9 @@
 
 from django.apps import apps
 
-from tools.app_utils import get_mult_name, parse_form_type
+from tools.app_utils import get_mult_name
+
+from opus_support import parse_form_type
 
 import settings
 
@@ -38,8 +40,8 @@ def lookup_pretty_value_for_mult(param_info, value, cvt_null):
     if param_info.form_type is None: # pragma: no cover
         return None
 
-    (form_type, form_type_func,
-     form_type_format) = parse_form_type(param_info.form_type)
+    (form_type, form_type_format,
+     form_type_unit_id) = parse_form_type(param_info.form_type)
 
     if form_type not in settings.MULT_FORM_TYPES: # pragma: no cover
         return None

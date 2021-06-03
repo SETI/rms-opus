@@ -301,12 +301,6 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
                    'widgets', 'widgets2',
                    '__sessionid')
 
-# The public URL to access OPUS
-PUBLIC_OPUS_URL = 'https://pds-rings.seti.org/search/'
-
-# The root URL used to retrieve product files from a web server
-PRODUCT_HTTP_PATH = 'https://pds-rings.seti.org/'
-
 # The columns selected when OPUS is first initialized
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
@@ -364,8 +358,14 @@ MAX_SELECTIONS_FOR_URL_DOWNLOAD = 10000
 MAX_DOWNLOAD_SIZE = 3*1024*1024*1024 # 3 gig max for any single download
 MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a session
 
-THRESHOLD_FOR_EXPONENTIAL = 1e8
-
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
+
+# OPUS supported cart download formats, a dictionary keyed by format, and value
+# is a tuple containing MIME type & accessing (w/r) modes for the format.
+DOWNLOAD_FORMATS = {
+    'zip': ('application/zip', 'w', 'r'),
+    'tar': ('application/x-tar', 'w', 'r'),
+    'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
+}

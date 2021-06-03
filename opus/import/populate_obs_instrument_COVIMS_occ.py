@@ -7,7 +7,6 @@
 import pdsfile
 
 from config_data import *
-import impglobals
 import import_util
 
 from populate_obs_mission_cassini import *
@@ -30,11 +29,8 @@ def _COVIMS_file_spec_helper(**kwargs):
 
 def populate_obs_general_COVIMS_opus_id_OCC(**kwargs):
     file_spec = _COVIMS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -82,7 +78,7 @@ def populate_obs_pds_COVIMS_primary_file_spec_OCC(**kwargs):
     return _COVIMS_file_spec_helper(**kwargs)
 
 def populate_obs_pds_COVIMS_product_creation_time_OCC(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-SR-VIMS-HSP-2/4-OCC-V2.0"
 def populate_obs_pds_COVIMS_data_set_id_OCC(**kwargs):
@@ -335,44 +331,61 @@ def populate_obs_ring_geometry_COVIMS_phase1_OCC(**kwargs):
 def populate_obs_ring_geometry_COVIMS_phase2_OCC(**kwargs):
     return 180.
 
-def _incidence_helper(**kwargs):
+def populate_obs_ring_geometry_COVIMS_incidence1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    inc = 90-abs(import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION'))
+    el = index_row['OBSERVED_RING_ELEVATION']
 
-    return inc
-
-def populate_obs_ring_geometry_COVIMS_incidence1_OCC(**kwargs):
-    return _incidence_helper(**kwargs)
+    return 90. - abs(el)
 
 def populate_obs_ring_geometry_COVIMS_incidence2_OCC(**kwargs):
-    return _incidence_helper(**kwargs)
-
-def populate_obs_ring_geometry_COVIMS_north_based_incidence1_OCC(**kwargs):
-    return _incidence_helper(**kwargs)
-
-def populate_obs_ring_geometry_COVIMS_north_based_incidence2_OCC(**kwargs):
-    return _incidence_helper(**kwargs)
-
-def _emission_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    em = 90+abs(import_util.safe_column(index_row,
-                                         'OBSERVED_RING_ELEVATION'))
+    el = index_row['OBSERVED_RING_ELEVATION']
 
-    return em
+    return 90. - abs(el)
+
+def populate_obs_ring_geometry_COVIMS_north_based_incidence1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. + el
+
+def populate_obs_ring_geometry_COVIMS_north_based_incidence2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. + el
 
 def populate_obs_ring_geometry_COVIMS_emission1_OCC(**kwargs):
-    return _emission_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. + abs(el)
 
 def populate_obs_ring_geometry_COVIMS_emission2_OCC(**kwargs):
-    return _emission_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. + abs(el)
 
 def populate_obs_ring_geometry_COVIMS_north_based_emission1_OCC(**kwargs):
-    return _emission_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. - el
 
 def populate_obs_ring_geometry_COVIMS_north_based_emission2_OCC(**kwargs):
-    return _emission_helper(**kwargs)
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return 90. - el
 
 # We set the center versions to be the same as the normal versions
 populate_obs_ring_geometry_COVIMS_center_phase1_OCC = \
@@ -399,30 +412,58 @@ populate_obs_ring_geometry_COVIMS_center_north_based_emission2_OCC = \
 def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+    el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_COVIMS_observer_ring_opening_angle2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+    el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_COVIMS_observer_ring_elevation1_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+    el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
 def populate_obs_ring_geometry_COVIMS_observer_ring_elevation2_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = import_util.safe_column(index_row, 'OBSERVED_RING_ELEVATION')
+    el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
+
+def populate_obs_ring_geometry_COVIMS_solar_ring_opening_angle1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_COVIMS_solar_ring_opening_angle2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_COVIMS_solar_ring_elevation1_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return -el
+
+def populate_obs_ring_geometry_COVIMS_solar_ring_elevation2_OCC(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    el = index_row['OBSERVED_RING_ELEVATION']
+
+    return -el
 
 def populate_obs_ring_geometry_COVIMS_ring_intercept_time1_OCC(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
@@ -483,7 +524,7 @@ def populate_obs_mission_cassini_COVIMS_spacecraft_clock_count2_OCC(**kwargs):
     if sc1 is not None and sc_cvt < sc1:
         import_util.log_warning(
     f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +f'are in the wrong order - setting to count1')
+    +'are in the wrong order - setting to count1')
         sc_cvt = sc1
 
     return sc_cvt

@@ -118,6 +118,7 @@ var opus = {
         "chrome (ios)": 56,
         "opera": 42,
         "safari": 10.1,
+        "edge": 83,
         "based on applewebkit": 537, // Based on Chrome 56
         "width": 550,
         "height": 270
@@ -418,13 +419,13 @@ var opus = {
         $('.nav-item a[href="#'+opus.prefs.view+'"]').trigger("click");
     },
 
-    updateLastBlogDate: function() {
+    updateNotifications: function() {
         /**
          * Retrieve the date of the last blog update and update the tooltip for
          * the 'Recent Announcements' nav bar item.
          */
 
-        $.getJSON("/opus/__lastblogupdate.json", function(data) {
+        $.getJSON("/opus/__notifications.json", function(data) {
             if (data.lastupdate !== null) {
                 let lastUpdateDate = new Date(data.lastupdate);
                 let today = Date.now();
@@ -440,6 +441,10 @@ var opus = {
             } else {
                 $("#op-last-blog-update-date").attr("title", "");
             }
+            // note: $.cookie compare needs to be != because the cookie is a string number but cdate is a number.
+            if (data.notification !== null && data.notification !== "" && $.cookie("notify") != data.notification_mdate) {
+                opus.displayNotificationDialog(data.notification, data.notification_mdate);
+            }
         });
     },
 
@@ -451,6 +456,34 @@ var opus = {
             opus.navLinkRemembered = null;
             opus.triggerNavbarClick();
         }
+    },
+
+    hideTawkChat: function(action) {
+        $("iframe").each(function(index) {
+            let elem = $(this).contents().find("div#tawkchat-minified-box");
+            if (elem.length > 0) {
+                if (elem.find("#minimizeChatMinifiedBtn").hasClass("hide")) {
+                    elem.hide();
+                }
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
+            if (elem.length > 0) {
+                elem.hide();
+            }
+        });
+    },
+
+    showTawkChat: function(action) {
+        $("iframe").each(function(index) {
+            let elem = $(this).contents().find("div#tawkchat-minified-box");
+            if (elem.length > 0) {
+                elem.show();
+            }
+            elem = $(this).contents().find("[id^=tawkchat-chat-bubble]");
+            if (elem.length > 0) {
+                elem.show();
+            }
+        });
     },
 
     changeTab: function(tab) {
@@ -482,7 +515,7 @@ var opus = {
         o_hash.updateURLFromCurrentHash();
 
         // Go ahead and check to see if the blog has been updated recently
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
 
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
@@ -495,24 +528,28 @@ var opus = {
                 // uses opacity, and we're already using opacity for the text
                 // and background image, so it flashes bright and then dims
                 $(".feedbackTab").show();
+                opus.showTawkChat();
                 o_search.activateSearchTab();
                 break;
 
             case "browse":
                 $("#browse").fadeIn();
                 $(".feedbackTab").hide();
+                opus.hideTawkChat();
                 o_browse.activateBrowseTab();
                 break;
 
             case "detail":
                 $("#detail").fadeIn();
                 $(".feedbackTab").show();
+                opus.showTawkChat();
                 o_detail.activateDetailTab(opus.prefs.detail);
                 break;
 
             case "cart":
                 $("#cart").fadeIn();
                 $(".feedbackTab").hide();
+                opus.hideTawkChat();
                 o_cart.activateCartTab();
                 break;
 
@@ -715,6 +752,7 @@ var opus = {
         o_cart.addCartBehaviors();
         o_search.addSearchBehaviors();
         o_sortMetadata.addBehaviours();
+        o_selectMetadata.addBehaviors();
     },
 
     addOpusBehaviors: function() {
@@ -731,7 +769,7 @@ var opus = {
         let adjustHelpPanelHeightDB = _.debounce(opus.adjustHelpPanelHeight, 200);
         let hideOrShowSelectMetadataMenuPSDB = _.debounce(o_selectMetadata.hideOrShowMenuPS, 200);
         let hideOrShowSelectedMetadataPSDB = _.debounce(o_selectMetadata.hideOrShowPS, 200);
-        let adjustBrowseDialogPSDB = _.debounce(o_browse.adjustBrowseDialogPS, 200);
+        let adjustBrowseDialogPSDB = function() {o_browse.adjustBrowseDialogPS(true);};
         let displayCartLeftPaneDB = _.debounce(o_cart.displayCartLeftPane, 200);
 
         $(window).on("resize", function() {
@@ -883,11 +921,18 @@ var opus = {
                         case "op-addall-to-cart-modal":
                             o_cart.addAllToCart();
                             break;
+                        case "op-close-widgets-modal":
+                            let slug = $("#op-close-widgets-modal").data("slug");
+                            o_widgets.closeAndRemoveWidgetFromDOM(slug, false);
+                            break;
                         case "op-close-surfacegeo-widgets-modal":
                             o_widgets.closeAllSURFACEGEOWidgets();
                             break;
                         case "op-http-response-error-modal":
                             location.reload();
+                            break;
+                        case "op-notification-modal":
+                            $.cookie("notify", $(`#${target}`).data("cookie"), {expires: 1000000});
                             break;
                     }
                     $(`#${target}`).modal("hide");
@@ -925,6 +970,14 @@ var opus = {
     tooltipRemoveHandler: function() {
         $(".op-tooltip-text").remove();
         $(window).off("touchstart", opus.tooltipRemoveHandler);
+    },
+
+    displayNotificationDialog: function(html, cookie) {
+        $("#op-notification-modal .modal-body").html(html);
+        $("#op-notification-modal").data("cookie", cookie);
+
+        opus.hideOrShowSplashText();
+        $("#op-notification-modal").modal("show");
     },
 
     displayHelpPane: function(action) {
@@ -977,6 +1030,9 @@ var opus = {
                 return;
             case "announcements":
                 window.open("https://ringsnodesearchtool.blogspot.com/", "_blank");
+                return;
+            case "tutorialVideos":
+                window.open("https://www.youtube.com/playlist?list=PLgPYitJagzrYj0iMFiuwQpdGImP6Wdt29", "_blank");
                 return;
         }
 
@@ -1079,7 +1135,7 @@ var opus = {
          * Initialize OPUS after the normalized URL has been returned.
          */
 
-        opus.updateLastBlogDate();
+        opus.updateNotifications();
         opus.addAllBehaviors();
 
         opus.prefs.widgets = [];
@@ -1232,6 +1288,17 @@ var opus = {
             matchObj = userAgent.match(/Version\/(\d+.\d+)/);
             browserName = "Safari";
             browserVersion = matchObj[1];
+        } else if (userAgent.indexOf("Edg") > -1) {
+            // ==== Microsoft Edge ====
+            // ** Mac:
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36 Edg/83.0.478.37
+            // ** Windows:
+            // Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+            // (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36 Edg/83.0.478.37
+            matchObj = userAgent.match(/Edg\/(\d+.\d+)/);
+            browserName = "Edge";
+            browserVersion = matchObj[1];
         } else if (userAgent.indexOf("AppleWebKit") > -1 && userAgent.indexOf("Edge") === -1 &&
                    userAgent.indexOf("Edg") === -1) {
             // ==== Other AppleWebKit-based Browser ====
@@ -1265,6 +1332,7 @@ var opus = {
                         Chrome (${opus.browserSupport.chrome}+),
                         Safari (${opus.browserSupport.safari}+),
                         Opera (${opus.browserSupport.opera}+),
+                        Edge (${opus.browserSupport.edge}+),
                         and other AppleWebKit-based browsers (${opus.browserSupport["based on applewebkit"]})+.
                         ${updateString}`);
         $("#op-browser-version-msg-modal .modal-body").html(modalMsg);

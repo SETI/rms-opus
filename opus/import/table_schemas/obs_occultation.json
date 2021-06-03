@@ -75,7 +75,6 @@
         "pi_slug": "occtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0, "RAD",   "Radio",   "010", "Y", null],
               [   1, "STE", "Stellar",   "020", "Y", null],
@@ -107,7 +106,6 @@
         "pi_slug": "occdir",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0, "I", "Ingress",   "010", "Y", null],
               [   1, "E",  "Egress",   "020", "Y", null],
@@ -138,8 +136,7 @@
         "pi_old_slug": null,
         "pi_slug": "bodyoccflag",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "temporal_sampling",
@@ -159,15 +156,14 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE%.4f",
+        "pi_form_type": "RANGE%.4f:duration",
         "pi_intro": null,
         "pi_label": "Temporal Sampling Interval",
         "pi_label_results": "Temporal Sampling Interval",
         "pi_old_slug": null,
         "pi_slug": "occtimesampling",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": "seconds"
+        "pi_tooltip": null
     },
     {
         "field_name": "quality_score",
@@ -192,8 +188,7 @@
         "pi_old_slug": null,
         "pi_slug": "occdataquality",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "optical_depth1",
@@ -223,8 +218,7 @@
         "pi_old_slug": null,
         "pi_slug": "occdepth1",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "optical_depth2",
@@ -251,8 +245,7 @@
         "pi_old_slug": null,
         "pi_slug": "occdepth2",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "wl_band",
@@ -278,7 +271,6 @@
         "pi_slug": "occwlband",
         "pi_sub_heading": null,
         "pi_tooltip": "",
-        "pi_units": null,
         "mult_options": [
               [   0, "S",        "S",   "010", "Y", null],
               [   1, "X",        "X",   "020", "Y", null],
@@ -312,8 +304,7 @@
         "pi_old_slug": null,
         "pi_slug": "occsource",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "field_name": "host",
@@ -338,8 +329,49 @@
         "pi_old_slug": null,
         "pi_slug": "occreceiverhost",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius1",
+        "pi_disp_order": 1000,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOringradius2",
+        "pi_disp_order": 1001,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle1",
+        "pi_disp_order": 1010,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOsolarringopeningangle2",
+        "pi_disp_order": 1011,
+        "pi_display": 0,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOobserverringopeningangle1",
+        "pi_disp_order": 1020,
+        "pi_display": 1,
+        "pi_display_results": 1
+    },
+    {
+        "pi_category_name": "obs_occultation",
+        "pi_referred_slug": "RINGGEOobserverringopeningangle2",
+        "pi_disp_order": 1021,
+        "pi_display": 0,
+        "pi_display_results": 1
     },
     {
         "put_mults_here": true

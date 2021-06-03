@@ -88,6 +88,12 @@
         "field_notnull": true
     },
     {
+        "field_name": "default_checked",
+        "field_type": "uint4",
+        "field_key": false,
+        "field_notnull": true
+    },
+    {
         "field_name": "product_order",
         "field_type": "uint4",
         "field_key": false,

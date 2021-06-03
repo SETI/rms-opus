@@ -2,11 +2,16 @@
 # populate_obs_instrument_GB_occ.py
 #
 # Routines to populate fields specific to ground-based instruments.
+#
+# XXX NOTE THIS ONLY WORKS FOR 28 SGR RIGHT NOW.
+# On 1989-07-03, 28 Sgr incidence angle was 64.627 on the south side
+# North-based incidence angle was 180-64.627 = 115.373
+# The north side of the rings were illuminated by the Sun
+# Earth was viewing the north side of the rings
+# Emission angle and north-based emission angle = incidence angle
+# Observer elevation = 90 - incidence angle
 ################################################################################
 
-import numpy as np
-
-import julian
 import pdsfile
 
 from config_data import *
@@ -34,11 +39,8 @@ def _GB_file_spec_helper(**kwargs):
 
 def populate_obs_general_GB_opus_id_OCC(**kwargs):
     file_spec = _GB_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -86,7 +88,7 @@ def populate_obs_pds_GB_product_creation_time_OCC(**kwargs):
 
 # Format: "ESO1M-SR-APPH-4-OCC-V1.0"
 def populate_obs_pds_GB_data_set_id_OCC(**kwargs):
-    return populate_data_set_id_from_index_label(**kwargs)
+    return populate_data_set_id_from_supp_index(**kwargs)
 
 # Format: "ES1_EGRESS"
 def populate_obs_pds_GB_product_id_OCC(**kwargs):
@@ -127,15 +129,15 @@ def populate_obs_type_image_GB_greater_pixel_size_OCC(**kwargs):
 
 def populate_obs_wavelength_GB_wavelength1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return wl
 
 def populate_obs_wavelength_GB_wavelength2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return wl
 
@@ -147,15 +149,15 @@ def populate_obs_wavelength_GB_wave_res2_OCC(**kwargs):
 
 def populate_obs_wavelength_GB_wave_no1_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
 def populate_obs_wavelength_GB_wave_no2_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     return 10000 / wl # cm^-1
 
@@ -217,8 +219,8 @@ def populate_obs_occultation_GB_quality_score_OCC(**kwargs):
 
 def populate_obs_occultation_GB_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
-    index_label = metadata['index_label']
-    wl = index_label['WAVELENGTH'] # microns
+    supp_index_row = metadata['supp_index_row']
+    wl = supp_index_row['WAVELENGTH'] # microns
 
     if wl > 0.7:
         return 'IR'
@@ -235,7 +237,7 @@ def populate_obs_occultation_GB_source_OCC(**kwargs):
 
 def populate_obs_occultation_GB_host_OCC(**kwargs):
     metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_label']
+    supp_index_row = metadata['supp_index_row']
     insthost = supp_index_row['INSTRUMENT_HOST_NAME']
 
     return (insthost, insthost)
@@ -276,16 +278,26 @@ def populate_obs_ring_geometry_GB_proj_resolution1_OCC(**kwargs):
 def populate_obs_ring_geometry_GB_proj_resolution2_OCC(**kwargs):
     return _radial_resolution_helper(**kwargs)
 
+### Phase angle
+
 def populate_obs_ring_geometry_GB_phase1_OCC(**kwargs):
     return 180.
 
 def populate_obs_ring_geometry_GB_phase2_OCC(**kwargs):
     return 180.
 
+def populate_obs_ring_geometry_GB_center_phase1_OCC(**kwargs):
+    return 180.
+
+def populate_obs_ring_geometry_GB_center_phase2_OCC(**kwargs):
+    return 180.
+
+### Incidence angle
+
 def _incidence_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
-    inc = import_util.safe_column(supp_index_row, 'INCIDENCE_ANGLE')
+    inc = supp_index_row['INCIDENCE_ANGLE']
 
     return inc
 
@@ -295,17 +307,113 @@ def populate_obs_ring_geometry_GB_incidence1_OCC(**kwargs):
 def populate_obs_ring_geometry_GB_incidence2_OCC(**kwargs):
     return _incidence_helper(**kwargs)
 
-def populate_obs_ring_geometry_GB_center_phase1_OCC(**kwargs):
-    return 180.
-
-def populate_obs_ring_geometry_GB_center_phase2_OCC(**kwargs):
-    return 180.
-
 def populate_obs_ring_geometry_GB_center_incidence1_OCC(**kwargs):
     return _incidence_helper(**kwargs)
 
 def populate_obs_ring_geometry_GB_center_incidence2_OCC(**kwargs):
     return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_north_based_incidence1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_north_based_incidence2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_north_based_incidence1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_north_based_incidence2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 180.-_incidence_helper(**kwargs)
+
+### Emission angle
+
+def populate_obs_ring_geometry_GB_emission1_OCC(**kwargs):
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_emission2_OCC(**kwargs):
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_emission1_OCC(**kwargs):
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_emission2_OCC(**kwargs):
+    return 180.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_north_based_emission1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_north_based_emission2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_north_based_emission1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_center_north_based_emission2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)
+
+### Observer ring opening angle (positive on north side of rings)
+### Observer ring elevation (positive on north side of rings for Saturn)
+
+def populate_obs_ring_geometry_GB_observer_ring_opening_angle1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 90.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_observer_ring_opening_angle2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 90.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_observer_ring_elevation1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 90.-_incidence_helper(**kwargs)
+
+def populate_obs_ring_geometry_GB_observer_ring_elevation2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return 90.-_incidence_helper(**kwargs)
+
+### Solar ring opening angle (positive on north side of rings)
+### Solar ring elevation (positive on north side of rings for Saturn)
+
+def populate_obs_ring_geometry_GB_solar_ring_opening_angle1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_opening_angle2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_elevation1_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+def populate_obs_ring_geometry_GB_solar_ring_elevation2_OCC(**kwargs):
+    # XXX This is only valid for EBROCC 28 Sgr where the star was on the south
+    # side of the rings
+    return _incidence_helper(**kwargs)-90.
+
+### Time
 
 def populate_obs_ring_geometry_GB_ring_intercept_time1_OCC(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START', **kwargs)

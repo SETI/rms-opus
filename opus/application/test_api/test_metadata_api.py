@@ -359,33 +359,33 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         self._run_json_equal(url, expected)
 
     # Other return formats
-    def test__api_meta_mults_NHPELO_2001_json(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target"
-        url = '/api/meta/mults/target.json?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_json(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target"
+        url = '/api/meta/mults/target.json?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = {"field_id": "target", "mults": {"2002 MS4": 60, "2010 JJ124": 90, "Arawn": 290, "Calibration": 6, "Charon": 490, "Chiron": 90, "HD 205905": 10, "HD 37962": 10, "Hydra": 143, "Ixion": 60,
                     "Kerberos": 10, "NGC 3532": 45, "Nix": 102, "Pluto": 5265, "Quaoar": 96, "Styx": 6}}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_csv(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target csv"
-        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_csv(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target csv"
+        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = b'2002 MS4,2010 JJ124,Arawn,Calibration,Charon,Chiron,HD 205905,HD 37962,Hydra,Ixion,Kerberos,NGC 3532,Nix,Pluto,Quaoar,Styx\n60,90,290,6,490,90,10,10,143,60,10,45,102,5265,96,6\n'
         self._run_csv_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_html(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target html"
-        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_html(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target html"
+        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         expected = b'<dl>\n<dt>2002 MS4</dt><dd>60</dd>\n<dt>2010 JJ124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>HD 205905</dt><dd>10</dd>\n<dt>HD 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>NGC 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_csv_internal(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target csv internal"
-        url = '/__api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_csv_internal(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target csv internal"
+        url = '/__api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         self._run_status_equal(url, 404)
 
-    def test__api_meta_mults_NHPELO_2001_html_internal(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target html internal"
-        url = '/__api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001'
+    def test__api_meta_mults_NHPELO_1001_html_internal(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target html internal"
+        url = '/__api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001'
         self._run_status_equal(url, 404)
 
     # reqno
@@ -415,15 +415,15 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         self._run_status_equal(url, 404,
                 HTTP404_BAD_OR_MISSING_REQNO('/__api/meta/mults/target.json'))
 
-    def test__api_meta_mults_NHPELO_2001_csv_reqno(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target reqno csv"
-        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=NaN'
+    def test__api_meta_mults_NHPELO_1001_csv_reqno(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target reqno csv"
+        url = '/api/meta/mults/target.csv?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001&reqno=NaN'
         expected = b'2002 MS4,2010 JJ124,Arawn,Calibration,Charon,Chiron,HD 205905,HD 37962,Hydra,Ixion,Kerberos,NGC 3532,Nix,Pluto,Quaoar,Styx\n60,90,290,6,490,90,10,10,143,60,10,45,102,5265,96,6\n'
         self._run_csv_equal(url, expected)
 
-    def test__api_meta_mults_NHPELO_2001_html_reqno(self):
-        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_2001 target reqno html"
-        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_2001&reqno=5'
+    def test__api_meta_mults_NHPELO_1001_html_reqno(self):
+        "[test_metadata_api.py] /api/meta/meta/mults: for NHPELO_1001 target reqno html"
+        url = '/api/meta/mults/target.html?instrument=New+Horizons+LORRI&volumeid=NHPELO_1001&reqno=5'
         expected = b'<dl>\n<dt>2002 MS4</dt><dd>60</dd>\n<dt>2010 JJ124</dt><dd>90</dd>\n<dt>Arawn</dt><dd>290</dd>\n<dt>Calibration</dt><dd>6</dd>\n<dt>Charon</dt><dd>490</dd>\n<dt>Chiron</dt><dd>90</dd>\n<dt>HD 205905</dt><dd>10</dd>\n<dt>HD 37962</dt><dd>10</dd>\n<dt>Hydra</dt><dd>143</dd>\n<dt>Ixion</dt><dd>60</dd>\n<dt>Kerberos</dt><dd>10</dd>\n<dt>NGC 3532</dt><dd>45</dd>\n<dt>Nix</dt><dd>102</dd>\n<dt>Pluto</dt><dd>5265</dd>\n<dt>Quaoar</dt><dd>96</dd>\n<dt>Styx</dt><dd>6</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
@@ -449,77 +449,77 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_cache(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: cache"
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": "ymdhms"}
         self._run_json_equal(url, expected)
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": "ymdhms"}
         self._run_json_equal(url, expected)
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": "ymdhms"}
         self._run_json_equal(url, expected)
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": "ymdhms"}
         self._run_json_equal(url, expected)
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=2'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 2, "units": "ymdhms"}
         self._run_json_equal(url, expected)
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=3'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 3, "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     # General / Observation Time (string return)
     def test__api_meta_range_endpoints_times_COISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COISS"
         url = '/api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COISS_internal(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COISS internal"
         url = '/__api/meta/range/endpoints/timesec1.json?volumeid=COISS_2111&reqno=1'
-        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": None}
+        expected = {"max": "2017-03-31T13:05:35.059", "nulls": 0, "min": "2017-02-17T23:59:39.059", "reqno": 1, "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COUVIS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COUVIS"
         url = '/api/meta/range/endpoints/timesec1.json?volumeid=COUVIS_0002'
-        expected = {"max": "2001-04-01T00:07:19.842", "nulls": 0, "min": "2001-01-01T02:12:02.721", "units": None}
+        expected = {"max": "2001-04-01T00:07:19.842", "nulls": 0, "min": "2001-01-01T02:12:02.721", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_COVIMS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times COVIMS"
         url = '/api/meta/range/endpoints/timesec1.json?volumeid=COVIMS_0006'
-        expected = {"max": "2005-04-01T00:06:46.867", "nulls": 0, "min": "2005-01-15T17:55:38.899", "units": None}
+        expected = {"max": "2005-04-01T00:06:46.867", "nulls": 0, "min": "2005-01-15T17:55:38.899", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_GOSSI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times GOSSI"
         url = '/api/meta/range/endpoints/timesec1.json?volumeid=GO_0017'
-        expected = {"max": "1996-12-14T17:30:37.354", "nulls": 0, "min": "1996-06-03T17:05:38.002", "units": None}
+        expected = {"max": "1996-12-14T17:30:37.354", "nulls": 0, "min": "1996-06-03T17:05:38.002", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times VGISS"
         url = '/api/meta/range/endpoints/timesec1.json?volumeid=VGISS_6210'
-        expected = {"max": "1981-08-15T22:17:36.000", "nulls": 0, "min": "1981-08-12T14:55:10.080", "units": None}
+        expected = {"max": "1981-08-15T22:17:36.000", "nulls": 0, "min": "1981-08-12T14:55:10.080", "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI"
-        url = '/api/meta/range/endpoints/timesec1.json?volumeid=HSTI1_2003'
-        expected = {"max": "2009-08-08T23:13:10.000", "nulls": 0, "min": "2009-07-23T18:12:25.000", "units": None}
+        url = '/api/meta/range/endpoints/timesec1.json?volumeid=HSTI1_1559'
+        expected = {"min": "2009-09-18T13:13:10.000", "max": "2009-09-23T01:05:12.000", "nulls": 0, "units": "ymdhms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_html(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI html"
-        url = '/api/meta/range/endpoints/timesec1.html?volumeid=HSTI1_2003'
-        expected = b'<dl>\n<dt>min</dt><dd>2009-07-23T18:12:25.000</dd>\n<dt>max</dt><dd>2009-08-08T23:13:10.000</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>None</dd>\n</dl>\n'
+        url = '/api/meta/range/endpoints/timesec1.html?volumeid=HSTI1_1559'
+        expected = b'<dl>\n<dt>min</dt><dd>2009-09-18T13:13:10.000</dd>\n<dt>max</dt><dd>2009-09-23T01:05:12.000</dd>\n<dt>nulls</dt><dd>0</dd>\n<dt>units</dt><dd>ymdhms</dd>\n</dl>\n'
         self._run_html_equal(url, expected)
 
     def test__api_meta_range_endpoints_times_HSTI_csv(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: times HSTI csv"
-        url = '/api/meta/range/endpoints/timesec1.csv?volumeid=HSTI1_2003'
-        expected = b'min,max,nulls,units\n2009-07-23T18:12:25.000,2009-08-08T23:13:10.000,0,\n'
+        url = '/api/meta/range/endpoints/timesec1.csv?volumeid=HSTI1_1559'
+        expected = b'min,max,nulls,units\n2009-09-18T13:13:10.000,2009-09-23T01:05:12.000,0,ymdhms\n'
         self._run_csv_equal(url, expected)
 
     # General / Observation Duration (floating point return)
@@ -597,10 +597,22 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
         expected = {"min": "192.007002", "max": "242.282082", "nulls": 0, "units": "degrees"}
         self._run_json_equal(url, expected)
 
-    def test__api_meta_range_endpoints_right_ascension_VGISS_hourangle(self):
-        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hourangle"
-        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hourangle'
-        expected = {"min": "12.8004668", "max": "16.1521388", "nulls": 0, "units": "hourangle"}
+    def test__api_meta_range_endpoints_right_ascension_VGISS_dms(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS dms"
+        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=dms'
+        expected = {"min": "192d 00m 25.207s", "max": "242d 16m 55.495s", "nulls": 0, "units": "dms"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_hours(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hours"
+        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hours'
+        expected = {"min": "12.8004668", "max": "16.1521388", "nulls": 0, "units": "hours"}
+        self._run_json_equal(url, expected)
+
+    def test__api_meta_range_endpoints_right_ascension_VGISS_hms(self):
+        "[test_metadata_api.py] /api/meta/range/endpoints: right ascension VGISS hms"
+        url = '/api/meta/range/endpoints/rightasc.json?volumeid=VGISS_6210&units=hms'
+        expected = {"min": "12h 48m 01.6805s", "max": "16h 09m 07.6997s", "nulls": 0, "units": "hms"}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_right_ascension_VGISS_radians(self):
@@ -774,28 +786,28 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_fields_time1_cache(self):
         "[test_metadata_api.py] /api/fields: time1 json cache"
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_json(self):
         "[test_metadata_api.py] /api/fields: time1 json"
         url = '/api/fields/time1.json'
-        expected = {"data": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", "default_units": None, "available_units": None, "type": "range_time"}}}
+        expected = {"data": {"General Constraints": {"time1": {"label": "Observation Start Time", "search_label": "Observation Time", "full_label": "Observation Start Time", "full_search_label": "Observation Time [General]", "category": "General Constraints", "slug": "time1", "field_id": "time1", "old_slug": "timesec1", 'linked': False, "default_units": "ymdhms", "available_units": ['ymdhms', 'ydhms', 'jd', 'jed', 'mjd', 'mjed', 'et'], "type": "range_time"}}}}
         self._run_json_equal(url, expected)
 
     def test__api_fields_time1_csv(self):

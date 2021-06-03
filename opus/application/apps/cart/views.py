@@ -16,11 +16,9 @@
 ################################################################################
 
 import csv
-import datetime
 import logging
 import os
-import random
-import string
+import tarfile
 import time
 import zipfile
 
@@ -30,7 +28,6 @@ from django.db import connection, DatabaseError
 from django.http import (HttpResponse,
                          HttpResponseServerError,
                          Http404)
-from django.shortcuts import render
 from django.template.loader import get_template
 from django.views.decorators.cache import never_cache
 
@@ -50,6 +47,7 @@ from search.views import (url_to_search_params,
                           create_order_by_sql)
 from tools.app_utils import (cols_to_slug_list,
                              csv_response,
+                             download_filename,
                              enter_api_call,
                              exit_api_call,
                              get_reqno,
@@ -57,12 +55,15 @@ from tools.app_utils import (cols_to_slug_list,
                              json_response,
                              throw_random_http404_error,
                              throw_random_http500_error,
+                             HTTP404_BAD_DOWNLOAD,
                              HTTP404_BAD_OR_MISSING_RANGE,
                              HTTP404_BAD_OR_MISSING_REQNO,
                              HTTP404_BAD_RECYCLEBIN,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT,
+                             HTTP404_UNKNOWN_SLUG,
                              HTTP500_DATABASE_ERROR,
                              HTTP500_INTERNAL_ERROR,
                              HTTP500_SEARCH_CACHE_FAILED)
@@ -121,13 +122,15 @@ def api_view_cart(request):
 
     for name, details in info['product_cat_list']:
         for type in details:
-            if type['slug_name'] in not_selected_product_types:
+            if (type['slug_name'] in not_selected_product_types or
+                not type['default_checked']):
                 type['selected'] = ''
             else:
                 type['selected'] = 'checked'
 
     info['count'] = count
     info['recycled_count'] = recycled_count
+    info['format'] = settings.DOWNLOAD_FORMATS.keys()
 
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
@@ -253,7 +256,8 @@ def api_get_cart_csv(request):
         exit_api_call(api_code, ret)
         raise ret
 
-    ret = csv_response('data', page, column_labels)
+    csv_filename = download_filename(None, 'cart')
+    ret = csv_response(csv_filename, page, column_labels)
 
     exit_api_call(api_code, ret)
     return ret
@@ -506,21 +510,23 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_id=None):
-    """Creates a zip file of all items in the cart or the given OPUS ID.
+def api_create_download(request, opus_id=None, fmt=None):
+    r"""Creates an archive file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
 
     Format: __cart/download.json
-        or: [__]api/download/(?P<opus_id>[-\w]+).zip
+        or: [__]api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)
     Arguments: types=<PRODUCT_TYPES>
-               urlonly=1 (optional) means to not zip the actual data products
+               urlonly=1 (optional) means to not include the actual data products
+               hierarchical=1 (optional) means files in archive are stored with
+               hierarchy tree
     """
     api_code = enter_api_call('api_create_download', request)
 
     if not request or request.GET is None:
         if opus_id:
-            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.zip'))
+            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.{fmt}'))
         else:
             ret = Http404(HTTP404_NO_REQUEST('/__cart/download.json'))
         exit_api_call(api_code, ret)
@@ -548,22 +554,22 @@ def api_create_download(request, opus_id=None):
             max_selections = settings.MAX_SELECTIONS_FOR_URL_DOWNLOAD
             if num_selections > max_selections:
                 ret = json_response({'error':
-                     f'You are attempting to download more than the maximum '
+                      'You are attempting to download more than the maximum '
                     +f'permitted number ({max_selections}) of observations in '
-                    +f'a URL archive. Please reduce the number of '
-                    +f'observations you are trying to download.'})
+                    + 'a URL archive. Please reduce the number of '
+                    + 'observations you are trying to download.'})
                 exit_api_call(api_code, ret)
                 return ret
         else:
             max_selections = settings.MAX_SELECTIONS_FOR_DATA_DOWNLOAD
             if num_selections > max_selections:
                 ret = json_response({'error':
-                     f'You are attempting to download more than the maximum '
+                      'You are attempting to download more than the maximum '
                     +f'permitted number ({max_selections}) of observations in '
-                    +f'a data archive. Please either reduce the number of '
-                    +f'observations you are trying to download or download a '
-                    +f'URL archive instead and then retrieve the data products '
-                    +f'using "wget".'})
+                    + 'a data archive. Please either reduce the number of '
+                    + 'observations you are trying to download or download a '
+                    + 'URL archive instead and then retrieve the data products '
+                    + 'using "wget".'})
                 exit_api_call(api_code, ret)
                 return ret
         res = (Cart.objects
@@ -587,17 +593,24 @@ def api_create_download(request, opus_id=None):
     files = get_pds_products(opus_ids, loc_type='raw',
                              product_types=product_types)
 
-    zip_base_file_name = _zip_filename(opus_id, url_file_only)
-    zip_root = zip_base_file_name.split('.')[0]
-    zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
-    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{zip_root}.csv'
-    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
-    url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
+    file_type = 'url' if url_file_only else 'data'
+
+    if not fmt:
+        fmt = request.GET.get('fmt', 'zip')
+    # If the file format is not supported, raise HTTP404 error.
+    if fmt not in settings.DOWNLOAD_FORMATS:
+        raise Http404(HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, request))
+
+    archive_root = download_filename(opus_id, file_type)
+    archive_base_file_name = archive_root + f'.{fmt}'
+    archive_file_name = settings.TAR_FILE_PATH + archive_base_file_name
+    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{archive_root}.csv'
+    csv_file_name = settings.TAR_FILE_PATH + f'csv_{archive_root}.txt'
+    url_file_name = settings.TAR_FILE_PATH + f'url_{archive_root}.txt'
 
     _create_csv_file(request, csv_file_name, opus_id, api_code=api_code)
 
-    # Don't create download if the resultant zip file would be too big
+    # Don't create download if the resultant archive file would be too big
     if not url_file_only:
         info = _get_download_info(product_types, session_id)
         download_size = info['total_download_size']
@@ -608,10 +621,10 @@ def api_create_download(request, opus_id=None):
                  +' bytes but the maximum allowed is '
                  +'{:,}'.format(settings.MAX_DOWNLOAD_SIZE)
                  +' bytes. Please either reduce the number of '
-                 +f'observations you are trying to download, reduce the number '
-                 +f'of data products for each observation, or download a URL '
-                 +f'archive instead and then retrieve the data products using '
-                 +f'"wget".'})
+                 +'observations you are trying to download, reduce the number '
+                 +'of data products for each observation, or download a URL '
+                 +'archive instead and then retrieve the data products using '
+                 +'"wget".'})
             exit_api_call(api_code, ret)
             return ret
 
@@ -628,13 +641,21 @@ def api_create_download(request, opus_id=None):
             return ret
         request.session['cum_download_size'] = int(cum_download_size)
 
-    # Add each file to the new zip file and create a manifest too
+    mime_type = settings.DOWNLOAD_FORMATS[fmt][0]
+    write_mode = settings.DOWNLOAD_FORMATS[fmt][1]
+    # Add each file to the new archive file and create a manifest too
     if return_directly:
-        response = HttpResponse(content_type='application/zip')
-        zip_file = zipfile.ZipFile(response, mode='w')
+        response = HttpResponse(content_type=mime_type)
+        if fmt == 'zip':
+            archive_file = zipfile.ZipFile(response, mode=write_mode)
+        else:
+            archive_file = tarfile.open(mode=write_mode, fileobj=response)
     else:
-        zip_file = zipfile.ZipFile(zip_file_name, mode='w')
-    # chksum_fp = open(chksum_file_name, 'w')
+        if fmt == 'zip':
+            archive_file = zipfile.ZipFile(archive_file_name, mode=write_mode)
+        else:
+            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)
+
     manifest_fp = open(manifest_file_name, 'w')
     manifest_fp.write('OPUS ID,Product Category,Product Type,'
                       +'Product Type Abbrev,'
@@ -642,7 +663,29 @@ def api_create_download(request, opus_id=None):
     url_fp = open(url_file_name, 'w')
 
     errors = []
+    # Store the files' logical paths added to the zip file.
     added = []
+
+    # Loop through files first to create a dictionary keyed by basenames. Each
+    # key has a list of paths pointing to itself. If there are multiple paths
+    # for a key, then it means these paths are not duplicated and need to be
+    # stored with hierarchy tree in the zip file.
+    hierarchical_struct = int(request.GET.get('hierarchical', 0))
+    files_info = {}
+    for f_opus_id in files:
+        if 'Current' not in files[f_opus_id]:
+            continue
+        files_version = files[f_opus_id]['Current']
+        for product_type in files_version:
+            for file_data in files_version[product_type]:
+                path = file_data['path']
+                pretty_name = path.split('/')[-1]
+                logical_path = path[path.index('/holdings')+9:]
+                if pretty_name not in files_info:
+                    files_info[pretty_name] = [logical_path]
+                elif logical_path not in files_info[pretty_name]:
+                    files_info[pretty_name].append(logical_path)
+
     for f_opus_id in files:
         if 'Current' not in files[f_opus_id]:
             continue
@@ -659,26 +702,33 @@ def api_create_download(request, opus_id=None):
                 size = file_data['size']
                 pretty_name = path.split('/')[-1]
                 logical_path = path[path.index('/holdings')+9:]
-                digest = f'{pretty_name}:{checksum}'
                 mdigest = (f'{f_opus_id},{category},{product_type},'
                           +f'{product_abbrev},{version_name},{logical_path},'
                           +f'{checksum},{size}')
                 manifest_fp.write(mdigest+'\n')
 
-                if pretty_name not in added:
-                    # chksum_fp.write(digest+'\n')
+                if logical_path not in added:
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
+                    # If hierarchical_struct is 1 or there are multiple paths
+                    # for the same file basename, we store files with hierarchy
+                    # tree in the zip file.
+                    if hierarchical_struct or len(files_info[pretty_name]) > 1:
+                        filename = logical_path
                     if not url_file_only:
                         try:
-                            zip_file.write(path, arcname=filename)
+                            if fmt == 'zip':
+                                archive_file.write(path, arcname=filename)
+                            else:
+                                archive_file.add(path, arcname=filename)
                         except Exception as e:
-                            log.error(
-            'api_create_download threw exception for opus_id %s, product_type %s, '
-            +'file %s, pretty_name %s: %s',
-            f_opus_id, product_type, path, pretty_name, str(e))
+                            log.error('api_create_download threw exception '+
+                                      'for opus_id %s, product_type %s, '+
+                                      'file %s, pretty_name %s: %s',
+                                      f_opus_id, product_type, path,
+                                      pretty_name, str(e))
                             errors.append('Error adding: ' + pretty_name)
-                    added.append(pretty_name)
+                    added.append(logical_path)
 
     # Write errors to manifest file
     if errors:
@@ -688,24 +738,27 @@ def api_create_download(request, opus_id=None):
 
     # Add manifests and checksum files to tarball and close everything up
     manifest_fp.close()
-    # chksum_fp.close()
     url_fp.close()
-    # zip_file.write(chksum_file_name, arcname='checksum.txt')
-    zip_file.write(manifest_file_name, arcname='manifest.csv')
-    zip_file.write(csv_file_name, arcname='data.csv')
-    zip_file.write(url_file_name, arcname='urls.txt')
-    zip_file.close()
+    if fmt == 'zip':
+        archive_file.write(manifest_file_name, arcname='manifest.csv')
+        archive_file.write(csv_file_name, arcname='data.csv')
+        archive_file.write(url_file_name, arcname='urls.txt')
+    else:
+        archive_file.add(manifest_file_name, arcname='manifest.csv')
+        archive_file.add(csv_file_name, arcname='data.csv')
+        archive_file.add(url_file_name, arcname='urls.txt')
+    archive_file.close()
 
-    # os.remove(chksum_file_name)
     os.remove(csv_file_name)
     os.remove(url_file_name)
 
     if return_directly:
-        response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
+        response['Content-Disposition'] = ('attachment; filename='
+                                           + archive_base_file_name)
         ret = response
     else:
-        zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
-        ret = json_response({'filename': zip_url})
+        archive_url = settings.TAR_FILE_URL_PATH + archive_base_file_name
+        ret = json_response({'filename': archive_url})
 
     exit_api_call(api_code, '<Encoded zip file>')
     return ret
@@ -751,19 +804,22 @@ def _get_download_info(product_types, session_id):
     values = []
     sql = 'SELECT DISTINCT '
 
-    # Retrieve the distinct list of product types for all observations, including the ones in the
-    # recycle bin.  This is used to allow the items on the cart to be added/removed from the recycle bin
-    # and update the download data panel without redrawing the cart page on every edit.
+    # Retrieve the distinct list of product types for all observations,
+    # including the ones in the recycle bin.  This is used to allow the items
+    # in the cart to be added/removed from the recycle bin and update the
+    # download data panel without redrawing the cart page on every edit.
     sql += q('obs_files')+'.'+q('category')+' AS '+q('cat')+', '
     sql += q('obs_files')+'.'+q('sort_order')+' AS '+q('sort')+', '
     sql += q('obs_files')+'.'+q('short_name')+' AS '+q('short')+', '
-    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')
+    sql += q('obs_files')+'.'+q('full_name')+' AS '+q('full')+', '
+    sql += q('obs_files')+'.'+q('default_checked')+' AS '+q('checked')
     sql += 'FROM '+q('obs_files')+' '
     sql += 'INNER JOIN '+q('cart')+' ON '
     sql += q('cart')+'.'+q('obs_general_id')+'='
     sql += q('obs_files')+'.'+q('obs_general_id')+' '
     sql += 'WHERE '+q('cart')+'.'+q('session_id')+'=%s '
     values.append(session_id)
+    sql += 'AND '+q('obs_files')+'.'+q('version_number')+' >= 900000 '
     sql += 'ORDER BY '+q('sort')
 
     log.debug('_get_download_info SQL DISTINCT product_type list: %s %s', sql, values)
@@ -776,7 +832,7 @@ def _get_download_info(product_types, session_id):
     product_dict_by_short_name = {}
 
     for res in results:
-        (category, sort_order, short_name, full_name) = res
+        (category, sort_order, short_name, full_name, default_checked) = res
 
         pretty_name = category
         if category == 'standard':
@@ -809,7 +865,8 @@ def _get_download_info(product_types, session_id):
             'product_count': 0,
             'download_count': 0,
             'download_size': 0,
-            'download_size_pretty': 0
+            'download_size_pretty': 0,
+            'default_checked': default_checked
         }
         cur_product_list.append(product_dict_entry)
         product_dict_by_short_name[short_name] = product_dict_entry
@@ -954,7 +1011,7 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
         # There are a few things this misses - empty opus_ids and duplicate
         # opus_ids will return this same error. But it doesn't seem worth
         # trying to catch those for an internal API.
-        return (f'Internal Error: One or more OPUS_IDs not found; '
+        return ('Internal Error: One or more OPUS_IDs not found; '
                 +'nothing added to cart')
 
     num_cart_and_recycle = (Cart.objects
@@ -972,13 +1029,13 @@ def _add_to_cart_table(opus_id_list, session_id, api_code):
         settings.MAX_SELECTIONS_ALLOWED):
         if len(general_res) == 1:
             return (f'Your request to add OPUS ID {opus_id_list[0]} to the '
-                    +f'cart failed - there are already too many observations '
-                    +f'in the cart and recycle bin. The maximum allowed is '
+                    +'cart failed - there are already too many observations '
+                    +'in the cart and recycle bin. The maximum allowed is '
                     +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
         else:
-            return (f'Your request to add multiple OPUS IDs to the cart failed '
-                    +f'- there are already too many observations in the cart '
-                    +f'and recycle bin. The maximum allowed is '
+            return ('Your request to add multiple OPUS IDs to the cart failed '
+                    +'- there are already too many observations in the cart '
+                    +'and recycle bin. The maximum allowed is '
                     +f'{settings.MAX_SELECTIONS_ALLOWED:,d}.')
 
     # We use REPLACE INTO to avoid problems with duplicate entries or
@@ -1017,7 +1074,7 @@ def _remove_from_cart_table(opus_id_list, session_id, recycle_bin, api_code):
                .filter(opus_id__in=opus_id_list)
                .values_list('opus_id', 'obs_general_id'))
         if len(res) != len(opus_id_list):
-            return (f'Internal Error: One or more OPUS_IDs not found; '
+            return ('Internal Error: One or more OPUS_IDs not found; '
                     +'nothing removed from cart')
         values = [(session_id, obs_general_id, opus_id, 1)
                   for opus_id, obs_general_id in res]
@@ -1232,10 +1289,10 @@ def _edit_cart_range(request, session_id, action, recycle_bin, api_code):
                 settings.MAX_SELECTIONS_ALLOWED):
                 return (f'Your request to add {num_wanted:,d} observations ('
                         +f'OPUS IDs {ids[0]} to {ids[1]}) '
-                        +f'to the cart failed. The resulting cart and recycle '
-                        +f'bin would have more than the maximum '
+                        +'to the cart failed. The resulting cart and recycle '
+                        +'bin would have more than the maximum '
                         +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                        +f'allowed. None of the observations were added.')
+                        +'allowed. None of the observations were added.')
 
         sql_params = []
         sql = 'REPLACE INTO '+q('cart')+' ('
@@ -1331,10 +1388,10 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 
         if num_cart_and_recycle+count-num_dup > settings.MAX_SELECTIONS_ALLOWED:
             return (f'Your request to add all {count:,d} observations '
-                    +f'to the cart failed. The resulting cart and recycle bin '
-                    +f'would have more than the maximum '
+                    +'to the cart failed. The resulting cart and recycle bin '
+                    +'would have more than the maximum '
                     +f'({settings.MAX_SELECTIONS_ALLOWED:,d}) '
-                    +f'allowed. None of the observations were added.')
+                    +'allowed. None of the observations were added.')
 
         values = [session_id]
         sql = 'REPLACE INTO '+q('cart')+' ('
@@ -1372,21 +1429,6 @@ def _edit_cart_addall(request, session_id, recycle_bin, api_code):
 # Support routines - Downloads
 #
 ################################################################################
-
-
-def _zip_filename(opus_id, url_file_only):
-    "Create a unique .zip filename for a user's cart."
-    random_ascii = random.choice(string.ascii_letters).lower()
-    timestamp = "T".join(str(datetime.datetime.now()).split(' '))
-    # Windows doesn't like ':' in filenames
-    timestamp = timestamp.replace(':', '-')
-    # And we don't want a period to confuse the suffix later
-    timestamp = timestamp.replace('.', '-')
-    data_url = 'url' if url_file_only else 'data'
-    root = f'pdsrms-{timestamp}-{data_url}-{random_ascii}'
-    if opus_id:
-        root += f'_{opus_id}'
-    return root + '.zip'
 
 
 def _csv_helper(request, opus_id, api_code=None):

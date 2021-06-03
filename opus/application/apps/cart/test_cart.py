@@ -1,15 +1,20 @@
 # cart/test_cart.py
 
 import logging
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
 from django.http import Http404
 from django.test import RequestFactory
-from django.test.client import Client
 
-from cart.views import *
+from cart.views import (api_cart_status,
+                        api_create_download,
+                        api_edit_cart,
+                        api_get_cart_csv,
+                        api_reset_session,
+                        api_view_cart)
+
+import settings
 
 class cartTests(TestCase):
 
@@ -38,7 +43,6 @@ class cartTests(TestCase):
 
     def test__api_view_cart_no_get(self):
         "[test_cart.py] api_view_cart: no GET"
-        c = Client()
         request = self.factory.get('/__cart/view.html')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -58,7 +62,6 @@ class cartTests(TestCase):
 
     def test__api_cart_status_no_get(self):
         "[test_cart.py] api_cart_status: no GET"
-        c = Client()
         request = self.factory.get('/__cart/status.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -78,7 +81,6 @@ class cartTests(TestCase):
 
     def test__api_get_cart_csv_no_get(self):
         "[test_cart.py] api_get_cart_csv: no GET"
-        c = Client()
         request = self.factory.get('/__cart/data.csv')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -98,7 +100,6 @@ class cartTests(TestCase):
 
     def test__api_edit_cart_no_get(self):
         "[test_cart.py] api_edit_cart: no GET"
-        c = Client()
         request = self.factory.get('/__cart/add.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -118,7 +119,6 @@ class cartTests(TestCase):
 
     def test__api_reset_session_no_get(self):
         "[test_cart.py] api_reset_session: no GET"
-        c = Client()
         request = self.factory.get('/__cart/reset.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -138,7 +138,6 @@ class cartTests(TestCase):
 
     def test__api_create_download_no_get(self):
         "[test_cart.py] api_create_download: no GET"
-        c = Client()
         request = self.factory.get('/__cart/download.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -147,9 +146,8 @@ class cartTests(TestCase):
 
     def test__api_create_download_opusid_no_get(self):
         "[test_cart.py] api_create_download: no GET"
-        c = Client()
         request = self.factory.get('/api/download/testopusid.zip')
         request.GET = None
         with self.assertRaisesRegex(Http404,
             r'Internal error \(No request was provided\) for /api/download/testopusid.zip'):
-            api_create_download(request, 'testopusid')
+            api_create_download(request, 'testopusid', 'zip')

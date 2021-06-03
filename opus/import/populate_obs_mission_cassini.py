@@ -89,24 +89,24 @@ _CASSINI_TARGET_CODE_MAPPING = {
 _CASSINI_PHASE_NAME_MAPPING = (
     # Short encounters that interrupt longer ones; these take priority so
     # are listed first
-    ('Phoebe Encounter',          '2004-163T04:30:06.353', '2004-163T20:52:47.180'),
-    ('Saturn Orbit Insertion',    '2004-183T03:11:40.288', '2004-183T05:15:46.245'),
-    ('Titan A Encounter',         '2004-300T00:30:21.455', '2004-300T21:15:32.979'),
-    ('Titan B Encounter',         '2004-348T00:18:13.469', '2004-348T22:03:45.065'),
+    ('Phoebe Encounter',          julian.tai_from_iso('2004-163T04:30:06.353'), julian.tai_from_iso('2004-163T20:52:47.180')),
+    ('Saturn Orbit Insertion',    julian.tai_from_iso('2004-183T03:11:40.288'), julian.tai_from_iso('2004-183T05:15:46.245')),
+    ('Titan A Encounter',         julian.tai_from_iso('2004-300T00:30:21.455'), julian.tai_from_iso('2004-300T21:15:32.979')),
+    ('Titan B Encounter',         julian.tai_from_iso('2004-348T00:18:13.469'), julian.tai_from_iso('2004-348T22:03:45.065')),
     # Full length encounters that completely cover the mission timeline
-    ('Science Cruise',            '1997-001T00:00:00.000', '2000-262T00:32:38.930'), #'2000-209T02:40:23.416'
-    ('Earth-Jupiter Cruise',      '2000-262T00:32:38.930', '2001-014T23:02:09.804'), #'2001-013T22:47:48.047'
-    ('Jupiter Encounter',         '2001-014T23:02:09.804', '2001-071T12:28:05.413'), #'2001-071T00:58:38.838'
-    ('Cruise Science',            '2001-071T12:28:05.413', '2003-138T02:16:18.383'), #'2003-115T07:45:08.222'
-    ('Space Science',             '2003-138T02:16:18.383', '2004-037T02:07:06.418'), #'2003-359T10:29:18.711'
-    ('Approach Science',          '2004-037T02:07:06.418', '2004-164T02:33:41.000'), #'2004-162T14:47:05.854'
-    ('Tour Pre-Huygens',          '2004-164T02:33:41.000', '2004-359T12:53:08.998'), #'2004-358T13:47:22.548'),
-    ('Huygens Probe Separation',  '2004-359T12:53:08.998', '2004-360T13:30:10.410'), #'2004-359T13:47:22.981'),
+    ('Science Cruise',            julian.tai_from_iso('1997-001T00:00:00.000'), julian.tai_from_iso('2000-262T00:32:38.930')), # '2000-209T02:40:23.416'
+    ('Earth-Jupiter Cruise',      julian.tai_from_iso('2000-262T00:32:38.930'), julian.tai_from_iso('2001-014T23:02:09.804')), # '2001-013T22:47:48.047'
+    ('Jupiter Encounter',         julian.tai_from_iso('2001-014T23:02:09.804'), julian.tai_from_iso('2001-071T12:28:05.413')), # '2001-071T00:58:38.838'
+    ('Cruise Science',            julian.tai_from_iso('2001-071T12:28:05.413'), julian.tai_from_iso('2003-138T02:16:18.383')), # '2003-115T07:45:08.222'
+    ('Space Science',             julian.tai_from_iso('2003-138T02:16:18.383'), julian.tai_from_iso('2004-037T02:07:06.418')), # '2003-359T10:29:18.711'
+    ('Approach Science',          julian.tai_from_iso('2004-037T02:07:06.418'), julian.tai_from_iso('2004-164T02:33:41.000')), # '2004-162T14:47:05.854'
+    ('Tour Pre-Huygens',          julian.tai_from_iso('2004-164T02:33:41.000'), julian.tai_from_iso('2004-359T12:53:08.998')), # '2004-358T13:47:22.548'),
+    ('Huygens Probe Separation',  julian.tai_from_iso('2004-359T12:53:08.998'), julian.tai_from_iso('2004-360T13:30:10.410')), # '2004-359T13:47:22.981'),
     # The descent actually happened on Jan 14
-    ('Huygens Descent',           '2004-360T13:30:10.410', '2005-015T18:28:29.451'), #'2005-001T14:28:54.449'),
-    ('Tour',                      '2005-015T18:28:29.451', '2008-183T21:04:08.998'), #'2008-183T09:17:06.323'),
-    ('Extended Mission',          '2008-183T21:04:08.998', '2010-285T05:22:24.745'), #'2010-283T14:14:20.741'),
-    ('Extended-Extended Mission', '2010-285T05:22:24.745', '2020-001T00:00:00.000')
+    ('Huygens Descent',           julian.tai_from_iso('2004-360T13:30:10.410'), julian.tai_from_iso('2005-015T18:28:29.451')), # '2005-001T14:28:54.449'),
+    ('Tour',                      julian.tai_from_iso('2005-015T18:28:29.451'), julian.tai_from_iso('2008-183T21:04:08.998')), # '2008-183T09:17:06.323'),
+    ('Extended Mission',          julian.tai_from_iso('2008-183T21:04:08.998'), julian.tai_from_iso('2010-285T05:22:24.745')), # '2010-283T14:14:20.741'),
+    ('Extended-Extended Mission', julian.tai_from_iso('2010-285T05:22:24.745'), julian.tai_from_iso('2020-001T00:00:00.000'))
 )
 
 # These mappings are for the TARGET_DESC field to clean them up
@@ -147,7 +147,7 @@ def helper_cassini_obs_name(**kwargs):
     return obs_id
 
 def helper_cassini_valid_obs_name(obs_name):
-    """Check a Cassini observation name to see if it is parsable. Such a
+    r"""Check a Cassini observation name to see if it is parsable. Such a
     name will have four parts separated by _:
 
     <PRIME> _ <REVNO> <TARGETCODE> _ <ACTIVITYNAME> <ACTIVITYNUMBER> _ <INST>
@@ -194,18 +194,21 @@ def helper_cassini_valid_obs_name(obs_name):
         return False
 
     ret = re.fullmatch(
-'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
+r'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d_[A-Z]{2,7}',
         obs_name)
     if ret:
         return True
 
     # Try without _INST
     ret = re.fullmatch(
-'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
+r'([A-Z]{2,5}|22NAV)_([0-2]\d\d|00[A-C]|C\d\d)[A-Z]{2}_[0-9A-Z]+\d\d\d',
         obs_name)
     if ret:
         return True
     return False
+
+_JUPITER_TAI = julian.tai_from_iso('2000-262T00:32:38.930')
+_SATURN_TAI = julian.tai_from_iso('2003-138T02:16:18.383')
 
 def helper_cassini_planet_id(**kwargs):
     """Find the planet associated with an observation. This is based on the
@@ -213,17 +216,13 @@ def helper_cassini_planet_id(**kwargs):
     instruments)."""
 
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
     obs_general_row = metadata['obs_general_row']
 
     time_sec2 = obs_general_row['time2']
 
-    jup = julian.tai_from_iso('2000-262T00:32:38.930')
-    sat = julian.tai_from_iso('2003-138T02:16:18.383')
-
-    if time_sec2 is None or time_sec2 < jup:
+    if time_sec2 is None or time_sec2 < _JUPITER_TAI:
         return None
-    if time_sec2 < sat:
+    if time_sec2 < _SATURN_TAI:
         return 'JUP'
     return 'SAT'
 
@@ -285,8 +284,8 @@ def helper_cassini_mission_phase_name(**kwargs):
     obs_general_row = metadata['obs_general_row']
     time1 = obs_general_row['time1']
     for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
-        start_time_sec = julian.tai_from_iso(start_time)
-        stop_time_sec = julian.tai_from_iso(stop_time)
+        start_time_sec = start_time
+        stop_time_sec = stop_time
         if start_time_sec <= time1 < stop_time_sec:
             return phase.upper()
     return None
@@ -301,18 +300,18 @@ def helper_fix_cassini_sclk(count):
 
     ### UVIS
     # See pds-opus issue #336
-    count = count.replace('.320', '.032')
-    count = count.replace('.640', '.064')
-    count = count.replace('.960', '.096')
-    if count.endswith('.32'):
-        count = count.replace('.32', '.032')
-    if count.endswith('.64'):
-        count = count.replace('.64', '.064')
-    if count.endswith('.96'):
-        count = count.replace('.96', '.096')
-    # See pds-opus issue #443
-    if count.endswith('.324'):
-        count = count.replace('.324', '.000')
+    # count = count.replace('.320', '.032')
+    # count = count.replace('.640', '.064')
+    # count = count.replace('.960', '.096')
+    # if count.endswith('.32'):
+    #     count = count.replace('.32', '.032')
+    # if count.endswith('.64'):
+    #     count = count.replace('.64', '.064')
+    # if count.endswith('.96'):
+    #     count = count.replace('.96', '.096')
+    # # See pds-opus issue #443
+    # if count.endswith('.324'):
+    #     count = count.replace('.324', '.000')
 
     ### VIMS
     # See pds-opus issue #444

@@ -40,7 +40,6 @@
         "pi_slug": "opusid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -66,7 +65,6 @@
         "pi_slug": "volumeid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "pi_units": null,
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -102,12 +100,11 @@
         "pi_label_results": "Data Set ID",
         "pi_slug": "datasetid",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "product_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_notnull": true,
         "field_key": true,
         "data_source": [
@@ -127,13 +124,12 @@
         "pi_label_results": "Product ID",
         "pi_slug": "productid",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "product_creation_time",
         "field_type": "real8",
-        "field_notnull": true,
+        "field_default": null,
         "field_key": true,
         "data_source": [
             "FUNCTION",
@@ -150,14 +146,13 @@
         "pi_disp_order": 40,
         "pi_display": 1,
         "pi_display_results": 1,
-        "pi_form_type": "RANGE:range_time",
-        "pi_intro": null,
+        "pi_form_type": "RANGE:datetime",
+        "pi_intro": "The Product Creation Time is the time when the actual final data product was created for inclusion in the PDS archive, not the time of the original observation. In most cases, you will want to use the Observation Time under General Constraints instead.",
         "pi_label": "Product Creation Time",
         "pi_label_results": "Product Creation Time",
         "pi_slug": "productcreationtime",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "primary_file_spec",
@@ -182,8 +177,7 @@
         "pi_label_results": "Primary File Spec",
         "pi_slug": "primaryfilespec",
         "pi_sub_heading": null,
-        "pi_tooltip": null,
-        "pi_units": null
+        "pi_tooltip": null
     },
     {
         "field_name": "note",
@@ -208,8 +202,7 @@
         "pi_label_results": "Note",
         "pi_slug": "note",
         "pi_sub_heading": null,
-        "pi_tooltip": "",
-        "pi_units": null
+        "pi_tooltip": ""
     },
     {
         "put_mults_here": true

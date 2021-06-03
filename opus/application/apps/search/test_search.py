@@ -4,16 +4,22 @@
 # COISS_2002,COISS_2008,COISS_2111,COUVIS_0002,GO_0017,VGISS_6210,VGISS_8201,HSTI1_2003
 
 import logging
-import sys
 from unittest import TestCase
 
 from django.core.cache import cache
 from django.db import connection
-from django.http import QueryDict
+from django.http import Http404, QueryDict
 from django.test import RequestFactory
-from django.test.client import Client
 
-from search.views import *
+from search.views import (api_normalize_input,
+                          api_string_search_choices,
+                          construct_query_string,
+                          get_longitude_query,
+                          get_range_query,
+                          get_string_query,
+                          set_user_search_number,
+                          url_to_search_params)
+import settings
 
 class searchTests(TestCase):
 
@@ -21,7 +27,7 @@ class searchTests(TestCase):
         cursor = connection.cursor()
         cursor.execute('DELETE FROM user_searches')
         cursor.execute("ALTER TABLE user_searches AUTO_INCREMENT = 1")
-        cursor.execute("SHOW TABLES LIKE %s" , ["cache_%"])
+        cursor.execute("SHOW TABLES LIKE %s", ["cache_%"])
         for row in cursor: # pragma: no cover
             q = 'DROP TABLE ' + row[0]
             print(q)
@@ -54,7 +60,6 @@ class searchTests(TestCase):
 
     def test__api_normalize_input_no_get(self):
         "[test_search.py] api_normalize_input: no GET"
-        c = Client()
         request = self.factory.get('/__api/normalizeinput.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -74,7 +79,6 @@ class searchTests(TestCase):
 
     def test__api_string_search_choices_no_get(self):
         "[test_search.py] api_string_search_choices: no GET"
-        c = Client()
         request = self.factory.get('/__api/stringsearchchoices/volumeid.json')
         request.GET = None
         with self.assertRaisesRegex(Http404,
@@ -100,7 +104,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -117,7 +121,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -134,7 +138,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -151,7 +155,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -169,7 +173,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -186,7 +190,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -203,7 +207,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -221,7 +225,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -239,7 +243,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -257,7 +261,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -275,7 +279,25 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['all', 'only']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+        self.assertEqual(extras['units'], units_expected)
+
+    def test__url_to_search_params_times_multi_4_bad_case(self):
+        "[test_search.py] url_to_search_params: date parsing multi 4 all/only"
+        # Using old slug name
+        q = QueryDict('time1=2000-01-23T06:00:00&time2=2000-01-24T06:00:00&time1_2=2000-01-24T06:00:01&time2_2=2000-01-24T06:00:02&qtype-time=AlL&qtype-time_2=ONly')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {'obs_general.time1': [1922432.0, 2008833.0],
+                        'obs_general.time2': [2008832.0, 2008834.0]}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {'obs_general.time': ['all', 'only']}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -293,7 +315,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any', 'only']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -311,7 +333,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only', 'any']}
-        units_expected = {'obs_general.time': [None, None]}
+        units_expected = {'obs_general.time': ['ymdhms', 'ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -329,7 +351,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['any']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -347,7 +369,7 @@ class searchTests(TestCase):
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_general.time': ['only']}
-        units_expected = {'obs_general.time': [None]}
+        units_expected = {'obs_general.time': ['ymdhms']}
         print(selections)
         print(extras)
         self.assertEqual(selections, sel_expected)
@@ -369,7 +391,7 @@ class searchTests(TestCase):
 
     def test__url_to_search_params_times_bad_3(self):
         "[test_search.py] url_to_search_params: bad date format #3"
-        q = QueryDict('time1=2000')
+        q = QueryDict('time1=2000-')
         (selections, extras) = url_to_search_params(q)
         self.assertIsNone(selections)
 
@@ -460,6 +482,22 @@ class searchTests(TestCase):
     def test__url_to_search_params_unit_only(self):
         "[test_search.py] url_to_search_params: range with unit only"
         q = QueryDict('unit-RINGGEOphase=degrees')
+        (selections, extras) = url_to_search_params(q)
+        sel_expected = {}
+        order_expected = (['obs_general.time1', 'obs_general.opus_id'],
+                          [False, False])
+        qtypes_expected = {}
+        units_expected = {}
+        print(selections)
+        print(extras)
+        self.assertEqual(selections, sel_expected)
+        self.assertEqual(extras['order'], order_expected)
+        self.assertEqual(extras['qtypes'], qtypes_expected)
+        self.assertEqual(extras['units'], units_expected)
+
+    def test__url_to_search_params_unit_only_bad_case(self):
+        "[test_search.py] url_to_search_params: range with unit only bad case"
+        q = QueryDict('unit-RINGGEOphase=DeGreeS')
         (selections, extras) = url_to_search_params(q)
         sel_expected = {}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
@@ -856,8 +894,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and unit: cm"
         q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007&unit-wavelength_01=cm')
         (selections, extras) = url_to_search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected =  {'wavelength1_01': '0.000039',
-                         'wavelength2_01': '0.00007'}
+        sel_expected = {'wavelength1_01': '0.000039',
+                        'wavelength2_01': '0.00007'}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_wavelength.wavelength': ['any']}
@@ -873,8 +911,8 @@ class searchTests(TestCase):
         "[test_search.py] url_to_search_params: range return_slugs pretty, with wavelength cm values and no unit (default unit)"
         q = QueryDict('wavelength1_01=0.000039&wavelength2_01=0.00007')
         (selections, extras) = url_to_search_params(q, return_slugs=True, pretty_results=True)
-        sel_expected =  {'wavelength1_01': '0',
-                         'wavelength2_01': '0.0001'}
+        sel_expected = {'wavelength1_01': '0',
+                        'wavelength2_01': '0.0001'}
         order_expected = (['obs_general.time1', 'obs_general.opus_id'],
                           [False, False])
         qtypes_expected = {'obs_wavelength.wavelength': ['any']}
@@ -2920,8 +2958,8 @@ class searchTests(TestCase):
         self.assertIsNone(sql)
         self.assertIsNone(params)
 
-    def test__string_query_bad_param(self):
-        "[test_search.py] string_query: bad param"
+    def test__string_query_bad_param_3(self):
+        "[test_search.py] string_query: bad param 3"
         selections = {'obs_pds.volume_id': ['ISS', 'COUVIS']}
         sql, params = get_string_query(selections, 'obs_pds.noteXXX', [])
         print(sql)

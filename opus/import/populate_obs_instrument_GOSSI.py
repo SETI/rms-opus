@@ -52,11 +52,8 @@ def _GOSSI_file_spec_helper(**kwargs):
 
 def populate_obs_general_GOSSI_opus_id_OBS(**kwargs):
     file_spec = _GOSSI_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec)
-    try:
-        opus_id = pds_file.opus_id
-    except:
-        opus_id = None
+    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
             f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
@@ -163,7 +160,7 @@ def populate_obs_pds_GOSSI_primary_file_spec_OBS(**kwargs):
     return _GOSSI_file_spec_helper(**kwargs)
 
 def populate_obs_pds_GOSSI_product_creation_time_OBS(**kwargs):
-    return populate_product_creation_time_from_index_label(**kwargs)
+    return None # Until the proper data is available in the supplemental index
 
 def populate_obs_pds_GOSSI_data_set_id_OBS(**kwargs):
     return populate_data_set_id_from_index(**kwargs)
@@ -267,7 +264,6 @@ def populate_obs_type_image_GOSSI_greater_pixel_size_OBS(**kwargs):
 def _wavelength_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    instrument_id = index_row['INSTRUMENT_ID']
     filter_name = index_row['FILTER_NAME']
 
     if filter_name not in _GOSSI_FILTER_WAVELENGTHS:

@@ -51,6 +51,7 @@
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="op-help-menu">
                             <a class="dropdown-item op-help-item" data-action="about" href="#" title="Learn about OPUS and its general capabilities">About</a>
                             <a class="dropdown-item op-help-item" data-action="gettingStarted" href="#" title="View a detailed introduction to each part of OPUS">Getting Started</a>
+                            <a class="dropdown-item op-help-item" data-action="tutorialVideos" href="#" title="Watch OPUS tutorials on YouTube">Tutorial Videos</a>
                             <a class="dropdown-item op-help-item" data-action="faq" href="#" title="Read the answers to frequently asked questions">FAQ</a>
                             <a class="dropdown-item op-help-item" data-action="announcements" href="#" title="View recent announcements about changes to OPUS">Recent Announcements</a>
                             <a class="dropdown-item op-help-item" data-action="volumes" href="#" title="View the list of PDS data volumes available in OPUS">Data Volumes</a>
@@ -264,11 +265,18 @@
                 <div class="loader"></div>
             </div>
 
+            <div id="op-edit-field-tool" class="dropdown-menu dropdown-menu-sm border-top-0 border-dark mt-0" data-toggle="dropdown" aria-labelledby="op-edit-field-tool" aria-haspopup="true" aria-expanded="false">
+                <div class="d-flex justify-content-between">
+                    <a href="#" class="op-metadata-detail-add" data-action="addBefore" title="Add a metadata field before this column"><i class="fas fa-plus pl-1"></i></a>
+                    <a href="#" class="op-metadata-detail-remove" data-action="remove" title="Remove this metadata field"><i class="far fa-trash-alt"></i></a>
+                    <a href="#" class="op-metadata-detail-add" data-action="addAfter" title="Add a metadata field after this column"><i class="fas fa-plus pr-1"></i></a>
+                </div>
+            </div>
         </div><!-- /tabcontent -->
 
 
         <!-- dropdown menu for observations -->
-        <div class="dropdown-menu dropdown-menu-sm" id="op-obs-menu" data-toggle="dropdown" aria-labelledby="op-obs-menu" aria-haspopup="true" aria-expanded="false">
+        <div id="op-obs-menu" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-obs-menu" aria-haspopup="true" aria-expanded="false">
             <h2 class="dropdown-header"></h2>
             <a class="dropdown-item" data-action="cart" href="#"><i class="fas fa-shopping-cart"></i>Add to cart</a>
             <a class="dropdown-item" data-action="range" href="#"><i class="fas fa-step-backward"></i>Range selection</a>
@@ -280,8 +288,14 @@
             <a class="dropdown-item" data-action="downloadURL" href="#" download><i class="fas fa-download"></i>Download zipped URL archive&nbsp;</a>
         </div>
 
+        <!-- dropdown menu for adding metadata fields -->
+        <div id="op-add-metadata-fields" class="op-no-select dropdown-menu dropdown-menu-sm" data-toggle="dropdown" data-direction="after" aria-labelledby="op-add-metadata-fields" aria-haspopup="true" aria-expanded="false">
+            <h2 class="dropdown-header">Add Metadata Field</h2>
+            <div class="op-select-list"></div>
+        </div>
+
         <!-- dropdown menu for sort metadata columns -->
-        <div id="op-add-sort-metadata" class="dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
+        <div id="op-add-sort-metadata" class="op-no-select dropdown-menu dropdown-menu-sm" data-toggle="dropdown" aria-labelledby="op-add-sort-metadata" aria-haspopup="true" aria-expanded="false">
             <h2 class="dropdown-header">Add Metadata Field to Sort</h2>
             <div class="op-sort-list"></div>
         </div>
@@ -311,10 +325,15 @@
                         <div class="row">
                             <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
                             <div class="right col-lg-5 col-sm">
-                                <div class="op-metadata-details">
-                                    <div class="contents"></div>
+                                <div class="op-metadata-detail-edit op-no-select">
+                                    <a href="#" class="op-edit-metadata-button" action="edit">
+                                        <i class="fas fa-pencil-alt"></i> Edit
+                                    </a>
+                                    <div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div>
                                 </div>
-                                <div class="detail"></div>
+                                <div class="op-metadata-details">
+                                    <div class="contents mr-2"></div>
+                                </div>
                                 <div class="row bottom"></div>
                             </div>
                         </div>
@@ -333,7 +352,7 @@
                             <i class="far fa-times-circle fa-lg text-light"></i>
                         </button>
                     </div>
-                    <div class="modal-body op-select-metadata-details" id="op-select-metadata-contents"></div>
+                    <div id="op-select-metadata-contents" class="modal-body"></div>
                     <div class="modal-footer">
                         <div class="left-container">
                             <button type="reset" class="btn btn-info">Reset to Default</button>
@@ -516,6 +535,17 @@
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with
+            id_name="op-notification-modal"
+            confirm_title="Important Message"
+            confirm_msg=""
+            target="op-notification-modal"
+            yes_text="Do not show again"
+            no_text="Close"
+            allow_close=True
+            draggable=False
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
             id_name="op-download-links-error-msg-modal"
             confirm_title="Download Error"
             confirm_msg=""
@@ -523,6 +553,17 @@
             yes_text="OK"
             allow_close=True
             draggable=False
+            close_by_keyboard="esc"
+        %}
+        {% include "ui/confirm_modal.html" with
+            id_name="op-close-widgets-modal"
+            confirm_title="Confirm Close Search Field"
+            confirm_msg="You are trying to remove a search field that has constraints. Removing the search field will remove the constraints.  Are you sure you wish to proceed?"
+            target="op-close-widgets-modal"
+            yes_text="Yes"
+            no_text="No"
+            allow_close=True
+            draggable=True
             close_by_keyboard="esc"
         %}
         {% include "ui/confirm_modal.html" with

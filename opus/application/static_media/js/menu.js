@@ -25,16 +25,13 @@ var o_menu = {
             let slug = $(this).data("slug");
             if (!slug) { return; }
             if ($.inArray(slug, opus.widgetsDrawn) > -1) {
-                // widget is already showing do not fetch another
-                try {
-                    // scroll to widget and highlight it
-                    o_widgets.scrollToWidget(`widget__${slug}`);
-                } catch(e) {
-                    return false;
-                }
+                // if the widget is already showing, delete it
+                // if the widget has config params, ask first...
+                o_widgets.closeCard(slug, true);
                 return false;
             } else {
-                o_menu.markMenuItem(this);
+                let menuSelector = `.op-search-menu a[data-slug=${slug}]`;
+                o_menu.markMenuItem(menuSelector);
                 o_widgets.getWidget(slug,'#op-search-widgets');
             }
 
@@ -97,15 +94,17 @@ var o_menu = {
             // We use find() here instead of just adding to the selector because
             // selector might be a string or it might be an actual DOM object
             $(selector).find(".op-search-param-checkmark").css({'opacity': 1});
+            $(selector).addClass("op-mark");
         } else {
             $(selector).children().css({"background": "initial"});
             $(selector).find(".op-search-param-checkmark").css({'opacity': 0});
+            $(selector).removeClass("op-mark");
         }
     },
 
     markCurrentMenuItems: function() {
         $.each(opus.prefs.widgets, function(index, slug) {
-            o_menu.markMenuItem(`.op-search-menu li > [data-slug="${slug}"]`);
+            o_menu.markMenuItem(`#search .op-search-menu li > [data-slug="${slug}"]`);
         });
     },
 

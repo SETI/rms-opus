@@ -7,9 +7,11 @@
 ################################################################################
 
 import argparse
-import json
+import cProfile
+import io
 import logging
 import os
+import pstats
 import sys
 import traceback
 import warnings
@@ -18,7 +20,7 @@ PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PDS_OPUS_ROOT = os.path.dirname(os.path.dirname(PROJECT_ROOT))
 sys.path.insert(0, PDS_OPUS_ROOT) # So we can import opus_secrets
 
-from opus_secrets import *
+from opus_secrets import * # noqa: E402
 
 sys.path.insert(0, PDS_WEBTOOLS_PATH)
 sys.path.insert(0, PDS_TOOLS_PATH)
@@ -28,27 +30,25 @@ IMPORT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(IMPORT_ROOT)
 sys.path.insert(0, PROJECT_ROOT)
 
-import pdslogger
+import pdslogger # noqa: E402
 pdslogger.TIME_FMT = '%Y-%m-%d %H:%M:%S'
-import pdsfile
+import pdsfile # noqa: E402
 
-import opus_support
+from config_data import * # noqa: E402
+import do_cart # noqa: E402
+import do_dictionary # noqa: E402
+import do_django # noqa: E402
+import do_grouping_target_name # noqa: E402
+import do_import # noqa: E402
+import do_param_info # noqa: E402
+import do_partables # noqa: E402
+import do_table_names # noqa: E402
+import do_update_mult_info # noqa: E402
+import do_validate # noqa: E402
+import impglobals # noqa: E402
+import import_util # noqa: E402
 
-from config_data import *
-import do_cart
-import do_dictionary
-import do_django
-import do_grouping_target_name
-import do_import
-import do_param_info
-import do_partables
-import do_table_names
-import do_update_mult_info
-import do_validate
-import impglobals
-import import_util
-
-import importdb
+import importdb # noqa: E402
 
 
 ################################################################################
@@ -72,6 +72,10 @@ parser.add_argument(
 parser.add_argument(
     '--override-pds-data-dir', type=str, default=None,
     help='Override the PDS_DATA_DIR specified in opus_secrets.py (.../holdings)'
+)
+parser.add_argument(
+    '--dont-use-shelves-only', action='store_true', default=False,
+    help='Don\\t use shelve files only instead of looking at actual pdsdata volumes'
 )
 
 # What to actually do - main import
@@ -162,6 +166,10 @@ parser.add_argument(
     help='Report observations that should have ring_geo data but don\'t'
 )
 parser.add_argument(
+    '--import-report-inventory-mismatch', action='store_true', default=False,
+    help='Report mismatches between inventory and surface geometry tables'
+)
+parser.add_argument(
     '--import-force-metadata-index', action='store_true', default=False,
     help='Force the use of metadata index files and fail if none available'
 )
@@ -172,6 +180,15 @@ parser.add_argument(
 parser.add_argument(
     '--import-ignore-missing-images', action='store_true', default=False,
     help='Don\'t warn about missing browse images'
+)
+parser.add_argument(
+    '--import-dont-use-row-files', action='store_true', default=False,
+    help="""Do not use metadata row files to determine whether index and summary
+            files should be included in the files table"""
+)
+parser.add_argument(
+    '--import-report-empty-products', action='store_true', default=False,
+    help='Report empty products during import'
 )
 parser.add_argument(
     '--import-fake-images', action='store_true', default=False,
@@ -273,8 +290,8 @@ parser.add_argument(
 
 # Arguments about logging
 parser.add_argument(
-    '--log-pdsfile', action='store_true', default=False,
-    help='Also log output of pdsfile actions'
+    '--no-log-pdsfile', action='store_true', default=False,
+    help="""Don't log output of pdsfile actions"""
 )
 parser.add_argument(
     '--log-sql', action='store_true', default=False,
@@ -293,6 +310,10 @@ parser.add_argument(
     help='Omit tracebacks from exception reports'
 )
 
+parser.add_argument(
+    '--profile', action='store_true', default=False,
+    help='Do performance profiling'
+)
 
 impglobals.ARGUMENTS = parser.parse_args(command_list)
 
@@ -363,9 +384,6 @@ impglobals.LOGGER.add_handler(handler)
 handler = pdslogger.error_handler(IMPORT_LOGFILE_DIR, rotation='none')
 impglobals.LOGGER.add_handler(handler)
 
-if impglobals.ARGUMENTS.log_pdsfile:
-    import_util.pdsfile.set_logger(impglobals.LOGGER, True)
-
 impglobals.PYTHON_WARNING_LIST = []
 
 def _new_warning_handler(message, category, filename, lineno, file, line):
@@ -391,17 +409,28 @@ if impglobals.ARGUMENTS.override_db_schema:
     our_schema_name = impglobals.ARGUMENTS.override_db_schema
 
 try: # Top-level exception handling so we always log what's going on
+    # Start the profiling
+    if impglobals.ARGUMENTS.profile:
+        pr = cProfile.Profile()
+        pr.enable()
 
     impglobals.LOGGER.open(
-            f'Performing all requested import functions',
+            'Performing all requested import functions',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
-    pdsfile.use_pickles()
+    if not impglobals.ARGUMENTS.dont_use_shelves_only:
+        pdsfile.use_shelves_only()
+    pdsfile.require_shelves(True)
     if impglobals.ARGUMENTS.override_pds_data_dir:
         pdsfile.preload(impglobals.ARGUMENTS.override_pds_data_dir)
     else:
         pdsfile.preload(PDS_DATA_DIR)
+
+    # We do this after the preload because we don't want to see all the preload
+    # debug messages.
+    if not impglobals.ARGUMENTS.no_log_pdsfile:
+        import_util.pdsfile.set_logger(impglobals.LOGGER)
 
     try:
         impglobals.DATABASE = importdb.get_db(
@@ -410,8 +439,7 @@ try: # Top-level exception handling so we always log what's going on
                                    DB_USER, DB_PASSWORD,
                                    mult_form_types=GROUP_FORM_TYPES,
                                    logger=impglobals.LOGGER,
-                                   import_prefix=
-                                        IMPORT_TABLE_TEMP_PREFIX,
+                                   import_prefix=IMPORT_TABLE_TEMP_PREFIX,
                                    read_only=impglobals.ARGUMENTS.read_only)
     except importdb.ImportDBException:
         sys.exit(-1)
@@ -429,7 +457,7 @@ try: # Top-level exception handling so we always log what's going on
          impglobals.ARGUMENTS.create_cart) and
          not impglobals.ARGUMENTS.drop_permanent_tables):
         impglobals.LOGGER.open(
-            f'Cleaning up OPUS/Django tables',
+            'Cleaning up OPUS/Django tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
@@ -450,7 +478,7 @@ try: # Top-level exception handling so we always log what's going on
         impglobals.ARGUMENTS.create_table_names or
         impglobals.ARGUMENTS.create_grouping_target_name):
         impglobals.LOGGER.open(
-                f'Creating auxiliary tables',
+                'Creating auxiliary tables',
                 limits={'info': impglobals.ARGUMENTS.log_info_limit,
                         'debug': impglobals.ARGUMENTS.log_debug_limit})
 
@@ -467,7 +495,7 @@ try: # Top-level exception handling so we always log what's going on
 
     if impglobals.ARGUMENTS.update_mult_info:
         impglobals.LOGGER.open(
-            f'Updating preprogrammed mult tables',
+            'Updating preprogrammed mult tables',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
@@ -481,7 +509,7 @@ try: # Top-level exception handling so we always log what's going on
     if (impglobals.ARGUMENTS.create_cart and
         impglobals.TRY_CART_LATER):
         impglobals.LOGGER.open(
-            f'Trying to create cart table a second time',
+            'Trying to create cart table a second time',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
 
@@ -491,11 +519,20 @@ try: # Top-level exception handling so we always log what's going on
 
     if impglobals.ARGUMENTS.import_dictionary:
         impglobals.LOGGER.open(
-            f'Importing dictionary',
+            'Importing dictionary',
             limits={'info': impglobals.ARGUMENTS.log_info_limit,
                     'debug': impglobals.ARGUMENTS.log_debug_limit})
         do_dictionary.do_dictionary()
         impglobals.LOGGER.close()
+
+    if impglobals.ARGUMENTS.profile:
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats(sortby)
+        ps.print_stats()
+        ps.print_callers()
+        impglobals.LOGGER.info('Profile results:\n%s', s.getvalue())
 
     impglobals.LOGGER.close()
 

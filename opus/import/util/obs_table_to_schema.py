@@ -71,7 +71,7 @@ if len(sys.argv) == 4:
     _, label_file = os.path.split(label_path)
     label_file = label_file.lower().replace('.lbl','')
 
-print(f'** Processing '+table_name)
+print('** Processing '+table_name)
 
 if label_file:
     label = pdsparser.PdsLabel.from_file(label_path).as_dict()
@@ -224,7 +224,7 @@ for table_column in desc_rows:
                 print(
             f'WARNING: No param_info for column {field_name} - REMOVING COLUMN',
                       file=sys.stderr)
-                continue;
+                continue
             else:
                 print(
             f'WARNING: No param_info for column {field_name} - column OK',
@@ -264,7 +264,7 @@ for table_column in desc_rows:
              pi_mission,                    # NOT USED
              pi_instrument,                 # NOT USED
              pi_sub_heading                 # Sub-heading on search form
-            ) = pi_rows[0]
+             ) = pi_rows[0]
 
             # This is the wrap-around longitude version of the 1/2 fields
             # that we already dealt with, so don't make a param_info entry for
@@ -311,7 +311,7 @@ for table_column in desc_rows:
             index_type_size = index_entry['BYTES']
             index_description = index_entry['DESCRIPTION']
 
-            index_description = re.sub('\s+', ' ', index_description)
+            index_description = re.sub(r'\s+', ' ', index_description)
 
             val_min = None
             val_max = None

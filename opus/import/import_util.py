@@ -11,7 +11,6 @@ import sys
 import traceback
 
 import pdsfile
-import pdslogger
 import pdsparser
 import pdstable
 
@@ -139,8 +138,8 @@ def yield_import_volume_ids(arguments):
                 impglobals.LOGGER.log('fatal',
                            f'Bad volume descriptor {volume_desc}')
             else:
-                if (not volume_pdsfile.is_volume_dir() and
-                    not volume_pdsfile.is_volset_dir()):
+                if (not volume_pdsfile.is_volume_dir and
+                    not volume_pdsfile.is_volset_dir):
                     any_invalid = True
                     impglobals.LOGGER.log('fatal',
                      f'Volume descriptor not a volume or volset: {volume_desc}')
@@ -154,8 +153,14 @@ def yield_import_volume_ids(arguments):
         new_voldescs = []
         for volume_desc in volume_descs:
             volume_pdsfile = pdsfile.PdsFile.from_path(volume_desc)
-            if volume_pdsfile.is_volset_dir():
-                new_voldescs += volume_pdsfile.childnames
+            if volume_pdsfile.is_volset_dir:
+                childnames = volume_pdsfile.childnames
+                # Make sure 2001 is imported first and then 1001 second for each
+                # New Horizon volume. That way, the primary filespec will be
+                # raw in OPUS (same as pdsfile).
+                if volume_pdsfile.volset.startswith("NH"):
+                    childnames.reverse()
+                new_voldescs += childnames
             else:
                 new_voldescs.append(volume_desc)
         # Now actually return the volume_ids
@@ -196,15 +201,13 @@ def safe_pdstable_read(filename):
     try:
         if preprocess_label_func is None:
             table = pdstable.PdsTable(filename, replacements=replacements,
-                                      table_callback=
-                                            preprocess_table_func)
+                                      table_callback=preprocess_table_func)
         else:
             lines = pdsparser.PdsLabel.load_file(filename)
             lines = preprocess_label_func(lines)
             table = pdstable.PdsTable(filename, label_contents=lines,
                                       replacements=replacements,
-                                      table_callback=
-                                            preprocess_table_func)
+                                      table_callback=preprocess_table_func)
 
     except KeyboardInterrupt:
         raise

@@ -4,9 +4,6 @@
 # Create an empty cart table.
 ################################################################################
 
-import os
-
-from config_data import *
 import impglobals
 import import_util
 

@@ -15,6 +15,8 @@ var o_utils = {
      *  some utils
      *
      **/
+    ignoreArrowKeys: false,
+
     areObjectsEqual: function(obj1, obj2) {
         /**
          * This is for comparing objects whose values are all arrays.
@@ -56,10 +58,14 @@ var o_utils = {
     // browse/cart tab which can cause a race condition
     disableUserInteraction: function(e) {
         $("body").addClass("op-prevent-pointer-events");
+        $(".modal-content").addClass("op-prevent-pointer-events");
+        o_utils.ignoreArrowKeys = true;
     },
 
     enableUserInteraction: function(e) {
         $("body").removeClass("op-prevent-pointer-events");
+        $(".modal-content").removeClass("op-prevent-pointer-events");
+        o_utils.ignoreArrowKeys = false;
     },
 
     // Break apart the window.location and return just the protocol and hostname
@@ -136,13 +142,18 @@ $.fn.isOnScreen = function(scope, slop) {
     }
     scope = $(scope);
     let top = scope.offset().top;
-    let bottom = top + scope.height();
+    let positionTop = scope.position().top;
+    let bottom = (top + scope.height()) - positionTop;
     let elementHeight = target.outerHeight();
     let offset = elementHeight * slop;   // allow part of the object to be off screen
     let elementTop = target.offset().top;
     // hack to take care of table header height
     if (this.is("tr")) {
         top += $("th").outerHeight();
+        // For a table item, the bottom border will be the top of the footer.
+        bottom = $(".app-footer").offset().top;
+        // Make sure highlighted table item is fully displayed.
+        offset = elementHeight;
     }
 
     return (elementTop + offset <= bottom) && (elementTop >= top);
