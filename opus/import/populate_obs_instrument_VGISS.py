@@ -319,7 +319,12 @@ def populate_obs_occultation_VGISS_host_OBS(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
 ################################################################################
 
-# There is nothing instrument-specific for Voyager.
+def populate_obs_mission_voyager_VGISS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME'].upper()
+
+    return mp
 
 
 ################################################################################

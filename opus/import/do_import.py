@@ -41,6 +41,7 @@ from populate_obs_instrument_NHMVIC import *
 
 from populate_obs_mission_voyager import *
 from populate_obs_instrument_VGISS import *
+from populate_obs_instrument_VGPPS_occ import *
 
 from populate_obs_mission_groundbased_occ import *
 from populate_obs_instrument_GB_occ import *
@@ -167,6 +168,8 @@ def create_tables_for_import(volume_id, namespace):
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    if type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
     if instrument_name is None:
         instrument_name = 'GB'
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
@@ -706,7 +709,11 @@ def import_one_volume(volume_id):
 def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
+
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    if type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     volset = volume_pdsfile.volset
 

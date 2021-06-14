@@ -69,6 +69,7 @@ VOLSETS_WITH_PREVIEWS = ['COISS_1xxx',
                          'HSTUx_xxxx',
                          'NHxxLO_xxxx',
                          'NHxxMV_xxxx',
+                         'VG_28xx',
                          'VGISS_5xxx',
                          'VGISS_6xxx',
                          'VGISS_7xxx',
@@ -132,7 +133,10 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'HSTWFPC2':  'HST',
     'NHLORRI':   'NH',
     'NHMVIC':    'NH',
-    'VGISS':     'VG'
+    'VGISS':     'VG',
+    'VGPPS':     'VG',
+    'VGUVS':     'VG',
+    'VGRSS':     'VG',
 }
 
 # Mapping from instrument abbrev to instrument name
@@ -150,6 +154,9 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'NHLORRI':     'New Horizons LORRI',
     'NHMVIC':      'New Horizons MVIC',
     'VGISS':       'Voyager ISS',
+    'VGPPS':       'Voyager PPS',
+    'VGUVS':       'Voyager UVS',
+    'VGRSS':       'Voyager RSS',
     # Ground-based
     'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
     'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',
@@ -185,7 +192,19 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'NHLAMV': 'NHMVIC',
     'NHPCMV': 'NHMVIC',
     'NHPEMV': 'NHMVIC',
-    'VGISS':  'VGISS'
+    'VGISS':  'VGISS',
+    'VG':     {
+        'VG_2801': 'VGPPS',
+        'VG_2802': 'VGUVS',
+        'VG_2803': 'VGRSS',
+    }
+}
+
+# Mapping from VOLUME ID to instrument name
+VOLUME_ID_TO_INSTRUMENT_NAME = {
+    'VG_2801': 'VGPSS',
+    'VG_2802': 'VGUVS',
+    'VG_2803': 'VGRSS',
 }
 
 # Mapping from VOLUME ID prefix to mission abbreviation
@@ -214,7 +233,8 @@ VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
     'NHLAMV': 'NH',
     'NHPCMV': 'NH',
     'NHPEMV': 'NH',
-    'VGISS':  'VG'
+    'VGISS':  'VG',
+    'VG':     'VG',
 }
 
 # Mapping from VOLUME root to observation type
@@ -237,6 +257,7 @@ VOLUME_ID_ROOT_TO_TYPE = {
     'HSTUx_xxxx':  'OBS',
     'NHxxLO_xxxx': 'OBS',
     'NHxxMV_xxxx': 'OBS',
+    'VG_28xx':     'OCC',
     'VGISS_5xxx':  'OBS',
     'VGISS_6xxx':  'OBS',
     'VGISS_7xxx':  'OBS',
@@ -379,6 +400,7 @@ TARGET_NAME_MAPPING = {
     'BETORI':           'BET_ORI',
     'BETPEG':           'BET_PEG',
     'BETPER':           'BET_PER',
+    'BETA PER':         'BET_PER',
     'BETPSA':           'BET_PSA',
     'BETSGR':           'BET01_SGR',
     'BETUMI':           'BET_UMI',
@@ -396,6 +418,7 @@ TARGET_NAME_MAPPING = {
     'DELORI':           'DEL_ORI',
     'DELPER':           'DEL_PER',
     'DELSCO':           'DEL_SCO',
+    'DELTA SCO':        'DEL_SCO',
     'DELVIR':           'DEL_VIR',
     'EPSCAS':           'EPS_CAS',
     'EPSCEN':           'EPS_CEN',
@@ -429,6 +452,8 @@ TARGET_NAME_MAPPING = {
     'HD339':            'HD_339479',
     'HD 37962':         'HD_37962',
     'HD71334':          'HD_71334',
+    'IOTHER':           'IO_HER',
+    'IOTA HER':         'IO_HER',
     'IOTCEN':           'IO_CEN',
     'IOTORI':           'IO_ORI',
     'KAPCEN':           'KAP_CEN',
@@ -879,6 +904,7 @@ TARGET_NAME_INFO = {
     'HD_71334':             (None,  'OTHER',      'HD 71334'),
     'IK_TAU':               (None,  'OTHER',      'NML Tau'),
     'IO_CEN':               (None,  'OTHER',      'Iot Cen'),
+    'IO_HER':               (None,  'OTHER',      'Iot Her'),
     'IO_ORI':               (None,  'OTHER',      'Iot Ori'),
     'IRC_+10216':           (None,  'OTHER',      'CW Leo (IRC +10216)'),
     'KAP_CEN':              (None,  'OTHER',      'Kap Cen'),
@@ -1037,6 +1063,7 @@ STAR_RA_DEC = {
     'HD_37962':             ( 85.216524637, -31.351106996),
     'HD_71334':             (126.456315441, -29.930591803),
     'IK_TAU':               ( 58.370368708,  11.406073878),
+    'IO_HER':               (264.866193000,  46.002279500),
     'IO_CEN':               (209.907936987, -56.148672972),
     'IO_ORI':               ( 83.601016047,  -4.411121205),
     'IRC_+10216':           (146.989193000,  13.278768000),
