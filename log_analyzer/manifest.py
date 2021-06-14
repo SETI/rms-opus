@@ -5,7 +5,7 @@ import csv
 import itertools
 import os
 import re
-from typing import NamedTuple, Sequence, Callable, Tuple, List, Dict, Any
+from typing import NamedTuple, Sequence, Callable, Tuple, List, Dict, Any, Optional
 
 
 class ManifestEntry(NamedTuple):
@@ -19,15 +19,18 @@ class ManifestEntry(NamedTuple):
     # version: str
 
     @staticmethod
-    def from_csv_line(line: Dict[str, str]) -> ManifestEntry:
-        return ManifestEntry(opus_id=line['OPUS ID'],
-                             product_category=line['Product Category'],
-                             product_type=line['Product Type'],
-                             file_path=line['File Path'],
-                             size=int(line['Size']),
-                             # product_type_abbr=line['Product Type Abbrev'],
-                             # version=line['Version']
-                             )
+    def from_csv_line(line: Dict[str, str]) -> Optional[ManifestEntry]:
+        try:
+            return ManifestEntry(opus_id=line['OPUS ID'],
+                                 product_category=line['Product Category'],
+                                 product_type=line['Product Type'],
+                                 file_path=line['File Path'],
+                                 size=int(line['Size']),
+                                 # product_type_abbr=line['Product Type Abbrev'],
+                                 # version=line['Version']
+                                 )
+        except:
+            return None
 
     @property
     def volume_set(self) -> str:
@@ -41,15 +44,22 @@ class Manifest(NamedTuple):
     entries: Sequence[ManifestEntry]
 
     @staticmethod
-    def read_manifest(file_name: str) -> Manifest:
-        with open(file_name, 'r', newline='') as file:
-            reader = csv.DictReader(file)
-            entries = [ManifestEntry.from_csv_line(line) for line in reader]
-            return Manifest(file_name, entries)
+    def read_manifest(file_name: str) -> Optional[Manifest]:
+        try:
+            with open(file_name, 'r', newline='') as file:
+                reader = csv.DictReader(file)
+                entries = [entry for line in reader
+                           for entry in [ManifestEntry.from_csv_line(line)] if entry]
+                return Manifest(file_name, entries)
+        except:
+            print(f"Error while reading Manifest file {file_name}")
+            return None
 
     @staticmethod
     def read_manifests(file_names: Sequence[str]) -> Sequence[Manifest]:
-        return [Manifest.read_manifest(file_name) for file_name in file_names]
+        return [manifest for file_name in file_names
+                for manifest in [Manifest.read_manifest(file_name)]
+                if manifest is not None]
 
     def size_in_bytes(self):
         file_to_size: Dict[str, int] = collections.defaultdict(int)
