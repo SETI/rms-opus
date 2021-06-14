@@ -77,6 +77,7 @@ class main_site(TemplateView):
         context['default_widgets'] = settings.DEFAULT_WIDGETS
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['max_selections_allowed'] = settings.MAX_SELECTIONS_ALLOWED
+        context['preview_guides'] = str(settings.PREVIEW_GUIDES).strip('"')
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()

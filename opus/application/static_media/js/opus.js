@@ -829,6 +829,26 @@ var opus = {
             return false;
         });
 
+        // Behavior for help submenu
+        $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
+            $(this).next(".dropdown-menu").toggle("show");
+            e.stopPropagation();
+        });
+
+        // Click on items inside submenu, we execute something and close the whole dropdown.
+        $("#op-help .dropdown-submenu .op-submenu-item").on("click", function(e) {
+            let submenuItem = $(this);
+            opus.displayHelpPane(submenuItem.data("action"))
+            submenuItem.parents(".dropdown-menu").removeClass("show");
+            e.stopPropagation();
+        });
+
+        // When the parent dropdown is closed, make sure submenu is closed.
+        $("#op-help").on("hidden.bs.dropdown", function(e) {
+            let submenu = $("#op-help .dropdown-submenu .dropdown-menu");
+            submenu.removeClass("show");
+        });
+
         // Clicking on either of the Reset buttons
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
@@ -1022,6 +1042,21 @@ var opus = {
                 pdfURL = baseURL + "gettingstarted.pdf";
                 header = "Getting Started with OPUS";
                 break;
+            case "COCIRS":
+                url = PREVIEW_GUIDES[action];
+                window.open(url, "_blank");
+                $("#op-help").removeClass("show");
+                return;
+            case "COUVIS":
+                url = PREVIEW_GUIDES[action];
+                window.open(url, "_blank");
+                $("#op-help").removeClass("show");
+                return;
+            case "COVIMS":
+                url = PREVIEW_GUIDES[action];
+                window.open(url, "_blank");
+                $("#op-help").removeClass("show");
+                return;
             case "contact":
                 FeedbackMethods.open();
                 return;
@@ -1035,7 +1070,6 @@ var opus = {
                 window.open("https://www.youtube.com/playlist?list=PLgPYitJagzrYj0iMFiuwQpdGImP6Wdt29", "_blank");
                 return;
         }
-
         let buttons = '<div class="op-open-help">';
         buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
         if (pdfURL) {
