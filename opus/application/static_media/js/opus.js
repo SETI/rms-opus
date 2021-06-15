@@ -845,8 +845,7 @@ var opus = {
 
         // When the parent dropdown is closed, make sure submenu is closed.
         $("#op-help").on("hidden.bs.dropdown", function(e) {
-            let submenu = $("#op-help .dropdown-submenu .dropdown-menu");
-            submenu.removeClass("show");
+            $(".op-interpret-image").hide();
         });
 
         // Clicking on either of the Reset buttons
@@ -1000,6 +999,13 @@ var opus = {
         $("#op-notification-modal").modal("show");
     },
 
+    displayImageInterpretation: function(action) {
+        let url = PREVIEW_GUIDES[action];
+        window.open(url, "_blank");
+        $("#op-help").removeClass("show");
+        $(".op-interpret-image").hide();
+    },
+
     displayHelpPane: function(action) {
         /**
          * Given the name of a help menu entry, open the help pane and load the
@@ -1043,19 +1049,9 @@ var opus = {
                 header = "Getting Started with OPUS";
                 break;
             case "COCIRS":
-                url = PREVIEW_GUIDES[action];
-                window.open(url, "_blank");
-                $("#op-help").removeClass("show");
-                return;
             case "COUVIS":
-                url = PREVIEW_GUIDES[action];
-                window.open(url, "_blank");
-                $("#op-help").removeClass("show");
-                return;
             case "COVIMS":
-                url = PREVIEW_GUIDES[action];
-                window.open(url, "_blank");
-                $("#op-help").removeClass("show");
+                opus.displayImageInterpretation(action);
                 return;
             case "contact":
                 FeedbackMethods.open();
