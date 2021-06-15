@@ -12,8 +12,8 @@ if [ "$yn" != "YES" ]; then
     exit 1
 fi
 python main_opus_import.py --drop-permanent-tables --scorched-earth $1
-# python main_opus_import.py --do-all-import VG_2803 $1
-python main_opus_import.py --do-all-import VG_2802 $1
+python main_opus_import.py --do-all-import VG_2803 $1
+# python main_opus_import.py --do-all-import VG_2802 $1
 # python main_opus_import.py --do-all-import VG_2801 $1
 # python main_opus_import.py --do-all-import COISS_2002,COISS_2008,COISS_2111 $1
 # python main_opus_import.py --do-all-import COUVIS_0002 $1

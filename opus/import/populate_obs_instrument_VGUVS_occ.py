@@ -241,14 +241,29 @@ def populate_obs_occultation_VGUVS_quality_score_OCC(**kwargs):
 def populate_obs_occultation_VGUVS_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wl_band = index_row['WAVELENGTH_BAND_1']
+    wl_band1 = index_row['WAVELENGTH_BAND_1']
+    wl_band2 = index_row['WAVELENGTH_BAND_2']
+    wl_band = [wl_band1, wl_band2]
+
+    for idx, band in enumerate(wl_band):
+        if '-BAND' in band:
+            wl_band[idx] = band[0]
+
+    if wl_band2 == 'N/A':
+        wl_band = wl_band[0]
 
     return wl_band
 
 def populate_obs_occultation_VGUVS_source_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    src_name = index_row['SIGNAL_SOURCE_NAME_1']
+    src_name1 = index_row['SIGNAL_SOURCE_NAME_1']
+    src_name2 = index_row['SIGNAL_SOURCE_NAME_2']
+
+    if src_name2 == 'N/A':
+        src_name = src_name1
+    else:
+        src_name = [src_name1, src_name2]
 
     return src_name
 
