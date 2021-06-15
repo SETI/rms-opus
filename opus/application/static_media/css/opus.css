@@ -133,12 +133,20 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-right: 0.5rem;
 }
 
+#op-browse-help-menu {
+    padding-left: 0.8em;
+}
+
 @media (max-height: 490px) {
     #op-help a {
         padding-top: 2px;
         padding-bottom: 2px;
         padding-left: 10px;
         padding-right: 10px;
+    }
+
+    #op-browse-help-menu {
+        padding-left: 0.2em !important;
     }
 }
 
