@@ -43,6 +43,7 @@ from populate_obs_mission_voyager import *
 from populate_obs_instrument_VGISS import *
 from populate_obs_instrument_VGPPS_occ import *
 from populate_obs_instrument_VGUVS_occ import *
+from populate_obs_instrument_VGRSS_occ import *
 
 from populate_obs_mission_groundbased_occ import *
 from populate_obs_instrument_GB_occ import *

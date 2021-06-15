@@ -246,10 +246,11 @@ def populate_obs_occultation_VGPPS_wl_band_OCC(**kwargs):
     return wl_band
 
 def populate_obs_occultation_VGPPS_source_OCC(**kwargs):
-    target_name, target_name_info = populate_star_name_helper_index(**kwargs)
-    if target_name_info is None:
-        return None
-    return target_name, target_name_info[2]
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    src_name = index_row['SIGNAL_SOURCE_NAME_1']
+
+    return src_name
 
 def populate_obs_occultation_VGPPS_host_OCC(**kwargs):
     return 'voyager'
