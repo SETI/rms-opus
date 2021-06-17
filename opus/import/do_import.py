@@ -171,10 +171,12 @@ def create_tables_for_import(volume_id, namespace):
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    if type(instrument_name) != str:
-        instrument_name = instrument_name[volume_id]
+
     if instrument_name is None:
         instrument_name = 'GB'
+    elif type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
 
@@ -714,7 +716,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     volume_id_prefix = volume_id[:volume_id.find('_')]
 
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    if type(instrument_name) != str:
+    if instrument_name is not None and type(instrument_name) != str:
         instrument_name = instrument_name[volume_id]
 
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
