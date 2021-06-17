@@ -76,10 +76,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "RAD",   "Radio",   "010", "Y", null],
-              [   1, "STE", "Stellar",   "020", "Y", null],
-              [   2, "SOL",   "Solar",   "030", "Y", null],
-              [   3,  null,     "N/A",   "040", "Y", null]
+              [   0, "RAD",        "Radio",   "010", "Y", null],
+              [   1, "STE",      "Stellar",   "020", "Y", null],
+              [   2, "SOL",        "Solar",   "030", "Y", null],
+              [   3, "REF",  "Reflectance",   "040", "Y", null],
+              [   4,  null,          "N/A",   "050", "Y", null]
         ]
     },
     {

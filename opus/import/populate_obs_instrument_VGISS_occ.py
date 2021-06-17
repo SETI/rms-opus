@@ -67,10 +67,11 @@ def populate_obs_general_VGISS_observation_duration_OCC(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
 
 def populate_obs_general_VGISS_quantity_OCC(**kwargs):
-    return 'OPDEPTH'
+    return 'REFLECT'
 
 def populate_obs_general_VGISS_observation_type_OCC(**kwargs):
-    return 'OCC'
+    # Intensity Profile
+    return 'INT'
 
 def populate_obs_pds_VGISS_note_OCC(**kwargs):
     return None
@@ -198,7 +199,8 @@ def populate_obs_wavelength_VGISS_polarization_type_OCC(**kwargs):
 ### populate_obs_occultation TABLE ###
 
 def populate_obs_occultation_VGISS_occ_type_OCC(**kwargs):
-    return 'STE' # There are no SUN occultations
+    # Reflectance
+    return 'REF'
 
 def populate_obs_occultation_VGISS_occ_dir_OCC(**kwargs):
     metadata = kwargs['metadata']
