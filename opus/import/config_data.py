@@ -197,6 +197,7 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
         'VG_2801': 'VGPPS',
         'VG_2802': 'VGUVS',
         'VG_2803': 'VGRSS',
+        'VG_2810': 'VGISS',
     }
 }
 
@@ -205,6 +206,7 @@ VOLUME_ID_TO_INSTRUMENT_NAME = {
     'VG_2801': 'VGPSS',
     'VG_2802': 'VGUVS',
     'VG_2803': 'VGRSS',
+    'VG_2810': 'VGISS',
 }
 
 # Mapping from VOLUME ID prefix to mission abbreviation

@@ -249,7 +249,7 @@
     },
     {
         "field_name": "wl_band",
-        "field_type": "char2",
+        "field_type": "char6",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -272,13 +272,14 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "S",        "S",   "010", "Y", null],
-              [   1, "X",        "X",   "020", "Y", null],
-              [   2, "KA",      "Ka",   "030", "Y", null],
-              [   3, "IR",      "IR",   "040", "Y", null],
-              [   4, "VI", "Visible",   "050", "Y", null],
-              [   5, "UV",      "UV",   "060", "Y", null],
-              [   6,  null,    "N/A",   "070", "Y", null]
+              [   0, "S",      "S",       "010", "Y", null],
+              [   1, "X",      "X",       "020", "Y", null],
+              [   2, "KA",     "Ka",      "030", "Y", null],
+              [   3, "IR",     "IR",      "040", "Y", null],
+              [   4, "VI",     "Visible", "050", "Y", null],
+              [   5, "UV",     "UV",      "060", "Y", null],
+              [   6, "VISUAL", "Visual",  "070", "Y", null],
+              [   7,  null,    "N/A",     "080", "Y", null]
         ]
     },
     {
