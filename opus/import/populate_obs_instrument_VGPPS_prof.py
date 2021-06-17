@@ -545,7 +545,7 @@ def populate_obs_mission_voyager_VGPPS_sequence_id_OCC(**kwargs):
 ################################################################################
 
 def populate_obs_instrument_VGPPS_channel_OCC(**kwargs):
-    return  None
+    return None
 
 def populate_obs_instrument_VGPPS_observation_type_OCC(**kwargs):
     return 'Occultation Profile'

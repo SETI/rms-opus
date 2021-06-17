@@ -549,7 +549,7 @@ def populate_obs_mission_voyager_VGISS_sequence_id_OCC(**kwargs):
 ################################################################################
 
 def populate_obs_instrument_VGISS_channel_OCC(**kwargs):
-    return  None
+    return None
 
 def populate_obs_instrument_VGISS_observation_type_OCC(**kwargs):
     return 'Occultation Profile'
