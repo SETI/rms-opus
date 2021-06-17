@@ -24,11 +24,11 @@ from populate_obs_pds import *
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS_occ import *
+from populate_obs_instrument_CORSS_prof import *
 from populate_obs_instrument_COUVIS import *
-from populate_obs_instrument_COUVIS_occ import *
+from populate_obs_instrument_COUVIS_prof import *
 from populate_obs_instrument_COVIMS import *
-from populate_obs_instrument_COVIMS_occ import *
+from populate_obs_instrument_COVIMS_prof import *
 
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
@@ -41,13 +41,13 @@ from populate_obs_instrument_NHMVIC import *
 
 from populate_obs_mission_voyager import *
 from populate_obs_instrument_VGISS import *
-from populate_obs_instrument_VGPPS_occ import *
-from populate_obs_instrument_VGUVS_occ import *
-from populate_obs_instrument_VGRSS_occ import *
-from populate_obs_instrument_VGISS_occ import *
+from populate_obs_instrument_VGPPS_prof import *
+from populate_obs_instrument_VGUVS_prof import *
+from populate_obs_instrument_VGRSS_prof import *
+from populate_obs_instrument_VGISS_prof import *
 
-from populate_obs_mission_groundbased_occ import *
-from populate_obs_instrument_GB_occ import *
+from populate_obs_mission_groundbased_prof import *
+from populate_obs_instrument_GB_prof import *
 
 from populate_obs_surface_geo import *
 

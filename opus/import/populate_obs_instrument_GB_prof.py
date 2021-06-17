@@ -17,7 +17,7 @@ import pdsfile
 from config_data import *
 import import_util
 
-from populate_obs_mission_groundbased_occ import *
+from populate_obs_mission_groundbased_prof import *
 from populate_util import *
 
 
