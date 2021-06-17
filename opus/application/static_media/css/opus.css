@@ -3215,7 +3215,7 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce spaces between each item in the help menu when screen is short */
-    .op-help-item {
+    .op-help-item, #op-interpret-image-menu {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
         font-size: 90%;
