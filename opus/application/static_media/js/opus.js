@@ -6,7 +6,7 @@
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
 /* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_sortMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
-/* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
+/* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL, PREVIEW_GUIDES */
 
 // defining the opus namespace first; document ready comes after...
 /* jshint varstmt: false */
@@ -838,7 +838,7 @@ var opus = {
         // Click on items inside submenu, we execute something and close the whole dropdown.
         $("#op-help .dropdown-submenu .op-submenu-item").on("click", function(e) {
             let submenuItem = $(this);
-            opus.displayHelpPane(submenuItem.data("action"))
+            opus.displayHelpPane(submenuItem.data("action"));
             submenuItem.parents(".dropdown-menu").removeClass("show");
             e.stopPropagation();
         });
