@@ -479,51 +479,6 @@ def populate_obs_ring_geometry_VGRSS_ring_intercept_time2_OCC(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY voyager INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_voyager_VGRSS_ert1_OCC(**kwargs):
-    return None
-
-def populate_obs_mission_voyager_VGRSS_ert2_OCC(**kwargs):
-    return None
-
-def populate_obs_mission_voyager_VGRSS_spacecraft_clock_count1_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_START_COUNT']
-    if sc == 'UNK':
-        return None
-
-    try:
-        sc_cvt = opus_support.parse_voyager_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Unable to parse voyager SCLK "{sc}": {e}')
-        return None
-    return sc_cvt
-
-def populate_obs_mission_voyager_VGRSS_spacecraft_clock_count2_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    sc = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
-    if sc == 'UNK':
-        return None
-
-    try:
-        sc_cvt = opus_support.parse_voyager_sclk(sc)
-    except Exception as e:
-        import_util.log_nonrepeating_warning(
-            f'Unable to parse voyager SCLK "{sc}": {e}')
-        return None
-
-    voyager_row = metadata['obs_mission_voyager_row']
-    sc1 = voyager_row['spacecraft_clock_count1']
-    if sc1 is not None and sc_cvt < sc1:
-        import_util.log_warning(
-    f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
-    +'are in the wrong order - setting to count1')
-        sc_cvt = sc1
-
-    return sc_cvt
-
 def populate_obs_mission_voyager_VGRSS_mission_phase_name_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -532,60 +487,10 @@ def populate_obs_mission_voyager_VGRSS_mission_phase_name_OCC(**kwargs):
 
     return mp
 
-def populate_obs_mission_voyager_VGRSS_sequence_id_OCC(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    id = supp_index_row['SEQUENCE_ID']
-
-    return id
-
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_VGRSS
 ################################################################################
 
-def populate_obs_instrument_VGRSS_channel_OCC(**kwargs):
-    return None
-
 def populate_obs_instrument_VGRSS_observation_type_OCC(**kwargs):
     return 'Occultation Profile'
-
-def populate_obs_instrument_VGRSS_occultation_port_state_OCC(**kwargs):
-    return 'N/A'
-
-def populate_obs_instrument_VGRSS_integration_duration_OCC(**kwargs):
-    return None
-    # return _integration_duration_helper(**kwargs)
-
-def populate_obs_instrument_VGRSS_compression_type_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_slit_state_OCC(**kwargs):
-    return 'NULL'
-
-def populate_obs_instrument_VGRSS_test_pulse_state_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_dwell_time_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_band1_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_band2_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_band_bin_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_line1_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_line2_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_line_bin_OCC(**kwargs):
-    return None
-
-def populate_obs_instrument_VGRSS_samples_OCC(**kwargs):
-    return None
