@@ -133,12 +133,20 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     padding-right: 0.5rem;
 }
 
-@media (max-height: 490px) {
+#op-interpret-image-menu {
+    padding-left: 0.8em;
+}
+
+@media (max-height: 535px) {
     #op-help a {
         padding-top: 2px;
         padding-bottom: 2px;
         padding-left: 10px;
         padding-right: 10px;
+    }
+
+    #op-interpret-image-menu {
+        padding-left: 0.2em !important;
     }
 }
 
@@ -3246,10 +3254,10 @@ when wrapping into the 2nd line */
     }
 
     /* Reduce spaces between each item in the help menu when screen is short */
-    .op-help-item {
+    .op-help-item, #op-interpret-image-menu {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
-        font-size: 90%;
+        font-size: 81%;
     }
 }
 
