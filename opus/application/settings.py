@@ -305,7 +305,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
 # The search widgets selected when OPUS is first intialized
-DEFAULT_WIDGETS = 'planet,target'
+DEFAULT_WIDGETS = 'instrument,observationtype,target'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.
