@@ -26,7 +26,7 @@ def _VGISS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_VGISS_opus_id_OCC(**kwargs):
+def populate_obs_general_VGISS_opus_id_PROF(**kwargs):
     file_spec = _VGISS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     opus_id = pds_file.opus_id
@@ -37,10 +37,10 @@ def populate_obs_general_VGISS_opus_id_OCC(**kwargs):
 
     return opus_id
 
-def populate_obs_general_VGISS_ring_obs_id_OCC(**kwargs):
+def populate_obs_general_VGISS_ring_obs_id_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGISS_inst_host_id_OCC(**kwargs):
+def populate_obs_general_VGISS_inst_host_id_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inst_host = index_row['INSTRUMENT_HOST_NAME']
@@ -51,88 +51,88 @@ def populate_obs_general_VGISS_inst_host_id_OCC(**kwargs):
     # return 'VG'
 
 # VGISS time span is the duration of the observation at the spacecraft
-def populate_obs_general_VGISS_time1_OCC(**kwargs):
+def populate_obs_general_VGISS_time1_PROF(**kwargs):
     return populate_time1_from_index(**kwargs)
 
-def populate_obs_general_VGISS_time2_OCC(**kwargs):
+def populate_obs_general_VGISS_time2_PROF(**kwargs):
     return populate_time2_from_index(**kwargs)
 
-def populate_obs_general_VGISS_target_name_OCC(**kwargs):
+def populate_obs_general_VGISS_target_name_PROF(**kwargs):
     # Get target name from index table
     target_name = populate_target_name_from_index(**kwargs)
     target_name_info = TARGET_NAME_INFO[target_name]
     return target_name, target_name_info[2]
 
-def populate_obs_general_VGISS_observation_duration_OCC(**kwargs):
+def populate_obs_general_VGISS_observation_duration_PROF(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
 
-def populate_obs_general_VGISS_quantity_OCC(**kwargs):
+def populate_obs_general_VGISS_quantity_PROF(**kwargs):
     return 'REFLECT'
 
-def populate_obs_general_VGISS_observation_type_OCC(**kwargs):
+def populate_obs_general_VGISS_observation_type_PROF(**kwargs):
     # Intensity Profile
     return 'INT'
 
-def populate_obs_pds_VGISS_note_OCC(**kwargs):
+def populate_obs_pds_VGISS_note_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGISS_primary_file_spec_OCC(**kwargs):
+def populate_obs_general_VGISS_primary_file_spec_PROF(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_VGISS_primary_file_spec_OCC(**kwargs):
+def populate_obs_pds_VGISS_primary_file_spec_PROF(**kwargs):
     return _VGISS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_VGISS_product_creation_time_OCC(**kwargs):
+def populate_obs_pds_VGISS_product_creation_time_PROF(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "VG2-SR/UR/NR-ISS-2/4-OCC-V1.0"
-def populate_obs_pds_VGISS_data_set_id_OCC(**kwargs):
+def populate_obs_pds_VGISS_data_set_id_PROF(**kwargs):
     return populate_data_set_id_from_index_label(**kwargs)
 
 # Format: "KM001/UU1P01DE.TAB"
-def populate_obs_pds_VGISS_product_id_OCC(**kwargs):
+def populate_obs_pds_VGISS_product_id_PROF(**kwargs):
     return populate_product_id_from_index(**kwargs)
 
-def populate_obs_general_VGISS_right_asc1_OCC(**kwargs):
+def populate_obs_general_VGISS_right_asc1_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGISS_right_asc2_OCC(**kwargs):
+def populate_obs_general_VGISS_right_asc2_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGISS_declination1_OCC(**kwargs):
+def populate_obs_general_VGISS_declination1_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGISS_declination2_OCC(**kwargs):
+def populate_obs_general_VGISS_declination2_PROF(**kwargs):
     return None
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_VGISS_image_type_id_OCC(**kwargs):
+def populate_obs_type_image_VGISS_image_type_id_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_VGISS_duration_OCC(**kwargs):
+def populate_obs_type_image_VGISS_duration_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_VGISS_levels_OCC(**kwargs):
+def populate_obs_type_image_VGISS_levels_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_VGISS_lesser_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_VGISS_lesser_pixel_size_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_VGISS_greater_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_VGISS_greater_pixel_size_PROF(**kwargs):
     return None
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_VGISS_wavelength1_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wavelength1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = index_row['MINIMUM_WAVELENGTH']
     return wl1
 
-def populate_obs_wavelength_VGISS_wavelength2_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
@@ -148,13 +148,13 @@ def _wave_res_helper(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_VGISS_wave_res1_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_res1_PROF(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_VGISS_wave_res2_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_res2_PROF(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_VGISS_wave_no1_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no1_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl2 = wavelength_row['wavelength2']
@@ -162,7 +162,7 @@ def populate_obs_wavelength_VGISS_wave_no1_OCC(**kwargs):
         return None
     return 10000 / wl2 # cm^-1
 
-def populate_obs_wavelength_VGISS_wave_no2_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no2_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl1 = wavelength_row['wavelength1']
@@ -180,29 +180,29 @@ def _wave_no_res_helper(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_VGISS_wave_no_res1_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no_res1_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_VGISS_wave_no_res2_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_wave_no_res2_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_VGISS_spec_flag_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_spec_flag_PROF(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_VGISS_spec_size_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_spec_size_PROF(**kwargs):
     return 1
 
-def populate_obs_wavelength_VGISS_polarization_type_OCC(**kwargs):
+def populate_obs_wavelength_VGISS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
 ### populate_obs_occultation TABLE ###
 
-def populate_obs_occultation_VGISS_occ_type_OCC(**kwargs):
+def populate_obs_occultation_VGISS_occ_type_PROF(**kwargs):
     # Reflectance
     return 'REF'
 
-def populate_obs_occultation_VGISS_occ_dir_OCC(**kwargs):
+def populate_obs_occultation_VGISS_occ_dir_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
@@ -211,17 +211,17 @@ def populate_obs_occultation_VGISS_occ_dir_OCC(**kwargs):
         return None
     return occ_direction[0]
 
-def populate_obs_occultation_VGISS_body_occ_flag_OCC(**kwargs):
+def populate_obs_occultation_VGISS_body_occ_flag_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
 
     return body_occ_flag
 
-def populate_obs_occultation_VGISS_optical_depth_min_OCC(**kwargs):
+def populate_obs_occultation_VGISS_optical_depth_min_PROF(**kwargs):
     return None
 
-def populate_obs_occultation_VGISS_optical_depth_max_OCC(**kwargs):
+def populate_obs_occultation_VGISS_optical_depth_max_PROF(**kwargs):
     return None
 
 def _integration_duration_helper(**kwargs):
@@ -232,17 +232,17 @@ def _integration_duration_helper(**kwargs):
     # HSP integration_duration is in milliseconds!
     return dur/1000
 
-def populate_obs_occultation_VGISS_temporal_sampling_OCC(**kwargs):
+def populate_obs_occultation_VGISS_temporal_sampling_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     tmp_sampling_interval = index_row['TEMPORAL_SAMPLING_INTERVAL']
 
     return tmp_sampling_interval
 
-def populate_obs_occultation_VGISS_quality_score_OCC(**kwargs):
+def populate_obs_occultation_VGISS_quality_score_PROF(**kwargs):
     return None
 
-def populate_obs_occultation_VGISS_wl_band_OCC(**kwargs):
+def populate_obs_occultation_VGISS_wl_band_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl_band1 = index_row['WAVELENGTH_BAND_1']
@@ -258,7 +258,7 @@ def populate_obs_occultation_VGISS_wl_band_OCC(**kwargs):
 
     return wl_band
 
-def populate_obs_occultation_VGISS_source_OCC(**kwargs):
+def populate_obs_occultation_VGISS_source_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name1 = index_row['SIGNAL_SOURCE_NAME_1']
@@ -271,123 +271,123 @@ def populate_obs_occultation_VGISS_source_OCC(**kwargs):
 
     return src_name
 
-def populate_obs_occultation_VGISS_host_OCC(**kwargs):
+def populate_obs_occultation_VGISS_host_PROF(**kwargs):
     return 'voyager'
 
 
 ### OBS_RING_GEOMETRY TABLE ###
 
-def populate_obs_ring_geometry_VGISS_ring_radius1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_radius1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row, 'MINIMUM_RING_RADIUS')
 
     return radius1
 
-def populate_obs_ring_geometry_VGISS_ring_radius2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_radius2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius2 = import_util.safe_column(index_row, 'MAXIMUM_RING_RADIUS')
 
     return radius2
 
-def populate_obs_ring_geometry_VGISS_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'MINIMUM_RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_VGISS_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'MAXIMUM_RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_VGISS_proj_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_proj_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'MINIMUM_RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_VGISS_proj_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_proj_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'MAXIMUM_RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_VGISS_j2000_longitude1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_j2000_longitude1_PROF(**kwargs):
     return None
 
-def populate_obs_ring_geometry_VGISS_j2000_longitude2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_j2000_longitude2_PROF(**kwargs):
     return None
 
-def populate_obs_ring_geometry_VGISS_ring_azimuth_wrt_observer1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_azimuth_wrt_observer1_PROF(**kwargs):
     return None
 
-def populate_obs_ring_geometry_VGISS_ring_azimuth_wrt_observer2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_azimuth_wrt_observer2_PROF(**kwargs):
     return None
 
-def populate_obs_ring_geometry_VGISS_phase1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_phase1_PROF(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_VGISS_phase2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_phase2_PROF(**kwargs):
     return 180.
 
 ###### TODO: Need to figure out the calculations for the followings: ######
-def populate_obs_ring_geometry_VGISS_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_north_based_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_north_based_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
     return el # 180-incidence
 
-def populate_obs_ring_geometry_VGISS_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
     return el # 180-incidence
 
-def populate_obs_ring_geometry_VGISS_north_based_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
     return el # 180-incidence
 
-def populate_obs_ring_geometry_VGISS_north_based_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
@@ -395,87 +395,87 @@ def populate_obs_ring_geometry_VGISS_north_based_emission2_OCC(**kwargs):
     return el # 180-incidence
 
 # We set the center versions to be the same as the normal versions
-populate_obs_ring_geometry_VGISS_center_phase1_OCC = \
-    populate_obs_ring_geometry_VGISS_phase1_OCC
-populate_obs_ring_geometry_VGISS_center_phase2_OCC = \
-    populate_obs_ring_geometry_VGISS_phase2_OCC
-populate_obs_ring_geometry_VGISS_center_incidence1_OCC = \
-    populate_obs_ring_geometry_VGISS_incidence1_OCC
-populate_obs_ring_geometry_VGISS_center_incidence2_OCC = \
-    populate_obs_ring_geometry_VGISS_incidence2_OCC
-populate_obs_ring_geometry_VGISS_center_emission1_OCC = \
-    populate_obs_ring_geometry_VGISS_emission1_OCC
-populate_obs_ring_geometry_VGISS_center_emission2_OCC = \
-    populate_obs_ring_geometry_VGISS_emission2_OCC
-populate_obs_ring_geometry_VGISS_center_north_based_incidence1_OCC = \
-    populate_obs_ring_geometry_VGISS_north_based_incidence1_OCC
-populate_obs_ring_geometry_VGISS_center_north_based_incidence2_OCC = \
-    populate_obs_ring_geometry_VGISS_north_based_incidence2_OCC
-populate_obs_ring_geometry_VGISS_center_north_based_emission1_OCC = \
-    populate_obs_ring_geometry_VGISS_north_based_emission1_OCC
-populate_obs_ring_geometry_VGISS_center_north_based_emission2_OCC = \
-    populate_obs_ring_geometry_VGISS_north_based_emission2_OCC
+populate_obs_ring_geometry_VGISS_center_phase1_PROF = \
+    populate_obs_ring_geometry_VGISS_phase1_PROF
+populate_obs_ring_geometry_VGISS_center_phase2_PROF = \
+    populate_obs_ring_geometry_VGISS_phase2_PROF
+populate_obs_ring_geometry_VGISS_center_incidence1_PROF = \
+    populate_obs_ring_geometry_VGISS_incidence1_PROF
+populate_obs_ring_geometry_VGISS_center_incidence2_PROF = \
+    populate_obs_ring_geometry_VGISS_incidence2_PROF
+populate_obs_ring_geometry_VGISS_center_emission1_PROF = \
+    populate_obs_ring_geometry_VGISS_emission1_PROF
+populate_obs_ring_geometry_VGISS_center_emission2_PROF = \
+    populate_obs_ring_geometry_VGISS_emission2_PROF
+populate_obs_ring_geometry_VGISS_center_north_based_incidence1_PROF = \
+    populate_obs_ring_geometry_VGISS_north_based_incidence1_PROF
+populate_obs_ring_geometry_VGISS_center_north_based_incidence2_PROF = \
+    populate_obs_ring_geometry_VGISS_north_based_incidence2_PROF
+populate_obs_ring_geometry_VGISS_center_north_based_emission1_PROF = \
+    populate_obs_ring_geometry_VGISS_north_based_emission1_PROF
+populate_obs_ring_geometry_VGISS_center_north_based_emission2_PROF = \
+    populate_obs_ring_geometry_VGISS_north_based_emission2_PROF
 
-def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_observer_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_observer_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return el
 
-def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return -el
 
-def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return -el
 
-def populate_obs_ring_geometry_VGISS_solar_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return -el
 
-def populate_obs_ring_geometry_VGISS_solar_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
     return -el
 
-def populate_obs_ring_geometry_VGISS_ring_intercept_time1_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
 
-def populate_obs_ring_geometry_VGISS_ring_intercept_time2_OCC(**kwargs):
+def populate_obs_ring_geometry_VGISS_ring_intercept_time2_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
 
@@ -483,7 +483,7 @@ def populate_obs_ring_geometry_VGISS_ring_intercept_time2_OCC(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY voyager INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_voyager_VGISS_mission_phase_name_OCC(**kwargs):
+def populate_obs_mission_voyager_VGISS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     target_name = index_row['TARGET_NAME'].upper()
@@ -496,12 +496,12 @@ def populate_obs_mission_voyager_VGISS_mission_phase_name_OCC(**kwargs):
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_VGISS
 ################################################################################
 
-def populate_obs_instrument_vgiss_camera_OCC(**kwargs):
+def populate_obs_instrument_vgiss_camera_PROF(**kwargs):
     # Narrow angle camera
     return 'N'
 
-def populate_obs_instrument_vgiss_usable_lines_OCC(**kwargs):
+def populate_obs_instrument_vgiss_usable_lines_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_vgiss_usable_samples_OCC(**kwargs):
+def populate_obs_instrument_vgiss_usable_samples_PROF(**kwargs):
     return None

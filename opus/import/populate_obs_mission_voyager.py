@@ -69,7 +69,7 @@ def helper_voyager_planet_id(**kwargs):
 def populate_obs_general_VG_planet_id_OBS(**kwargs):
     return helper_voyager_planet_id(**kwargs)
 
-def populate_obs_general_VG_planet_id_OCC(**kwargs):
+def populate_obs_general_VG_planet_id_PROF(**kwargs):
     return helper_voyager_planet_id(**kwargs)
 
 

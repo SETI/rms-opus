@@ -37,7 +37,7 @@ def helper_groundbased_target_name(**kwargs):
 def helper_groundbased_planet_id(**kwargs):
     return 'SAT'
 
-def populate_obs_general_GB_planet_id_OCC(**kwargs):
+def populate_obs_general_GB_planet_id_PROF(**kwargs):
     return helper_groundbased_planet_id(**kwargs)
 
 
