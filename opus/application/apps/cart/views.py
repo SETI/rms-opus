@@ -18,6 +18,7 @@
 import csv
 import logging
 import os
+import tarfile
 import time
 import zipfile
 
@@ -61,6 +62,7 @@ from tools.app_utils import (cols_to_slug_list,
                              HTTP404_MISSING_OPUS_ID,
                              HTTP404_NO_REQUEST,
                              HTTP404_SEARCH_PARAMS_INVALID,
+                             HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT,
                              HTTP404_UNKNOWN_SLUG,
                              HTTP500_DATABASE_ERROR,
                              HTTP500_INTERNAL_ERROR,
@@ -128,6 +130,7 @@ def api_view_cart(request):
 
     info['count'] = count
     info['recycled_count'] = recycled_count
+    info['format'] = settings.DOWNLOAD_FORMATS.keys()
 
     cart_template = get_template('cart/cart.html')
     html = cart_template.render(info)
@@ -507,23 +510,23 @@ def api_reset_session(request):
 
 
 @never_cache
-def api_create_download(request, opus_id=None):
-    r"""Creates a zip file of all items in the cart or the given OPUS ID.
+def api_create_download(request, opus_id=None, fmt=None):
+    r"""Creates an archive file of all items in the cart or the given OPUS ID.
 
     This is a PRIVATE API.
 
     Format: __cart/download.json
-        or: [__]api/download/(?P<opus_id>[-\w]+).zip
+        or: [__]api/download/(?P<opus_id>[-\w]+).(?P<fmt>zip|tar|tgz)
     Arguments: types=<PRODUCT_TYPES>
-               urlonly=1 (optional) means to not zip the actual data products
-               hierarchical=1 (optional) means files in zip are stored with
+               urlonly=1 (optional) means to not include the actual data products
+               hierarchical=1 (optional) means files in archive are stored with
                hierarchy tree
     """
     api_code = enter_api_call('api_create_download', request)
 
     if not request or request.GET is None:
         if opus_id:
-            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.zip'))
+            ret = Http404(HTTP404_NO_REQUEST(f'/api/download/{opus_id}.{fmt}'))
         else:
             ret = Http404(HTTP404_NO_REQUEST('/__cart/download.json'))
         exit_api_call(api_code, ret)
@@ -591,17 +594,23 @@ def api_create_download(request, opus_id=None):
                              product_types=product_types)
 
     file_type = 'url' if url_file_only else 'data'
-    zip_base_file_name = download_filename(opus_id, file_type) + '.zip'
-    zip_root = zip_base_file_name.split('.')[0]
-    zip_file_name = settings.TAR_FILE_PATH + zip_base_file_name
-    # chksum_file_name = settings.TAR_FILE_PATH + f'checksum_{zip_root}.txt'
-    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{zip_root}.csv'
-    csv_file_name = settings.TAR_FILE_PATH + f'csv_{zip_root}.txt'
-    url_file_name = settings.TAR_FILE_PATH + f'url_{zip_root}.txt'
+
+    if not fmt:
+        fmt = request.GET.get('fmt', 'zip')
+    # If the file format is not supported, raise HTTP404 error.
+    if fmt not in settings.DOWNLOAD_FORMATS:
+        raise Http404(HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, request))
+
+    archive_root = download_filename(opus_id, file_type)
+    archive_base_file_name = archive_root + f'.{fmt}'
+    archive_file_name = settings.TAR_FILE_PATH + archive_base_file_name
+    manifest_file_name = settings.MANIFEST_FILE_PATH+f'manifest_{archive_root}.csv'
+    csv_file_name = settings.TAR_FILE_PATH + f'csv_{archive_root}.txt'
+    url_file_name = settings.TAR_FILE_PATH + f'url_{archive_root}.txt'
 
     _create_csv_file(request, csv_file_name, opus_id, api_code=api_code)
 
-    # Don't create download if the resultant zip file would be too big
+    # Don't create download if the resultant archive file would be too big
     if not url_file_only:
         info = _get_download_info(product_types, session_id)
         download_size = info['total_download_size']
@@ -632,13 +641,21 @@ def api_create_download(request, opus_id=None):
             return ret
         request.session['cum_download_size'] = int(cum_download_size)
 
-    # Add each file to the new zip file and create a manifest too
+    mime_type = settings.DOWNLOAD_FORMATS[fmt][0]
+    write_mode = settings.DOWNLOAD_FORMATS[fmt][1]
+    # Add each file to the new archive file and create a manifest too
     if return_directly:
-        response = HttpResponse(content_type='application/zip')
-        zip_file = zipfile.ZipFile(response, mode='w')
+        response = HttpResponse(content_type=mime_type)
+        if fmt == 'zip':
+            archive_file = zipfile.ZipFile(response, mode=write_mode)
+        else:
+            archive_file = tarfile.open(mode=write_mode, fileobj=response)
     else:
-        zip_file = zipfile.ZipFile(zip_file_name, mode='w')
-    # chksum_fp = open(chksum_file_name, 'w')
+        if fmt == 'zip':
+            archive_file = zipfile.ZipFile(archive_file_name, mode=write_mode)
+        else:
+            archive_file = tarfile.open(name=archive_file_name, mode=write_mode)
+
     manifest_fp = open(manifest_file_name, 'w')
     manifest_fp.write('OPUS ID,Product Category,Product Type,'
                       +'Product Type Abbrev,'
@@ -691,7 +708,6 @@ def api_create_download(request, opus_id=None):
                 manifest_fp.write(mdigest+'\n')
 
                 if logical_path not in added:
-                    # chksum_fp.write(digest+'\n')
                     url_fp.write(url+'\n')
                     filename = os.path.basename(path)
                     # If hierarchical_struct is 1 or there are multiple paths
@@ -701,7 +717,10 @@ def api_create_download(request, opus_id=None):
                         filename = logical_path
                     if not url_file_only:
                         try:
-                            zip_file.write(path, arcname=filename)
+                            if fmt == 'zip':
+                                archive_file.write(path, arcname=filename)
+                            else:
+                                archive_file.add(path, arcname=filename)
                         except Exception as e:
                             log.error('api_create_download threw exception '+
                                       'for opus_id %s, product_type %s, '+
@@ -719,24 +738,27 @@ def api_create_download(request, opus_id=None):
 
     # Add manifests and checksum files to tarball and close everything up
     manifest_fp.close()
-    # chksum_fp.close()
     url_fp.close()
-    # zip_file.write(chksum_file_name, arcname='checksum.txt')
-    zip_file.write(manifest_file_name, arcname='manifest.csv')
-    zip_file.write(csv_file_name, arcname='data.csv')
-    zip_file.write(url_file_name, arcname='urls.txt')
-    zip_file.close()
+    if fmt == 'zip':
+        archive_file.write(manifest_file_name, arcname='manifest.csv')
+        archive_file.write(csv_file_name, arcname='data.csv')
+        archive_file.write(url_file_name, arcname='urls.txt')
+    else:
+        archive_file.add(manifest_file_name, arcname='manifest.csv')
+        archive_file.add(csv_file_name, arcname='data.csv')
+        archive_file.add(url_file_name, arcname='urls.txt')
+    archive_file.close()
 
-    # os.remove(chksum_file_name)
     os.remove(csv_file_name)
     os.remove(url_file_name)
 
     if return_directly:
-        response['Content-Disposition'] = f'attachment; filename={zip_base_file_name}'
+        response['Content-Disposition'] = ('attachment; filename='
+                                           + archive_base_file_name)
         ret = response
     else:
-        zip_url = settings.TAR_FILE_URL_PATH + zip_base_file_name
-        ret = json_response({'filename': zip_url})
+        archive_url = settings.TAR_FILE_URL_PATH + archive_base_file_name
+        ret = json_response({'filename': archive_url})
 
     exit_api_call(api_code, '<Encoded zip file>')
     return ret

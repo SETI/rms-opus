@@ -328,6 +328,11 @@ def HTTP404_UNKNOWN_CATEGORY(r):
         r = r.path
     return f'Unknown category for {r}'
 
+def HTTP404_UNKNOWN_DOWNLOAD_FILE_FORMAT(fmt, r):
+    if type(r) != str:
+        r = r.path
+    return f'Unknown DOWNLOAD FILE FORMAT "{fmt}" for {r}'
+
 def wrap_http500_string(s):
     # This duplicates the format for the Django debug page
     ret = f'<div id="info">{s}</div>'

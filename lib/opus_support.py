@@ -1947,7 +1947,27 @@ def parse_form_type(s):
 
     return form_type, form_type_format, form_type_unit
 
+def get_single_parse_function(unit_id):
+    """Return the parse func for a unit_id with a single non-displayed unit."""
+    parse_func = None
+    if unit_id and not display_unit_ever(unit_id):
+        default_unit = get_default_unit(unit_id)
+        parse_func = (UNIT_FORMAT_DB[unit_id]
+                                    ['conversions']
+                                    [default_unit]
+                                    [2])
+    return parse_func
 
+def get_single_format_function(unit_id):
+    """Return the format func for a unit_id with a single non-displayed unit."""
+    format_func = None
+    if unit_id and not display_unit_ever(unit_id):
+        default_unit = get_default_unit(unit_id)
+        format_func = (UNIT_FORMAT_DB[unit_id]
+                                    ['conversions']
+                                    [default_unit]
+                                    [3])
+    return format_func
 
 
 if __name__ == '__main__':

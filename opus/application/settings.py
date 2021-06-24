@@ -361,3 +361,11 @@ MAX_CUM_DOWNLOAD_SIZE = 50*1024*1024*1024 # 50 gigs max cum downloads for a sess
 TEST_RESULT_COUNTS_AGAINST_INTERNAL_DB = False
 
 OPUS_FILE_VERSION = ''
+
+# OPUS supported cart download formats, a dictionary keyed by format, and value
+# is a tuple containing MIME type & accessing (w/r) modes for the format.
+DOWNLOAD_FORMATS = {
+    'zip': ('application/zip', 'w', 'r'),
+    'tar': ('application/x-tar', 'w', 'r'),
+    'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
+}

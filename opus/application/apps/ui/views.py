@@ -32,6 +32,7 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
+from cart.models import Cart
 from dictionary.models import Definitions
 from paraminfo.models import ParamInfo
 from results.views import get_triggered_tables
@@ -47,6 +48,7 @@ from tools.app_utils import (cols_to_slug_list,
                              get_git_version,
                              get_mult_name,
                              get_reqno,
+                             get_session_id,
                              json_response,
                              strip_numeric_suffix,
                              throw_random_http404_error,
@@ -77,6 +79,7 @@ class main_site(TemplateView):
         context['default_widgets'] = settings.DEFAULT_WIDGETS
         context['default_sort_order'] = settings.DEFAULT_SORT_ORDER
         context['max_selections_allowed'] = settings.MAX_SELECTIONS_ALLOWED
+        context['preview_guides'] = str(settings.PREVIEW_GUIDES).strip('"')
         context['menu'] = menu['menu']
         if settings.OPUS_FILE_VERSION == '':
             settings.OPUS_FILE_VERSION = get_git_version()
@@ -523,6 +526,24 @@ def api_init_detail_page(request, **kwargs):
     filespec = obs_general.primary_file_spec
     selection = filespec.split('/')[-1].split('.')[0]
 
+    # See if this opus_id is in the cart
+    in_cart = True
+    try:
+        session_id = get_session_id(request)
+        Cart.objects.get(opus_id=opus_id, session_id=session_id, recycled=0)
+    except ObjectDoesNotExist:
+        in_cart = False
+
+    cart = {}
+    if in_cart:
+        cart['action'] = 'remove'
+        cart['title'] = 'Remove from cart'
+        cart['icon_class'] = 'far fa-trash-alt'
+    else:
+        cart['action'] = 'add'
+        cart['title'] = 'Add to cart'
+        cart['icon_class'] = 'fas fa-cart-plus'
+
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
     preview_med_list = get_pds_preview_images(opus_id, None, 'med')
@@ -597,7 +618,8 @@ def api_init_detail_page(request, **kwargs):
         'preview_guide_url': preview_guide_url,
         'products': new_products,
         'opus_id': opus_id,
-        'instrument_id': instrument_id
+        'instrument_id': instrument_id,
+        'cart': cart
     }
     ret = render(request, 'ui/detail.html', context)
     exit_api_call(api_code, ret)
