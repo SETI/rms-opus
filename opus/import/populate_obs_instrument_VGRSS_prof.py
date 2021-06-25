@@ -333,40 +333,65 @@ def populate_obs_ring_geometry_VGRSS_phase1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGRSS_phase2_PROF(**kwargs):
     return 180.
 
-###### TODO: Need to figure out the calculations for the followings: ######
 # Source: Voyager RSS is at south, observer: earth is at north.
+# Incidence angle: the angle between the point where incoming source photons
+# hit the ring, to the north pole of the earth (normal vector
+# on the surface of LIT side of the ring, same as source side), always between
+# 0 (parallel to north pole) to 90 (parallel to ring)
+# We would like to use emission angle to get both min/max of incidence angle.
+# Emission angle is 90-180 (dark side), so incidence angle is 180 - emission
+# angle.
 def populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return el
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
+    cal_inc = 180 - max_ea
+    msg = 'The difference between incidence angle and 180 - emission is'
+          + ' more than 0.001'
+    assert abs(cal_inc - inc) <= 0.001, msg
+    return 180. - max_ea
 
 def populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return el
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
+    cal_inc = 180 - min_ea
+    msg = 'The difference between incidence angle and 180 - emission is'
+          + ' more than 0.001'
+    assert abs(cal_inc - inc) <= 0.001, msg
+    return 180. - min_ea
 
+# North based ia: the angle between the point where incoming source photons hit
+# the ring to the normal vector on the NORTH side of the ring. 0-90 when north
+# side of the ring is lit, and 90-180 when south side is lit.
+# Since south side is lit, north based incidence angle is between 90-180.
+# It's 180 - inc, which will be the same as emission angle.
 def populate_obs_ring_geometry_VGRSS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return el # 180 - inc
+    return inc
 
 def populate_obs_ring_geometry_VGRSS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180 - inc
+    return inc
 
+# Emission angle: the angle between the normal vector on the LIT side, to the
+# direction where outgoing photons to the observer. 0-90 when observer is at the
+# lit side of the ring, and 90-180 when it's at the dark side.
+# Since observer is at the dark side, ea is between 90-180
 def populate_obs_ring_geometry_VGRSS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    el = index_row['MINIMUM_EMISSION_ANGLE']
 
     return el
 
@@ -377,19 +402,25 @@ def populate_obs_ring_geometry_VGRSS_emission2_PROF(**kwargs):
 
     return el
 
+# North based ea: the angle between the normal vector on the NORTH side of the
+# ring, to the direction where outgoing photons to the observer. 0-90 when
+# observer is at the north side of the ring, and 90-180 when it's at the south
+# side.
+# Since observer is at north, north based emission angle is between 0-90.
+# It's 180 - ea
 def populate_obs_ring_geometry_VGRSS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-min emission angle
+    return 180. - max_ea
 
 def populate_obs_ring_geometry_VGRSS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return el # 180-max emission angle
+    return 180. - min_el
 
 # We set the center versions to be the same as the normal versions
 populate_obs_ring_geometry_VGRSS_center_phase1_PROF = \
@@ -413,61 +444,86 @@ populate_obs_ring_geometry_VGRSS_center_north_based_emission1_PROF = \
 populate_obs_ring_geometry_VGRSS_center_north_based_emission2_PROF = \
     populate_obs_ring_geometry_VGRSS_north_based_emission2_PROF
 
+# Opening angle to observer: the angle between the ring surface to the direction
+# where outgoing photons to the observer. Positive if observer is at the north
+# side of the ring , negative if it's at the south side. In this case, observer
+# is at the north side, so it's 90 - ea. For reference, if observer is at the
+# south side, then oa is 90 - 180 - ea.
+# Observer is at north, so it's ea - 90 (positive 0-90)
 def populate_obs_ring_geometry_VGRSS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return el # inc - 90
+    return min_ea - 90.
 
 def populate_obs_ring_geometry_VGRSS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # inc - 90
+    return max_ea - 90.
 
+# Ring elevation to observer, same to opening angle except, it's positive if
+# observer is at north side of Jupiter, Saturn, and Neptune, and south side of
+# Uranus. Negative if observer is at south side of Jupiter, Saturn, and Neptune,
+# and north side of Uranus. In this volume, observer is at the north of Saturn,
+# so ring elevation will be the same as opening angle.
+# Same as observer opening angle
 def populate_obs_ring_geometry_VGRSS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return el # 90 - max emission
+    return min_ea - 90.
 
 def populate_obs_ring_geometry_VGRSS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 90 - min emission
+    return max_ea - 90.
 
+# Opening angle to solar: the angle between the ring surface to the direction
+# where incoming photons from the source. Positive if source is at the north
+# side of the ring , negative if it's at the south side. In this case, source
+# is at the north side, so it's 90 - inc. For reference, if source is at the
+# south side, then oa is - (90 - inc).
+# Source is at south of the ring, so it's neagtive observer oa, which is 90 - ea
+# (negative 0-90).
 def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max-ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return -el # 180 - obs opneing ang
+    return 90. - max_ea
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return -el  # 180 - obs opneing ang
+    return  90. - min_ea
 
+# Ring elevation to solar, same to opening angle except, it's positive if
+# source is at north side of Jupiter, Saturn, and Neptune, and south side of
+# Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
+# and north side of Uranus. In this volume, source is at north of Saturn,
+# so ring elevation will be the same as opening angle.
+# Same as source opening angle
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max-ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return -el  # 180 - obs elevation
+    return 90. - max_ea
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return -el  # 180 - obs elevation
+    return  90. - min_ea
 
 def populate_obs_ring_geometry_VGRSS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)

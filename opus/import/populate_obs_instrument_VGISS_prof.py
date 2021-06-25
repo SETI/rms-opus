@@ -390,7 +390,7 @@ def populate_obs_ring_geometry_VGISS_emission2_PROF(**kwargs):
 
     return ea
 
-# Noth based ea: the angle between the normal vector on the NORTH side of the
+# North based ea: the angle between the normal vector on the NORTH side of the
 # ring, to the direction where outgoing photons to the observer. 0-90 when
 # observer is at the north side of the ring, and 90-180 when it's at the south
 # side.
@@ -440,14 +440,14 @@ def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle1_PROF(**kwargs)
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return 90 - max_ea
+    return 90. - max_ea
 
 def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return 90 - min_ea
+    return 90. - min_ea
 
 # Ring elevation to observer, same to opening angle except, it's positive if
 # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -459,14 +459,14 @@ def populate_obs_ring_geometry_VGISS_observer_ring_elevation1_PROF(**kwargs):
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return 90 - max_ea
+    return 90. - max_ea
 
 def populate_obs_ring_geometry_VGISS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
-    return 90 - min_ea
+    return 90. - min_ea
 
 
 # Opening angle to solar: the angle between the ring surface to the direction
@@ -479,14 +479,14 @@ def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle1_PROF(**kwargs):
     index_row = metadata['index_row']
     inc = index_row['INCIDENCE_ANGLE']
 
-    return 90 - inc
+    return 90. - inc
 
 def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return 90 - inc
+    return 90. - inc
 
 # Ring elevation to solar, same to opening angle except, it's positive if
 # source is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -498,14 +498,14 @@ def populate_obs_ring_geometry_VGISS_solar_ring_elevation1_PROF(**kwargs):
     index_row = metadata['index_row']
     inc = index_row['INCIDENCE_ANGLE']
 
-    return 90 - inc
+    return 90. - inc
 
 def populate_obs_ring_geometry_VGISS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = index_row['INCIDENCE_ANGLE']
 
-    return 90 - inc
+    return 90. - inc
 
 def populate_obs_ring_geometry_VGISS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
