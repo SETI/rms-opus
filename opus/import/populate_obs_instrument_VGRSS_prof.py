@@ -334,6 +334,7 @@ def populate_obs_ring_geometry_VGRSS_phase2_PROF(**kwargs):
     return 180.
 
 ###### TODO: Need to figure out the calculations for the followings: ######
+# Source: Voyager RSS is at south, observer: earth is at north.
 def populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -353,42 +354,42 @@ def populate_obs_ring_geometry_VGRSS_north_based_incidence1_PROF(**kwargs):
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # 180 - inc
 
 def populate_obs_ring_geometry_VGRSS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # 180 - inc
 
 def populate_obs_ring_geometry_VGRSS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 def populate_obs_ring_geometry_VGRSS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 def populate_obs_ring_geometry_VGRSS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el # 180-min emission angle
 
 def populate_obs_ring_geometry_VGRSS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el # 180-max emission angle
 
 # We set the center versions to be the same as the normal versions
 populate_obs_ring_geometry_VGRSS_center_phase1_PROF = \
@@ -417,56 +418,56 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_opening_angle1_PROF(**kwargs)
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # inc - 90
 
 def populate_obs_ring_geometry_VGRSS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # inc - 90
 
 def populate_obs_ring_geometry_VGRSS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # 90 - max emission
 
 def populate_obs_ring_geometry_VGRSS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return el
+    return el # 90 - min emission
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return -el
+    return -el # 180 - obs opneing ang
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return -el
+    return -el  # 180 - obs opneing ang
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return -el
+    return -el  # 180 - obs elevation
 
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['INCIDENCE_ANGLE']
 
-    return -el
+    return -el  # 180 - obs elevation
 
 def populate_obs_ring_geometry_VGRSS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)

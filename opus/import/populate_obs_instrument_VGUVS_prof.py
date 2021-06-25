@@ -334,6 +334,9 @@ def populate_obs_ring_geometry_VGUVS_phase2_PROF(**kwargs):
     return 180.
 
 ###### TODO: Need to figure out the calculations for the followings: ######
+# Source is star, observer is voyager
+# Voyager location: N -> S -> N => Saturn
+# Do the same to figure out voyager location for Neptune and Uranus
 def populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -367,28 +370,28 @@ def populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs):
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 def populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 def populate_obs_ring_geometry_VGUVS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 def populate_obs_ring_geometry_VGUVS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return el
 
 # We set the center versions to be the same as the normal versions
 populate_obs_ring_geometry_VGUVS_center_phase1_PROF = \

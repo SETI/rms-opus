@@ -334,6 +334,10 @@ def populate_obs_ring_geometry_VGPPS_phase2_PROF(**kwargs):
     return 180.
 
 ###### TODO: Need to figure out the calculations for the followings: ######
+# Same as UVS
+# Source is star, observer is voyager
+# Voyager location: N -> S -> N => Saturn
+# Do the same to figure out voyager location for Neptune and Uranus
 def populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
