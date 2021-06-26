@@ -447,8 +447,8 @@ populate_obs_ring_geometry_VGRSS_center_north_based_emission2_PROF = \
 # Opening angle to observer: the angle between the ring surface to the direction
 # where outgoing photons to the observer. Positive if observer is at the north
 # side of the ring , negative if it's at the south side. In this case, observer
-# is at the north side, so it's ea - 90. For reference, if observer is at the
-# south side, then oa is 90 - ea.
+# is at the north side, so it's ea - 90 (or 90 - inc). For reference, if
+# observer is at the south side, then oa is 90 - ea.
 # Observer is at north, so it's ea - 90 (positive 0-90)
 def populate_obs_ring_geometry_VGRSS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
