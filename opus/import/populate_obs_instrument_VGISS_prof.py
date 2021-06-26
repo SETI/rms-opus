@@ -345,33 +345,33 @@ def populate_obs_ring_geometry_VGISS_phase2_PROF(**kwargs):
 def populate_obs_ring_geometry_VGISS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    ia = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return ia
+    return inc
 
 def populate_obs_ring_geometry_VGISS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    ia = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return ia
+    return inc
 
-# North based ia: the angle between the point where incoming source photons hit
+# North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
 # side of the ring is lit, and 90-180 when south side is lit.
 def populate_obs_ring_geometry_VGISS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    ia = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return ia
+    return inc
 
 def populate_obs_ring_geometry_VGISS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    ia = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return ia
+    return inc
 
 # Emission angle: the angle between the normal vector on the LIT side, to the
 # direction where outgoing photons to the observer. 0-90 when observer is at the

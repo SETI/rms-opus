@@ -333,10 +333,16 @@ def populate_obs_ring_geometry_VGUVS_phase1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGUVS_phase2_PROF(**kwargs):
     return 180.
 
-###### TODO: Need to figure out the calculations for the followings: ######
 # Source is star, observer is voyager
 # Voyager location: N -> S -> N => Saturn
 # Do the same to figure out voyager location for Neptune and Uranus
+# Incidence angle: the angle between the point where incoming source photons
+# hit the ring, to the north pole of the earth (normal vector
+# on the surface of LIT side of the ring, same as source side), always between
+# 0 (parallel to north pole) to 90 (parallel to ring)
+# We would like to use emission angle to get both min/max of incidence angle.
+# Emission angle is 90-180 (dark side), so incidence angle is 180 - emission
+# angle.
 def populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -351,6 +357,9 @@ def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
 
     return el
 
+# North based ia: the angle between the point where incoming source photons hit
+# the ring to the normal vector on the NORTH side of the ring. 0-90 when north
+# side of the ring is lit, and 90-180 when south side is lit.
 def populate_obs_ring_geometry_VGUVS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -365,6 +374,10 @@ def populate_obs_ring_geometry_VGUVS_north_based_incidence2_PROF(**kwargs):
 
     return el
 
+# Emission angle: the angle between the normal vector on the LIT side, to the
+# direction where outgoing photons to the observer. 0-90 when observer is at the
+# lit side of the ring, and 90-180 when it's at the dark side.
+# Since observer is at the dark side, ea is between 90-180
 def populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -379,6 +392,10 @@ def populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs):
 
     return el
 
+# North based ea: the angle between the normal vector on the NORTH side of the
+# ring, to the direction where outgoing photons to the observer. 0-90 when
+# observer is at the north side of the ring, and 90-180 when it's at the south
+# side.
 def populate_obs_ring_geometry_VGUVS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -415,6 +432,12 @@ populate_obs_ring_geometry_VGUVS_center_north_based_emission1_PROF = \
 populate_obs_ring_geometry_VGUVS_center_north_based_emission2_PROF = \
     populate_obs_ring_geometry_VGUVS_north_based_emission2_PROF
 
+
+# Opening angle to observer: the angle between the ring surface to the direction
+# where outgoing photons to the observer. Positive if observer is at the north
+# side of the ring , negative if it's at the south side. In this case, observer
+# is at the north side, so it's 90 - ea. For reference, if observer is at the
+# south side, then oa is 90 - 180 - ea.
 def populate_obs_ring_geometry_VGUVS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -429,6 +452,10 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_opening_angle2_PROF(**kwargs)
 
     return el
 
+# Ring elevation to observer, same to opening angle except, it's positive if
+# observer is at north side of Jupiter, Saturn, and Neptune, and south side of
+# Uranus. Negative if observer is at south side of Jupiter, Saturn, and Neptune,
+# and north side of Uranus.
 def populate_obs_ring_geometry_VGUVS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -443,6 +470,11 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
 
     return el
 
+# Opening angle to solar: the angle between the ring surface to the direction
+# where incoming photons from the source. Positive if source is at the north
+# side of the ring , negative if it's at the south side. In this case, source
+# is at the north side, so it's 90 - inc. For reference, if source is at the
+# south side, then oa is - (90 - inc).
 def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -457,6 +489,10 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
 
     return -el
 
+# Ring elevation to solar, same to opening angle except, it's positive if
+# source is at north side of Jupiter, Saturn, and Neptune, and south side of
+# Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
+# and north side of Uranus.
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
