@@ -349,7 +349,7 @@ def populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     cal_inc = 180 - max_ea
     msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001'
+          + ' more than 0.001, volume: VG_2803.'
     assert abs(cal_inc - inc) <= 0.001, msg
     return 180. - max_ea
 
@@ -361,7 +361,7 @@ def populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs):
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     cal_inc = 180 - min_ea
     msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001'
+          + ' more than 0.001, volume: VG_2803.'
     assert abs(cal_inc - inc) <= 0.001, msg
     return 180. - min_ea
 
@@ -556,7 +556,7 @@ def populate_obs_ring_geometry_VGRSS_ring_intercept_time2_PROF(**kwargs):
 def populate_obs_mission_voyager_VGRSS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
+    target_name = index_row['TARGET_NAME'].upper().strip()
     mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
 
     return mp

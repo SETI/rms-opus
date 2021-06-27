@@ -521,7 +521,7 @@ def populate_obs_ring_geometry_VGISS_ring_intercept_time2_PROF(**kwargs):
 def populate_obs_mission_voyager_VGISS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
+    target_name = index_row['TARGET_NAME'].upper().strip()
     mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
 
     return mp

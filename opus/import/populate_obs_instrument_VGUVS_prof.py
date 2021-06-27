@@ -338,7 +338,7 @@ def populate_obs_ring_geometry_VGUVS_phase2_PROF(**kwargs):
 # Source SIGMA SGR is at south, observer Voyager is at north. This is when
 # start time before 1986-01-24T17:10:13.320. Target: U ring.
 # Source SIGMA SGR is at north, observer Voyager is at south. This is when
-# start time after 1986-01-24T17:10:13.320.  Target: N ring.
+# start time after 1986-01-24T17:10:13.320. Target: N ring.
 # Source IOTA HER is at north, observer Voyager is at south. Target: S ring.
 
 # Incidence angle: the angle between the point where incoming source photons
@@ -356,7 +356,7 @@ def populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     cal_inc = 180 - max_ea
     msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001'
+          + ' more than 0.001, volume: VG_2802.'
     assert abs(cal_inc - inc) <= 0.001, msg
     return 180. - max_ea
 
@@ -368,7 +368,7 @@ def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     cal_inc = 180 - min_ea
     msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001'
+          + ' more than 0.001, volume: VG_2802.'
     assert abs(cal_inc - inc) <= 0.001, msg
     return 180. - min_ea
 
@@ -587,7 +587,7 @@ def _is_Voyager_at_north(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
-    target_name = index_row['TARGET_NAME'].upper()
+    target_name = index_row['TARGET_NAME'].upper().strip()
     if (src_name == "DELTA SCO"
         or (src_name == "SIGMA SGR" and target_name == "U RINGS")):
         return True
@@ -602,7 +602,7 @@ def _is_Voyager_at_north(**kwargs):
 def populate_obs_mission_voyager_VGUVS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
+    target_name = index_row['TARGET_NAME'].upper().strip()
     mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
 
     return mp

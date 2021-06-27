@@ -333,12 +333,12 @@ def populate_obs_ring_geometry_VGPPS_phase1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGPPS_phase2_PROF(**kwargs):
     return 180.
 
-###### TODO: Need to figure out the calculations for the followings: ######
-# Same as UVS
-# Source is star, observer is voyager
-# Voyager location: N -> S -> N => Saturn
-# Do the same to figure out voyager location for Neptune and Uranus
-# Do the same to figure out voyager location for Neptune and Uranus
+# Source is star, observer is Voyager
+# Source DELTA SCO is at south, observer Voyager is at north. Target: S ring.
+# Source SIGMA SGR is at south, observer Voyager is at north. Target: U ring.
+# Source SIGMA SGR is at north, observer Voyager is at south. Target: N ring.
+# Source BETA PER is at north, observer Voyager is at south. Target: U ring.
+
 # Incidence angle: the angle between the point where incoming source photons
 # hit the ring, to the north pole of the earth (normal vector
 # on the surface of LIT side of the ring, same as source side), always between
@@ -349,33 +349,45 @@ def populate_obs_ring_geometry_VGPPS_phase2_PROF(**kwargs):
 def populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return el
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
+    cal_inc = 180 - max_ea
+    msg = 'The difference between incidence angle and 180 - emission is'
+          + ' more than 0.001, volume: VG_2801.'
+    assert abs(cal_inc - inc) <= 0.001, msg
+    return 180. - max_ea
 
 def populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
-    return el
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
+    cal_inc = 180 - min_ea
+    msg = 'The difference between incidence angle and 180 - emission is'
+          + ' more than 0.001, volume: VG_2801.'
+    assert abs(cal_inc - inc) <= 0.001, msg
+    return 180. - min_ea
 
-# North based ia: the angle between the point where incoming source photons hit
+# North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
 # side of the ring is lit, and 90-180 when south side is lit.
 def populate_obs_ring_geometry_VGPPS_north_based_incidence1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return el
+    if _is_Voyager_at_north(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        return 180. - inc
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        return inc
 
 def populate_obs_ring_geometry_VGPPS_north_based_incidence2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return el
+    if _is_Voyager_at_north(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        return 180. - inc
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        return inc
 
 # Emission angle: the angle between the normal vector on the LIT side, to the
 # direction where outgoing photons to the observer. 0-90 when observer is at the
@@ -384,34 +396,38 @@ def populate_obs_ring_geometry_VGPPS_north_based_incidence2_PROF(**kwargs):
 def populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    min_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return min_ea
 
 def populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
 
-    return el # 180-incidence
+    return max_ea
 
 # North based ea: the angle between the normal vector on the NORTH side of the
 # ring, to the direction where outgoing photons to the observer. 0-90 when
 # observer is at the north side of the ring, and 90-180 when it's at the south
 # side.
 def populate_obs_ring_geometry_VGPPS_north_based_emission1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        ea = 180. - max_ea
+    else:
+        ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
 
-    return el # 180-incidence
+    return ea
 
 def populate_obs_ring_geometry_VGPPS_north_based_emission2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['MAXIMUM_EMISSION_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        ea = 180. - min_ea
+    else:
+        ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
 
-    return el # 180-incidence
+    return ea
 
 # We set the center versions to be the same as the normal versions
 populate_obs_ring_geometry_VGPPS_center_phase1_PROF = \
@@ -437,22 +453,24 @@ populate_obs_ring_geometry_VGPPS_center_north_based_emission2_PROF = \
 
 # Opening angle to observer: the angle between the ring surface to the direction
 # where outgoing photons to the observer. Positive if observer is at the north
-# side of the ring , negative if it's at the south side. In this case, observer
-# is at the north side, so it's 90 - ea. For reference, if observer is at the
-# south side, then oa is 90 - 180 - ea.
+# side of the ring , negative if it's at the south side. If observer is at the
+# north side, it's ea - 90 (or 90 - inc). If observer is at the south side,
+# then oa is 90 - ea.
 def populate_obs_ring_geometry_VGPPS_observer_ring_opening_angle1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return el
+    if _is_Voyager_at_north(**kwargs):
+        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        return min_ea - 90.
+    else:
+        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        return 90. - max_ea
 
 def populate_obs_ring_geometry_VGPPS_observer_ring_opening_angle2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return el
+    if _is_Voyager_at_north(**kwargs):
+        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        return max_ea - 90.
+    else:
+        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        return 90. - min_ea
 
 # Ring elevation to observer, same to opening angle except, it's positive if
 # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
@@ -461,14 +479,32 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_opening_angle2_PROF(**kwargs)
 def populate_obs_ring_geometry_VGPPS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        tartget_name = populate_target_name_from_index(**kwargs)
+        if target_name =='U RINGS':
+            el = - (max_ea - 90.) # negative
+        else:
+            el = min_ea - 90. # positive
+    else:
+        el = - (max_ea - 90.) # negative
 
     return el
 
 def populate_obs_ring_geometry_VGPPS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        tartget_name = populate_target_name_from_index(**kwargs)
+        if target_name =='U RINGS':
+            el = - (min_ea - 90.) # negative
+        else:
+            el = max_ea - 90. # positive
+    else:
+        el = - (min_ea - 90.) # negative
 
     return el
 
@@ -478,36 +514,54 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_elevation2_PROF(**kwargs):
 # is at the north side, so it's 90 - inc. For reference, if source is at the
 # south side, then oa is - (90 - inc).
 def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return -el
+    if _is_Voyager_at_north(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        return inc - 90.
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        return 90. - inc
 
 def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
-
-    return -el
+    if _is_Voyager_at_north(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        return inc - 90.
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        return 90. - inc
 
 # Ring elevation to solar, same to opening angle except, it's positive if
 # source is at north side of Jupiter, Saturn, and Neptune, and south side of
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGPPS_solar_ring_elevation1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        tartget_name = populate_target_name_from_index(**kwargs)
+        if target_name =='U RINGS':
+            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+            el = 90. - inc # positive
+        else:
+            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+            el = inc - 90. # negative
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        el = 90. - inc # positive
 
-    return -el
+    return el
 
 def populate_obs_ring_geometry_VGPPS_solar_ring_elevation2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    if _is_Voyager_at_north(**kwargs):
+        tartget_name = populate_target_name_from_index(**kwargs)
+        if target_name =='U RINGS':
+            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+            el = 90. - inc # positive
+        else:
+            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+            el = inc - 90. # negative
+    else:
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        el = 90. - inc # positive
 
-    return -el
+    return el
 
 def populate_obs_ring_geometry_VGPPS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
@@ -515,6 +569,24 @@ def populate_obs_ring_geometry_VGPPS_ring_intercept_time1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGPPS_ring_intercept_time2_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
+def _is_Voyager_at_north(**kwargs):
+    """In this volume,
+    Voyager is at north when:
+        - Source is DELTA SCO (Target S RINGS)
+        - Source is SIGMA SGR (Target U RINGS)
+    Voyager is south when:
+        - Source is SIGMA SGR (Target N RINGS)
+        - Source is BETA PER (Target U RINGS)
+    """
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    src_name = index_row['SIGNAL_SOURCE_NAME_1']
+    target_name = index_row['TARGET_NAME'].upper().strip()
+    if (src_name == "DELTA SCO"
+        or (src_name == "SIGMA SGR" and target_name == "U RINGS")):
+        return True
+    else:
+        return False
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY voyager INSTRUMENT
@@ -523,7 +595,7 @@ def populate_obs_ring_geometry_VGPPS_ring_intercept_time2_PROF(**kwargs):
 def populate_obs_mission_voyager_VGPPS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper()
+    target_name = index_row['TARGET_NAME'].upper().strip()
     mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
 
     return mp

@@ -136,7 +136,7 @@ def populate_product_id_from_supp_index(**kwargs):
 def populate_target_name_from_index(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME']
+    target_name = index_row['TARGET_NAME'].strip()
 
     return target_name
 
