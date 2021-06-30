@@ -484,7 +484,7 @@ def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    el = index_row['INCIDENCE_ANGLE']
+    inc = index_row['INCIDENCE_ANGLE']
 
     return 90. - inc
 

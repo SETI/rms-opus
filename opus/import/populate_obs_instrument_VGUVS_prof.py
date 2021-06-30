@@ -355,9 +355,9 @@ def populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs):
 
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     cal_inc = 180 - max_ea
-    msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001, volume: VG_2802.'
-    assert abs(cal_inc - inc) <= 0.001, msg
+    msg = ('The difference between incidence angle and 180 - emission is' +
+           ' more than 0.005, volume: VG_2802.')
+    assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - max_ea
 
 def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
@@ -367,9 +367,9 @@ def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
 
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     cal_inc = 180 - min_ea
-    msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001, volume: VG_2802.'
-    assert abs(cal_inc - inc) <= 0.001, msg
+    msg = ('The difference between incidence angle and 180 - emission is' +
+           ' more than 0.005, volume: VG_2802.')
+    assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - min_ea
 
 # North based inc: the angle between the point where incoming source photons hit
@@ -485,7 +485,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation1_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (max_ea - 90.) # negative
         else:
@@ -501,7 +501,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (min_ea - 90.) # negative
         else:
@@ -539,7 +539,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
             el = 90. - inc # positive
@@ -554,7 +554,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
 
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
             el = 90. - inc # positive

@@ -353,9 +353,9 @@ def populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs):
 
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     cal_inc = 180 - max_ea
-    msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001, volume: VG_2801.'
-    assert abs(cal_inc - inc) <= 0.001, msg
+    msg = ('The difference between incidence angle and 180 - emission(' +
+           f'{abs(cal_inc - inc)}) is more than 0.005, volume: VG_2801.')
+    assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - max_ea
 
 def populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs):
@@ -365,9 +365,9 @@ def populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs):
 
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     cal_inc = 180 - min_ea
-    msg = 'The difference between incidence angle and 180 - emission is'
-          + ' more than 0.001, volume: VG_2801.'
-    assert abs(cal_inc - inc) <= 0.001, msg
+    msg = ('The difference between incidence angle and 180 - emission(' +
+           f'{abs(cal_inc - inc)}) is more than 0.005, volume: VG_2801.')
+    assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - min_ea
 
 # North based inc: the angle between the point where incoming source photons hit
@@ -375,18 +375,18 @@ def populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs):
 # side of the ring is lit, and 90-180 when south side is lit.
 def populate_obs_ring_geometry_VGPPS_north_based_incidence1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
         return 180. - inc
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         return inc
 
 def populate_obs_ring_geometry_VGPPS_north_based_incidence2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         return 180. - inc
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
         return inc
 
 # Emission angle: the angle between the normal vector on the LIT side, to the
@@ -413,19 +413,19 @@ def populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs):
 # side.
 def populate_obs_ring_geometry_VGPPS_north_based_emission1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        max_ea = populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs)
         ea = 180. - max_ea
     else:
-        ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        ea = populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs)
 
     return ea
 
 def populate_obs_ring_geometry_VGPPS_north_based_emission2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        min_ea = populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs)
         ea = 180. - min_ea
     else:
-        ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        ea = populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs)
 
     return ea
 
@@ -458,18 +458,18 @@ populate_obs_ring_geometry_VGPPS_center_north_based_emission2_PROF = \
 # then oa is 90 - ea.
 def populate_obs_ring_geometry_VGPPS_observer_ring_opening_angle1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        min_ea = populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs)
         return min_ea - 90.
     else:
-        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        max_ea = populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs)
         return 90. - max_ea
 
 def populate_obs_ring_geometry_VGPPS_observer_ring_opening_angle2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
+        max_ea = populate_obs_ring_geometry_VGPPS_emission2_PROF(**kwargs)
         return max_ea - 90.
     else:
-        min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
+        min_ea = populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs)
         return 90. - min_ea
 
 # Ring elevation to observer, same to opening angle except, it's positive if
@@ -482,7 +482,7 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_elevation1_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (max_ea - 90.) # negative
         else:
@@ -498,7 +498,7 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_elevation2_PROF(**kwargs):
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (min_ea - 90.) # negative
         else:
@@ -515,18 +515,18 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_elevation2_PROF(**kwargs):
 # south side, then oa is - (90 - inc).
 def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         return inc - 90.
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
         return 90. - inc
 
 def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
         return inc - 90.
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         return 90. - inc
 
 # Ring elevation to solar, same to opening angle except, it's positive if
@@ -535,30 +535,30 @@ def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle2_PROF(**kwargs):
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGPPS_solar_ring_elevation1_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
-            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+            inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
             el = 90. - inc # positive
         else:
-            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+            inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
             el = inc - 90. # negative
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
         el = 90. - inc # positive
 
     return el
 
 def populate_obs_ring_geometry_VGPPS_solar_ring_elevation2_PROF(**kwargs):
     if _is_Voyager_at_north(**kwargs):
-        tartget_name = populate_target_name_from_index(**kwargs)
+        target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
-            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+            inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
             el = 90. - inc # positive
         else:
-            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+            inc = populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs)
             el = inc - 90. # negative
     else:
-        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         el = 90. - inc # positive
 
     return el
