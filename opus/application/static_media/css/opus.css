@@ -74,6 +74,13 @@ even when the browser size is narrow. */
     outline: none; !important
 }
 
+#op-main-nav .op-nav-detail-image {
+    height: 20px;
+    width: 20px;
+    vertical-align: top;
+    margin-left: 0.3em;
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;

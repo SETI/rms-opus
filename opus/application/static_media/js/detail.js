@@ -128,9 +128,20 @@ var o_detail = {
         o_detail.adjustDetailHeight();
     },
 
-    showDetailInNav: function() {
-        if (opus.prefs.detail !== "") {
-            $("#op-main-nav .nav-link .op-selected-detail").text(`\(${opus.prefs.detail}\)`);
+    showDetailThumbInNav: function(imageHtml) {
+        if (imageHtml === undefined) {
+            if (opus.prefs.detail != "") {
+                let url = "/opus/api/image/thumb/" + opus.prefs.detail + ".json";
+                $.getJSON(url, function(image)  {
+                    let imageObj = image.data[0];
+                    imageHtml = `<img class="op-nav-detail-image" src="${imageObj.url}"
+                                      alt="${imageObj.alt_text}"
+                                      title="${imageObj.opus_id}">`;
+                    $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
+                });
+            }
+        } else {
+            $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
         }
     },
 
