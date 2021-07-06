@@ -1243,8 +1243,9 @@ var o_browse = {
     showDetail: function(e, opusId) {
         o_browse.hideMenus();
 
-        // if the item is selected as 'detail', add the icon in the corner
-        // hide all first... this will hide both on browse and cart
+        // If the item is selected as 'DETAIL', show the 'DETAIL' text in the corner
+        // Hide any previous selected 'DETAIL' designation first... this will
+        //      hide 'DETAIL' on both browse and cart
         $(`.op-thumbnail-container .op-detail-overlay`).addClass("op-hide-element");
         let elem = $(`[data-id='${opusId}'] .op-detail-overlay`);
         if (elem.length > 0) {

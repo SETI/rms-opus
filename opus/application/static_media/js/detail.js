@@ -131,7 +131,7 @@ var o_detail = {
     showDetailThumbInNav: function(imageHtml) {
         if (imageHtml === undefined) {
             if (opus.prefs.detail != "") {
-                let url = "/opus/api/image/thumb/" + opus.prefs.detail + ".json";
+                let url = "/opus/__api/image/thumb/" + opus.prefs.detail + ".json";
                 $.getJSON(url, function(image)  {
                     let imageObj = image.data[0];
                     imageHtml = `<img class="op-nav-detail-image" src="${imageObj.url}"
