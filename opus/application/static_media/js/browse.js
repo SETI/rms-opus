@@ -1246,7 +1246,7 @@ var o_browse = {
         // If the item is selected as 'DETAIL', show the 'DETAIL' text in the corner
         // Hide any previous selected 'DETAIL' designation first... this will
         //      hide 'DETAIL' on both browse and cart
-        $(`.op-thumbnail-container .op-detail-overlay`).addClass("op-hide-element");
+        $(".op-thumbnail-container .op-detail-overlay").addClass("op-hide-element");
         let elem = $(`[data-id='${opusId}'] .op-detail-overlay`);
         if (elem.length > 0) {
             elem.removeClass("op-hide-element");
