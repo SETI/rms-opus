@@ -74,6 +74,13 @@ even when the browser size is narrow. */
     outline: none; !important
 }
 
+#op-main-nav .op-nav-detail-image {
+    height: 20px;
+    width: 20px;
+    vertical-align: top;
+    margin-left: 0.3em;
+}
+
 @media (max-width: 992px) {
     #op-main-nav.navbar .navbar-brand {
         float: none;
@@ -609,6 +616,21 @@ ul.op-search-menu {
     z-index: 999;
 }
 
+.op-thumbnail-container .op-detail-overlay {
+    transform: translate(-50%, -50%);
+    filter: contrast(200%) drop-shadow(3px 2px 2px black);
+    opacity: 1;
+    z-index: 999;
+}
+
+.op-thumbnail-container .op-detail-overlay:after {
+    content: "DETAIL";
+    font-family: sans-serif;
+    position: absolute;
+    width: 100%;
+    left: 95%;
+}
+
 .op-thumbnail-container .op-modal-show {
     z-index: 999;
     filter: contrast(200%) drop-shadow(3px 2px 2px black);
@@ -628,6 +650,12 @@ tr.op-modal-show {
 }
 
 .op-thumbnail-container .op-recycle-overlay.op-modal-show {
+    -webkit-transform: scale(0.4) translate(-210%, -270%);
+    -moz-transform: scale(0.4) translate(-210%, -270%);
+    transform: scale(0.4) translate(-210%, -270%);
+}
+
+.op-thumbnail-container .op-detail-overlay.op-modal-show {
     -webkit-transform: scale(0.4) translate(-210%, -270%);
     -moz-transform: scale(0.4) translate(-210%, -270%);
     transform: scale(0.4) translate(-210%, -270%);

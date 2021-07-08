@@ -37,6 +37,7 @@ urlpatterns = [
     url(r'^api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)$', api_get_images_by_size),
     url(r'^api/images.(?P<fmt>json|csv)$', api_get_images),
     url(r'^api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)$', api_get_image),
+    url(r'^__api/image/(?P<size>thumb|small|med|full)/(?P<opus_id>[-\w]+).(?P<fmt>json)$', api_get_image),
 
     url(r'^api/files/(?P<opus_id>[-\w]+).json$', api_get_files),
     url(r'^api/files.json$', api_get_files),

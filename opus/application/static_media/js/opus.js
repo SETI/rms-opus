@@ -520,6 +520,7 @@ var opus = {
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
 
+        o_detail.showDetailThumbInNav();
         switch(opus.prefs.view) {
             case "search":
                 window.scrollTo(0,0);
@@ -1192,6 +1193,7 @@ var opus = {
         }
 
         o_cart.initCart();
+        o_detail.showDetailThumbInNav();
 
         // This is a general function to discover if an element is in the viewport
         // Used like this: if ($(this).isInViewport()) {}

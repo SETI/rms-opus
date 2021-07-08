@@ -293,7 +293,7 @@ def api_get_data(request, fmt):
     "page" is not documented in the API Guide.
 
     Format: api/data.(?P<fmt>json|html|csv)
-            __data/data.(?P<fmt>csv)
+            __api/data.(?P<fmt>csv)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
@@ -728,6 +728,7 @@ def api_get_images_by_size(request, size, fmt):
     This is a PUBLIC API.
 
     Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
+            __api/images/(?P<size>thumb|small|med|full).(?P<fmt>json)
     Arguments: limit=<N>
                page=<N>  OR  startobs=<N> (1-based)
                order=<column>[,<column>...]
