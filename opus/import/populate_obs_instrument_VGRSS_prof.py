@@ -540,7 +540,7 @@ def populate_obs_ring_geometry_VGRSS_solar_ring_elevation2_PROF(**kwargs):
         inc = populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs)
         el = inc - 90. # negative
 
-    return  el
+    return el
 
 def populate_obs_ring_geometry_VGRSS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
