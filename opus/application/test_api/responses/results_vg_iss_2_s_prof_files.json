@@ -1,0 +1,60 @@
+{
+    "data": {
+        "vg-iss-2-s-prof": {
+            "vgiss_prof_02": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM002.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM002.LBL"
+            ],
+            "vgiss_prof_04": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM004.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM004.LBL"
+            ],
+            "vgiss_prof_10": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM010.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM010.LBL"
+            ],
+            "vgiss_prof_20": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM020.TAB",
+                "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM020.LBL"
+            ],
+            "rms_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.lbl"
+            ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.lbl"
+            ]
+        }
+    },
+    "versions": {
+        "vg-iss-2-s-prof": {
+            "Current": {
+                "vgiss_prof_02": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM002.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM002.LBL"
+                ],
+                "vgiss_prof_04": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM004.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM004.LBL"
+                ],
+                "vgiss_prof_10": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM010.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM010.LBL"
+                ],
+                "vgiss_prof_20": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM020.TAB",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/VG_28xx/VG_2810/DATA/IS2_P0001_V01_KM020.LBL"
+                ],
+                "rms_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.lbl"
+                ]
+            }
+        }
+    }
+}

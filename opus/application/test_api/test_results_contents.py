@@ -676,6 +676,78 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/co-vims-occ-2014-175-l2pup-e.json"
         self._run_json_equal_file(url, "results_co_vims_occ_2014_175_l2pup_e_files.json")
 
+    # VG_28xx
+    def test__results_contents_vg_pps_2_s_occ_1981_238_delsco_e_metadata(self):
+        "[test_results_contents.py] vg-pps-2-s-occ-1981-238-delsco-e metadata"
+        url = "/api/metadata_v2/vg-pps-2-s-occ-1981-238-delsco-e.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_s_occ_1981_238_delsco_e_metadata.json")
+
+    def test__results_contents_vg_pps_2_s_occ_1981_238_delsco_e_files(self):
+        "[test_results_contents.py] vg-pps-2-s-occ-1981-238-delsco-e files"
+        url = "/api/files/vg-pps-2-s-occ-1981-238-delsco-e.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_s_occ_1981_238_delsco_e_files.json")
+
+    def test__results_contents_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_metadata(self):
+        "[test_results_contents.py] vg-pps-2-u-occ-1986-024-delta-sigsgr-e metadata"
+        url = "/api/metadata_v2/vg-pps-2-u-occ-1986-024-delta-sigsgr-e.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_metadata.json")
+
+    def test__results_contents_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_files(self):
+        "[test_results_contents.py] vg-pps-2-u-occ-1986-024-delta-sigsgr-e files"
+        url = "/api/files/vg-pps-2-u-occ-1986-024-delta-sigsgr-e.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_files.json")
+
+    def test__results_contents_vg_pps_2_n_occ_1989_236_sigsgr_i_metadata(self):
+        "[test_results_contents.py] vg-pps-2-n-occ-1989-236-sigsgr-i metadata"
+        url = "/api/metadata_v2/vg-pps-2-n-occ-1989-236-sigsgr-i.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_n_occ_1989_236_sigsgr_i_metadata.json")
+
+    def test__results_contents_vg_pps_2_n_occ_1989_236_sigsgr_i_files(self):
+        "[test_results_contents.py] vg-pps-2-n-occ-1989-236-sigsgr-i files"
+        url = "/api/files/vg-pps-2-n-occ-1989-236-sigsgr-i.json"
+        self._run_json_equal_file(url, "results_vg_pps_2_n_occ_1989_236_sigsgr_i_files.json")
+
+    def test__results_contents_vg_uvs_1_s_occ_1980_317_iother_e_metadata(self):
+        "[test_results_contents.py] vg-uvs-1-s-occ-1980-317-iother-e metadata"
+        url = "/api/metadata_v2/vg-uvs-1-s-occ-1980-317-iother-e.json"
+        self._run_json_equal_file(url, "results_vg_uvs_1_s_occ_1980_317_iother_e_metadata.json")
+
+    def test__results_contents_vg_uvs_1_s_occ_1980_317_iother_e_files(self):
+        "[test_results_contents.py] vg-uvs-1-s-occ-1980-317-iother-e files"
+        url = "/api/files/vg-uvs-1-s-occ-1980-317-iother-e.json"
+        self._run_json_equal_file(url, "results_vg_uvs_1_s_occ_1980_317_iother_e_files.json")
+
+    def test__results_contents_vg_rss_2_u_occ_1986_024_four_s43_i_metadata(self):
+        "[test_results_contents.py] vg-rss-2-u-occ-1986-024-four-s43-i metadata"
+        url = "/api/metadata_v2/vg-rss-2-u-occ-1986-024-four-s43-i.json"
+        self._run_json_equal_file(url, "results_vg_rss_2_u_occ_1986_024_four_s43_i_metadata.json")
+
+    def test__results_contents_vg_rss_2_u_occ_1986_024_four_s43_i_files(self):
+        "[test_results_contents.py] vg-rss-2-u-occ-1986-024-four-s43-i files"
+        url = "/api/files/vg-rss-2-u-occ-1986-024-four-s43-i.json"
+        self._run_json_equal_file(url, "results_vg_rss_2_u_occ_1986_024_four_s43_i_files.json")
+
+    def test__results_contents_vg_uvs_2_n_occ_1989_236_sigsgr_i_metadata(self):
+        "[test_results_contents.py] vg-uvs-2-n-occ-1989-236-sigsgr-i metadata"
+        url = "/api/metadata_v2/vg-uvs-2-n-occ-1989-236-sigsgr-i.json"
+        self._run_json_equal_file(url, "results_vg_uvs_2_n_occ_1989_236_sigsgr_i_metadata.json")
+
+    def test__results_contents_vg_uvs_2_n_occ_1989_236_sigsgr_i_files(self):
+        "[test_results_contents.py] vg-uvs-2-n-occ-1989-236-sigsgr-i files"
+        url = "/api/files/vg-uvs-2-n-occ-1989-236-sigsgr-i.json"
+        self._run_json_equal_file(url, "results_vg_uvs_2_n_occ_1989_236_sigsgr_i_files.json")
+
+    def test__results_contents_vg_iss_2_s_prof_metadata(self):
+        "[test_results_contents.py] vg-iss-2-s-prof metadata"
+        url = "/api/metadata_v2/vg-iss-2-s-prof.json"
+        self._run_json_equal_file(url, "results_vg_iss_2_s_prof_metadata.json")
+
+    def test__results_contents_vg_iss_2_s_prof_files(self):
+        "[test_results_contents.py] vg-iss-2-s-prof files"
+        url = "/api/files/vg-iss-2-s-prof.json"
+        self._run_json_equal_file(url, "results_vg_iss_2_s_prof_files.json")
+    ####################
+
     def test__results_contents_co_cirs_0408010657_fp3_images(self):
         "[test_results_contents.py] co-cirs-0408010657-fp3 images"
         url = "/api/images.json?opusid=co-cirs-0408010657-fp3"
@@ -995,3 +1067,40 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] co-vims-occ-2014-175-l2pup-e images"
         url = "/api/images.json?opusid=co-vims-occ-2014-175-l2pup-e"
         self._run_json_equal_file(url, "results_co_vims_occ_2014_175_l2pup_e_images.json")
+
+    # VG_28xx
+    def test__results_contents_vg_pps_2_s_occ_1981_238_delsco_e_images(self):
+        "[test_results_contents.py] vg-pps-2-s-occ-1981-238-delsco-e images"
+        url = "/api/images.json?opusid=vg-pps-2-s-occ-1981-238-delsco-e"
+        self._run_json_equal_file(url, "results_vg_pps_2_s_occ_1981_238_delsco_e_images.json")
+
+    def test__results_contents_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_images(self):
+        "[test_results_contents.py] vg-pps-2-u-occ-1986-024-delta-sigsgr-e images"
+        url = "/api/images.json?opusid=vg-pps-2-u-occ-1986-024-delta-sigsgr-e"
+        self._run_json_equal_file(url, "results_vg_pps_2_u_occ_1986_024_delta_sigsgr_e_images.json")
+
+    def test__results_contents_vg_pps_2_n_occ_1989_236_sigsgr_i_images(self):
+        "[test_results_contents.py] vg-pps-2-n-occ-1989-236-sigsgr-i images"
+        url = "/api/images.json?opusid=vg-pps-2-n-occ-1989-236-sigsgr-i"
+        self._run_json_equal_file(url, "results_vg_pps_2_n_occ_1989_236_sigsgr_i_images.json")
+
+    def test__results_contents_vg_uvs_1_s_occ_1980_317_iother_e_images(self):
+        "[test_results_contents.py] vg-uvs-1-s-occ-1980-317-iother-e images"
+        url = "/api/images.json?opusid=vg-uvs-1-s-occ-1980-317-iother-e"
+        self._run_json_equal_file(url, "results_vg_uvs_1_s_occ_1980_317_iother_e_images.json")
+
+    def test__results_contents_vg_rss_2_u_occ_1986_024_four_s43_i_images(self):
+        "[test_results_contents.py] vg-rss-2-u-occ-1986-024-four-s43-i images"
+        url = "/api/images.json?opusid=vg-rss-2-u-occ-1986-024-four-s43-i"
+        self._run_json_equal_file(url, "results_vg_rss_2_u_occ_1986_024_four_s43_i_images.json")
+
+    def test__results_contents_vg_uvs_2_n_occ_1989_236_sigsgr_i_images(self):
+        "[test_results_contents.py] vg-uvs-2-n-occ-1989-236-sigsgr-i images"
+        url = "/api/images.json?opusid=vg-uvs-2-n-occ-1989-236-sigsgr-i"
+        self._run_json_equal_file(url, "results_vg_uvs_2_n_occ_1989_236_sigsgr_i_images.json")
+
+    def test__results_contents_vg_iss_2_s_prof_images(self):
+        "[test_results_contents.py] vg-iss-2-s-prof images"
+        url = "/api/images.json?opusid=vg-iss-2-s-prof"
+        self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
+    ####################

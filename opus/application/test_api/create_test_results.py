@@ -66,7 +66,14 @@ if __name__ == "__main__":
         # 'co-uvis-occ-2005-175-126tau-i',
         # 'co-uvis-occ-2009-015-gamcas-e',
         # 'co-vims-occ-2006-204-alpori-i',
-        # 'co-vims-occ-2014-175-l2pup-e'
+        # 'co-vims-occ-2014-175-l2pup-e',
+        # 'vg-pps-2-s-occ-1981-238-delsco-e',
+        # 'vg-pps-2-u-occ-1986-024-delta-sigsgr-e',
+        # 'vg-pps-2-n-occ-1989-236-sigsgr-i',
+        # 'vg-uvs-1-s-occ-1980-317-iother-e',
+        # 'vg-rss-2-u-occ-1986-024-four-s43-i',
+        # 'vg-uvs-2-n-occ-1989-236-sigsgr-i',
+        # 'vg-iss-2-s-prof'
     ]
 
     session = requests.Session()
