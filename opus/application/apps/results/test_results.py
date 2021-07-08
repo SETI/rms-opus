@@ -408,8 +408,7 @@ class resultsTests(TestCase):
                     'obs_surface_geometry_name',
                     'obs_surface_geometry',
                     'obs_ring_geometry',
-                    'obs_mission_voyager',
-                    'obs_instrument_vgiss']
+                    'obs_mission_voyager']
         self._test_triggered_tables(q, expected)
 
     def test__get_triggered_tables_vgiss(self):
