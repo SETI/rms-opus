@@ -243,16 +243,13 @@ def populate_obs_occultation_VGRSS_wl_band_PROF(**kwargs):
     index_row = metadata['index_row']
     wl_band1 = index_row['WAVELENGTH_BAND_1']
     wl_band2 = index_row['WAVELENGTH_BAND_2']
-    wl_band = [wl_band1, wl_band2]
 
-    for idx, band in enumerate(wl_band):
-        if '-BAND' in band:
-            wl_band[idx] = band[0]
+    if wl_band2 != 'N/A':
+        assert wl1_band1 == wl2_band2, 'Mismatched wl_band1 and wl_band2.'
+    if '-BAND' in wl_band1:
+        wl_band1 = wl_band1[0]
 
-    if wl_band2 == 'N/A':
-        wl_band = wl_band[0]
-
-    return wl_band
+    return wl_band1
 
 def populate_obs_occultation_VGRSS_source_PROF(**kwargs):
     metadata = kwargs['metadata']
@@ -260,12 +257,10 @@ def populate_obs_occultation_VGRSS_source_PROF(**kwargs):
     src_name1 = index_row['SIGNAL_SOURCE_NAME_1']
     src_name2 = index_row['SIGNAL_SOURCE_NAME_2']
 
-    if src_name2 == 'N/A':
-        src_name = src_name1
-    else:
-        src_name = [src_name1, src_name2]
+    if src_name2 != 'N/A':
+        assert src_name1 == src_name2, 'Mismatched src_name1 and src_name2.'
 
-    return src_name
+    return src_name1
 
 def populate_obs_occultation_VGRSS_host_PROF(**kwargs):
     return 'voyager'
