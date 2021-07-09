@@ -40,7 +40,7 @@ from populate_obs_instrument_NHLORRI import *
 from populate_obs_instrument_NHMVIC import *
 
 from populate_obs_mission_voyager import *
-from populate_obs_instrument_VGISS import *
+from populate_obs_instrument_VGISS_obs import *
 from populate_obs_instrument_VGPPS_prof import *
 from populate_obs_instrument_VGUVS_prof import *
 from populate_obs_instrument_VGRSS_prof import *

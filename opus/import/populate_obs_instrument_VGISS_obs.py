@@ -1,5 +1,5 @@
 ################################################################################
-# populate_obs_instrument_VGISS.py
+# populate_obs_instrument_VGISS_obs.py
 #
 # Routines to populate fields specific to VGISS.
 ################################################################################

@@ -1,5 +1,5 @@
 ################################################################################
-# populate_obs_instrument_VGRSS_occ.py
+# populate_obs_instrument_VGRSS_prof.py
 #
 # Routines to populate fields specific to VGRSS.
 ################################################################################
@@ -48,7 +48,6 @@ def populate_obs_general_VGRSS_inst_host_id_PROF(**kwargs):
     assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
 
     return 'VG'+inst_host[-1]
-    # return 'VG'
 
 # VGRSS time span is the duration of the observation at the spacecraft
 def populate_obs_general_VGRSS_time1_PROF(**kwargs):
@@ -220,14 +219,6 @@ def populate_obs_occultation_VGRSS_optical_depth_min_PROF(**kwargs):
 def populate_obs_occultation_VGRSS_optical_depth_max_PROF(**kwargs):
     return None
 
-def _integration_duration_helper(**kwargs):
-    metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    dur = supp_index_row['INTEGRATION_DURATION']
-
-    # HSP integration_duration is in milliseconds!
-    return dur/1000
-
 def populate_obs_occultation_VGRSS_temporal_sampling_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -330,7 +321,7 @@ def populate_obs_ring_geometry_VGRSS_phase2_PROF(**kwargs):
 
 # Source: Voyager RSS is at south, observer: earth is at north.
 # Incidence angle: the angle between the point where incoming source photons
-# hit the ring, to the north pole of the earth (normal vector
+# hit the ring, to the north pole of the planet we're looking at (normal vector
 # on the surface of LIT side of the ring, same as source side), always between
 # 0 (parallel to north pole) to 90 (parallel to ring)
 # We would like to use emission angle to get both min/max of incidence angle.
