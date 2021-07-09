@@ -105,12 +105,23 @@ def yield_import_volume_ids(arguments):
                 elif desc.upper() == 'CORSS':
                     volume_descs.append('CORSS_8xxx')
                 elif desc.upper() == 'VOYAGER':
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
                     volume_descs.append('VG_28xx')
                 elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
                     volume_descs.append('VGISS_5xxx')
                     volume_descs.append('VGISS_6xxx')
                     volume_descs.append('VGISS_7xxx')
                     volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('VG_2810')
+                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGPPS':
+                    volume_descs.append('VG_2801')
+                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGUVS':
+                    volume_descs.append('VG_2802')
+                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGRSS':
+                    volume_descs.append('VG_2803')
                 elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
                     volume_descs.append('GO_0xxx')
                 elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':

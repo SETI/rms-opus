@@ -423,6 +423,42 @@ class resultsTests(TestCase):
                     'obs_instrument_vgiss']
         self._test_triggered_tables(q, expected)
 
+    def test__get_triggered_tables_vguvs(self):
+        "[test_results.py] get_triggered_tables: tables triggered by instrument VGUVS"
+        q = QueryDict('instrument=Voyager+UVS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_occultation',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager',
+                    'obs_instrument_vguvs']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgpps(self):
+        "[test_results.py] get_triggered_tables: tables triggered by instrument VGPPS"
+        q = QueryDict('instrument=Voyager+PPS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_occultation',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager',
+                    'obs_instrument_vgpps']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgrss(self):
+        "[test_results.py] get_triggered_tables: tables triggered by instrument VGRSS"
+        q = QueryDict('instrument=Voyager+RSS')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_occultation',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager',
+                    'obs_instrument_vgrss']
+        self._test_triggered_tables(q, expected)
+
     def test__get_triggered_tables_vgiss_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VGISS_6210"
         q = QueryDict('volumeid=VGISS_6210')
