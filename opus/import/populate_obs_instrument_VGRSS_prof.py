@@ -134,7 +134,6 @@ def populate_obs_wavelength_VGRSS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
-
     return wl2
 
 def _wave_res_helper(**kwargs):
@@ -194,7 +193,7 @@ def populate_obs_wavelength_VGRSS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
-### populate_obs_occultation TABLE ###
+### OBS_OCCULTATION TABLE ###
 
 def populate_obs_occultation_VGRSS_occ_type_PROF(**kwargs):
     return 'STE' # There are no SUN occultations
@@ -484,7 +483,7 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_elevation2_PROF(**kwargs):
 
 # Opening angle to solar: the angle between the ring surface to the direction
 # where incoming photons from the source. Positive if source is at the north
-# side of the ring , negative if it's at the south side. In this case, source
+# side of the ring, negative if it's at the south side. In this case, source
 # is at the south side, so it's - (90 - inc). For reference, if source is at the
 # north side, then oa is 90 - inc.
 # Source is at south of the ring, so it's neagtive which is inc - 90
@@ -536,7 +535,7 @@ def populate_obs_ring_geometry_VGRSS_ring_intercept_time2_PROF(**kwargs):
 
 
 ################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY voyager INSTRUMENT
+# THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
 ################################################################################
 
 def populate_obs_mission_voyager_VGRSS_mission_phase_name_PROF(**kwargs):

@@ -134,7 +134,6 @@ def populate_obs_wavelength_VGUVS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
-
     return wl2
 
 def _wave_res_helper(**kwargs):
@@ -194,7 +193,7 @@ def populate_obs_wavelength_VGUVS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
-### populate_obs_occultation TABLE ###
+### OBS_OCCULTATION TABLE ###
 
 def populate_obs_occultation_VGUVS_occ_type_PROF(**kwargs):
     return 'STE' # There are no SUN occultations
@@ -358,11 +357,32 @@ def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
     assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - min_ea
 
+def _is_voyager_at_north(**kwargs):
+    """In this volume,
+    Voyager is at north when:
+        - Source is DELTA SCO (Target S RINGS)
+        - Source is SIGMA SGR (Target U RINGS, start time before
+          1986-01-24T17:10:13.320)
+    Voyager is south when:
+        - Source is SIGMA SGR (Target N RINGS, start time after
+          1986-01-24T17:10:13.320)
+        - Source is IOTA HER (Target S RINGS)
+    """
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    src_name = index_row['SIGNAL_SOURCE_NAME_1']
+    target_name = index_row['TARGET_NAME'].upper().strip()
+    if (src_name == "DELTA SCO"
+        or (src_name == "SIGMA SGR" and target_name == "U RINGS")):
+        return True
+    else:
+        return False
+
 # North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
 # side of the ring is lit, and 90-180 when south side is lit.
 def populate_obs_ring_geometry_VGUVS_north_based_incidence1_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
         return 180. - inc
     else:
@@ -370,7 +390,7 @@ def populate_obs_ring_geometry_VGUVS_north_based_incidence1_PROF(**kwargs):
         return inc
 
 def populate_obs_ring_geometry_VGUVS_north_based_incidence2_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
         return 180. - inc
     else:
@@ -400,7 +420,7 @@ def populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs):
 # observer is at the north side of the ring, and 90-180 when it's at the south
 # side.
 def populate_obs_ring_geometry_VGUVS_north_based_emission1_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
         ea = 180. - max_ea
     else:
@@ -409,7 +429,7 @@ def populate_obs_ring_geometry_VGUVS_north_based_emission1_PROF(**kwargs):
     return ea
 
 def populate_obs_ring_geometry_VGUVS_north_based_emission2_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
         ea = 180. - min_ea
     else:
@@ -442,11 +462,11 @@ populate_obs_ring_geometry_VGUVS_center_north_based_emission2_PROF = \
 
 # Opening angle to observer: the angle between the ring surface to the direction
 # where outgoing photons to the observer. Positive if observer is at the north
-# side of the ring , negative if it's at the south side. If observer is at the
+# side of the ring, negative if it's at the south side. If observer is at the
 # north side, it's ea - 90 (or 90 - inc). If observer is at the south side,
 # then oa is 90 - ea.
 def populate_obs_ring_geometry_VGUVS_observer_ring_opening_angle1_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         min_ea = populate_obs_ring_geometry_VGUVS_emission1_PROF(**kwargs)
         return min_ea - 90.
     else:
@@ -454,7 +474,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_opening_angle1_PROF(**kwargs)
         return 90. - max_ea
 
 def populate_obs_ring_geometry_VGUVS_observer_ring_opening_angle2_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         max_ea = populate_obs_ring_geometry_VGUVS_emission2_PROF(**kwargs)
         return max_ea - 90.
     else:
@@ -470,7 +490,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation1_PROF(**kwargs):
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (max_ea - 90.) # negative
@@ -486,7 +506,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             el = - (min_ea - 90.) # negative
@@ -503,7 +523,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
 # north side, it's 90 - inc. If source is at the south side, then oa is
 # - (90 - inc).
 def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle1_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
         return inc - 90.
     else:
@@ -512,7 +532,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle1_PROF(**kwargs):
 
 
 def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
         return inc - 90.
     else:
@@ -524,7 +544,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
@@ -539,7 +559,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
     return el
 
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation2_PROF(**kwargs):
-    if _is_Voyager_at_north(**kwargs):
+    if _is_voyager_at_north(**kwargs):
         target_name = populate_target_name_from_index(**kwargs)
         if target_name =='U RINGS':
             inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
@@ -559,30 +579,9 @@ def populate_obs_ring_geometry_VGUVS_ring_intercept_time1_PROF(**kwargs):
 def populate_obs_ring_geometry_VGUVS_ring_intercept_time2_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
-def _is_Voyager_at_north(**kwargs):
-    """In this volume,
-    Voyager is at north when:
-        - Source is DELTA SCO (Target S RINGS)
-        - Source is SIGMA SGR (Target U RINGS, start time before
-          1986-01-24T17:10:13.320)
-    Voyager is south when:
-        - Source is SIGMA SGR (Target N RINGS, start time after
-          1986-01-24T17:10:13.320)
-        - Source is IOTA HER (Target S RINGS)
-    """
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    src_name = index_row['SIGNAL_SOURCE_NAME_1']
-    target_name = index_row['TARGET_NAME'].upper().strip()
-    if (src_name == "DELTA SCO"
-        or (src_name == "SIGMA SGR" and target_name == "U RINGS")):
-        return True
-    else:
-        return False
-
 
 ################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY voyager INSTRUMENT
+# THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
 ################################################################################
 
 def populate_obs_mission_voyager_VGUVS_mission_phase_name_PROF(**kwargs):
