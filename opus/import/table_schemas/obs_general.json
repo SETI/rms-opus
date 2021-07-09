@@ -568,7 +568,7 @@
               [   4,  "TS",          "Time Series", "050", "Y", null],
               [   5, "STS", "Spectral Time Series", "060", "Y", null],
               [   6, "OCC",  "Occultation Profile", "070", "Y", null],
-              [   7, "INT",    "Intensity Profile", "080", "Y", null]
+              [   7, "REF",          "Reflectance", "080", "Y", null]
         ]
     },
     {

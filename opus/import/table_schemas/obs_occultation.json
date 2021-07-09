@@ -279,8 +279,7 @@
               [   3, "IR",     "IR",      "040", "Y", null],
               [   4, "VI",     "Visible", "050", "Y", null],
               [   5, "UV",     "UV",      "060", "Y", null],
-              [   6, "VISUAL", "Visual",  "070", "Y", null],
-              [   7,  null,    "N/A",     "080", "Y", null]
+              [   6,  null,    "N/A",     "070", "Y", null]
         ]
     },
     {

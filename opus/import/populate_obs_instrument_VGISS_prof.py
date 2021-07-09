@@ -70,8 +70,8 @@ def populate_obs_general_VGISS_quantity_PROF(**kwargs):
     return 'REFLECT'
 
 def populate_obs_general_VGISS_observation_type_PROF(**kwargs):
-    # Intensity Profile
-    return 'INT'
+    # Reflectance
+    return 'REF'
 
 def populate_obs_pds_VGISS_note_PROF(**kwargs):
     return None
@@ -252,6 +252,8 @@ def populate_obs_occultation_VGISS_wl_band_PROF(**kwargs):
         assert wl1_band1 == wl2_band2, 'Mismatched wl_band1 and wl_band2.'
     if '-BAND' in wl_band1:
         wl_band1 = wl_band1[0]
+    if 'VISUAL' in wl_band1:
+        wl_band1 = 'VI'
 
     return wl_band1
 

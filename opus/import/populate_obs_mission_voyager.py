@@ -18,6 +18,7 @@ VG_TARGET_TO_MISSION_PHASE_MAPPING = {
     'U RINGS': 'URANUS ENCOUNTER',
     'N RINGS': 'NEPTUNE ENCOUNTER'
 }
+
 ################################################################################
 # HELPER FUNCTIONS USED BY VOYAGER INSTRUMENTS
 ################################################################################
