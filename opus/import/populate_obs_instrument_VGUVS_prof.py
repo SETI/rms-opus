@@ -372,11 +372,14 @@ def _is_voyager_at_north(**kwargs):
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
     target_name = index_row['TARGET_NAME'].upper().strip()
-    if (src_name == "DELTA SCO"
-        or (src_name == "SIGMA SGR" and target_name == "U RINGS")):
-        return True
-    else:
-        return False
+    return (src_name == "DELTA SCO"
+            or (src_name == "SIGMA SGR" and target_name == "U RINGS"))
+
+def _is_voyager_at_north_except_uranus(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    src_name = index_row['SIGNAL_SOURCE_NAME_1']
+    return src_name == "DELTA SCO"
 
 # North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
@@ -490,12 +493,8 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation1_PROF(**kwargs):
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
-    if _is_voyager_at_north(**kwargs):
-        target_name = populate_target_name_from_index(**kwargs)
-        if target_name =='U RINGS':
-            el = - (max_ea - 90.) # negative
-        else:
-            el = min_ea - 90. # positive
+    if _is_voyager_at_north_except_uranus(**kwargs):
+        el = min_ea - 90. # positive
     else:
         el = - (max_ea - 90.) # negative
 
@@ -506,12 +505,8 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
     index_row = metadata['index_row']
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
-    if _is_voyager_at_north(**kwargs):
-        target_name = populate_target_name_from_index(**kwargs)
-        if target_name =='U RINGS':
-            el = - (min_ea - 90.) # negative
-        else:
-            el = max_ea - 90. # positive
+    if _is_voyager_at_north_except_uranus(**kwargs):
+        el = max_ea - 90. # positive
     else:
         el = - (min_ea - 90.) # negative
 
@@ -544,14 +539,9 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
-    if _is_voyager_at_north(**kwargs):
-        target_name = populate_target_name_from_index(**kwargs)
-        if target_name =='U RINGS':
-            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
-            el = 90. - inc # positive
-        else:
-            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
-            el = inc - 90. # negative
+    if _is_voyager_at_north_except_uranus(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
+        el = inc - 90. # negative
     else:
         inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
         el = 90. - inc # positive
@@ -559,14 +549,9 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_elevation1_PROF(**kwargs):
     return el
 
 def populate_obs_ring_geometry_VGUVS_solar_ring_elevation2_PROF(**kwargs):
-    if _is_voyager_at_north(**kwargs):
-        target_name = populate_target_name_from_index(**kwargs)
-        if target_name =='U RINGS':
-            inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
-            el = 90. - inc # positive
-        else:
-            inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
-            el = inc - 90. # negative
+    if _is_voyager_at_north_except_uranus(**kwargs):
+        inc = populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs)
+        el = inc - 90. # negative
     else:
         inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
         el = 90. - inc # positive
