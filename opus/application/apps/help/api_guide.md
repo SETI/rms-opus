@@ -1519,7 +1519,7 @@ Example:
   },
   {
     "table_name": "obs_profile",
-    "label": "Occultation Constraints"
+    "label": "Occultation&Reflectance Profile Constraints"
   },
   {
     "table_name": "obs_surface_geometry__methone",
@@ -1583,7 +1583,7 @@ Example:
   },
   {
     "table_name": "obs_profile",
-    "label": "Occultation Constraints"
+    "label": "Occultation&Reflectance Profile Constraints"
   },
   {
     "table_name": "obs_surface_geometry__daphnis",
