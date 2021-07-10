@@ -285,7 +285,7 @@ DATABASES = {
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
                'obs_surface_geometry_name', 'obs_surface_geometry',
-               'obs_wavelength', 'obs_type_image', 'obs_occultation']
+               'obs_wavelength', 'obs_type_image', 'obs_profile']
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL

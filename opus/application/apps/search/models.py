@@ -1779,7 +1779,7 @@ class ObsOccultation(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'obs_occultation'
+        db_table = 'obs_profile'
 
 
 class ObsPds(models.Model):

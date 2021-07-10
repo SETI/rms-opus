@@ -177,7 +177,7 @@ def populate_obs_wavelength_GB_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
-### OBS_OCCULTATION TABLE ###
+### OBS_PROFILE TABLE ###
 
 def populate_obs_occultation_GB_occ_type_PROF(**kwargs):
     return 'STE'

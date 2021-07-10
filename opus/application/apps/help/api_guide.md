@@ -1518,7 +1518,7 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
-    "table_name": "obs_occultation",
+    "table_name": "obs_profile",
     "label": "Occultation Constraints"
   },
   {
@@ -1582,7 +1582,7 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
-    "table_name": "obs_occultation",
+    "table_name": "obs_profile",
     "label": "Occultation Constraints"
   },
   {

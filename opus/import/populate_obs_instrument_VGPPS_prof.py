@@ -193,7 +193,7 @@ def populate_obs_wavelength_VGPPS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
-### OBS_OCCULTATION TABLE ###
+### OBS_PROFILE TABLE ###
 
 def populate_obs_occultation_VGPPS_occ_type_PROF(**kwargs):
     return 'STE' # There are no SUN occultations
