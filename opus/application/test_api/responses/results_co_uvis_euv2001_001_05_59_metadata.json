@@ -45,7 +45,7 @@
         "specsize": "512",
         "polarizationtype": "None"
     },
-    "Occultation&Reflectance Profile Constraints": {
+    "Ring/Limb Profile Constraints": {
         "occtype": null,
         "occdir": null,
         "bodyoccflag": null,

@@ -6,7 +6,7 @@
         "mission": "Voyager",
         "insthost": "Voyager 2",
         "instrument": "Voyager ISS",
-        "observationtype": "Intensity Profile",
+        "observationtype": "Reflectance Profile",
         "time1": "1981-08-25T17:55:10.280",
         "time2": "1981-08-25T18:59:11.000",
         "observationduration": "3840.72",
@@ -45,7 +45,7 @@
         "specsize": "1",
         "polarizationtype": "None"
     },
-    "Occultation&Reflectance Profile Constraints": {
+    "Ring/Limb Profile Constraints": {
         "occtype": "Reflectance",
         "occdir": null,
         "bodyoccflag": "No",
@@ -53,7 +53,7 @@
         "occdataquality": null,
         "occdepth1": null,
         "occdepth2": null,
-        "occwlband": "Visual",
+        "occwlband": "Visible",
         "occsource": "Rings",
         "occreceiverhost": "Voyager",
         "RINGGEOringradius1": "74000",
