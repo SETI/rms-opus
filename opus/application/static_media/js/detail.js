@@ -20,10 +20,10 @@ var o_detail = {
 
         $("#detail").on("click", "a[data-action]", function() {
             let action = $(this).data("action");
+            let opusId = $(this).data("id");
             switch(action) {
                 case "add":
                 case "remove":
-                    let opusId = $(this).data("id");
                     if (opusId) {
                         o_browse.reloadObservationData = true;
                         o_cart.reloadObservationData = true;
@@ -37,8 +37,15 @@ var o_detail = {
                 case "downloadURL":
                     $(this).attr("href", `/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
                     break;
+                case "share":
+                    if (opusId) {
+                        let urlToShare = $(this).attr("href");
+                        o_detail.copyToClipboard(urlToShare)
+                            .then(() => o_detail.showShareMessage())
+                            .catch(() => console.log('error'));
+                    }
+                    break;
             }
-            //return false;
         });
 
         opus.prefs.detail = opusId;
@@ -70,6 +77,9 @@ var o_detail = {
                     $(detailSelector).html(html).fadeIn();
                     return;
                 }
+                let urlToShare = `${window.location.origin}${window.location.pathname}#/view=detail&detail=${opusId}`;
+                $(".op-detail-share a[data-action='share']").attr("href", urlToShare);
+
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
@@ -113,6 +123,37 @@ var o_detail = {
             } // /detail.load
         );
     }, // / activateDetailTab
+
+    copyToClipboard: function(urlToCopy) {
+        // navigator clipboard api needs a secure context (https)
+        if (navigator.clipboard && window.isSecureContext) {
+            // navigator clipboard api method'
+            return navigator.clipboard.writeText(urlToCopy);
+        } else {
+            // text area method
+            let textArea = document.createElement("textarea");
+            textArea.value = urlToCopy;
+            // make the textarea out of viewport
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            return new Promise((res, rej) => {
+                // here the magic happens
+                document.execCommand('copy') ? res() : rej();
+                textArea.remove();
+            });
+        }
+    },
+
+    showShareMessage: function() {
+        $(".op-share-message").fadeIn().css("visibility", "visible");
+        setTimeout(function() {
+            $(".op-share-message").fadeOut("slow");
+        }, 2000 );
+    },
 
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
