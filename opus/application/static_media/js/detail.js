@@ -41,8 +41,8 @@ var o_detail = {
                     if (opusId) {
                         let urlToShare = $(this).attr("href");
                         o_detail.copyToClipboard(urlToShare)
-                            .then(() => o_detail.showShareMessage())
-                            .catch(() => console.log('error'));
+                            .then(() => o_detail.showShareMessage("URL copied!"))
+                            .catch(() => o_detail.showShareMessage("Error copying URL"))
                     }
                     break;
             }
@@ -148,8 +148,8 @@ var o_detail = {
         }
     },
 
-    showShareMessage: function() {
-        $(".op-share-message").fadeIn();
+    showShareMessage: function(message) {
+        $(".op-share-message").text(message).fadeIn();
         setTimeout(function() {
             $(".op-share-message").fadeOut("slow");
         }, 2000 );
