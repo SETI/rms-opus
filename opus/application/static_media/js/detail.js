@@ -149,7 +149,7 @@ var o_detail = {
     },
 
     showShareMessage: function() {
-        $(".op-share-message").fadeIn().css("visibility", "visible");
+        $(".op-share-message").fadeIn();
         setTimeout(function() {
             $(".op-share-message").fadeOut("slow");
         }, 2000 );

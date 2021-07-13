@@ -7,12 +7,12 @@
                     <div class="col-auto"><b>OPUS ID: </b>{{ opus_id }}</div>
                     <div class="op-detail-cart col col-1">
                         <a href="#" data-icon="cart" data-action="{{ cart.action }}" data-id="{{ opus_id }}" title="{{ cart.title }}">
-                            <i class="{{ cart.icon_class }} fa-xs"></i>
+                            <i class="{{ cart.icon_class }}"></i>
                         </a>
                     </div>
                     <div class="op-detail-share col col-2 pr-0">
-                        <a href="#" data-icon="share" data-action="share" data-id="{{ opus_id }}" title="Share detail URL">
-                            <i class="fas fa-share fa-xs"> SHARE</i>
+                        <a href="#" data-icon="share" data-action="share" data-id="{{ opus_id }}" title="Copy URL for this detail page to the clipboard">
+                            <i class="fas fa-share"> SHARE</i>
                         </a>
                     </div>
                     <div class="op-share-message col col-3 text-dark bg-secondary">URL copied!</div>

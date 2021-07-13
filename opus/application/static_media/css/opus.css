@@ -2235,8 +2235,8 @@ also set its min width to be 150px */
 }
 
 .op-share-message {
-    display: inline-block;
-    visibility: hidden;
+    display: none;
+    max-width: 7.5em;
 }
 
 .op-range-select-info-box {
