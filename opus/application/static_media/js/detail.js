@@ -46,6 +46,7 @@ var o_detail = {
                     }
                     break;
             }
+            return false;
         });
 
         opus.prefs.detail = opusId;
@@ -190,7 +191,7 @@ var o_detail = {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
-        let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header p").outerHeight(true);
+        let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header .row").outerHeight(true);
         // When detail image is moved to the top of detail left pane, we have to
         // account for the height of detail image as well when calculating the containerHeight
         let detailImgHeight = 0;
