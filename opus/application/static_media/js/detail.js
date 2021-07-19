@@ -20,10 +20,10 @@ var o_detail = {
 
         $("#detail").on("click", "a[data-action]", function() {
             let action = $(this).data("action");
+            let opusId = $(this).data("id");
             switch(action) {
                 case "add":
                 case "remove":
-                    let opusId = $(this).data("id");
                     if (opusId) {
                         o_browse.reloadObservationData = true;
                         o_cart.reloadObservationData = true;
@@ -37,8 +37,16 @@ var o_detail = {
                 case "downloadURL":
                     $(this).attr("href", `/opus/__api/download/${opusId}.zip?urlonly=1&cols=${opus.prefs.cols.join()}`);
                     break;
+                case "share":
+                    if (opusId) {
+                        let urlToShare = $(this).attr("href");
+                        o_detail.copyToClipboard(urlToShare)
+                            .then(() => o_detail.showShareMessage("URL copied!"))
+                            .catch(() => o_detail.showShareMessage("Error copying URL"));
+                    }
+                    break;
             }
-            //return false;
+            return false;
         });
 
         opus.prefs.detail = opusId;
@@ -70,6 +78,9 @@ var o_detail = {
                     $(detailSelector).html(html).fadeIn();
                     return;
                 }
+                let urlToShare = `${window.location.origin}${window.location.pathname}#/view=detail&detail=${opusId}`;
+                $(".op-detail-share a[data-action='share']").attr("href", urlToShare);
+
                 let colStr = opus.prefs.cols.join(',');
                 let arrOfDeferred = [];
                 // get the column metadata, this part is fast
@@ -114,6 +125,37 @@ var o_detail = {
         );
     }, // / activateDetailTab
 
+    copyToClipboard: function(urlToCopy) {
+        // navigator clipboard api needs a secure context (https)
+        if (navigator.clipboard && window.isSecureContext) {
+            // navigator clipboard api method'
+            return navigator.clipboard.writeText(urlToCopy);
+        } else {
+            // text area method
+            let textArea = document.createElement("textarea");
+            textArea.value = urlToCopy;
+            // make the textarea out of viewport
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            return new Promise((res, rej) => {
+                // here the magic happens
+                document.execCommand('copy') ? res() : rej();
+                textArea.remove();
+            });
+        }
+    },
+
+    showShareMessage: function(message) {
+        $(".op-share-message").text(message).fadeIn();
+        setTimeout(function() {
+            $(".op-share-message").fadeOut("slow");
+        }, 2000 );
+    },
+
     // Note: PS is init every time when html is rendered. The previous PS will be garbage collected and there isn't a memory leak here even though we're calling new (to init ps) over and over.
     initAndUpdatePerfectScrollbar: function() {
         // Enable default scrollbar for Ctrl + F search scroll to work in Chrome and Firefox.
@@ -128,11 +170,28 @@ var o_detail = {
         o_detail.adjustDetailHeight();
     },
 
+    showDetailThumbInNav: function(imageHtml) {
+        if (imageHtml === undefined) {
+            if (opus.prefs.detail != "") {
+                let url = "/opus/__api/image/thumb/" + opus.prefs.detail + ".json";
+                $.getJSON(url, function(image)  {
+                    let imageObj = image.data[0];
+                    imageHtml = `<img class="op-nav-detail-image" src="${imageObj.url}"
+                                      alt="${imageObj.alt_text}"
+                                      title="${imageObj.opus_id}">`;
+                    $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
+                });
+            }
+        } else {
+            $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
+        }
+    },
+
     adjustDetailHeight: function() {
         let footerHeight = $(".app-footer").outerHeight();
         let mainNavHeight = $("#op-main-nav").outerHeight();
         let detailTabPaddingTop = ($("#detail").outerHeight() - $("#detail").height())/2;
-        let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header p").outerHeight(true);
+        let detailHeaderHeight = $(".op-detail-metadata-header h1").outerHeight(true) + $(".op-detail-metadata-header .row").outerHeight(true);
         // When detail image is moved to the top of detail left pane, we have to
         // account for the height of detail image as well when calculating the containerHeight
         let detailImgHeight = 0;

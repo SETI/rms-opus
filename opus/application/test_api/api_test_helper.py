@@ -202,7 +202,10 @@ class ApiTestHelper:
             resp = archive_file.namelist()
         else:
             resp = archive_file.getnames()
-
+        archive_file.close()
+        # Remove the archive file stored under settings.TAR_FILE_PATH
+        if archive_file_path and os.path.exists(archive_file_path):
+            os.remove(archive_file_path)
         resp.sort()
         expected.sort()
         print('Got:')
@@ -210,7 +213,3 @@ class ApiTestHelper:
         print('Expected:')
         print(expected)
         self.assertListEqual(resp, expected)
-
-        # Remove the archive file stored under settings.TAR_FILE_PATH
-        if archive_file_path and os.path.exists(archive_file_path):
-            os.remove(archive_file_path)

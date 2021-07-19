@@ -6,7 +6,7 @@
 /* jshint multistr: true */
 /* globals $, _, PerfectScrollbar */
 /* globals o_browse, o_cart, o_detail, o_hash, o_menu, o_selectMetadata, o_sortMetadata, o_mutationObserver, o_search, o_utils, o_widgets, FeedbackMethods */
-/* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL */
+/* globals DEFAULT_COLUMNS, DEFAULT_WIDGETS, DEFAULT_SORT_ORDER, STATIC_URL, PREVIEW_GUIDES */
 
 // defining the opus namespace first; document ready comes after...
 /* jshint varstmt: false */
@@ -520,6 +520,7 @@ var opus = {
         // deselect any leftover selected text for clean slate
         document.getSelection().removeAllRanges();
 
+        o_detail.showDetailThumbInNav();
         switch(opus.prefs.view) {
             case "search":
                 window.scrollTo(0,0);
@@ -831,6 +832,25 @@ var opus = {
             return false;
         });
 
+        // Behavior for help submenu
+        $("#op-help .dropdown-submenu .dropdown-item").on("click", function(e) {
+            $(this).next(".dropdown-menu").toggle("show");
+            e.stopPropagation();
+        });
+
+        // Click on items inside submenu, we execute something and close the whole dropdown.
+        $("#op-help .dropdown-submenu .op-submenu-item").on("click", function(e) {
+            let submenuItem = $(this);
+            opus.displayHelpPane(submenuItem.data("action"));
+            submenuItem.parents(".dropdown-menu").removeClass("show");
+            e.stopPropagation();
+        });
+
+        // When the parent dropdown is closed, make sure submenu is closed.
+        $("#op-help").on("hidden.bs.dropdown", function(e) {
+            $(".op-interpret-image").hide();
+        });
+
         // Clicking on either of the Reset buttons
         $(".op-reset-button button").on("click", function() {
             let targetModal = $(this).data("target");
@@ -982,6 +1002,13 @@ var opus = {
         $("#op-notification-modal").modal("show");
     },
 
+    displayImageInterpretation: function(action) {
+        let url = PREVIEW_GUIDES[action];
+        window.open(url, "_blank");
+        $("#op-help").removeClass("show");
+        $(".op-interpret-image").hide();
+    },
+
     displayHelpPane: function(action) {
         /**
          * Given the name of a help menu entry, open the help pane and load the
@@ -1024,6 +1051,11 @@ var opus = {
                 pdfURL = baseURL + "gettingstarted.pdf";
                 header = "Getting Started with OPUS";
                 break;
+            case "COCIRS":
+            case "COUVIS":
+            case "COVIMS":
+                opus.displayImageInterpretation(action);
+                return;
             case "contact":
                 FeedbackMethods.open();
                 return;
@@ -1037,7 +1069,6 @@ var opus = {
                 window.open("https://www.youtube.com/playlist?list=PLgPYitJagzrYj0iMFiuwQpdGImP6Wdt29", "_blank");
                 return;
         }
-
         let buttons = '<div class="op-open-help">';
         buttons += `&nbsp;&nbsp;<button type="button" class="btn btn-sm btn-secondary op-open-help-new-tab" data-action="${action}" title="Open the contents of this panel in a new browser tab">View in new browser tab</button>`;
         if (pdfURL) {
@@ -1164,6 +1195,7 @@ var opus = {
         }
 
         o_cart.initCart();
+        o_detail.showDetailThumbInNav();
 
         // This is a general function to discover if an element is in the viewport
         // Used like this: if ($(this).isInViewport()) {}

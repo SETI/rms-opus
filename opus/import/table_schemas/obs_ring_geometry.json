@@ -785,10 +785,36 @@
         "comments": "Definition is from RING_GEO label file."
     },
     {
-        "field_name": "sub_observer_ring_long1",
+        "field_name": "sub_solar_ring_long",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
+        "data_source": [
+            "FUNCTION",
+            "helper_longitude_field"
+        ],
+        "data_source_order": 10,
+        "val_min": 0,
+        "val_max": 360
+    },
+    {
+        "field_name": "d_sub_solar_ring_long",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": false,
+        "data_source": [
+            "FUNCTION",
+            "helper_d_longitude_field"
+        ],
+        "data_source_order": 10,
+        "val_min": 0,
+        "val_max": 180
+    },
+    {
+        "field_name": "sub_observer_ring_long1",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": false,
         "data_source": [
             "TAB:ring_geo",
             "SUB_OBSERVER_RING_LONGITUDE"
@@ -844,6 +870,32 @@
         "pi_sub_heading": "Radius & Longitude",
         "pi_tooltip": null,
         "comments": "Definition is from RING_GEO label file."
+    },
+    {
+        "field_name": "sub_observer_ring_long",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": false,
+        "data_source": [
+            "FUNCTION",
+            "helper_longitude_field"
+        ],
+        "data_source_order": 10,
+        "val_min": 0,
+        "val_max": 360
+    },
+    {
+        "field_name": "d_sub_observer_ring_long",
+        "field_type": "real8",
+        "field_default": null,
+        "field_key": false,
+        "data_source": [
+            "FUNCTION",
+            "helper_d_longitude_field"
+        ],
+        "data_source_order": 10,
+        "val_min": 0,
+        "val_max": 180
     },
     {
         "field_name": "solar_ring_elev1",
