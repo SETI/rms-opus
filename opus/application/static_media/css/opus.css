@@ -2234,6 +2234,11 @@ also set its min width to be 150px */
     max-height: 70vh; */
 }
 
+.op-share-message {
+    display: none;
+    max-width: 7.5em;
+}
+
 .op-range-select-info-box {
     position: fixed;
     bottom: 0;
