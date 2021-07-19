@@ -42,7 +42,7 @@ var o_detail = {
                         let urlToShare = $(this).attr("href");
                         o_detail.copyToClipboard(urlToShare)
                             .then(() => o_detail.showShareMessage("URL copied!"))
-                            .catch(() => o_detail.showShareMessage("Error copying URL"))
+                            .catch(() => o_detail.showShareMessage("Error copying URL"));
                     }
                     break;
             }
