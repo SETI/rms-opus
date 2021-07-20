@@ -369,3 +369,6 @@ DOWNLOAD_FORMATS = {
     'tar': ('application/x-tar', 'w', 'r'),
     'tgz': ('application/gzip', 'w:gz', 'r:gz'), # same as .tar.gz, we will use .tgz here
 }
+
+# Mult widgets that required tooltips
+MULT_WIDGETS_WITH_TOOLTIPS = ['mission']

@@ -123,12 +123,12 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0,  "CO",      "Cassini", "010", "Y", null],
-              [   1,  "GO",      "Galileo", "020", "Y", null],
-              [   2, "HST",       "Hubble", "030", "Y", null],
-              [   3,  "NH", "New Horizons", "040", "Y", null],
-              [   4,  "VG",      "Voyager", "050", "Y", null],
-              [   5,  "GB", "Ground-based", "060", "Y", null]
+              [   0,  "CO",      "Cassini", "010", "Y",  "CO tooltips"],
+              [   1,  "GO",      "Galileo", "020", "Y",  "GO tooltips"],
+              [   2, "HST",       "Hubble", "030", "Y", "HST tooltips"],
+              [   3,  "NH", "New Horizons", "040", "Y",  "NH tooltips"],
+              [   4,  "VG",      "Voyager", "050", "Y",  "VG tooltips"],
+              [   5,  "GB", "Ground-based", "060", "Y",  "GB tooltips"]
           ]
     },
     {

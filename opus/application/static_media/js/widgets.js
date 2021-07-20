@@ -1364,15 +1364,17 @@ var o_widgets = {
                 }
             }
 
-            // Wrap mults label names with span tag, we will style the span tag to have a caret cursor
-            // so that users know that they can select and copy the text.
-            if (widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) {
+            // Wrap mults label names with span tag (if the wrapping span is not there),
+            // we will style the span tag to have a caret cursor so that users know that
+            // they can select and copy the text.
+            if ((widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice"))
+                && !widgetInputs.next().hasClass("op-choice-label-name")) {
                 let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
                 let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
                 for (const label of allChoiceLabels) {
                     $(label).contents().filter(function() {
                         return this.nodeType === 3;
-                    }).wrap("<span class='op-choice-label-name'></span>");
+                    }).wrap("<span class='op-choice-label-name' title='This is my tooltip message!'></span>");
                 }
             }
 
@@ -1432,6 +1434,16 @@ var o_widgets = {
             if (!opus.isAnyNormalizeInputInProgress()) {
                 opus.updateOPUSLastSelectionsWithOPUSSelections();
             }
+
+            // TESTING
+            // Activate tooltipster after html is fully loaded
+            $(".cust-tooltip").tooltipster({
+                interactive: true,
+                functionReady: function(instance, helper){
+                    console.log("tooltips is ready");
+                }
+            });
+
         }); // end callback for .done()
     }, // end getWidget function
 

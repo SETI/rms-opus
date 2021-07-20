@@ -3386,3 +3386,12 @@ different browsers */
     padding-left: 0.2em;
     padding-right: 0.2em;
 }
+
+/* Stylings for customized tooltips */
+.tooltip-templates {
+    display: none;
+}
+
+.op-cust-tooltips-link {
+    color: #FFFFFF;
+}

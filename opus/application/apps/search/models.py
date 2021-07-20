@@ -206,6 +206,7 @@ class MultObsGeneralMissionId(models.Model):
     label = models.CharField(max_length=100)
     disp_order = models.CharField(max_length=100)
     display = models.CharField(max_length=1)
+    tooltips = models.CharField(max_length=100)
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
