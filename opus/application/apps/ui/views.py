@@ -482,6 +482,12 @@ def api_get_widget(request, **kwargs):
                                                   form_type_unit_id, unit))
             item['valid_units_info'] = zip(new_unit, new_val1, new_val2)
 
+    # Get the current selections for customized widget inputs, need to pass into
+    # template and check the selected checkboxes.
+    try:
+        current_selections = form_vals[slug]
+    except KeyError:
+        current_selections = []
     # If we don't want to display this group of units on the search tab, then
     # don't pass it to the template
     if not display_search_unit(form_type_unit_id):
@@ -500,6 +506,7 @@ def api_get_widget(request, **kwargs):
         "ranges": ranges,
         "customized_input": customized_input,
         "options": options,
+        "selections": current_selections,
     }
     ret = render(request, template, context)
 

@@ -57,13 +57,17 @@
                     {% endif %}
                     <!-- TESTING AREA -->
                     <!-- Customize inputs in the widget -->
-                    {% if customized_input is True %}
+                    {% if customized_input %}
                         <li>
                             <ul id="{{ slug }}" class="multichoice">
                                 {% for id, choice, tooltips in options %}
                                     <li>
                                         <label for="{{ slug }}_{{ id }}">
-                                        <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
+                                            {% if choice in selections %}
+                                                <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}" checked>
+                                            {% else %}
+                                                <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
+                                            {% endif %}
                                         <span class="op-choice-label-name cust-tooltip" data-tooltip-content="#tooltip-content-{{ id }}">
                                             {{ choice }}
                                         </span>
@@ -73,9 +77,6 @@
                                                 <a class="op-cust-tooltips-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltips }}</strong></a>
                                             </span>
                                         </div>
-                                        <!-- <span class="op-choice-label-name cust-tooltip" title="{{ tooltips }}">
-                                            {{ choice }}
-                                        </span> -->
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -83,8 +84,6 @@
                     {% else %}
                         {{ form|safe }}
                     {% endif %}
-                    <!-- //////////// -->
-                        <!-- {{ form|safe }} -->
                 </ul>
                 {% if ranges %}
                     <div class="op-preprogrammed-ranges">

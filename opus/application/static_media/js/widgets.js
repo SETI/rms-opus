@@ -1439,9 +1439,6 @@ var o_widgets = {
             // Activate tooltipster after html is fully loaded
             $(".cust-tooltip").tooltipster({
                 interactive: true,
-                functionReady: function(instance, helper){
-                    console.log("tooltips is ready");
-                }
             });
 
         }); // end callback for .done()
