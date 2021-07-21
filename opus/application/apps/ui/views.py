@@ -398,7 +398,7 @@ def api_get_widget(request, **kwargs):
         if customized_input:
             count = 0
             for mult in model.objects.filter(display='Y').order_by('disp_order'):
-                options.append((count, mult.label, mult.tooltips))
+                options.append((count, mult.label, mult.tooltip))
                 count += 1
 
         if values is not None:

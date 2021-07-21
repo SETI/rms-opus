@@ -323,7 +323,7 @@ def _mult_table_column_names(table_name):
        constant because various *_target_name tables have an extra
        column used for target name grouping."""
 
-    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'tooltips']
+    column_list = ['id', 'value', 'label', 'disp_order', 'display', 'tooltip']
     if table_name in MULT_TABLES_WITH_TARGET_GROUPING:
         column_list.append('grouping')
     return column_list
@@ -334,14 +334,14 @@ def _convert_sql_response_to_mult_table(mult_table_name, rows):
 
     mult_rows = []
     for row in rows:
-        id_num, value, label, disp_order, display, tooltips = row[:6]
+        id_num, value, label, disp_order, display, tooltip = row[:6]
         row_dict = {
             'id': id_num,
             'value': value,
             'label': str(label),
             'disp_order': disp_order,
             'display': display,
-            'tooltips': tooltips
+            'tooltip': tooltip
         }
         if mult_table_name in MULT_TABLES_WITH_TARGET_GROUPING:
             row_dict['grouping'] = row[6]
