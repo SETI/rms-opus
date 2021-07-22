@@ -371,4 +371,4 @@ DOWNLOAD_FORMATS = {
 }
 
 # Mult widgets that required tooltips
-MULT_WIDGETS_WITH_TOOLTIPS = ['mission']
+MULT_WIDGETS_WITH_TOOLTIPS = ['mission', 'target']

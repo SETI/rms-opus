@@ -1437,7 +1437,7 @@ var o_widgets = {
 
             // TESTING
             // Activate tooltipster after html is fully loaded
-            $(".cust-tooltip").tooltipster({
+            $(`.cust-tooltip-${slug}`).tooltipster({
                 interactive: true,
             });
 

@@ -268,7 +268,12 @@ def api_get_widget(request, **kwargs):
     selections = {}
     extras = {}
     customized_input = slug in settings.MULT_WIDGETS_WITH_TOOLTIPS
+    # Mult options that will be passed to the template for customized mult input
+    # HTML.
     options = []
+    # Dictionary keyed by group names, and the value will a list mult options
+    # corresponding to each group.
+    grouped_options = {}
 
     if request and request.GET is not None:
         (selections, extras) = url_to_search_params(request.GET,
@@ -394,13 +399,6 @@ def api_get_widget(request, **kwargs):
         mult_param = get_mult_name(param_qualified_name)
         model = apps.get_model('search',mult_param.title().replace('_',''))
 
-
-        if customized_input:
-            count = 0
-            for mult in model.objects.filter(display='Y').order_by('disp_order'):
-                options.append((count, mult.label, mult.tooltip))
-                count += 1
-
         if values is not None:
             # Make form choices case-insensitive
             choices = [mult.label for mult in model.objects.filter(display='Y')]
@@ -413,34 +411,71 @@ def api_get_widget(request, **kwargs):
                 new_values.append(val)
             form_vals = {slug: new_values}
 
-        # XXX It's horrible that this whole section is inside a try/except
         try:
             _ = model.objects.distinct().values('grouping')
-            grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
-            grouping_model = apps.get_model('metadata',grouping_table.title().replace('_',''))
-            for group_info in grouping_model.objects.order_by('disp_order'):
-                gvalue = group_info.value
-                glabel = group_info.label if group_info.label else 'Other'
-                if glabel == 'NULL':
-                    glabel = 'Other'
-                if model.objects.filter(grouping=gvalue)[0:1]:
-                    form += ("\n\n"
-                             +'<div class="mult_group_label_container'
-                             +' mult_group_' + str(glabel) + '">'
-                             +'<span class="indicator fa fa-plus">'
-                             +'</span>'
-                             +'<span class="mult_group_label">'
-                             +str(glabel) + '</span></div>'
-                             +'<ul class="mult_group"'
-                             +' data-group=' + str(glabel) + '>'
-                             +SearchForm(form_vals,
-                                         auto_id='%s_' + str(gvalue),
-                                         grouping=gvalue).as_ul()
-                             +'</ul>')
-
+            is_grouped_mult = True
         except FieldError:
-            # this model does not have grouping
-            form = SearchForm(form_vals, auto_id=auto_id).as_ul()
+            is_grouped_mult = False
+
+        # Customized widget mult input
+        if customized_input:
+            if not is_grouped_mult:
+                count = 0
+                for mult in (model.objects.filter(display='Y')
+                                          .order_by('disp_order')):
+                    options.append((count, mult.label, mult.tooltip))
+                    count += 1
+            else:
+                grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
+                grouping_model = apps.get_model('metadata', grouping_table.title().replace('_',''))
+                for group_info in grouping_model.objects.order_by('disp_order'):
+                    gvalue = group_info.value
+                    glabel = group_info.label if group_info.label else 'Other'
+                    if glabel == 'NULL':
+                        glabel = 'Other'
+
+                    options_of_a_group = []
+                    if model.objects.filter(grouping=gvalue)[0:1]:
+                        count = 0
+                        for mult in (model.objects.filter(grouping=gvalue, display='Y')
+                                                  .order_by('disp_order')):
+                            # TODO: We don't include mult.tooltip here because
+                            # there is no mult_options in table schema. Need to
+                            # figure out a proper way to generate the tooltip,
+                            # it's created by populate functions
+                            options_of_a_group.append((count, mult.label, None))
+                            count += 1
+                        grouped_options[(glabel,gvalue)] = options_of_a_group
+                options = grouped_options
+        else:
+            # XXX It's horrible that this whole section is inside a try/except
+            try:
+                _ = model.objects.distinct().values('grouping')
+                grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
+                grouping_model = apps.get_model('metadata', grouping_table.title().replace('_',''))
+                for group_info in grouping_model.objects.order_by('disp_order'):
+                    gvalue = group_info.value
+                    glabel = group_info.label if group_info.label else 'Other'
+                    if glabel == 'NULL':
+                        glabel = 'Other'
+                    if model.objects.filter(grouping=gvalue)[0:1]:
+                        form += ("\n\n"
+                                 +'<div class="mult_group_label_container'
+                                 +' mult_group_' + str(glabel) + '">'
+                                 +'<span class="indicator fa fa-plus">'
+                                 +'</span>'
+                                 +'<span class="mult_group_label">'
+                                 +str(glabel) + '</span></div>'
+                                 +'<ul class="mult_group"'
+                                 +' data-group=' + str(glabel) + '>'
+                                 +SearchForm(form_vals,
+                                             auto_id='%s_' + str(gvalue),
+                                             grouping=gvalue).as_ul()
+                                 +'</ul>')
+
+            except FieldError:
+                # this model does not have grouping
+                form = SearchForm(form_vals, auto_id=auto_id).as_ul()
 
     else:  # all other form types
         if param_qualified_name in selections:
@@ -506,6 +541,7 @@ def api_get_widget(request, **kwargs):
         "ranges": ranges,
         "customized_input": customized_input,
         "options": options,
+        "is_grouped_mult": is_grouped_mult,
         "selections": current_selections,
     }
     ret = render(request, template, context)
