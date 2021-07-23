@@ -256,6 +256,12 @@ var o_selectMetadata = {
                 o_selectMetadata.hideOrShowMenuPS();
                 o_selectMetadata.hideMenuLoaderSpinner();
                 o_selectMetadata.rendered = true;
+
+                // Initialize all tooltips using tooltipster in select metadata menu
+                $(".op-metadata-selector-tooltip").tooltipster({
+                    maxWidth: opus.tooltips_max_width,
+                    theme: opus.tooltips_theme,
+                });
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);

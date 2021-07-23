@@ -99,6 +99,7 @@ var o_detail = {
                             .load(urlMetadata, function() {
                                 $(this).hide().slideDown("fast");
                                 arrOfDeferred[index].resolve();
+                                // Initialize all tooltips using tooltipster in the metadata area of the detail tab
                                 $(".op-detail-metadata-tooltip").tooltipster({
                                     maxWidth: opus.tooltips_max_width,
                                     theme: opus.tooltips_theme,
@@ -114,7 +115,7 @@ var o_detail = {
                         initDetailPageScrollbar();
                     });
                 });
-                // Initialize all tooltips using tooltipster in cart.html
+                // Initialize all tooltips using tooltipster in detail.html
                 $(".op-detail-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,

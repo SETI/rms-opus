@@ -1496,4 +1496,9 @@ $(document).ready(function() {
     // Call normalized url api first
     // Rest of initialization process will be performed afterwards
     opus.normalizedURLAPICall();
+    // Initialize all tooltips using tooltipster in base.html
+    $(".op-base-tooltip").tooltipster({
+        maxWidth: opus.tooltips_max_width,
+        theme: opus.tooltips_theme,
+    });
 });
