@@ -37,7 +37,7 @@
                 {% for slug, param_info in all_slugs_info.items %}
       		        <li id="cchoose__{{ slug }}">
                         <span class="op-selected-metadata-info">
-                            &nbsp;<i class="fas fa-info-circle" title="{{ param_info.get_tooltip_results }}"></i>
+                            &nbsp;<i class="fas fa-info-circle op-metadata-selector-tooltip" title="{{ param_info.get_tooltip_results }}"></i>
                         </span>
                         {{ param_info.body_qualified_label_results }}
                         <span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></i></span>
@@ -45,7 +45,7 @@
                 {% endfor %}
             </ul>
         </div>
-        <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download CSV of selected metadata for ALL observations in current results">
+        <a href="#" class="op-download-csv btn btn-outline-primary op-metadata-selector-tooltip" download title="Download CSV of selected metadata for ALL observations in current results">
             <i class="fas fa-download"></i>&nbsp;Download CSV (all results)
         </a>
     </div>

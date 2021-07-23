@@ -262,6 +262,11 @@ var o_selectMetadata = {
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
                 });
+                // Initialize all tooltips using tooltipster in menu.html
+                $(".op-menu-tooltip").tooltipster({
+                    maxWidth: opus.tooltips_max_width,
+                    theme: opus.tooltips_theme,
+                });
             });
         }
         $("#op-select-metadata a.op-download-csv").attr("title", downloadTitle);
