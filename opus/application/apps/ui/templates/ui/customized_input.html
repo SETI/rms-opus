@@ -10,14 +10,14 @@
                         <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
                     {% endif %}
                 <!-- Assign an unique html structure to data-tooltip-content for each different individual tooltip-->
-                <span class="op-choice-label-name cust-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ choice }}">
+                <span class="op-choice-label-name op-mult-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ choice }}">
                     {{ choice }}
                 </span>
                 <!-- Customized tooltip contents -->
                 {% if tooltip %}
                     <div class="tooltip-templates">
                         <span id="tooltip-content-{{ slug }}-{{ choice }}">
-                            <a class="op-cust-tooltip-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltip }}</strong></a>
+                            <a class="op-mult-tooltip-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltip }}</strong></a>
                         </span>
                     </div>
                 {% endif %}

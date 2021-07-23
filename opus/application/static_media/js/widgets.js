@@ -1437,8 +1437,10 @@ var o_widgets = {
 
             // TESTING
             // Activate tooltipster after html is fully loaded
-            $(`.cust-tooltip-${slug}`).tooltipster({
+            $(`.op-mult-tooltip-${slug}`).tooltipster({
                 interactive: true,
+                maxWidth: opus.tooltips_max_width,
+                theme: opus.tooltips_theme,
             });
 
         }); // end callback for .done()

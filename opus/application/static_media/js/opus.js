@@ -151,6 +151,9 @@ var opus = {
 
     oldSurfacegeoTarget: null,
 
+    tooltips_max_width: 300,
+    tooltips_theme: 'tooltipster-default',
+
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
     //------------------------------------------------------------------------------------

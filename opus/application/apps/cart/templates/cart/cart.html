@@ -20,16 +20,16 @@
                 ">
                 <li class="list-inline-item">
                     <div id="create_zip_data_file">
-                        <a href="#" class="downloadData btn btn-outline-primary" title="Download a zipped data archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
+                        <a href="#" class="downloadData btn btn-outline-primary op-cart-tooltip" title="Download a zipped data archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;Data Archive</a>
                     </div>
                 </li>
                 <li class="list-inline-item">
                     <div id="create_zip_url_file">
-                        <a href="#" class="downloadURL btn btn-outline-primary" title="Download a zipped URL archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
+                        <a href="#" class="downloadURL btn btn-outline-primary op-cart-tooltip" title="Download a zipped URL archive of all observations in the cart using the selected products"><i class="fas fa-download"></i>&nbsp;URL Archive</a>
                     </div>
                 </li>
                 <li class="list-inline-item">
-                    <a href="#" class="op-download-csv btn btn-outline-primary" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
+                    <a href="#" class="op-download-csv btn btn-outline-primary op-cart-tooltip" download title="Download a CSV of selected metadata for all observations in the cart"><i class="fas fa-file-csv"></i>&nbsp;Metadata CSV</a>
                 </li>
             </div>
             <h1 class="op-download-options-title">Download Options</h1>
@@ -39,7 +39,7 @@
                         <input type="checkbox" checked>
                     </div>
                     <div class="col col-sm-1">
-                        <i class="fas fa-info-circle" title="If unchecked, download products will be added to the zip file using the same directory structure used by the PDS RMS archive. If checked, all download products will be placed in the root directory of the zip file, unless there is an ambiguity caused by multiple files that have the same base filename. In that case those files only will be added using the full directory structure."></i>
+                        <i class="fas fa-info-circle op-cart-tooltip" title="If unchecked, download products will be added to the zip file using the same directory structure used by the PDS RMS archive. If checked, all download products will be placed in the root directory of the zip file, unless there is an ambiguity caused by multiple files that have the same base filename. In that case those files only will be added using the full directory structure."></i>
                     </div>
                     <div class="col col-lg">Flat file structure</div>
                 </div>
@@ -81,8 +81,8 @@
                     <div class="row no-gutters bg-light">
                         <div class="col-12">
                             <h5 class="mt-2">
-                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
-                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
+                                <button class="op-cart-select-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Select all in category"><i class="fas fa-check"></i></button>
+                                <button class="op-cart-deselect-btn btn btn-sm p-0 border-0 bg-light op-cart-tooltip" data-category="{{ product_cat|slugify }}" type="button" title="Deselect all in category"><i class="fas fa-times"></i></button>
                                 {{ product_cat }}
                             </h5>
                         </div>
@@ -97,7 +97,7 @@
                                 </div>
                                 <div class="col col-sm-1">
                                     {% if product_info.tooltip %}
-                                        <i class="fas fa-info-circle" title="{{ product_info.tooltip }}"></i>
+                                        <i class="fas fa-info-circle op-cart-tooltip" title="{{ product_info.tooltip }}"></i>
                                     {% endif %}
                                 </div>
                                 <div class="col col-lg">

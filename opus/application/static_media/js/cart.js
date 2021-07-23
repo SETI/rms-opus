@@ -575,6 +575,12 @@ var o_cart = {
                 if (zippedFiles_html) {
                     $(".op-zipped-files", "#cart").html(zippedFiles_html);
                 }
+
+                // Initialize all tooltips using tooltipster in cart.html
+                $(`.op-cart-tooltip`).tooltipster({
+                    maxWidth: opus.tooltips_max_width,
+                    theme: opus.tooltips_theme,
+                });
             });
         } else {
             // Make sure "Add all results to cart" is still hidden in cart tab when user switches
