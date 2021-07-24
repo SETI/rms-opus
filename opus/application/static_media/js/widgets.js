@@ -1442,6 +1442,10 @@ var o_widgets = {
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
             });
+            $(`.op-widget-tooltip-${slug}`).tooltipster({
+                maxWidth: opus.tooltips_max_width,
+                theme: opus.tooltips_theme,
+            });
 
         }); // end callback for .done()
     }, // end getWidget function

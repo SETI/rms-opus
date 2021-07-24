@@ -144,7 +144,7 @@ var o_detail = {
                 let url = "/opus/__api/image/thumb/" + opus.prefs.detail + ".json";
                 $.getJSON(url, function(image)  {
                     let imageObj = image.data[0];
-                    imageHtml = `<img class="op-nav-detail-image" src="${imageObj.url}"
+                    imageHtml = `<img class="op-nav-detail-image op-detail-img-tooltip" src="${imageObj.url}"
                                       alt="${imageObj.alt_text}"
                                       title="${imageObj.opus_id}">`;
                     $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
@@ -153,6 +153,11 @@ var o_detail = {
         } else {
             $("#op-main-nav .nav-link .op-selected-detail").html(`${imageHtml}`);
         }
+        // Init tooltip of the image in detail tab
+        $(".op-detail-img-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+        });
     },
 
     adjustDetailHeight: function() {

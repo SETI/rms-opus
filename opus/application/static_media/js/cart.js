@@ -31,7 +31,7 @@ const downloadLinksPopoverTemplate = "<div class='popover' role='tooltip'>" +
                                      "<a tabindex='0' role='button' class='op-cite-opus-btn op-no-select'>" +
                                      "How to Cite OPUS" +
                                      "</a>" +
-                                     "<button class='op-clear-history-btn btn btn-sm btn-secondary'" +
+                                     "<button class='op-clear-history-btn btn btn-sm btn-secondary op-download-popover-tooltip'" +
                                      "type='button' title='Clear all history' disabled>Clear All</button></div>" +
                                      "</div>";
 const downloadLinksPopoverTitle = "Download Archive Links" +
@@ -197,6 +197,14 @@ var o_cart = {
             content: function() {
                 return $("#op-download-links").html();
             }
+        });
+
+        // Init tooltipster after popover is about to show.
+        $(".app-footer .op-download-links-btn").on("show.bs.popover", function () {
+            $(".op-download-popover-tooltip").tooltipster({
+                maxWidth: opus.tooltips_max_width,
+                theme: opus.tooltips_theme,
+            });
         });
 
         // Toggle popover window when clicking download history button at the footer

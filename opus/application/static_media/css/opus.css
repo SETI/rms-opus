@@ -3395,3 +3395,8 @@ different browsers */
 .op-mult-tooltip-link {
     color: #FFFFFF;
 }
+
+/* Make sure tooltipster tooltip is not covered by popover */
+.tooltipster-show {
+    z-index: 2000000002 !important;
+}
