@@ -274,6 +274,7 @@ def api_get_widget(request, **kwargs):
     # Dictionary keyed by group names, and the value will a list mult options
     # corresponding to each group.
     grouped_options = {}
+    is_grouped_mult = False
 
     if request and request.GET is not None:
         (selections, extras) = url_to_search_params(request.GET,
