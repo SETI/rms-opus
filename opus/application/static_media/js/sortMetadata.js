@@ -233,7 +233,7 @@ let o_sortMetadata = {
         let dragTooltip = "\nDrag to reorder";
 
         let addIconHtml = `<div class="op-no-sort list-inline-item">` +
-                             `<div class="op-sort-order-add-icon" title="Add metadata fields to sort order">`+
+                             `<div class="op-sort-order-add-icon op-sort-tooltip" title="Add metadata fields to sort order">`+
                                 `<i class="fas fa-plus"></i>` +
                              `</div>`;  // opusID pill will get tagged onto this later thus ending the </div>
 
@@ -256,9 +256,9 @@ let o_sortMetadata = {
             let listHtml = `<div class='${itemClasses}'>`;
             listHtml += `<span class='badge badge-pill badge-light' data-slug="${slug}" data-descending="${isDescending}">`;
             if (removeable) {
-                listHtml += "<span class='op-remove-sort' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
+                listHtml += "<span class='op-remove-sort op-sort-tooltip' title='Remove metadata field from sort'><i class='fas fa-times-circle'></i></span> ";
             }
-            listHtml += `<span class='op-flip-sort' title='${orderTooltip}'>`;
+            listHtml += `<span class='op-flip-sort op-sort-tooltip' title='${orderTooltip}'>`;
             listHtml += label;
             listHtml += (isDescending ? `<i class="${pillSortUpArrow} ml-1"></i>` : `<i class="${pillSortDownArrow} ml-1"></i>`);
             listHtml += "</span></span></div>";
@@ -278,6 +278,12 @@ let o_sortMetadata = {
             }
         });
         $(".op-sort-contents").append(addIconHtml);
+
+        // Initialize all tooltips using tooltipster in sort order pills.
+        $(".op-sort-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+        });
 
         // if all the metadata field columns are already in the sort list, disable the add button
         // limit the total number of sort columns to 9

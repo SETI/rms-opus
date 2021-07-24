@@ -266,6 +266,7 @@ var o_selectMetadata = {
                 $(".op-menu-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    debug: false,
                 });
             });
         }
@@ -288,12 +289,18 @@ var o_selectMetadata = {
         opus.prefs.cols.push(slug);
 
         let label = $(menuSelector).data("qualifiedlabel");
-        let info = `<i class="fas fa-info-circle" title="${$(menuSelector).find('*[title]').attr("title")}"></i>`;
+        let info = `<i class="fas fa-info-circle op-metadata-selector-tooltip" title="${$(menuSelector).find(".tooltipstered").tooltipster("content")}"></i>`;
         let html = `<li id="cchoose__${slug}" class="ui-sortable-handle"><span class="op-selected-metadata-info">&nbsp;${info}</span>${label}<span class="op-selected-metadata-unselect"><i class="far fa-trash-alt"></span></li>`;
         $(".op-selected-metadata-column > ul").append(html);
         if ($(".op-selected-metadata-column li").length > 1) {
             $(".op-selected-metadata-column .op-selected-metadata-unselect").show();
         }
+
+        $(".op-metadata-selector-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+        });
+
     },
 
     removeColumn: function(slug) {
