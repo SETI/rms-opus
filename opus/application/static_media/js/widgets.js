@@ -423,10 +423,8 @@ var o_widgets = {
             if (firstExistingSetOfInputs.find(".op-remove-inputs").length === 0) {
                 firstExistingSetOfInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
                 firstExistingSetOfInputs.append(orLabel);
-                console.log("AAAAAAA")
                 cloneInputs.find(".op-qtype-wrapping-group").append(removeInputIcon);
             } else {
-                console.log("BBBBBBB")
                 lastExistingSetOfInputs.append(orLabel);
                 cloneInputs.find(".op-or-labels").remove();
                 // remove the cloned trash icon, and attach a new so that the tooltipster
