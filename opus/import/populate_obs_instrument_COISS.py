@@ -649,7 +649,12 @@ def populate_obs_instrument_coiss_combined_filter(**kwargs):
                 filter1, filter2 = filter2, filter1
             new_filter = filter1 + '+' + filter2
 
-    return (new_filter, new_filter)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'combined_filter'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, new_filter)
+
+    return (new_filter, new_filter, tooltip)
 
 def populate_obs_instrument_coiss_image_observation_type(**kwargs):
     metadata = kwargs['metadata']

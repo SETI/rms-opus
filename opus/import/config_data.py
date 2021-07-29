@@ -1101,3 +1101,15 @@ STAR_RA_DEC = {
     'ZET_PER':              ( 58.533010313,  31.883633684),
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
+
+# Data structure will a dictionary keyed by mult table names, the corresponding
+# value will be a dictionary. The internal dictionary will be keyed by a mult
+# option, and the value will be the tooltip of that mult option.
+# {mult_table_name: {mult_option: tooltip}}
+TOOLTIPS_FOR_MULT = {
+    'mult_obs_instrument_coiss_combined_filter': {
+        'BL1': 'BL1 Tooltip',
+        'IR3': 'IR3 Tooltip',
+        'CB1+P60': 'CB1+P60 Tooltip',
+    }
+}

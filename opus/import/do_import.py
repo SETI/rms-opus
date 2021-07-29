@@ -410,7 +410,7 @@ def read_or_create_mult_table(mult_table_name, table_column):
 
 
 def update_mult_table(table_name, field_name, table_column, val, label,
-                      disp_order=None):
+                      tooltip=None, disp_order=None):
     """Update a single value in the cached version of a mult table."""
 
     mult_table_name = import_util.table_name_mult(table_name, field_name)
@@ -501,6 +501,7 @@ f'Unable to parse "{label}" for type "range_func_name": {e}')
         'id': next_id,
         'value': val,
         'label': label,
+        'tooltip': tooltip,
         'disp_order': disp_order,
         'display': 'Y' # if label is not None else 'N'
     }
@@ -1318,6 +1319,7 @@ def import_observation_table(volume_id,
             processed = False
             column_val = None
             mult_label = None
+            mult_tooltip = None
             mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
 
@@ -1437,7 +1439,10 @@ def import_observation_table(volume_id,
                         column_val = ret[0]
                         mult_label = ret[1]
                         if len(ret) == 3:
-                            disp_order = ret[2]
+                            if type(ret[2]) == str:
+                                mult_tooltip = ret[2]
+                            else:
+                                disp_order = ret[2]
                         mult_label_set = True
                     else:
                         column_val = ret
@@ -1607,7 +1612,8 @@ def import_observation_table(volume_id,
                         # in all caps
                         mult_label = mult_label.title()
             id_num = update_mult_table(table_name, field_name, table_column,
-                                       column_val, mult_label, disp_order)
+                                       column_val, mult_label, mult_tooltip,
+                                       disp_order)
             new_row[mult_column_name] = id_num
 
         ### A BIT OF TRICKERY - WE CAN'T RETRIEVE THE RING OR SURFACE GEO

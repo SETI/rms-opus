@@ -371,4 +371,7 @@ DOWNLOAD_FORMATS = {
 }
 
 # Mult widgets that required tooltips
-MULT_WIDGETS_WITH_TOOLTIPS = ['mission', 'target']
+MULT_WIDGETS_WITH_TOOLTIPS = ['mission', 'target', 'COISSfilter']
+
+# We don't want to have these characters in HTML class or ID
+INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`#'

@@ -424,7 +424,15 @@ def api_get_widget(request, **kwargs):
                 count = 0
                 for mult in (model.objects.filter(display='Y')
                                           .order_by('disp_order')):
-                    options.append((count, mult.label, mult.tooltip))
+                    tp_id = mult.label
+                    # If there is any invalid characters for HTML class/id
+                    # we will replace invalid characters in the mult options
+                    # with '_'. This will make sure we don't assign invalid
+                    # characters to HTML class/id for customized tooltips.
+                    for ch in settings.INVALID_CLASS_CHAR:
+                        if ch in tp_id:
+                            tp_id = tp_id.replace(ch, '_')
+                    options.append((count, mult.label, mult.tooltip, tp_id))
                     count += 1
             else:
                 grouping_table = 'grouping_' + param_qualified_name.split('.')[1]

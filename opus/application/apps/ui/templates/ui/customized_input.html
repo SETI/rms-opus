@@ -1,7 +1,7 @@
 <!-- generic customized mult checkbox input -->
 <li>
     <ul id="{{ slug }}" class="multichoice">
-        {% for id, choice, tooltip in options %}
+        {% for id, choice, tooltip, tp_id in options %}
             <li>
                 <label for="{{ slug }}_{{ id }}">
                     {% if choice in selections %}
@@ -10,13 +10,13 @@
                         <input type="checkbox" name="{{ slug }}" value="{{ choice }}" class="multichoice" id="{{ slug }}_{{ id }}">
                     {% endif %}
                 <!-- Assign an unique html structure to data-tooltip-content for each different individual tooltip-->
-                <span class="op-choice-label-name op-mult-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ choice }}">
+                <span class="op-choice-label-name op-mult-tooltip-{{ slug }}" data-tooltip-content="#tooltip-content-{{ slug }}-{{ tp_id }}">
                     {{ choice }}
                 </span>
                 <!-- Customized tooltip contents -->
                 {% if tooltip %}
                     <div class="tooltip-templates">
-                        <span id="tooltip-content-{{ slug }}-{{ choice }}">
+                        <span id="tooltip-content-{{ slug }}-{{ tp_id }}">
                             <a class="op-mult-tooltip-link" href="https://pds-rings.seti.org/" target="_blank"><strong>{{ tooltip }}</strong></a>
                         </span>
                     </div>
