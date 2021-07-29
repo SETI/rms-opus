@@ -431,11 +431,12 @@ def api_get_widget(request, **kwargs):
                     # characters to HTML class/id for customized tooltips.
                     for ch in settings.INVALID_CLASS_CHAR:
                         if ch in tp_id:
-                            tp_id = tp_id.replace(ch, '_')
+                            tp_id = tp_id.replace(ch, '-')
                     options.append((count, mult.label, mult.tooltip, tp_id))
                     count += 1
             else:
-                grouping_table = 'grouping_' + param_qualified_name.split('.')[1]
+                grouping_table = ('grouping_' +
+                                  param_qualified_name.split('.')[1])
                 grouping_model = apps.get_model('metadata', grouping_table.title().replace('_',''))
                 for group_info in grouping_model.objects.order_by('disp_order'):
                     gvalue = group_info.value
@@ -446,13 +447,14 @@ def api_get_widget(request, **kwargs):
                     options_of_a_group = []
                     if model.objects.filter(grouping=gvalue)[0:1]:
                         count = 0
-                        for mult in (model.objects.filter(grouping=gvalue, display='Y')
+                        for mult in (model.objects.filter(grouping=gvalue,
+                                                          display='Y')
                                                   .order_by('disp_order')):
                             # TODO: We don't include mult.tooltip here because
                             # there is no mult_options in table schema. Need to
                             # figure out a proper way to generate the tooltip,
                             # it's created by populate functions
-                            options_of_a_group.append((count, mult.label, None))
+                            options_of_a_group.append((count, mult.label, None, None))
                             count += 1
                         grouped_options[(glabel,gvalue)] = options_of_a_group
                 options = grouped_options

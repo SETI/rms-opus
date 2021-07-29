@@ -696,4 +696,10 @@ def populate_obs_instrument_coiss_target_desc(**kwargs):
     if target_desc in COISS_TARGET_DESC_MAPPING:
         target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
 
-    return target_desc
+    target_desc_label = target_desc.title()
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'target_desc'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           target_desc_label)
+    return (target_desc, target_desc_label, tooltip)
