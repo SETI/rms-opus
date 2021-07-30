@@ -453,7 +453,11 @@ def populate_obs_wavelength_COISS_wave_no_res2_OBS(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_COISS_spec_flag_OBS(**kwargs):
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_COISS_spec_size_OBS(**kwargs):
     return None
@@ -595,7 +599,13 @@ def populate_obs_mission_cassini_COISS_mission_phase_name_OBS(**kwargs):
     mp = index_row['MISSION_PHASE_NAME']
     if mp.upper() == 'NULL':
         return None
-    return mp.replace('_', ' ')
+    mp = mp.replace('_', ' ')
+    mp_label = mp.title()
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'mission_phase_name'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, mp_label)
+    return (mp, mp_label, tooltip)
 
 def populate_obs_mission_cassini_COISS_sequence_id_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -648,12 +658,10 @@ def populate_obs_instrument_coiss_combined_filter(**kwargs):
                 # If wavelengths are the same, make it name order
                 filter1, filter2 = filter2, filter1
             new_filter = filter1 + '+' + filter2
-
     # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
     table_name = kwargs['table_name']
     field_name = 'combined_filter'
     tooltip = import_util.get_mult_tooltip(table_name, field_name, new_filter)
-
     return (new_filter, new_filter, tooltip)
 
 def populate_obs_instrument_coiss_image_observation_type(**kwargs):
@@ -695,7 +703,6 @@ def populate_obs_instrument_coiss_target_desc(**kwargs):
 
     if target_desc in COISS_TARGET_DESC_MAPPING:
         target_desc = COISS_TARGET_DESC_MAPPING[target_desc]
-
     target_desc_label = target_desc.title()
     # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
     table_name = kwargs['table_name']

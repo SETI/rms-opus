@@ -731,9 +731,16 @@ def _acs_spec_flag(**kwargs):
             filter1, filter2)
 
 def populate_obs_wavelength_HSTACS_spec_flag_OBS(**kwargs):
+    spec_flag = 'N'
     if _acs_spec_flag(**kwargs)[0]:
-        return 'Y'
-    return 'N'
+        spec_flag = 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    spec_flag_label = 'Yes' if spec_flag == 'Y' else 'No'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           spec_flag_label)
+    return (spec_flag, spec_flag_label, tooltip)
 
 def populate_obs_wavelength_HSTACS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -826,9 +833,16 @@ def _nicmos_spec_flag(**kwargs):
     return filter1.startswith('G'), filter1, filter2
 
 def populate_obs_wavelength_HSTNICMOS_spec_flag_OBS(**kwargs):
+    spec_flag = 'N'
     if _nicmos_spec_flag(**kwargs)[0]:
-        return 'Y'
-    return 'N'
+        spec_flag = 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    spec_flag_label = 'Yes' if spec_flag == 'Y' else 'No'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           spec_flag_label)
+    return (spec_flag, spec_flag_label, tooltip)
 
 def populate_obs_wavelength_HSTNICMOS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -918,9 +932,16 @@ def _stis_spec_flag(**kwargs):
     return obs_type == 'SPE'
 
 def populate_obs_wavelength_HSTSTIS_spec_flag_OBS(**kwargs):
+    spec_flag = 'N'
     if _stis_spec_flag(**kwargs):
-        return 'Y'
-    return 'N'
+        spec_flag = 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    spec_flag_label = 'Yes' if spec_flag == 'Y' else 'No'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           spec_flag_label)
+    return (spec_flag, spec_flag_label, tooltip)
 
 def populate_obs_wavelength_HSTSTIS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -966,9 +987,16 @@ def _wfc3_spec_flag(**kwargs):
     return filter1.startswith('G'), filter1, filter2
 
 def populate_obs_wavelength_HSTWFC3_spec_flag_OBS(**kwargs):
+    spec_flag = 'N'
     if _wfc3_spec_flag(**kwargs)[0]:
-        return 'Y'
-    return 'N'
+        spec_flag = 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    spec_flag_label = 'Yes' if spec_flag == 'Y' else 'No'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           spec_flag_label)
+    return (spec_flag, spec_flag_label, tooltip)
 
 def populate_obs_wavelength_HSTWFC3_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -1035,7 +1063,11 @@ def populate_obs_mission_hubble_HSTWFC3_filter_type(**kwargs):
 
 def populate_obs_wavelength_HSTWFPC2_spec_flag_OBS(**kwargs):
     # No prism or grism filters
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_HSTWFPC2_spec_size_OBS(**kwargs):
     # No prism or grism filters
@@ -1112,7 +1144,11 @@ def populate_obs_mission_hubble_filter_name(**kwargs):
     else:
         filter_name = filter_name.replace('_', ' ')
     ret = instrument[3:] + '-' + filter_name
-    return (ret, ret)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'filter_name'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, ret)
+    return (ret, ret, tooltip)
 
 def populate_obs_mission_hubble_aperture_type(**kwargs):
     metadata = kwargs['metadata']
@@ -1120,7 +1156,11 @@ def populate_obs_mission_hubble_aperture_type(**kwargs):
     index_row = metadata['index_row']
     aperture = index_row['APERTURE_TYPE']
     ret = instrument[3:] + '-' + aperture
-    return (ret, ret)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'aperture_type'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, ret)
+    return (ret, ret, tooltip)
 
 def populate_obs_mission_hubble_HSTx_proposed_aperture_type(**kwargs):
     return None
@@ -1134,7 +1174,11 @@ def populate_obs_mission_hubble_HSTSTIS_proposed_aperture_type(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     aperture = index_row['PROPOSED_APERTURE_TYPE'].upper()
-    return (aperture, aperture)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'proposed_aperture_type'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, aperture)
+    return (aperture, aperture, tooltip)
 
 def populate_obs_mission_hubble_HSTACS_targeted_detector_id(**kwargs):
     return None
@@ -1169,7 +1213,11 @@ def populate_obs_mission_hubble_HSTSTIS_optical_element(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     element = index_row['OPTICAL_ELEMENT_NAME'].upper()
-    return (element, element)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'optical_element'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, element)
+    return (element, element, tooltip)
 
 def populate_obs_mission_hubble_HSTACS_pc1_flag(**kwargs):
     return None
@@ -1187,7 +1235,12 @@ def populate_obs_mission_hubble_HSTWFPC2_pc1_flag(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     pc1_flag = index_row['PC1_FLAG']
-    return pc1_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'pc1_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           pc1_flag)
+    return (pc1_flag, pc1_flag, tooltip)
 
 def populate_obs_mission_hubble_HSTACS_wf2_flag(**kwargs):
     return None
@@ -1205,7 +1258,12 @@ def populate_obs_mission_hubble_HSTWFPC2_wf2_flag(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wf2_flag = index_row['WF2_FLAG']
-    return wf2_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'wf2_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           wf2_flag)
+    return (wf2_flag, wf2_flag, tooltip)
 
 def populate_obs_mission_hubble_HSTACS_wf3_flag(**kwargs):
     return None
@@ -1223,7 +1281,12 @@ def populate_obs_mission_hubble_HSTWFPC2_wf3_flag(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wf3_flag = index_row['WF3_FLAG']
-    return wf3_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'wf3_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           wf3_flag)
+    return (wf3_flag, wf3_flag, tooltip)
 
 def populate_obs_mission_hubble_HSTACS_wf4_flag(**kwargs):
     return None
@@ -1241,7 +1304,12 @@ def populate_obs_mission_hubble_HSTWFPC2_wf4_flag(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wf4_flag = index_row['WF4_FLAG']
-    return wf4_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'wf4_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           wf4_flag)
+    return (wf4_flag, wf4_flag, tooltip)
 
 def populate_obs_mission_hubble_publication_date(**kwargs):
     metadata = kwargs['metadata']

@@ -23,7 +23,12 @@ def populate_obs_surface_geo_name_target_name(**kwargs):
         import_util.announce_unknown_target_name(target_name)
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    return target_name, target_name_info[2]
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'combined_filter'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           target_name_info[2])
+    return (target_name, target_name_info[2], tooltip)
 
 # These are fields in the normal obs_surface_geometry table that have the
 # standard one-to-one mapping with OPUS ID

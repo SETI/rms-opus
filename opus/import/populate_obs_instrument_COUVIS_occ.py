@@ -190,7 +190,11 @@ def populate_obs_wavelength_COUVIS_wave_no_res2_OCC(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_COUVIS_spec_flag_OCC(**kwargs):
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_COUVIS_spec_size_OCC(**kwargs):
     return 1
@@ -221,8 +225,12 @@ def populate_obs_occultation_COUVIS_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
-
-    return body_occ_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'body_occ_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           body_occ_flag)
+    return (body_occ_flag, body_occ_flag, tooltip)
 
 def populate_obs_occultation_COUVIS_optical_depth_min_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -253,8 +261,13 @@ def populate_obs_occultation_COUVIS_quality_score_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     dq_score = supp_index_row['DATA_QUALITY_SCORE']
-
-    return dq_score
+    dq_score_label = dq_score.title()
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'quality_score'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           dq_score_label)
+    return (dq_score, dq_score_label, tooltip)
 
 def populate_obs_occultation_COUVIS_wl_band_OCC(**kwargs):
     return 'UV'
@@ -263,10 +276,19 @@ def populate_obs_occultation_COUVIS_source_OCC(**kwargs):
     target_name, target_name_info = populate_star_name_helper_index(**kwargs)
     if target_name_info is None:
         return None
-    return target_name, target_name_info[2]
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'source'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           target_name_info[2])
+    return (target_name, target_name_info[2], tooltip)
 
 def populate_obs_occultation_COUVIS_host_OCC(**kwargs):
-    return 'Cassini'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'host'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'Cassini')
+    return ('Cassini', 'Cassini', tooltip)
 
 
 ### OBS_RING_GEOMETRY TABLE ###

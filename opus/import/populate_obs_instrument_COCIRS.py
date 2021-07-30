@@ -204,7 +204,11 @@ def populate_obs_wavelength_COCIRS_wave_no_res2_OBS(**kwargs):
     return wave_no_res2
 
 def populate_obs_wavelength_COCIRS_spec_flag_OBS(**kwargs):
-    return 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'Yes')
+    return ('Y', 'Yes', tooltip)
 
 def populate_obs_wavelength_COCIRS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
@@ -311,7 +315,13 @@ def populate_obs_mission_cassini_COCIRS_mission_phase_name_OBS(**kwargs):
     mp = index_row['MISSION_PHASE_NAME']
     if mp.upper() == 'NULL':
         return None
-    return mp.replace('_', ' ')
+    mp = mp.replace('_', ' ')
+    mp_label = mp.title()
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'mission_phase_name'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, mp_label)
+    return (mp, mp_label, tooltip)
 
 def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
     return None

@@ -168,7 +168,11 @@ def populate_obs_wavelength_GB_wave_no_res2_OCC(**kwargs):
     return None # Not available
 
 def populate_obs_wavelength_GB_spec_flag_OCC(**kwargs):
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_GB_spec_size_OCC(**kwargs):
     return None
@@ -202,8 +206,12 @@ def populate_obs_occultation_GB_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     body_occ_flag = supp_index_row['PLANETARY_OCCULTATION_FLAG']
-
-    return body_occ_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'body_occ_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           body_occ_flag)
+    return (body_occ_flag, body_occ_flag, tooltip)
 
 def populate_obs_occultation_GB_optical_depth_min_OCC(**kwargs):
     return None # Not available
@@ -215,7 +223,11 @@ def populate_obs_occultation_GB_temporal_sampling_OCC(**kwargs):
     return None # Not available
 
 def populate_obs_occultation_GB_quality_score_OCC(**kwargs):
-    return ("UNASSIGNED", "Unassigned")
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'quality_score'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, "Unassigned")
+    return ("UNASSIGNED", "Unassigned", tooltip)
 
 def populate_obs_occultation_GB_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -233,14 +245,22 @@ def populate_obs_occultation_GB_source_OCC(**kwargs):
                                                                     **kwargs)
     if target_name_info is None:
         return None
-    return target_name, target_name_info[2]
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'source'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           target_name_info[2])
+    return (target_name, target_name_info[2], tooltip)
 
 def populate_obs_occultation_GB_host_OCC(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     insthost = supp_index_row['INSTRUMENT_HOST_NAME']
-
-    return (insthost, insthost)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'host'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, insthost)
+    return (insthost, insthost, tooltip)
 
 
 ### OBS_RING_GEOMETRY TABLE ###

@@ -454,7 +454,12 @@ def api_get_widget(request, **kwargs):
                             # there is no mult_options in table schema. Need to
                             # figure out a proper way to generate the tooltip,
                             # it's created by populate functions
-                            options_of_a_group.append((count, mult.label, None, None))
+                            tp_id = mult.label
+                            for ch in settings.INVALID_CLASS_CHAR:
+                                if ch in tp_id:
+                                    tp_id = tp_id.replace(ch, '-')
+                            options_of_a_group.append((count, mult.label,
+                                                       mult.tooltip, tp_id))
                             count += 1
                         grouped_options[(glabel,gvalue)] = options_of_a_group
                 options = grouped_options

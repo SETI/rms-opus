@@ -1496,17 +1496,17 @@ def import_observation_table(volume_id,
             if field_type.startswith('flag'):
                 if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
                     if field_type == 'flag_onoff':
-                        column_val = 'Off'
+                        column_val, mult_label = 'Off', 'Off'
                     else:
-                        column_val = 'No'
+                        column_val, mult_label = 'No', 'No'
                 elif column_val in [1, 'y', 'Y', 'yes', 'Yes', 'YES', 'on',
                                     'ON']:
                     if field_type == 'flag_onoff':
-                        column_val = 'On'
+                        column_val, mult_label = 'On', 'On'
                     else:
-                        column_val = 'Yes'
+                        column_val, mult_label = 'Yes', 'Yes'
                 elif column_val in ['N/A', 'UNK', 'NULL']:
-                    column_val = None
+                    column_val, mult_label = None, 'N/A'
                 else:
                     import_util.log_nonrepeating_error(
                         f'Column "{field_name}" in table "{table_name}" '+

@@ -482,9 +482,16 @@ def _spec_size_helper(**kwargs):
 
 def populate_obs_wavelength_COUVIS_spec_flag_OBS(**kwargs):
     spec_size = _spec_size_helper(**kwargs)
+    spec_flag = 'Y'
     if spec_size is None or spec_size <= 1:
-        return 'N'
-    return 'Y'
+        spec_flag = 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    spec_flag_label = 'Yes' if spec_flag == 'Y' else 'No'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           spec_flag_label)
+    return (spec_flag, spec_flag_label, tooltip)
 
 def populate_obs_wavelength_COUVIS_spec_size_OBS(**kwargs):
     return _spec_size_helper(**kwargs)

@@ -293,7 +293,11 @@ def populate_obs_wavelength_COVIMS_wave_no_res2_OBS(**kwargs):
     return wave_res1 * 10000. / (wl1*wl1)
 
 def populate_obs_wavelength_COVIMS_spec_flag_OBS(**kwargs):
-    return 'Y'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'Yes')
+    return ('Y', 'Yes', tooltip)
 
 def populate_obs_wavelength_COVIMS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']

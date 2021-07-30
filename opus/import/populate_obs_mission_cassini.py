@@ -249,24 +249,33 @@ def helper_cassini_intended_target_name(**kwargs):
         obs_parts = obs_name.split('_')
         target_code = obs_parts[1][-2:]
 
+    table_name = kwargs['table_name']
+    field_name = 'target_name'
+
     # 1: TARGET_NAME of SATURN or SKY and TARGET_CODE is one of the rings
     if ((target_name == 'SATURN' or target_name == 'SKY') and
         target_code in ('RA','RB','RC','RD','RE','RF','RG','RI')):
-        return ('S RINGS', 'Saturn Rings')
+        tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                               'Saturn Rings')
+        return ('S RINGS', 'Saturn Rings', tooltip)
 
     # 2: TARGET_NAME of SATURN or SKY and TARGET_DESC contains "RING"
     # (leave TARGET_CODE of "Star" alone)
     if ((target_name == 'SATURN' or target_name == 'SKY') and
         target_desc is not None and target_desc.find('RING') != -1 and
         target_code != 'ST'):
-        return ('S RINGS', 'Saturn Rings')
+        tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                               'Saturn Rings')
+        return ('S RINGS', 'Saturn Rings', tooltip)
 
     # 3: TARGET_NAME of SKY and TARGET_CODE of Skeleton, let TARGET_DESC
     # override TARGET_NAME
     if (target_name == 'SKY' and target_code == 'SK' and
         target_desc is not None and target_desc in TARGET_NAME_INFO):
         target_name_info = TARGET_NAME_INFO[target_desc]
-        return target_desc, target_name_info[2]
+        tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                               target_name_info[2])
+        return (target_desc, target_name_info[2], tooltip)
 
     if target_name not in TARGET_NAME_INFO:
         import_util.announce_unknown_target_name(target_name)
@@ -274,7 +283,9 @@ def helper_cassini_intended_target_name(**kwargs):
             return 'None'
         return None
     target_name_info = TARGET_NAME_INFO[target_name]
-    return target_name, target_name_info[2]
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           target_name_info[2])
+    return (target_name, target_name_info[2], tooltip)
 
 # This is used for COUVIS and COVIMS because they don't include the
 # MISSION_PHASE_NAME in the label files. We deduce it from the observation
@@ -287,7 +298,14 @@ def helper_cassini_mission_phase_name(**kwargs):
         start_time_sec = start_time
         stop_time_sec = stop_time
         if start_time_sec <= time1 < stop_time_sec:
-            return phase.upper()
+            phase = phase.upper()
+            phase_label = phase.title()
+            # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+            table_name = kwargs['table_name']
+            field_name = 'mission_phase_name'
+            tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                                   phase_label)
+            return (phase, phase_label, tooltip)
     return None
 
 def helper_fix_cassini_sclk(count):
@@ -389,9 +407,15 @@ def populate_obs_mission_cassini_is_prime(**kwargs):
 
     # Change COISS to ISS, etc.
     inst_id = inst_id.replace('CO', '')
+
+    is_prime = 'No'
     if prime_inst == inst_id:
-        return 'Yes'
-    return 'No'
+        is_prime = 'Yes'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'is_prime'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, is_prime)
+    return (is_prime, is_prime, tooltip)
 
 def populate_obs_mission_cassini_cassini_target_code(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
@@ -404,7 +428,13 @@ def populate_obs_mission_cassini_cassini_target_code(**kwargs):
     obs_parts = obs_name.split('_')
     target_code = obs_parts[1][-2:]
     if target_code in _CASSINI_TARGET_CODE_MAPPING:
-        return (target_code, _CASSINI_TARGET_CODE_MAPPING[target_code])
+        target_code_label = _CASSINI_TARGET_CODE_MAPPING[target_code]
+        # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+        table_name = kwargs['table_name']
+        field_name = 'cassini_target_code'
+        tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                               target_code_label)
+        return (target_code, target_code_label, tooltip)
 
     return None
 
@@ -414,10 +444,12 @@ def populate_obs_mission_cassini_cassini_target_name(**kwargs):
 
     if 'TARGET_NAME' not in index_row: # RSS
         return None
-
     target_name = index_row['TARGET_NAME'].title()
-
-    return (target_name, target_name)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'cassini_target_name'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, target_name)
+    return (target_name, target_name, tooltip)
 
 def populate_obs_mission_cassini_activity_name(**kwargs):
     obs_name = helper_cassini_obs_name(**kwargs)
@@ -435,7 +467,11 @@ def populate_obs_mission_cassini_rev_no(**kwargs):
     rev_no = obs_parts[1][:3]
     if rev_no[0] == 'C':
         return None
-    return (rev_no, rev_no)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'rev_no'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, rev_no)
+    return (rev_no, rev_no, tooltip)
 
 def populate_obs_mission_cassini_rev_no_cvt(**kwargs):
     metadata = kwargs['metadata']

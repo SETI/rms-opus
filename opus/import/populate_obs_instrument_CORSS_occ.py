@@ -210,7 +210,11 @@ def populate_obs_wavelength_CORSS_wave_no_res2_OCC(**kwargs):
     return None
 
 def populate_obs_wavelength_CORSS_spec_flag_OCC(**kwargs):
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_CORSS_spec_size_OCC(**kwargs):
     return None
@@ -241,8 +245,12 @@ def populate_obs_occultation_CORSS_body_occ_flag_OCC(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
-
-    return body_occ_flag
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'body_occ_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name,
+                                           body_occ_flag)
+    return (body_occ_flag, body_occ_flag, tooltip)
 
 def populate_obs_occultation_CORSS_optical_depth_min_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -262,7 +270,11 @@ def populate_obs_occultation_CORSS_temporal_sampling_OCC(**kwargs):
     return None # Not available
 
 def populate_obs_occultation_CORSS_quality_score_OCC(**kwargs):
-    return ("UNASSIGNED", "Unassigned")
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'quality_score'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, "Unassigned")
+    return ("UNASSIGNED", "Unassigned", tooltip)
 
 def populate_obs_occultation_CORSS_wl_band_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -275,7 +287,12 @@ def populate_obs_occultation_CORSS_wl_band_OCC(**kwargs):
     return band
 
 def populate_obs_occultation_CORSS_source_OCC(**kwargs):
-    return ('CASSINI', 'Cassini', '!Cassini')
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'source'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'Cassini')
+    return ('CASSINI', 'Cassini', tooltip)
+    # return ('CASSINI', 'Cassini', '!Cassini')
 
 def populate_obs_occultation_CORSS_host_OCC(**kwargs):
     metadata = kwargs['metadata']
@@ -283,7 +300,11 @@ def populate_obs_occultation_CORSS_host_OCC(**kwargs):
     dsn = supp_index['DSN_STATION_NUMBER']
 
     ret = f'DSN {dsn} ({_DSN_NAMES[dsn]})'
-    return (ret, ret)
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'host'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, ret)
+    return (ret, ret, tooltip)
 
 
 ### OBS_RING_GEOMETRY TABLE ###
@@ -601,7 +622,13 @@ def populate_obs_mission_cassini_CORSS_mission_phase_name_OCC(**kwargs):
     mp = index_row['MISSION_PHASE_NAME']
     if mp.upper() == 'NULL':
         return None
-    return mp.replace('_', ' ')
+    mp = mp.replace('_', ' ')
+    mp_label = mp.title()
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'mission_phase_name'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, mp_label)
+    return (mp, mp_label, tooltip)
 
 def populate_obs_mission_cassini_CORSS_sequence_id_OCC(**kwargs):
     return None

@@ -214,7 +214,11 @@ def populate_obs_wavelength_NHMVIC_wave_no_res2_OBS(**kwargs):
     return wno2 - wno1
 
 def populate_obs_wavelength_NHMVIC_spec_flag_OBS(**kwargs):
-    return 'N'
+    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
+    table_name = kwargs['table_name']
+    field_name = 'spec_flag'
+    tooltip = import_util.get_mult_tooltip(table_name, field_name, 'No')
+    return ('N', 'No', tooltip)
 
 def populate_obs_wavelength_NHMVIC_spec_size_OBS(**kwargs):
     return None
