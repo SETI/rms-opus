@@ -47,12 +47,8 @@ def helper_voyager_planet_id(**kwargs):
     pl = mp.upper()[:3]
 
     assert pl in ['JUP', 'SAT', 'URA', 'NEP']
-    # Check if there is a tooltip specified in TOOLTIPS_FOR_MULT
-    table_name = kwargs['table_name']
-    field_name = 'mission_phase_name'
-    tooltip = import_util.get_mult_tooltip(table_name, field_name, pl)
 
-    return (pl, pl, tooltip)
+    return pl
 
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY MISSION
