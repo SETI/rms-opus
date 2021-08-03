@@ -72,6 +72,7 @@ var o_menu = {
             $(".op-menu-tooltip").tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
                 debug: false,
             });
         });

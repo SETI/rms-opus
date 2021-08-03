@@ -261,11 +261,13 @@ var o_selectMetadata = {
                 $(".op-metadata-selector-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
                 });
                 // Initialize all tooltips using tooltipster in menu.html
                 $(".op-menu-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
                     debug: false,
                 });
             });
@@ -299,6 +301,7 @@ var o_selectMetadata = {
         $(".op-metadata-selector-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
         });
 
     },

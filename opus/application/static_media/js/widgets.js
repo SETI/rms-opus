@@ -454,6 +454,7 @@ var o_widgets = {
             $(".op-input-action-tooltip").tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
                 debug: false,
             });
             // Prevent overscrolling for newly added dropdown.
@@ -1457,10 +1458,12 @@ var o_widgets = {
                 interactive: true,
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
             });
             $(`.op-widget-tooltip-${slug}`).tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
             });
 
         }); // end callback for .done()

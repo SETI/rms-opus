@@ -374,4 +374,6 @@ DOWNLOAD_FORMATS = {
 INVALID_CLASS_CHAR = '~!@$%^&*()+=,./;:"?><[]\{}|`# '
 
 # Mult widgets that required tooltips
-MULT_WIDGETS_WITH_TOOLTIPS = ['mission', 'target', 'COISSfilter', 'COISStargetdesc']
+MULT_WIDGETS_WITH_TOOLTIPS = []
+# Uncomment and use the following MULT_WIDGETS_WITH_TOOLTIPS for testing purpose
+# MULT_WIDGETS_WITH_TOOLTIPS = ['COISSfilter', 'COISStargetdesc']

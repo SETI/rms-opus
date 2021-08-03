@@ -103,6 +103,7 @@ var o_detail = {
                                 $(".op-detail-metadata-tooltip").tooltipster({
                                     maxWidth: opus.tooltips_max_width,
                                     theme: opus.tooltips_theme,
+                                    delay: opus.tooltips_delay,
                                 });
                             }
                         );
@@ -119,6 +120,7 @@ var o_detail = {
                 $(".op-detail-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
                 });
             } // /detail.load
         );
@@ -157,6 +159,7 @@ var o_detail = {
         $(".op-detail-img-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
         });
     },
 

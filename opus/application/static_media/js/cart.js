@@ -204,6 +204,7 @@ var o_cart = {
             $(".op-download-popover-tooltip").tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
             });
         });
 
@@ -588,6 +589,7 @@ var o_cart = {
                 $(".op-cart-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
                 });
             });
         } else {

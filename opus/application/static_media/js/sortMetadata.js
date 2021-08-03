@@ -283,6 +283,7 @@ let o_sortMetadata = {
         $(".op-sort-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
         });
 
         // if all the metadata field columns are already in the sort list, disable the add button

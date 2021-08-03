@@ -151,8 +151,10 @@ var opus = {
 
     oldSurfacegeoTarget: null,
 
+    // Tooltipster settings
     tooltips_max_width: 300,
-    tooltips_theme: 'tooltipster-default',
+    tooltips_theme: 'tooltipster-light',
+    tooltips_delay: 1500,
 
     //------------------------------------------------------------------------------------
     // Functions to update the result count and hinting numbers on any change to the search
@@ -1131,6 +1133,7 @@ var opus = {
                 $(".op-help-tooltip").tooltipster({
                     maxWidth: opus.tooltips_max_width,
                     theme: opus.tooltips_theme,
+                    delay: opus.tooltips_delay,
                 });
 
                 $(".op-open-help-pdf").on("click", function(e) {
@@ -1507,5 +1510,6 @@ $(document).ready(function() {
     $(".op-base-tooltip").tooltipster({
         maxWidth: opus.tooltips_max_width,
         theme: opus.tooltips_theme,
+        delay: opus.tooltips_delay,
     });
 });

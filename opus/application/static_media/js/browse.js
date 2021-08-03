@@ -3,7 +3,7 @@
 /* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
-/* globals $, PerfectScrollbar */
+/* globals $, _, PerfectScrollbar */
 /* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, o_widgets, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
@@ -55,6 +55,11 @@ var o_browse = {
     pageLoaderSpinnerTimer: null,   // used to apply a small delay to the loader spinner
     loadDataInProgress: false,
     infiniteScrollLoadInProgress: false,
+
+    // the x coordinate of the current cursor when moving mouse in the table view
+    mouseX: 0,
+    // The timer we used to detect the stop of mouse moving action in the table view
+    timer: null,
     /**
     *
     *  all the things that happen on the browse tab
@@ -62,6 +67,22 @@ var o_browse = {
     **/
     addBrowseBehaviors: function() {
         // note: using .on vs .click allows elements to be added dynamically w/out bind/rebind of handler
+
+        // Get the x coordinate of the current cursor when moving mouse in the table view.
+        // Also when moving around in the same table row, reposition the tooltip so that
+        // it stays right next to the cursor.
+        $("#browse table tbody").on("mousemove", function(e) {
+            // We will wait for the stop of mouse moving, and then show the tooltip
+            // after the amount of delay we set.
+            clearTimeout(o_browse.timer);
+            o_browse.mouseX = e.clientX;
+            o_browse.timer = setTimeout(function() {
+                let tableRow = $(e.target).parent("tr");
+                if (tableRow.length) {
+                    tableRow.tooltipster("instance").reposition();
+                }
+            }, opus.tooltips_delay);
+        });
 
         $(".op-gallery-view, .op-data-table-view").on("scroll", o_browse.checkScroll);
         // Mouse wheel up will also trigger ps-scroll-up.
@@ -1487,7 +1508,7 @@ var o_browse = {
                 // DEBBY
                 galleryHtml += `<div class="op-thumbnail-container ${(item.cart_state === "cart" ? 'op-in-cart' : '')}" data-id="${opusId}" data-obs="${item.obs_num}">`;
                 galleryHtml += `<a href="${url}" class="thumbnail" data-image="${images.full.url}">`;
-                galleryHtml += `<img class="img-thumbnail img-fluid op-browse-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
+                galleryHtml += `<img class="img-thumbnail img-fluid op-browse-gallery-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
 
                 // whenever the user clicks an image to show the modal, we need to highlight the selected image w/an icon
                 galleryHtml += '<div class="op-modal-overlay">';
@@ -1495,7 +1516,7 @@ var o_browse = {
                 galleryHtml += '</div></a>';
 
                 // recycle bin icon container
-                galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-tooltip" title="${mainTitle}">`;
+                galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')} op-browse-gallery-tooltip" title="${mainTitle}">`;
                 galleryHtml += '<p class="content-text"><i class="fas fa-recycle fa-4x text-success" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
 
@@ -1505,10 +1526,10 @@ var o_browse = {
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
-                galleryHtml += '<a class="op-browse-tooltip" href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
+                galleryHtml += '<a class="op-browse-gallery-tooltip" href="#" data-icon="info" title="View observation detail (use Ctrl for new tab)"><i class="fas fa-info-circle fa-xs"></i></a>';
 
-                galleryHtml += `<a class="op-browse-tooltip" href="#" data-icon="cart" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-xs"></i></a>`;
-                galleryHtml += '<a class="op-browse-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
+                galleryHtml += `<a class="op-browse-gallery-tooltip" href="#" data-icon="cart" title="${buttonInfo[tab].title}"><i class="${buttonInfo[tab].icon} fa-xs"></i></a>`;
+                galleryHtml += '<a class="op-browse-gallery-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>';
                 galleryHtml += '</div>';
                 galleryHtml += '</div></div>';
 
@@ -1516,13 +1537,13 @@ var o_browse = {
                 let checked = item.cart_state === "cart" ? " checked" : "";
                 let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "class='text-success op-recycled'" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
-                let minimenu = `<a class="op-browse-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let minimenu = `<a class="op-browse-table-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
+                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-table-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
 
-                let miniThumbnail = `<img class="op-browse-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
+                let miniThumbnail = `<img class="op-browse-table-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
 
-                let tr = `<tr class="op-browse-tooltip" data-id="${opusId}" ${recycled} data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
+                let tr = `<tr class="op-browse-table-tooltip" data-id="${opusId}" ${recycled} data-target="#galleryView" data-obs="${item.obs_num}" title="${mainTitle}">`;
                 $.each(item.metadata, function(index, cell) {
                     let slug = slugs[index];
                     row += `<td class="op-metadata-value" data-slug="${slug}">${cell}</td>`;
@@ -1563,9 +1584,41 @@ var o_browse = {
         o_hash.updateURLFromCurrentHash();
 
         // Initialize tooltips using tooltipster in browse gallery and table
-        $(".op-browse-tooltip").tooltipster({
+        $(".op-browse-gallery-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            debug: false,
+        });
+        $(".op-browse-table-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            debug: false,
+            functionBefore: function(instance, helper){
+                // Make sure all other tooltips is closed before a new one is open
+                // in table view.
+                $.each($.tooltipster.instances(), function(i, inst){
+                    inst.close();
+                });
+            },
+            // Make sure the tooltip position is next to the cursor when users
+            // move around the same row in the browse table view.
+            functionPosition: function(instance, helper, position){
+                let tooltipWidth = position.size.width;
+                let offsetToRightWindow = 5;
+                let windowWidth = helper.geo.window.size.width;
+                // When the cursor is very close to the right edget of the window, we have
+                // to move the tooltip position to the right so that it won't get cut off
+                // by the window.
+                if ((o_browse.mouseX + tooltipWidth) + offsetToRightWindow > windowWidth) {
+                    position.coord.left = o_browse.mouseX - tooltipWidth;
+                } else {
+                    position.coord.left = o_browse.mouseX;
+                }
+                position.target = o_browse.mouseX;
+                return position;
+            }
         });
     },
 
@@ -1645,6 +1698,7 @@ var o_browse = {
         $(".op-addall-icon-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
         });
     },
 
@@ -2580,6 +2634,7 @@ var o_browse = {
         $(".op-metadatabox-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
         });
 
         // if it was last in edit mode, open in edit mode...
@@ -2629,6 +2684,7 @@ var o_browse = {
             $(".op-metadatabox-tooltip").tooltipster({
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
+                delay: opus.tooltips_delay,
             });
         }
     },

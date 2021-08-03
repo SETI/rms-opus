@@ -1107,14 +1107,15 @@ STAR_RA_DEC = {
 # option, and the value will be the tooltip of that mult option.
 # {mult_table_name: {mult_option: tooltip}}
 TOOLTIPS_FOR_MULT = {
+# Uncomment the followings before running import for testing purpose
     # 'mult_obs_instrument_coiss_combined_filter': {
     #     'BL1': 'BL1 Tooltip',
     #     'IR3': 'IR3 Tooltip',
     #     'CB1+P60': 'CB1+P60 Tooltip',
     # },
-    'mult_obs_instrument_coiss_target_desc': {
-        'Constant I/F': 'Constant I/F Tooltip',
-        'Saturn-Rings': 'Saturn-Rings Tooltip',
-        'Icy Satellites': 'Icy Satellites Tooltip',
-    }
+    # 'mult_obs_instrument_coiss_target_desc': {
+    #     'Constant I/F': 'Constant I/F Tooltip',
+    #     'Saturn-Rings': 'Saturn-Rings Tooltip',
+    #     'Icy Satellites': 'Icy Satellites Tooltip',
+    # }
 }
