@@ -1384,8 +1384,8 @@ var o_widgets = {
             // Wrap mults label names with span tag (if the wrapping span is not there),
             // we will style the span tag to have a caret cursor so that users know that
             // they can select and copy the text.
-            if ((widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice"))
-                && !widgetInputs.next().hasClass("op-choice-label-name")) {
+            if ((widgetInputs.hasClass("multichoice") || widgetInputs.hasClass("singlechoice")) &&
+                !widgetInputs.next().hasClass("op-choice-label-name")) {
                 let choiceClass = widgetInputs.hasClass("multichoice") ? ".multichoice" : ".singlechoice";
                 let allChoiceLabels = $(`#widget__${slug} ul${choiceClass} label`);
                 for (const label of allChoiceLabels) {

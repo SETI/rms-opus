@@ -3,7 +3,7 @@
 /* jshint latedef: true, leanswitch: true, noarg: true, nocomma: true */
 /* jshint nonbsp: true, nonew: true */
 /* jshint varstmt: true */
-/* globals $, _, PerfectScrollbar */
+/* globals $, PerfectScrollbar */
 /* globals o_cart, o_hash, o_utils, o_selectMetadata, o_sortMetadata, o_menu, o_widgets, opus */
 /* globals MAX_SELECTIONS_ALLOWED */
 
