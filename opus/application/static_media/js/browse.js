@@ -70,8 +70,8 @@ var o_browse = {
 
         // Get the x coordinate of the current cursor when moving mouse in the table view.
         // Also when moving around in the same table row, reposition the tooltip so that
-        // it stays right next to the cursor.
-        $("#browse table tbody").on("mousemove", function(e) {
+        // it stays right next to the cursor. Work for both browse/cart data table.
+        $(".op-data-table tbody").on("mousemove", function(e) {
             // We will wait for the stop of mouse moving, and then show the tooltip
             // after the amount of delay we set.
             clearTimeout(o_browse.timer);
