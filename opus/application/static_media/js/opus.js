@@ -153,7 +153,7 @@ var opus = {
 
     // Tooltipster settings
     tooltips_max_width: 300,
-    tooltips_theme: 'tooltipster-light',
+    tooltips_theme: "tooltipster-light",
     tooltips_delay: 1500,
 
     //------------------------------------------------------------------------------------
