@@ -1671,7 +1671,8 @@ var o_browse = {
             let positionIndicatorClasses = "op-sort-position-indicator text-primary ml-1 font-xs";
             //let reorderTip = "Drag to reorder\n";
             let reorderTip = "";
-            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
+            let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field<br>Ctrl+click to append to current sort'` : "title='Too many sort fields'");
+            // let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
                 orderToolTip = `title='${reorderTip}Change to descending sort'`;
@@ -1690,7 +1691,7 @@ var o_browse = {
             let spacing = headerArr.length ? "&nbsp;" : "";
             let lastWordWrappingGroup = `${headerArr.join(" ")}${spacing}<span class="op-last-word-group">${lastWord}` +
                                         `<span data-sort="${columnSorting}" class="op-column-ordering fas fa-sort${icon}">${columnOrderPostion}</span>`;
-            let columnOrdering = `<a href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
+            let columnOrdering = `<a class="op-data-table-tooltip" href="" data-slug="${slug}" ${orderToolTip} data-label="${label}">${lastWordWrappingGroup}</a>`;
 
             $(`${tab} .op-data-table-view thead tr`).append(`<th id="${slug}" scope="col" class="op-draggable sticky-header"><div>${columnOrdering}</div></th>`);
         });
@@ -1699,10 +1700,11 @@ var o_browse = {
         //o_browse.initDraggableColumn(tab);
 
         // Init addall icon tooltip in the browse table
-        $(".op-addall-icon-tooltip").tooltipster({
+        $(".op-addall-icon-tooltip, .op-data-table-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
+            contentAsHTML: true,
         });
     },
 
