@@ -1394,8 +1394,10 @@ var o_browse = {
             $(`${tab} .op-gallery-view`).fadeIn("done", function() {o_browse.fading = false;});
 
             browseViewSelector.html("<i class='far fa-list-alt'></i>&nbsp;View Table");
-            browseViewSelector.attr("title", "View sortable metadata table");
             browseViewSelector.data("view", "data");
+            // After tooltipster is initialized, if we want to change the title, we need to do it
+            // by changing the content instead of updating the title attribute.
+            $(".op-browse-view-tooltip").tooltipster("content", "View sortable metadata table");
 
             suppressScrollY = false;
         } else {
@@ -1403,8 +1405,10 @@ var o_browse = {
             $(`${tab} .op-data-table-view`).fadeIn("done", function() {o_browse.fading = false;});
 
             browseViewSelector.html("<i class='far fa-images'></i>&nbsp;View Gallery");
-            browseViewSelector.attr("title", "View sortable thumbnail gallery");
             browseViewSelector.data("view", "gallery");
+            // After tooltipster is initialized, if we want to change the title, we need to do it
+            // by changing the content instead of updating the title attribute.
+            $(".op-browse-view-tooltip").tooltipster("content", "View sortable thumbnail gallery");
 
             suppressScrollY = true;
         }

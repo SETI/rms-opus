@@ -1507,9 +1507,10 @@ $(document).ready(function() {
     // Rest of initialization process will be performed afterwards
     opus.normalizedURLAPICall();
     // Initialize all tooltips using tooltipster in base.html
-    $(".op-base-tooltip").tooltipster({
+    $(".op-base-tooltip, .op-browse-view-tooltip").tooltipster({
         maxWidth: opus.tooltips_max_width,
         theme: opus.tooltips_theme,
         delay: opus.tooltips_delay,
+        debug: false,
     });
 });

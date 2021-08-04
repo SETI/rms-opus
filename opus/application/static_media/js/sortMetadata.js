@@ -19,7 +19,15 @@ let o_sortMetadata = {
     *
     **/
     addBehaviours: function() {
-        $(".op-sort-order-icon").attr("title", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
+        // Initialize tooltips of "Sort by" using tooltipster
+        $(".op-browse-sort-tooltip").tooltipster({
+            maxWidth: opus.tooltips_max_width,
+            theme: opus.tooltips_theme,
+            delay: opus.tooltips_delay,
+            debug: false,
+            content: "Results are sorted by these metadata fields\nClick to reset sort fields to default",
+        });
+        // $(".op-browse-sort-tooltip").tooltipster("content", "Results are sorted by these metadata fields\nClick to reset sort fields to default");
         $(".op-sort-contents").sortable({
             items: "div.op-sort-only",
             cursor: "grab",
