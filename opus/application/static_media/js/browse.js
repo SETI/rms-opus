@@ -1503,7 +1503,7 @@ var o_browse = {
                 viewNamespace.observationData[opusId] = item.metadata;    // for galleryView, store in global array
                 let buttonInfo = o_browse.cartButtonInfo((item.cart_state === "cart" ? "" : "remove"));
 
-                let mainTitle = `#${item.obs_num}: ${opusId}\r\nClick to enlarge (slideshow mode)\r\Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range`;
+                let mainTitle = `#${item.obs_num}: ${opusId}<br>Click to enlarge (slideshow mode)<br>Ctrl+click to ${buttonInfo[tab].title.toLowerCase()}<br>Shift+click to start/end range`;
 
                 // gallery
                 let images = item.images;
@@ -1542,7 +1542,7 @@ var o_browse = {
                 let recycled = (tab === "#cart" && item.cart_state === "recycle") ? "class='text-success op-recycled'" : "";
                 let checkbox = `<input type="checkbox" name="${opusId}" value="${opusId}" class="multichoice"${checked}/>`;
                 let minimenu = `<a class="op-browse-table-tooltip" href="#" data-icon="menu" title="More options"><i class="fas fa-bars fa-xs"></i></a>`;
-                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-table-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}\r\nShift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
+                let row = `<td class="op-table-tools"><div class="op-tools mx-0 form-group op-browse-table-tooltip" title="Click to ${buttonInfo[tab].title.toLowerCase()}<br>Shift+click to start/end range" data-id="${opusId}">${checkbox} ${minimenu}</div></td>`;
 
                 let miniThumbnail = `<img class="op-browse-table-tooltip" src="${images.thumb.url}" alt="${images.thumb.alt_text}" title="${mainTitle}">`;
                 row += `<td class="op-mini-thumbnail op-mini-thumbnail-zoom"><div>${miniThumbnail}</div></td>`;
@@ -1593,12 +1593,14 @@ var o_browse = {
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
             debug: false,
+            contentAsHTML: true,
         });
         $(".op-browse-table-tooltip").tooltipster({
             maxWidth: opus.tooltips_max_width,
             theme: opus.tooltips_theme,
             delay: opus.tooltips_delay,
             debug: false,
+            contentAsHTML: true,
             functionBefore: function(instance, helper){
                 // Make sure all other tooltips is closed before a new one is open
                 // in table view.
@@ -1672,7 +1674,6 @@ var o_browse = {
             //let reorderTip = "Drag to reorder\n";
             let reorderTip = "";
             let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field<br>Ctrl+click to append to current sort'` : "title='Too many sort fields'");
-            // let orderToolTip = (opus.prefs.order.length < 9 ? `title='${reorderTip}Click to sort on this field\nCtrl+click to append to current sort'` : "title='Too many sort fields'");
 
             if (positionAsc >= 0) {
                 orderToolTip = `title='${reorderTip}Change to descending sort'`;
@@ -2680,7 +2681,7 @@ var o_browse = {
             $("#galleryViewContents .bottom").html(html);
 
             let imageURL = $(tab).find(`[data-id='${opusId}'] > a.thumbnail`).data("image");
-            let title = `#${obsNum}: ${opusId}\r\nClick for full-size image`;
+            let title = `#${obsNum}: ${opusId}<br>Click for full-size image`;
 
             o_browse.metadataboxHtml(opusId);
             $("#galleryViewContents .left").html(`<a href="${imageURL}" target="_blank"><img src="${imageURL}" title="${title}" class="op-slideshow-image-preview op-metadatabox-tooltip"/></a>`);
@@ -2691,6 +2692,7 @@ var o_browse = {
                 maxWidth: opus.tooltips_max_width,
                 theme: opus.tooltips_theme,
                 delay: opus.tooltips_delay,
+                contentAsHTML: true,
             });
         }
     },
