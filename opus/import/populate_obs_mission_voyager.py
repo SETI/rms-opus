@@ -50,7 +50,7 @@ def helper_voyager_planet_id(**kwargs):
     #   Uranus Encounter
 
     index_label = metadata['index_label']
-    # For occulation, we will fetch data from profile index
+    # For a profile, we derive the mission phase from the target name
     if 'VG_28' in index_label['VOLUME_ID']:
         target_name = index_row['TARGET_NAME'].upper()
         mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]

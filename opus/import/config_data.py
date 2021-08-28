@@ -69,7 +69,6 @@ VOLSETS_WITH_PREVIEWS = ['COISS_1xxx',
                          'HSTUx_xxxx',
                          'NHxxLO_xxxx',
                          'NHxxMV_xxxx',
-                         'VG_28xx',
                          'VGISS_5xxx',
                          'VGISS_6xxx',
                          'VGISS_7xxx',
@@ -135,8 +134,8 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'NHMVIC':    'NH',
     'VGISS':     'VG',
     'VGPPS':     'VG',
-    'VGUVS':     'VG',
     'VGRSS':     'VG',
+    'VGUVS':     'VG',
 }
 
 # Mapping from instrument abbrev to instrument name
@@ -155,8 +154,8 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'NHMVIC':      'New Horizons MVIC',
     'VGISS':       'Voyager ISS',
     'VGPPS':       'Voyager PPS',
-    'VGUVS':       'Voyager UVS',
     'VGRSS':       'Voyager RSS',
+    'VGUVS':       'Voyager UVS',
     # Ground-based
     'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
     'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',

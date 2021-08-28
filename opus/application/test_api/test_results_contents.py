@@ -746,6 +746,7 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof files"
         url = "/api/files/vg-iss-2-s-prof.json"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_files.json")
+
     ####################
 
     def test__results_contents_co_cirs_0408010657_fp3_images(self):
@@ -1103,4 +1104,5 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] vg-iss-2-s-prof images"
         url = "/api/images.json?opusid=vg-iss-2-s-prof"
         self._run_json_equal_file(url, "results_vg_iss_2_s_prof_images.json")
+
     ####################

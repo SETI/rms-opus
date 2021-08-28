@@ -45,7 +45,7 @@
         "specsize": "1",
         "polarizationtype": "None"
     },
-    "Ring/Limb Profile Constraints": {
+    "Occultation and reflectance Profiles Constraints": {
         "occtype": "Stellar",
         "occdir": "Egress",
         "bodyoccflag": "No",
