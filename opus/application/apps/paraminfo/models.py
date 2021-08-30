@@ -98,7 +98,7 @@ class ParamInfo(models.Model):
         pretty_name = pretty_name.replace(' Constraints', '')
 
         if (pretty_name in ['General', 'PDS', 'Wavelength', 'Image',
-                            'Occultation and reflectance Profiles', 'Surface']
+                            'Occultation/Reflectance Profiles', 'Surface']
             and not referred):
             return self.label_results
         # Make sure "[Ring]", "[<Surface Body>]", etc is not duplicated in the

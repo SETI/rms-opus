@@ -72,7 +72,7 @@ def create_import_table_names_table():
     if impglobals.DATABASE.table_exists('perm', 'obs_profile'):
         entry = {
             'table_name': 'obs_profile',
-            'label':      'Occultation and reflectance Profiles Constraints',
+            'label':      'Occultation/Reflectance Profiles Constraints',
             'display':    'Y',
             'disp_order': disp_order
         }
