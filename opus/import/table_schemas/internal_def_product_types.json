@@ -721,6 +721,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv0_4",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 400m resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgrss_occ_inv0_5",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 500m resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
@@ -728,6 +733,11 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgrss_occ_inv01",
         "definition": "Text files (*.TAB) that tabulate an occultation profile with 1km resolution. Associated labels (*.LBL) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "vgrss_occ_inv05",
+        "definition": "Text files (*.TAB) that tabulate an occultation profile with 5km resolution. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
