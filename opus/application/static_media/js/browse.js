@@ -246,6 +246,7 @@ var o_browse = {
                 o_browse.updateMetadataDetailViewTool("max", false);
             },
             resize: function(event, ui) {
+                o_browse.checkForMaximizeMetadataDetailView();
                 o_browse.keepMetadataResizeContained();
                 o_browse.onResizeMetadataDetailView();
                 o_browse.adjustMetadataDetailDialogPS(true);
@@ -256,7 +257,7 @@ var o_browse = {
 
         $(".app-body").on("shown.bs.modal", "#op-metadata-detail-view", function(e) {
             o_browse.checkForMaximizeMetadataDetailView();
-            o_browse.keepMetadataDetailViewInview(false);
+            o_browse.keepMetadataDetailViewInview();
             o_browse.onResizeMetadataDetailView();
         });
 
@@ -1188,9 +1189,9 @@ var o_browse = {
     // for the mutationObserver code on browser resize...
     adjustMetadataDetailViewSize: function() {
         if ($("#op-metadata-detail-view").hasClass("show")) {
-            o_browse.keepMetadataDetailViewInview(true);
-            o_browse.onResizeMetadataDetailView();
             o_browse.checkForMaximizeMetadataDetailView(true);
+            o_browse.keepMetadataDetailViewInview();
+            o_browse.onResizeMetadataDetailView();
         }
     },
 
@@ -1223,13 +1224,13 @@ var o_browse = {
     centerMetadataDetailViewToDefault: function(width, height) {
         let options = {};
         if (width !== undefined) {
-            options["width"] = width;
+            options.width = width;
         }
         if (height !== undefined) {
-            options["height"] = height;
+            options.height = height;
         }
-        options["top"] = "";
-        options["left"] = "";
+        options.top = "";
+        options.left = "";
         let selector = "#op-metadata-detail-view-content";
         $(selector).animate(options, function() {
             // Animation complete.
@@ -1251,7 +1252,7 @@ var o_browse = {
         });
     },
 
-    checkForMaximizeMetadataDetailView: function(checkForOversize) {
+    checkForMaximizeMetadataDetailView: function(browserResize) {
         let content = $("#op-metadata-detail-view .modal-content");
         let dialog = $("#op-metadata-detail-view .modal-dialog");
 
@@ -1264,14 +1265,21 @@ var o_browse = {
         width = (width > maxWidth ? maxWidth : width);
         height = (height > maxHeight ? maxHeight : height);
 
-        let max = (Math.round(maxWidth) == Math.round(width) &&
-                   Math.round(maxHeight) == Math.round(height));
-        o_browse.updateMetadataDetailViewTool("max", max);
+        if (browserResize === undefined || browserResize === false) {
+            let max = (Math.round(maxWidth) == Math.round(width) &&
+                       Math.round(maxHeight) == Math.round(height));
+            o_browse.updateMetadataDetailViewTool("max", max);
+        } else if (browserResize === true) {
+            if (content.resizable("instance").max === true) {
+                content.width(maxWidth);
+                content.height(maxHeight);
+            } else {
+                content.width(width);
+                content.height(height);
+            }
+        }
 
-        if (content.resizable("instance").max) {
-            //content.resizable("option", "maxHeight", height);
-            //content.resizable("option", "maxWidth", width);
-        } else {
+        if (!content.resizable("instance").max) {
             let min = (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
                        Math.round(content.resizable("option").minWidth) == Math.round(width));
             o_browse.updateMetadataDetailViewTool("min", min);
@@ -1282,11 +1290,12 @@ var o_browse = {
 
     keepMetadataResizeContained: function() {
         let content = $("#op-metadata-detail-view .modal-content");
+        let dialog = $("#op-metadata-detail-view .modal-dialog");
 
         let top = (content.offset().top < 0 ? 0 : content.offset().top);
         let left = (content.offset().left < 0 ? 0 : content.offset().left);
-        let width = content.outerWidth();
-        let height = content.outerHeight();
+        let width = dialog.width();
+        let height = dialog.height();
 
         // if the top or left has gone negative, just adjust
         if (top !== content.offset().top || left !== content.offset().left) {
@@ -1316,22 +1325,9 @@ var o_browse = {
         let top = content.offset().top;
         let left = content.offset().left;
         let bodyWidth = $("body").width();
-        let bodyHeight = $("body").height();
-        let maxWidth = content.resizable("option", "maxWidth");
-        let maxHeight = content.resizable("option", "maxHeight");
+        let bodyHeight = $("body").height() - $("footer").height();
         let width = content.outerWidth();
         let height = content.outerHeight();
-        console.log(`before: top:${top}, left:${left}, bodyWidth:${bodyWidth}, width:${width}, bodyHeight:${bodyHeight}, height:${height}`);
-
-        // first, make sure that the modal is not too big for the new size
-        if (width > maxWidth) {
-            content.width(maxWidth);
-            width = maxWidth;
-        }
-        if (height > maxHeight) {
-            content.height(maxHeight);
-            height = maxHeight;
-        }
 
         if (left < 0) {
             left = 0;
@@ -1351,7 +1347,6 @@ var o_browse = {
         if (adjust) {
             content.offset({top: top, left: left});
         }
-        console.log(`after: top:${top}, left:${left}, width:${width}, height:${height}`);
     },
 
     onResizeMetadataDetailView: function() {
@@ -2806,7 +2801,6 @@ var o_browse = {
 
     metadataboxHtml: function(opusId, view) {
         let viewNamespace = opus.getViewNamespace(view);
-        let tab = opus.getViewTab();
         opus.metadataDetailOpusId = opusId;
 
         // list columns + values
@@ -2848,7 +2842,7 @@ var o_browse = {
             let buttonInfo = o_browse.cartButtonInfo(action);
 
             // prev/next buttons - put this in op-metadata-detail-view html...
-            html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
+            let html = `<div class="col"><a href="#" class="op-cart-toggle" data-id="${opusId}" title="${buttonInfo[tab].title} (spacebar)"><i class="${buttonInfo[tab].icon} fa-2x float-left"></i></a></div>`;
             html += `<div class="col text-center op-obs-direction">`;
             let opPrevDisabled = (nextPrevHandles.prev == "" ? "op-button-disabled" : "");
             let opNextDisabled = (nextPrevHandles.next == "" ? "op-button-disabled" : "");

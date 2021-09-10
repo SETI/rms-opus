@@ -653,12 +653,12 @@ var o_cart = {
         let selector = `#cart .op-thumb-overlay [data-icon="cart"]`;
         $(selector).html(`<i class="${buttonInfo["#cart"].icon} fa-xs"></i>`);
         $(selector).prop("title", buttonInfo["#cart"].title);
-        $(`#cart .op-thumbnail-container`).addClass("op-in-cart");
-        $(`#cart .op-thumbnail-container .op-recycle-overlay`).addClass("op-hide-element");
-        $(`#cart tr[data-id]`).removeClass("text-success op-recycled");
-        $(`#cart .op-thumbnail-container[data-id] .op-recycle-overlay`).addClass("op-hide-element");
-        $(`.op-gallery-view-body .op-cart-toggle`).attr("title", `${buttonInfo[tab].title} (spacebar)`);
-        $(`.op-gallery-view-body .op-cart-toggle`).html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
+        $("#cart .op-thumbnail-container").addClass("op-in-cart");
+        $("#cart .op-thumbnail-container .op-recycle-overlay").addClass("op-hide-element");
+        $("#cart tr[data-id]").removeClass("text-success op-recycled");
+        $("#cart .op-thumbnail-container[data-id] .op-recycle-overlay").addClass("op-hide-element");
+        $(".op-gallery-view-body .op-cart-toggle").attr("title", `${buttonInfo[tab].title} (spacebar)`);
+        $(".op-gallery-view-body .op-cart-toggle").html(`<i class="${buttonInfo[tab].icon} fa-2x float-left"></i>`);
     },
 
     // action = add/remove/addrange/removerange/addall
