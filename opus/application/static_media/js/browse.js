@@ -1290,12 +1290,11 @@ var o_browse = {
 
     keepMetadataResizeContained: function() {
         let content = $("#op-metadata-detail-view .modal-content");
-        let dialog = $("#op-metadata-detail-view .modal-dialog");
 
         let top = (content.offset().top < 0 ? 0 : content.offset().top);
         let left = (content.offset().left < 0 ? 0 : content.offset().left);
-        let width = dialog.width();
-        let height = dialog.height();
+        let width = content.width();
+        let height = content.height();
 
         // if the top or left has gone negative, just adjust
         if (top !== content.offset().top || left !== content.offset().left) {
