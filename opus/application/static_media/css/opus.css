@@ -630,6 +630,19 @@ ul.op-search-menu {
     left: 95%;
 }
 
+.op-thumbnail-container .op-last-modal-overlay {
+    filter: contrast(200%) drop-shadow(3px 2px 2px black);
+    opacity: 1;
+    z-index: 999;
+}
+
+.op-thumbnail-container .op-last-modal-overlay:after {
+    font-family: "Font Awesome 5 Free"; font-weight: 900; content: "\f1e5";
+    position: absolute;
+    width: 100%;
+    left: 5%;
+}
+
 .op-thumbnail-container .op-modal-show {
     z-index: 999;
     filter: contrast(200%) drop-shadow(3px 2px 2px black);

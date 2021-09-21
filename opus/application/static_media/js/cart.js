@@ -65,6 +65,8 @@ var o_cart = {
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'yCell': 0, 'yFloor': 0, 'yPartial': 0, 'trFloor': 0},
     gallerySliderStep: 10,
+    // opusID of the last slide show/gallery view modal after it is closed
+    lastMetadataDetailOpusId: "",
 
     // unique to o_cart
     lastRequestNo: 0,           // for status

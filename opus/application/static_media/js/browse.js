@@ -36,6 +36,8 @@ var o_browse = {
     maxCachedObservations: 1000,    // max number of observations to store in cache, will be updated based on screen size
     galleryBoundingRect: {'x': 0, 'yCell': 0, 'yFloor': 0, 'yPartial': 0, 'trFloor': 0},
     gallerySliderStep: 10,
+    // opusID of the last slide show/gallery view modal after it is closed
+    lastMetadataDetailOpusId: "",
 
     // The viewable fraction of an item's height such that it will be treated as present on the screen
     galleryImageViewableFraction: 0.8,
@@ -256,14 +258,20 @@ var o_browse = {
         });
 
         $(".app-body").on("shown.bs.modal", "#op-metadata-detail-view", function(e) {
+            opus.getViewNamespace().lastMetadataDetailOpusId = "";
             o_browse.checkForMaximizeMetadataDetailView();
             o_browse.keepMetadataDetailViewInview();
             o_browse.onResizeMetadataDetailView();
         });
 
         $(".app-body").on("hide.bs.modal", "#op-metadata-detail-view", function(e) {
-            let namespace = o_browse.getViewInfo().namespace;
-            $(namespace).find(".op-modal-show").removeClass("op-modal-show");
+            let tab = o_browse.getViewInfo().namespace;
+            $(tab).find(".op-modal-show").removeClass("op-modal-show");
+            let elem = $(`${tab} [data-id='${opus.metadataDetailOpusId}'] .op-last-modal-overlay`);
+            if (elem.length > 0) {
+                elem.removeClass("op-hide-element");
+            }
+            opus.getViewNamespace().lastMetadataDetailOpusId = opus.metadataDetailOpusId;
             opus.metadataDetailOpusId = "";
             o_browse.removeEditMetadataDetails();
         });
@@ -1414,6 +1422,9 @@ var o_browse = {
         }
         $("#op-metadata-detail-view").modal("show");
 
+        let tab = opus.getViewTab();
+        $(`${tab} .op-thumbnail-container .op-last-modal-overlay`).addClass("op-hide-element");
+
         // Do the fake API call to write in the Apache log files that
         // we showed the modal for this OPUSID. This is what the previous
         // version of OPUS did so the log_analyzer already handles it. Note that
@@ -1755,6 +1766,7 @@ var o_browse = {
                 galleryHtml += '<div class="op-modal-overlay">';
                 galleryHtml += '<p class="content-text"><i class="fas fa-binoculars fa-4x text-info" aria-hidden="true"></i></p>';
                 galleryHtml += '</div></a>';
+                galleryHtml += `<div class="op-last-modal-overlay text-success op-hide-element" title="Last viewed in slideshow mode"></div>`;
 
                 // recycle bin icon container
                 galleryHtml += `<div class="op-recycle-overlay ${((tab === "#cart" && item.cart_state === "recycle") ? '' : 'op-hide-element')}" title="${mainTitle}">`;
@@ -1763,7 +1775,7 @@ var o_browse = {
 
                 // detail overlay
                 let hideDetail = (opus.prefs.detail === opusId ?  "" : "op-hide-element");
-                galleryHtml += `<div class="op-detail-overlay text-success ${hideDetail}"></div>`;
+                galleryHtml += `<div class="op-detail-overlay text-success ${hideDetail}" title="Shown on Detail tab"></div>`;
 
                 galleryHtml += '<div class="op-thumb-overlay">';
                 galleryHtml += `<div class="op-tools dropdown" data-id="${opusId}">`;
@@ -1802,6 +1814,12 @@ var o_browse = {
                 $(".gallery", tab).prepend(galleryHtml);
                 $(".op-data-table-view tbody", tab).prepend(tableHtml);
             }
+        }
+
+        let lastViewedOpusId = opus.getViewNamespace().lastMetadataDetailOpusId;
+        let elem = $(`${tab} [data-id='${lastViewedOpusId}'] .op-last-modal-overlay`);
+        if (elem.length > 0) {
+            elem.removeClass("op-hide-element");
         }
 
         // we must always use the op-metadata-detail-view infinite scroll object for the rangeSelectOpusID because we only
