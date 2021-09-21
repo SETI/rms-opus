@@ -1395,6 +1395,8 @@ var o_browse = {
                 // wrap the edit message if it exists when narrow
                 $(".op-metadata-detail-edit").addClass("op-metadata-detail-edit-wrap");
                 //$(".op-metadata-details").addClass("mt-3");
+            } else {
+                $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
             }
             $("#op-metadata-detail-view-content .row").removeClass("flex-column");
             $(".op-metadata-details").removeClass("pl-3");

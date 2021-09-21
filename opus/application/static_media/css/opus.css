@@ -223,8 +223,6 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
     margin-bottom: 0.5em;
     white-space: nowrap;
     display: inline-flex;
-    position: absolute;
-    top: -0.5em;
 }
 
 .op-metadata-detail-edit a:hover {
@@ -232,7 +230,7 @@ so that both "Recent Announcements" and "Message" can be vertically aligned. */
 }
 
 .op-metadata-detail-edit-wrap {
-    max-width: 100px;
+    max-width: 10em;
     flex-wrap: wrap;
 }
 
@@ -1274,6 +1272,16 @@ when window sized is narrow */
     position: absolute;
 }
 
+.op-metadata-detail-view-body .op-metadata-details-container {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior: contain;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    right: 0;
+}
+
 .op-metadata-detail-view-body .op-metadata-details {
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -1286,7 +1294,6 @@ when window sized is narrow */
     width: 100%;
     /* make ps stick to the right of the modal when screen is resizing */
     position: absolute;
-    top: 1.5em;
     right: 0;
 }
 
