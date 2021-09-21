@@ -1360,9 +1360,11 @@ var o_browse = {
         let content = $("#op-metadata-detail-view .modal-content");
         let width = content.width();
         let height = content.height();
+        let resizeSmall = false;
 
         if ((width < 300 || height <= 400)) {
             content.addClass("op-resize-small");
+            resizeSmall = true;
 
             // need to resize the add metadata menu as well and X in the corner
             content.find("i.fa-times-circle").removeClass("fa-lg");
@@ -1380,7 +1382,7 @@ var o_browse = {
         if ((width <= 480 && height > 400) || (width <= 450)) {
             // once the modal narrows, we don't need this to wrap so remove it
             $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
-            $(".op-metadata-details").removeClass("mt-3");
+            $(".op-metadata-detail-edit-message").removeClass("pl-0");
 
             $("#op-metadata-detail-view-content .row").addClass("flex-column");
             $(".op-metadata-details").addClass("pl-3");
@@ -1391,12 +1393,13 @@ var o_browse = {
             $("#op-metadata-detail-view-content .right").removeClass("col-lg-5");
             $("#op-metadata-detail-view-content .right").addClass("col-lg-7");
         } else {
-            if (width <= 800) {
+            if ((resizeSmall && width <= 650) || (!resizeSmall && width <= 750)) {
                 // wrap the edit message if it exists when narrow
                 $(".op-metadata-detail-edit").addClass("op-metadata-detail-edit-wrap");
-                //$(".op-metadata-details").addClass("mt-3");
+                $(".op-metadata-detail-edit-message").addClass("pl-0");
             } else {
                 $(".op-metadata-detail-edit").removeClass("op-metadata-detail-edit-wrap");
+                $(".op-metadata-detail-edit-message").removeClass("pl-0");
             }
             $("#op-metadata-detail-view-content .row").removeClass("flex-column");
             $(".op-metadata-details").removeClass("pl-3");
