@@ -1264,14 +1264,14 @@ var o_browse = {
         let content = $("#op-metadata-detail-view .modal-content");
         let dialog = $("#op-metadata-detail-view .modal-dialog");
 
-        let width = content.outerWidth();
-        let height = content.outerHeight();
+        let outerWidth = content.outerWidth();
+        let outerHeight = content.outerHeight();
 
         let maxWidth = dialog.width();
         let maxHeight = dialog.height();
 
-        width = (width > maxWidth ? maxWidth : width);
-        height = (height > maxHeight ? maxHeight : height);
+        let width = (outerWidth > maxWidth ? maxWidth : outerWidth);
+        let height = (outerHeight > maxHeight ? maxHeight : outerHeight);
 
         if (browserResize === undefined || browserResize === false) {
             let max = (Math.round(maxWidth) == Math.round(width) &&
@@ -1283,8 +1283,12 @@ var o_browse = {
                 content.height(maxHeight);
             } else {
                 if (content.resizable("instance").min === false) {
-                    content.width(width);
-                    content.height(height);
+                    if (outerWidth != width) {
+                        content.width(width);
+                    }
+                    if (outerHeight != height) {
+                        content.height(height);
+                    }
                 }
             }
         }
@@ -1349,7 +1353,7 @@ var o_browse = {
         }
 
         if (top < 0) {
-            top = 0
+            top = 0;
             adjust = true;
         }
 
