@@ -764,11 +764,11 @@ th.sticky-header {
     text-decoration: none;
 }
 
-#op-edit-field-tool .dropdown-menu {
+.op-edit-field-tool .dropdown-menu {
     overflow-y: auto;
 }
 
-#op-edit-field-tool {
+.op-edit-field-tool {
     min-width: 0;
     background-color: black;
     border-top-left-radius: 0;
@@ -3210,7 +3210,7 @@ when wrapping into the 2nd line */
         transform: scale(2.5);
     }
 
-    #op-add-metadata-fields, #op-edit-field-tool {
+    #op-add-metadata-fields, .op-edit-field-tool {
         font-size: 75% !important;
     }
 

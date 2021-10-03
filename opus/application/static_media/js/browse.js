@@ -438,7 +438,8 @@ var o_browse = {
         });
 
         $(".op-data-table-view").on("mouseleave", "th.op-draggable", function(e) {
-            let tools = $("#op-edit-field-tool");
+            let tab = opus.getViewTab();
+            let tools = $(`${tab} .op-edit-field-tool`);
             if (e.pageY < Math.floor(tools.offset().top)  ||
                (e.pageY > tools.outerHeight() + tools.offset().top) ||
                (e.pageX < tools.offset().left) ||
@@ -453,16 +454,17 @@ var o_browse = {
             o_browse.hideTableMetadataTools(e);
         });
 
-        $("#op-edit-field-tool").on("mouseleave", function(e) {
+        $(".op-edit-field-tool").on("mouseleave", function(e) {
             // only hide the edit metadata field tool bar if the add metadata menu is not showing
             if (!$("#op-add-metadata-fields").hasClass("show")) {
                 o_browse.hideTableMetadataTools(e);
             }
         });
 
-        $("#op-edit-field-tool a").on("click", function(e) {
+        $(".op-edit-field-tool a").on("click", function(e) {
             let action = $(this).data("action");
-            let slug = $("#op-edit-field-tool").data("slug");
+            let tab = opus.getViewTab();
+            let slug = $(`${tab} .op-edit-field-tool`).data("slug");
             switch (action) {
                 case "addBefore":
                     $("#op-add-metadata-fields").data("slug", slug);
@@ -2662,32 +2664,51 @@ var o_browse = {
     },
 
     showTableMetadataTools: function(e, slug) {
-        let elem = e.currentTarget;
-        let targetPosition = $(elem).offset();
-        let left = targetPosition.left;
-        let width = $(elem).outerWidth();
+        let tab = opus.getViewTab();
+        let targetElem = e.currentTarget;
+        let toolElem = `${tab} .op-edit-field-tool`;
+        let left = $(targetElem).position().left +
+                    $(`${tab} .op-data-table-view .table`).offset().left;
+        let top = $(targetElem).offset().top +
+                  $(targetElem).outerHeight();
+
+        if (tab === "#cart") {
+            if ($(".cart_details:visible").length > 0) {
+                // need to calculate a new offset if the table has scrolled left behind the details window
+                left -= $(".cart_details").outerWidth() + $(".cart_details").offset().left;
+            } else {
+                // when the details are collapsed, need to use the offset instead of position
+                left = $(targetElem).offset().left +
+                       $(`${tab} .op-data-table-view`).position().left -
+                       $(`${tab} .op-data-table-view`).offset().left;
+            }
+            // because the cart is in a container, we need to account for the nav
+            // there is a bit of overlap between the top of the cart gallery and navbar
+            let offset = $("#op-main-nav").outerHeight() - $(".op-cart-gallery-side").offset().top;
+            top -= $("#op-main-nav").outerHeight() - offset;
+        }
+        let width = $(targetElem).outerWidth();
+
         // need to adjust for the PerfectScrollbar overlaying a bit on the last field
         let lastSlug = opus.prefs.cols[opus.prefs.cols.length - 1];
         if (slug === lastSlug) {
-            width -= $(".op-data-table-view .ps__thumb-y").width();
+            width -= $(`${tab} .op-data-table-view .ps__thumb-y`).width();
         }
-        let top = $(elem).offset().top +
-                  $(elem).outerHeight();
-
         o_browse.checkForEmptyMetadataList();
 
-        $("#op-edit-field-tool").css({
+        $(toolElem).css({
             display: "block",
             top: top,
             left: left,
             width: width,
         }).fadeIn("slow");
 
-        $("#op-edit-field-tool").data("slug", slug);
+        $(toolElem).data("slug", slug);
     },
 
     hideTableMetadataTools: function() {
-        $("#op-edit-field-tool").removeClass("show").hide();
+        let tab = opus.getViewTab();
+        $(`${tab} .op-edit-field-tool`).removeClass("show").hide();
     },
 
     onDoneUpdateFromTableMetadataDetails: function(e) {
