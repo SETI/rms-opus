@@ -13,6 +13,11 @@ from config_data import *
 import impglobals
 import import_util
 
+VG_TARGET_TO_MISSION_PHASE_MAPPING = {
+    'S RINGS': 'SATURN ENCOUNTER',
+    'U RINGS': 'URANUS ENCOUNTER',
+    'N RINGS': 'NEPTUNE ENCOUNTER'
+}
 
 ################################################################################
 # HELPER FUNCTIONS USED BY VOYAGER INSTRUMENTS
@@ -43,7 +48,15 @@ def helper_voyager_planet_id(**kwargs):
     #   Neptune Encounter
     #   Saturn Encounter
     #   Uranus Encounter
-    mp = index_row['MISSION_PHASE_NAME']
+
+    index_label = metadata['index_label']
+    # For a profile, we derive the mission phase from the target name
+    if 'VG_28' in index_label['VOLUME_ID']:
+        target_name = index_row['TARGET_NAME'].upper()
+        mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
+    else:
+        mp = index_row['MISSION_PHASE_NAME']
+
     pl = mp.upper()[:3]
 
     assert pl in ['JUP', 'SAT', 'URA', 'NEP']
@@ -57,6 +70,9 @@ def helper_voyager_planet_id(**kwargs):
 def populate_obs_general_VG_planet_id_OBS(**kwargs):
     return helper_voyager_planet_id(**kwargs)
 
+def populate_obs_general_VG_planet_id_PROF(**kwargs):
+    return helper_voyager_planet_id(**kwargs)
+
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_MISSION_VOYAGER
@@ -68,7 +84,8 @@ def populate_obs_general_VG_planet_id_OBS(**kwargs):
 def populate_obs_mission_voyager_ert(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    ert_time = index_row['EARTH_RECEIVED_TIME']
+    # For PPS & UVS, we don't have EARTH_RECEIVED_TIME in the label.
+    ert_time = index_row.get('EARTH_RECEIVED_TIME', 'UNK')
 
     if ert_time.startswith('UNK'):
         return None
@@ -84,14 +101,24 @@ def populate_obs_mission_voyager_ert(**kwargs):
 
 def populate_obs_mission_voyager_spacecraft_clock_count1(**kwargs):
     metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
+    index_row = metadata['supp_index_row']
+    if index_row is None:
         return None
-    partition = import_util.safe_column(supp_index_row,
-                                        'SPACECRAFT_CLOCK_PARTITION_NUMBER')
-    start_time = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
 
-    sc = str(partition) + '/' + start_time
+    index_label = metadata['index_label']
+    # For occulation, we will fetch data from profile index
+    if 'VG_28' in index_label['VOLUME_ID']:
+        index_row = metadata['index_row']
+
+    start_time = index_row['SPACECRAFT_CLOCK_START_COUNT']
+    # VG_28xx doesn't have SPACECRAFT_CLOCK_PARTITION_NUMBER
+    try:
+        partition = import_util.safe_column(index_row,
+                                            'SPACECRAFT_CLOCK_PARTITION_NUMBER')
+        sc = str(partition) + '/' + start_time
+    except KeyError:
+        sc = start_time
+
     try:
         sc_cvt = opus_support.parse_voyager_sclk(sc)
     except Exception as e:
@@ -102,14 +129,24 @@ def populate_obs_mission_voyager_spacecraft_clock_count1(**kwargs):
 
 def populate_obs_mission_voyager_spacecraft_clock_count2(**kwargs):
     metadata = kwargs['metadata']
-    supp_index_row = metadata['supp_index_row']
-    if supp_index_row is None:
+    index_row = metadata['supp_index_row']
+    if index_row is None:
         return None
-    partition = import_util.safe_column(supp_index_row,
-                                        'SPACECRAFT_CLOCK_PARTITION_NUMBER')
-    stop_time = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
 
-    sc = str(partition) + '/' + stop_time
+    index_label = metadata['index_label']
+    # For occulation, we will fetch data from profile index
+    if 'VG_28' in index_label['VOLUME_ID']:
+        index_row = metadata['index_row']
+
+    stop_time = index_row['SPACECRAFT_CLOCK_STOP_COUNT']
+    # VG_28xx doesn't have SPACECRAFT_CLOCK_PARTITION_NUMBER
+    try:
+        partition = import_util.safe_column(index_row,
+                                            'SPACECRAFT_CLOCK_PARTITION_NUMBER')
+        sc = str(partition) + '/' + stop_time
+    except KeyError:
+        sc = stop_time
+
     try:
         sc_cvt = opus_support.parse_voyager_sclk(sc)
     except Exception as e:

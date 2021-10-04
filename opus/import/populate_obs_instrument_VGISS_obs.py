@@ -1,5 +1,5 @@
 ################################################################################
-# populate_obs_instrument_VGISS.py
+# populate_obs_instrument_VGISS_obs.py
 #
 # Routines to populate fields specific to VGISS.
 ################################################################################
@@ -319,14 +319,19 @@ def populate_obs_occultation_VGISS_host_OBS(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
 ################################################################################
 
-# There is nothing instrument-specific for Voyager.
+def populate_obs_mission_voyager_VGISS_mission_phase_name_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    mp = index_row['MISSION_PHASE_NAME'].upper()
+
+    return mp
 
 
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_VGISS
 ################################################################################
 
-def populate_obs_instrument_vgiss_camera(**kwargs):
+def populate_obs_instrument_vgiss_camera_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     camera = index_row['INSTRUMENT_NAME']
@@ -335,7 +340,7 @@ def populate_obs_instrument_vgiss_camera(**kwargs):
 
     return camera[0]
 
-def populate_obs_instrument_vgiss_usable_lines(**kwargs):
+def populate_obs_instrument_vgiss_usable_lines_OBS(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:
@@ -345,7 +350,7 @@ def populate_obs_instrument_vgiss_usable_lines(**kwargs):
 
     return line2-line1+1
 
-def populate_obs_instrument_vgiss_usable_samples(**kwargs):
+def populate_obs_instrument_vgiss_usable_samples_OBS(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     if supp_index_row is None:

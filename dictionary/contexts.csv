@@ -4,7 +4,7 @@ OPUS_GENERAL_SEARCH,OPUS General Constraints,PSDD
 OPUS_PDS,OPUS PDS Constraints,PSDD
 OPUS_TYPE_IMAGE,OPUS Image Constraints,PSDD
 OPUS_WAVELENGTH,OPUS Wavelength Constraints,PSDD
-OPUS_OCCULTATION,OPUS Occultation Constraints,PSDD
+OPUS_PROFILE,OPUS Occultation/Reflectance Profiles Constraints,PSDD
 SURFACE_GEO,Surface Geometry,PSDD
 RING_GEO,Ring Geometry,PSDD
 CASSINI,Cassini Mission,OPUS_GENERAL

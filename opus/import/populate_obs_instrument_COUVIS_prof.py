@@ -27,7 +27,7 @@ def _COUVIS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_COUVIS_opus_id_OCC(**kwargs):
+def populate_obs_general_COUVIS_opus_id_PROF(**kwargs):
     file_spec = _COUVIS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     opus_id = pds_file.opus_id
@@ -46,96 +46,96 @@ def populate_obs_general_COUVIS_opus_id_OCC(**kwargs):
 
     return opus_id
 
-def populate_obs_general_COUVIS_ring_obs_id_OCC(**kwargs):
+def populate_obs_general_COUVIS_ring_obs_id_PROF(**kwargs):
     return None
 
-def populate_obs_general_COUVIS_inst_host_id_OCC(**kwargs):
+def populate_obs_general_COUVIS_inst_host_id_PROF(**kwargs):
     return 'CO'
 
 # COUVIS time span is the duration of the observation at the spacecraft
-def populate_obs_general_COUVIS_time1_OCC(**kwargs):
+def populate_obs_general_COUVIS_time1_PROF(**kwargs):
     return populate_time1_from_supp_index(**kwargs)
 
-def populate_obs_general_COUVIS_time2_OCC(**kwargs):
+def populate_obs_general_COUVIS_time2_PROF(**kwargs):
     return populate_time2_from_supp_index(**kwargs)
 
-def populate_obs_general_COUVIS_target_name_OCC(**kwargs):
+def populate_obs_general_COUVIS_target_name_PROF(**kwargs):
     target_name = 'S RINGS'
     target_name_info = TARGET_NAME_INFO[target_name]
     return target_name, target_name_info[2]
 
-def populate_obs_general_COUVIS_observation_duration_OCC(**kwargs):
+def populate_obs_general_COUVIS_observation_duration_PROF(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
 
-def populate_obs_general_COUVIS_quantity_OCC(**kwargs):
+def populate_obs_general_COUVIS_quantity_PROF(**kwargs):
     return 'OPDEPTH'
 
-def populate_obs_general_COUVIS_observation_type_OCC(**kwargs):
+def populate_obs_general_COUVIS_observation_type_PROF(**kwargs):
     return 'OCC'
 
-def populate_obs_pds_COUVIS_note_OCC(**kwargs):
+def populate_obs_pds_COUVIS_note_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     dq_score = supp_index_row['DATA_QUALITY_SCORE']
     return 'Data quality ' + dq_score.lower()
 
-def populate_obs_general_COUVIS_primary_file_spec_OCC(**kwargs):
+def populate_obs_general_COUVIS_primary_file_spec_PROF(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COUVIS_primary_file_spec_OCC(**kwargs):
+def populate_obs_pds_COUVIS_primary_file_spec_PROF(**kwargs):
     return _COUVIS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_COUVIS_product_creation_time_OCC(**kwargs):
+def populate_obs_pds_COUVIS_product_creation_time_PROF(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-SR-UVIS-HSP-2/4-OCC-V2.0"
-def populate_obs_pds_COUVIS_data_set_id_OCC(**kwargs):
+def populate_obs_pds_COUVIS_data_set_id_PROF(**kwargs):
     return populate_data_set_id_from_index_label(**kwargs)
 
 # Format: "UVIS_HSP_2004_280_XI2CET_E_TAU01KM.TAB"
-def populate_obs_pds_COUVIS_product_id_OCC(**kwargs):
+def populate_obs_pds_COUVIS_product_id_PROF(**kwargs):
     return populate_product_id_from_index(**kwargs)
 
-def populate_obs_general_COUVIS_right_asc1_OCC(**kwargs):
+def populate_obs_general_COUVIS_right_asc1_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[0]
 
-def populate_obs_general_COUVIS_right_asc2_OCC(**kwargs):
+def populate_obs_general_COUVIS_right_asc2_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[1]
 
-def populate_obs_general_COUVIS_declination1_OCC(**kwargs):
+def populate_obs_general_COUVIS_declination1_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[2]
 
-def populate_obs_general_COUVIS_declination2_OCC(**kwargs):
+def populate_obs_general_COUVIS_declination2_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[3]
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_COUVIS_image_type_id_OCC(**kwargs):
+def populate_obs_type_image_COUVIS_image_type_id_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_COUVIS_duration_OCC(**kwargs):
+def populate_obs_type_image_COUVIS_duration_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_COUVIS_levels_OCC(**kwargs):
+def populate_obs_type_image_COUVIS_levels_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_COUVIS_lesser_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_COUVIS_lesser_pixel_size_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_COUVIS_greater_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_COUVIS_greater_pixel_size_PROF(**kwargs):
     return None
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_COUVIS_wavelength1_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wavelength1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl1 = index_row['MINIMUM_WAVELENGTH']
     return wl1
 
-def populate_obs_wavelength_COUVIS_wavelength2_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
@@ -151,13 +151,13 @@ def _wave_res_helper(**kwargs):
         return None
     return wl2 - wl1
 
-def populate_obs_wavelength_COUVIS_wave_res1_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_res1_PROF(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_wave_res2_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_res2_PROF(**kwargs):
     return _wave_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_wave_no1_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_no1_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl2 = wavelength_row['wavelength2']
@@ -165,7 +165,7 @@ def populate_obs_wavelength_COUVIS_wave_no1_OCC(**kwargs):
         return None
     return 10000 / wl2 # cm^-1
 
-def populate_obs_wavelength_COUVIS_wave_no2_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_no2_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl1 = wavelength_row['wavelength1']
@@ -183,28 +183,28 @@ def _wave_no_res_helper(**kwargs):
         return None
     return wno2 - wno1
 
-def populate_obs_wavelength_COUVIS_wave_no_res1_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_no_res1_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_wave_no_res2_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_wave_no_res2_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
-def populate_obs_wavelength_COUVIS_spec_flag_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_spec_flag_PROF(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_COUVIS_spec_size_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_spec_size_PROF(**kwargs):
     return 1
 
-def populate_obs_wavelength_COUVIS_polarization_type_OCC(**kwargs):
+def populate_obs_wavelength_COUVIS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
 ### populate_obs_occultation TABLE ###
 
-def populate_obs_occultation_COUVIS_occ_type_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_occ_type_PROF(**kwargs):
     return 'STE' # There are no SUN occultations
 
-def populate_obs_occultation_COUVIS_occ_dir_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_occ_dir_PROF(**kwargs):
     filespec = _COUVIS_file_spec_helper(**kwargs)
 
     # We don't allow "Both" as a direction since these are always split into
@@ -217,21 +217,21 @@ def populate_obs_occultation_COUVIS_occ_dir_OCC(**kwargs):
         f'Unknown ring occultation direction in filespec "{filespec}"')
     return None
 
-def populate_obs_occultation_COUVIS_body_occ_flag_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_body_occ_flag_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
 
     return body_occ_flag
 
-def populate_obs_occultation_COUVIS_optical_depth_min_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_optical_depth_min_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     opac = import_util.safe_column(supp_index_row, 'LOWEST_DETECTABLE_OPACITY')
 
     return opac
 
-def populate_obs_occultation_COUVIS_optical_depth_max_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_optical_depth_max_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     opac = import_util.safe_column(supp_index_row, 'HIGHEST_DETECTABLE_OPACITY')
@@ -246,157 +246,157 @@ def _integration_duration_helper(**kwargs):
     # HSP integration_duration is in milliseconds!
     return dur/1000
 
-def populate_obs_occultation_COUVIS_temporal_sampling_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_temporal_sampling_PROF(**kwargs):
     return _integration_duration_helper(**kwargs)
 
-def populate_obs_occultation_COUVIS_quality_score_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_quality_score_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     dq_score = supp_index_row['DATA_QUALITY_SCORE']
 
     return dq_score
 
-def populate_obs_occultation_COUVIS_wl_band_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_wl_band_PROF(**kwargs):
     return 'UV'
 
-def populate_obs_occultation_COUVIS_source_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_source_PROF(**kwargs):
     target_name, target_name_info = populate_star_name_helper_index(**kwargs)
     if target_name_info is None:
         return None
     return target_name, target_name_info[2]
 
-def populate_obs_occultation_COUVIS_host_OCC(**kwargs):
+def populate_obs_occultation_COUVIS_host_PROF(**kwargs):
     return 'Cassini'
 
 
 ### OBS_RING_GEOMETRY TABLE ###
 
-def populate_obs_ring_geometry_COUVIS_ring_radius1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_radius1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row, 'MINIMUM_RING_RADIUS')
 
     return radius1
 
-def populate_obs_ring_geometry_COUVIS_ring_radius2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_radius2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius2 = import_util.safe_column(index_row, 'MAXIMUM_RING_RADIUS')
 
     return radius2
 
-def populate_obs_ring_geometry_COUVIS_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_COUVIS_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_COUVIS_proj_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_proj_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_COUVIS_proj_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_proj_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_COUVIS_j2000_longitude1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_j2000_longitude1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     long1 = import_util.safe_column(index_row, 'MINIMUM_RING_LONGITUDE')
 
     return long1
 
-def populate_obs_ring_geometry_COUVIS_j2000_longitude2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_j2000_longitude2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     long2 = import_util.safe_column(index_row, 'MAXIMUM_RING_LONGITUDE')
 
     return long2
 
-def populate_obs_ring_geometry_COUVIS_ring_azimuth_wrt_observer1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_azimuth_wrt_observer1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     az1 = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_AZIMUTH')
 
     return az1
 
-def populate_obs_ring_geometry_COUVIS_ring_azimuth_wrt_observer2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_azimuth_wrt_observer2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     az2 = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_AZIMUTH')
 
     return az2
 
-def populate_obs_ring_geometry_COUVIS_phase1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_phase1_PROF(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_COUVIS_phase2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_phase2_PROF(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_COUVIS_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. - abs(el)
 
-def populate_obs_ring_geometry_COUVIS_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. - abs(el)
 
-def populate_obs_ring_geometry_COUVIS_north_based_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. + el
 
-def populate_obs_ring_geometry_COUVIS_north_based_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. + el
 
-def populate_obs_ring_geometry_COUVIS_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. + abs(el)
 
-def populate_obs_ring_geometry_COUVIS_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. + abs(el)
 
-def populate_obs_ring_geometry_COUVIS_north_based_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return 90. - el
 
-def populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
@@ -404,87 +404,87 @@ def populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC(**kwargs):
     return 90. - el
 
 # We set the center versions to be the same as the normal versions
-populate_obs_ring_geometry_COUVIS_center_phase1_OCC = \
-    populate_obs_ring_geometry_COUVIS_phase1_OCC
-populate_obs_ring_geometry_COUVIS_center_phase2_OCC = \
-    populate_obs_ring_geometry_COUVIS_phase2_OCC
-populate_obs_ring_geometry_COUVIS_center_incidence1_OCC = \
-    populate_obs_ring_geometry_COUVIS_incidence1_OCC
-populate_obs_ring_geometry_COUVIS_center_incidence2_OCC = \
-    populate_obs_ring_geometry_COUVIS_incidence2_OCC
-populate_obs_ring_geometry_COUVIS_center_emission1_OCC = \
-    populate_obs_ring_geometry_COUVIS_emission1_OCC
-populate_obs_ring_geometry_COUVIS_center_emission2_OCC = \
-    populate_obs_ring_geometry_COUVIS_emission2_OCC
-populate_obs_ring_geometry_COUVIS_center_north_based_incidence1_OCC = \
-    populate_obs_ring_geometry_COUVIS_north_based_incidence1_OCC
-populate_obs_ring_geometry_COUVIS_center_north_based_incidence2_OCC = \
-    populate_obs_ring_geometry_COUVIS_north_based_incidence2_OCC
-populate_obs_ring_geometry_COUVIS_center_north_based_emission1_OCC = \
-    populate_obs_ring_geometry_COUVIS_north_based_emission1_OCC
-populate_obs_ring_geometry_COUVIS_center_north_based_emission2_OCC = \
-    populate_obs_ring_geometry_COUVIS_north_based_emission2_OCC
+populate_obs_ring_geometry_COUVIS_center_phase1_PROF = \
+    populate_obs_ring_geometry_COUVIS_phase1_PROF
+populate_obs_ring_geometry_COUVIS_center_phase2_PROF = \
+    populate_obs_ring_geometry_COUVIS_phase2_PROF
+populate_obs_ring_geometry_COUVIS_center_incidence1_PROF = \
+    populate_obs_ring_geometry_COUVIS_incidence1_PROF
+populate_obs_ring_geometry_COUVIS_center_incidence2_PROF = \
+    populate_obs_ring_geometry_COUVIS_incidence2_PROF
+populate_obs_ring_geometry_COUVIS_center_emission1_PROF = \
+    populate_obs_ring_geometry_COUVIS_emission1_PROF
+populate_obs_ring_geometry_COUVIS_center_emission2_PROF = \
+    populate_obs_ring_geometry_COUVIS_emission2_PROF
+populate_obs_ring_geometry_COUVIS_center_north_based_incidence1_PROF = \
+    populate_obs_ring_geometry_COUVIS_north_based_incidence1_PROF
+populate_obs_ring_geometry_COUVIS_center_north_based_incidence2_PROF = \
+    populate_obs_ring_geometry_COUVIS_north_based_incidence2_PROF
+populate_obs_ring_geometry_COUVIS_center_north_based_emission1_PROF = \
+    populate_obs_ring_geometry_COUVIS_north_based_emission1_PROF
+populate_obs_ring_geometry_COUVIS_center_north_based_emission2_PROF = \
+    populate_obs_ring_geometry_COUVIS_north_based_emission2_PROF
 
-def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_COUVIS_observer_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_COUVIS_observer_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_COUVIS_solar_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_COUVIS_solar_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_COUVIS_solar_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_COUVIS_solar_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_COUVIS_ring_intercept_time1_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
 
-def populate_obs_ring_geometry_COUVIS_ring_intercept_time2_OCC(**kwargs):
+def populate_obs_ring_geometry_COUVIS_ring_intercept_time2_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
 
@@ -492,13 +492,13 @@ def populate_obs_ring_geometry_COUVIS_ring_intercept_time2_OCC(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_COUVIS_ert1_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_ert1_PROF(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COUVIS_ert2_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_ert2_PROF(**kwargs):
     return None
 
-def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     sc = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
@@ -513,7 +513,7 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count1_OCC(**kwargs):
         return None
     return sc_cvt
 
-def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     sc = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
@@ -537,10 +537,10 @@ def populate_obs_mission_cassini_COUVIS_spacecraft_clock_count2_OCC(**kwargs):
 
     return sc_cvt
 
-def populate_obs_mission_cassini_COUVIS_mission_phase_name_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_mission_phase_name_PROF(**kwargs):
     return helper_cassini_mission_phase_name(**kwargs)
 
-def populate_obs_mission_cassini_COUVIS_sequence_id_OCC(**kwargs):
+def populate_obs_mission_cassini_COUVIS_sequence_id_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     id = supp_index_row['SEQUENCE_ID']
@@ -552,51 +552,51 @@ def populate_obs_mission_cassini_COUVIS_sequence_id_OCC(**kwargs):
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COUVIS
 ################################################################################
 
-def populate_obs_instrument_couvis_channel_OCC(**kwargs):
+def populate_obs_instrument_couvis_channel_PROF(**kwargs):
     return ('HSP', 'HSP')
 
-def populate_obs_instrument_couvis_observation_type_OCC(**kwargs):
+def populate_obs_instrument_couvis_observation_type_PROF(**kwargs):
     return 'NONE'
 
-def populate_obs_instrument_couvis_occultation_port_state_OCC(**kwargs):
+def populate_obs_instrument_couvis_occultation_port_state_PROF(**kwargs):
     return 'N/A'
 
-def populate_obs_instrument_couvis_integration_duration_OCC(**kwargs):
+def populate_obs_instrument_couvis_integration_duration_PROF(**kwargs):
     return _integration_duration_helper(**kwargs)
 
-def populate_obs_instrument_couvis_compression_type_OCC(**kwargs):
+def populate_obs_instrument_couvis_compression_type_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     comp = supp_index_row['COMPRESSION_TYPE']
 
     return (comp, comp)
 
-def populate_obs_instrument_couvis_slit_state_OCC(**kwargs):
+def populate_obs_instrument_couvis_slit_state_PROF(**kwargs):
     return 'NULL'
 
-def populate_obs_instrument_couvis_test_pulse_state_OCC(**kwargs):
+def populate_obs_instrument_couvis_test_pulse_state_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_dwell_time_OCC(**kwargs):
+def populate_obs_instrument_couvis_dwell_time_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_band1_OCC(**kwargs):
+def populate_obs_instrument_couvis_band1_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_band2_OCC(**kwargs):
+def populate_obs_instrument_couvis_band2_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_band_bin_OCC(**kwargs):
+def populate_obs_instrument_couvis_band_bin_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_line1_OCC(**kwargs):
+def populate_obs_instrument_couvis_line1_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_line2_OCC(**kwargs):
+def populate_obs_instrument_couvis_line2_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_line_bin_OCC(**kwargs):
+def populate_obs_instrument_couvis_line_bin_PROF(**kwargs):
     return None
 
-def populate_obs_instrument_couvis_samples_OCC(**kwargs):
+def populate_obs_instrument_couvis_samples_PROF(**kwargs):
     return None

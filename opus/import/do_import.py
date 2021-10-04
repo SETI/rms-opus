@@ -24,11 +24,11 @@ from populate_obs_pds import *
 from populate_obs_mission_cassini import *
 from populate_obs_instrument_COCIRS import *
 from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS_occ import *
+from populate_obs_instrument_CORSS_prof import *
 from populate_obs_instrument_COUVIS import *
-from populate_obs_instrument_COUVIS_occ import *
+from populate_obs_instrument_COUVIS_prof import *
 from populate_obs_instrument_COVIMS import *
-from populate_obs_instrument_COVIMS_occ import *
+from populate_obs_instrument_COVIMS_prof import *
 
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
@@ -40,10 +40,14 @@ from populate_obs_instrument_NHLORRI import *
 from populate_obs_instrument_NHMVIC import *
 
 from populate_obs_mission_voyager import *
-from populate_obs_instrument_VGISS import *
+from populate_obs_instrument_VGISS_obs import *
+from populate_obs_instrument_VGPPS_prof import *
+from populate_obs_instrument_VGUVS_prof import *
+from populate_obs_instrument_VGRSS_prof import *
+from populate_obs_instrument_VGISS_prof import *
 
-from populate_obs_mission_groundbased_occ import *
-from populate_obs_instrument_GB_occ import *
+from populate_obs_mission_groundbased_prof import *
+from populate_obs_instrument_GB_prof import *
 
 from populate_obs_surface_geo import *
 
@@ -167,8 +171,12 @@ def create_tables_for_import(volume_id, namespace):
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+
     if instrument_name is None:
         instrument_name = 'GB'
+    elif type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
 
@@ -706,7 +714,11 @@ def import_one_volume(volume_id):
 def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
+
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    if instrument_name is not None and type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     volset = volume_pdsfile.volset
 

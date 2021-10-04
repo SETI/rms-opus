@@ -1518,8 +1518,8 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
-    "table_name": "obs_occultation",
-    "label": "Occultation Constraints"
+    "table_name": "obs_profile",
+    "label": "Occultation/Reflectance Profiles Constraints"
   },
   {
     "table_name": "obs_surface_geometry__methone",
@@ -1582,8 +1582,8 @@ Example:
     "label": "Wavelength Constraints"
   },
   {
-    "table_name": "obs_occultation",
-    "label": "Occultation Constraints"
+    "table_name": "obs_profile",
+    "label": "Occultation/Reflectance Profiles Constraints"
   },
   {
     "table_name": "obs_surface_geometry__daphnis",
