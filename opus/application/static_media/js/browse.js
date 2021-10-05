@@ -147,7 +147,7 @@ var o_browse = {
         // NOTE: range can go forward or backwards
 
         // images...
-        $(".gallery").on("click", ".thumbnail, .op-recycle-overlay", function(e) {
+        $(".gallery").on("click", ".thumbnail, .op-recycle-overlay, .op-detail-overlay, .op-last-modal-overlay", function(e) {
             let elem = $(this).parent();
             o_browse.onGalleryOrRowClick(elem, e);
         });
