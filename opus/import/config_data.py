@@ -232,6 +232,8 @@ VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
 
 # Mapping from VOLUME root to observation type
 VOLUME_ID_ROOT_TO_TYPE = {
+    'COCIRS_0xxx': 'OBS',
+    'COCIRS_1xxx': 'OBS',
     'COCIRS_5xxx': 'OBS',
     'COCIRS_6xxx': 'OBS',
     'COISS_1xxx':  'OBS',

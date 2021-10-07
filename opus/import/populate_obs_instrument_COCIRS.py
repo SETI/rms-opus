@@ -22,12 +22,20 @@ from populate_util import *
 ################################################################################
 
 ### OBS_GENERAL TABLE ###
+def _get_COCIRS_file_spec(index_row):
+    try:
+        # For OBSINDEX
+        # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
+        file_spec = index_row['SPECTRUM_FILE_SPECIFICATION']
+    except KeyError:
+        # For cube_*_index
+        file_spec = index_row['FILE_SPECIFICATION_NAME']
+    return file_spec
 
 def _COCIRS_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-    file_spec = index_row['SPECTRUM_FILE_SPECIFICATION']
+    file_spec = _get_COCIRS_file_spec(index_row)
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
@@ -43,13 +51,21 @@ def populate_obs_general_COCIRS_opus_id_OBS(**kwargs):
 
 def populate_obs_general_COCIRS_ring_obs_id_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    instrument_id = index_row['DETECTOR_ID']
-    filename = index_row['SPECTRUM_FILE_SPECIFICATION'].split('/')[-1]
-    if not filename.startswith('SPEC') or not filename.endswith('.DAT'):
-        import_util.log_nonrepeating_error(
-            f'Bad format SPECTRUM_FILE_SPECIFICATION "{filename}"')
-        return None
+    try:
+        index_row = metadata['index_row'] # OBSINDEX
+        instrument_id = index_row['DETECTOR_ID']
+    except KeyError:
+        index_row = metadata['supp_index_row'] # cube_*_index
+        instrument_id = index_row['DETECTOR_ID']
+
+    try:
+        filename = index_row['SPECTRUM_FILE_SPECIFICATION'].split('/')[-1]
+        if not filename.startswith('SPEC') or not filename.endswith('.DAT'):
+            import_util.log_nonrepeating_error(
+                f'Bad format SPECTRUM_FILE_SPECIFICATION "{filename}"')
+            return None
+    except KeyError:
+        filename = index_row['FILE_SPECIFICATION_NAME'].split('/')[-1]
     image_num = filename[4:14]
     planet = helper_cassini_planet_id(**kwargs)
     if planet is None:
@@ -100,7 +116,8 @@ def populate_obs_pds_COCIRS_product_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-    filename = index_row['SPECTRUM_FILE_SPECIFICATION'].split('/')[-1]
+    file_spec = _get_COCIRS_file_spec(index_row)
+    filename = file_spec.split('/')[-1]
     return filename
 
 # We don't have ring geometry or other such info for CIRS
@@ -308,7 +325,13 @@ def populate_obs_mission_cassini_COCIRS_spacecraft_clock_count2_OBS(**kwargs):
 def populate_obs_mission_cassini_COCIRS_mission_phase_name_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    mp = index_row['MISSION_PHASE_NAME']
+    try:
+        index_row = metadata['index_row'] # OBSINDEX
+        mp = index_row['MISSION_PHASE_NAME']
+    except KeyError:
+        index_row = metadata['supp_index_row'] # cube_*_index
+        mp = index_row['MISSION_PHASE_NAME']
+
     if mp.upper() == 'NULL':
         return None
     return mp.replace('_', ' ')
@@ -320,3 +343,11 @@ def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COCIRS
 ################################################################################
+def obs_instrument_coiss_detector_id_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    try:
+        index_row = metadata['index_row'] # OBSINDEX
+        return index_row['DETECTOR_ID']
+    except KeyError:
+        index_row = metadata['supp_index_row'] # cube_*_index
+        return index_row['DETECTOR_ID']

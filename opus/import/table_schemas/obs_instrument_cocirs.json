@@ -45,8 +45,8 @@
         "field_type": "char3",
         "field_notnull": true,
         "data_source": [
-            "TAB:index",
-            "DETECTOR_ID"
+            "FUNCTION",
+            "obs_instrument_coiss_detector_id_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
