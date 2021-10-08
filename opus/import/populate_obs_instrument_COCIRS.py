@@ -226,9 +226,14 @@ def populate_obs_wavelength_COCIRS_spec_flag_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_spec_size_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    wave_no_res1 = index_row['SPECTRUM_SAMPLES']
-    return wave_no_res1
+    try:
+        index_row = metadata['index_row']
+        spec_size = index_row['SPECTRUM_SAMPLES']
+    except KeyError:
+        index_row = metadata['supp_index_row']
+        spec_size = index_row['BANDS']
+
+    return spec_size
 
 def populate_obs_wavelength_COCIRS_polarization_type_OBS(**kwargs):
     return 'NONE'
