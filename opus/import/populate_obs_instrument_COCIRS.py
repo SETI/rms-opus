@@ -22,16 +22,6 @@ from populate_util import *
 ################################################################################
 
 ### OBS_GENERAL TABLE ###
-def _get_COCIRS_file_spec(index_row):
-    try:
-        # For OBSINDEX
-        # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-        file_spec = index_row['SPECTRUM_FILE_SPECIFICATION']
-    except KeyError:
-        # For cube_*_index
-        file_spec = index_row['FILE_SPECIFICATION_NAME']
-    return file_spec
-
 def _COCIRS_file_spec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -156,8 +146,8 @@ def populate_obs_type_image_COCIRS_greater_pixel_size_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    wave_no2 = index_row['MAXIMUM_WAVENUMBER']
+    # index_row = metadata['index_row']
+    wave_no2 = _get_COCIRS_max_waveno(metadata)
 
     if wave_no2 is None:
         return None
@@ -166,8 +156,7 @@ def populate_obs_wavelength_COCIRS_wavelength1_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_wavelength2_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    wave_no1 = index_row['MINIMUM_WAVENUMBER']
+    wave_no1 = _get_COCIRS_min_waveno(metadata)
 
     if wave_no1 is None:
         return None
@@ -177,8 +166,12 @@ def populate_obs_wavelength_COCIRS_wavelength2_OBS(**kwargs):
 def populate_obs_wavelength_COCIRS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
-    wave_no2 = index_row['MAXIMUM_WAVENUMBER']
+    # TODO: Is the BAND_BIN_WIDTH same as WAVENUMBER_RESOLUTION?
+    try:
+        wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
+    except KeyError:
+        wave_no_res2 = None
+    wave_no2 = _get_COCIRS_max_waveno(metadata)
 
     if wave_no_res2 is None or wave_no2 is None:
         return None
@@ -188,8 +181,11 @@ def populate_obs_wavelength_COCIRS_wave_res1_OBS(**kwargs):
 def populate_obs_wavelength_COCIRS_wave_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
-    wave_no1 = index_row['MINIMUM_WAVENUMBER']
+    try:
+        wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
+    except KeyError:
+        wave_no_res1 = None
+    wave_no1 = _get_COCIRS_min_waveno(metadata)
 
     if wave_no_res1 is None or wave_no1 is None:
         return None
@@ -198,26 +194,31 @@ def populate_obs_wavelength_COCIRS_wave_res2_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_wave_no1_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    wave_no2 = index_row['MINIMUM_WAVENUMBER']
-    return wave_no2
+    wave_no1 = _get_COCIRS_min_waveno(metadata)
+    return wave_no1
 
 def populate_obs_wavelength_COCIRS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    wave_no2 = index_row['MAXIMUM_WAVENUMBER']
+    # index_row = metadata['index_row']
+    wave_no2 = _get_COCIRS_max_waveno(metadata)
     return wave_no2
 
 def populate_obs_wavelength_COCIRS_wave_no_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
+    try:
+        wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
+    except KeyError:
+        wave_no_res1 = None
     return wave_no_res1
 
 def populate_obs_wavelength_COCIRS_wave_no_res2_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
+    try:
+        wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
+    except KeyError:
+        wave_no_res2 = None
     return wave_no_res2
 
 def populate_obs_wavelength_COCIRS_spec_flag_OBS(**kwargs):
@@ -343,7 +344,7 @@ def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COCIRS
 ################################################################################
-def obs_instrument_coiss_detector_id_OBS(**kwargs):
+def populate_obs_instrument_coiss_detector_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     try:
         index_row = metadata['index_row'] # OBSINDEX
@@ -351,3 +352,38 @@ def obs_instrument_coiss_detector_id_OBS(**kwargs):
     except KeyError:
         index_row = metadata['supp_index_row'] # cube_*_index
         return index_row['DETECTOR_ID']
+
+################################################################################
+# Helper functions
+################################################################################
+def _get_COCIRS_file_spec(index_row):
+    try:
+        # For OBSINDEX
+        # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
+        file_spec = index_row['SPECTRUM_FILE_SPECIFICATION']
+    except KeyError:
+        # For cube_*_index
+        file_spec = index_row['FILE_SPECIFICATION_NAME']
+    return file_spec
+
+def _get_COCIRS_max_waveno(metadata):
+    try:
+        # For OBSINDEX
+        index_row = metadata['index_row']
+        max_waveno = index_row['MAXIMUM_WAVENUMBER']
+    except KeyError:
+        # For cube_*_index
+        index_row = metadata['supp_index_row']
+        max_waveno = index_row['MAXIMUM_WAVENUMBER']
+    return max_waveno
+
+def _get_COCIRS_min_waveno(metadata):
+    try:
+        # For OBSINDEX
+        index_row = metadata['index_row']
+        max_waveno = index_row['MINIMUM_WAVENUMBER']
+    except KeyError:
+        # For cube_*_index
+        index_row = metadata['supp_index_row']
+        max_waveno = index_row['MINIMUM_WAVENUMBER']
+    return max_waveno
