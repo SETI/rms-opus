@@ -248,10 +248,12 @@ var o_browse = {
                 o_browse.updateMetadataDetailViewTool("max", false);
             },
             resize: function(event, ui) {
-                o_browse.checkForMaximizeMetadataDetailView();
                 o_browse.keepMetadataResizeContained();
                 o_browse.onResizeMetadataDetailView();
                 o_browse.adjustMetadataDetailDialogPS(true);
+            },
+            stop: function(event, ui) {
+                o_browse.checkForMaximizeMetadataDetailView();
             },
         }).on("resize", function(e) {
             e.stopPropagation();
@@ -260,7 +262,6 @@ var o_browse = {
         $(".app-body").on("shown.bs.modal", "#op-metadata-detail-view", function(e) {
             opus.getViewNamespace().lastMetadataDetailOpusId = "";
             o_browse.checkForMaximizeMetadataDetailView();
-            o_browse.keepMetadataDetailViewInview();
             o_browse.onResizeMetadataDetailView();
         });
 
@@ -1268,6 +1269,7 @@ var o_browse = {
 
         let outerWidth = content.outerWidth();
         let outerHeight = content.outerHeight();
+        let padding = outerWidth - content.width();
 
         let maxWidth = dialog.width();
         let maxHeight = dialog.height();
@@ -1275,31 +1277,28 @@ var o_browse = {
         let width = (outerWidth > maxWidth ? maxWidth : outerWidth);
         let height = (outerHeight > maxHeight ? maxHeight : outerHeight);
 
-        if (browserResize === undefined || browserResize === false) {
-            let max = (Math.round(maxWidth) == Math.round(width) &&
-                       Math.round(maxHeight) == Math.round(height));
-            o_browse.updateMetadataDetailViewTool("max", max);
-        } else if (browserResize === true) {
-            if (content.resizable("instance").max === true) {
-                content.width(maxWidth);
-                content.height(maxHeight);
-            } else {
-                if (content.resizable("instance").min === false) {
-                    if (outerWidth != width) {
-                        content.width(width);
-                    }
-                    if (outerHeight != height) {
-                        content.height(height);
-                    }
-                }
-            }
-        }
-
-        if (!content.resizable("instance").max) {
+        if (content.resizable("instance").max === true) {
+            content.width(maxWidth-padding);
+            content.height(maxHeight-padding);
+        } else {
             let min = (Math.round(content.resizable("option").minHeight) == Math.round(height) &&
                        Math.round(content.resizable("option").minWidth) == Math.round(width));
             o_browse.updateMetadataDetailViewTool("min", min);
+
+            let max = (Math.round(maxWidth) == Math.round(width) &&
+                       Math.round(maxHeight) == Math.round(height));
+            o_browse.updateMetadataDetailViewTool("max", max);
         }
+
+        if (content.resizable("instance").min === false) {
+            if (outerWidth != width) {
+                content.width(width-padding);
+            }
+            if (outerHeight != height) {
+                content.height(height-padding);
+            }
+        }
+
         content.resizable("option", "maxWidth", maxWidth);
         content.resizable("option", "maxHeight", maxHeight);
     },
