@@ -351,12 +351,25 @@ def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
 ################################################################################
 def populate_obs_instrument_coiss_detector_id_OBS(**kwargs):
     metadata = kwargs['metadata']
-    try:
-        index_row = metadata['index_row'] # OBSINDEX
-        return index_row['DETECTOR_ID']
-    except KeyError:
-        index_row = metadata['supp_index_row'] # cube_*_index
-        return index_row['DETECTOR_ID']
+    # cube_*_index
+    index_row = metadata['supp_index_row']
+    return index_row['DETECTOR_ID']
+
+# For COCIRS_0xxx and COCIRS_1xxx, we don't have these info in the index files
+# TODO: Should we put None for all of them, check with Mark/Rob later. All these
+# can't be null in the table previously
+def populate_obs_instrument_coiss_blinking_flag_OBS(**kwargs):
+    return None
+def populate_obs_instrument_coiss_even_flag_OBS(**kwargs):
+    return None
+def populate_obs_instrument_coiss_odd_flag_OBS(**kwargs):
+    return None
+def populate_obs_instrument_coiss_centers_flag_OBS(**kwargs):
+    return None
+def populate_obs_instrument_coiss_pairs_flag_OBS(**kwargs):
+    return None
+def populate_obs_instrument_coiss_all_flag_OBS(**kwargs):
+    return None
 
 ################################################################################
 # Helper functions

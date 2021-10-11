@@ -262,6 +262,8 @@ VOLUME_ID_ROOT_TO_TYPE = {
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU
 # names for targets, but we want to in OPUS.
 TARGET_NAME_MAPPING = {
+    # This is found in COCIRS_0xxx/1xxx
+    'S_RINGS':          'S RINGS',
     # These are found in COISS
     'ERRIAPO':          'ERRIAPUS',
     'HYROKKIN':         'HYRROKKIN',

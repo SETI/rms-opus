@@ -11,7 +11,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_notnull": true,
         "field_key": "unique",
         "data_source": [
