@@ -146,7 +146,6 @@ def populate_obs_type_image_COCIRS_greater_pixel_size_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_wavelength1_OBS(**kwargs):
     metadata = kwargs['metadata']
-    # index_row = metadata['index_row']
     wave_no2 = _get_COCIRS_max_waveno(metadata)
 
     if wave_no2 is None:
@@ -166,11 +165,11 @@ def populate_obs_wavelength_COCIRS_wavelength2_OBS(**kwargs):
 def populate_obs_wavelength_COCIRS_wave_res1_OBS(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    # TODO: Is the BAND_BIN_WIDTH same as WAVENUMBER_RESOLUTION?
     try:
         wave_no_res2 = index_row['WAVENUMBER_RESOLUTION']
     except KeyError:
-        wave_no_res2 = None
+        index_row = metadata['supp_index_row']
+        wave_no_res2 = index_row['BAND_BIN_WIDTH']
     wave_no2 = _get_COCIRS_max_waveno(metadata)
 
     if wave_no_res2 is None or wave_no2 is None:
@@ -184,7 +183,8 @@ def populate_obs_wavelength_COCIRS_wave_res2_OBS(**kwargs):
     try:
         wave_no_res1 = index_row['WAVENUMBER_RESOLUTION']
     except KeyError:
-        wave_no_res1 = None
+        index_row = metadata['supp_index_row']
+        wave_no_res1 = index_row['BAND_BIN_WIDTH']
     wave_no1 = _get_COCIRS_min_waveno(metadata)
 
     if wave_no_res1 is None or wave_no1 is None:
@@ -199,7 +199,6 @@ def populate_obs_wavelength_COCIRS_wave_no1_OBS(**kwargs):
 
 def populate_obs_wavelength_COCIRS_wave_no2_OBS(**kwargs):
     metadata = kwargs['metadata']
-    # index_row = metadata['index_row']
     wave_no2 = _get_COCIRS_max_waveno(metadata)
     return wave_no2
 
