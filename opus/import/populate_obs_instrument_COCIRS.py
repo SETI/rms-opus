@@ -8,6 +8,7 @@
 #   time1/2 must come before planet_id
 #   planet_id must come before opus_id
 
+import julian
 import pdsfile
 
 from config_data import *
@@ -121,6 +122,211 @@ def populate_obs_general_COCIRS_declination1_OBS(**kwargs):
     return None
 
 def populate_obs_general_COCIRS_declination2_OBS(**kwargs):
+    return None
+
+# RING GEOMETRY FOR COCIRS_0xxx/1xxx, only apply to ring maps (RING_POLAR)
+def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius1 = import_util.safe_column(index_row,
+                'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
+
+    return radius1
+
+def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius2 = import_util.safe_column(index_row,
+                'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
+
+    return radius2
+
+def populate_obs_ring_geometry_COCIRS_j2000_longitude1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius1 = import_util.safe_column(index_row,
+                'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_BEGINNING')
+
+def populate_obs_ring_geometry_COCIRS_j2000_longitude2_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius1 = import_util.safe_column(index_row,
+                'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_END')
+
+def populate_obs_ring_geometry_COCIRS_ring_azimuth_wrt_observer1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_ring_azimuth_wrt_observer2_OBS(**kwargs):
+    return None
+
+# Phase angle: The angle between the point where incoming source photons
+# hit the ring , to the direction where outgoing photons to the observer
+def populate_obs_ring_geometry_COCIRS_phase1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius1 = import_util.safe_column(index_row,
+                'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+
+def populate_obs_ring_geometry_COCIRS_phase2_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    radius1 = import_util.safe_column(index_row,
+                'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+
+# Source: star, observer: COCIRS
+# Incidence angle: the angle between the point where incoming source photons
+# hit the ring, to the north pole of the planet we're looking at (normal vector
+# on the surface of LIT side of the ring, same as source side), always between
+# 0 (parallel to north pole) to 90 (parallel to ring)
+# Note: we don't have enough info to get the incidence angle.
+def populate_obs_ring_geometry_COCIRS_incidence1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_incidence2_OBS(**kwargs):
+    return None
+
+# North based inc: the angle between the point where incoming source photons hit
+# the ring to the normal vector on the NORTH side of the ring. 0-90 when north
+# side of the ring is lit, and 90-180 when south side is lit.
+# Note: we don't have enough info to get the incidence angle.
+def populate_obs_ring_geometry_COCIRS_north_based_incidence1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_north_based_incidence2_OBS(**kwargs):
+    return None
+
+# Emission angle: the angle between the normal vector on the LIT side, to the
+# direction where outgoing photons to the observer. 0-90 when observer is at the
+# lit side of the ring, and 90-180 when it's at the dark side.
+# Since observer is at the dark side, ea is between 90-180
+def populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    ea = index_row['CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE']
+
+    return ea
+
+def populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs):
+    metadata = kwargs['metadata']
+    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+        return None
+    index_row = metadata['index_row']
+    ea = index_row['CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE']
+
+    return ea
+
+# North based ea: the angle between the normal vector on the NORTH side of the
+# ring, to the direction where outgoing photons to the observer. 0-90 when
+# observer is at the north side of the ring, and 90-180 when it's at the south
+# side.
+# If north side of the ring is lit, then north based emission angle is the same
+# as the emission angle. If south side of the ring is lit, north based emission
+# angle will be 180 - the emission angle.
+def populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs):
+    ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
+    if _is_ring_north_side_lit(**kwargs):
+        return ea
+    else:
+        # min/max ea are the same
+        return 180. - ea
+
+def populate_obs_ring_geometry_COCIRS_north_based_emission2_OBS(**kwargs):
+    ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
+    if _is_ring_north_side_lit(**kwargs):
+        return ea
+    else:
+        # min/max ea are the same
+        return 180. - ea
+
+# We set the center versions to be the same as the normal versions
+populate_obs_ring_geometry_COCIRS_center_phase1_OBS = \
+    populate_obs_ring_geometry_COCIRS_phase1_OBS
+populate_obs_ring_geometry_COCIRS_center_phase2_OBS = \
+    populate_obs_ring_geometry_COCIRS_phase2_OBS
+populate_obs_ring_geometry_COCIRS_center_incidence1_OBS = \
+    populate_obs_ring_geometry_COCIRS_incidence1_OBS
+populate_obs_ring_geometry_COCIRS_center_incidence2_OBS = \
+    populate_obs_ring_geometry_COCIRS_incidence2_OBS
+populate_obs_ring_geometry_COCIRS_center_emission1_OBS = \
+    populate_obs_ring_geometry_COCIRS_emission1_OBS
+populate_obs_ring_geometry_COCIRS_center_emission2_OBS = \
+    populate_obs_ring_geometry_COCIRS_emission2_OBS
+populate_obs_ring_geometry_COCIRS_center_north_based_incidence1_OBS = \
+    populate_obs_ring_geometry_COCIRS_north_based_incidence1_OBS
+populate_obs_ring_geometry_COCIRS_center_north_based_incidence2_OBS = \
+    populate_obs_ring_geometry_COCIRS_north_based_incidence2_OBS
+populate_obs_ring_geometry_COCIRS_center_north_based_emission1_OBS = \
+    populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS
+populate_obs_ring_geometry_COCIRS_center_north_based_emission2_OBS = \
+    populate_obs_ring_geometry_COCIRS_north_based_emission2_OBS
+
+# Opening angle to observer: the angle between the ring surface to the direction
+# where outgoing photons to the observer. Positive if observer is at the north
+# side of the ring, negative if it's at the south side.
+def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(**kwargs):
+    ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
+    if _is_cassini_at_north(**kwargs):
+        return abs(90. - ea)
+    else:
+        return - abs(90. - ea)
+
+def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle2_OBS(**kwargs):
+    ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
+    if _is_cassini_at_north(**kwargs):
+        return abs(90. - ea)
+    else:
+        return - abs(90. - ea)
+
+# Ring elevation to observer, same to opening angle. It's positive if observer
+# is at north side Saturn (COCIRS is targeting Saturn). Negative if observer is
+# at south side of Saturn.
+def populate_obs_ring_geometry_COCIRS_observer_ring_elevation1_OBS(**kwargs):
+    return (populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(
+            **kwargs))
+
+def populate_obs_ring_geometry_COCIRS_observer_ring_elevation2_OBS(**kwargs):
+    return (populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle2_OBS(
+            **kwargs))
+
+# Opening angle to solar: the angle between the ring surface to the direction
+# where incoming photons from the source. Positive if source is at the north
+# side of the ring , negative if it's at the south side.
+# Note: we don't have enough info to get the incidence angle.
+def populate_obs_ring_geometry_COCIRS_solar_ring_opening_angle1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_solar_ring_opening_angle2_OBS(**kwargs):
+    return None
+
+# Ring elevation to solar, same to opening angle except, it's positive if
+# source is at north side of Jupiter, Saturn, and Neptune, and south side of
+# Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
+# and north side of Uranus.
+# Note: we don't have enough info to get the incidence angle.
+def populate_obs_ring_geometry_COCIRS_solar_ring_elevation1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_solar_ring_elevation2_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_ring_intercept_time1_OBS(**kwargs):
+    return None
+
+def populate_obs_ring_geometry_COCIRS_ring_intercept_time2_OBS(**kwargs):
     return None
 
 
@@ -404,3 +610,27 @@ def _get_COCIRS_min_waveno(metadata):
         index_row = metadata['supp_index_row']
         max_waveno = index_row['MINIMUM_WAVENUMBER']
     return max_waveno
+
+def _get_COCIRS_cube_map_projections(metadata):
+    index_row = metadata['index_row']
+    vol_id = index_row['VOLUME_ID']
+    if (vol_id.startswith('COCIRS_0') or vol_id.startswith('COCIRS_1')):
+        return index_row['PRODUCT_ID'][-1].lower()
+    else:
+        return None
+
+# Equinox: 2009-08-11T01:40:08.914
+# Before this time, north side of the ring is lit.
+# After this time, south side of the ring is lit.
+def _is_ring_north_side_lit(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    start_time = julian.tai_from_iso(index_row['START_TIME'])
+    equinox_time = julian.tai_from_iso('2009-08-11T01:40:08.914')
+    return start_time < equinox_time
+
+# Use north based emission angle to determine if observer is at the north of the
+# ring.
+def _is_cassini_at_north(**kwargs):
+    ea = populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs)
+    return ea >= 0 and ea <= 90
