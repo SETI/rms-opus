@@ -130,36 +130,40 @@ def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row,
+    radius = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
 
-    return radius1
+    return radius
 
-def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
+def populate_obs_ring_geometry_COCIRS_ring_radius2_OBS(**kwargs):
     if not _is_ring_map_projections(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius2 = import_util.safe_column(index_row,
+    radius = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
 
-    return radius2
+    return radius
 
 def populate_obs_ring_geometry_COCIRS_j2000_longitude1_OBS(**kwargs):
     if not _is_ring_map_projections(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row,
+    longitude = import_util.safe_column(index_row,
                 'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_BEGINNING')
+
+    return longitude
 
 def populate_obs_ring_geometry_COCIRS_j2000_longitude2_OBS(**kwargs):
     if not _is_ring_map_projections(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row,
+    longitude = import_util.safe_column(index_row,
                 'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_END')
+
+    return longitude
 
 def populate_obs_ring_geometry_COCIRS_ring_azimuth_wrt_observer1_OBS(**kwargs):
     return None
@@ -174,16 +178,20 @@ def populate_obs_ring_geometry_COCIRS_phase1_OBS(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row,
+    phase_angle = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+
+    return phase_angle
 
 def populate_obs_ring_geometry_COCIRS_phase2_OBS(**kwargs):
     if not _is_ring_map_projections(**kwargs):
         return None
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row,
+    phase_angle = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
+
+    return phase_angle
 
 # Source: star, observer: COCIRS
 # Incidence angle: the angle between the point where incoming source photons
@@ -238,7 +246,8 @@ def populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs):
 # angle will be 180 - the emission angle.
 def populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
-    if ea is None: return ea # not ring map projections
+    if ea is None:
+        return ea # not ring map projections
 
     if _is_ring_north_side_lit(**kwargs):
         return ea
@@ -248,7 +257,8 @@ def populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs):
 
 def populate_obs_ring_geometry_COCIRS_north_based_emission2_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
-    if ea is None: return ea # not ring map projections
+    if ea is None:
+        return ea # not ring map projections
 
     if _is_ring_north_side_lit(**kwargs):
         return ea
@@ -283,7 +293,8 @@ populate_obs_ring_geometry_COCIRS_center_north_based_emission2_OBS = \
 # side of the ring, negative if it's at the south side.
 def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
-    if ea is None: return ea # not ring map projections
+    if ea is None:
+        return ea # not ring map projections
 
     if _is_cassini_at_north(**kwargs):
         return abs(90. - ea)
@@ -292,7 +303,8 @@ def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(**kwargs)
 
 def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle2_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
-    if ea is None: return ea # not ring map projections
+    if ea is None:
+        return ea # not ring map projections
 
     if _is_cassini_at_north(**kwargs):
         return abs(90. - ea)
