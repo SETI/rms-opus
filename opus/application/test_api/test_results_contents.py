@@ -96,6 +96,66 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/co-cirs-0408220524-fp4.json"
         self._run_json_equal_file(url, "results_co_cirs_0408220524_fp4_files.json")
 
+    def test__results_contents_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e metadata"
+        url = "/api/metadata_v2/co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_metadata.json")
+
+    def test__results_contents_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_files(self):
+        "[test_results_contents.py] co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e files"
+        url = "/api/files/co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_files.json")
+
+    def test__results_contents_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-000ia_presoi001____ri____699_f4_038p metadata"
+        url = "/api/metadata_v2/co-cirs-cube-000ia_presoi001____ri____699_f4_038p.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_metadata.json")
+
+    def test__results_contents_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_files(self):
+        "[test_results_contents.py] co-cirs-cube-000ia_presoi001____ri____699_f4_038p files"
+        url = "/api/files/co-cirs-cube-000ia_presoi001____ri____699_f4_038p.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_files.json")
+
+    def test__results_contents_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-000rb_comp001______ci005_680_f3_224r metadata"
+        url = "/api/metadata_v2/co-cirs-cube-000rb_comp001______ci005_680_f3_224r.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_metadata.json")
+
+    def test__results_contents_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_files(self):
+        "[test_results_contents.py] co-cirs-cube-000rb_comp001______ci005_680_f3_224r files"
+        url = "/api/files/co-cirs-cube-000rb_comp001______ci005_680_f3_224r.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_files.json")
+
+    def test__results_contents_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-127en_icyplu001____uv____699_f1_039e metadata"
+        url = "/api/metadata_v2/co-cirs-cube-127en_icyplu001____uv____699_f1_039e.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_metadata.json")
+
+    def test__results_contents_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_files(self):
+        "[test_results_contents.py] co-cirs-cube-127en_icyplu001____uv____699_f1_039e files"
+        url = "/api/files/co-cirs-cube-127en_icyplu001____uv____699_f1_039e.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_files.json")
+
+    def test__results_contents_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-127ic_dscal10066___sp____699_f4_039p metadata"
+        url = "/api/metadata_v2/co-cirs-cube-127ic_dscal10066___sp____699_f4_039p.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_metadata.json")
+
+    def test__results_contents_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_files(self):
+        "[test_results_contents.py] co-cirs-cube-127ic_dscal10066___sp____699_f4_039p files"
+        url = "/api/files/co-cirs-cube-127ic_dscal10066___sp____699_f4_039p.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_files.json")
+
+    def test__results_contents_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_metadata(self):
+        "[test_results_contents.py] co-cirs-cube-128ri_lrlemp001____is____680_f3_039r metadata"
+        url = "/api/metadata_v2/co-cirs-cube-128ri_lrlemp001____is____680_f3_039r.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_metadata.json")
+
+    def test__results_contents_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_files(self):
+        "[test_results_contents.py] co-cirs-cube-128ri_lrlemp001____is____680_f3_039r files"
+        url = "/api/files/co-cirs-cube-128ri_lrlemp001____is____680_f3_039r.json"
+        self._run_json_equal_file(url, "results_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_files.json")
+
     def test__results_contents_co_iss_n1460961193_metadata(self):
         "[test_results_contents.py] co-iss-n1460961193 metadata"
         url = "/api/metadata_v2/co-iss-n1460961193.json"
@@ -778,6 +838,36 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         "[test_results_contents.py] co-cirs-0408220524-fp4 images"
         url = "/api/images.json?opusid=co-cirs-0408220524-fp4"
         self._run_json_equal_file(url, "results_co_cirs_0408220524_fp4_images.json")
+
+    def test__results_contents_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_images(self):
+        "[test_results_contents.py] co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e images"
+        url = "/api/images.json?opusid=co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ph_fp3daymap001_ci004_609_f1_038e_images.json")
+
+    def test__results_contents_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_images(self):
+        "[test_results_contents.py] co-cirs-cube-000ia_presoi001____ri____699_f4_038p images"
+        url = "/api/images.json?opusid=co-cirs-cube-000ia_presoi001____ri____699_f4_038p"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000ia_presoi001____ri____699_f4_038p_images.json")
+
+    def test__results_contents_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_images(self):
+        "[test_results_contents.py] co-cirs-cube-000rb_comp001______ci005_680_f3_224r images"
+        url = "/api/images.json?opusid=co-cirs-cube-000rb_comp001______ci005_680_f3_224r"
+        self._run_json_equal_file(url, "results_co_cirs_cube_000rb_comp001______ci005_680_f3_224r_images.json")
+
+    def test__results_contents_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_images(self):
+        "[test_results_contents.py] co-cirs-cube-127en_icyplu001____uv____699_f1_039e images"
+        url = "/api/images.json?opusid=co-cirs-cube-127en_icyplu001____uv____699_f1_039e"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127en_icyplu001____uv____699_f1_039e_images.json")
+
+    def test__results_contents_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_images(self):
+        "[test_results_contents.py] co-cirs-cube-127ic_dscal10066___sp____699_f4_039p images"
+        url = "/api/images.json?opusid=co-cirs-cube-127ic_dscal10066___sp____699_f4_039p"
+        self._run_json_equal_file(url, "results_co_cirs_cube_127ic_dscal10066___sp____699_f4_039p_images.json")
+
+    def test__results_contents_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_images(self):
+        "[test_results_contents.py] co-cirs-cube-128ri_lrlemp001____is____680_f3_039r images"
+        url = "/api/images.json?opusid=co-cirs-cube-128ri_lrlemp001____is____680_f3_039r"
+        self._run_json_equal_file(url, "results_co_cirs_cube_128ri_lrlemp001____is____680_f3_039r_images.json")
 
     def test__results_contents_co_iss_n1460961193_images(self):
         "[test_results_contents.py] co-iss-n1460961193 images"
