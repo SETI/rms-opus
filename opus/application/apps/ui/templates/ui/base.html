@@ -130,15 +130,16 @@
                             <div class="op-sort-contents"></div>
                         </div>
                     </nav>
-                    <div class="panel-body gallery-contents container-fluid">
-                       <div class="op-results-message">
+                    <div class="panel-body op-gallery-contents container-fluid">
+                        <div class="op-results-message">
                             <h2>Your search produced no results</h2>
                             <p>Remove or edit one or more of the search criteria selected on the Search tab
                             or click on the Reset Search button to reset the search criteria to default.</p>
-                       </div>
-                       <div class="justify-content-start op-gallery-view mx-0">
-                            <div class="mr-0 thumb gallery gallery-scroll">
+                        </div>
+                        <div class="justify-content-start op-gallery-view mx-0">
+                            <div class="mr-0 gallery gallery-scroll">
                             </div>
+                            <div class="op-gallery-view-docked panel">CONTENTS</div>
                         </div>
                         <div class="op-data-table-view mx-0">
                             <div class="col-lg p-0">
@@ -172,7 +173,7 @@
 
             <div id="cart" class="tab-pane fade op-no-select" role="tabpanel" aria-labelledby="cart-tab">
                 <div class="row">
-                    <div class="col cart_details pr-0">
+                    <div class="col op-cart-details pr-0">
                         <div id="op-download-options-container" class="sidebar_wrapper mt-0 pr-0"></div>
                     </div>
                     <div class="col pl-0 op-cart-gallery-side">
@@ -226,7 +227,7 @@
                                 </div>
                             </div>
                         </nav>
-                        <div class="panel-body gallery-contents flex-container">
+                        <div class="panel-body op-gallery-contents flex-container">
                             <div class="op-results-message">
                                 <h2>Your cart is empty</h2>
                                 <p>To add observations to the cart, click on the Browse Results tab
@@ -234,7 +235,7 @@
                                 then click on the cart icon.  </p>
                             </div>
                             <div class="justify-content-start op-gallery-view mr-0 ml-1">
-                                <div class="mr-0 thumb gallery gallery-scroll">
+                                <div class="mr-0 gallery gallery-scroll">
                                 </div>
                             </div>
                             <div class="op-data-table-view mx-0">
@@ -330,24 +331,33 @@
         </div>
 
         <!-- modal dialog for the gallery views -->
-        <div id="galleryView" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="galleryViewLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <i class="far fa-times-circle fa-lg text-info"></i>
-                    </button>
-                    <div id="galleryViewContents" class="modal-body bg-dark">
-                        <div class="row">
-                            <div class="left col-lg-7 col-sm d-flex align-items-center justify-content-center op-no-select"></div>
-                            <div class="right col-lg-5 col-sm">
-                                <div class="op-metadata-detail-edit op-no-select">
-                                    <a href="#" class="op-edit-metadata-button" action="edit">
-                                        <i class="fas fa-pencil-alt"></i> Edit
-                                    </a>
-                                    <div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div>
-                                </div>
-                                <div class="op-metadata-details">
-                                    <div class="contents mr-2"></div>
+        <div id="op-metadata-detail-view" class="modal fade" role="dialog" tabbindex="-1" data-backdrop="false" data-keyboard="false" aria-labelledby="op-metadata-detail-viewLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div id="op-metadata-detail-view-content" class="modal-content">
+                    <div class="op-docking-tools op-no-select">
+                        <a href="#" class="op-slide-minimize" aria-label="Minimize" title="Minimize the slide"><i class="fas fa-compress-arrows-alt fa-lg"></i></a>
+                        <a href="#" class="op-slide-maximize" aria-label="Maximize" title="Restore the slide to the default size"><i class="fas fa-expand-arrows-alt fa-lg"></i></a>
+                        <!--a href="#" class="op-slide-dock" aria-label="Dock" title="Pin the slide to the right of the Browse view"><i class="fas fa-sign-in-alt fa-lg text-info"></i></a-->
+                    </div>
+                    <div class="close">
+                        <a href="#" class="op-close-modal" data-dismiss="modal" aria-label="Close" title="Close the slide">
+                            <i class="far fa-times-circle fa-lg"></i>
+                        </a>
+                    </div>
+                    <div class="op-metadata-detail-view-body modal-body bg-dark">
+                        <div class="row flex-nowrap">
+                            <div class="left col-lg-7 col d-flex align-items-center justify-content-center mw-100 op-no-select"></div>
+                            <div class="right col-lg-5 col mw-100">
+                                <div class="op-metadata-details-container">
+                                    <div class="op-metadata-detail-edit op-no-select">
+                                        <a href="#" class="op-edit-metadata-button" action="edit">
+                                            <i class="fas fa-pencil-alt"></i> Edit
+                                        </a>
+                                        <div class="op-metadata-detail-edit-message text-secondary">Drag to reorder</div>
+                                    </div>
+                                    <div class="op-metadata-details">
+                                        <div class="contents mr-2"></div>
+                                    </div>
                                 </div>
                                 <div class="row bottom"></div>
                             </div>
