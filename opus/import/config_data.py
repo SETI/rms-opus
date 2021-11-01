@@ -1125,3 +1125,8 @@ STAR_RA_DEC = {
     'ZET_PER':              ( 58.533010313,  31.883633684),
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
+
+# Index files that contains surface geo info
+INDEX_FILES_WITH_SURFACE_GEO_INFO = [
+    'CUBE_EQUI'
+]

@@ -796,10 +796,21 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                         impglobals.IMPORT_HAS_BAD_DATA = True
                         continue
                     return False
+
+                # This is used to determine if we need to create body surface
+                # geo table when *_summary doesn't exist under metadata.
+                sub_assoc_type = None
                 if 'RING_SUMMARY' in basename.upper():
                     assoc_type = 'ring_geo'
                 elif 'SUPPLEMENTAL_INDEX' in basename.upper():
                     assoc_type = 'supp_index'
+                    # Check if the index file contains surface geo info, if so,
+                    # we assign 'body_surface_geo' to sub_assoc_dict
+                    for f in INDEX_FILES_WITH_SURFACE_GEO_INFO:
+                        if f in basename.upper():
+                            sub_assoc_type = 'body_surface_geo'
+                            break
+
                 elif 'INVENTORY' in basename.upper():
                     assoc_type = 'inventory'
                 else:
@@ -915,6 +926,29 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                 break
                             key = key.upper()
                             assoc_dict[key] = row
+
+                    # construct surface geo dict for index files that contains
+                    # surface geo info.
+                    # Format: {opus_id: {target: 'Target_NAME': target}}
+                    if sub_assoc_type == 'body_surface_geo':
+                        obs_rows = metadata['index']
+                        sub_assoc_dict = metadata.get(sub_assoc_type, {})
+                        for row in obs_rows:
+                            vol_id = row.get('VOLUME_ID', None)
+                            file_spec_name = row.get('FILE_SPECIFICATION_NAME',
+                                                     None).upper()
+                            data_file_spec = vol_id+'/'+file_spec_name
+                            data_pdsfile = pdsfile.PdsFile.from_filespec(
+                                                    data_file_spec,
+                                                    fix_case=True)
+                            opus_id = data_pdsfile.opus_id
+                            target = row.get('TARGET_NAME')
+                            sub_assoc_dict[opus_id] = {}
+                            sub_assoc_dict[opus_id][target] = {
+                                'TARGET_NAME': target
+                            }
+                        metadata[sub_assoc_type] = sub_assoc_dict
+
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
 

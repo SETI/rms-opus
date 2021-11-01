@@ -58,7 +58,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_PLANETOCENTRIC_LATITUDE"
+            "MINIMUM_PLANETOCENTRIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_planetocentric_latitude1_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -90,7 +92,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOCENTRIC_LATITUDE"
+            "MAXIMUM_PLANETOCENTRIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_planetocentric_latitude2_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -119,7 +123,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_PLANETOGRAPHIC_LATITUDE"
+            "MINIMUM_PLANETOGRAPHIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_planetographic_latitude1_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -151,7 +157,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOGRAPHIC_LATITUDE"
+            "MAXIMUM_PLANETOGRAPHIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_planetographic_latitude2_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -180,7 +188,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_IAU_LONGITUDE"
+            "MINIMUM_IAU_LONGITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_iau_west_longitude1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -212,7 +222,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_IAU_LONGITUDE"
+            "MAXIMUM_IAU_LONGITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_iau_west_longitude2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -267,7 +279,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_LOCAL_HOUR_ANGLE"
+            "MINIMUM_LOCAL_HOUR_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_solar_hour_angle1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -299,7 +313,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_LOCAL_HOUR_ANGLE"
+            "MAXIMUM_LOCAL_HOUR_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_solar_hour_angle2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -354,7 +370,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_LONGITUDE_WRT_OBSERVER"
+            "MINIMUM_LONGITUDE_WRT_OBSERVER",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_observer_longitude1_<TYPE>"
         ],
         "val_min": -180,
         "val_max": 180,
@@ -386,7 +404,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_LONGITUDE_WRT_OBSERVER"
+            "MAXIMUM_LONGITUDE_WRT_OBSERVER",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_observer_longitude2_<TYPE>"
         ],
         "val_min": -180,
         "val_max": 180,
@@ -441,7 +461,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_FINEST_SURFACE_RESOLUTION"
+            "MINIMUM_FINEST_SURFACE_RESOLUTION",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_finest_resolution1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -473,7 +495,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_FINEST_SURFACE_RESOLUTION"
+            "MAXIMUM_FINEST_SURFACE_RESOLUTION",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_finest_resolution2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -502,7 +526,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_COARSEST_SURFACE_RESOLUTION"
+            "MINIMUM_COARSEST_SURFACE_RESOLUTION",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_coarsest_resolution1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e6,
@@ -535,7 +561,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_COARSEST_SURFACE_RESOLUTION"
+            "MAXIMUM_COARSEST_SURFACE_RESOLUTION",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_coarsest_resolution2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e6,
@@ -565,7 +593,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_SURFACE_DISTANCE"
+            "MINIMUM_SURFACE_DISTANCE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_range_to_body1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -597,7 +627,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_SURFACE_DISTANCE"
+            "MAXIMUM_SURFACE_DISTANCE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_range_to_body2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -626,7 +658,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_PHASE_ANGLE"
+            "MINIMUM_PHASE_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_phase1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -658,7 +692,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_PHASE_ANGLE"
+            "MAXIMUM_PHASE_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_phase2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -687,7 +723,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_INCIDENCE_ANGLE"
+            "MINIMUM_INCIDENCE_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_incidence1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -719,7 +757,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_INCIDENCE_ANGLE"
+            "MAXIMUM_INCIDENCE_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_incidence2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,
@@ -748,7 +788,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MINIMUM_EMISSION_ANGLE"
+            "MINIMUM_EMISSION_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_emission1_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 90,
@@ -780,7 +822,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "MAXIMUM_EMISSION_ANGLE"
+            "MAXIMUM_EMISSION_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_emission2_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 90,
@@ -809,7 +853,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOCENTRIC_LATITUDE"
+            "SUB_SOLAR_PLANETOCENTRIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_solar_planetocentric_latitude_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -838,7 +884,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOGRAPHIC_LATITUDE"
+            "SUB_SOLAR_PLANETOGRAPHIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_solar_planetographic_latitude_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -867,7 +915,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOCENTRIC_LATITUDE"
+            "SUB_OBSERVER_PLANETOCENTRIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_observer_planetocentric_latitude_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -896,7 +946,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE"
+            "SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_observer_planetographic_latitude_<TYPE>"
         ],
         "val_min": -90,
         "val_max": 90,
@@ -925,7 +977,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_SOLAR_IAU_LONGITUDE"
+            "SUB_SOLAR_IAU_LONGITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_solar_iau_longitude_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -954,7 +1008,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "SUB_OBSERVER_IAU_LONGITUDE"
+            "SUB_OBSERVER_IAU_LONGITUDE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_sub_observer_iau_longitude_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 360,
@@ -983,7 +1039,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "CENTER_RESOLUTION"
+            "CENTER_RESOLUTION",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_center_resolution_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -1012,7 +1070,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "CENTER_DISTANCE"
+            "CENTER_DISTANCE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_center_distance_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 1e18,
@@ -1041,7 +1101,9 @@
         "field_key": true,
         "data_source": [
             "TAB:body_surface_geo",
-            "CENTER_PHASE_ANGLE"
+            "CENTER_PHASE_ANGLE",
+            "FUNCTION",
+            "~obs_surface_geo_<INST>_center_phase_angle_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 180,

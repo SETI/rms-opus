@@ -126,9 +126,9 @@ def populate_obs_general_COCIRS_declination2_OBS(**kwargs):
 
 # RING GEOMETRY FOR COCIRS_0xxx/1xxx, only apply to ring maps (RING_POLAR)
 def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
@@ -136,9 +136,9 @@ def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
     return radius1
 
 def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius2 = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_RADIUS_ZPD')
@@ -146,17 +146,17 @@ def populate_obs_ring_geometry_COCIRS_ring_radius1_OBS(**kwargs):
     return radius2
 
 def populate_obs_ring_geometry_COCIRS_j2000_longitude1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row,
                 'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_BEGINNING')
 
 def populate_obs_ring_geometry_COCIRS_j2000_longitude2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row,
                 'CSS:PRIMARY_SUB_SOLAR_LONGITUDE_END')
@@ -170,17 +170,17 @@ def populate_obs_ring_geometry_COCIRS_ring_azimuth_wrt_observer2_OBS(**kwargs):
 # Phase angle: The angle between the point where incoming source photons
 # hit the ring , to the direction where outgoing photons to the observer
 def populate_obs_ring_geometry_COCIRS_phase1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
 
 def populate_obs_ring_geometry_COCIRS_phase2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row,
                 'CSS:MEAN_RING_BORESIGHT_SOLAR_PHASE')
@@ -212,18 +212,18 @@ def populate_obs_ring_geometry_COCIRS_north_based_incidence2_OBS(**kwargs):
 # lit side of the ring, and 90-180 when it's at the dark side.
 # Since observer is at the dark side, ea is between 90-180
 def populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     ea = index_row['CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE']
 
     return ea
 
 def populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs):
-    metadata = kwargs['metadata']
-    if _get_COCIRS_cube_map_projections(metadata) != 'r':
+    if not _is_ring_map_projections(**kwargs):
         return None
+    metadata = kwargs['metadata']
     index_row = metadata['index_row']
     ea = index_row['CSS:MEAN_RING_BORESIGHT_EMISSION_ANGLE']
 
@@ -238,6 +238,8 @@ def populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs):
 # angle will be 180 - the emission angle.
 def populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
+    if ea is None: return ea # not ring map projections
+
     if _is_ring_north_side_lit(**kwargs):
         return ea
     else:
@@ -246,6 +248,8 @@ def populate_obs_ring_geometry_COCIRS_north_based_emission1_OBS(**kwargs):
 
 def populate_obs_ring_geometry_COCIRS_north_based_emission2_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
+    if ea is None: return ea # not ring map projections
+
     if _is_ring_north_side_lit(**kwargs):
         return ea
     else:
@@ -279,6 +283,8 @@ populate_obs_ring_geometry_COCIRS_center_north_based_emission2_OBS = \
 # side of the ring, negative if it's at the south side.
 def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission1_OBS(**kwargs)
+    if ea is None: return ea # not ring map projections
+
     if _is_cassini_at_north(**kwargs):
         return abs(90. - ea)
     else:
@@ -286,6 +292,8 @@ def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle1_OBS(**kwargs)
 
 def populate_obs_ring_geometry_COCIRS_observer_ring_opening_angle2_OBS(**kwargs):
     ea = populate_obs_ring_geometry_COCIRS_emission2_OBS(**kwargs)
+    if ea is None: return ea # not ring map projections
+
     if _is_cassini_at_north(**kwargs):
         return abs(90. - ea)
     else:
@@ -327,6 +335,210 @@ def populate_obs_ring_geometry_COCIRS_ring_intercept_time1_OBS(**kwargs):
     return None
 
 def populate_obs_ring_geometry_COCIRS_ring_intercept_time2_OBS(**kwargs):
+    return None
+
+### SURFACE GEOMETRY ###
+def populate_obs_surface_geo_COCIRS_planetocentric_latitude1_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pc_latitude = index_row['CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC']
+
+    return pc_latitude
+
+def populate_obs_surface_geo_COCIRS_planetocentric_latitude2_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pc_latitude = index_row['CSS:MEAN_BORESIGHT_LATITUDE_ZPD_PC']
+
+    return pc_latitude
+
+def populate_obs_surface_geo_COCIRS_planetographic_latitude1_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    latitude = index_row['CSS:MEAN_BORESIGHT_LATITUDE_ZPD']
+
+    return latitude
+
+def populate_obs_surface_geo_COCIRS_planetographic_latitude2_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    latitude = index_row['CSS:MEAN_BORESIGHT_LATITUDE_ZPD']
+
+    return latitude
+
+def populate_obs_surface_geo_COCIRS_iau_west_longitude1_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    longitude = index_row['CSS:MEAN_BORESIGHT_LONGITUDE_ZPD']
+
+    return longitude
+
+def populate_obs_surface_geo_COCIRS_iau_west_longitude2_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    longitude = index_row['CSS:MEAN_BORESIGHT_LONGITUDE_ZPD']
+
+    return longitude
+
+def populate_obs_surface_geo_COCIRS_solar_hour_angle1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_solar_hour_angle2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_observer_longitude1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_observer_longitude2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_finest_resolution1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_finest_resolution2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_coarsest_resolution1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_coarsest_resolution2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_range_to_body1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_range_to_body2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_phase1_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    phase_angle = index_row['CSS:MEAN_BODY_PHASE_ANGLE']
+
+    return phase_angle
+
+def populate_obs_surface_geo_COCIRS_phase2_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    phase_angle = index_row['CSS:MEAN_BODY_PHASE_ANGLE']
+
+    return phase_angle
+
+def populate_obs_surface_geo_COCIRS_incidence1_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_incidence2_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_emission1_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    ea = index_row['CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE']
+
+    return ea
+
+def populate_obs_surface_geo_COCIRS_emission2_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    ea = index_row['CSS:MEAN_EMISSION_ANGLE_FOV_AVERAGE']
+
+    return ea
+
+def populate_obs_surface_geo_COCIRS_sub_solar_planetocentric_latitude_OBS(
+    **kwargs
+):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    pc_latitude = index_row['CSS:BODY_SUB_SOLAR_LATITUDE_PC_MIDDLE']
+
+    return pc_latitude
+
+def populate_obs_surface_geo_COCIRS_sub_solar_planetographic_latitude_OBS(
+    **kwargs
+):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    latitude = index_row['CSS:BODY_SUB_SOLAR_LATITUDE_MIDDLE']
+
+    return latitude
+
+def populate_obs_surface_geo_COCIRS_sub_observer_planetocentric_latitude_OBS(
+    **kwargs
+):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    latitude = index_row['CSS:BODY_SUB_SPACECRAFT_LATITUDE_PC_MIDDLE']
+
+    return latitude
+
+def populate_obs_surface_geo_COCIRS_sub_observer_planetographic_latitude_OBS(
+    **kwargs
+):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    latitude = index_row['CSS:BODY_SUB_SPACECRAFT_LATITUDE_MIDDLE']
+
+    return latitude
+
+def populate_obs_surface_geo_COCIRS_sub_solar_iau_longitude_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    longitude = index_row['CSS:BODY_SUB_SOLAR_LONGITUDE_MIDDLE']
+
+    return longitude
+
+def populate_obs_surface_geo_COCIRS_sub_observer_iau_longitude_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    longitude = index_row['CSS:BODY_SUB_SPACECRAFT_LONGITUDE_MIDDLE']
+
+    return longitude
+
+def populate_obs_surface_geo_COCIRS_center_resolution_OBS(**kwargs):
+    return None
+
+def populate_obs_surface_geo_COCIRS_center_distance_OBS(**kwargs):
+    if not _is_equi_map_projections(**kwargs):
+        return None
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    center_distance = index_row['CSS:BODY_SPACECRAFT_RANGE_MIDDLE']
+
+    return center_distance
+
+def populate_obs_surface_geo_COCIRS_center_phase_angle_OBS(**kwargs):
     return None
 
 
@@ -618,6 +830,14 @@ def _get_COCIRS_cube_map_projections(metadata):
         return index_row['PRODUCT_ID'][-1].lower()
     else:
         return None
+
+def _is_ring_map_projections(**kwargs):
+    metadata = kwargs['metadata']
+    return _get_COCIRS_cube_map_projections(metadata) == 'r'
+
+def _is_equi_map_projections(**kwargs):
+    metadata = kwargs['metadata']
+    return _get_COCIRS_cube_map_projections(metadata) == 'e'
 
 # Equinox: 2009-08-11T01:40:08.914
 # Before this time, north side of the ring is lit.
