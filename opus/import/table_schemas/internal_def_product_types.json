@@ -71,6 +71,11 @@
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cube_index",
+        "definition": "Text files ([volume]_cube_equi/point/ring_index.tab) that tabulate information about the cube image with different map projections for each observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "planet_geometry",
         "definition": "Text files ([volume]_[planet]_summary.tab) that list the values of various surface geometry metadata for the central planet for every observation in a particular volume. Associated labels (*.lbl) describe the contents of the text files."
     },
@@ -333,6 +338,16 @@
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cocirs_browse_pan",
         "definition": "Diagrams (POI*_FPx_618.PNG) showing the footprint of the spectra in a CIRS observation on Pan. Associated labels (POI*_FPx_618.LBL) are text files that contain information about the footprint diagrams."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cocirs_cube",
+        "definition": "Compressed tar archive (*.tar.gz) that contain spectral image cubes information for COCIRS. Associated labels (*.LBL) describe the contents of the archive files."
+    },
+    {
+        "pi_dict_context": "OPUS_PRODUCT_TYPE",
+        "pi_dict_name": "cocirs_extra",
+        "definition": "Supplemental viewable image (*.JPG) that contain spectral image cubes information for COCIRS. Associated labels (*.LBL) describe the contents of the supplemental files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
