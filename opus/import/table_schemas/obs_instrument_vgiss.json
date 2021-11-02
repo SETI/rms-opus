@@ -46,7 +46,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "IMAGE_ID"
+            "IMAGE_ID",
+            "FUNCTION",
+            "obs_instrument_vgiss_image_id_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -71,7 +73,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "SCAN_MODE"
+            "SCAN_MODE",
+            "FUNCTION",
+            "obs_instrument_vgiss_scan_mode_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -103,7 +107,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "SHUTTER_MODE"
+            "SHUTTER_MODE",
+            "FUNCTION",
+            "obs_instrument_vgiss_shutter_mode_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -138,7 +144,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "GAIN_MODE"
+            "GAIN_MODE",
+            "FUNCTION",
+            "obs_instrument_vgiss_gain_mode_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -167,7 +175,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "EDIT_MODE"
+            "EDIT_MODE",
+            "FUNCTION",
+            "obs_instrument_vgiss_edit_mode_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -204,7 +214,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "FILTER_NAME"
+            "FILTER_NAME",
+            "FUNCTION",
+            "obs_instrument_vgiss_filter_name_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -239,7 +251,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "FILTER_NUMBER"
+            "FILTER_NUMBER",
+            "FUNCTION",
+            "obs_instrument_vgiss_filter_name_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",

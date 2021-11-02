@@ -523,7 +523,28 @@ def populate_obs_instrument_vgiss_camera_PROF(**kwargs):
     return 'N'
 
 def populate_obs_instrument_vgiss_usable_lines_PROF(**kwargs):
-    return None
+    return 800
 
 def populate_obs_instrument_vgiss_usable_samples_PROF(**kwargs):
-    return None
+    return 800
+
+def populate_obs_instrument_vgiss_filter_name_PROF(**kwargs):
+    return 'CLEAR'
+
+def populate_obs_instrument_vgiss_filter_number_PROF(**kwargs):
+    return 0
+
+def populate_obs_instrument_vgiss_shutter_mode_PROF(**kwargs):
+    return 'NAONLY'
+
+def populate_obs_instrument_vgiss_edit_mode_PROF(**kwargs):
+    return '1:1'
+
+def populate_obs_instrument_vgiss_scan_mode_PROF(**kwargs):
+    return '1:1'
+
+def populate_obs_instrument_vgiss_gain_mode_PROF(**kwargs):
+    return 'LOW'
+
+def populate_obs_instrument_vgiss_image_id_PROF(**kwargs):
+    return 'LOW'
