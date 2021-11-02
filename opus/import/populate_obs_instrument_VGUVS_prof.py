@@ -226,7 +226,7 @@ def populate_obs_occultation_VGUVS_temporal_sampling_PROF(**kwargs):
     return tmp_sampling_interval
 
 def populate_obs_occultation_VGUVS_quality_score_PROF(**kwargs):
-    return None
+    return 'GOOD'
 
 def populate_obs_occultation_VGUVS_wl_band_PROF(**kwargs):
     metadata = kwargs['metadata']
