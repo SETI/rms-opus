@@ -184,7 +184,7 @@ def populate_obs_wavelength_VGUVS_wave_no_res2_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_VGUVS_spec_flag_PROF(**kwargs):
-    return 'N'
+    return 'Y'
 
 def populate_obs_wavelength_VGUVS_spec_size_PROF(**kwargs):
     return 1

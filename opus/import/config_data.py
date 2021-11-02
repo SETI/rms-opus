@@ -1010,7 +1010,7 @@ STAR_RA_DEC = {
     'BET_LUP':              (224.633022333, -43.133963861),
     'BET_ORI':              ( 78.634467083,  -8.201638361),
     'BET_PEG':              (345.943572750,  28.082787111),
-    'BET_PER':              ( 47.042218556,  40.955646670),
+    'BET_PER':              ( 47.042218542,  40.955646667),
     'BET_PSA':              (337.876376594, -32.346073708),
     'BET01_SGR':            (290.659578409, -44.458985404),
     'BET_UMI':              (222.676357500,  74.155503944),
@@ -1060,7 +1060,7 @@ STAR_RA_DEC = {
     'HD_37962':             ( 85.216524637, -31.351106996),
     'HD_71334':             (126.456315441, -29.930591803),
     'IK_TAU':               ( 58.370368708,  11.406073878),
-    'IO_HER':               (264.866193000,  46.002279500),
+    'IO_HER':               (264.866193333,  46.006331945),
     'IO_CEN':               (209.907936987, -56.148672972),
     'IO_ORI':               ( 83.601016047,  -4.411121205),
     'IRC_+10216':           (146.989193000,  13.278768000),
@@ -1127,6 +1127,8 @@ STAR_RA_DEC = {
 }
 
 # Index files that contains surface geo info
+# In the future, we can just add the keyword of the basenames here if the index
+# files are meant to be searchable as surface geo.
 INDEX_FILES_WITH_SURFACE_GEO_INFO = [
     'CUBE_EQUI'
 ]
