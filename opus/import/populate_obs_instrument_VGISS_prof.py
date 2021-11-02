@@ -108,19 +108,19 @@ def populate_obs_general_VGISS_declination2_PROF(**kwargs):
 ### OBS_TYPE_IMAGE TABLE ###
 
 def populate_obs_type_image_VGISS_image_type_id_PROF(**kwargs):
-    return None
+    return 'Frame'
 
 def populate_obs_type_image_VGISS_duration_PROF(**kwargs):
-    return None
+    return 0.72
 
 def populate_obs_type_image_VGISS_levels_PROF(**kwargs):
-    return None
+    return 255
 
 def populate_obs_type_image_VGISS_lesser_pixel_size_PROF(**kwargs):
-    return None
+    return 800
 
 def populate_obs_type_image_VGISS_greater_pixel_size_PROF(**kwargs):
-    return None
+    return 800
 
 
 ### OBS_WAVELENGTH TABLE ###
