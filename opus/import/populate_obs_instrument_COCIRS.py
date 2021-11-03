@@ -85,7 +85,14 @@ def populate_obs_general_COCIRS_quantity_OBS(**kwargs):
     return 'THERMAL'
 
 def populate_obs_general_COCIRS_observation_type_OBS(**kwargs):
-    return 'STS' # Spectral Time Series
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
+    file_spec = _get_COCIRS_file_spec(index_row)
+    if 'CUBE' in file_spec:
+        return 'SCU' # Spectral Cube 
+    else:
+        return 'STS' # Spectral Time Series
 
 def populate_obs_pds_COCIRS_note_OBS(**kwargs):
     return None
