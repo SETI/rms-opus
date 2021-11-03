@@ -41,8 +41,8 @@
         "waveno2": "-101.010101",
         "wavenores1": "0",
         "wavenores2": "0",
-        "specflag": "No",
-        "specsize": "1",
+        "specflag": "Yes",
+        "specsize": null,
         "polarizationtype": "None"
     },
     "Occultation/Reflectance Profiles Constraints": {
@@ -50,7 +50,7 @@
         "occdir": "Ingress",
         "bodyoccflag": "No",
         "occtimesampling": "0.32",
-        "occdataquality": null,
+        "occdataquality": "Good",
         "occdepth1": null,
         "occdepth2": null,
         "occwlband": "UV",

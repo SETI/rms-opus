@@ -26,11 +26,11 @@
         "note": null
     },
     "Image Constraints": {
-        "duration": null,
-        "greaterpixelsize": null,
-        "lesserpixelsize": null,
-        "levels": null,
-        "imagetype": null
+        "duration": "0.72",
+        "greaterpixelsize": "800",
+        "lesserpixelsize": "800",
+        "levels": "255",
+        "imagetype": "Frame"
     },
     "Wavelength Constraints": {
         "wavelength1": "0.28",
@@ -48,9 +48,9 @@
     "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Reflectance",
         "occdir": null,
-        "bodyoccflag": "No",
-        "occtimesampling": "0",
-        "occdataquality": null,
+        "bodyoccflag": null,
+        "occtimesampling": null,
+        "occdataquality": "Good",
         "occdepth1": null,
         "occdepth2": null,
         "occwlband": "Visible",
@@ -147,8 +147,8 @@
         "VGISSgainmode": "Low",
         "VGISSscanmode": "3:1",
         "VGISSimageid": "N/A",
-        "VGISSusablelines": null,
-        "VGISSusablesamples": null,
-        "duration": null
+        "VGISSusablelines": "800",
+        "VGISSusablesamples": "800",
+        "duration": "0.72"
     }
 }

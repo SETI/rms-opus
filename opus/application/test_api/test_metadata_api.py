@@ -683,13 +683,13 @@ class ApiMetadataTests(TestCase, ApiTestHelper):
     def test__api_meta_range_endpoints_levels1_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 VGISS"
         url = '/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS'
-        expected = {'min': '256', 'max': '256', 'nulls': 2, "units": None}
+        expected = {'min': '256', 'max': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     def test__api_meta_range_endpoints_levels_constrained_VGISS(self):
         "[test_metadata_api.py] /api/meta/range/endpoints: levels1 VGISS constrained"
         url = '/api/meta/range/endpoints/levels.json?instrument=Voyager+ISS&levels1=5&levels2=10'
-        expected = {'min': '256', 'max': '256', 'nulls': 2, "units": None}
+        expected = {'min': '256', 'max': '256', 'nulls': 0, "units": None}
         self._run_json_equal(url, expected)
 
     # reqno

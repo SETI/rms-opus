@@ -187,7 +187,7 @@ def populate_obs_wavelength_VGUVS_spec_flag_PROF(**kwargs):
     return 'Y'
 
 def populate_obs_wavelength_VGUVS_spec_size_PROF(**kwargs):
-    return 1
+    return None #TBD
 
 def populate_obs_wavelength_VGUVS_polarization_type_PROF(**kwargs):
     return 'NONE'

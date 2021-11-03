@@ -108,13 +108,13 @@ def populate_obs_general_VGISS_declination2_PROF(**kwargs):
 ### OBS_TYPE_IMAGE TABLE ###
 
 def populate_obs_type_image_VGISS_image_type_id_PROF(**kwargs):
-    return 'Frame'
+    return 'FRAM'
 
 def populate_obs_type_image_VGISS_duration_PROF(**kwargs):
     return 0.72
 
 def populate_obs_type_image_VGISS_levels_PROF(**kwargs):
-    return 255
+    return 256
 
 def populate_obs_type_image_VGISS_lesser_pixel_size_PROF(**kwargs):
     return 800
@@ -201,20 +201,10 @@ def populate_obs_occultation_VGISS_occ_type_PROF(**kwargs):
     return 'REF'
 
 def populate_obs_occultation_VGISS_occ_dir_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    occ_direction = index_row['RING_OCCULTATION_DIRECTION']
-    if 'N/A' in occ_direction:
-        return None
-    return occ_direction[0]
+    return None
 
 def populate_obs_occultation_VGISS_body_occ_flag_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
-
-    return body_occ_flag
+    return None
 
 def populate_obs_occultation_VGISS_optical_depth_min_PROF(**kwargs):
     return None
@@ -223,11 +213,7 @@ def populate_obs_occultation_VGISS_optical_depth_max_PROF(**kwargs):
     return None
 
 def populate_obs_occultation_VGISS_temporal_sampling_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    tmp_sampling_interval = index_row['TEMPORAL_SAMPLING_INTERVAL']
-
-    return tmp_sampling_interval
+    return None
 
 def populate_obs_occultation_VGISS_quality_score_PROF(**kwargs):
     return 'GOOD'

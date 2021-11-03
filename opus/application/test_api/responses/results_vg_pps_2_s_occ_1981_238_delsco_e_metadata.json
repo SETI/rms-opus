@@ -50,7 +50,7 @@
         "occdir": "Egress",
         "bodyoccflag": "No",
         "occtimesampling": "0.01",
-        "occdataquality": null,
+        "occdataquality": "Good",
         "occdepth1": null,
         "occdepth2": null,
         "occwlband": "UV",
