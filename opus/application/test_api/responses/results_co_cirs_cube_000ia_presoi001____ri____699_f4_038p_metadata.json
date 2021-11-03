@@ -6,7 +6,7 @@
         "mission": "Cassini",
         "insthost": "Cassini",
         "instrument": "Cassini CIRS",
-        "observationtype": "Spectral Time Series",
+        "observationtype": "Spectral Cube",
         "time1": "2004-06-22T08:59:53.000",
         "time2": "2004-06-22T08:59:58.000",
         "observationduration": "5",
