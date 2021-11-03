@@ -29,7 +29,7 @@
         "duration": "0.72",
         "greaterpixelsize": "800",
         "lesserpixelsize": "800",
-        "levels": "255",
+        "levels": "256",
         "imagetype": "Frame"
     },
     "Wavelength Constraints": {
