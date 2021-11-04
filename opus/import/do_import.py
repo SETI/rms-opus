@@ -592,6 +592,15 @@ def import_one_volume(volume_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
+
+    # Check if we want to ignore this specific volume in a volset
+    volset = volume_pdsfile.volset
+    if volset in DESIRED_VOLUMES_IN_VOLSET.keys():
+        if not re.match(DESIRED_VOLUMES_IN_VOLSET[volset], volume_id):
+            impglobals.LOGGER.close()
+            impglobals.CURRENT_VOLUME_ID = None
+            return True
+
     if not volume_pdsfile.is_volume:
         impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
