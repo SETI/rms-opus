@@ -1140,9 +1140,3 @@ DESIRED_VOLUMES_IN_VOLSET = {
     # we will ignore volumes smaller than 0402 for COCIRS_0xxx
     'COCIRS_0xxx': r'(COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d{2})$',
 }
-# A Dictionary that stores the specific index files for a specific volset
-# {volset: list of regex patterns for desired index files}
-# VOLSET_TO_INDEX_FILES = {
-#     'COCIRS_0xxx': r'.*metadata/COCIRS_0xxx/.*/.*cube.*'
-#     'COCIRS_1xxx': r'.*metadata/COCIRS_1xxx/.*/.*cube.*',
-# }
