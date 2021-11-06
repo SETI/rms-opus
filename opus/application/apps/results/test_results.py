@@ -467,6 +467,50 @@ class resultsTests(TestCase):
                     'obs_mission_voyager', 'obs_instrument_vgiss']
         self._test_triggered_tables(q, expected)
 
+    def test__get_triggered_tables_vgpps_volume(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume VG_2801"
+        q = QueryDict('volumeid=VG_2801')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vguvs_volume(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume VG_2802"
+        q = QueryDict('volumeid=VG_2802')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgrss_volume(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume VG_2803"
+        q = QueryDict('volumeid=VG_2803')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_vgiss_volume(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume VG_2810"
+        q = QueryDict('volumeid=VG_2810')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_voyager', 'obs_instrument_vgiss']
+        self._test_triggered_tables(q, expected)
+
     def test__get_triggered_tables_hubble(self):
         "[test_results.py] get_triggered_tables: tables triggered by mission Hubble"
         q = QueryDict('mission=Hubble')
