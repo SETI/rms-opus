@@ -321,6 +321,28 @@ class resultsTests(TestCase):
                     'obs_mission_cassini', 'obs_instrument_cocirs']
         self._test_triggered_tables(q, expected)
 
+    def test__get_triggered_tables_cocirs_volume_5xxx(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_5xxx"
+        q = QueryDict('observationtype=Spectral+Time+Series&volumeid=COCIRS&qtype-volumeid=begins')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_cocirs']
+        self._test_triggered_tables(q, expected)
+
+    def test__get_triggered_tables_cocirs_volume_0xxx(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_0xxx"
+        q = QueryDict('observationtype=Spectral+Cube&volumeid=COCIRS&qtype-volumeid=begins')
+        expected = ['obs_general', 'obs_pds', 'obs_type_image',
+                    'obs_wavelength', 'obs_profile',
+                    'obs_surface_geometry_name',
+                    'obs_surface_geometry',
+                    'obs_ring_geometry',
+                    'obs_mission_cassini', 'obs_instrument_cocirs']
+        self._test_triggered_tables(q, expected)
+
     def test__get_triggered_tables_coiss(self):
         "[test_results.py] get_triggered_tables: tables triggered by instrument COISS"
         q = QueryDict('planet=SATURN&instrument=COISS')
