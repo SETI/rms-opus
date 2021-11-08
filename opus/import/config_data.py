@@ -41,7 +41,9 @@ VOLSETS_WITH_RING_GEO = ['COISS_1xxx',
 
 # These instruments have surface geo available (maybe)
 # This is only used to give a warning if the surface geo isn't available
-VOLSETS_WITH_SURFACE_GEO = ['COISS_1xxx',
+VOLSETS_WITH_SURFACE_GEO = ['COCIRS_0xxx',
+                            'COCIRS_1xxx',
+                            'COISS_1xxx',
                             'COISS_2xxx',
                             'COUVIS_0xxx',
                             'COVIMS_0xxx',
