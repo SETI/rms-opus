@@ -48,7 +48,7 @@
             "TAB:index",
             "DETECTOR_ID",
             "FUNCTION",
-            "obs_instrument_coiss_detector_id_<TYPE>"
+            "obs_instrument_cocirs_detector_id_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -78,7 +78,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_BLINKING_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_blinking_flag_<TYPE>"
+            "obs_instrument_cocirs_blinking_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -103,7 +103,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_EVEN_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_even_flag_<TYPE>"
+            "obs_instrument_cocirs_even_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -128,7 +128,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_ODD_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_odd_flag_<TYPE>"
+            "obs_instrument_cocirs_odd_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -153,7 +153,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_CENTERS_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_centers_flag_<TYPE>"
+            "obs_instrument_cocirs_centers_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -178,7 +178,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_PAIRS_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_pairs_flag_<TYPE>"
+            "obs_instrument_cocirs_pairs_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -203,7 +203,7 @@
             "TAB:index",
             "INSTRUMENT_MODE_ALL_FLAG",
             "FUNCTION",
-            "obs_instrument_coiss_all_flag_<TYPE>"
+            "obs_instrument_cocirs_all_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",

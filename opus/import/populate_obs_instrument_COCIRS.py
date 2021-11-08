@@ -90,7 +90,7 @@ def populate_obs_general_COCIRS_observation_type_OBS(**kwargs):
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
     file_spec = _get_COCIRS_file_spec(index_row)
     if 'CUBE' in file_spec:
-        return 'SCU' # Spectral Cube 
+        return 'SCU' # Spectral Cube
     else:
         return 'STS' # Spectral Time Series
 
@@ -785,7 +785,7 @@ def populate_obs_mission_cassini_COCIRS_sequence_id_OBS(**kwargs):
 ################################################################################
 # THESE ARE SPECIFIC TO OBS_INSTRUMENT_COCIRS
 ################################################################################
-def populate_obs_instrument_coiss_detector_id_OBS(**kwargs):
+def populate_obs_instrument_cocirs_detector_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     # cube_*_index
     index_row = metadata['supp_index_row']
@@ -794,17 +794,17 @@ def populate_obs_instrument_coiss_detector_id_OBS(**kwargs):
 # For COCIRS_0xxx and COCIRS_1xxx, we don't have these info in the index files
 # TODO: Should we put None for all of them, check with Mark/Rob later. All these
 # can't be null in the table previously
-def populate_obs_instrument_coiss_blinking_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_blinking_flag_OBS(**kwargs):
     return None
-def populate_obs_instrument_coiss_even_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_even_flag_OBS(**kwargs):
     return None
-def populate_obs_instrument_coiss_odd_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_odd_flag_OBS(**kwargs):
     return None
-def populate_obs_instrument_coiss_centers_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_centers_flag_OBS(**kwargs):
     return None
-def populate_obs_instrument_coiss_pairs_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_pairs_flag_OBS(**kwargs):
     return None
-def populate_obs_instrument_coiss_all_flag_OBS(**kwargs):
+def populate_obs_instrument_cocirs_all_flag_OBS(**kwargs):
     return None
 
 ################################################################################
