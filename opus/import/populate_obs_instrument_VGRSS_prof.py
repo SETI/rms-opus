@@ -323,6 +323,11 @@ def populate_obs_ring_geometry_VGRSS_phase2_PROF(**kwargs):
     return 180.
 
 # Source: Voyager RSS is at south, observer: earth is at north.
+# Note: we search VGISS start_time in OPUS and look at north based emssion
+# angle to determine the location of the Voyager. If the north based emission
+# angle is more than 90, it means the observer (Voyager) is at the south side
+# of the ring. Otherwise, the observer is at the north side of the ring.
+
 # Incidence angle: the angle between the point where incoming source photons
 # hit the ring, to the north pole of the planet we're looking at (normal vector
 # on the surface of LIT side of the ring, same as source side), always between
