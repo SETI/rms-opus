@@ -60,7 +60,7 @@
             "FUNCTION",
             "obs_occultation_<INST>_occ_type_<TYPE>"
         ],
-        "definition": "An occultation is a measurement in which a source signal passes through a medium before being observed. Radio means the source is an artificially-emitted radio signal. Solar means the source is the Sun. Stellar means the source is a star other than the Sun.",
+        "definition": "An occultation is a measurement in which a source signal passes through a medium before being observed. Radio means the source is an artificially-emitted radio signal. Solar means the source is the Sun. Stellar means the source is a star other than the Sun. A reflectance profile is a measurement in which a source signal is reflected from a surface and a 1-D slice is recorded.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "OCCULTATION_TYPE",
@@ -69,8 +69,8 @@
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
         "pi_intro": null,
-        "pi_label": "Occultation Type",
-        "pi_label_results": "Occultation Type",
+        "pi_label": "Occultation or Profile Type",
+        "pi_label_results": "Occultation or Profile Type",
         "pi_old_slug": null,
         "pi_slug": "occtype",
         "pi_sub_heading": null,
@@ -175,7 +175,7 @@
             "FUNCTION",
             "obs_occultation_<INST>_quality_score_<TYPE>"
         ],
-        "definition": "A subjective rating of quality of the occultation profile.",
+        "definition": "A subjective rating of quality of the occultation or reflectance profile.",
         "pi_category_name": "obs_profile",
         "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "DATA_QUALITY_SCORE",

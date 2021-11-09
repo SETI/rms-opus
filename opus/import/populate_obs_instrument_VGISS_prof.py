@@ -188,7 +188,7 @@ def populate_obs_wavelength_VGISS_spec_flag_PROF(**kwargs):
     return 'N'
 
 def populate_obs_wavelength_VGISS_spec_size_PROF(**kwargs):
-    return 1
+    return None
 
 def populate_obs_wavelength_VGISS_polarization_type_PROF(**kwargs):
     return 'NONE'
@@ -234,18 +234,14 @@ def populate_obs_occultation_VGISS_wl_band_PROF(**kwargs):
     return wl_band1
 
 def populate_obs_occultation_VGISS_source_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    src_name1 = index_row['SIGNAL_SOURCE_NAME_1']
-    src_name2 = index_row['SIGNAL_SOURCE_NAME_2']
-
-    if src_name2 != 'N/A':
-        assert src_name1 == src_name2, 'Mismatched src_name1 and src_name2.'
-
-    return src_name1
+    return 'N/A'
 
 def populate_obs_occultation_VGISS_host_PROF(**kwargs):
-    return 'voyager'
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    receiver_host = index_row['RECEIVER_HOST_NAME']
+
+    return receiver_host
 
 
 ### OBS_RING_GEOMETRY TABLE ###
@@ -305,10 +301,18 @@ def populate_obs_ring_geometry_VGISS_ring_azimuth_wrt_observer2_PROF(**kwargs):
     return None
 
 def populate_obs_ring_geometry_VGISS_phase1_PROF(**kwargs):
-    return 180.
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    phase_angle = index_row['MINIMUM_PHASE_ANGLE']
+
+    return phase_angle
 
 def populate_obs_ring_geometry_VGISS_phase2_PROF(**kwargs):
-    return 180.
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    phase_angle = index_row['MAXIMUM_PHASE_ANGLE']
+
+    return phase_angle
 
 # Source: Sun, observer: earth, both of them are at the north side.
 # Incidence angle: the angle between the point where incoming source photons
@@ -513,24 +517,3 @@ def populate_obs_instrument_vgiss_usable_lines_PROF(**kwargs):
 
 def populate_obs_instrument_vgiss_usable_samples_PROF(**kwargs):
     return 800
-
-def populate_obs_instrument_vgiss_filter_name_PROF(**kwargs):
-    return 'CLEAR'
-
-def populate_obs_instrument_vgiss_filter_number_PROF(**kwargs):
-    return 0
-
-def populate_obs_instrument_vgiss_shutter_mode_PROF(**kwargs):
-    return 'NAONLY'
-
-def populate_obs_instrument_vgiss_edit_mode_PROF(**kwargs):
-    return '1:1'
-
-def populate_obs_instrument_vgiss_scan_mode_PROF(**kwargs):
-    return '1:1'
-
-def populate_obs_instrument_vgiss_gain_mode_PROF(**kwargs):
-    return 'LOW'
-
-def populate_obs_instrument_vgiss_image_id_PROF(**kwargs):
-    return 'LOW'

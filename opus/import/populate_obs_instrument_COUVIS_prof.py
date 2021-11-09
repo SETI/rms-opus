@@ -193,7 +193,7 @@ def populate_obs_wavelength_COUVIS_spec_flag_PROF(**kwargs):
     return 'N'
 
 def populate_obs_wavelength_COUVIS_spec_size_PROF(**kwargs):
-    return 1
+    return None
 
 def populate_obs_wavelength_COUVIS_polarization_type_PROF(**kwargs):
     return 'NONE'

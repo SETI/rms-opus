@@ -253,7 +253,11 @@ def populate_obs_occultation_VGPPS_source_PROF(**kwargs):
     return src_name1
 
 def populate_obs_occultation_VGPPS_host_PROF(**kwargs):
-    return 'voyager'
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    receiver_host = index_row['RECEIVER_HOST_NAME']
+
+    return receiver_host
 
 
 ### OBS_RING_GEOMETRY TABLE ###

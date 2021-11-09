@@ -184,10 +184,10 @@ def populate_obs_wavelength_VGUVS_wave_no_res2_PROF(**kwargs):
     return _wave_no_res_helper(**kwargs)
 
 def populate_obs_wavelength_VGUVS_spec_flag_PROF(**kwargs):
-    return 'Y'
+    return 'N'
 
 def populate_obs_wavelength_VGUVS_spec_size_PROF(**kwargs):
-    return None #TBD
+    return None
 
 def populate_obs_wavelength_VGUVS_polarization_type_PROF(**kwargs):
     return 'NONE'
@@ -253,7 +253,11 @@ def populate_obs_occultation_VGUVS_source_PROF(**kwargs):
     return src_name1
 
 def populate_obs_occultation_VGUVS_host_PROF(**kwargs):
-    return 'voyager'
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    receiver_host = index_row['RECEIVER_HOST_NAME']
+
+    return receiver_host
 
 
 ### OBS_RING_GEOMETRY TABLE ###
