@@ -847,11 +847,11 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_prof_img_raw",
-        "definition": "Raw Voyager image files (*.TIF) after decompression. Images are in VICAR2 format. Associated labels (*.LBL) describe the contents of the image files."
+        "definition": "Raw image files (*_RAW.IMG) for Voyager ISS that were used to create a radial scan. Images are in VICAR format, uncalibrated, and in units of DN (data number). Associated labels (*.LBL) are text files that contain information about the image. Raw images have not been geometrically corrected and contain significant distortions."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vgiss_prof_img_cal",
-        "definition": "Finally calibrated image files (*.TIF) that are geometrically corrected Voyager images. Associated labels (*.LBL) describe the contents of the image files."
+        "definition": "Calibrated and geometrically corrected image files (*_GEOMED.IMG) for Voyager ISS that were used to create a radial scan. Images are in VICAR format and have been calibrated and geometrically corrected at the Ring-Moon Systems Node using the VICAR software package. They are in units of scaled I/F. Associated labels (*.LBL) are text files that contain information about the image. Calibration was performed after apparent flaws in the raw image, including reseau markings and spikes, were removed; these are geometrically corrected versions of the calibrated images (*_CALIB.IMG)."
     }
 ]
