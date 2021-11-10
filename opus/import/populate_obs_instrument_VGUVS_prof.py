@@ -330,10 +330,10 @@ def populate_obs_ring_geometry_VGUVS_phase2_PROF(**kwargs):
 # start time after 1986-01-24T17:10:13.320. Target: N ring.
 # Source IOTA HER is at north, observer Voyager is at south. Target: S ring.
 
-# Incidence angle: the angle between the point where incoming source photons
-# hit the ring, to the north pole of the planet we're looking at (normal vector
-# on the surface of LIT side of the ring, same as source side), always between
-# 0 (parallel to north pole) to 90 (parallel to ring)
+# Incidence angle: The angle between the point where the incoming source
+# photos hit the ring and the normal to the ring plane on the LIT side of
+# the ring. This is always between 0 (parallel to the normal vector) and 90
+# (parallel to the ring plane)
 # We would like to use emission angle to get both min/max of incidence angle.
 # Emission angle is 90-180 (dark side), so incidence angle is 180 - emission
 # angle.

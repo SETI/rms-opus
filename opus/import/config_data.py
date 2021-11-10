@@ -1128,9 +1128,14 @@ STAR_RA_DEC = {
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
 
-# Index files that contains surface geo info
-# In the future, we can just add the keyword of the basenames here if the index
-# files are meant to be searchable as surface geo.
+VG_TARGET_TO_MISSION_PHASE_MAPPING = {
+    'S RINGS': 'SATURN ENCOUNTER',
+    'U RINGS': 'URANUS ENCOUNTER',
+    'N RINGS': 'NEPTUNE ENCOUNTER'
+}
+
+# Keywords in supplemental index filenames that indicate they contain surface
+# geo info in the absence of an actual surface geo summary file.
 SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
     'CUBE_EQUI'
 ]

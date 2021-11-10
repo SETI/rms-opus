@@ -314,11 +314,16 @@ def populate_obs_ring_geometry_VGISS_phase2_PROF(**kwargs):
 
     return phase_angle
 
-# Source: Sun, observer: earth, both of them are at the north side.
-# Incidence angle: the angle between the point where incoming source photons
-# hit the ring, to the north pole of the planet we're looking at (normal vector
-# on the surface of LIT side of the ring, same as source side), always between
-# 0 (parallel to north pole) to 90 (parallel to ring)
+# Source: Sun, observer: Voyager. For both of the reflectance profiles,
+# the Sun was illuminating the north side of the rings and Voyager was
+# observing the rings from the south side. Thus the incidence/emission
+# angles and the north-based incidence/emission angles will
+# be the same.
+
+# Incidence angle: The angle between the point where the incoming source
+# photos hit the ring and the normal to the ring plane on the LIT side of
+# the ring. This is always between 0 (parallel to the normal vector) and 90
+# (parallel to the ring plane)
 def populate_obs_ring_geometry_VGISS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
