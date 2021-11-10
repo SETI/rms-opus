@@ -722,7 +722,7 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "vguvs_occ_ring",
-        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the J2000 frame. Associated labels (*.LBL) describe the contents of the text files."
+        "definition": "Text files (*.TAB) that contain time and position information for Voyager and for the ring intercept point, referenced to the ring frame. Associated labels (*.LBL) describe the contents of the text files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",

@@ -127,13 +127,13 @@ def populate_obs_type_image_VGISS_greater_pixel_size_PROF(**kwargs):
 
 def populate_obs_wavelength_VGISS_wavelength1_PROF(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
+    index_row = metadata['supp_index_row']
     wl1 = index_row['MINIMUM_WAVELENGTH']
     return wl1
 
 def populate_obs_wavelength_VGISS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
+    index_row = metadata['supp_index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
     return wl2
 

@@ -126,13 +126,13 @@ def populate_obs_type_image_VGRSS_greater_pixel_size_PROF(**kwargs):
 
 def populate_obs_wavelength_VGRSS_wavelength1_PROF(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
+    index_row = metadata['supp_index_row']
     wl1 = index_row['MINIMUM_WAVELENGTH']
     return wl1
 
 def populate_obs_wavelength_VGRSS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
+    index_row = metadata['supp_index_row']
     wl2 = index_row['MAXIMUM_WAVELENGTH']
     return wl2
 
@@ -187,7 +187,7 @@ def populate_obs_wavelength_VGRSS_spec_flag_PROF(**kwargs):
     return 'N'
 
 def populate_obs_wavelength_VGRSS_spec_size_PROF(**kwargs):
-    return 1
+    return None
 
 def populate_obs_wavelength_VGRSS_polarization_type_PROF(**kwargs):
     return 'NONE'
@@ -196,7 +196,7 @@ def populate_obs_wavelength_VGRSS_polarization_type_PROF(**kwargs):
 ### OBS_PROFILE TABLE ###
 
 def populate_obs_occultation_VGRSS_occ_type_PROF(**kwargs):
-    return 'STE' # There are no SUN occultations
+    return 'RAD'
 
 def populate_obs_occultation_VGRSS_occ_dir_PROF(**kwargs):
     metadata = kwargs['metadata']
@@ -220,7 +220,7 @@ def populate_obs_occultation_VGRSS_optical_depth_max_PROF(**kwargs):
 
 def populate_obs_occultation_VGRSS_temporal_sampling_PROF(**kwargs):
     metadata = kwargs['metadata']
-    index_row = metadata['index_row']
+    index_row = metadata['supp_index_row']
     tmp_sampling_interval = index_row['TEMPORAL_SAMPLING_INTERVAL']
 
     return tmp_sampling_interval
