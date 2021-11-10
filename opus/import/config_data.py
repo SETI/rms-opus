@@ -1131,7 +1131,7 @@ STAR_RA_DEC = {
 # Index files that contains surface geo info
 # In the future, we can just add the keyword of the basenames here if the index
 # files are meant to be searchable as surface geo.
-INDEX_FILES_WITH_SURFACE_GEO_INFO = [
+SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
     'CUBE_EQUI'
 ]
 

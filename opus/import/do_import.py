@@ -809,13 +809,14 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 # This is used to determine if we need to create body surface
                 # geo table when *_summary doesn't exist under metadata.
                 sub_assoc_type = None
+
                 if 'RING_SUMMARY' in basename.upper():
                     assoc_type = 'ring_geo'
                 elif 'SUPPLEMENTAL_INDEX' in basename.upper():
                     assoc_type = 'supp_index'
-                    # Check if the index file contains surface geo info, if so,
-                    # we assign 'body_surface_geo' to sub_assoc_dict
-                    for f in INDEX_FILES_WITH_SURFACE_GEO_INFO:
+                    # Check if the supplemental index file contains surface geo
+                    # info, and if so, mark the sub_assoc_type accordingly.
+                    for f in SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO:
                         if f in basename.upper():
                             sub_assoc_type = 'body_surface_geo'
                             break
@@ -936,9 +937,12 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             key = key.upper()
                             assoc_dict[key] = row
 
-                    # construct surface geo dict for index files that contains
-                    # surface geo info.
-                    # Format: {opus_id: {target: 'Target_NAME': target}}
+                    # Construct the surface geo dict for supplemental index
+                    # files that contain surface geo info. The only metadata we
+                    # put in the surface geo dict is the target name, relying
+                    # on populate functions to retrieve the necessary metadata
+                    # later.
+                    # Format: {opus_id: {target: {'TARGET_NAME': target}}}
                     if sub_assoc_type == 'body_surface_geo':
                         obs_rows = metadata['index']
                         sub_assoc_dict = metadata.get(sub_assoc_type, {})
