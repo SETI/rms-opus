@@ -408,7 +408,7 @@ def populate_obs_ring_geometry_VGPPS_north_based_incidence2_PROF(**kwargs):
 def populate_obs_ring_geometry_VGPPS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
-    min_ea = index_row['MAXIMUM_EMISSION_ANGLE']
+    min_ea = index_row['MINIMUM_EMISSION_ANGLE']
 
     return min_ea
 
@@ -512,7 +512,7 @@ def populate_obs_ring_geometry_VGPPS_observer_ring_elevation2_PROF(**kwargs):
 
     return el
 
-# Opening angle to solar: the angle between the ring surface to the direction
+# Opening angle to Sun: the angle between the ring surface to the direction
 # where incoming photons from the source. Positive if source is at the north
 # side of the ring , negative if it's at the south side. In this case, source
 # is at the north side, so it's 90 - inc. For reference, if source is at the
@@ -533,7 +533,7 @@ def populate_obs_ring_geometry_VGPPS_solar_ring_opening_angle2_PROF(**kwargs):
         inc = populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs)
         return 90. - inc
 
-# Ring elevation to solar, same to opening angle except, it's positive if
+# Ring elevation to Sun, same to opening angle except, it's positive if
 # source is at north side of Jupiter, Saturn, and Neptune, and south side of
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.

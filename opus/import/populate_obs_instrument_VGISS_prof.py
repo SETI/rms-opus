@@ -415,8 +415,7 @@ populate_obs_ring_geometry_VGISS_center_north_based_emission2_PROF = \
 # Opening angle to observer: the angle between the ring surface to the direction
 # where outgoing photons to the observer. Positive if observer is at the north
 # side of the ring , negative if it's at the south side. In this case, observer
-# is at the north side, so it's 90 - ea. For reference, if observer is at the
-# south side, then oa is 90 - 180 - ea.
+# is at the south side, so it's 90 - north based ea.
 def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
@@ -434,7 +433,7 @@ def populate_obs_ring_geometry_VGISS_observer_ring_opening_angle2_PROF(**kwargs)
 # Ring elevation to observer, same to opening angle except, it's positive if
 # observer is at north side of Jupiter, Saturn, and Neptune, and south side of
 # Uranus. Negative if observer is at south side of Jupiter, Saturn, and Neptune,
-# and north side of Uranus. In this volume, observer is at the north of Saturn,
+# and north side of Uranus. In this volume, observer is at the south of Saturn,
 # so ring elevation will be the same as opening angle.
 def populate_obs_ring_geometry_VGISS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
@@ -451,7 +450,7 @@ def populate_obs_ring_geometry_VGISS_observer_ring_elevation2_PROF(**kwargs):
     return 90. - min_ea
 
 
-# Opening angle to solar: the angle between the ring surface to the direction
+# Opening angle to Sun: the angle between the ring surface to the direction
 # where incoming photons from the source. Positive if source is at the north
 # side of the ring, negative if it's at the south side. In this case, source
 # is at the north side, so it's 90 - inc. For reference, if source is at the
@@ -470,7 +469,7 @@ def populate_obs_ring_geometry_VGISS_solar_ring_opening_angle2_PROF(**kwargs):
 
     return 90. - inc
 
-# Ring elevation to solar, same to opening angle except, it's positive if
+# Ring elevation to Sun, same to opening angle except, it's positive if
 # source is at north side of Jupiter, Saturn, and Neptune, and south side of
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus. In this volume, source is at north of Saturn,

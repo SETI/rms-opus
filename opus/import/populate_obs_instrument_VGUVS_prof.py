@@ -516,7 +516,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
 
     return el
 
-# Opening angle to solar: the angle between the ring surface to the direction
+# Opening angle to Sun: the angle between the ring surface to the direction
 # where incoming photons from the source. Positive if source is at the north
 # side of the ring, negative if it's at the south side. If source is at the
 # north side, it's 90 - inc. If source is at the south side, then oa is
@@ -538,7 +538,7 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_opening_angle2_PROF(**kwargs):
         inc = populate_obs_ring_geometry_VGUVS_incidence1_PROF(**kwargs)
         return 90. - inc
 
-# Ring elevation to solar, same to opening angle except, it's positive if
+# Ring elevation to Sun, same to opening angle except, it's positive if
 # source is at north side of Jupiter, Saturn, and Neptune, and south side of
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.
