@@ -466,8 +466,7 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
-    target_name = populate_target_name_from_index(**kwargs)
-    if target_name =='U RINGS':
+    if _is_voyager_at_uranus(**kwargs):
         max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
         el = - (max_ea - 90.) # negative
     else:
@@ -480,8 +479,7 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
-    target_name = populate_target_name_from_index(**kwargs)
-    if target_name =='U RINGS':
+    if _is_voyager_at_uranus(**kwargs):
         min_ea = index_row['MINIMUM_EMISSION_ANGLE']
         el = - (min_ea - 90.) # negative
     else:
@@ -512,8 +510,7 @@ def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle2_PROF(**kwargs):
 # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
 # and north side of Uranus.
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation1_PROF(**kwargs):
-    target_name = populate_target_name_from_index(**kwargs)
-    if target_name =='U RINGS':
+    if _is_voyager_at_uranus(**kwargs):
         inc = populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs)
         el = - (inc - 90.) # positive
     else:
@@ -526,8 +523,7 @@ def populate_obs_ring_geometry_VGRSS_solar_ring_elevation2_PROF(**kwargs):
     inc = populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs)
     el = inc - 90.
 
-    target_name = populate_target_name_from_index(**kwargs)
-    if target_name =='U RINGS':
+    if _is_voyager_at_uranus(**kwargs):
         inc = populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs)
         el = - (inc - 90.) # positive
     else:
@@ -562,3 +558,10 @@ def populate_obs_mission_voyager_VGRSS_mission_phase_name_PROF(**kwargs):
 
 def populate_obs_instrument_VGRSS_observation_type_PROF(**kwargs):
     return 'Occultation Profile'
+
+################################################################################
+# Helper
+################################################################################
+def _is_voyager_at_uranus(**kwargs):
+    target_name = populate_target_name_from_index(**kwargs)
+    return target_name == 'U RINGS'
