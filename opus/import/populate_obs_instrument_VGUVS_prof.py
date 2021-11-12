@@ -363,27 +363,49 @@ def populate_obs_ring_geometry_VGUVS_incidence2_PROF(**kwargs):
 
 def _is_voyager_at_north(**kwargs):
     """In this volume,
-    Voyager is at north when:
+    Voyager is at north when: (start time before 1986-01-24T17:10:13.320)
         - Source is DELTA SCO (Target S RINGS)
-        - Source is SIGMA SGR (Target U RINGS, start time before
-          1986-01-24T17:10:13.320)
-    Voyager is south when:
-        - Source is SIGMA SGR (Target N RINGS, start time after
-          1986-01-24T17:10:13.320)
+        - Source is SIGMA SGR (Target U RINGS)
+    Voyager is south when: (start time after 1986-01-24T17:10:13.320)
+        - Source is SIGMA SGR (Target N RINGS)
         - Source is IOTA HER (Target S RINGS)
+    Note: threshold value 1986-01-24T17:10:13.320 is obtained and determined by
+    observing the results from OPUS.
     """
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
     target_name = index_row['TARGET_NAME'].upper().strip()
-    return (src_name == "DELTA SCO"
-            or (src_name == "SIGMA SGR" and target_name == "U RINGS"))
+
+    start_time = julian.tai_from_iso(index_row['START_TIME'])
+    threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+    msg = "Observation start time and Voyager location don't match."
+
+    isAtNorth = (src_name == 'DELTA SCO'
+                 or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
+    # Check if the start time match the Voyager location.
+    if isAtNorth:
+        assert start_time <= threshold, msg
+    else:
+        assert start_time > threshold, msg
+    return isAtNorth
 
 def _is_voyager_at_north_except_uranus(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
-    return src_name == "DELTA SCO"
+
+    start_time = julian.tai_from_iso(index_row['START_TIME'])
+    threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+    msg = "Observation start time and Voyager location don't match."
+
+    isAtNorth = (src_name == 'DELTA SCO')
+    # Check if the start time match the Voyager location.
+    if isAtNorth:
+        assert start_time <= threshold, msg
+    else:
+        assert start_time > threshold, msg
+    return isAtNorth
 
 # North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north

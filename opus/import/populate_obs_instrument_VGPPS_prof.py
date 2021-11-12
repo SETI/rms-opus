@@ -342,8 +342,8 @@ def populate_obs_ring_geometry_VGPPS_incidence1_PROF(**kwargs):
 
     max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
     cal_inc = 180 - max_ea
-    msg = ('The difference between incidence angle and 180 - emission(' +
-           f'{abs(cal_inc - inc)}) is more than 0.005, volume: VG_2801.')
+    msg = ('The difference between incidence angle and 180 - emission is' +
+           ' more than 0.005, volume: VG_2801.')
     assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - max_ea
 
@@ -354,32 +354,56 @@ def populate_obs_ring_geometry_VGPPS_incidence2_PROF(**kwargs):
 
     min_ea = index_row['MINIMUM_EMISSION_ANGLE']
     cal_inc = 180 - min_ea
-    msg = ('The difference between incidence angle and 180 - emission(' +
-           f'{abs(cal_inc - inc)}) is more than 0.005, volume: VG_2801.')
+    msg = ('The difference between incidence angle and 180 - emission is' +
+           ' more than 0.005, volume: VG_2801.')
     assert abs(cal_inc - inc) <= 0.005, msg
     return 180. - min_ea
 
 def _is_voyager_at_north(**kwargs):
     """In this volume,
-    Voyager is at north when:
+    Voyager is at north when: (start time before 1986-01-24T17:10:13.320)
         - Source is DELTA SCO (Target S RINGS)
         - Source is SIGMA SGR (Target U RINGS)
-    Voyager is south when:
+    Voyager is south when: (start time after 1986-01-24T17:10:13.320)
         - Source is SIGMA SGR (Target N RINGS)
         - Source is BETA PER (Target U RINGS)
+    Note: threshold value 1986-01-24T17:10:13.320 is obtained and determined by
+    observing the results from OPUS.
     """
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
     target_name = index_row['TARGET_NAME'].upper().strip()
-    return (src_name == "DELTA SCO"
-            or (src_name == "SIGMA SGR" and target_name == "U RINGS"))
+
+    start_time = julian.tai_from_iso(index_row['START_TIME'])
+    threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+    msg = "Observation start time and Voyager location don't match."
+
+    isAtNorth = (src_name == 'DELTA SCO'
+                 or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
+    # Check if the start time match the Voyager location.
+    if isAtNorth:
+        assert start_time <= threshold, msg
+    else:
+        assert start_time > threshold, msg
+    return isAtNorth
 
 def _is_voyager_at_north_except_uranus(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     src_name = index_row['SIGNAL_SOURCE_NAME_1']
-    return src_name == "DELTA SCO"
+
+    start_time = julian.tai_from_iso(index_row['START_TIME'])
+    threshold = julian.tai_from_iso(THRESHOLD_START_TIME_VG_AT_NORTH)
+    msg = "Observation start time and Voyager location don't match."
+
+    isAtNorth = (src_name == 'DELTA SCO')
+    # Check if the start time match the Voyager location.
+    if isAtNorth:
+        assert start_time <= threshold, msg
+    else:
+        assert start_time > threshold, msg
+    return isAtNorth
 
 
 # North based inc: the angle between the point where incoming source photons hit

@@ -1147,3 +1147,8 @@ DESIRED_VOLUMES_IN_VOLSET = {
     # we will ignore volumes smaller than 0402 for COCIRS_0xxx
     'COCIRS_0xxx': r'(COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d{2})$',
 }
+
+# Note: threshold value 1986-01-24T17:10:13.320 is obtained and determined by
+# observing the results from OPUS. Voyager is at north when start time is before
+# 1986-01-24T17:10:13.320
+THRESHOLD_START_TIME_VG_AT_NORTH = '1986-01-24T17:10:13.320'
