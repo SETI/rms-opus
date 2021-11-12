@@ -522,7 +522,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation1_PROF(**kwargs):
     if _is_voyager_at_north_except_uranus(**kwargs):
         el = min_ea - 90. # positive
     else:
-        el = - (max_ea - 90.) # negative
+        el = 90. - max_ea # negative
 
     return el
 
@@ -534,7 +534,7 @@ def populate_obs_ring_geometry_VGUVS_observer_ring_elevation2_PROF(**kwargs):
     if _is_voyager_at_north_except_uranus(**kwargs):
         el = max_ea - 90. # positive
     else:
-        el = - (min_ea - 90.) # negative
+        el = 90. - min_ea # negative
 
     return el
 

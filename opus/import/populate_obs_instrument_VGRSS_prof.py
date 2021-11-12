@@ -325,8 +325,8 @@ def populate_obs_ring_geometry_VGRSS_phase2_PROF(**kwargs):
 # Source: Voyager RSS is at south, observer: earth is at north.
 # Note: we search VGISS start_time in OPUS and look at north based emssion
 # angle to determine the location of the Voyager. If the north based emission
-# angle is more than 90, it means the observer (Voyager) is at the south side
-# of the ring. Otherwise, the observer is at the north side of the ring.
+# angle is more than 90, it means the observer is at the south side of the
+# ring. Otherwise, the observer is at the north side of the ring.
 
 # Incidence angle: The angle between the point where the incoming source
 # photos hit the ring and the normal to the ring plane on the LIT side of
@@ -468,7 +468,7 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_elevation1_PROF(**kwargs):
 
     if _is_voyager_at_uranus(**kwargs):
         max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
-        el = - (max_ea - 90.) # negative
+        el = 90. - max_ea # negative
     else:
         min_ea = index_row['MINIMUM_EMISSION_ANGLE']
         el = min_ea - 90. # positive
@@ -481,7 +481,7 @@ def populate_obs_ring_geometry_VGRSS_observer_ring_elevation2_PROF(**kwargs):
 
     if _is_voyager_at_uranus(**kwargs):
         min_ea = index_row['MINIMUM_EMISSION_ANGLE']
-        el = - (min_ea - 90.) # negative
+        el = 90. - min_ea # negative
     else:
         max_ea = index_row['MAXIMUM_EMISSION_ANGLE']
         el = max_ea - 90. # positive
@@ -512,7 +512,7 @@ def populate_obs_ring_geometry_VGRSS_solar_ring_opening_angle2_PROF(**kwargs):
 def populate_obs_ring_geometry_VGRSS_solar_ring_elevation1_PROF(**kwargs):
     if _is_voyager_at_uranus(**kwargs):
         inc = populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs)
-        el = - (inc - 90.) # positive
+        el = 90. - inc # positive
     else:
         inc = populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs)
         el = inc - 90. # negative
@@ -525,7 +525,7 @@ def populate_obs_ring_geometry_VGRSS_solar_ring_elevation2_PROF(**kwargs):
 
     if _is_voyager_at_uranus(**kwargs):
         inc = populate_obs_ring_geometry_VGRSS_incidence1_PROF(**kwargs)
-        el = - (inc - 90.) # positive
+        el = 90. - inc # positive
     else:
         inc = populate_obs_ring_geometry_VGRSS_incidence2_PROF(**kwargs)
         el = inc - 90. # negative
