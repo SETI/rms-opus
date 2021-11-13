@@ -478,7 +478,7 @@ class resultsTests(TestCase):
                     'obs_mission_voyager']
         self._test_triggered_tables(q, expected)
 
-    def test__get_triggered_tables_vgiss_volume(self):
+    def test__get_triggered_tables_vgiss_obs_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VGISS_6210"
         q = QueryDict('volumeid=VGISS_6210')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
@@ -522,7 +522,7 @@ class resultsTests(TestCase):
                     'obs_mission_voyager']
         self._test_triggered_tables(q, expected)
 
-    def test__get_triggered_tables_vgiss_volume(self):
+    def test__get_triggered_tables_vgiss_prof_volume(self):
         "[test_results.py] get_triggered_tables: tables triggered by volume VG_2810"
         q = QueryDict('volumeid=VG_2810')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',

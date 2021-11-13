@@ -387,12 +387,12 @@ def _is_voyager_at_north(**kwargs):
         assert (start_time <= threshold[0]
                 or (start_time <= threshold[2] and start_time >= threshold[1])
                 or (start_time <= threshold[4] and start_time >= threshold[3])
-        ), msg
+                ), msg
     else:
         assert (start_time > threshold[4]
                 or (start_time > threshold[0] and start_time < threshold[1])
                 or (start_time > threshold[2] and start_time < threshold[3])
-        ), msg
+                ), msg
     return isAtNorth
 
 def _is_voyager_at_north_except_uranus(**kwargs):
@@ -412,12 +412,12 @@ def _is_voyager_at_north_except_uranus(**kwargs):
         assert (start_time <= threshold[0]
                 or (start_time <= threshold[2] and start_time >= threshold[1])
                 or (start_time <= threshold[4] and start_time >= threshold[3])
-        ), msg
+                ), msg
     else:
         assert (start_time > threshold[4]
                 or (start_time > threshold[0] and start_time < threshold[1])
                 or (start_time > threshold[2] and start_time < threshold[3])
-        ), msg
+                ), msg
     return isAtNorth
 
 # North based inc: the angle between the point where incoming source photons hit

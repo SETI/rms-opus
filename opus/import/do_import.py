@@ -22,7 +22,8 @@ from populate_obs_general import *
 from populate_obs_pds import *
 
 from populate_obs_mission_cassini import *
-from populate_obs_instrument_COCIRS import *
+from populate_obs_instrument_COCIRS_cube import *
+from populate_obs_instrument_COCIRS_obs import *
 from populate_obs_instrument_COISS import *
 from populate_obs_instrument_CORSS_prof import *
 from populate_obs_instrument_COUVIS import *
