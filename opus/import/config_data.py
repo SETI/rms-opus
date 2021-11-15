@@ -1128,12 +1128,6 @@ STAR_RA_DEC = {
     'ZET_PUP':              (120.896031417, -40.003147806),
 }
 
-VG_TARGET_TO_MISSION_PHASE_MAPPING = {
-    'S RINGS': 'SATURN ENCOUNTER',
-    'U RINGS': 'URANUS ENCOUNTER',
-    'N RINGS': 'NEPTUNE ENCOUNTER'
-}
-
 # Keywords in supplemental index filenames that indicate they contain surface
 # geo info in the absence of an actual surface geo summary file.
 SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [

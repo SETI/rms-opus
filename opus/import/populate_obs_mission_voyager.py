@@ -13,6 +13,11 @@ from config_data import *
 import impglobals
 import import_util
 
+VG_TARGET_TO_MISSION_PHASE_MAPPING = {
+    'S RINGS': 'SATURN ENCOUNTER',
+    'U RINGS': 'URANUS ENCOUNTER',
+    'N RINGS': 'NEPTUNE ENCOUNTER'
+}
 
 ################################################################################
 # HELPER FUNCTIONS USED BY VOYAGER INSTRUMENTS
