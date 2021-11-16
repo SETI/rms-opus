@@ -252,7 +252,7 @@ def populate_obs_occultation_VGRSS_host_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     receiver_host = index_row['RECEIVER_HOST_NAME']
-    dsn = receiver_host[-2:]
+    dsn = int(receiver_host[-2:])
 
     ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
     return (ret, ret)

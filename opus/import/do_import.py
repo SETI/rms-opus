@@ -745,7 +745,11 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     metadata['index_label'] = obs_label_dict
 
     volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
-
+    # This is used to check against these lists: VOLSETS_WITH_RING_GEO and
+    # VOLSETS_WITH_SURFACE_GEO. Most of the time, volset_info will just be the
+    # same as volset, but for cases like COCIRS_0xxx/1xxx, it will have info
+    # about the part of volume (cube_equi) that includes ring/geo info.
+    volset_info = volset
 
     ######################################
     ### FIND ASSOCIATED METADATA FILES ###
@@ -820,6 +824,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     for f in SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO:
                         if f in basename.upper():
                             sub_assoc_type = 'body_surface_geo'
+                            volset_info = volset + f'_{f}'
                             break
 
                 elif 'INVENTORY' in basename.upper():
@@ -970,19 +975,19 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     # supports it - but it isn't a fatal error if we don't because sometimes
     # the geo files are generated later
     if ('ring_geo' not in metadata and
-        volset in VOLSETS_WITH_RING_GEO):
+        volset_info in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing ring geometry files')
     elif ('ring_geo' in metadata and
-        volset not in VOLSETS_WITH_RING_GEO):
+        volset_info not in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected ring geometry files')
     if ('body_surface_geo' not in metadata and
-        volset in VOLSETS_WITH_SURFACE_GEO):
+        volset_info in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing body surface geometry files')
     elif ('body_surface_geo' in metadata and
-        volset not in VOLSETS_WITH_SURFACE_GEO):
+        volset_info not in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected body surface geometry files')
 

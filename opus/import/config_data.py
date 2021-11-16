@@ -41,8 +41,8 @@ VOLSETS_WITH_RING_GEO = ['COISS_1xxx',
 
 # These instruments have surface geo available (maybe)
 # This is only used to give a warning if the surface geo isn't available
-VOLSETS_WITH_SURFACE_GEO = ['COCIRS_0xxx',
-                            'COCIRS_1xxx',
+VOLSETS_WITH_SURFACE_GEO = ['COCIRS_0xxx_CUBE_EQUI',
+                            'COCIRS_1xxx_CUBE_EQUI',
                             'COISS_1xxx',
                             'COISS_2xxx',
                             'COUVIS_0xxx',
@@ -1133,6 +1133,10 @@ STAR_RA_DEC = {
 SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
     'CUBE_EQUI'
 ]
+# SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = {
+#     'COCIRS_0xxx': 'CUBE_EQUI',
+#     'COCIRS_1xxx': 'CUBE_EQUI',
+# }
 
 # A Dictionary that stores the desired volumes in a volset.
 # {volset: pattern of desired volumes}

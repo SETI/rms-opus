@@ -497,17 +497,6 @@ class ApiSearchTests(TestCase, ApiTestHelper):
                     'truncated_results': False, "reqno": 123}
         self._run_stringsearchchoices_subset(url, expected)
 
-    def test__api_stringsearchchoices_volumeid_empty_bigcache_timeout(self):
-        "[test_search_api.py] /api/stringsearchchoices: volumeid empty timeout"
-        settings.STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 1
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 1
-        settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 1
-        url = '/__api/stringsearchchoices/volumeid.json?volumeid=&reqno=123&limit=400'
-        expected = {'choices': ['COISS_2002', 'GO_0017'],
-                    # 'full_search': False,
-                    'truncated_results': False, "reqno": 123}
-        self._run_stringsearchchoices_subset(url, expected)
-
     def test__api_stringsearchchoices_volumeid_none(self):
         "[test_search_api.py] /api/stringsearchchoices: volumeid none"
         url = '/__api/stringsearchchoices/volumeid.json?volumeid=BAD_VOLUME&reqno=123'
