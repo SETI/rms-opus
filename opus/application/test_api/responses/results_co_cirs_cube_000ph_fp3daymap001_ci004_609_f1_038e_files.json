@@ -71,18 +71,6 @@
                 "cocirs_extra": [
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E.JPG",
                     "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_0xxx_v3/COCIRS_0406/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E.LBL"
-                ],
-                "browse_thumb": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_thumb.jpg"
-                ],
-                "browse_small": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_small.jpg"
-                ],
-                "browse_medium": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_med.jpg"
-                ],
-                "browse_full": [
-                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_0xxx_v3/COCIRS_0406/DATA/CUBE/EQUIRECTANGULAR/000PH_FP3DAYMAP001_CI004_609_F1_038E_full.jpg"
                 ]
             }
         }

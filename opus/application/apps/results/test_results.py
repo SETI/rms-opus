@@ -321,9 +321,9 @@ class resultsTests(TestCase):
                     'obs_mission_cassini', 'obs_instrument_cocirs']
         self._test_triggered_tables(q, expected)
 
-    def test__get_triggered_tables_cocirs_volume_5201(self):
-        "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_5201"
-        q = QueryDict('volumeid=COCIRS_5201&qtype-volumeid=begins')
+    def test__get_triggered_tables_cocirs_volume_5408(self):
+        "[test_results.py] get_triggered_tables: tables triggered by volume COCIRS_5408"
+        q = QueryDict('volumeid=COCIRS_5408&qtype-volumeid=begins')
         expected = ['obs_general', 'obs_pds', 'obs_type_image',
                     'obs_wavelength', 'obs_profile',
                     'obs_surface_geometry_name',
