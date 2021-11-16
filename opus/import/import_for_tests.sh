@@ -25,7 +25,7 @@ python main_opus_import.py --do-all-import CORSS_8001 $1
 python main_opus_import.py --do-all-import COUVIS_8001 $1
 python main_opus_import.py --do-all-import COVIMS_8001 $1
 python main_opus_import.py --do-all-import VG_28xx $1
-python main_opus_import.py --do-all-import COCIRS_0406,COCIRS_1003,COCIRS_1002,COCIRS_0010,COCIRS_1402,COCIRS_1709 $1
+python main_opus_import.py --do-all-import COCIRS_0406,COCIRS_1003,COCIRS_1002,COCIRS_0010 $1
 python main_opus_import.py --cleanup-aux-tables
 python main_opus_import.py --import-dictionary
 (cd ../application; python manage.py migrate)

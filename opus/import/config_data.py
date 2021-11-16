@@ -1133,10 +1133,6 @@ STAR_RA_DEC = {
 SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
     'CUBE_EQUI'
 ]
-# SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = {
-#     'COCIRS_0xxx': 'CUBE_EQUI',
-#     'COCIRS_1xxx': 'CUBE_EQUI',
-# }
 
 # A Dictionary that stores the desired volumes in a volset.
 # {volset: pattern of desired volumes}
