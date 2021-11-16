@@ -12,23 +12,6 @@ import import_util
 from populate_obs_mission_cassini import *
 from populate_util import *
 
-
-_DSN_NAMES = {
-    14: 'Goldstone 14m',
-    15: 'Goldstone 34m',
-    24: 'Goldstone 34m',
-    25: 'Goldstone 34m',
-    26: 'Goldstone 34m',
-    34: 'Canberra 34m',
-    35: 'Canberra 34m',
-    36: 'Canberra 34m',
-    43: 'Canberra 70m',
-    54: 'Madrid 34m',
-    55: 'Madrid 34m',
-    63: 'Madrid 70m',
-    65: 'Madrid 34m'
-}
-
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY INSTRUMENT
 ################################################################################
@@ -282,7 +265,7 @@ def populate_obs_occultation_CORSS_host_PROF(**kwargs):
     supp_index = metadata['supp_index_row']
     dsn = supp_index['DSN_STATION_NUMBER']
 
-    ret = f'DSN {dsn} ({_DSN_NAMES[dsn]})'
+    ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
     return (ret, ret)
 
 

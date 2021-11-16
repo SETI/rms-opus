@@ -1162,3 +1162,19 @@ THRESHOLD_START_TIME_VG_AT_NORTH = [
     '1985-11-06T17:22:30.040',
     '1986-01-24T17:10:13.320'
 ]
+
+DSN_NAMES = {
+    14: 'Goldstone 14m',
+    15: 'Goldstone 34m',
+    24: 'Goldstone 34m',
+    25: 'Goldstone 34m',
+    26: 'Goldstone 34m',
+    34: 'Canberra 34m',
+    35: 'Canberra 34m',
+    36: 'Canberra 34m',
+    43: 'Canberra 70m',
+    54: 'Madrid 34m',
+    55: 'Madrid 34m',
+    63: 'Madrid 70m',
+    65: 'Madrid 34m'
+}

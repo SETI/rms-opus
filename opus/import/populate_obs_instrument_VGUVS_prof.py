@@ -380,10 +380,10 @@ def _is_voyager_at_north(**kwargs):
     msg = (f"{index_row['FILE_SPECIFICATION_NAME']} start time" +
            f"{index_row['START_TIME']} and Voyager location do not match.")
 
-    isAtNorth = (src_name == 'DELTA SCO'
+    is_at_north = (src_name == 'DELTA SCO'
                  or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'))
     # Check if the start time match the Voyager location.
-    if isAtNorth:
+    if is_at_north:
         assert (start_time <= threshold[0]
                 or (start_time <= threshold[2] and start_time >= threshold[1])
                 or (start_time <= threshold[4] and start_time >= threshold[3])
@@ -393,7 +393,7 @@ def _is_voyager_at_north(**kwargs):
                 or (start_time > threshold[0] and start_time < threshold[1])
                 or (start_time > threshold[2] and start_time < threshold[3])
                 ), msg
-    return isAtNorth
+    return is_at_north
 
 def _is_voyager_at_north_except_uranus(**kwargs):
     metadata = kwargs['metadata']
@@ -406,9 +406,9 @@ def _is_voyager_at_north_except_uranus(**kwargs):
     msg = (f"{index_row['FILE_SPECIFICATION_NAME']} start time" +
            f"{index_row['START_TIME']} and Voyager location do not match.")
 
-    isAtNorth = (src_name == 'DELTA SCO')
+    is_at_north = (src_name == 'DELTA SCO')
     # Check if the start time match the Voyager location.
-    if isAtNorth or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'):
+    if is_at_north or (src_name == 'SIGMA SGR' and target_name == 'U RINGS'):
         assert (start_time <= threshold[0]
                 or (start_time <= threshold[2] and start_time >= threshold[1])
                 or (start_time <= threshold[4] and start_time >= threshold[3])
@@ -418,7 +418,7 @@ def _is_voyager_at_north_except_uranus(**kwargs):
                 or (start_time > threshold[0] and start_time < threshold[1])
                 or (start_time > threshold[2] and start_time < threshold[3])
                 ), msg
-    return isAtNorth
+    return is_at_north
 
 # North based inc: the angle between the point where incoming source photons hit
 # the ring to the normal vector on the NORTH side of the ring. 0-90 when north
