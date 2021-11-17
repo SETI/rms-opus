@@ -342,12 +342,12 @@
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cocirs_cube",
-        "definition": "Compressed tar archive (*.tar.gz) that contain spectral image cubes information for COCIRS. Associated labels (*.LBL) describe the contents of the archive files."
+        "definition": "Compressed tar archives (*.tar.gz) that contain spectral image cube information for COCIRS. Associated labels (*.LBL) describe the contents of the archive files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
         "pi_dict_name": "cocirs_extra",
-        "definition": "Supplemental viewable image (*.JPG) that contain spectral image cubes information for COCIRS. Associated labels (*.LBL) describe the contents of the supplemental files."
+        "definition": "Supplemental viewable images (*.JPG) that contain spectral image cube information for COCIRS. Associated labels (*.LBL) describe the contents of the supplemental files."
     },
     {
         "pi_dict_context": "OPUS_PRODUCT_TYPE",
