@@ -234,7 +234,7 @@ def populate_obs_occultation_VGISS_wl_band_PROF(**kwargs):
     return wl_band1
 
 def populate_obs_occultation_VGISS_source_PROF(**kwargs):
-    return 'N/A'
+    return None
 
 def populate_obs_occultation_VGISS_host_PROF(**kwargs):
     metadata = kwargs['metadata']

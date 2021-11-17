@@ -187,7 +187,7 @@ def populate_obs_wavelength_VGPPS_spec_flag_PROF(**kwargs):
     return 'N'
 
 def populate_obs_wavelength_VGPPS_spec_size_PROF(**kwargs):
-    return 1
+    return None
 
 def populate_obs_wavelength_VGPPS_polarization_type_PROF(**kwargs):
     return 'NONE'
