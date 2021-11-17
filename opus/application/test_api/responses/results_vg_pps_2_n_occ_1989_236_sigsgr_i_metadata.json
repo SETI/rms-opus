@@ -42,7 +42,7 @@
         "wavenores1": "0",
         "wavenores2": "0",
         "specflag": "No",
-        "specsize": "1",
+        "specsize": null,
         "polarizationtype": "None"
     },
     "Occultation/Reflectance Profiles Constraints": {

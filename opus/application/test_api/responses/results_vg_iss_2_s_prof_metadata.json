@@ -54,7 +54,7 @@
         "occdepth1": null,
         "occdepth2": null,
         "occwlband": "Visible",
-        "occsource": "N/A",
+        "occsource": null,
         "occreceiverhost": "Voyager 2",
         "RINGGEOringradius1": "74000",
         "RINGGEOringradius2": "138700",
