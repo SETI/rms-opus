@@ -227,6 +227,10 @@
                 "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.lbl"
             ],
+            "profile_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_profile_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_profile_index.lbl"
+            ],
             "supplemental_index": [
                 "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.tab",
                 "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.lbl"
@@ -461,6 +465,10 @@
                 "rms_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.tab",
                     "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_index.lbl"
+                ],
+                "profile_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_profile_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_profile_index.lbl"
                 ],
                 "supplemental_index": [
                     "https://opus.pds-rings.seti.org/holdings/metadata/VG_28xx/VG_2810/VG_2810_supplemental_index.tab",
