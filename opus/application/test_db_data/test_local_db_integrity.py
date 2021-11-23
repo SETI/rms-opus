@@ -330,16 +330,9 @@ class DBIntegrityTest(TestCase):
 
     def test__partables_has_all_surface_geo_tables(self):
         """[test_local_db_integrity.py] DB Integrity: partables table has an entry for each surface_geo table
-           XXX NOTE: We exclude Callirrhoe and Elara from this comparison
-           because of GitHub issue #465 "Missing surface geo for Callirrhoe
-           and Elara in NHJULO_2001". This causes a surface_geo table to be
-           created during the import of NHJULO_1001, and then have no actual
-           contents when NHJULO_1001 is replaced by NHJULO_2001.
         """
         count_partables = (Partables.objects
                            .filter(partable__contains='surface_geometry__')
-                           .exclude(partable__contains='callirrhoe')
-                           .exclude(partable__contains='elara')
                            .values('partable').distinct().count())
         count_surface_geo = (ObsSurfaceGeometryName.objects
                              .values('target_name').distinct().count())
