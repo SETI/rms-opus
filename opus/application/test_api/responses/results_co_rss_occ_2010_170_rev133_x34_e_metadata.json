@@ -45,7 +45,7 @@
         "specsize": null,
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Radio",
         "occdir": "Egress",
         "bodyoccflag": "Yes",

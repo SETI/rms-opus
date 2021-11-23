@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -129,8 +129,8 @@
         "field_notnull": true,
         "field_key": true,
         "data_source": [
-            "TAB:index",
-            "MISSION_PHASE_NAME"
+            "FUNCTION",
+            "obs_mission_voyager_<INST>_mission_phase_name_<TYPE>"
         ],
         "definition": "The mission phase during which an observation was taken.",
         "pi_category_name": "obs_mission_voyager",

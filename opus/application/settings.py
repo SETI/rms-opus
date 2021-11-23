@@ -285,7 +285,7 @@ DATABASES = {
 # These tables are ALWAYS shown to the user and are not triggered.
 BASE_TABLES = ['obs_general', 'obs_pds', 'obs_ring_geometry',
                'obs_surface_geometry_name', 'obs_surface_geometry',
-               'obs_wavelength', 'obs_type_image', 'obs_occultation']
+               'obs_wavelength', 'obs_type_image', 'obs_profile']
 
 # These slugs may show up in the hash but are not actually database
 # queries and thus should be ignored when creating SQL
@@ -305,7 +305,7 @@ SLUGS_NOT_IN_DB = ('browse', 'order', 'page', 'startobs',
 DEFAULT_COLUMNS = 'opusid,instrument,planet,target,time1,observationduration'
 
 # The search widgets selected when OPUS is first intialized
-DEFAULT_WIDGETS = 'planet,target'
+DEFAULT_WIDGETS = 'instrument,observationtype,target'
 
 # The sort order to be used if there is no order specified in the URL, or
 # the order slug has no value.

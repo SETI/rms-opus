@@ -45,7 +45,7 @@
         "specsize": "556",
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": null,
         "occdir": null,
         "bodyoccflag": null,

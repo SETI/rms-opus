@@ -9,6 +9,12 @@ if __name__ == "__main__":
         # 'co-cirs-0408152208-fp3',
         # 'co-cirs-0408161433-fp4',
         # 'co-cirs-0408220524-fp4',
+        # 'co-cirs-cube-000ph_fp3daymap001_ci004_609_f1_038e',
+        # 'co-cirs-cube-000ia_presoi001____ri____699_f4_038p',
+        # 'co-cirs-cube-000rb_comp001______ci005_680_f3_224r',
+        # 'co-cirs-cube-127en_icyplu001____uv____699_f1_039e',
+        # 'co-cirs-cube-127ic_dscal10066___sp____699_f4_039p',
+        # 'co-cirs-cube-128ri_lrlemp001____is____680_f3_039r',
         # 'co-iss-n1460961193',
         # 'co-iss-n1461527506',
         # 'co-iss-n1461810160',
@@ -66,7 +72,14 @@ if __name__ == "__main__":
         # 'co-uvis-occ-2005-175-126tau-i',
         # 'co-uvis-occ-2009-015-gamcas-e',
         # 'co-vims-occ-2006-204-alpori-i',
-        # 'co-vims-occ-2014-175-l2pup-e'
+        # 'co-vims-occ-2014-175-l2pup-e',
+        # 'vg-pps-2-s-occ-1981-238-delsco-e',
+        # 'vg-pps-2-u-occ-1986-024-sigsgr-delta-e',
+        # 'vg-pps-2-n-occ-1989-236-sigsgr-i',
+        # 'vg-uvs-1-s-occ-1980-317-iother-e',
+        # 'vg-rss-2-u-occ-1986-024-s43-four-i',
+        # 'vg-uvs-2-n-occ-1989-236-sigsgr-i',
+        # 'vg-iss-2-s-prof'
     ]
 
     session = requests.Session()

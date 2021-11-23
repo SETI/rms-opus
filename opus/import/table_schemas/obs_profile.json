@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -60,26 +60,27 @@
             "FUNCTION",
             "obs_occultation_<INST>_occ_type_<TYPE>"
         ],
-        "definition": "An occultation is a measurement in which a source signal passes through a medium before being observed. Radio means the source is an artificially-emitted radio signal. Solar means the source is the Sun. Stellar means the source is a star other than the Sun.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "definition": "An occultation is a measurement in which a source signal passes through a medium before being observed. Radio means the source is an artificially-emitted radio signal. Solar means the source is the Sun. Stellar means the source is a star other than the Sun. A reflectance profile is a measurement in which a source signal is reflected from a surface and a 1-D slice is recorded.",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "OCCULTATION_TYPE",
         "pi_disp_order": 10,
         "pi_display": 1,
         "pi_display_results": 1,
         "pi_form_type": "GROUP",
         "pi_intro": null,
-        "pi_label": "Occultation Type",
-        "pi_label_results": "Occultation Type",
+        "pi_label": "Occultation or Profile Type",
+        "pi_label_results": "Occultation or Profile Type",
         "pi_old_slug": null,
         "pi_slug": "occtype",
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "RAD",   "Radio",   "010", "Y", null],
-              [   1, "STE", "Stellar",   "020", "Y", null],
-              [   2, "SOL",   "Solar",   "030", "Y", null],
-              [   3,  null,     "N/A",   "040", "Y", null]
+              [   0, "RAD",        "Radio",   "010", "Y", null],
+              [   1, "STE",      "Stellar",   "020", "Y", null],
+              [   2, "SOL",        "Solar",   "030", "Y", null],
+              [   3, "REF",  "Reflectance",   "040", "Y", null],
+              [   4,  null,          "N/A",   "050", "Y", null]
         ]
     },
     {
@@ -92,8 +93,8 @@
             "obs_occultation_<INST>_occ_dir_<TYPE>"
         ],
         "definition": "Ingress means that, from the observer's point of view, the source moves inward from the periphery toward the center of the medium. Egress means the source moves outward. Both means the source moves both inward and outward within a single observation.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "OCCULTATION_DIR",
         "pi_disp_order": 20,
         "pi_display": 1,
@@ -123,8 +124,8 @@
             "obs_occultation_<INST>_body_occ_flag_<TYPE>"
         ],
         "definition": "A flag indicating whether the source passes behind a any planet or other body as seen by the observer during the observation.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "BODY_OCCULTATION_FLAG",
         "pi_disp_order": 30,
         "pi_display": 1,
@@ -149,8 +150,8 @@
         ],
         "val_min": 0,
         "val_max": 1e32,
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "TEMPORAL_SAMPLING_INTERVAL",
         "definition": "The time interval between each sample in the original source observation(s).",
         "pi_disp_order": 40,
@@ -174,9 +175,9 @@
             "FUNCTION",
             "obs_occultation_<INST>_quality_score_<TYPE>"
         ],
-        "definition": "A subjective rating of quality of the occultation profile.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "definition": "A subjective rating of quality of the occultation or reflectance profile.",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "DATA_QUALITY_SCORE",
         "pi_disp_order": 50,
         "pi_display": 1,
@@ -201,11 +202,11 @@
         ],
         "val_min": 0,
         "val_max": 1e32,
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "DETECTABLE_OPTICAL_DEPTH",
         "definition": "The range of optical depths detectable within the observation. Both the minimum and maximum optical depth are stored for each observation and the search can be made more specific using the any/all/only modifiers. See Help/FAQ for more information.",
-        "pi_dict_context_results": "OPUS_OCCULTATION",
+        "pi_dict_context_results": "OPUS_PROFILE",
         "pi_dict_name_results": "MINIMUM_DETECTABLE_OPTICAL_DEPTH",
         "definition_results": "The minimum optical depth detectable within the observation.",
         "pi_disp_order": 60,
@@ -231,8 +232,8 @@
         ],
         "val_min": 0,
         "val_max": 1e32,
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context_results": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context_results": "OPUS_PROFILE",
         "pi_dict_name_results": "MAXIMUM_DETECTABLE_OPTICAL_DEPTH",
         "definition_results": "The maximum optical depth detectable within the observation.",
         "pi_disp_order": 61,
@@ -249,7 +250,7 @@
     },
     {
         "field_name": "wl_band",
-        "field_type": "char2",
+        "field_type": "char6",
         "field_default": null,
         "field_key": true,
         "data_source": [
@@ -257,8 +258,8 @@
             "obs_occultation_<INST>_wl_band_<TYPE>"
         ],
         "definition": "The wavelength band at which an observation was made.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "WAVELENGTH_BAND",
         "pi_disp_order": 70,
         "pi_display": 1,
@@ -272,13 +273,13 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "S",        "S",   "010", "Y", null],
-              [   1, "X",        "X",   "020", "Y", null],
-              [   2, "KA",      "Ka",   "030", "Y", null],
-              [   3, "IR",      "IR",   "040", "Y", null],
-              [   4, "VI", "Visible",   "050", "Y", null],
-              [   5, "UV",      "UV",   "060", "Y", null],
-              [   6,  null,    "N/A",   "070", "Y", null]
+              [   0, "S",      "S",       "010", "Y", null],
+              [   1, "X",      "X",       "020", "Y", null],
+              [   2, "KA",     "Ka",      "030", "Y", null],
+              [   3, "IR",     "IR",      "040", "Y", null],
+              [   4, "VI",     "Visible", "050", "Y", null],
+              [   5, "UV",     "UV",      "060", "Y", null],
+              [   6,  null,    "N/A",     "070", "Y", null]
         ]
     },
     {
@@ -291,8 +292,8 @@
             "obs_occultation_<INST>_source_<TYPE>"
         ],
         "definition": "The name of the star or artificial transmitter that emitted the source signal.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "OCCULTATION_SOURCE",
         "pi_disp_order": 80,
         "pi_display": 1,
@@ -316,8 +317,8 @@
             "obs_occultation_<INST>_host_<TYPE>"
         ],
         "definition": "The name of the observatory or spacecraft at which the signal was observed.",
-        "pi_category_name": "obs_occultation",
-        "pi_dict_context": "OPUS_OCCULTATION",
+        "pi_category_name": "obs_profile",
+        "pi_dict_context": "OPUS_PROFILE",
         "pi_dict_name": "OCCULTATION_RECEIVER_HOST",
         "pi_disp_order": 90,
         "pi_display": 1,
@@ -332,42 +333,42 @@
         "pi_tooltip": ""
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOringradius1",
         "pi_disp_order": 1000,
         "pi_display": 1,
         "pi_display_results": 1
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOringradius2",
         "pi_disp_order": 1001,
         "pi_display": 0,
         "pi_display_results": 1
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOsolarringopeningangle1",
         "pi_disp_order": 1010,
         "pi_display": 1,
         "pi_display_results": 1
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOsolarringopeningangle2",
         "pi_disp_order": 1011,
         "pi_display": 0,
         "pi_display_results": 1
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOobserverringopeningangle1",
         "pi_disp_order": 1020,
         "pi_display": 1,
         "pi_display_results": 1
     },
     {
-        "pi_category_name": "obs_occultation",
+        "pi_category_name": "obs_profile",
         "pi_referred_slug": "RINGGEOobserverringopeningangle2",
         "pi_disp_order": 1021,
         "pi_display": 0,

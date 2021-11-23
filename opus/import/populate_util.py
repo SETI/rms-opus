@@ -133,10 +133,21 @@ def populate_product_id_from_supp_index(**kwargs):
 
     return product_id
 
+def populate_target_name_from_index(**kwargs):
+    metadata = kwargs['metadata']
+    index_row = metadata['index_row']
+    target_name = index_row['TARGET_NAME'].strip()
+
+    return target_name
+
 def _star_name_helper(index, **kwargs):
     metadata = kwargs['metadata']
     index_label = metadata[index]
-    target_name = index_label['STAR_NAME'].replace(' ', '').upper()
+    try:
+        target_name = index_label['STAR_NAME'].replace(' ', '').upper()
+    except KeyError:
+        # For VG_28xx
+        target_name = index_label['SIGNAL_SOURCE_NAME_1'].upper()
 
     if target_name in TARGET_NAME_MAPPING:
         target_name = TARGET_NAME_MAPPING[target_name]

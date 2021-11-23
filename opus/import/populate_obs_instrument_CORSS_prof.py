@@ -12,23 +12,6 @@ import import_util
 from populate_obs_mission_cassini import *
 from populate_util import *
 
-
-_DSN_NAMES = {
-    14: 'Goldstone 14m',
-    15: 'Goldstone 34m',
-    24: 'Goldstone 34m',
-    25: 'Goldstone 34m',
-    26: 'Goldstone 34m',
-    34: 'Canberra 34m',
-    35: 'Canberra 34m',
-    36: 'Canberra 34m',
-    43: 'Canberra 70m',
-    54: 'Madrid 34m',
-    55: 'Madrid 34m',
-    63: 'Madrid 70m',
-    65: 'Madrid 34m'
-}
-
 ################################################################################
 # THESE NEED TO BE IMPLEMENTED FOR EVERY INSTRUMENT
 ################################################################################
@@ -43,7 +26,7 @@ def _CORSS_file_spec_helper(**kwargs):
     volume_id = kwargs['volume_id']
     return volume_id + '/' + file_spec
 
-def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
+def populate_obs_general_CORSS_opus_id_PROF(**kwargs):
     file_spec = _CORSS_file_spec_helper(**kwargs)
     pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
     opus_id = pds_file.opus_id
@@ -53,15 +36,15 @@ def populate_obs_general_CORSS_opus_id_OCC(**kwargs):
         return file_spec.split('/')[-1]
     return opus_id
 
-def populate_obs_general_CORSS_ring_obs_id_OCC(**kwargs):
+def populate_obs_general_CORSS_ring_obs_id_PROF(**kwargs):
     return None
 
-def populate_obs_general_CORSS_inst_host_id_OCC(**kwargs):
+def populate_obs_general_CORSS_inst_host_id_PROF(**kwargs):
     return 'CO'
 
 # CORSS time span is from when the photon first leaves the spacecraft to when
 # it is received on Earth.
-def populate_obs_general_CORSS_time1_OCC(**kwargs):
+def populate_obs_general_CORSS_time1_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     start_time = supp_index_row['SPACECRAFT_EVENT_START_TIME']
@@ -75,7 +58,7 @@ def populate_obs_general_CORSS_time1_OCC(**kwargs):
 
     return start_time_sec
 
-def populate_obs_general_CORSS_time2_OCC(**kwargs):
+def populate_obs_general_CORSS_time2_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     stop_time = supp_index_row['EARTH_RECEIVED_STOP_TIME']
@@ -98,96 +81,96 @@ def populate_obs_general_CORSS_time2_OCC(**kwargs):
 
     return stop_time_sec
 
-def populate_obs_general_CORSS_target_name_OCC(**kwargs):
+def populate_obs_general_CORSS_target_name_PROF(**kwargs):
     target_name = 'S RINGS'
     target_name_info = TARGET_NAME_INFO[target_name]
     return target_name, target_name_info[2]
 
-def populate_obs_general_CORSS_observation_duration_OCC(**kwargs):
+def populate_obs_general_CORSS_observation_duration_PROF(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
 
-def populate_obs_general_CORSS_quantity_OCC(**kwargs):
+def populate_obs_general_CORSS_quantity_PROF(**kwargs):
     return 'OPDEPTH'
 
-def populate_obs_general_CORSS_observation_type_OCC(**kwargs):
+def populate_obs_general_CORSS_observation_type_PROF(**kwargs):
     return 'OCC'
 
-def populate_obs_pds_CORSS_note_OCC(**kwargs):
+def populate_obs_pds_CORSS_note_PROF(**kwargs):
     return None
 
-def populate_obs_general_CORSS_primary_file_spec_OCC(**kwargs):
+def populate_obs_general_CORSS_primary_file_spec_PROF(**kwargs):
     return _CORSS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_CORSS_primary_file_spec_OCC(**kwargs):
+def populate_obs_pds_CORSS_primary_file_spec_PROF(**kwargs):
     return _CORSS_file_spec_helper(**kwargs)
 
-def populate_obs_pds_CORSS_product_creation_time_OCC(**kwargs):
+def populate_obs_pds_CORSS_product_creation_time_PROF(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)
 
 # Format: "CO-SR-RSS-4/5-OCC-V2.0"
-def populate_obs_pds_CORSS_data_set_id_OCC(**kwargs):
+def populate_obs_pds_CORSS_data_set_id_PROF(**kwargs):
     return populate_data_set_id_from_index_label(**kwargs)
 
 # Format: "RSS_2005_123_X43_E_TAU_01KM.LBL"
-def populate_obs_pds_CORSS_product_id_OCC(**kwargs):
+def populate_obs_pds_CORSS_product_id_PROF(**kwargs):
     return populate_product_id_from_index(**kwargs)
 
 # There's no easy way to figure out RA/DEC for CORSS since the Spacecraft
 # itself is the signal source.
-def populate_obs_general_CORSS_right_asc1_OCC(**kwargs):
+def populate_obs_general_CORSS_right_asc1_PROF(**kwargs):
     return None
 
-def populate_obs_general_CORSS_right_asc2_OCC(**kwargs):
+def populate_obs_general_CORSS_right_asc2_PROF(**kwargs):
     return None
 
-def populate_obs_general_CORSS_declination1_OCC(**kwargs):
+def populate_obs_general_CORSS_declination1_PROF(**kwargs):
     return None
 
-def populate_obs_general_CORSS_declination2_OCC(**kwargs):
+def populate_obs_general_CORSS_declination2_PROF(**kwargs):
     return None
 
 
 ### OBS_TYPE_IMAGE TABLE ###
 
-def populate_obs_type_image_CORSS_image_type_id_OCC(**kwargs):
+def populate_obs_type_image_CORSS_image_type_id_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_CORSS_duration_OCC(**kwargs):
+def populate_obs_type_image_CORSS_duration_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_CORSS_levels_OCC(**kwargs):
+def populate_obs_type_image_CORSS_levels_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_CORSS_lesser_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_CORSS_lesser_pixel_size_PROF(**kwargs):
     return None
 
-def populate_obs_type_image_CORSS_greater_pixel_size_OCC(**kwargs):
+def populate_obs_type_image_CORSS_greater_pixel_size_PROF(**kwargs):
     return None
 
 
 ### OBS_WAVELENGTH TABLE ###
 
-def populate_obs_wavelength_CORSS_wavelength1_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wavelength1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
     return wl * 10000 # cm -> micron
 
-def populate_obs_wavelength_CORSS_wavelength2_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wavelength2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     wl = index_row['WAVELENGTH']
 
     return wl * 10000 # cm -> micron
 
-def populate_obs_wavelength_CORSS_wave_res1_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_res1_PROF(**kwargs):
     return None
 
-def populate_obs_wavelength_CORSS_wave_res2_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_res2_PROF(**kwargs):
     return None
 
-def populate_obs_wavelength_CORSS_wave_no1_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_no1_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl2 = wavelength_row['wavelength2']
@@ -195,7 +178,7 @@ def populate_obs_wavelength_CORSS_wave_no1_OCC(**kwargs):
         return None
     return 10000 / wl2 # cm^-1
 
-def populate_obs_wavelength_CORSS_wave_no2_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_no2_PROF(**kwargs):
     metadata = kwargs['metadata']
     wavelength_row = metadata['obs_wavelength_row']
     wl1 = wavelength_row['wavelength1']
@@ -203,28 +186,28 @@ def populate_obs_wavelength_CORSS_wave_no2_OCC(**kwargs):
         return None
     return 10000 / wl1 # cm^-1
 
-def populate_obs_wavelength_CORSS_wave_no_res1_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_no_res1_PROF(**kwargs):
     return None
 
-def populate_obs_wavelength_CORSS_wave_no_res2_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_wave_no_res2_PROF(**kwargs):
     return None
 
-def populate_obs_wavelength_CORSS_spec_flag_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_spec_flag_PROF(**kwargs):
     return 'N'
 
-def populate_obs_wavelength_CORSS_spec_size_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_spec_size_PROF(**kwargs):
     return None
 
-def populate_obs_wavelength_CORSS_polarization_type_OCC(**kwargs):
+def populate_obs_wavelength_CORSS_polarization_type_PROF(**kwargs):
     return 'NONE'
 
 
 ### populate_obs_occultation TABLE ###
 
-def populate_obs_occultation_CORSS_occ_type_OCC(**kwargs):
+def populate_obs_occultation_CORSS_occ_type_PROF(**kwargs):
     return 'RAD'
 
-def populate_obs_occultation_CORSS_occ_dir_OCC(**kwargs):
+def populate_obs_occultation_CORSS_occ_dir_PROF(**kwargs):
     filespec = _CORSS_file_spec_helper(**kwargs)
 
     # We don't allow "Both" as a direction since these are always split into
@@ -237,34 +220,34 @@ def populate_obs_occultation_CORSS_occ_dir_OCC(**kwargs):
         f'Unknown ring occultation direction in filespec "{filespec}"')
     return None
 
-def populate_obs_occultation_CORSS_body_occ_flag_OCC(**kwargs):
+def populate_obs_occultation_CORSS_body_occ_flag_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     body_occ_flag = index_row['PLANETARY_OCCULTATION_FLAG']
 
     return body_occ_flag
 
-def populate_obs_occultation_CORSS_optical_depth_min_OCC(**kwargs):
+def populate_obs_occultation_CORSS_optical_depth_min_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     opac = supp_index_row['LOWEST_DETECTABLE_OPACITY']
 
     return opac
 
-def populate_obs_occultation_CORSS_optical_depth_max_OCC(**kwargs):
+def populate_obs_occultation_CORSS_optical_depth_max_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     opac = supp_index_row['HIGHEST_DETECTABLE_OPACITY']
 
     return opac
 
-def populate_obs_occultation_CORSS_temporal_sampling_OCC(**kwargs):
+def populate_obs_occultation_CORSS_temporal_sampling_PROF(**kwargs):
     return None # Not available
 
-def populate_obs_occultation_CORSS_quality_score_OCC(**kwargs):
+def populate_obs_occultation_CORSS_quality_score_PROF(**kwargs):
     return ("UNASSIGNED", "Unassigned")
 
-def populate_obs_occultation_CORSS_wl_band_OCC(**kwargs):
+def populate_obs_occultation_CORSS_wl_band_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_label = metadata['index_row']
     band = index_label['BAND_NAME'] # microns
@@ -274,146 +257,146 @@ def populate_obs_occultation_CORSS_wl_band_OCC(**kwargs):
 
     return band
 
-def populate_obs_occultation_CORSS_source_OCC(**kwargs):
+def populate_obs_occultation_CORSS_source_PROF(**kwargs):
     return ('CASSINI', 'Cassini', '!Cassini')
 
-def populate_obs_occultation_CORSS_host_OCC(**kwargs):
+def populate_obs_occultation_CORSS_host_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index = metadata['supp_index_row']
     dsn = supp_index['DSN_STATION_NUMBER']
 
-    ret = f'DSN {dsn} ({_DSN_NAMES[dsn]})'
+    ret = f'DSN {dsn} ({DSN_NAMES[dsn]})'
     return (ret, ret)
 
 
 ### OBS_RING_GEOMETRY TABLE ###
 
-def populate_obs_ring_geometry_CORSS_ring_radius1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_radius1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius1 = import_util.safe_column(index_row, 'MINIMUM_RING_RADIUS')
 
     return radius1
 
-def populate_obs_ring_geometry_CORSS_ring_radius2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_radius2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     radius2 = import_util.safe_column(index_row, 'MAXIMUM_RING_RADIUS')
 
     return radius2
 
-def populate_obs_ring_geometry_CORSS_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_CORSS_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_CORSS_proj_resolution1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_proj_resolution1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_CORSS_proj_resolution2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_proj_resolution2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     res = import_util.safe_column(index_row, 'RADIAL_RESOLUTION')
 
     return res
 
-def populate_obs_ring_geometry_CORSS_j2000_longitude1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_j2000_longitude1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     long1 = import_util.safe_column(index_row, 'MINIMUM_RING_LONGITUDE')
 
     return long1
 
-def populate_obs_ring_geometry_CORSS_j2000_longitude2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_j2000_longitude2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     long2 = import_util.safe_column(index_row, 'MAXIMUM_RING_LONGITUDE')
 
     return long2
 
-def populate_obs_ring_geometry_CORSS_ring_azimuth_wrt_observer1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_azimuth_wrt_observer1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     az1 = import_util.safe_column(index_row, 'MINIMUM_OBSERVED_RING_AZIMUTH')
 
     return az1
 
-def populate_obs_ring_geometry_CORSS_ring_azimuth_wrt_observer2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_azimuth_wrt_observer2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     az2 = import_util.safe_column(index_row, 'MAXIMUM_OBSERVED_RING_AZIMUTH')
 
     return az2
 
-def populate_obs_ring_geometry_CORSS_phase1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_phase1_PROF(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_CORSS_phase2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_phase2_PROF(**kwargs):
     return 180.
 
-def populate_obs_ring_geometry_CORSS_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
-def populate_obs_ring_geometry_CORSS_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return inc
 
-def populate_obs_ring_geometry_CORSS_north_based_incidence1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_north_based_incidence1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
-def populate_obs_ring_geometry_CORSS_north_based_incidence2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_north_based_incidence2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90+el
 
-def populate_obs_ring_geometry_CORSS_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = index_row['MAXIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
-def populate_obs_ring_geometry_CORSS_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     inc = index_row['MINIMUM_LIGHT_SOURCE_INCIDENCE_ANGLE']
 
     return 180-inc
 
-def populate_obs_ring_geometry_CORSS_north_based_emission1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_north_based_emission1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return 90-el
 
-def populate_obs_ring_geometry_CORSS_north_based_emission2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_north_based_emission2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
@@ -421,87 +404,87 @@ def populate_obs_ring_geometry_CORSS_north_based_emission2_OCC(**kwargs):
     return 90-el
 
 # We set the center versions to be the same as the normal versions
-populate_obs_ring_geometry_CORSS_center_phase1_OCC = \
-    populate_obs_ring_geometry_CORSS_phase1_OCC
-populate_obs_ring_geometry_CORSS_center_phase2_OCC = \
-    populate_obs_ring_geometry_CORSS_phase2_OCC
-populate_obs_ring_geometry_CORSS_center_incidence1_OCC = \
-    populate_obs_ring_geometry_CORSS_incidence1_OCC
-populate_obs_ring_geometry_CORSS_center_incidence2_OCC = \
-    populate_obs_ring_geometry_CORSS_incidence2_OCC
-populate_obs_ring_geometry_CORSS_center_emission1_OCC = \
-    populate_obs_ring_geometry_CORSS_emission1_OCC
-populate_obs_ring_geometry_CORSS_center_emission2_OCC = \
-    populate_obs_ring_geometry_CORSS_emission2_OCC
-populate_obs_ring_geometry_CORSS_center_north_based_incidence1_OCC = \
-    populate_obs_ring_geometry_CORSS_north_based_incidence1_OCC
-populate_obs_ring_geometry_CORSS_center_north_based_incidence2_OCC = \
-    populate_obs_ring_geometry_CORSS_north_based_incidence2_OCC
-populate_obs_ring_geometry_CORSS_center_north_based_emission1_OCC = \
-    populate_obs_ring_geometry_CORSS_north_based_emission1_OCC
-populate_obs_ring_geometry_CORSS_center_north_based_emission2_OCC = \
-    populate_obs_ring_geometry_CORSS_north_based_emission2_OCC
+populate_obs_ring_geometry_CORSS_center_phase1_PROF = \
+    populate_obs_ring_geometry_CORSS_phase1_PROF
+populate_obs_ring_geometry_CORSS_center_phase2_PROF = \
+    populate_obs_ring_geometry_CORSS_phase2_PROF
+populate_obs_ring_geometry_CORSS_center_incidence1_PROF = \
+    populate_obs_ring_geometry_CORSS_incidence1_PROF
+populate_obs_ring_geometry_CORSS_center_incidence2_PROF = \
+    populate_obs_ring_geometry_CORSS_incidence2_PROF
+populate_obs_ring_geometry_CORSS_center_emission1_PROF = \
+    populate_obs_ring_geometry_CORSS_emission1_PROF
+populate_obs_ring_geometry_CORSS_center_emission2_PROF = \
+    populate_obs_ring_geometry_CORSS_emission2_PROF
+populate_obs_ring_geometry_CORSS_center_north_based_incidence1_PROF = \
+    populate_obs_ring_geometry_CORSS_north_based_incidence1_PROF
+populate_obs_ring_geometry_CORSS_center_north_based_incidence2_PROF = \
+    populate_obs_ring_geometry_CORSS_north_based_incidence2_PROF
+populate_obs_ring_geometry_CORSS_center_north_based_emission1_PROF = \
+    populate_obs_ring_geometry_CORSS_north_based_emission1_PROF
+populate_obs_ring_geometry_CORSS_center_north_based_emission2_PROF = \
+    populate_obs_ring_geometry_CORSS_north_based_emission2_PROF
 
-def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_observer_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_CORSS_observer_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_observer_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_CORSS_observer_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_observer_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return el
 
-def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_solar_ring_opening_angle2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_CORSS_solar_ring_elevation1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MAXIMUM_OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_CORSS_solar_ring_elevation2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_solar_ring_elevation2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     el = index_row['MINIMUM_OBSERVED_RING_ELEVATION']
 
     return -el
 
-def populate_obs_ring_geometry_CORSS_ring_intercept_time1_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_intercept_time1_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
 
-def populate_obs_ring_geometry_CORSS_ring_intercept_time2_OCC(**kwargs):
+def populate_obs_ring_geometry_CORSS_ring_intercept_time2_PROF(**kwargs):
     return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
 
 
@@ -509,7 +492,7 @@ def populate_obs_ring_geometry_CORSS_ring_intercept_time2_OCC(**kwargs):
 # THESE NEED TO BE IMPLEMENTED FOR EVERY CASSINI INSTRUMENT
 ################################################################################
 
-def populate_obs_mission_cassini_CORSS_ert1_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_ert1_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['supp_index_row']
 
@@ -527,7 +510,7 @@ def populate_obs_mission_cassini_CORSS_ert1_OCC(**kwargs):
 
     return ert_sec
 
-def populate_obs_mission_cassini_CORSS_ert2_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_ert2_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['supp_index_row']
 
@@ -554,7 +537,7 @@ def populate_obs_mission_cassini_CORSS_ert2_OCC(**kwargs):
 
     return ert_sec
 
-def populate_obs_mission_cassini_CORSS_spacecraft_clock_count1_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_spacecraft_clock_count1_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     count = supp_index_row['SPACECRAFT_CLOCK_START_COUNT']
@@ -570,7 +553,7 @@ def populate_obs_mission_cassini_CORSS_spacecraft_clock_count1_OCC(**kwargs):
         return None
     return sc_cvt
 
-def populate_obs_mission_cassini_CORSS_spacecraft_clock_count2_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_spacecraft_clock_count2_PROF(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     count = supp_index_row['SPACECRAFT_CLOCK_STOP_COUNT']
@@ -595,7 +578,7 @@ def populate_obs_mission_cassini_CORSS_spacecraft_clock_count2_OCC(**kwargs):
 
     return sc_cvt
 
-def populate_obs_mission_cassini_CORSS_mission_phase_name_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_mission_phase_name_PROF(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['supp_index_row']
     mp = index_row['MISSION_PHASE_NAME']
@@ -603,7 +586,7 @@ def populate_obs_mission_cassini_CORSS_mission_phase_name_OCC(**kwargs):
         return None
     return mp.replace('_', ' ')
 
-def populate_obs_mission_cassini_CORSS_sequence_id_OCC(**kwargs):
+def populate_obs_mission_cassini_CORSS_sequence_id_PROF(**kwargs):
     return None
 
 

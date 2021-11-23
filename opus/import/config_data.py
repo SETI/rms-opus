@@ -16,7 +16,7 @@ TABLES_TO_POPULATE = ['obs_general',
                       'obs_instrument_<INST>',
                       'obs_type_image',
                       'obs_wavelength',
-                      'obs_occultation',
+                      'obs_profile',
                       'obs_files',
                       'obs_ring_geometry',
                       'obs_surface_geometry',
@@ -41,7 +41,9 @@ VOLSETS_WITH_RING_GEO = ['COISS_1xxx',
 
 # These instruments have surface geo available (maybe)
 # This is only used to give a warning if the surface geo isn't available
-VOLSETS_WITH_SURFACE_GEO = ['COISS_1xxx',
+VOLSETS_WITH_SURFACE_GEO = ['COCIRS_0xxx_CUBE_EQUI',
+                            'COCIRS_1xxx_CUBE_EQUI',
+                            'COISS_1xxx',
                             'COISS_2xxx',
                             'COUVIS_0xxx',
                             'COVIMS_0xxx',
@@ -132,7 +134,10 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
     'HSTWFPC2':  'HST',
     'NHLORRI':   'NH',
     'NHMVIC':    'NH',
-    'VGISS':     'VG'
+    'VGISS':     'VG',
+    'VGPPS':     'VG',
+    'VGRSS':     'VG',
+    'VGUVS':     'VG',
 }
 
 # Mapping from instrument abbrev to instrument name
@@ -150,6 +155,9 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
     'NHLORRI':     'New Horizons LORRI',
     'NHMVIC':      'New Horizons MVIC',
     'VGISS':       'Voyager ISS',
+    'VGPPS':       'Voyager PPS',
+    'VGRSS':       'Voyager RSS',
+    'VGUVS':       'Voyager UVS',
     # Ground-based
     'ESO1MAPPH':   'ESO 1-Meter Aperture Photometer',
     'ESO22MAPPH':  'ESO 2.2-Meter Aperture Photometer',
@@ -185,7 +193,13 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
     'NHLAMV': 'NHMVIC',
     'NHPCMV': 'NHMVIC',
     'NHPEMV': 'NHMVIC',
-    'VGISS':  'VGISS'
+    'VGISS':  'VGISS',
+    'VG':     {
+        'VG_2801': 'VGPPS',
+        'VG_2802': 'VGUVS',
+        'VG_2803': 'VGRSS',
+        'VG_2810': 'VGISS',
+    }
 }
 
 # Mapping from VOLUME ID prefix to mission abbreviation
@@ -214,21 +228,24 @@ VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
     'NHLAMV': 'NH',
     'NHPCMV': 'NH',
     'NHPEMV': 'NH',
-    'VGISS':  'VG'
+    'VGISS':  'VG',
+    'VG':     'VG',
 }
 
 # Mapping from VOLUME root to observation type
 VOLUME_ID_ROOT_TO_TYPE = {
+    'COCIRS_0xxx': 'CUBE',
+    'COCIRS_1xxx': 'CUBE',
     'COCIRS_5xxx': 'OBS',
     'COCIRS_6xxx': 'OBS',
     'COISS_1xxx':  'OBS',
     'COISS_2xxx':  'OBS',
-    'CORSS_8xxx':  'OCC',
+    'CORSS_8xxx':  'PROF',
     'COUVIS_0xxx': 'OBS',
-    'COUVIS_8xxx': 'OCC',
+    'COUVIS_8xxx': 'PROF',
     'COVIMS_0xxx': 'OBS',
-    'COVIMS_8xxx': 'OCC',
-    'EBROCC_xxxx': 'OCC',
+    'COVIMS_8xxx': 'PROF',
+    'EBROCC_xxxx': 'PROF',
     'GO_0xxx':     'OBS',
     'HSTIx_xxxx':  'OBS',
     'HSTJx_xxxx':  'OBS',
@@ -237,6 +254,7 @@ VOLUME_ID_ROOT_TO_TYPE = {
     'HSTUx_xxxx':  'OBS',
     'NHxxLO_xxxx': 'OBS',
     'NHxxMV_xxxx': 'OBS',
+    'VG_28xx':     'PROF',
     'VGISS_5xxx':  'OBS',
     'VGISS_6xxx':  'OBS',
     'VGISS_7xxx':  'OBS',
@@ -246,6 +264,8 @@ VOLUME_ID_ROOT_TO_TYPE = {
 # Some instruments (I'm looking at you, Cassini) don't use the official IAU
 # names for targets, but we want to in OPUS.
 TARGET_NAME_MAPPING = {
+    # This is found in COCIRS_0xxx/1xxx
+    'S_RINGS':          'S RINGS',
     # These are found in COISS
     'ERRIAPO':          'ERRIAPUS',
     'HYROKKIN':         'HYRROKKIN',
@@ -379,6 +399,7 @@ TARGET_NAME_MAPPING = {
     'BETORI':           'BET_ORI',
     'BETPEG':           'BET_PEG',
     'BETPER':           'BET_PER',
+    'BETA PER':         'BET_PER',
     'BETPSA':           'BET_PSA',
     'BETSGR':           'BET01_SGR',
     'BETUMI':           'BET_UMI',
@@ -396,6 +417,7 @@ TARGET_NAME_MAPPING = {
     'DELORI':           'DEL_ORI',
     'DELPER':           'DEL_PER',
     'DELSCO':           'DEL_SCO',
+    'DELTA SCO':        'DEL_SCO',
     'DELVIR':           'DEL_VIR',
     'EPSCAS':           'EPS_CAS',
     'EPSCEN':           'EPS_CEN',
@@ -429,6 +451,8 @@ TARGET_NAME_MAPPING = {
     'HD339':            'HD_339479',
     'HD 37962':         'HD_37962',
     'HD71334':          'HD_71334',
+    'IOTHER':           'IO_HER',
+    'IOTA HER':         'IO_HER',
     'IOTCEN':           'IO_CEN',
     'IOTORI':           'IO_ORI',
     'KAPCEN':           'KAP_CEN',
@@ -879,6 +903,7 @@ TARGET_NAME_INFO = {
     'HD_71334':             (None,  'OTHER',      'HD 71334'),
     'IK_TAU':               (None,  'OTHER',      'NML Tau'),
     'IO_CEN':               (None,  'OTHER',      'Iot Cen'),
+    'IO_HER':               (None,  'OTHER',      'Iot Her'),
     'IO_ORI':               (None,  'OTHER',      'Iot Ori'),
     'IRC_+10216':           (None,  'OTHER',      'CW Leo (IRC +10216)'),
     'KAP_CEN':              (None,  'OTHER',      'Kap Cen'),
@@ -987,7 +1012,7 @@ STAR_RA_DEC = {
     'BET_LUP':              (224.633022333, -43.133963861),
     'BET_ORI':              ( 78.634467083,  -8.201638361),
     'BET_PEG':              (345.943572750,  28.082787111),
-    'BET_PER':              ( 47.042218556,  40.955646670),
+    'BET_PER':              ( 47.042218542,  40.955646667),
     'BET_PSA':              (337.876376594, -32.346073708),
     'BET01_SGR':            (290.659578409, -44.458985404),
     'BET_UMI':              (222.676357500,  74.155503944),
@@ -1037,6 +1062,7 @@ STAR_RA_DEC = {
     'HD_37962':             ( 85.216524637, -31.351106996),
     'HD_71334':             (126.456315441, -29.930591803),
     'IK_TAU':               ( 58.370368708,  11.406073878),
+    'IO_HER':               (264.866193333,  46.006331945),
     'IO_CEN':               (209.907936987, -56.148672972),
     'IO_ORI':               ( 83.601016047,  -4.411121205),
     'IRC_+10216':           (146.989193000,  13.278768000),
@@ -1100,4 +1126,55 @@ STAR_RA_DEC = {
     'ZET_ORI':              ( 85.189694417,  -1.942573583),
     'ZET_PER':              ( 58.533010313,  31.883633684),
     'ZET_PUP':              (120.896031417, -40.003147806),
+}
+
+# Keywords in supplemental index filenames that indicate they contain surface
+# geo info in the absence of an actual surface geo summary file.
+SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO = [
+    'CUBE_EQUI'
+]
+
+# A Dictionary that stores the desired volumes in a volset.
+# {volset: pattern of desired volumes}
+# If the pattern is not matched, we will skip importing that specific volume.
+DESIRED_VOLUMES_IN_VOLSET = {
+    # we will ignore volumes smaller than 0402 for COCIRS_0xxx
+    'COCIRS_0xxx': r'(COCIRS_040[2-9]|COCIRS_041\d|COCIRS_0[5-9]\d{2})$',
+}
+
+# Note: threshold values are obtained and determined by observing the results
+# from OPUS. Voyager location:
+# North
+# 1980-11-12T05:15:45.520
+# South
+# 1980-11-13T04:19:30.640
+# North
+# 1981-08-26T04:18:21.080
+# South
+# 1985-11-06T17:22:30.040
+# North
+# 1986-01-24T17:10:13.320
+# South
+THRESHOLD_START_TIME_VG_AT_NORTH = [
+    '1980-11-12T05:15:45.520',
+    '1980-11-13T04:19:30.640',
+    '1981-08-26T04:16:45.080',
+    '1985-11-06T17:22:30.040',
+    '1986-01-24T17:10:13.320'
+]
+
+DSN_NAMES = {
+    14: 'Goldstone 14m',
+    15: 'Goldstone 34m',
+    24: 'Goldstone 34m',
+    25: 'Goldstone 34m',
+    26: 'Goldstone 34m',
+    34: 'Canberra 34m',
+    35: 'Canberra 34m',
+    36: 'Canberra 34m',
+    43: 'Canberra 70m',
+    54: 'Madrid 34m',
+    55: 'Madrid 34m',
+    63: 'Madrid 70m',
+    65: 'Madrid 34m'
 }

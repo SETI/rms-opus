@@ -482,7 +482,7 @@ def _spec_size_helper(**kwargs):
 
 def populate_obs_wavelength_COUVIS_spec_flag_OBS(**kwargs):
     spec_size = _spec_size_helper(**kwargs)
-    if spec_size is None or spec_size <= 1:
+    if spec_size is None or spec_size < 1:
         return 'N'
     return 'Y'
 

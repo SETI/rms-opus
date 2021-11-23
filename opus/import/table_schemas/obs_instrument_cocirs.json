@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -46,7 +46,9 @@
         "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "DETECTOR_ID"
+            "DETECTOR_ID",
+            "FUNCTION",
+            "obs_instrument_cocirs_detector_id_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -72,10 +74,11 @@
     {
         "field_name": "instrument_mode_blinking_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_BLINKING_FLAG"
+            "INSTRUMENT_MODE_BLINKING_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_blinking_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -96,10 +99,11 @@
     {
         "field_name": "instrument_mode_even_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_EVEN_FLAG"
+            "INSTRUMENT_MODE_EVEN_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_even_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -120,10 +124,11 @@
     {
         "field_name": "instrument_mode_odd_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_ODD_FLAG"
+            "INSTRUMENT_MODE_ODD_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_odd_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -144,10 +149,11 @@
     {
         "field_name": "instrument_mode_centers_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_CENTERS_FLAG"
+            "INSTRUMENT_MODE_CENTERS_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_centers_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -168,10 +174,11 @@
     {
         "field_name": "instrument_mode_pairs_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_PAIRS_FLAG"
+            "INSTRUMENT_MODE_PAIRS_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_pairs_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",
@@ -192,10 +199,11 @@
     {
         "field_name": "instrument_mode_all_flag",
         "field_type": "flag_onoff",
-        "field_notnull": true,
         "data_source": [
             "TAB:index",
-            "INSTRUMENT_MODE_ALL_FLAG"
+            "INSTRUMENT_MODE_ALL_FLAG",
+            "FUNCTION",
+            "obs_instrument_cocirs_all_flag_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_cocirs",
         "pi_dict_context": "COCIRS",

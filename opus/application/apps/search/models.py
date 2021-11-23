@@ -1202,7 +1202,7 @@ class MultObsMissionVoyagerMissionPhaseName(models.Model):
         db_table = 'mult_obs_mission_voyager_mission_phase_name'
 
 
-class MultObsOccultationBodyOccFlag(models.Model):
+class MultObsProfileBodyOccFlag(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1212,10 +1212,10 @@ class MultObsOccultationBodyOccFlag(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_body_occ_flag'
+        db_table = 'mult_obs_profile_body_occ_flag'
 
 
-class MultObsOccultationHost(models.Model):
+class MultObsProfileHost(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1225,10 +1225,10 @@ class MultObsOccultationHost(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_host'
+        db_table = 'mult_obs_profile_host'
 
 
-class MultObsOccultationOccDir(models.Model):
+class MultObsProfileOccDir(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1238,10 +1238,10 @@ class MultObsOccultationOccDir(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_occ_dir'
+        db_table = 'mult_obs_profile_occ_dir'
 
 
-class MultObsOccultationOccType(models.Model):
+class MultObsProfileOccType(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1251,10 +1251,10 @@ class MultObsOccultationOccType(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_occ_type'
+        db_table = 'mult_obs_profile_occ_type'
 
 
-class MultObsOccultationQualityScore(models.Model):
+class MultObsProfileQualityScore(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1264,10 +1264,10 @@ class MultObsOccultationQualityScore(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_quality_score'
+        db_table = 'mult_obs_profile_quality_score'
 
 
-class MultObsOccultationSource(models.Model):
+class MultObsProfileSource(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1277,10 +1277,10 @@ class MultObsOccultationSource(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_source'
+        db_table = 'mult_obs_profile_source'
 
 
-class MultObsOccultationWlBand(models.Model):
+class MultObsProfileWlBand(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     value = models.CharField(max_length=100, blank=True, null=True)
     label = models.CharField(max_length=100)
@@ -1290,7 +1290,7 @@ class MultObsOccultationWlBand(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'mult_obs_occultation_wl_band'
+        db_table = 'mult_obs_profile_wl_band'
 
 
 class MultObsSurfaceGeometryNameTargetName(models.Model):
@@ -1752,7 +1752,7 @@ class ObsMissionVoyager(models.Model):
         db_table = 'obs_mission_voyager'
 
 
-class ObsOccultation(models.Model):
+class ObsProfile(models.Model):
     obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')
     opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')
     volume_id = models.CharField(max_length=11)
@@ -1767,19 +1767,19 @@ class ObsOccultation(models.Model):
     wl_band = models.CharField(max_length=2, blank=True, null=True)
     source = models.CharField(max_length=40, blank=True, null=True)
     host = models.CharField(max_length=40, blank=True, null=True)
-    mult_obs_occultation_occ_type = models.ForeignKey(MultObsOccultationOccType, models.DO_NOTHING, db_column='mult_obs_occultation_occ_type')
-    mult_obs_occultation_occ_dir = models.ForeignKey(MultObsOccultationOccDir, models.DO_NOTHING, db_column='mult_obs_occultation_occ_dir')
-    mult_obs_occultation_body_occ_flag = models.ForeignKey(MultObsOccultationBodyOccFlag, models.DO_NOTHING, db_column='mult_obs_occultation_body_occ_flag')
-    mult_obs_occultation_quality_score = models.ForeignKey(MultObsOccultationQualityScore, models.DO_NOTHING, db_column='mult_obs_occultation_quality_score')
-    mult_obs_occultation_wl_band = models.ForeignKey(MultObsOccultationWlBand, models.DO_NOTHING, db_column='mult_obs_occultation_wl_band')
-    mult_obs_occultation_source = models.ForeignKey(MultObsOccultationSource, models.DO_NOTHING, db_column='mult_obs_occultation_source')
-    mult_obs_occultation_host = models.ForeignKey(MultObsOccultationHost, models.DO_NOTHING, db_column='mult_obs_occultation_host')
+    mult_obs_profile_occ_type = models.ForeignKey(MultObsProfileOccType, models.DO_NOTHING, db_column='mult_obs_profile_occ_type')
+    mult_obs_profile_occ_dir = models.ForeignKey(MultObsProfileOccDir, models.DO_NOTHING, db_column='mult_obs_profile_occ_dir')
+    mult_obs_profile_body_occ_flag = models.ForeignKey(MultObsProfileBodyOccFlag, models.DO_NOTHING, db_column='mult_obs_profile_body_occ_flag')
+    mult_obs_profile_quality_score = models.ForeignKey(MultObsProfileQualityScore, models.DO_NOTHING, db_column='mult_obs_profile_quality_score')
+    mult_obs_profile_wl_band = models.ForeignKey(MultObsProfileWlBand, models.DO_NOTHING, db_column='mult_obs_profile_wl_band')
+    mult_obs_profile_source = models.ForeignKey(MultObsProfileSource, models.DO_NOTHING, db_column='mult_obs_profile_source')
+    mult_obs_profile_host = models.ForeignKey(MultObsProfileHost, models.DO_NOTHING, db_column='mult_obs_profile_host')
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
 
     class Meta:
         managed = False
-        db_table = 'obs_occultation'
+        db_table = 'obs_profile'
 
 
 class ObsPds(models.Model):

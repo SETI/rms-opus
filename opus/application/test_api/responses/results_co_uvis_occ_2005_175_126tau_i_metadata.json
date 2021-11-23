@@ -42,10 +42,10 @@
         "wavenores1": "38277.511961722",
         "wavenores2": "38277.511961722",
         "specflag": "No",
-        "specsize": "1",
+        "specsize": null,
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Stellar",
         "occdir": "Ingress",
         "bodyoccflag": "No",

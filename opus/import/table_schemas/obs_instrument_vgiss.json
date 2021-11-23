@@ -16,7 +16,7 @@
     },
     {
         "field_name": "opus_id",
-        "field_type": "char40",
+        "field_type": "char50",
         "field_key": "foreign",
         "field_key_foreign": [
             "obs_general",
@@ -99,7 +99,7 @@
     {
         "field_name": "shutter_mode",
         "field_type": "enum",
-        "field_enum_options": "'BODARK','BOTALT','BOTSIM','BSIMAN','NAONLY','NOSHUT','WAONLY'",
+        "field_enum_options": "'BODARK','BOTALT','BOTSIM','BSIMAN','NAONLY','NOSHUT','WAONLY','N/A'",
         "field_notnull": true,
         "data_source": [
             "TAB:index",
@@ -127,7 +127,8 @@
               [   3, "BODARK", "BODARK", "040", "Y", null],
               [   4, "BOTALT", "BOTALT", "050", "Y", null],
               [   5, "BSIMAN", "BSIMAN", "060", "Y", null],
-              [   6, "NOSHUT", "NOSHUT", "070", "Y", null]
+              [   6, "NOSHUT", "NOSHUT", "070", "Y", null],
+              [   7, "N/A",    "N/A"   , "080", "Y", null]
           ]
     },
     {
@@ -273,7 +274,7 @@
         "field_notnull": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_vgiss_camera"
+            "obs_instrument_vgiss_camera_<TYPE>"
         ],
         "pi_category_name": "obs_instrument_vgiss",
         "pi_dict_context": "VGISS",
@@ -298,11 +299,11 @@
     {
         "field_name": "usable_lines",
         "field_type": "int2",
-        "field_notnull": true,
+        "field_notnull": false,
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_vgiss_usable_lines"
+            "obs_instrument_vgiss_usable_lines_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 800,
@@ -325,11 +326,11 @@
     {
         "field_name": "usable_samples",
         "field_type": "int2",
-        "field_notnull": true,
+        "field_notnull": false,
         "field_key": true,
         "data_source": [
             "FUNCTION",
-            "obs_instrument_vgiss_usable_samples"
+            "obs_instrument_vgiss_usable_samples_<TYPE>"
         ],
         "val_min": 0,
         "val_max": 800,

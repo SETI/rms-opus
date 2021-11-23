@@ -812,7 +812,7 @@ def _api_get_images(request, fmt, api_code, size, include_search, opus_id):
                                             ignore_missing=True)
     else:
         image_list = get_pds_preview_images(opus_ids, preview_jsons,
-                                            sizes=[size], ignore_missing=True)
+                                            sizes=[size])
 
     if not image_list:
         log.error('_api_get_images: No image found for: %s', str(opus_ids[:50]))

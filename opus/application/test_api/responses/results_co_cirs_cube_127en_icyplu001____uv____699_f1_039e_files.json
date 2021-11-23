@@ -1,0 +1,78 @@
+{
+    "data": {
+        "co-cirs-cube-127en_icyplu001____uv____699_f1_039e": {
+            "cocirs_cube": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.tar.gz",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+            ],
+            "cocirs_extra": [
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.JPG",
+                "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+            ],
+            "cube_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_index.lbl"
+            ],
+            "supplemental_index": [
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_supplemental_index.tab",
+                "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_supplemental_index.lbl"
+            ],
+            "browse_thumb": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_thumb.jpg"
+            ],
+            "browse_small": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_small.jpg"
+            ],
+            "browse_medium": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_med.jpg"
+            ],
+            "browse_full": [
+                "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_full.jpg"
+            ]
+        }
+    },
+    "versions": {
+        "co-cirs-cube-127en_icyplu001____uv____699_f1_039e": {
+            "Current": {
+                "cocirs_cube": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.tar.gz",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+                ],
+                "cocirs_extra": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+                ],
+                "cube_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_index.lbl"
+                ],
+                "supplemental_index": [
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_supplemental_index.tab",
+                    "https://opus.pds-rings.seti.org/holdings/metadata/COCIRS_1xxx/COCIRS_1003/COCIRS_1003_cube_equi_supplemental_index.lbl"
+                ],
+                "browse_thumb": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_thumb.jpg"
+                ],
+                "browse_small": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_small.jpg"
+                ],
+                "browse_medium": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_med.jpg"
+                ],
+                "browse_full": [
+                    "https://opus.pds-rings.seti.org/holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_full.jpg"
+                ]
+            },
+            "3": {
+                "cocirs_cube": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx_v3/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.tar.gz",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx_v3/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+                ],
+                "cocirs_extra": [
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx_v3/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.JPG",
+                    "https://opus.pds-rings.seti.org/holdings/volumes/COCIRS_1xxx_v3/COCIRS_1003/EXTRAS/CUBE_OVERVIEW/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E.LBL"
+                ]
+            }
+        }
+    }
+}

@@ -35,6 +35,8 @@ def yield_import_volume_ids(arguments):
                 if desc.upper() == 'ALL':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
@@ -55,11 +57,14 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('CORSS_8xxx')
                     volume_descs.append('COUVIS_8xxx')
                     volume_descs.append('COVIMS_8xxx')
+                    volume_descs.append('VG_28xx')
                 elif desc.upper() == 'ALLBUTNH':
                     # This is useful because NH has duplicate opus_id that require
                     # checking while the others don't.
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
@@ -78,9 +83,12 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('CORSS_8xxx')
                     volume_descs.append('COUVIS_8xxx')
                     volume_descs.append('COVIMS_8xxx')
+                    volume_descs.append('VG_28xx')
                 elif desc.upper() == 'CASSINI':
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                     volume_descs.append('COUVIS_0xxx')
@@ -92,6 +100,8 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COISS_1xxx')
                     volume_descs.append('COISS_2xxx')
                 elif desc.upper() == 'COCIRS':
+                    volume_descs.append('COCIRS_0xxx')
+                    volume_descs.append('COCIRS_1xxx')
                     volume_descs.append('COCIRS_5xxx')
                     volume_descs.append('COCIRS_6xxx')
                 elif desc.upper() == 'COUVIS':
@@ -102,11 +112,24 @@ def yield_import_volume_ids(arguments):
                     volume_descs.append('COVIMS_8xxx')
                 elif desc.upper() == 'CORSS':
                     volume_descs.append('CORSS_8xxx')
-                elif desc.upper() == 'VOYAGER' or desc.upper() == 'VGISS':
+                elif desc.upper() == 'VOYAGER':
                     volume_descs.append('VGISS_5xxx')
                     volume_descs.append('VGISS_6xxx')
                     volume_descs.append('VGISS_7xxx')
                     volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('VG_28xx')
+                elif desc.upper() == 'VGISS':
+                    volume_descs.append('VGISS_5xxx')
+                    volume_descs.append('VGISS_6xxx')
+                    volume_descs.append('VGISS_7xxx')
+                    volume_descs.append('VGISS_8xxx')
+                    volume_descs.append('VG_2810')
+                elif desc.upper() == 'VGPPS':
+                    volume_descs.append('VG_2801')
+                elif desc.upper() == 'VGUVS':
+                    volume_descs.append('VG_2802')
+                elif desc.upper() == 'VGRSS':
+                    volume_descs.append('VG_2803')
                 elif desc.upper() == 'GALILEO' or desc.upper() == 'GOSSI':
                     volume_descs.append('GO_0xxx')
                 elif desc.upper() == 'HST' or desc.upper() == 'HUBBLE':

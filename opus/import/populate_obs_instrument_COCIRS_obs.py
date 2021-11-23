@@ -1,5 +1,5 @@
 ################################################################################
-# populate_obs_instrument_COCIRS.py
+# populate_obs_instrument_COCIRS_obs.py
 #
 # Routines to populate fields specific to COCIRS.
 ################################################################################

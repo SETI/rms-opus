@@ -45,7 +45,7 @@
         "specsize": "256",
         "polarizationtype": "None"
     },
-    "Occultation Constraints": {
+    "Occultation/Reflectance Profiles Constraints": {
         "occtype": "Stellar",
         "occdir": "Egress",
         "bodyoccflag": "Yes",

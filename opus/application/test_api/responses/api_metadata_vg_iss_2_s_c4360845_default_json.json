@@ -45,7 +45,7 @@
     "spec_size": null,
     "polarization_type": "NONE"
   },
-  "Occultation Constraints": {
+  "Occultation/Reflectance Profiles Constraints": {
     "observer_ring_opening_angle1": "10.753",
     "observer_ring_opening_angle2": "10.753",
     "occ_type": null,

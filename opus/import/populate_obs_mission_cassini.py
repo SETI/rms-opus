@@ -333,7 +333,10 @@ def populate_obs_general_CO_planet_id_OBS(**kwargs):
         return 'OTH'
     return planet_id
 
-def populate_obs_general_CO_planet_id_OCC(**kwargs):
+def populate_obs_general_CO_planet_id_CUBE(**kwargs):
+    return 'SAT'
+
+def populate_obs_general_CO_planet_id_PROF(**kwargs):
     return 'SAT'
 
 ################################################################################

@@ -22,13 +22,14 @@ from populate_obs_general import *
 from populate_obs_pds import *
 
 from populate_obs_mission_cassini import *
-from populate_obs_instrument_COCIRS import *
+from populate_obs_instrument_COCIRS_cube import *
+from populate_obs_instrument_COCIRS_obs import *
 from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS_occ import *
+from populate_obs_instrument_CORSS_prof import *
 from populate_obs_instrument_COUVIS import *
-from populate_obs_instrument_COUVIS_occ import *
+from populate_obs_instrument_COUVIS_prof import *
 from populate_obs_instrument_COVIMS import *
-from populate_obs_instrument_COVIMS_occ import *
+from populate_obs_instrument_COVIMS_prof import *
 
 from populate_obs_mission_galileo import *
 from populate_obs_instrument_GOSSI import *
@@ -40,10 +41,14 @@ from populate_obs_instrument_NHLORRI import *
 from populate_obs_instrument_NHMVIC import *
 
 from populate_obs_mission_voyager import *
-from populate_obs_instrument_VGISS import *
+from populate_obs_instrument_VGISS_obs import *
+from populate_obs_instrument_VGPPS_prof import *
+from populate_obs_instrument_VGUVS_prof import *
+from populate_obs_instrument_VGRSS_prof import *
+from populate_obs_instrument_VGISS_prof import *
 
-from populate_obs_mission_groundbased_occ import *
-from populate_obs_instrument_GB_occ import *
+from populate_obs_mission_groundbased_prof import *
+from populate_obs_instrument_GB_prof import *
 
 from populate_obs_surface_geo import *
 
@@ -167,8 +172,12 @@ def create_tables_for_import(volume_id, namespace):
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+
     if instrument_name is None:
         instrument_name = 'GB'
+    elif type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
 
@@ -584,6 +593,15 @@ def import_one_volume(volume_id):
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
+
+    # Check if we want to ignore this specific volume in a volset
+    volset = volume_pdsfile.volset
+    if volset in DESIRED_VOLUMES_IN_VOLSET.keys():
+        if not re.match(DESIRED_VOLUMES_IN_VOLSET[volset], volume_id):
+            impglobals.LOGGER.close()
+            impglobals.CURRENT_VOLUME_ID = None
+            return True
+
     if not volume_pdsfile.is_volume:
         impglobals.LOGGER.log('error', f'{volume_id} is not a volume!')
         impglobals.LOGGER.close()
@@ -706,7 +724,11 @@ def import_one_volume(volume_id):
 def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
+
     instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    if instrument_name is not None and type(instrument_name) != str:
+        instrument_name = instrument_name[volume_id]
+
     mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
     volset = volume_pdsfile.volset
 
@@ -723,7 +745,11 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     metadata['index_label'] = obs_label_dict
 
     volume_type = VOLUME_ID_ROOT_TO_TYPE[volume_pdsfile.volset]
-
+    # This is used to check against these lists: VOLSETS_WITH_RING_GEO and
+    # VOLSETS_WITH_SURFACE_GEO. Most of the time, volset_info will just be the
+    # same as volset, but for cases like COCIRS_0xxx/1xxx, it will have info
+    # about the part of volume (cube_equi) that includes ring/geo info.
+    volset_info = volset
 
     ######################################
     ### FIND ASSOCIATED METADATA FILES ###
@@ -784,10 +810,23 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                         impglobals.IMPORT_HAS_BAD_DATA = True
                         continue
                     return False
+
+                # This is used to determine if we need to create body surface
+                # geo table when *_summary doesn't exist under metadata.
+                sub_assoc_type = None
+
                 if 'RING_SUMMARY' in basename.upper():
                     assoc_type = 'ring_geo'
                 elif 'SUPPLEMENTAL_INDEX' in basename.upper():
                     assoc_type = 'supp_index'
+                    # Check if the supplemental index file contains surface geo
+                    # info, and if so, mark the sub_assoc_type accordingly.
+                    for f in SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO:
+                        if f in basename.upper():
+                            sub_assoc_type = 'body_surface_geo'
+                            volset_info = volset + f'_{f}'
+                            break
+
                 elif 'INVENTORY' in basename.upper():
                     assoc_type = 'inventory'
                 else:
@@ -903,6 +942,32 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                 break
                             key = key.upper()
                             assoc_dict[key] = row
+
+                    # Construct the surface geo dict for supplemental index
+                    # files that contain surface geo info. The only metadata we
+                    # put in the surface geo dict is the target name, relying
+                    # on populate functions to retrieve the necessary metadata
+                    # later.
+                    # Format: {opus_id: {target: {'TARGET_NAME': target}}}
+                    if sub_assoc_type == 'body_surface_geo':
+                        obs_rows = metadata['index']
+                        sub_assoc_dict = metadata.get(sub_assoc_type, {})
+                        for row in obs_rows:
+                            vol_id = row.get('VOLUME_ID', None)
+                            file_spec_name = row.get('FILE_SPECIFICATION_NAME',
+                                                     None).upper()
+                            data_file_spec = vol_id+'/'+file_spec_name
+                            data_pdsfile = pdsfile.PdsFile.from_filespec(
+                                                    data_file_spec,
+                                                    fix_case=True)
+                            opus_id = data_pdsfile.opus_id
+                            target = row.get('TARGET_NAME')
+                            sub_assoc_dict[opus_id] = {}
+                            sub_assoc_dict[opus_id][target] = {
+                                'TARGET_NAME': target
+                            }
+                        metadata[sub_assoc_type] = sub_assoc_dict
+
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type+'_label'] = assoc_label_dict
 
@@ -910,19 +975,19 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     # supports it - but it isn't a fatal error if we don't because sometimes
     # the geo files are generated later
     if ('ring_geo' not in metadata and
-        volset in VOLSETS_WITH_RING_GEO):
+        volset_info in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing ring geometry files')
     elif ('ring_geo' in metadata and
-        volset not in VOLSETS_WITH_RING_GEO):
+        volset_info not in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected ring geometry files')
     if ('body_surface_geo' not in metadata and
-        volset in VOLSETS_WITH_SURFACE_GEO):
+        volset_info in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing body surface geometry files')
     elif ('body_surface_geo' in metadata and
-        volset not in VOLSETS_WITH_SURFACE_GEO):
+        volset_info not in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected body surface geometry files')
 

@@ -1,0 +1,33 @@
+{
+    "start_obs": 1,
+    "limit": 100,
+    "count": 1,
+    "available": 1,
+    "order": "time1,opusid",
+    "data": [
+        {
+            "opus_id": "co-cirs-cube-127en_icyplu001____uv____699_f1_039e",
+            "thumb_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_thumb.jpg",
+            "thumb_alt_text": "127EN_ICYPLU001____UV____699_F1_039E_thumb.jpg",
+            "thumb_size_bytes": 2950,
+            "thumb_width": 100,
+            "thumb_height": 80,
+            "small_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_small.jpg",
+            "small_alt_text": "127EN_ICYPLU001____UV____699_F1_039E_small.jpg",
+            "small_size_bytes": 10980,
+            "small_width": 256,
+            "small_height": 205,
+            "med_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_med.jpg",
+            "med_alt_text": "127EN_ICYPLU001____UV____699_F1_039E_med.jpg",
+            "med_size_bytes": 31618,
+            "med_width": 512,
+            "med_height": 410,
+            "full_url": "https://opus.pds-rings.seti.org//holdings/previews/COCIRS_1xxx/COCIRS_1003/DATA/CUBE/EQUIRECTANGULAR/127EN_ICYPLU001____UV____699_F1_039E_full.jpg",
+            "full_alt_text": "127EN_ICYPLU001____UV____699_F1_039E_full.jpg",
+            "full_size_bytes": 120439,
+            "full_width": 1280,
+            "full_height": 1024,
+            "ring_obs_id": "S_SPEC_CO_CIRS_N_ICYPLU00_FP1"
+        }
+    ]
+}

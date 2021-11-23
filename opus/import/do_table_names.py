@@ -69,10 +69,10 @@ def create_import_table_names_table():
         disp_order += 1
         rows.append(entry)
 
-    if impglobals.DATABASE.table_exists('perm', 'obs_occultation'):
+    if impglobals.DATABASE.table_exists('perm', 'obs_profile'):
         entry = {
-            'table_name': 'obs_occultation',
-            'label':      'Occultation Constraints',
+            'table_name': 'obs_profile',
+            'label':      'Occultation/Reflectance Profiles Constraints',
             'display':    'Y',
             'disp_order': disp_order
         }
