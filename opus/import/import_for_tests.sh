@@ -16,7 +16,7 @@ python main_opus_import.py --do-all-import COISS_2002,COISS_2008,COISS_2111 $1
 python main_opus_import.py --do-all-import COUVIS_0002 $1
 python main_opus_import.py --do-all-import COVIMS_0006 $1
 python main_opus_import.py --do-all-import COCIRS_5408 $1
-python main_opus_import.py --do-all-import GO_0017 $1
+python main_opus_import.py --import-check-duplicate-id --do-all-import GO_0017,GO_0018 $1
 python main_opus_import.py --do-all-import VGISS_6210,VGISS_8201 $1
 python main_opus_import.py --do-all-import HSTI1_3667,HSTI1_1559,HSTJ0_9975,HSTJ1_1085,HSTN0_7181,HSTO0_7316,HSTU0_5642 $1
 python main_opus_import.py --import-check-duplicate-id --do-all-import NHPELO_2001,NHPELO_1001,NHLAMV_2001,NHLAMV_1001,NHJUMV_2001,NHJUMV_1001 $1
