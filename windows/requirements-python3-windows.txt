@@ -24,7 +24,7 @@ numpy==1.17.3
 oyaml==0.9
 packaging==19.2
 pdfkit==0.6.1
-Pillow==6.2.1
+Pillow==9.0.0
 pip-upgrader==1.4.15
 pluggy==0.13.1
 py==1.10.0
