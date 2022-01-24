@@ -1,5 +1,5 @@
 - Fixes #XXX
-- Were any Django, import pipeline, table_schema, or dictionary files modified? Y/N
+- Were any Django, import pipeline, or table_schema files modified? Y/N
   - If YES:
     - Database used: XXX
     - All Django tests pass: Y/NA
@@ -10,6 +10,12 @@
     - Tested on Chrome, Firefox, Safari, Edge, and iOS: Y/NA
       (Remember to test all browser sizes)
     - Tested for race conditions (with delayed API calls if applicable): Y/NA
+- Was the documentation reviewed for necessary changes or additions? Y/NA
+  - About
+  - Getting Started
+  - FAQ
+  - API Guide
+  - Tooltips
 
 Description of changes:
 
