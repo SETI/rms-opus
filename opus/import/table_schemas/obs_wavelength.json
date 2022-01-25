@@ -23,10 +23,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +31,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +39,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,11 +47,7 @@
         "field_type": "real4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wavelength1_<TYPE>"
-        ],
-        "data_source_order": 0,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH",
@@ -88,11 +75,7 @@
         "field_type": "real4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wavelength2_<TYPE>"
-        ],
-        "data_source_order": 1,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context_results": "OPUS_WAVELENGTH",
         "pi_dict_name_results": "WAVELENGTH_MAX",
@@ -114,11 +97,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_res1_<TYPE>"
-        ],
-        "data_source_order": 2,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVELENGTH_RESOLUTION",
@@ -143,11 +122,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_res2_<TYPE>"
-        ],
-        "data_source_order": 3,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context_results": "OPUS_WAVELENGTH",
         "pi_dict_name_results": "WAVELENGTH_RESOLUTION_MAX",
@@ -169,11 +144,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_no1_<TYPE>"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVENUMBER",
@@ -198,11 +169,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_no2_<TYPE>"
-        ],
-        "data_source_order": 10,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context_results": "OPUS_WAVELENGTH",
         "pi_dict_name_results": "WAVENUMBER_MAX",
@@ -224,11 +191,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_no_res1_<TYPE>"
-        ],
-        "data_source_order": 20,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "WAVENUMBER_RESOLUTION",
@@ -253,11 +216,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_wave_no_res2_<TYPE>"
-        ],
-        "data_source_order": 20,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context_results": "OPUS_WAVELENGTH",
         "pi_dict_name_results": "WAVENUMBER_RESOLUTION_MAX",
@@ -278,11 +237,7 @@
         "field_name": "spec_flag",
         "field_type": "flag_yesno",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_spec_flag_<TYPE>"
-        ],
-        "data_source_order": 30,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "SPECTRAL_INFORMATION_FLAG",
@@ -304,11 +259,7 @@
         "field_type": "uint4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_spec_size_<TYPE>"
-        ],
-        "data_source_order": 30,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "SPECTRUM_SIZE",
@@ -330,10 +281,7 @@
         "field_type": "enum",
         "field_enum_options": "'LINEAR','CIRCULAR','NONE'",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_wavelength_<INST>_polarization_type_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_wavelength",
         "pi_dict_context": "OPUS_WAVELENGTH",
         "pi_dict_name": "RECEIVED_POLARIZATION_TYPE",
@@ -361,10 +309,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

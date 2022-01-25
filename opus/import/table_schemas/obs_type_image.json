@@ -23,10 +23,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +31,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +39,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,10 +47,7 @@
         "field_type": "char4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_type_image_<INST>_image_type_id_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The type of camera used. In a Frame camera, all pixels are exposed simultaneously. In a Pushbroom camera, the image is obtained by sweeping a single line of pixels across the target. In a Raster Scan camera, the image is constructed by repeatedly sweeping a single pixel across a field of view.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
@@ -87,10 +75,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_type_image_<INST>_duration_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The time interval between the opening and closing of an instrument aperture (such as a camera shutter). For most instruments this is the same as Observation Duration. For Cassini UVIS this is the integration duration. For Cassini VIMS this is the exposure duration for the given detector.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
@@ -112,10 +97,7 @@
         "field_type": "uint4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_type_image_<INST>_levels_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The number of discrete values that can appear in a single data point. This is a property of the instrument and does not represent the actual contents of the observation. For example, a camera with 12-bit pixels will support 4096 levels.",
         "pi_category_name": "obs_type_image",
         "pi_dict_context": "OPUS_TYPE_IMAGE",
@@ -136,10 +118,7 @@
         "field_type": "uint4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_type_image_<INST>_greater_pixel_size_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e8,
         "definition": "For an observation that can be represented as a 2-D array of pixels, this is the number of pixels along the longer of the two axes.",
@@ -162,10 +141,7 @@
         "field_type": "uint4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_type_image_<INST>_lesser_pixel_size_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e8,
         "definition": "For an observation that can be represented as a 2-D array of pixels, this is the number of pixels along the shorter of the two axes.",

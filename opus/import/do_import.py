@@ -18,39 +18,41 @@ import do_django
 import impglobals
 import import_util
 
-from populate_obs_general import *
-from populate_obs_pds import *
+# from populate_obs_general import *
+# from populate_obs_pds import *
+#
+# from populate_obs_mission_cassini import *
+# from populate_obs_instrument_COCIRS_cube import *
+# from populate_obs_instrument_COCIRS_obs import *
+# from populate_obs_instrument_COISS import *
+# from populate_obs_instrument_CORSS_prof import *
+# from populate_obs_instrument_COUVIS import *
+# from populate_obs_instrument_COUVIS_prof import *
+# from populate_obs_instrument_COVIMS import *
+# from populate_obs_instrument_COVIMS_prof import *
+#
+# from populate_obs_mission_galileo import *
+# from populate_obs_instrument_GOSSI import *
+#
+# from populate_obs_mission_hubble import *
+#
+# from populate_obs_mission_new_horizons import *
+# from populate_obs_instrument_NHLORRI import *
+# from populate_obs_instrument_NHMVIC import *
+#
+# from populate_obs_mission_voyager import *
+# from populate_obs_instrument_VGISS_obs import *
+# from populate_obs_instrument_VGPPS_prof import *
+# from populate_obs_instrument_VGUVS_prof import *
+# from populate_obs_instrument_VGRSS_prof import *
+# from populate_obs_instrument_VGISS_prof import *
+#
+# from populate_obs_mission_groundbased_prof import *
+# from populate_obs_instrument_GB_prof import *
+#
+# from populate_obs_surface_geo import *
 
-from populate_obs_mission_cassini import *
-from populate_obs_instrument_COCIRS_cube import *
-from populate_obs_instrument_COCIRS_obs import *
-from populate_obs_instrument_COISS import *
-from populate_obs_instrument_CORSS_prof import *
-from populate_obs_instrument_COUVIS import *
-from populate_obs_instrument_COUVIS_prof import *
-from populate_obs_instrument_COVIMS import *
-from populate_obs_instrument_COVIMS_prof import *
-
-from populate_obs_mission_galileo import *
-from populate_obs_instrument_GOSSI import *
-
-from populate_obs_mission_hubble import *
-
-from populate_obs_mission_new_horizons import *
-from populate_obs_instrument_NHLORRI import *
-from populate_obs_instrument_NHMVIC import *
-
-from populate_obs_mission_voyager import *
-from populate_obs_instrument_VGISS_obs import *
-from populate_obs_instrument_VGPPS_prof import *
-from populate_obs_instrument_VGUVS_prof import *
-from populate_obs_instrument_VGRSS_prof import *
-from populate_obs_instrument_VGISS_prof import *
-
-from populate_obs_mission_groundbased_prof import *
-from populate_obs_instrument_GB_prof import *
-
-from populate_obs_surface_geo import *
+from obs_instrument_gossi import ObsInstrumentGOSSI
 
 
 ################################################################################
