@@ -1395,7 +1395,7 @@ class ObsGeneral(models.Model):
     declination2 = models.FloatField(blank=True, null=True)
     observation_type = models.CharField(max_length=3)
     ring_obs_id = models.CharField(max_length=40, blank=True, null=True)
-    primary_file_spec = models.CharField(max_length=240)
+    primary_filespec = models.CharField(max_length=240)
     preview_images = models.TextField()  # This field type is a guess.
     mult_obs_general_instrument = models.ForeignKey(MultObsGeneralInstrumentId, models.DO_NOTHING)
     mult_obs_general_mission = models.ForeignKey(MultObsGeneralMissionId, models.DO_NOTHING)
@@ -1790,7 +1790,7 @@ class ObsPds(models.Model):
     data_set_id = models.CharField(max_length=40)
     product_id = models.CharField(max_length=30)
     product_creation_time = models.FloatField()
-    primary_file_spec = models.CharField(max_length=240)
+    primary_filespec = models.CharField(max_length=240)
     note = models.CharField(max_length=255, blank=True, null=True)
     id = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()

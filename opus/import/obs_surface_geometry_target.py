@@ -30,7 +30,7 @@ class ObsSurfaceGeometryTarget(ObsBase):
         return self.instrument_id
 
     # For all of these methods, _surface_geo_index_col will return None if there is no
-    # ring geo information for this instrument or this observation.
+    # surface geo information for this instrument or this observation.
     # If the surface_geo contents are going to come from another source, the
     # instrument class can subclass these methods.
 

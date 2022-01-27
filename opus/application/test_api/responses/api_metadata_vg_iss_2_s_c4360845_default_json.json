@@ -21,7 +21,7 @@
     "data_set_id": "VG1/VG2-S-ISS-2/3/4/6-PROCESSED-V1.0",
     "product_id": "C4360845_RAW.IMG",
     "product_creation_time": "2012-05-01T16:00:00.000",
-    "primary_file_spec": "VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL",
+    "primary_filespec": "VGISS_6210/DATA/C43608XX/C4360845_RAW.LBL",
     "opus_id": "vg-iss-2-s-c4360845",
     "note": ""
   },

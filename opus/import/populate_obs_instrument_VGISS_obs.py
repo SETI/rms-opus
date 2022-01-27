@@ -33,22 +33,22 @@ _VGISS_FILTER_WAVELENGTHS = { # XXX
 
 ### OBS_GENERAL TABLE ###
 
-def _VGISS_file_spec_helper(**kwargs):
+def _VGISS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/C13854XX/C1385455_CALIB.LBL"
-    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    filespec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_VGISS_opus_id_OBS(**kwargs):
-    file_spec = _VGISS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _VGISS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_VGISS_ring_obs_id_OBS(**kwargs):
@@ -114,11 +114,11 @@ def populate_obs_pds_VGISS_note_OBS(**kwargs):
     index_row = metadata['index_row']
     return index_row['NOTE']
 
-def populate_obs_general_VGISS_primary_file_spec_OBS(**kwargs):
-    return _VGISS_file_spec_helper(**kwargs)
+def populate_obs_general_VGISS_primary_filespec_OBS(**kwargs):
+    return _VGISS_filespec_helper(**kwargs)
 
-def populate_obs_pds_VGISS_primary_file_spec_OBS(**kwargs):
-    return _VGISS_file_spec_helper(**kwargs)
+def populate_obs_pds_VGISS_primary_filespec_OBS(**kwargs):
+    return _VGISS_filespec_helper(**kwargs)
 
 # Format: "VG1/VG2-J-ISS-2/3/4/6-PROCESSED-V1.0"
 def populate_obs_pds_VGISS_data_set_id_OBS(**kwargs):

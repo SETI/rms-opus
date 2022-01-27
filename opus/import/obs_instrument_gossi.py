@@ -5,14 +5,8 @@
 # obs_instrument_gossi table.
 ################################################################################
 
-import json
-import os
-
 import numpy as np
 
-import julian
-
-import import_util
 import opus_support
 
 from obs_mission_galileo import ObsMissionGalileo
@@ -34,12 +28,12 @@ _GOSSI_FOV_RAD_DIAG = _GOSSI_FOV_RAD * np.sqrt(2)
 # (WL MIN, WL MAX, EFFECTIVE WL)
 _GOSSI_FILTER_WAVELENGTHS = {
     'CLEAR':   (360, 1050, 611),
-    'VIOLET':  (360, 440, 404),
-    'GREEN':   (510, 610, 559),
-    'RED':     (620, 730, 671),
-    'IR-7270': (725, 750, 734),
-    'IR-7560': (750, 790, 756),
-    'IR-8890': (870, 900, 887),
+    'VIOLET':  (360,  440, 404),
+    'GREEN':   (510,  610, 559),
+    'RED':     (620,  730, 671),
+    'IR-7270': (725,  750, 734),
+    'IR-7560': (750,  790, 756),
+    'IR-8890': (870,  900, 887),
     'IR-9680': (940, 1050, 986),
 }
 
@@ -56,10 +50,6 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     @property
     def inst_host_id(self):
         return 'GO'
-
-    @property
-    def field_obs_general_inst_host_id(self):
-        return self.inst_host_id
 
     @property
     def field_obs_general_ring_obs_id(self):
@@ -100,14 +90,13 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     @property
     def field_obs_general_time2(self):
-        # Yes we really mean time1 here, not time2, since time1 just takes a single
-        # column and GOSSI uses the IMAGE_TIME as the stop time.
-        return self._time1_from_index('IMAGE_TIME')
+        return self._time2_from_index(None, column='IMAGE_TIME')
 
     @property
     def field_obs_general_observation_duration(self):
         exposure = self._index_col('EXPOSURE_DURATION')
         if exposure is None:
+            # Error will be reported under field_obs_general_time1
             return None
         return exposure / 1000
 
@@ -167,14 +156,13 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     @property
     def field_obs_pds_data_set_id(self):
-        dsi = self._index_col('DATA_SET_ID')
-        return dsi
+        return self._index_col('DATA_SET_ID')
 
     @property
     def field_obs_pds_product_id(self):
         s = self._index_col('FILE_SPECIFICATION_NAME')
 
-        # The file_spec looks like GO_0017:[J0.OPNAV.C034640]5900R.IMG
+        # The filespec looks like GO_0017:[J0.OPNAV.C034640]5900R.IMG
         # We want to extract C0346405900R
         idx = s.find('.')
         s = s[idx+1:]
@@ -217,8 +205,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         filter_name = self._index_col('FILTER_NAME')
 
         if filter_name not in _GOSSI_FILTER_WAVELENGTHS:
-            self._log_nonrepeating_error(
-                f'Unknown GOSSI filter name "{filter_name}"')
+            self._log_nonrepeating_error(f'Unknown GOSSI filter name "{filter_name}"')
             return 0
 
         return _GOSSI_FILTER_WAVELENGTHS[filter_name]
@@ -283,6 +270,21 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     @property
     def field_obs_mission_galileo_orbit_number(self):
         return str(self._index_col('ORBIT_NUMBER'))
+
+    @property
+    def field_obs_mission_galileo_spacecraft_clock_count1(self):
+        sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
+        try:
+            sc_cvt = opus_support.parse_galileo_sclk(sc)
+        except Exception as e:
+            self._log_nonrepeating_error(f'Unable to parse Galileo SCLK "{sc}": {e}')
+            return None
+        return sc_cvt
+
+    @property
+    def field_obs_mission_galileo_spacecraft_clock_count2(self):
+        # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
+        return self.field_obs_mission_galileo_spacecraft_clock_count1
 
 
     ####################################

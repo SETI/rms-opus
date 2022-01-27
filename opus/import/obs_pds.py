@@ -46,5 +46,5 @@ class ObsPds(ObsBase):
         return None
 
     @property
-    def field_obs_pds_primary_file_spec(self):
+    def field_obs_pds_primary_filespec(self):
         return self.primary_filespec

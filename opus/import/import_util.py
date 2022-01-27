@@ -367,6 +367,8 @@ def _format_vol_line():
         ret = impglobals.CURRENT_VOLUME_ID
         if impglobals.CURRENT_INDEX_ROW_NUMBER is not None:
             ret += ' index row '+str(impglobals.CURRENT_INDEX_ROW_NUMBER)
+        if impglobals.CURRENT_PRIMARY_FILESPEC is not None:
+            ret += f' "{impglobals.CURRENT_PRIMARY_FILESPEC}"'
     if ret != '':
         ret = '[' + ret + '] '
     return ret

@@ -18,22 +18,22 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _VGPPS_file_spec_helper(**kwargs):
+def _VGPPS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
 
-    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    filespec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_VGPPS_opus_id_PROF(**kwargs):
-    file_spec = _VGPPS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _VGPPS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
 
     return opus_id
 
@@ -74,11 +74,11 @@ def populate_obs_general_VGPPS_observation_type_PROF(**kwargs):
 def populate_obs_pds_VGPPS_note_PROF(**kwargs):
     return None
 
-def populate_obs_general_VGPPS_primary_file_spec_PROF(**kwargs):
-    return _VGPPS_file_spec_helper(**kwargs)
+def populate_obs_general_VGPPS_primary_filespec_PROF(**kwargs):
+    return _VGPPS_filespec_helper(**kwargs)
 
-def populate_obs_pds_VGPPS_primary_file_spec_PROF(**kwargs):
-    return _VGPPS_file_spec_helper(**kwargs)
+def populate_obs_pds_VGPPS_primary_filespec_PROF(**kwargs):
+    return _VGPPS_filespec_helper(**kwargs)
 
 def populate_obs_pds_VGPPS_product_creation_time_PROF(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)

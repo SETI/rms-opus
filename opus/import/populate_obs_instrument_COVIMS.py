@@ -23,7 +23,7 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _COVIMS_file_spec_helper(**kwargs):
+def _COVIMS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "/data/1999010T054026_1999010T060958"
@@ -37,13 +37,13 @@ def _COVIMS_file_spec_helper(**kwargs):
 def populate_obs_general_COVIMS_opus_id_OBS(**kwargs):
     metadata = kwargs['metadata']
     phase_name = metadata['phase_name'].lower()
-    file_spec = _COVIMS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _COVIMS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1] + '_' + phase_name
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1] + '_' + phase_name
     opus_id += '_' + phase_name
     return opus_id
 
@@ -98,11 +98,11 @@ def populate_obs_general_COVIMS_observation_duration_OBS(**kwargs):
 def populate_obs_pds_COVIMS_note_OBS(**kwargs):
     None
 
-def populate_obs_general_COVIMS_primary_file_spec_OBS(**kwargs):
-    return _COVIMS_file_spec_helper(**kwargs)
+def populate_obs_general_COVIMS_primary_filespec_OBS(**kwargs):
+    return _COVIMS_filespec_helper(**kwargs)
 
-def populate_obs_pds_COVIMS_primary_file_spec_OBS(**kwargs):
-    return _COVIMS_file_spec_helper(**kwargs)
+def populate_obs_pds_COVIMS_primary_filespec_OBS(**kwargs):
+    return _COVIMS_filespec_helper(**kwargs)
 
 def populate_obs_pds_COVIMS_product_creation_time_OBS(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)

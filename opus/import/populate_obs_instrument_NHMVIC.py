@@ -18,22 +18,22 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _NHMVIC_file_spec_helper(**kwargs):
+def _NHMVIC_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata['supp_index_row']
     # Format: "data/20070108_003059/mc0_0030598439_0x630_eng_1.lbl"
-    file_spec = supp_index_row['FILE_SPECIFICATION_NAME']
+    filespec = supp_index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_NHMVIC_opus_id_OBS(**kwargs):
-    file_spec = _NHMVIC_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _NHMVIC_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_NHMVIC_ring_obs_id_OBS(**kwargs):
@@ -90,11 +90,11 @@ def populate_obs_pds_NHMVIC_note_OBS(**kwargs):
         note = None
     return note
 
-def populate_obs_general_NHMVIC_primary_file_spec_OBS(**kwargs):
-    return _NHMVIC_file_spec_helper(**kwargs)
+def populate_obs_general_NHMVIC_primary_filespec_OBS(**kwargs):
+    return _NHMVIC_filespec_helper(**kwargs)
 
-def populate_obs_pds_NHMVIC_primary_file_spec_OBS(**kwargs):
-    return _NHMVIC_file_spec_helper(**kwargs)
+def populate_obs_pds_NHMVIC_primary_filespec_OBS(**kwargs):
+    return _NHMVIC_filespec_helper(**kwargs)
 
 def populate_obs_pds_NHMVIC_product_creation_time_OBS(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)

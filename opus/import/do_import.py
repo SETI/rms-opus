@@ -593,6 +593,7 @@ def import_one_volume(volume_id):
     impglobals.MAX_TABLE_ID_CACHE = {}
     impglobals.CURRENT_VOLUME_ID = volume_id
     impglobals.CURRENT_INDEX_ROW_NUMBER = None
+    impglobals.CURRENT_PRIMARY_FILESPEC = None
 
     volume_pdsfile = pdsfile.PdsFile.from_path(volume_id)
 
@@ -684,6 +685,7 @@ def import_one_volume(volume_id):
             impglobals.LOGGER.close()
             impglobals.CURRENT_VOLUME_ID = None
             impglobals.CURRENT_INDEX_ROW_NUMBER = None
+            impglobals.CURRENT_PRIMARY_FILESPEC = None
             return ret
 
         # For the remaining, there might be more than one index file (like
@@ -713,6 +715,7 @@ def import_one_volume(volume_id):
                 impglobals.LOGGER.close()
                 impglobals.CURRENT_VOLUME_ID = None
                 impglobals.CURRENT_INDEX_ROW_NUMBER = None
+                impglobals.CURRENT_PRIMARY_FILESPEC = None
                 return ret
 
     impglobals.LOGGER.log('error',
@@ -825,19 +828,19 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     # info, and if so, mark the sub_assoc_type accordingly.
                     for f in SUPPLEMENTAL_INDEX_FILES_WITH_SURFACE_GEO_INFO:
                         if f in basename.upper():
-                            sub_assoc_type = 'body_surface_geo'
+                            sub_assoc_type = 'surface_geo'
                             volset_info = volset + f'_{f}'
                             break
 
                 elif 'INVENTORY' in basename.upper():
                     assoc_type = 'inventory'
                 else:
-                    assoc_type = 'body_surface_geo'
+                    assoc_type = 'surface_geo'
                 impglobals.LOGGER.log('info',
         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
                 if (assoc_type == 'ring_geo' or
-                    assoc_type == 'body_surface_geo' or
+                    assoc_type == 'surface_geo' or
                     assoc_type == 'inventory'):
                     for row in assoc_rows:
                         key = None
@@ -851,20 +854,20 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             import_util.log_nonrepeating_error(
                                f'{assoc_label_path} is missing VOLUME_ID field')
                             break
-                        geo_file_spec = row.get('FILE_SPECIFICATION_NAME',
+                        geo_filespec = row.get('FILE_SPECIFICATION_NAME',
                                                 None)
-                        if geo_file_spec is None:
+                        if geo_filespec is None:
                             import_util.log_nonrepeating_error(
                 f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
                             break
-                        geo_full_file_spec = geo_vol+'/'+geo_file_spec
+                        geo_full_filespec = geo_vol+'/'+geo_filespec
                         geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_file_spec,
+                                                geo_full_filespec,
                                                 fix_case=True)
                         key = geo_pdsfile.opus_id
                         if not key:
                             import_util.log_nonrepeating_error(
-            f'Failed to convert file_spec "{geo_full_file_spec}" to opus_id '+
+            f'Failed to convert filespec "{geo_full_filespec}" to opus_id '+
             f'for {assoc_label_path}')
                             continue
                         key = key.replace('.', '-')
@@ -885,14 +888,14 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                             else:
                                 import_util.log_nonrepeating_error(
                  f'{assoc_label_path} has bad OPUS_ID for '+
-                 f'file_spec "{geo_full_file_spec}"')
+                 f'filespec "{geo_full_filespec}"')
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
                             # RING_GEO and INVENTORY are easy - there is at most
                             # a single entry per observation, so we just create
                             # a dictionary keyed by opus_id.
                             assoc_dict[key] = row
-                        elif assoc_type == 'body_surface_geo':
+                        elif assoc_type == 'surface_geo':
                             # SURFACE_GEO is more complicated, because there can
                             # be more than one entry per observation, since
                             # there is one for each target. We create a
@@ -951,16 +954,16 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     # on populate functions to retrieve the necessary metadata
                     # later.
                     # Format: {opus_id: {target: {'TARGET_NAME': target}}}
-                    if sub_assoc_type == 'body_surface_geo':
+                    if sub_assoc_type == 'surface_geo':
                         obs_rows = metadata['index']
                         sub_assoc_dict = metadata.get(sub_assoc_type, {})
                         for row in obs_rows:
                             vol_id = row.get('VOLUME_ID', None)
-                            file_spec_name = row.get('FILE_SPECIFICATION_NAME',
+                            filespec_name = row.get('FILE_SPECIFICATION_NAME',
                                                      None).upper()
-                            data_file_spec = vol_id+'/'+file_spec_name
+                            data_filespec = vol_id+'/'+filespec_name
                             data_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                    data_file_spec,
+                                                    data_filespec,
                                                     fix_case=True)
                             opus_id = data_pdsfile.opus_id
                             target = row.get('TARGET_NAME')
@@ -984,11 +987,11 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         volset_info not in VOLSETS_WITH_RING_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected ring geometry files')
-    if ('body_surface_geo' not in metadata and
+    if ('surface_geo' not in metadata and
         volset_info in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" is missing body surface geometry files')
-    elif ('body_surface_geo' in metadata and
+    elif ('surface_geo' in metadata and
         volset_info not in VOLSETS_WITH_SURFACE_GEO):
         impglobals.LOGGER.log('warning',
             f'Volume "{volume_id}" has unexpected body surface geometry files')
@@ -1055,6 +1058,10 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         obs_pds_row = None
         impglobals.CURRENT_INDEX_ROW_NUMBER = index_row_num+1
 
+        # Sometimes the primary_filespec is taken from the supplemental index, which we
+        # don't have yet, so we can't look it up until later.
+        impglobals.CURRENT_PRIMARY_FILESPEC = None
+
         # The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
         # (thanks VIMS team) but that's how we match across (supplemental) index
         # files, so it's easier just to fake one here rather than special-case
@@ -1083,14 +1090,14 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             # Match up the PATH_NAME + FILE_NAME with FILE_SPECIFICATION_NAME
             path_name = index_row['PATH_NAME']
             file_name = index_row['FILE_NAME']
-            file_spec_name = path_name+file_name
-            file_spec_name = file_spec_name.upper()
+            filespec_name = path_name+file_name
+            filespec_name = filespec_name.upper()
             supp_index = metadata['supp_index']
-            if file_spec_name in supp_index:
-                metadata['supp_index_row'] = supp_index[file_spec_name]
+            if filespec_name in supp_index:
+                metadata['supp_index_row'] = supp_index[filespec_name]
             else:
                 import_util.log_nonrepeating_error(
-                    f'File "{file_spec_name}" is missing supplemental data')
+                    f'File "{filespec_name}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif 'supp_index' in metadata:
@@ -1137,6 +1144,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 phase_names.append('IR')
         else:
             phase_names = ['NORMAL']
+
+        impglobals.CURRENT_PRIMARY_FILESPEC = instrument_obj.primary_filespec
 
         for phase_name in phase_names:
             metadata['phase_name'] = phase_name
@@ -1193,8 +1202,8 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
             # obs_surface_geometry__<TARGET>
 
             target_dict = {}
-            if 'body_surface_geo' in metadata:
-                surface_geo_dict = metadata['body_surface_geo']
+            if 'surface_geo' in metadata:
+                surface_geo_dict = metadata['surface_geo']
                 for table_name in table_names_in_order:
                     if not table_name.startswith('obs_surface_geometry_'):
                         # Deal with obs_surface_geometry_name and
@@ -1219,7 +1228,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                                                                 target_name)
                         new_table_name = table_name.replace('<TARGET>',
                                                             new_target_name)
-                        metadata['body_surface_geo_row'] = target_dict[
+                        metadata['surface_geo_row'] = target_dict[
                                                                 target_name]
 
                         row = import_observation_table(instrument_obj,
@@ -1268,7 +1277,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                     # Deal with obs_files only
                     continue
                 rows = get_pdsfile_rows_for_filespec(
-                                obs_pds_row['primary_file_spec'],
+                                obs_pds_row['primary_filespec'],
                                 obs_general_row['id'],
                                 obs_general_row['opus_id'],
                                 obs_general_row['volume_id'],
@@ -1559,9 +1568,9 @@ def import_observation_table(instrument_obj,
                     impglobals.LOGGER.log('warning',
                         'RING GEO metadata available but missing for '+
                         f'opus_id "{opus_id}"')
-            if 'body_surface_geo' in metadata:
-                body_geo = metadata['body_surface_geo'].get(opus_id)
-                metadata['body_surface_geo_row'] = body_geo
+            if 'surface_geo' in metadata:
+                body_geo = metadata['surface_geo'].get(opus_id)
+                metadata['surface_geo_row'] = body_geo
 
     return new_row
 
@@ -1570,7 +1579,7 @@ def import_run_field_function(instrument_obj,
                               field_name):
     "Call the Python function used to populate a single field in a table."
     func_name = 'field_'+table_name+'_'+field_name
-    if not hasattr(instrument_obj, func_name):
+    if func_name not in dir(instrument_obj):
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
             f'Unknown table field func "{class_name}::{func_name}"')
@@ -1588,7 +1597,7 @@ def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
         pdsf = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     except ValueError:
         import_util.log_nonrepeating_error(
-                                    f'Failed to convert file_spec "{file_spec}"')
+                                    f'Failed to convert filespec "{filespec}"')
         return
 
     products = pdsf.opus_products()

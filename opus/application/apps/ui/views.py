@@ -523,7 +523,7 @@ def api_init_detail_page(request, **kwargs):
         exit_api_call(api_code, None)
         raise Http404
     instrument_id = obs_general.instrument_id
-    filespec = obs_general.primary_file_spec
+    filespec = obs_general.primary_filespec
     selection = filespec.split('/')[-1].split('.')[0]
 
     # See if this opus_id is in the cart

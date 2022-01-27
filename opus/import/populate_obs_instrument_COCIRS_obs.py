@@ -23,22 +23,22 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _COCIRS_file_spec_helper(**kwargs):
+def _COCIRS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/APODSPEC/SPEC0802010000_FP1.DAT"
-    file_spec = index_row['SPECTRUM_FILE_SPECIFICATION']
+    filespec = index_row['SPECTRUM_FILE_SPECIFICATION']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_COCIRS_opus_id_OBS(**kwargs):
-    file_spec = _COCIRS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _COCIRS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_COCIRS_ring_obs_id_OBS(**kwargs):
@@ -83,11 +83,11 @@ def populate_obs_general_COCIRS_observation_type_OBS(**kwargs):
 def populate_obs_pds_COCIRS_note_OBS(**kwargs):
     return None
 
-def populate_obs_general_COCIRS_primary_file_spec_OBS(**kwargs):
-    return _COCIRS_file_spec_helper(**kwargs)
+def populate_obs_general_COCIRS_primary_filespec_OBS(**kwargs):
+    return _COCIRS_filespec_helper(**kwargs)
 
-def populate_obs_pds_COCIRS_primary_file_spec_OBS(**kwargs):
-    return _COCIRS_file_spec_helper(**kwargs)
+def populate_obs_pds_COCIRS_primary_filespec_OBS(**kwargs):
+    return _COCIRS_filespec_helper(**kwargs)
 
 def populate_obs_pds_COCIRS_product_creation_time_OBS(**kwargs):
     return None # Until the proper data is available in the supplemental index

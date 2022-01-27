@@ -5,8 +5,6 @@
 # obs_mission_galileo table.
 ################################################################################
 
-import opus_support
-
 from obs_common import ObsCommon
 
 
@@ -37,16 +35,8 @@ class ObsMissionGalileo(ObsCommon):
 
     @property
     def field_obs_mission_galileo_spacecraft_clock_count1(self):
-        sc = self._index_col('SPACECRAFT_CLOCK_START_COUNT')
-        try:
-            sc_cvt = opus_support.parse_galileo_sclk(sc)
-        except Exception as e:
-            self._log_nonrepeating_error(
-                f'Unable to parse Galileo SCLK "{sc}": {e}')
-            return None
-        return sc_cvt
+        raise NotImplementedError
 
     @property
     def field_obs_mission_galileo_spacecraft_clock_count2(self):
-        # There is no SPACECRAFT_CLOCK_STOP_COUNT for Galileo
-        return self.field_obs_mission_galileo_spacecraft_clock_count1
+        raise NotImplementedError

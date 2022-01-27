@@ -52,23 +52,23 @@ def populate_obs_general_HST_planet_id_OBS(**kwargs):
 
 ### OBS_GENERAL TABLE ###
 
-def _HST_file_spec_helper(**kwargs):
+def _HST_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/VISIT_05/O43B05C1Q.LBL"
-    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    filespec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
 
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_HSTx_opus_id_OBS(**kwargs):
-    file_spec = _HST_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _HST_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
 
     return opus_id.replace('.', '-')
 
@@ -264,25 +264,25 @@ populate_obs_pds_HSTSTIS_note_OBS = populate_obs_pds_HSTx_note_OBS
 populate_obs_pds_HSTWFC3_note_OBS = populate_obs_pds_HSTx_note_OBS
 populate_obs_pds_HSTWFPC2_note_OBS = populate_obs_pds_HSTx_note_OBS
 
-def populate_obs_general_HSTx_primary_file_spec_OBS(**kwargs):
-    file_spec = _HST_file_spec_helper(**kwargs)
-    return file_spec
+def populate_obs_general_HSTx_primary_filespec_OBS(**kwargs):
+    filespec = _HST_filespec_helper(**kwargs)
+    return filespec
 
-populate_obs_general_HSTACS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
-populate_obs_general_HSTNICMOS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
-populate_obs_general_HSTSTIS_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
-populate_obs_general_HSTWFC3_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
-populate_obs_general_HSTWFPC2_primary_file_spec_OBS = populate_obs_general_HSTx_primary_file_spec_OBS
+populate_obs_general_HSTACS_primary_filespec_OBS = populate_obs_general_HSTx_primary_filespec_OBS
+populate_obs_general_HSTNICMOS_primary_filespec_OBS = populate_obs_general_HSTx_primary_filespec_OBS
+populate_obs_general_HSTSTIS_primary_filespec_OBS = populate_obs_general_HSTx_primary_filespec_OBS
+populate_obs_general_HSTWFC3_primary_filespec_OBS = populate_obs_general_HSTx_primary_filespec_OBS
+populate_obs_general_HSTWFPC2_primary_filespec_OBS = populate_obs_general_HSTx_primary_filespec_OBS
 
-def populate_obs_pds_HSTx_primary_file_spec_OBS(**kwargs):
-    file_spec = _HST_file_spec_helper(**kwargs)
-    return file_spec
+def populate_obs_pds_HSTx_primary_filespec_OBS(**kwargs):
+    filespec = _HST_filespec_helper(**kwargs)
+    return filespec
 
-populate_obs_pds_HSTACS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
-populate_obs_pds_HSTNICMOS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
-populate_obs_pds_HSTSTIS_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
-populate_obs_pds_HSTWFC3_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
-populate_obs_pds_HSTWFPC2_primary_file_spec_OBS = populate_obs_pds_HSTx_primary_file_spec_OBS
+populate_obs_pds_HSTACS_primary_filespec_OBS = populate_obs_pds_HSTx_primary_filespec_OBS
+populate_obs_pds_HSTNICMOS_primary_filespec_OBS = populate_obs_pds_HSTx_primary_filespec_OBS
+populate_obs_pds_HSTSTIS_primary_filespec_OBS = populate_obs_pds_HSTx_primary_filespec_OBS
+populate_obs_pds_HSTWFC3_primary_filespec_OBS = populate_obs_pds_HSTx_primary_filespec_OBS
+populate_obs_pds_HSTWFPC2_primary_filespec_OBS = populate_obs_pds_HSTx_primary_filespec_OBS
 
 def populate_obs_pds_HSTx_product_creation_time_OBS(**kwargs):
     return populate_product_creation_time_from_index(**kwargs)

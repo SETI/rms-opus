@@ -25,15 +25,15 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _COUVIS_file_spec_helper(**kwargs):
+def _COUVIS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     supp_index_row = metadata.get('supp_index_row', None)
     if supp_index_row is None:
         return None
     # Format: "/DATA/D2015_001/EUV2015_001_17_57.LBL"
-    file_spec = supp_index_row['FILE_SPECIFICATION_NAME']
+    filespec = supp_index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def _COUVIS_channel_time_helper(**kwargs):
     metadata = kwargs['metadata']
@@ -52,13 +52,13 @@ def _COUVIS_channel_time_helper(**kwargs):
     return channel, image_time
 
 def populate_obs_general_COUVIS_opus_id_OBS(**kwargs):
-    file_spec = _COUVIS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _COUVIS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
     return opus_id
 
 def populate_obs_general_COUVIS_ring_obs_id_OBS(**kwargs):
@@ -159,11 +159,11 @@ def populate_obs_pds_COUVIS_note_OBS(**kwargs):
                                       '')
     return description
 
-def populate_obs_general_COUVIS_primary_file_spec_OBS(**kwargs):
-    return _COUVIS_file_spec_helper(**kwargs)
+def populate_obs_general_COUVIS_primary_filespec_OBS(**kwargs):
+    return _COUVIS_filespec_helper(**kwargs)
 
-def populate_obs_pds_COUVIS_primary_file_spec_OBS(**kwargs):
-    return _COUVIS_file_spec_helper(**kwargs)
+def populate_obs_pds_COUVIS_primary_filespec_OBS(**kwargs):
+    return _COUVIS_filespec_helper(**kwargs)
 
 def populate_obs_pds_COUVIS_product_creation_time_OBS(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)

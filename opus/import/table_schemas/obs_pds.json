@@ -133,7 +133,7 @@
         "pi_tooltip": null
     },
     {
-        "field_name": "primary_file_spec",
+        "field_name": "primary_filespec",
         "field_type": "char240",
         "field_notnull": true,
         "field_key": true,

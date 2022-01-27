@@ -16,7 +16,7 @@ from obs_surface_geometry_name import ObsSurfaceGeometryName
 from obs_surface_geometry_target import ObsSurfaceGeometryTarget
 
 class ObsCommon(ObsGeneral, ObsPds, ObsTypeImage, ObsWavelength, ObsProfile,
-                ObsRingGeometry, ObsSurfaceGeometry, ObsSurfaceGeometryName,
-                ObsSurfaceGeometryTarget):
+                ObsRingGeometry,
+                ObsSurfaceGeometry, ObsSurfaceGeometryName, ObsSurfaceGeometryTarget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

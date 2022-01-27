@@ -432,7 +432,7 @@
         "pi_units": null
     },
     {
-        "@field_name": "primary_file_spec",
+        "@field_name": "primary_filespec",
         "@field_type": "char240",
         "@field_x_default": null,
         "pi_category_name": "obs_general",

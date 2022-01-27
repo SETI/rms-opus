@@ -19,22 +19,22 @@ from populate_util import *
 
 ### OBS_GENERAL TABLE ###
 
-def _COUVIS_file_spec_helper(**kwargs):
+def _COUVIS_filespec_helper(**kwargs):
     metadata = kwargs['metadata']
     index_row = metadata['index_row']
     # Format: "DATA/UVIS_HSP_2004_280_XI2CET_E_TAU01KM.LBL"
-    file_spec = index_row['FILE_SPECIFICATION_NAME']
+    filespec = index_row['FILE_SPECIFICATION_NAME']
     volume_id = kwargs['volume_id']
-    return volume_id + '/' + file_spec
+    return volume_id + '/' + filespec
 
 def populate_obs_general_COUVIS_opus_id_PROF(**kwargs):
-    file_spec = _COUVIS_file_spec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(file_spec, fix_case=True)
+    filespec = _COUVIS_filespec_helper(**kwargs)
+    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
     opus_id = pds_file.opus_id
     if not opus_id:
         import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{file_spec}"')
-        return file_spec.split('/')[-1]
+            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
+        return filespec.split('/')[-1]
 
     # We do this because the filenames are wrong in the archive
     if opus_id == 'co-uvis-occ-2005-139-psicen-e':
@@ -79,11 +79,11 @@ def populate_obs_pds_COUVIS_note_PROF(**kwargs):
     dq_score = supp_index_row['DATA_QUALITY_SCORE']
     return 'Data quality ' + dq_score.lower()
 
-def populate_obs_general_COUVIS_primary_file_spec_PROF(**kwargs):
-    return _COUVIS_file_spec_helper(**kwargs)
+def populate_obs_general_COUVIS_primary_filespec_PROF(**kwargs):
+    return _COUVIS_filespec_helper(**kwargs)
 
-def populate_obs_pds_COUVIS_primary_file_spec_PROF(**kwargs):
-    return _COUVIS_file_spec_helper(**kwargs)
+def populate_obs_pds_COUVIS_primary_filespec_PROF(**kwargs):
+    return _COUVIS_filespec_helper(**kwargs)
 
 def populate_obs_pds_COUVIS_product_creation_time_PROF(**kwargs):
     return populate_product_creation_time_from_supp_index(**kwargs)
@@ -205,7 +205,7 @@ def populate_obs_occultation_COUVIS_occ_type_PROF(**kwargs):
     return 'STE' # There are no SUN occultations
 
 def populate_obs_occultation_COUVIS_occ_dir_PROF(**kwargs):
-    filespec = _COUVIS_file_spec_helper(**kwargs)
+    filespec = _COUVIS_filespec_helper(**kwargs)
 
     # We don't allow "Both" as a direction since these are always split into
     # separate files.

@@ -35,12 +35,16 @@ class ObsGeneral(ObsBase):
         return self.instrument_id
 
     @property
+    def field_obs_general_inst_host_id(self):
+        return self.inst_host_id
+
+    @property
     def field_obs_general_mission_id(self):
         return self._mission_id
 
     @property
     def field_obs_general_inst_host_id(self):
-        return self._inst_host_id
+        return self.inst_host_id
 
     @property
     def field_obs_general_planet_id(self):
@@ -103,19 +107,19 @@ class ObsGeneral(ObsBase):
         return None
 
     @property
-    def field_obs_general_primary_file_spec(self):
+    def field_obs_general_primary_filespec(self):
         return self.primary_filespec
 
     @property
     def field_obs_general_preview_images(self):
         ### XXX Review this
-        pdsf = self._pdsfile_from_filespec(self.field_obs_general_primary_file_spec)
+        pdsf = self._pdsfile_from_filespec(self.primary_filespec)
 
         try:
             viewset = pdsf.viewset
         except ValueError as e:
             self._log_nonrepeating_warning(
-                f'ViewSet threw ValueError for "{file_spec}": {e}')
+                f'ViewSet threw ValueError for "{filespec}": {e}')
             viewset = None
 
         if viewset:
@@ -123,20 +127,20 @@ class ObsGeneral(ObsBase):
             if not impglobals.ARGUMENTS.import_ignore_missing_images:
                 if not viewset.thumbnail:
                     self._log_nonrepeating_warning(
-                        f'Missing thumbnail browse/diagram image for "{file_spec}"')
+                        f'Missing thumbnail browse/diagram image for "{filespec}"')
                 if not viewset.small:
                     self._log_nonrepeating_warning(
-                        f'Missing small browse/diagram image for "{file_spec}"')
+                        f'Missing small browse/diagram image for "{filespec}"')
                 if not viewset.medium:
                     self._log_nonrepeating_warning(
-                        f'Missing medium browse/diagram image for "{file_spec}"')
+                        f'Missing medium browse/diagram image for "{filespec}"')
                 if not viewset.full_size:
                     self._log_nonrepeating_warning(
-                        f'Missing full_size browse/diagram image for "{file_spec}"')
+                        f'Missing full_size browse/diagram image for "{filespec}"')
         else:
             if impglobals.ARGUMENTS.import_fake_images:
                 # impglobals.LOGGER.log('debug',
-                #                 f'Faking browse/diagram images for "{file_spec}"')
+                #                 f'Faking browse/diagram images for "{filespec}"')
                 base_path = os.path.splitext(pdsf.logical_path)[0]
                 if base_path.find('CIRS') != -1:
                     base_path = base_path.replace('volumes', 'diagrams')
@@ -165,7 +169,7 @@ class ObsGeneral(ObsBase):
                 if (volset in VOLSETS_WITH_PREVIEWS and
                     not impglobals.ARGUMENTS.import_ignore_missing_images):
                     self._log_nonrepeating_warning(
-                        f'Missing all browse/diagram images for "{file_spec}"')
+                        f'Missing all browse/diagram images for "{filespec}"')
 
         ret = json.dumps(browse_data)
         return ret

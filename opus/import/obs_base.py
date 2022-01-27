@@ -1,3 +1,10 @@
+################################################################################
+# obs_base.py
+#
+# Defines the ObsBase class, which is the base class for all Obs* classes.
+# It contains information on the observation and basic utility methods.
+################################################################################
+
 import julian
 import pdsfile
 
@@ -20,8 +27,13 @@ class ObsBase(object):
         volset          The PDS3 volset ("COISS_2xxx")
         mission_id      The mission abbreviation ("CO")
         instrument_id   The instrument abbreviation ("COISS")
-        metadata
-
+        metadata        The collection of metadata available for this observation.
+                        This includes rows from the various index as well as additional
+                        information. Note that the metadata structure is updated
+                        for each observation even though only a single ObsBase instance
+                        is created for each volume. Thus methods have to assume that
+                        the metadata has changed between calls and they can't cache
+                        results.
         ignore_errors   True if the user argument --import-ignore-errors was
                         given. This bypasses certain errors (like unknown
                         target name) and fakes data so that the import can
@@ -32,11 +44,7 @@ class ObsBase(object):
         self._mission_id     = mission_id
         self._instrument_id  = instrument_id
         self._metadata       = metadata
-
         self._ignore_errors  = ignore_errors
-
-    def set_metadata(self, metadata):
-        self._metadata = metadata
 
     def __str__(self):
         s  = 'class '+type(self).__name__+'\n'
@@ -70,14 +78,14 @@ class ObsBase(object):
     @property
     def inst_host_id(self):
         # This will be overriden by instrument subclasses
-        assert NotImplementedError
+        raise NotImplementedError
 
 
     ### Compute the OPUS ID ###
 
     @property
     def primary_filespec(self):
-        assert NotImplementedError
+        raise NotImplementedError
 
     @property
     def opus_id(self):
@@ -85,10 +93,12 @@ class ObsBase(object):
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
-            self._log_nonrepeating_error(
-                f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
-            return file_spec.split('/')[-1]
+            self._log_nonrepeating_error('Unable to create OPUS_ID')
+            return filespec.split('/')[-1]
         return opus_id
+
+
+    ### Helpers for other data_sources ###
 
     def compute_longitude_field(self):
         # Fill in the value for a LONGITUDE_FIELD data_source. This is the center
@@ -153,11 +163,13 @@ class ObsBase(object):
         return safe_column(self._metadata['supp_index_row'], col, idx=idx)
 
     def _ring_geo_index_col(self, col, idx=None):
+        # ring_geo is an optional index file so we allow it to be missing
         if 'ring_geo_row' not in self._metadata:
             return None
         return safe_column(self._metadata['ring_geo_row'], col, idx=idx)
 
     def _surface_geo_index_col(self, col, idx=None):
+        # surface_geo is an optional index file so we allow it to be missing
         if 'surface_geo_row' not in self._metadata:
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
@@ -179,7 +191,7 @@ class ObsBase(object):
 
     def _get_target_info(self, target_name):
         # Given a target_name, map the name as necessary and return the
-        # target_class tuple (planet_id, target_class, pretty name)
+        # target_class tuple (planet_id, target_class, pretty name).
         # Example: ('JUP', 'IRR_SAT', 'Callirrhoe')
         if target_name is None:
             return None
@@ -197,26 +209,25 @@ class ObsBase(object):
         # extension. The extension is instrument-specific, so this function will
         # be subclassed as necessary.
         # XXX
-        if filespec.startswith('NH'):
-            filespec = filespec.replace('.lbl', '.fit')
-            filespec = filespec.replace('.LBL', '.FIT')
-        elif filespec.startswith('COUVIS_0'):
-            filespec = filespec.replace('.LBL', '.DAT')
-        elif (filespec.startswith('VGISS_5') or
-              filespec.startswith('VGISS_6') or
-              filespec.startswith('VGISS_7') or
-              filespec.startswith('VGISS_8')):
-            filespec = filespec.replace('.LBL', '.IMG')
-        elif filespec.startswith('CORSS_8'):
-            filespec = filespec.replace('.LBL', '.TAB')
-        elif filespec.startswith('COUVIS_8'):
-            filespec = filespec.replace('.LBL', '.TAB')
-        elif filespec.startswith('COVIMS_8'):
-            filespec = filespec.replace('.LBL', '.TAB')
-        elif filespec.startswith('EBROCC'):
-            filespec = filespec.replace('.LBL', '.TAB')
-
         return filespec
+        # if filespec.startswith('NH'):
+        #     filespec = filespec.replace('.lbl', '.fit')
+        #     filespec = filespec.replace('.LBL', '.FIT')
+        # elif filespec.startswith('COUVIS_0'):
+        #     filespec = filespec.replace('.LBL', '.DAT')
+        # elif (filespec.startswith('VGISS_5') or
+        #       filespec.startswith('VGISS_6') or
+        #       filespec.startswith('VGISS_7') or
+        #       filespec.startswith('VGISS_8')):
+        #     filespec = filespec.replace('.LBL', '.IMG')
+        # elif filespec.startswith('CORSS_8'):
+        #     filespec = filespec.replace('.LBL', '.TAB')
+        # elif filespec.startswith('COUVIS_8'):
+        #     filespec = filespec.replace('.LBL', '.TAB')
+        # elif filespec.startswith('COVIMS_8'):
+        #     filespec = filespec.replace('.LBL', '.TAB')
+        # elif filespec.startswith('EBROCC'):
+        #     filespec = filespec.replace('.LBL', '.TAB')
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.
@@ -228,6 +239,8 @@ class ObsBase(object):
         return pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
 
     def _time1_helper(self, index, column):
+        # Read and convert the starting time, which can exist in various indexes or
+        # columns.
         start_time = safe_column(self._metadata[index], column)
 
         if start_time is None:
@@ -241,7 +254,10 @@ class ObsBase(object):
 
         return start_time_sec
 
-    def _time2_helper(self, index, column):
+    def _time2_helper(self, index, start_time_sec, column):
+        # Read and convert the ending time, which can exist in various indexes or
+        # columns. Compare it to the starting time to make sure they're in the proper
+        # order.
         index_row = self._metadata[index]
         stop_time = safe_column(index_row, column)
 
@@ -254,12 +270,10 @@ class ObsBase(object):
             self._log_nonrepeating_error(f'Bad stop time format "{stop_time}": {e}')
             return None
 
-        start_time_sec = self.field_obs_general_time1
-
         if start_time_sec is not None and stop_time_sec < start_time_sec:
             start_time = safe_column(index_row, column1)
-            self._log_warning(f'time1 ({start_time}) and time2 ({stop_time}) '
-                              'are in the wrong order - setting to time1')
+            self._log_warning(f'{column} ({start_time}) and ({stop_time}) '
+                              'are in the wrong order - setting to start time')
             stop_time_sec = start_time_sec
 
         return stop_time_sec
@@ -270,8 +284,8 @@ class ObsBase(object):
     def _time1_from_supp_index(self, column='START_TIME'):
         return self._time1_helper('supp_index_row', column)
 
-    def _time2_from_index(self, column='STOP_TIME'):
-        return self._time2_helper('index_row', column)
+    def _time2_from_index(self, start_time_sec, column='STOP_TIME'):
+        return self._time2_helper('index_row', start_time_sec, column)
 
-    def _time2_from_supp_index(self, column='STOP_TIME'):
-        return self._time2_helper('supp_index_row')
+    def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
+        return self._time2_helper('supp_index_row', start_time_sec, column)
