@@ -28,17 +28,17 @@ def create_import_partables_table():
 
     rows = []
 
-    for mission_abbrev in sorted(MISSION_ABBREV_TO_MISSION_TABLE_SFX.keys()):
+    for mission_id in sorted(MISSION_ID_TO_MISSION_TABLE_SFX.keys()):
         entry = {
             'trigger_tab': 'obs_general',
             'trigger_col': 'mission_id',
-            'trigger_val': mission_abbrev,
+            'trigger_val': mission_id,
             'partable':    ('obs_mission_'+
-                            MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev])
+                            MISSION_ID_TO_MISSION_TABLE_SFX[mission_id])
         }
         rows.append(entry)
 
-    for instrument_id in sorted(INSTRUMENT_ABBREV_TO_MISSION_ABBREV.keys()):
+    for instrument_id in sorted(INSTRUMENT_ID_TO_MISSION_ID.keys()):
         partable = 'obs_instrument_'+instrument_id.lower()
         if instrument_id[:3] == 'HST':
             # This is a hack because we don't actually have HST instrument
@@ -52,14 +52,14 @@ def create_import_partables_table():
         }
         rows.append(entry)
 
-    for inst_host_id in sorted(INST_HOST_ABBREV_TO_MISSION_ABBREV.keys()):
+    for inst_host_id in sorted(INST_HOST_ID_TO_MISSION_ID.keys()):
         entry = {
             'trigger_tab': 'obs_general',
             'trigger_col': 'inst_host_id',
             'trigger_val': inst_host_id,
             'partable':    ('obs_mission_'+
-                            MISSION_ABBREV_TO_MISSION_TABLE_SFX[
-                                INST_HOST_ABBREV_TO_MISSION_ABBREV[
+                            MISSION_ID_TO_MISSION_TABLE_SFX[
+                                INST_HOST_ID_TO_MISSION_ID[
                                     inst_host_id]])
         }
         rows.append(entry)

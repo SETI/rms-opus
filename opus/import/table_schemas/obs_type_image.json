@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -167,10 +164,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

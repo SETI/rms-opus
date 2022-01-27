@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -161,6 +158,7 @@
         "field_type": "char255",
         "field_default": null,
         "field_key": true,
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
         "pi_dict_context": "OPUS_PDS",
         "pi_dict_name": "NOTE",

@@ -5,21 +5,12 @@
 # obs_pds table.
 ################################################################################
 
-from functools import cached_property
-import json
-import os
-
-import pdsfile
-
-import impglobals
-import import_util
-
 from obs_base import ObsBase
 
 
 class ObsPds(ObsBase):
     def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
+        super().__init__(*args, **kwargs)
 
 
     ####################################
@@ -27,17 +18,33 @@ class ObsPds(ObsBase):
     ####################################
 
     @property
-    def field_data_set_id(self):
+    def field_obs_pds_opus_id(self):
+        return self.opus_id
+
+    @property
+    def field_obs_pds_volume_id(self):
+        return self.volume
+
+    @property
+    def field_obs_pds_instrument_id(self):
+        return self.instrument_id
+
+    @property
+    def field_obs_pds_data_set_id(self):
         raise NotImplementedError
 
     @property
-    def field_product_id(self):
+    def field_obs_pds_product_id(self):
         raise NotImplementedError
 
     @property
-    def field_product_creation_time(self):
-        raise None
+    def field_obs_pds_product_creation_time(self):
+        return None
 
     @property
-    def field_note(self):
-        raise None
+    def field_obs_pds_note(self):
+        return None
+
+    @property
+    def field_obs_pds_primary_file_spec(self):
+        return self.primary_filespec

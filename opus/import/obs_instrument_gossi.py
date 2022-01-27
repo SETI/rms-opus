@@ -5,15 +5,13 @@
 # obs_instrument_gossi table.
 ################################################################################
 
-from functools import cached_property
 import json
 import os
 
 import numpy as np
 
-import pdsfile
+import julian
 
-import impglobals
 import import_util
 import opus_support
 
@@ -48,7 +46,7 @@ _GOSSI_FILTER_WAVELENGTHS = {
 
 class ObsInstrumentGOSSI(ObsMissionGalileo):
     def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
+        super().__init__(*args, **kwargs)
 
 
     ################################
@@ -56,12 +54,20 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ################################
 
     @property
-    def field_ring_obs_id(self):
-        image_num = self._index_row['SPACECRAFT_CLOCK_START_COUNT'].replace('.', '')
-        return pl_str + 'J_IMG_GO_SSI_' + image_num
+    def inst_host_id(self):
+        return 'GO'
 
     @property
-    def field_planet_id(self):
+    def field_obs_general_inst_host_id(self):
+        return self.inst_host_id
+
+    @property
+    def field_obs_general_ring_obs_id(self):
+        image_num = self._index_col('SPACECRAFT_CLOCK_START_COUNT').replace('.', '')
+        return 'J_IMG_GO_SSI_' + image_num
+
+    @property
+    def field_obs_general_planet_id(self):
         # WARNING: This will need to be changed if we ever get additional volumes
         # for Galileo. Right now we set everything to Jupiter rather than basing
         # it on the target name because we only have volumes for the time Galileo
@@ -69,19 +75,13 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         # XXX Update for new GOSSI volume list
         return 'JUP'
 
-    @cached_property
-    def field_target_name(self):
-        # XXX COLLAPSE TO SUBFUNCTION
-        target_name = self._index_row['TARGET_NAME']
-        if target_name in TARGET_NAME_MAPPING:
-            target_name = TARGET_NAME_MAPPING[target_name]
-        if target_name is None:
+    @property
+    def field_obs_general_target_name(self):
+        target_name = self._index_col('TARGET_NAME')
+        target_info = self._get_target_info(target_name)
+        if target_info is None:
             return None
-        if target_name not in TARGET_NAME_INFO:
-            import_util.announce_unknown_target_name(target_name)
-            return None
-        target_name_info = TARGET_NAME_INFO[target_name]
-        return target_name, target_name_info[2]
+        return target_name, target_info[2]
 
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
     # We assume it means stop time like it does for Voyager, and because Mark
@@ -90,42 +90,39 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     # If we don't have exposure, we just set them equal so we can still search
     # cleanly.
     @property
-    def field_time1(self):
-        exposure = self._index_row['EXPOSURE_DURATION']
-        return self.field_time2 - exposure/1000
+    def field_obs_general_time1(self):
+        exposure = self._index_col('EXPOSURE_DURATION')
+        if exposure is None:
+            self._log_nonrepeating_warning(
+                f'Null exposure time for {self.opus_id}')
+            exposure = 0
+        return self.field_obs_general_time2 - exposure/1000
 
     @property
-    def field_time2(self):
-        stop_time = self._index_row['IMAGE_TIME']
-
-        try:
-            stop_time_sec = julian.tai_from_iso(stop_time)
-        except Exception as e:
-            import_util.log_nonrepeating_error(
-                f'Bad image time format "{stop_time}": {e}')
-            return None
-
-        return stop_time_sec
+    def field_obs_general_time2(self):
+        # Yes we really mean time1 here, not time2, since time1 just takes a single
+        # column and GOSSI uses the IMAGE_TIME as the stop time.
+        return self._time1_from_index('IMAGE_TIME')
 
     @property
-    def field_observation_duration(self):
-        exposure = import_util.safe_column(self._index_row, 'EXPOSURE_DURATION')
+    def field_obs_general_observation_duration(self):
+        exposure = self._index_col('EXPOSURE_DURATION')
         if exposure is None:
             return None
         return exposure / 1000
 
     @property
-    def field_quantity(self):
+    def field_obs_general_quantity(self):
         return 'REFLECT'
 
     # We only have the center point for RA,DEC so derive the edges by using the
     # FOV
     def _gossi_ra_helper(self):
-        ra = import_util.safe_column(self._index_row, 'RIGHT_ASCENSION')
-        dec = import_util.safe_column(self._index_row, 'DECLINATION')
+        ra = self._index_col('RIGHT_ASCENSION')
+        dec = self._index_col('DECLINATION')
         if ra is None or dec is None:
             return None, None
-        delta = np.rad2deg(self._GOSSI_FOV_RAD_DIAG/2 / np.cos(np.deg2rad(dec)))
+        delta = np.rad2deg(_GOSSI_FOV_RAD_DIAG/2 / np.cos(np.deg2rad(dec)))
         ra1 = (ra-delta) % 360
         ra2 = (ra+delta) % 360
         if ra2 < ra1:
@@ -133,54 +130,55 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         return ra1, ra2
 
     @property
-    def field_right_asc1(self):
+    def field_obs_general_right_asc1(self):
         return self._gossi_ra_helper()[0]
 
     @property
-    def field_right_asc2(self):
+    def field_obs_general_right_asc2(self):
         return self._gossi_ra_helper()[1]
 
     @property
-    def field_declination1(self):
-        dec = import_util.safe_column(self._index_row, 'DECLINATION')
+    def field_obs_general_declination1(self):
+        dec = self._index_col('DECLINATION')
         if dec is None:
             return None
         return dec - np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     @property
-    def field_declination2(self):
-        dec = import_util.safe_column(self._index_row, 'DECLINATION')
+    def field_obs_general_declination2(self):
+        dec = self._index_col('DECLINATION')
         if dec is None:
             return None
         return dec + np.rad2deg(_GOSSI_FOV_RAD_DIAG/2)
 
     @property
-    def field_observation_type(self):
-        return 'IMG' # Image
+    def field_obs_general_observation_type(self):
+        return 'IMG'
 
 
     ############################
     ### OVERRIDE FROM ObsPds ###
     ############################
 
-    @cached_property
-    def field_primary_file_spec(self):
+    @property
+    def primary_filespec(self):
         # Format: GO_0017/J0/OPNAV/C0347569700R.IMG
-        return self._index_row['FILE_SPECIFICATION_NAME']
+        return self._index_col('FILE_SPECIFICATION_NAME')
 
     @property
-    def field_data_set_id(self):
-        return self.data_set_id_from_index
+    def field_obs_pds_data_set_id(self):
+        dsi = self._index_col('DATA_SET_ID')
+        return dsi
 
     @property
-    def field_product_id(self):
-        s = self._index_row['FILE_SPECIFICATION_NAME']
+    def field_obs_pds_product_id(self):
+        s = self._index_col('FILE_SPECIFICATION_NAME')
 
         # The file_spec looks like GO_0017:[J0.OPNAV.C034640]5900R.IMG
         # We want to extract C0346405900R
-        idx = file_spec.find('.')
+        idx = s.find('.')
         s = s[idx+1:]
-        idx = file_spec.find('.')
+        idx = s.find('.')
         s = s[idx+1:].replace(']', '').replace('.IMG', '')
 
         return s
@@ -191,23 +189,23 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ##################################
 
     @property
-    def field_image_type_id(self):
+    def field_obs_type_image_image_type_id(self):
         return 'FRAM'
 
     @property
-    def field_duration(self):
-        return self.field_observation_duration # from ObsGeneral
+    def field_obs_type_image_duration(self):
+        return self.field_obs_general_observation_duration
 
     @property
-    def field_levels(self):
+    def field_obs_type_image_levels(self):
         return 256
 
     @property
-    def field_greater_pixel_size(self):
+    def field_obs_type_image_greater_pixel_size(self):
         return 800
 
     @property
-    def field_lesser_pixel_size(self):
+    def field_obs_type_image_lesser_pixel_size(self):
         return 800
 
 
@@ -216,65 +214,65 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ###################################
 
     def _gossi_wavelength_helper(self):
-        filter_name = self._index_row['FILTER_NAME']
+        filter_name = self._index_col('FILTER_NAME')
 
-        if filter_name not in self._GOSSI_FILTER_WAVELENGTHS:
-            import_util.log_nonrepeating_error(
+        if filter_name not in _GOSSI_FILTER_WAVELENGTHS:
+            self._log_nonrepeating_error(
                 f'Unknown GOSSI filter name "{filter_name}"')
             return 0
 
         return _GOSSI_FILTER_WAVELENGTHS[filter_name]
 
-    @cached_property
-    def field_wavelength1(self):
+    @property
+    def field_obs_wavelength_wavelength1(self):
         return self._gossi_wavelength_helper()[0] / 1000 # microns
 
-    @cached_property
-    def field_wavelength2(self):
+    @property
+    def field_obs_wavelength_wavelength2(self):
         return self._gossi_wavelength_helper()[1] / 1000 # microns
 
     @property
-    def field_waveres1(self):
-        wl1 = self.field_wavelength1
-        wl2 = self.field_wavelength2
+    def field_obs_wavelength_wave_res1(self):
+        wl1 = self.field_obs_wavelength_wavelength1
+        wl2 = self.field_obs_wavelength_wavelength2
         if wl1 is None or wl2 is None:
             return None
         return wl2 - wl1
 
     @property
-    def field_waveres2(self):
-        return self.field_waveres1
+    def field_obs_wavelength_wave_res2(self):
+        return self.field_obs_wavelength_wave_res1
 
     @property
-    def field_wave_no1(self):
-        return 10000 / self.field_wavelength2 # cm^-1
+    def field_obs_wavelength_wave_no1(self):
+        return 10000 / self.field_obs_wavelength_wavelength2 # cm^-1
 
     @property
-    def field_wave_no2(self):
-        return 10000 / self.field_wavelength1 # cm^-1
+    def field_obs_wavelength_wave_no2(self):
+        return 10000 / self.field_obs_wavelength_wavelength1 # cm^-1
 
-    @cached_property
-    def field_wave_no_res1(self):
-        wno1 = self.field_wave_no1
-        wno2 = self.field_wave_no2
+    @property
+    def field_obs_wavelength_wave_no_res1(self):
+        wno1 = self.field_obs_wavelength_wave_no1
+        wno2 = self.field_obs_wavelength_wave_no2
         if wno1 is None or wno2 is None:
             return None
         return wno2 - wno1
 
     @property
-    def field_wave_no_res2(self):
-        return self.field_wave_no_res1
+    def field_obs_wavelength_wave_no_res2(self):
+        return self.field_obs_wavelength_wave_no_res1
 
     @property
-    def field_spec_flag(self):
+    def field_obs_wavelength_spec_flag(self):
         return 'N'
 
     @property
-    def field_spec_size(self):
+    def field_obs_wavelength_spec_size(self):
         return None
 
     @property
-    def field_polarization_type(self):
+    def field_obs_wavelength_polarization_type(self):
         return 'NONE'
 
 
@@ -283,8 +281,8 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     #######################################
 
     @property
-    def field_orbit_number(self):
-        return str(self._index_row['ORBIT_NUMBER'])
+    def field_obs_mission_galileo_orbit_number(self):
+        return str(self._index_col('ORBIT_NUMBER'))
 
 
     ####################################
@@ -292,33 +290,45 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
     ####################################
 
     @property
-    def field_observation_id(self):
-        return self._index_row['OBSERVATION_ID']
+    def field_obs_instrument_gossi_opus_id(self):
+        return self.opus_id
 
     @property
-    def field_image_id(self):
-        return self._index_row['IMAGE_ID']
+    def field_obs_instrument_gossi_volume_id(self):
+        return self.volume
 
     @property
-    def field_filter_name(self):
-        return self._index_row['FILTER_NAME']
+    def field_obs_instrument_gossi_instrument_id(self):
+        return self.instrument_id
 
     @property
-    def field_filter_number(self):
-        return self._index_row['FILTER_NUMBER']
+    def field_obs_instrument_gossi_observation_id(self):
+        return self._index_col('OBSERVATION_ID')
 
     @property
-    def field_gain_mode_id(self):
-        return self._index_row['GAIN_MODE_ID']
+    def field_obs_instrument_gossi_image_id(self):
+        return self._index_col('IMAGE_ID')
 
     @property
-    def field_frame_duration(self):
-        return self._index_row['FRAME_DURATION']
+    def field_obs_instrument_gossi_filter_name(self):
+        return self._index_col('FILTER_NAME')
 
     @property
-    def field_obstruction_id(self):
-        return self._index_row['OBSTRUCTION_ID']
+    def field_obs_instrument_gossi_filter_number(self):
+        return self._index_col('FILTER_NUMBER')
 
     @property
-    def field_compression_type(self):
-        return self._index_row['COMPRESSION_TYPE']
+    def field_obs_instrument_gossi_gain_mode_id(self):
+        return self._index_col('GAIN_MODE_ID')
+
+    @property
+    def field_obs_instrument_gossi_frame_duration(self):
+        return self._index_col('FRAME_DURATION')
+
+    @property
+    def field_obs_instrument_gossi_obstruction_id(self):
+        return self._index_col('OBSTRUCTION_ID')
+
+    @property
+    def field_obs_instrument_gossi_compression_type(self):
+        return self._index_col('COMPRESSION_TYPE')

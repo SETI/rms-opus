@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {

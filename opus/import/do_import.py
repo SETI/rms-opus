@@ -173,15 +173,15 @@ def create_tables_for_import(volume_id, namespace):
        tables because we don't yet know what target names we have."""
 
     volume_id_prefix = volume_id[:volume_id.find('_')]
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
+    instrument_id = VOLUME_ID_PREFIX_TO_INSTRUMENT_ID[volume_id_prefix]
 
-    if instrument_name is None:
-        instrument_name = 'GB'
-    elif type(instrument_name) != str:
-        instrument_name = instrument_name[volume_id]
+    if instrument_id is None:
+        instrument_id = 'GB'
+    elif type(instrument_id) != str:
+        instrument_id = instrument_id[volume_id]
 
-    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
-    mission_name = MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_abbrev]
+    mission_id = VOLUME_ID_PREFIX_TO_MISSION_ID[volume_id_prefix]
+    mission_name = MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
 
@@ -194,7 +194,7 @@ def create_tables_for_import(volume_id, namespace):
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
-        table_name = table_name.replace('<INST>', instrument_name.lower())
+        table_name = table_name.replace('<INST>', instrument_id.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
 
         if table_name.startswith('obs_surface_geometry__'):
@@ -727,11 +727,11 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     volume_id_prefix = volume_id[:volume_id.find('_')]
 
-    instrument_name = VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME[volume_id_prefix]
-    if instrument_name is not None and type(instrument_name) != str:
-        instrument_name = instrument_name[volume_id]
+    instrument_id = VOLUME_ID_PREFIX_TO_INSTRUMENT_ID[volume_id_prefix]
+    if instrument_id is not None and type(instrument_id) != str:
+        instrument_id = instrument_id[volume_id]
 
-    mission_abbrev = VOLUME_ID_PREFIX_TO_MISSION_ABBREV[volume_id_prefix]
+    mission_id = VOLUME_ID_PREFIX_TO_MISSION_ID[volume_id_prefix]
     volset = volume_pdsfile.volset
 
     obs_rows, obs_label_dict = import_util.safe_pdstable_read(volume_label_path)
@@ -1036,6 +1036,13 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
 
     used_targets = set()
 
+    instrument_obj = ObsInstrumentGOSSI(
+        volume=volume_id,
+        volset=volset,
+        mission_id=mission_id,
+        instrument_id=instrument_id,
+        metadata=metadata
+    )
 
     ##############################################
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
@@ -1072,7 +1079,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
         elif ('supp_index' in metadata and
-              instrument_name in ['NHLORRI', 'NHMVIC']):
+              instrument_id in ['NHLORRI', 'NHMVIC']):
             # Match up the PATH_NAME + FILE_NAME with FILE_SPECIFICATION_NAME
             path_name = index_row['PATH_NAME']
             file_name = index_row['FILE_NAME']
@@ -1101,9 +1108,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
         # This is used to make all ground-based observations look like they were
         # done by a single instrument to make writing the populate_* functions
         # easier.
-        func_instrument_name = instrument_name
-        derived_instrument_name = instrument_name
-        if instrument_name is None:
+        func_instrument_id = instrument_id
+        derived_instrument_id = instrument_id
+        if instrument_id is None:
             # There could be multiple instruments in a single index file.
             # We assume this only happens for ground-based instruments.
             if ('supp_index_row' not in metadata or
@@ -1114,9 +1121,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 )
             else:
                 supp_index_row = metadata['supp_index_row']
-                derived_instrument_name = (supp_index_row['INSTRUMENT_HOST_ID']
+                derived_instrument_id = (supp_index_row['INSTRUMENT_HOST_ID']
                                            +supp_index_row['INSTRUMENT_ID'])
-                func_instrument_name = 'GB'
+                func_instrument_id = 'GB'
 
         # Sometimes a single row in the index turns into multiple opus_id
         # in the database. This happens with COVIMS because each observation
@@ -1147,12 +1154,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 if table_name not in table_schemas:
                     # Table not relevant for this product
                     continue
-                row = import_observation_table(volume_id,
-                                               volset,
-                                               derived_instrument_name,
-                                               func_instrument_name,
-                                               mission_abbrev,
-                                               volume_type,
+                row = import_observation_table(instrument_obj,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1220,14 +1222,9 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                         metadata['body_surface_geo_row'] = target_dict[
                                                                 target_name]
 
-                        row = import_observation_table(volume_id,
-                                                       volset,
-                                                       derived_instrument_name,
-                                                       func_instrument_name,
-                                                       mission_abbrev,
-                                                       volume_type,
+                        row = import_observation_table(instrument_obj,
                                                        new_table_name,
-                                                      table_schemas[table_name],
+                                                       table_schemas[table_name],
                                                        metadata)
                         if new_table_name not in table_rows:
                             table_rows[new_table_name] = []
@@ -1254,12 +1251,7 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
                 # This is used to populate the surface geo target_list
                 # field
 
-                row = import_observation_table(volume_id,
-                                               volset,
-                                               derived_instrument_name,
-                                               func_instrument_name,
-                                               mission_abbrev,
-                                               volume_type,
+                row = import_observation_table(instrument_obj,
                                                table_name,
                                                table_schemas[table_name],
                                                metadata)
@@ -1327,28 +1319,14 @@ def import_one_index(volume_id, volume_pdsfile, vol_prefix, metadata_paths,
     return True # SUCCESS!
 
 
-def import_observation_table(volume_id,
-                             volset,
-                             instrument_name,
-                             func_instrument_name,
-                             mission_abbrev,
-                             volume_type,
+def import_observation_table(instrument_obj,
                              table_name,
                              table_schema,
                              metadata):
     "Import the data from a row from a PDS file into a single table."
     new_row = {}
 
-    # So it can be accessed by populate_*
     metadata[table_name+'_row'] = new_row
-
-    # Compute the columns in the specified order because some populate_*
-    # functions rely on previous ones having already been run.
-
-    ordered_table_schema = [(x.get('data_source_order', 0), x)
-                            for x in table_schema]
-    ordered_table_schema.sort(key=lambda x: x[0])
-    ordered_columns = [x[1] for x in ordered_table_schema]
 
     # Run through all the based columns and compute their values.
     # Always skip "id" for tables other than obs_general, because this is just
@@ -1358,7 +1336,7 @@ def import_observation_table(volume_id,
     # Skip "mult_" tables because they are handled separately when the search
     # type is a GROUP-type.
 
-    for table_column in ordered_columns:
+    for table_column in table_schema:
         if (table_column.get('put_mults_here', False) or
             table_column.get('pi_referred_slug', False)):
             continue
@@ -1371,8 +1349,8 @@ def import_observation_table(volume_id,
         if field_name == 'timestamp':
             continue
 
-        data_source_tuple = table_column.get('data_source', None)
-        if not data_source_tuple:
+        data_source = table_column.get('data_source', None)
+        if not data_source:
             import_util.log_nonrepeating_warning(
                 f'No data source for column "{field_name}" in table '+
                 f'"{table_name}"')
@@ -1381,125 +1359,34 @@ def import_observation_table(volume_id,
 
             ### COMPUTE THE NEW COLUMN VALUE ###
 
-            processed = False
             column_val = None
             mult_label = None
             mult_label_set = False
             disp_order = None # Might be set with mult_label but not otherwise
 
-            # Collect all the error messages in case we never find a valid
-            # data source, in which case we display all of them
-            error_list = []
+            # print(table_name, field_name, data_source)
+            if data_source.find(':') != -1:
+                (data_source_prefix,
+                 data_source_param) = data_source.split(':')
+            else:
+                data_source_prefix = data_source
+                data_source_param = None
 
-            data_source_offset = 0
-            while data_source_offset < len(data_source_tuple):
-                data_source_cmd = data_source_tuple[data_source_offset]
-                if data_source_cmd.find(':') != -1:
-                    (data_source_cmd_prefix,
-                     data_source_cmd_param) = data_source_cmd.split(':')
-                else:
-                    data_source_cmd_prefix = data_source_cmd
-                    data_source_cmd_param = None
+            if data_source_prefix == 'OBS_GENERAL_ID':
+                obs_general_row = metadata['obs_general_row']
+                column_val = import_util.safe_column(obs_general_row,
+                                                     'id')
 
-                if data_source_cmd_prefix == 'IGNORE':
-                    processed = True
-                    break
-
-                data_source_data = data_source_tuple[data_source_offset+1]
-
-                if data_source_cmd_prefix.startswith('TAB'):
-                    data_source_offset += 2
-                    ref_index_row = None
-                    if data_source_cmd_param+'_row' not in metadata:
-                        if data_source_cmd_param != 'ring_geo':
-                            # If we don't have ring_geo for this volume, don't
-                            # bitch about it because we already did earlier.
-                            error_list.append(
-                                'Unknown internal metadata name '+
-                                f'"{data_source_cmd_param}"'+
-                                f' while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    ref_index_row = metadata[data_source_cmd_param+'_row']
-                    if ref_index_row is None:
-                        import_util.log_nonrepeating_warning(
-                            'Missing row in metadata file '+
-                            f'"{data_source_cmd_param}"')
-                        processed = True
-                        break
-                    if data_source_data not in ref_index_row:
-                        error_list.append(
-                                'Unknown referenced column '+
-                                f'"{data_source_data}" '+
-                                f'while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_data)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix.startswith('ARRAY'):
-                    data_source_offset += 2
-                    (ref_index_name,
-                     array_index) = data_source_cmd_param.split('.')
-                    array_index = int(array_index)
-                    ref_index_row = None
-                    if ref_index_name+'_row' not in metadata:
-                        if data_source_cmd_param != 'ring_geo':
-                            # If we don't have ring_geo for this volume, don't
-                            # bitch about it because we already did earlier.
-                            error_list.append(
-                                'Unknown internal metadata name '+
-                                f'"{ref_index_name}"'+
-                                f' while processing column "{field_name}" in '+
-                                f'table "{table_name}"')
-                        continue
-                    ref_index_row = metadata[ref_index_name+'_row']
-                    if ref_index_row is None:
-                        import_util.log_nonrepeating_warning(
-                            'Missing row in metadata file '+
-                            f'"{data_source_cmd_param}"')
-                        processed = True
-                        break
-                    if data_source_data not in ref_index_row:
-                        error_list.append(
-                                'Unknown referenced column '+
-                                f'"{data_source_data}" '+
-                                f'while processing table "{table_name}"')
-                        continue
-                    if (array_index < 0 or
-                        array_index >=
-                            len(ref_index_row[data_source_data])):
-                        import_util.log_nonrepeating_error(
-                            f'Bad array index "{array_index}" for column '+
-                            f'"{field_name}" in table "{table_name}"')
-                        processed = True
-                        break
-                    column_val = import_util.safe_column(ref_index_row,
-                                                         data_source_data,
-                                                         array_index)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'FUNCTION':
-                    data_source_offset += 2
-                    ok, ret = import_run_field_function(data_source_data,
-                                                        volume_id,
-                                                        volset,
-                                                        instrument_name,
-                                                        func_instrument_name,
-                                                        mission_abbrev,
-                                                        volume_type,
-                                                        table_name,
-                                                        table_schema,
-                                                        metadata,
-                                                        field_name)
-                    if not ok:
-                        # Function doesn't exist
-                        # An error will already have been logged
-                        continue
-                    if isinstance(ret, tuple) or isinstance(ret, list):
+            elif data_source_prefix == 'COMPUTE':
+                ok, ret = import_run_field_function(instrument_obj,
+                                                    table_name,
+                                                    table_schema,
+                                                    metadata,
+                                                    field_name)
+                if ok:
+                    # If the function doesn't exist, an error will already
+                    # have been logged
+                    if isinstance(ret, (tuple, list)):
                         column_val = ret[0]
                         mult_label = ret[1]
                         if len(ret) == 3:
@@ -1507,43 +1394,25 @@ def import_observation_table(volume_id,
                         mult_label_set = True
                     else:
                         column_val = ret
-                    processed = True
-                    break
 
-                if data_source_cmd_prefix == 'MAX_ID':
-                    if table_name not in impglobals.MAX_TABLE_ID_CACHE:
-                        impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                            import_util.find_max_table_id(table_name))
+            elif data_source_prefix == 'LONGITUDE_FIELD':
+                column_val = instrument_obj.compute_longitude_field()
+
+            elif data_source_prefix == 'D_LONGITUDE_FIELD':
+                column_val = instrument_obj.compute_d_longitude_field()
+
+            elif data_source_prefix == 'MAX_ID':
+                if table_name not in impglobals.MAX_TABLE_ID_CACHE:
                     impglobals.MAX_TABLE_ID_CACHE[table_name] = (
-                        impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
-                    column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
-                    processed = True
-                    break
+                        import_util.find_max_table_id(table_name))
+                impglobals.MAX_TABLE_ID_CACHE[table_name] = (
+                    impglobals.MAX_TABLE_ID_CACHE[table_name]+1)
+                column_val = impglobals.MAX_TABLE_ID_CACHE[table_name]
 
-                if data_source_cmd_prefix == 'VALUESTR':
-                    column_val = data_source_data
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'VALUEREAL':
-                    column_val = float(data_source_data)
-                    processed = True
-                    break
-
-                if data_source_cmd_prefix == 'VALUEINT':
-                    column_val = int(data_source_data)
-                    processed = True
-                    break
-
+            else:
                 import_util.log_nonrepeating_error(
-                    f'Unknown data_source type "{data_source_cmd}" for'+
+                    f'Unknown data_source type "{data_source}" for '+
                     f'"{field_name}" in table "{table_name}"')
-                processed = True
-                break
-
-            if not processed:
-                for error_str in error_list:
-                    import_util.log_nonrepeating_error(error_str)
 
         ### VALIDATE THE COLUMN VALUE ###
 
@@ -1696,36 +1565,20 @@ def import_observation_table(volume_id,
 
     return new_row
 
-def import_run_field_function(func_name_suffix, volume_id,
-                              volset,
-                              instrument_name,
-                              func_instrument_name,
-                              mission_abbrev,
-                              volume_type,
+def import_run_field_function(instrument_obj,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
-    not_exists_is_ok = False
-    if func_name_suffix[0] == '~':
-        not_exists_is_ok = True
-        func_name_suffix = func_name_suffix[1:]
-
-    func_name = 'populate_'+func_name_suffix
-    func_name = func_name.replace('<INST>', func_instrument_name)
-    func_name = func_name.replace('<MISSION>', mission_abbrev)
-    func_name = func_name.replace('<TYPE>', volume_type)
-    if func_name not in globals():
-        if not not_exists_is_ok:
-            import_util.log_nonrepeating_error(
-                f'Unknown table populate function "{func_name}" for '+
-                f'"{field_name}" in table "{table_name}"')
+    func_name = 'field_'+table_name+'_'+field_name
+    if not hasattr(instrument_obj, func_name):
+        class_name = type(instrument_obj).__name__
+        import_util.log_nonrepeating_error(
+            f'Unknown table field func "{class_name}::{func_name}"')
         return (False, None)
-    func = globals()[func_name]
-    return (True, func(volume_id=volume_id, volset=volset,
-                       instrument_name=instrument_name,
-                       mission_abbrev=mission_abbrev,
-                       table_name=table_name, table_schema=table_schema,
-                       metadata=metadata))
+    # Since all field_ methods are @property, just getting the attribute
+    # gets the proper value. No need to call anything after.
+    res = getattr(instrument_obj, func_name)
+    return (True, res)
 
 def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,
                                   instrument_id):

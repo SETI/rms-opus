@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,12 +44,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_RADIUS",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_radius1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -93,12 +76,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_RADIUS",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_radius2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -124,12 +102,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "FINEST_RING_INTERCEPT_RESOLUTION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_resolution1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -157,12 +130,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "COARSEST_RING_INTERCEPT_RESOLUTION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_resolution2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -187,12 +155,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "FINEST_RADIAL_RESOLUTION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_proj_resolution1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -220,12 +183,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "COARSEST_RADIAL_RESOLUTION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_proj_resolution2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -250,10 +208,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -282,10 +237,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -311,10 +263,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -343,10 +292,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -372,12 +318,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_LONGITUDE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_j2000_longitude1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -406,12 +347,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_LONGITUDE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_j2000_longitude2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -437,11 +373,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -450,11 +382,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -463,10 +391,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_SOLAR_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -495,10 +420,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_SOLAR_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -524,11 +446,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -537,11 +455,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -550,10 +464,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_LONGITUDE_WRT_OBSERVER"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
@@ -582,10 +493,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_LONGITUDE_WRT_OBSERVER"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
@@ -611,11 +519,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -624,11 +528,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -637,12 +537,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_AZIMUTH",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_azimuth_wrt_observer1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -671,12 +566,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_AZIMUTH",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_azimuth_wrt_observer2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -702,11 +592,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -715,11 +601,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -728,10 +610,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "SUB_SOLAR_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -760,10 +639,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "SUB_SOLAR_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -789,11 +665,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -802,11 +674,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -815,10 +683,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "SUB_OBSERVER_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -847,10 +712,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "SUB_OBSERVER_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -876,11 +738,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -889,11 +747,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -902,12 +756,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_SOLAR_RING_ELEVATION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_solar_ring_elevation1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -936,12 +785,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_SOLAR_RING_ELEVATION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_solar_ring_elevation2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -967,12 +811,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_OBSERVER_RING_ELEVATION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_observer_ring_elevation1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1001,12 +840,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_OBSERVER_RING_ELEVATION",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_observer_ring_elevation2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1032,12 +866,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_phase1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1066,12 +895,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_phase2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1097,12 +921,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_incidence1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1131,12 +950,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_incidence2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1162,12 +976,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_RING_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_emission1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1196,12 +1005,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_RING_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_emission2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1227,12 +1031,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_NORTH_BASED_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_north_based_incidence1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1261,12 +1060,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_NORTH_BASED_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_north_based_incidence2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1292,12 +1086,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_NORTH_BASED_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_north_based_emission1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1326,12 +1115,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_NORTH_BASED_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_north_based_emission2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1357,12 +1141,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_phase1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1391,12 +1170,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_phase2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1422,12 +1196,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_incidence1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1456,12 +1225,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_incidence2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1487,12 +1251,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_emission1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1521,12 +1280,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_emission2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1552,12 +1306,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_north_based_incidence1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1586,12 +1335,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_NORTH_BASED_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_north_based_incidence2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1617,12 +1361,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_NORTH_BASED_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_north_based_emission1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1651,12 +1390,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "RING_CENTER_NORTH_BASED_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_center_north_based_emission2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1682,12 +1416,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "SOLAR_RING_OPENING_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_solar_ring_opening_angle1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1716,12 +1445,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "SOLAR_RING_OPENING_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_solar_ring_opening_angle2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1747,12 +1471,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "OBSERVER_RING_OPENING_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_observer_ring_opening_angle1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1781,12 +1500,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "OBSERVER_RING_OPENING_ANGLE",
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_observer_ring_opening_angle2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -1812,10 +1526,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_EDGE_ON_RING_RADIUS"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -1844,10 +1555,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_EDGE_ON_RING_RADIUS"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -1873,10 +1581,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_EDGE_ON_RING_ALTITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -1e32,
         "val_max": 1e32,
         "val_sentinel": -9.99e+09,
@@ -1905,10 +1610,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_EDGE_ON_RING_ALTITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -1e32,
         "val_max": 1e32,
         "val_sentinel": -9.99e+09,
@@ -1934,10 +1636,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "FINEST_EDGE_ON_RADIAL_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -1965,10 +1664,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "COARSEST_EDGE_ON_RADIAL_RESOLUTION"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_sentinel": -999,
         "pi_category_name": "obs_ring_geometry",
@@ -1993,10 +1689,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_EDGE_ON_INTERCEPT_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -2025,10 +1718,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_EDGE_ON_INTERCEPT_DISTANCE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e32,
         "val_sentinel": -999,
@@ -2054,10 +1744,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_EDGE_ON_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -2086,10 +1773,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_EDGE_ON_RING_LONGITUDE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -2115,11 +1799,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -2128,11 +1808,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -2141,10 +1817,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MINIMUM_EDGE_ON_SOLAR_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -2173,10 +1846,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "TAB:ring_geo",
-            "MAXIMUM_EDGE_ON_SOLAR_HOUR_ANGLE"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -2202,11 +1872,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 360
     },
@@ -2215,11 +1881,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": false,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
-        "data_source_order": 10,
+        "data_source": "D_LONGITUDE_FIELD",
         "val_min": 0,
         "val_max": 180
     },
@@ -2228,10 +1890,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_intercept_time1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -664500621.0,
         "val_max": 978220837.0,
         "pi_category_name": "obs_ring_geometry",
@@ -2259,10 +1918,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "~obs_ring_geometry_<INST>_ring_intercept_time2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -664500621.0,
         "val_max": 978220837.0,
         "pi_category_name": "obs_ring_geometry",
@@ -2286,10 +1942,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

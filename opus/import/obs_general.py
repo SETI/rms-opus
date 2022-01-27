@@ -5,21 +5,17 @@
 # obs_general table.
 ################################################################################
 
-from functools import cached_property
 import json
 import os
 
-import pdsfile
-
-import impglobals
-import import_util
+import impglobals # XXX
 
 from obs_base import ObsBase
 
 
 class ObsGeneral(ObsBase):
     def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
+        super().__init__(*args, **kwargs)
 
 
     ####################################
@@ -27,72 +23,98 @@ class ObsGeneral(ObsBase):
     ####################################
 
     @property
-    def field_planet_id(self):
-        raise NotImplementedError
-
-    @cached_property
-    def field_target_name(self):
-        raise NotImplementedError
+    def field_obs_general_opus_id(self):
+        return self.opus_id
 
     @property
-    def field_time1(self):
-        raise NotImplementedError
+    def field_obs_general_volume_id(self):
+        return self.volume
 
     @property
-    def field_time2(self):
-        raise NotImplementedError
+    def field_obs_general_instrument_id(self):
+        return self.instrument_id
 
     @property
-    def field_observation_duration(self):
-        # This is the default behavior, but will be overriden for some
-        # instruments
-        return self.field_time2 - self.field_time1
+    def field_obs_general_mission_id(self):
+        return self._mission_id
 
     @property
-    def field_quantity(self):
-        raise NotImplementedError
+    def field_obs_general_inst_host_id(self):
+        return self._inst_host_id
 
     @property
-    def field_right_asc1(self):
-        raise None
-
-    @property
-    def field_right_asc2(self):
-        raise None
-
-    @property
-    def field_declination1(self):
-        raise None
-
-    @property
-    def field_declination2(self):
-        raise None
-
-    @property
-    def field_observation_type(self):
+    def field_obs_general_planet_id(self):
         raise NotImplementedError
 
     @property
-    def field_ring_obs_id(self):
-        raise None
+    def field_obs_general_target_name(self):
+        raise NotImplementedError
 
     @property
-    def field_target_class(self):
-        target_name = self.field_target_name
-        target_info = self.get_target_info(target_name)
+    def field_obs_general_target_class(self):
+        target_name = self.field_obs_general_target_name[0]
+        target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_info[1]
 
     @property
-    def field_preview_images(self):
+    def field_obs_general_time1(self):
+        raise NotImplementedError
+
+    @property
+    def field_obs_general_time2(self):
+        raise NotImplementedError
+
+    @property
+    def field_obs_general_observation_duration(self):
+        # This is the default behavior, but will be overriden for some
+        # instruments
+        return self.field_obs_general_time2 - self.field_obs_general_time1
+
+    @property
+    def field_obs_general_quantity(self):
+        raise NotImplementedError
+
+    @property
+    def field_obs_general_right_asc1(self):
+        return None
+
+    @property
+    def field_obs_general_right_asc2(self):
+        return None
+
+    # XXX right_asc, d_right_asc
+
+    @property
+    def field_obs_general_declination1(self):
+        return None
+
+    @property
+    def field_obs_general_declination2(self):
+        return None
+
+    @property
+    def field_obs_general_observation_type(self):
+        raise NotImplementedError
+
+    @property
+    def field_obs_general_ring_obs_id(self):
+        return None
+
+    @property
+    def field_obs_general_primary_file_spec(self):
+        return self.primary_filespec
+
+    @property
+    def field_obs_general_preview_images(self):
         ### XXX Review this
-        pdsf = self.pdsfile_from_filespec(self.field_primary_file_spec)
+        pdsf = self._pdsfile_from_filespec(self.field_obs_general_primary_file_spec)
 
         try:
             viewset = pdsf.viewset
         except ValueError as e:
-            import_util.log_nonrepeating_warning(
+            self._log_nonrepeating_warning(
                 f'ViewSet threw ValueError for "{file_spec}": {e}')
             viewset = None
 
@@ -100,16 +122,16 @@ class ObsGeneral(ObsBase):
             browse_data = viewset.to_dict()
             if not impglobals.ARGUMENTS.import_ignore_missing_images:
                 if not viewset.thumbnail:
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Missing thumbnail browse/diagram image for "{file_spec}"')
                 if not viewset.small:
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Missing small browse/diagram image for "{file_spec}"')
                 if not viewset.medium:
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Missing medium browse/diagram image for "{file_spec}"')
                 if not viewset.full_size:
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Missing full_size browse/diagram image for "{file_spec}"')
         else:
             if impglobals.ARGUMENTS.import_fake_images:
@@ -142,7 +164,7 @@ class ObsGeneral(ObsBase):
                 browse_data = {'viewables': []}
                 if (volset in VOLSETS_WITH_PREVIEWS and
                     not impglobals.ARGUMENTS.import_ignore_missing_images):
-                    import_util.log_nonrepeating_warning(
+                    self._log_nonrepeating_warning(
                         f'Missing all browse/diagram images for "{file_spec}"')
 
         ret = json.dumps(browse_data)

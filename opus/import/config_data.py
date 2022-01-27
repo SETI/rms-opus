@@ -78,7 +78,7 @@ VOLSETS_WITH_PREVIEWS = ['COISS_1xxx',
 
 # Mapping from mission abbreviation (UC) to full mission name (LC)
 # These are used for table names
-MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
+MISSION_ID_TO_MISSION_TABLE_SFX = {
     'CO':  'cassini',
     'GB':  'earth',
     'GO':  'galileo',
@@ -88,7 +88,7 @@ MISSION_ABBREV_TO_MISSION_TABLE_SFX = {
 }
 
 # Mapping from mission abbreviation (UC) to full mission name (displayable)
-MISSION_ABBREV_TO_MISSION_NAME = {
+MISSION_ID_TO_MISSION_NAME = {
     'CO':  'Cassini',
     'GB':  'Ground-based',
     'GO':  'Galileo',
@@ -98,7 +98,7 @@ MISSION_ABBREV_TO_MISSION_NAME = {
 }
 
 # Mapping from instrument host abbreviation to mission abbreviation
-INST_HOST_ABBREV_TO_MISSION_ABBREV = {
+INST_HOST_ID_TO_MISSION_ID = {
     'CO':  'CO',
     'GB':  'GB',
     'GO':  'GO',
@@ -109,7 +109,7 @@ INST_HOST_ABBREV_TO_MISSION_ABBREV = {
 }
 
 # Mapping from instrument host abbreviation to instrument host name
-INST_HOST_ABBREV_TO_INST_HOST = {
+INST_HOST_ID_TO_INST_HOST_NAME = {
     'CO':  'Cassini',
     'GB':  'Ground-based',
     'GO':  'Galileo',
@@ -120,7 +120,7 @@ INST_HOST_ABBREV_TO_INST_HOST = {
 }
 
 # Mapping from instrument abbreviation to mission abbreviation
-INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
+INSTRUMENT_ID_TO_MISSION_ID = {
     'COCIRS':    'CO',
     'COISS':     'CO',
     'CORSS':     'CO',
@@ -141,7 +141,7 @@ INSTRUMENT_ABBREV_TO_MISSION_ABBREV = {
 }
 
 # Mapping from instrument abbrev to instrument name
-INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
+INSTRUMENT_ID_TO_INSTRUMENT_NAME = {
     'COCIRS':      'Cassini CIRS',
     'COISS':       'Cassini ISS',
     'COUVIS':      'Cassini UVIS',
@@ -168,7 +168,7 @@ INSTRUMENT_ABBREV_TO_INSTRUMENT_NAME = {
 }
 
 # Mapping from VOLUME ID prefix to instrument name
-VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
+VOLUME_ID_PREFIX_TO_INSTRUMENT_ID = {
     'COCIRS': 'COCIRS',
     'COISS':  'COISS',
     'CORSS':  'CORSS',
@@ -203,7 +203,7 @@ VOLUME_ID_PREFIX_TO_INSTRUMENT_NAME = {
 }
 
 # Mapping from VOLUME ID prefix to mission abbreviation
-VOLUME_ID_PREFIX_TO_MISSION_ABBREV = {
+VOLUME_ID_PREFIX_TO_MISSION_ID = {
     'COCIRS': 'CO',
     'COISS':  'CO',
     'CORSS':  'CO',

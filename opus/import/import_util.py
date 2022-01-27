@@ -271,12 +271,12 @@ def safe_column(row, column_name, idx=None):
 ################################################################################
 
 def table_name_obs_mission(mission_name):
-    assert mission_name in MISSION_ABBREV_TO_MISSION_TABLE_SFX
+    assert mission_name in MISSION_ID_TO_MISSION_TABLE_SFX
     return ('obs_mission_'+
-            MISSION_ABBREV_TO_MISSION_TABLE_SFX[mission_name].lower())
+            MISSION_ID_TO_MISSION_TABLE_SFX[mission_name].lower())
 
 def table_name_obs_instrument(inst_name):
-    assert inst_name in INSTRUMENT_ABBREV_TO_MISSION_ABBREV
+    assert inst_name in INSTRUMENT_ID_TO_MISSION_ID
     return 'obs_instrument_'+inst_name.lower()
 
 def table_name_mult(table_name, field_name):
@@ -392,6 +392,6 @@ def log_nonrepeating_warning(msg):
         impglobals.LOGGED_IMPORT_WARNINGS.append(msg)
         impglobals.LOGGER.log('warning', _format_vol_line()+msg)
 
-def announce_unknown_target_name(target_name):
+def log_unknown_target_name(target_name):
     msg = f'Unknown TARGET_NAME "{target_name}" - edit config_data.py'
     log_nonrepeating_error(msg)

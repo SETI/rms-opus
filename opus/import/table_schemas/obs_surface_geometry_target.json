@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "char12",
         "field_key": true,
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "instrument_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The instrument_id is included here for ease of database manipulation only."
     },
     {
@@ -56,12 +44,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PLANETOCENTRIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_planetocentric_latitude1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -90,12 +73,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOCENTRIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_planetocentric_latitude2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -121,12 +99,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PLANETOGRAPHIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_planetographic_latitude1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -155,12 +128,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PLANETOGRAPHIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_planetographic_latitude2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -186,12 +154,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_IAU_LONGITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_iau_west_longitude1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -220,12 +183,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_IAU_LONGITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_iau_west_longitude2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -251,10 +209,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
+        "data_source": "LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 360
@@ -264,10 +219,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
+        "data_source": "D_LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 180
@@ -277,12 +229,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_LOCAL_HOUR_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_solar_hour_angle1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -311,12 +258,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_LOCAL_HOUR_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_solar_hour_angle2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -342,10 +284,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
+        "data_source": "LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 360
@@ -355,10 +294,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
+        "data_source": "D_LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 180
@@ -368,12 +304,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_LONGITUDE_WRT_OBSERVER",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_observer_longitude1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
@@ -402,12 +333,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_LONGITUDE_WRT_OBSERVER",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_observer_longitude2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -180,
         "val_max": 180,
         "val_sentinel": -999,
@@ -433,10 +359,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_longitude_field"
-        ],
+        "data_source": "LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 360
@@ -446,10 +369,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "helper_d_longitude_field"
-        ],
+        "data_source": "D_LONGITUDE_FIELD",
         "data_source_order": 10,
         "val_min": 0,
         "val_max": 180
@@ -459,12 +379,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_FINEST_SURFACE_RESOLUTION",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_finest_resolution1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -493,12 +408,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_FINEST_SURFACE_RESOLUTION",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_finest_resolution2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -524,12 +434,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_COARSEST_SURFACE_RESOLUTION",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_coarsest_resolution1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e6,
         "val_sentinel": -999,
@@ -559,12 +464,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_COARSEST_SURFACE_RESOLUTION",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_coarsest_resolution2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e6,
         "val_sentinel": -999,
@@ -591,12 +491,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_SURFACE_DISTANCE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_range_to_body1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -625,12 +520,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_SURFACE_DISTANCE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_range_to_body2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -656,12 +546,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_phase1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -690,12 +575,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_phase2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -721,12 +601,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_incidence1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -755,12 +630,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_INCIDENCE_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_incidence2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -786,12 +656,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MINIMUM_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_emission1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -820,12 +685,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "MAXIMUM_EMISSION_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_emission2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 90,
         "val_sentinel": -999,
@@ -851,12 +711,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOCENTRIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_solar_planetocentric_latitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -882,12 +737,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_PLANETOGRAPHIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_solar_planetographic_latitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -913,12 +763,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOCENTRIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_observer_planetocentric_latitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -944,12 +789,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_PLANETOGRAPHIC_LATITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_observer_planetographic_latitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": -90,
         "val_max": 90,
         "val_sentinel": -999,
@@ -975,12 +815,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_SOLAR_IAU_LONGITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_solar_iau_longitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -1006,12 +841,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "SUB_OBSERVER_IAU_LONGITUDE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_sub_observer_iau_longitude_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 360,
         "val_sentinel": -999,
@@ -1037,12 +867,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_RESOLUTION",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_center_resolution_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -1068,12 +893,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_DISTANCE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_center_distance_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e18,
         "val_sentinel": -999,
@@ -1099,12 +919,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:body_surface_geo",
-            "CENTER_PHASE_ANGLE",
-            "FUNCTION",
-            "~obs_surface_geo_<INST>_center_phase_angle_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 180,
         "val_sentinel": -999,
@@ -1130,10 +945,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",
