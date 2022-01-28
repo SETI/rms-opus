@@ -16,6 +16,7 @@ import pdstable
 
 from opus_secrets import *
 from config_data import *
+from config_targets import *
 import impglobals
 import instruments
 

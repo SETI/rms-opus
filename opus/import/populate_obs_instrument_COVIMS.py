@@ -1,3 +1,16 @@
+# The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
+# (thanks VIMS team) but that's how we match across (supplemental) index
+# files, so it's easier just to fake one here rather than special-case
+# all the uses of FILE_SPECIFICATION_NAME later.
+# if volset == 'COVIMS_0xxx':
+#     vims_filename = index_row['FILE_NAME']
+#     vims_path = index_row['PATH_NAME']
+#     if vims_path[0] == '/':
+#         vims_path = vims_path[1:]
+#     filespec = vims_path + '/' + vims_filename.replace('.qub', '.lbl')
+#     index_row['FILE_SPECIFICATION_NAME'] = filespec
+#
+
 ################################################################################
 # populate_obs_instrument_COVIMS.py
 #

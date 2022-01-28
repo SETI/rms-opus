@@ -1,3 +1,36 @@
+        # if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
+        #     # Match up the FILENAME with the key we generated earlier
+        #     couvis_filename = index_row['FILE_NAME'].upper()
+        #     supp_index = metadata['supp_index']
+        #     if couvis_filename in supp_index:
+        #         metadata['supp_index_row'] = supp_index[couvis_filename]
+        #     else:
+        #         import_util.log_nonrepeating_error(
+        #             f'File "{couvis_filename}" is missing supplemental data')
+        #         metadata['supp_index_row'] = None
+        #         continue # We don't process entries without supp_index
+
+        #     if volset == 'COUVIS_0xxx':
+#         # The COUVIS_0xxx supplemental index is keyed by a
+#         # combination of VOLUME_ID (COUVIS_0001) and
+#         # FILE_SPECIFICATION_NAME
+#         # (DATA/D2000_153/EUV2000_153_15_52.LBL)
+#         # that maps to the FILE_NAME field in the main index
+#         # (/COUVIS_0001/DATA/D2000_153/EUV2000_153_15_52.LBL).
+#         # It's too much of a pain to calculate the opus_id
+#         # here to use that as a key, so we just stick with the
+#         # filename.
+#         for row in assoc_rows:
+#             key1 = row.get('VOLUME_ID', None)
+#             key2 = row.get('FILE_SPECIFICATION_NAME', None).upper()
+#             if key1 is None or key2 is None:
+#                 import_util.log_nonrepeating_error(
+#         f'{assoc_label_path} is missing VOLUME_ID or '+
+#          'FILE_SPECIFICATION_NAME fields')
+#                 break
+#             key = f'/{key1}/{key2}'
+#             assoc_dict[key] = row
+
 ################################################################################
 # populate_obs_instrument_COUVIS.py
 #

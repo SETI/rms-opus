@@ -14,6 +14,7 @@ from opus_support import (get_single_parse_function,
                           parse_form_type)
 
 from config_data import *
+from config_targets import *
 import config_volume_info
 import do_cart
 import do_django
@@ -617,6 +618,16 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
     metadata['index'] = obs_rows
     metadata['index_label'] = obs_label_dict
 
+    # Instantiate the appropriate class that knows how to import this instrument
+    instrument_obj = instrument_class(
+        volume=volume_id,
+        volset=volset,
+        mission_id=mission_id,
+        instrument_id=instrument_id,
+        metadata=metadata
+    )
+
+
     ######################################
     ### FIND ASSOCIATED METADATA FILES ###
     ######################################
@@ -686,10 +697,7 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
 
                 # Now that we have the data from the associated file, we need to go
                 # through and cross-reference it with the primary index based on the
-                # primary filespec. Unfortunately this isn't as easy as it should be
-                # because there are inconsistencies in how the primary filespec is
-                # formatted between these associated files and the original primary
-                # index file, so we have to normalize the primary filespecs first.
+                # primary filespec.
                 impglobals.LOGGER.log('info',
                         f'{assoc_type.upper()}: {len(assoc_rows)} in {assoc_label_path}')
                 assoc_dict = metadata.get(assoc_type, {})
@@ -697,51 +705,11 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
                     assoc_type == 'surface_geo' or
                     assoc_type == 'inventory'):
                     for row in assoc_rows:
-                        key = None
-                        geo_vol = row.get('VOLUME_ID', None)
-                        if geo_vol is None:
+                        key = row.get('OPUS_ID', None)
+                        if key is None:
                             import_util.log_nonrepeating_error(
-                               f'{assoc_label_path} is missing VOLUME_ID field')
+            f'{assoc_label_path} is missing OPUS_ID field')
                             break
-                        if geo_vol != volume_id:
-                            import_util.log_nonrepeating_error(
-                f'{assoc_label_path} VOLUME_ID "{geo_vol}" does not match current '+
-                f'import volume "{volume_id}"')
-                            break
-                        geo_filespec = row.get('FILE_SPECIFICATION_NAME', None)
-                        if geo_filespec is None:
-                            import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                            break
-                        geo_full_filespec = geo_vol+'/'+geo_filespec
-                        geo_pdsfile = pdsfile.PdsFile.from_filespec(
-                                                geo_full_filespec,
-                                                fix_case=True)
-                        key = geo_pdsfile.opus_id
-                        if not key:
-                            import_util.log_nonrepeating_error(
-                f'Failed to convert filespec "{geo_full_filespec}" to opus_id '+
-                f'for {assoc_label_path}')
-                            continue # Might be just this one row that's broken
-                        key = key.replace('.', '-')
-
-                        # WARNING: HACK FOR VIMS
-                        # The current VIMS geo and inventory tables have entries
-                        # for VIS and IR but the only way to distinguish
-                        # between them is to look at the OPUS_ID field.
-                        if geo_vol.startswith('COVIMS'):
-                            opus_id = row.get('OPUS_ID', None)
-                            if opus_id is None:
-                                import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing OPUS_ID field')
-                                break
-                            if opus_id.endswith('ir'):
-                                key += '_ir'
-                            elif opus_id.endswith('vis'):
-                                key += '_vis'
-                            else:
-                                import_util.log_nonrepeating_error(
-                 f'{assoc_label_path} has bad OPUS_ID for filespec "{geo_full_filespec}"')
 
                         if (assoc_type == 'ring_geo' or
                             assoc_type == 'inventory'):
@@ -768,40 +736,10 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
 
                 else:
                     assert assoc_type == 'supp_index'
-
-                    if volset == 'COUVIS_0xxx':
-                        # The COUVIS_0xxx supplemental index is keyed by a
-                        # combination of VOLUME_ID (COUVIS_0001) and
-                        # FILE_SPECIFICATION_NAME
-                        # (DATA/D2000_153/EUV2000_153_15_52.LBL)
-                        # that maps to the FILE_NAME field in the main index
-                        # (/COUVIS_0001/DATA/D2000_153/EUV2000_153_15_52.LBL).
-                        # It's too much of a pain to calculate the opus_id
-                        # here to use that as a key, so we just stick with the
-                        # filename.
-                        for row in assoc_rows:
-                            key1 = row.get('VOLUME_ID', None)
-                            key2 = row.get('FILE_SPECIFICATION_NAME', None).upper()
-                            if key1 is None or key2 is None:
-                                import_util.log_nonrepeating_error(
-                        f'{assoc_label_path} is missing VOLUME_ID or '+
-                         'FILE_SPECIFICATION_NAME fields')
-                                break
-                            key = f'/{key1}/{key2}'
-                            assoc_dict[key] = row
-                    else:
-                        # All other supplemental indexes are
-                        # keyed by FILE_SPECIFICATION_NAME
-                        # (DATA/C13854XX/C1385455_RAW.LBL)
-                        # that maps to the FILE_SPECIFICATION_NAME field in the
-                        # main index.
-                        for row in assoc_rows:
-                            key = row.get('FILE_SPECIFICATION_NAME', None)
-                            if key is None:
-                                import_util.log_nonrepeating_error(
-                f'{assoc_label_path} is missing FILE_SPECIFICATION_NAME field')
-                                break
-                            key = key.upper()
+                    for row in assoc_rows:
+                        key = instrument_obj.opus_id_from_supp_index_row(row)
+                        if key is not None:
+                            # Error will already be logged if key is None
                             assoc_dict[key] = row
 
                 # We need to be able to look things up in both the main tab file and
@@ -835,15 +773,6 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
 
     used_targets = set()
 
-    # Instantiate the appropriate class that knows how to import this instrument
-    instrument_obj = instrument_class(
-        volume=volume_id,
-        volset=volset,
-        mission_id=mission_id,
-        instrument_id=instrument_id,
-        metadata=metadata
-    )
-
     ##############################################
     ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
     ##############################################
@@ -859,55 +788,18 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
         # don't have yet, so we can't look it up until later.
         impglobals.CURRENT_PRIMARY_FILESPEC = None
 
-        primary_filespec = instrument_obj.primary_filespec
-
-        # The COVIMS_0xxx index file doesn't use FILE_SPECIFICATION_NAME
-        # (thanks VIMS team) but that's how we match across (supplemental) index
-        # files, so it's easier just to fake one here rather than special-case
-        # all the uses of FILE_SPECIFICATION_NAME later.
-        # if volset == 'COVIMS_0xxx':
-        #     vims_filename = index_row['FILE_NAME']
-        #     vims_path = index_row['PATH_NAME']
-        #     if vims_path[0] == '/':
-        #         vims_path = vims_path[1:]
-        #     filespec = vims_path + '/' + vims_filename.replace('.qub', '.lbl')
-        #     index_row['FILE_SPECIFICATION_NAME'] = filespec
-        #
-        # if 'supp_index' in metadata and volset == 'COUVIS_0xxx':
-        #     # Match up the FILENAME with the key we generated earlier
-        #     couvis_filename = index_row['FILE_NAME'].upper()
-        #     supp_index = metadata['supp_index']
-        #     if couvis_filename in supp_index:
-        #         metadata['supp_index_row'] = supp_index[couvis_filename]
-        #     else:
-        #         import_util.log_nonrepeating_error(
-        #             f'File "{couvis_filename}" is missing supplemental data')
-        #         metadata['supp_index_row'] = None
-        #         continue # We don't process entries without supp_index
-        # elif ('supp_index' in metadata and
-        #       instrument_id in ['NHLORRI', 'NHMVIC']):
-        #     # Match up the PATH_NAME + FILE_NAME with FILE_SPECIFICATION_NAME
-        #     path_name = index_row['PATH_NAME']
-        #     file_name = index_row['FILE_NAME']
-        #     filespec_name = path_name+file_name
-        #     filespec_name = filespec_name.upper()
-        #     supp_index = metadata['supp_index']
-        #     if filespec_name in supp_index:
-        #         metadata['supp_index_row'] = supp_index[filespec_name]
-        #     else:
-        #         import_util.log_nonrepeating_error(
-        #             f'File "{filespec_name}" is missing supplemental data')
-        #         metadata['supp_index_row'] = None
-        #         continue # We don't process entries without supp_index
+        opus_id = instrument_obj.opus_id
 
         if 'supp_index' in metadata:
             # Match up the primary filespec
             supp_index = metadata['supp_index']
-            if primary_filespec in supp_index:
-                metadata['supp_index_row'] = supp_index[primary_filespec]
+            # print(opus_id)
+            # print(list(supp_index.keys())[:5])
+            if opus_id in supp_index:
+                metadata['supp_index_row'] = supp_index[opus_id]
             else:
                 import_util.log_nonrepeating_error(
-                    f'File "{filename}" is missing supplemental data')
+                    f'OPUS ID "{opus_id}" is missing supplemental data')
                 metadata['supp_index_row'] = None
                 continue # We don't process entries without supp_index
 
@@ -1367,6 +1259,8 @@ def import_run_field_function(instrument_obj,
                               table_name, table_schema, metadata,
                               field_name):
     "Call the Python function used to populate a single field in a table."
+    if table_name.startswith('obs_surface_geometry__'):
+        table_name = 'obs_surface_geometry_target'
     func_name = 'field_'+table_name+'_'+field_name
     if func_name not in dir(instrument_obj):
         class_name = type(instrument_obj).__name__

@@ -85,15 +85,41 @@ class ObsBase(object):
 
     @property
     def primary_filespec(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
         raise NotImplementedError
 
     @property
     def opus_id(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
         filespec = self.primary_filespec
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_error('Unable to create OPUS_ID')
+            return filespec.split('/')[-1]
+        return opus_id
+
+    def opus_id_from_supp_index_row(self, supp_row):
+        # This is a helper function used to take a row from the supplemental_index
+        # and convert it to an opus_id so that the supplemental_index and other
+        # index/geo/inventory files can be cross-referenced. We do this here
+        # because the supplemental index files are inconsistent in their formatting.
+        volume_id = supp_row.get('VOLUME_ID', None)
+        if volume_id is None:
+            self.log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
+            return None
+        filespec = supp_row.get('FILE_SPECIFICATION_NAME')
+        if filespec is None:
+            self.log_nonrepeating_error('Supplemental index missing FILESPEC field')
+            return None
+        full_filespec = volume_id + '/' + filespec
+        pdsf = self._pdsfile_from_filespec(full_filespec)
+        opus_id = pdsf.opus_id
+        if not opus_id:
+            self._log_nonrepeating_error(
+                        'Unable to create OPUS_ID from supplemental index')
             return filespec.split('/')[-1]
         return opus_id
 
@@ -164,13 +190,15 @@ class ObsBase(object):
 
     def _ring_geo_index_col(self, col, idx=None):
         # ring_geo is an optional index file so we allow it to be missing
-        if 'ring_geo_row' not in self._metadata:
+        if ('ring_geo_row' not in self._metadata or
+            self._metadata['ring_geo_row'] is None):
             return None
         return safe_column(self._metadata['ring_geo_row'], col, idx=idx)
 
     def _surface_geo_index_col(self, col, idx=None):
         # surface_geo is an optional index file so we allow it to be missing
-        if 'surface_geo_row' not in self._metadata:
+        if ('surface_geo_row' not in self._metadata or
+            self._metadata['surface_geo_row'] is None):
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
 
@@ -289,3 +317,22 @@ class ObsBase(object):
 
     def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
         return self._time2_helper('supp_index_row', start_time_sec, column)
+
+    def _product_creation_time_helper(self, index):
+        index_row = self._metadata[index]
+        pct = index_row['PRODUCT_CREATION_TIME']
+
+        try:
+            pct_sec = julian.tai_from_iso(pct)
+        except Exception as e:
+            import_util.log_nonrepeating_error(
+                f'Bad product creation time format "{pct}": {e}')
+            return None
+
+        return pct_sec
+
+    def _product_creation_time_from_index(self):
+        return self._product_creation_time_helper('index_row')
+
+    def _product_creation_time_from_supp_index(self):
+        return self._product_creation_time_helper('supp_index_row')
