@@ -10,22 +10,6 @@ from config_data import *
 import import_util
 
 
-def populate_time1_from_index(column='START_TIME', **kwargs):
-    return _time1_helper('index_row', column, **kwargs)
-
-def populate_time1_from_supp_index(column='START_TIME', **kwargs):
-    return _time1_helper('supp_index_row', column, **kwargs)
-
-def populate_time2_from_index(column1='START_TIME',
-                              column2='STOP_TIME',
-                              **kwargs):
-    return _time2_helper('index_row', column1, column2, **kwargs)
-
-def populate_time2_from_supp_index(column1='START_TIME',
-                                   column2='STOP_TIME',
-                                   **kwargs):
-    return _time2_helper('supp_index_row', column1, column2, **kwargs)
-
 def populate_observation_duration_from_time(**kwargs):
     metadata = kwargs['metadata']
     general_row = metadata['obs_general_row']

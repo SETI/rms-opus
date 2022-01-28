@@ -8,8 +8,8 @@
 import julian
 import pdsfile
 
-from config_data import (TARGET_NAME_INFO,
-                         TARGET_NAME_MAPPING)
+from config_targets import (TARGET_NAME_INFO,
+                            TARGET_NAME_MAPPING)
 from import_util import (log_nonrepeating_error,
                          log_nonrepeating_warning,
                          log_unknown_target_name,
