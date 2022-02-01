@@ -17,16 +17,11 @@ from import_util import (log_nonrepeating_error,
 
 
 class ObsBase(object):
-    def __init__(self, volume=None, volset=None, mission_id=None,
-                       instrument_id=None,
-                       metadata=None,
-                       ignore_errors=False):
+    def __init__(self, volume=None, volset=None, metadata=None, ignore_errors=False):
         """Initialize an ObsBase object.
 
         volume          The PDS3 volume ("COISS_2116")
         volset          The PDS3 volset ("COISS_2xxx")
-        mission_id      The mission abbreviation ("CO")
-        instrument_id   The instrument abbreviation ("COISS")
         metadata        The collection of metadata available for this observation.
                         This includes rows from the various index as well as additional
                         information. Note that the metadata structure is updated
@@ -41,23 +36,48 @@ class ObsBase(object):
         """
         self._volume         = volume
         self._volset         = volset
-        self._mission_id     = mission_id
-        self._instrument_id  = instrument_id
         self._metadata       = metadata
         self._ignore_errors  = ignore_errors
 
-    def __str__(self):
-        s  = 'class '+type(self).__name__+'\n'
-        s += '  volume = '+str(self._volume)+'\n'
-        s += '  volset = '+str(self._volset)+'\n'
-        s += '  mission_id = '+str(self._mission_id)+'\n'
-        s += '  ignore_errors = '+str(self._ignore_errors)+'\n'
-        return s
+        self._opus_id_last_filespec = None # For caching opus_id
+        self._opus_id_cached        = None
+
+
+    ###################################
+    ### !!! Must override these !!! ###
+    ###################################
+
+    @property
+    def instrument_id(self):
+        raise NotImplementedError
+
+    @property
+    def inst_host_id(self):
+        raise NotImplementedError
+
+    @property
+    def mission_id(self):
+        raise NotImplementedError
+
+    @property
+    def primary_filespec(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
+        # This is because this (and the subsequent creation of opus_id) is used
+        # to actually find the matching row in the supplemental index dictionary.
+        raise NotImplementedError
 
 
     #############################
     ### Public access methods ###
     #############################
+
+    def __str__(self):
+        s  = 'class '+type(self).__name__+'\n'
+        s += '  volume = '+str(self._volume)+'\n'
+        s += '  volset = '+str(self._volset)+'\n'
+        s += '  ignore_errors = '+str(self._ignore_errors)+'\n'
+        return s
 
     @property
     def volume(self):
@@ -68,37 +88,19 @@ class ObsBase(object):
         return self._volset
 
     @property
-    def mission_id(self):
-        return self._mission_id
-
-    @property
-    def instrument_id(self):
-        return self._instrument_id
-
-    @property
-    def inst_host_id(self):
-        # This will be overriden by instrument subclasses
-        raise NotImplementedError
-
-
-    ### Compute the OPUS ID ###
-
-    @property
-    def primary_filespec(self):
-        # Note it's very important that this can be calculated using ONLY
-        # the primary index, not the supplemental index!
-        raise NotImplementedError
-
-    @property
     def opus_id(self):
-        # Note it's very important that this can be calculated using ONLY
-        # the primary index, not the supplemental index!
         filespec = self.primary_filespec
+        if filespec == self._opus_id_last_filespec:
+            # Creating the OPUS ID can be expensive so we cache it here because
+            # it is used for every obs_ table.
+            return self._opus_id_cached
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_error('Unable to create OPUS_ID')
-            return filespec.split('/')[-1]
+            opus_id = filespec.split('/')[-1]
+        self._opus_id_last_filespec = filespec
+        self._opus_id_cached = opus_id
         return opus_id
 
     def opus_id_from_supp_index_row(self, supp_row):
@@ -108,11 +110,11 @@ class ObsBase(object):
         # because the supplemental index files are inconsistent in their formatting.
         volume_id = supp_row.get('VOLUME_ID', None)
         if volume_id is None:
-            self.log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
+            self._log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
             return None
         filespec = supp_row.get('FILE_SPECIFICATION_NAME')
         if filespec is None:
-            self.log_nonrepeating_error('Supplemental index missing FILESPEC field')
+            self._log_nonrepeating_error('Supplemental index missing FILESPEC field')
             return None
         full_filespec = volume_id + '/' + filespec
         pdsf = self._pdsfile_from_filespec(full_filespec)
@@ -202,20 +204,25 @@ class ObsBase(object):
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
 
+    def _col_in_index(self, col):
+        # Figure out if col is in the supplemental index (first) or normal index
+        # (second) and return the index name as appropriate. If not found anywhere,
+        # return None.
+        for index in ['supp_index_row', 'index_row']:
+            if index in self._metadata and col in self._metadata[index]:
+                return index
+        return None
 
-    ### Error logging ###
-
-    def _log_unknown_target_name(self, target_name):
-        log_unknown_target_name(target_name)
-
-    def _log_nonrepeating_warning(self, *args, **kwargs):
-        log_nonrepeating_warning(*args, **kwargs)
-
-    def _log_nonrepeating_error(self, *args, **kwargs):
-        log_nonrepeating_error(*args, **kwargs)
+    def _supp_index_or_index_col(self, col, idx=None):
+        index = self._col_in_index(col)
+        if index is None:
+            self._log_nonrepeating_error(
+                f'Column "{col}" not found in supp_index or index')
+            return None
+        return safe_column(self._metadata[index], col, idx=idx)
 
 
-    ### Utility functions useful for subclasses ###
+    ### Other utility functions useful for subclasses ###
 
     def _get_target_info(self, target_name):
         # Given a target_name, map the name as necessary and return the
@@ -265,6 +272,9 @@ class ObsBase(object):
         # here.
         filespec = self._convert_filespec_from_lbl(filespec)
         return pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
+
+
+    # Helpers for field_obs_general_time[12]
 
     def _time1_helper(self, index, column):
         # Read and convert the starting time, which can exist in various indexes or
@@ -318,6 +328,25 @@ class ObsBase(object):
     def _time2_from_supp_index(self, start_time_sec, column='STOP_TIME'):
         return self._time2_helper('supp_index_row', start_time_sec, column)
 
+    def _time1_from_some_index(self):
+        index = self._col_in_index('START_TIME')
+        if index is None:
+            self._log_nonrepeating_error(
+                f'Column "START_TIME" not found in supp_index or index')
+            return None
+        return self._time1_helper(index, 'START_TIME')
+
+    def _time2_from_some_index(self):
+        index = self._col_in_index('STOP_TIME')
+        if index is None:
+            self._log_nonrepeating_error(
+                f'Column "STOP_TIME" not found in supp_index or index')
+            return None
+        return self._time2_helper(index, self.field_obs_general_time1(), 'STOP_TIME')
+
+
+    # Helpers for field_obs_pds_product_creation_time
+
     def _product_creation_time_helper(self, index):
         index_row = self._metadata[index]
         pct = index_row['PRODUCT_CREATION_TIME']
@@ -336,3 +365,23 @@ class ObsBase(object):
 
     def _product_creation_time_from_supp_index(self):
         return self._product_creation_time_helper('supp_index_row')
+
+    def _product_creation_time_from_some_index(self):
+        index = self._col_in_index('PRODUCT_CREATION_TIME')
+        if index is None:
+            self._log_nonrepeating_error(
+                f'Column "PRODUCT_CREATION_TIME" not found in supp_index or index')
+            return None
+        return self._product_creation_time_helper(index)
+
+
+    ### Error logging ###
+
+    def _log_unknown_target_name(self, target_name):
+        log_unknown_target_name(target_name)
+
+    def _log_nonrepeating_warning(self, *args, **kwargs):
+        log_nonrepeating_warning(*args, **kwargs)
+
+    def _log_nonrepeating_error(self, *args, **kwargs):
+        log_nonrepeating_error(*args, **kwargs)

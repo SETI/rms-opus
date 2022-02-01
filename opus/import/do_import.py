@@ -622,8 +622,6 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
     instrument_obj = instrument_class(
         volume=volume_id,
         volset=volset,
-        mission_id=mission_id,
-        instrument_id=instrument_id,
         metadata=metadata
     )
 
@@ -1262,14 +1260,13 @@ def import_run_field_function(instrument_obj,
     if table_name.startswith('obs_surface_geometry__'):
         table_name = 'obs_surface_geometry_target'
     func_name = 'field_'+table_name+'_'+field_name
-    if func_name not in dir(instrument_obj):
+    if (not hasattr(instrument_obj, func_name) or
+        not callable(func := getattr(instrument_obj, func_name))):
         class_name = type(instrument_obj).__name__
         import_util.log_nonrepeating_error(
             f'Unknown table field func "{class_name}::{func_name}"')
         return (False, None)
-    # Since all field_ methods are @property, just getting the attribute
-    # gets the proper value. No need to call anything after.
-    res = getattr(instrument_obj, func_name)
+    res = func()
     return (True, res)
 
 def get_pdsfile_rows_for_filespec(filespec, obs_general_id, opus_id, volume_id,

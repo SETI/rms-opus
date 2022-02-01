@@ -17,34 +17,38 @@ class ObsPds(ObsBase):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    @property
+    ### Don't override these ###
+
     def field_obs_pds_opus_id(self):
         return self.opus_id
 
-    @property
     def field_obs_pds_volume_id(self):
         return self.volume
 
-    @property
     def field_obs_pds_instrument_id(self):
         return self.instrument_id
 
-    @property
+    def field_obs_pds_primary_filespec(self):
+        return self.primary_filespec
+
+
+    ################################
+    ### ! Might override these ! ###
+    ################################
+
     def field_obs_pds_data_set_id(self):
-        raise NotImplementedError
+        return self._supp_index_or_index_col('DATA_SET_ID')
 
-    @property
     def field_obs_pds_product_id(self):
-        raise NotImplementedError
+        return self._supp_index_or_index_col('PRODUCT_ID')
 
-    @property
     def field_obs_pds_product_creation_time(self):
-        return None
+        return self._product_creation_time_from_some_index()
 
-    @property
     def field_obs_pds_note(self):
         return None
 
-    @property
-    def field_obs_pds_primary_filespec(self):
-        return self.primary_filespec
+
+    ###################################
+    ### !!! Must override these !!! ###
+    ###################################

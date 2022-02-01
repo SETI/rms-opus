@@ -19,19 +19,17 @@ class ObsSurfaceGeometry(ObsBase):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    @property
+    ### Don't override these ###
+    
     def field_obs_surface_geometry_opus_id(self):
         return self.opus_id
 
-    @property
     def field_obs_surface_geometry_volume_id(self):
         return self.volume
 
-    @property
     def field_obs_surface_geometry_instrument_id(self):
         return self.instrument_id
 
-    @property
     def field_obs_surface_geometry_target_list(self):
         # This is the "Multiple Target List" field
         target_list = self._metadata['inventory_list']

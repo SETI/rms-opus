@@ -22,95 +22,33 @@ class ObsGeneral(ObsBase):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    @property
+    ### Don't override these ###
+
     def field_obs_general_opus_id(self):
         return self.opus_id
 
-    @property
     def field_obs_general_volume_id(self):
         return self.volume
 
-    @property
     def field_obs_general_instrument_id(self):
         return self.instrument_id
 
-    @property
     def field_obs_general_inst_host_id(self):
         return self.inst_host_id
 
-    @property
     def field_obs_general_mission_id(self):
-        return self._mission_id
+        return self.mission_id
 
-    @property
-    def field_obs_general_inst_host_id(self):
-        return self.inst_host_id
-
-    @property
-    def field_obs_general_planet_id(self):
-        raise NotImplementedError
-
-    @property
-    def field_obs_general_target_name(self):
-        raise NotImplementedError
-
-    @property
     def field_obs_general_target_class(self):
-        target_name = self.field_obs_general_target_name[0]
+        target_name = self.field_obs_general_target_name()[0]
         target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_info[1]
 
-    @property
-    def field_obs_general_time1(self):
-        raise NotImplementedError
-
-    @property
-    def field_obs_general_time2(self):
-        raise NotImplementedError
-
-    @property
-    def field_obs_general_observation_duration(self):
-        # This is the default behavior, but will be overriden for some
-        # instruments
-        return self.field_obs_general_time2 - self.field_obs_general_time1
-
-    @property
-    def field_obs_general_quantity(self):
-        raise NotImplementedError
-
-    @property
-    def field_obs_general_right_asc1(self):
-        return None
-
-    @property
-    def field_obs_general_right_asc2(self):
-        return None
-
-    # XXX right_asc, d_right_asc
-
-    @property
-    def field_obs_general_declination1(self):
-        return None
-
-    @property
-    def field_obs_general_declination2(self):
-        return None
-
-    @property
-    def field_obs_general_observation_type(self):
-        raise NotImplementedError
-
-    @property
-    def field_obs_general_ring_obs_id(self):
-        return None
-
-    @property
     def field_obs_general_primary_filespec(self):
         return self.primary_filespec
 
-    @property
     def field_obs_general_preview_images(self):
         ### XXX Review this
         pdsf = self._pdsfile_from_filespec(self.primary_filespec)
@@ -173,3 +111,51 @@ class ObsGeneral(ObsBase):
 
         ret = json.dumps(browse_data)
         return ret
+
+
+    ################################
+    ### ! Might override these ! ###
+    ################################
+
+    def field_obs_general_time1(self):
+        return self._time1_from_some_index()
+
+    def field_obs_general_time2(self):
+        return self._time2_from_some_index()
+
+    def field_obs_general_observation_duration(self):
+        # This is the default behavior, but will be overriden for some
+        # instruments
+        return self.field_obs_general_time2() - self.field_obs_general_time1()
+
+    def field_obs_general_right_asc1(self):
+        return None
+
+    def field_obs_general_right_asc2(self):
+        return None
+
+    def field_obs_general_declination1(self):
+        return None
+
+    def field_obs_general_declination2(self):
+        return None
+
+    def field_obs_general_ring_obs_id(self):
+        return None
+
+
+    ###################################
+    ### !!! Must override these !!! ###
+    ###################################
+
+    def field_obs_general_planet_id(self):
+        raise NotImplementedError
+
+    def field_obs_general_target_name(self):
+        raise NotImplementedError
+
+    def field_obs_general_quantity(self):
+        raise NotImplementedError
+
+    def field_obs_general_observation_type(self):
+        raise NotImplementedError

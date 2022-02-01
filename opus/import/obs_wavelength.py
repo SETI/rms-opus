@@ -17,63 +17,61 @@ class ObsWavelength(ObsBase):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    @property
+    ### Don't override these ###
+
     def field_obs_wavelength_opus_id(self):
         return self.opus_id
 
-    @property
     def field_obs_wavelength_volume_id(self):
         return self.volume
 
-    @property
     def field_obs_wavelength_instrument_id(self):
         return self.instrument_id
 
+
+    ################################
+    ### ! Might override these ! ###
+    ################################
 
     # Because the obs_wavelength table has an entry for all observations,
     # we provide a default for all fields and don't require subclasses to
     # override the methods.
 
-    @property
     def field_obs_wavelength_wavelength1(self):
         return None
 
-    @property
     def field_obs_wavelength_wavelength2(self):
         return None
 
-    @property
     def field_obs_wavelength_wave_res1(self):
         return None
 
-    @property
     def field_obs_wavelength_wave_res2(self):
         return None
 
-    @property
     def field_obs_wavelength_wave_no1(self):
-        return None
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wl2 is None:
+            return None
+        return 10000 / wl2 # cm^-1
 
-    @property
     def field_obs_wavelength_wave_no2(self):
-        return None
+        wl1 = self.field_obs_wavelength_wavelength1()
+        if wl1 is None:
+            return None
+        return 10000 / wl1 # cm^-1
 
-    @property
     def field_obs_wavelength_wave_no_res1(self):
         return None
 
-    @property
     def field_obs_wavelength_wave_no_res2(self):
         return None
 
-    @property
     def field_obs_wavelength_spec_flag(self):
         return 'N'
 
-    @property
     def field_obs_wavelength_spec_size(self):
         return None
 
-    @property
     def field_obs_wavelength_polarization_type(self):
         return 'NONE'

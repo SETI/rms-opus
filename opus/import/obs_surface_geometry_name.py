@@ -17,19 +17,17 @@ class ObsSurfaceGeometryName(ObsBase):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    @property
+    ### Don't override these ###
+
     def field_obs_surface_geometry_name_opus_id(self):
         return self.opus_id
 
-    @property
     def field_obs_surface_geometry_name_volume_id(self):
         return self.volume
 
-    @property
     def field_obs_surface_geometry_name_instrument_id(self):
         return self.instrument_id
 
-    @property
     def field_obs_surface_geometry_name_target_name(self):
         # This is the target_name field in obs_surface_geometry that has the
         # many-to-one mapping of rows to OPUS IDs
