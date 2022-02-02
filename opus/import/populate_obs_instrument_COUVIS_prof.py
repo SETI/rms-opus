@@ -1,3 +1,7 @@
+
+def populate_obs_general_CO_planet_id_PROF(**kwargs):
+    return 'SAT'
+
 ################################################################################
 # populate_obs_instrument_COUVIS_occ.py
 #

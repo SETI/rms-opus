@@ -1,3 +1,4 @@
+from obs_instrument_coiss import ObsInstrumentCOISS
 from obs_instrument_ebrocc import ObsInstrumentEBROCC
 from obs_instrument_gossi import ObsInstrumentGOSSI
 from obs_instrument_nhlorri import ObsInstrumentNHLORRI
@@ -9,6 +10,10 @@ VOLUME_INFO = [
     (r'EBROCC_0001',
         {'primary_index': '<VOLUME>_profile_index.lbl',
          'instrument_class': ObsInstrumentEBROCC},
+    ),
+    (r'COISS_[12]\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'instrument_class': ObsInstrumentCOISS},
     ),
     (r'GO_00\d\d',
         {'primary_index': '<VOLUME>_index.lbl',

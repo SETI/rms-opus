@@ -203,7 +203,16 @@ class ObsBase(object):
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
 
-    def _col_in_index_or_label(self, col):
+    def _col_in_some_index(self, col):
+        # Figure out if col is in the supplemental index or normal index
+        # and return the index name as appropriate. If not found anywhere,
+        # return None.
+        for index in ['supp_index_row', 'index_row']:
+            if index in self._metadata and col in self._metadata[index]:
+                return index
+        return None
+
+    def _col_in_some_index_or_label(self, col):
         # Figure out if col is in the supplemental index or normal index
         # or one of the associated label files and return the index name
         # as appropriate. If not found anywhere, return None.
@@ -212,11 +221,19 @@ class ObsBase(object):
                 return index
         return None
 
-    def _supp_index_or_index_or_label_col(self, col, idx=None):
-        index = self._col_in_index_or_label(col)
+    def _some_index_col(self, col, idx=None):
+        index = self._col_in_some_index(col)
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index')
+            return None
+        return safe_column(self._metadata[index], col, idx=idx)
+
+    def _some_index_or_label_col(self, col, idx=None):
+        index = self._col_in_some_index_or_label(col)
+        if index is None:
+            self._log_nonrepeating_error(
+                f'Column "{col}" not found in supp_index or index or their labels')
             return None
         return safe_column(self._metadata[index], col, idx=idx)
 
@@ -325,7 +342,7 @@ class ObsBase(object):
         return self._time2_helper('supp_index_row', start_time_sec, column)
 
     def _time1_from_some_index(self):
-        index = self._col_in_index_or_label('START_TIME')
+        index = self._col_in_some_index_or_label('START_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "START_TIME" not found in supp_index or index')
@@ -333,7 +350,7 @@ class ObsBase(object):
         return self._time1_helper(index, 'START_TIME')
 
     def _time2_from_some_index(self):
-        index = self._col_in_index_or_label('STOP_TIME')
+        index = self._col_in_some_index_or_label('STOP_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "STOP_TIME" not found in supp_index or index')
@@ -363,7 +380,7 @@ class ObsBase(object):
         return self._product_creation_time_helper('supp_index_row')
 
     def _product_creation_time_from_some_index(self):
-        index = self._col_in_index_or_label('PRODUCT_CREATION_TIME')
+        index = self._col_in_some_index_or_label('PRODUCT_CREATION_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "PRODUCT_CREATION_TIME" not found in supp_index or index')

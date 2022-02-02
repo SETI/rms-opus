@@ -87,19 +87,19 @@ class ObsInstrumentINST(ObsMissionMISSION):
 
     ### Optional
 
-    def field_type_image_image_type_id(self):
+    def field_obs_type_image_image_type_id(self):
         return None
 
-    def field_type_image_duration(self):
+    def field_obs_type_image_duration(self):
         return None
 
-    def field_type_image_levels(self):
+    def field_obs_type_image_levels(self):
         return None
 
-    def field_type_image_greater_pixel_size(self):
+    def field_obs_type_image_greater_pixel_size(self):
         return None
 
-    def field_type_image_lesser_pixel_size(self):
+    def field_obs_type_image_lesser_pixel_size(self):
         return None
 
 

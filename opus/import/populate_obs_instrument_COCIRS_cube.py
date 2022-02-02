@@ -1,3 +1,7 @@
+def populate_obs_general_CO_planet_id_CUBE(**kwargs):
+    return 'SAT'
+
+
 ################################################################################
 # populate_obs_instrument_COCIRS_cube.py
 #

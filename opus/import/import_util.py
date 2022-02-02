@@ -5,6 +5,7 @@
 ################################################################################
 
 import json
+import numpy as np
 import os
 import re
 import sys
@@ -259,7 +260,7 @@ def safe_column(row, column_name, idx=None):
         return row[column_name][idx]
 
     if idx is None:
-        if row[column_name+'_mask']:
+        if np.any(row[column_name+'_mask']):
             return None
         return row[column_name]
 
