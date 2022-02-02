@@ -212,6 +212,7 @@ class ObsMissionCassini(ObsCommon):
 
     def _cassini_intended_target_name(self):
         target_name = self._index_col('TARGET_NAME').upper()
+        # Note this mapping takes care of the "ATLAS:" case from COUVIS_0053
         if target_name in TARGET_NAME_MAPPING:
             target_name = TARGET_NAME_MAPPING[target_name]
 
@@ -404,6 +405,9 @@ class ObsMissionCassini(ObsCommon):
         if 'TARGET_NAME' not in self._metadata['index_row']: # RSS
             return None
         target_name = self._index_col('TARGET_NAME').title()
+        target_name = target_name.replace(':', '') # Bug in COUVIS_0053 index
+        if target_name == 'N/A':
+            return None
         return target_name, target_name
 
     def field_obs_mission_cassini_activity_name(self):
