@@ -32,7 +32,7 @@ class ObsSurfaceGeometryName(ObsBase):
         # This is the target_name field in obs_surface_geometry that has the
         # many-to-one mapping of rows to OPUS IDs
         target_name = self._surface_geo_index_col('TARGET_NAME').upper()
-        target_info = self._get_target_info(target_name)
+        target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_name, target_info[2]

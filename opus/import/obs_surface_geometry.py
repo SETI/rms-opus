@@ -20,7 +20,7 @@ class ObsSurfaceGeometry(ObsBase):
     ####################################
 
     ### Don't override these ###
-    
+
     def field_obs_surface_geometry_opus_id(self):
         return self.opus_id
 
@@ -38,7 +38,7 @@ class ObsSurfaceGeometry(ObsBase):
 
         new_target_list = []
         for target_name in target_list:
-            target_info = self._get_target_info(target_name)
+            _, target_info = self._get_target_info(target_name)
             if target_info is None:
                 return None
             new_target_list.append(target_info[2])
@@ -48,7 +48,7 @@ class ObsSurfaceGeometry(ObsBase):
             used_targets = self._metadata['used_surface_geo_targets']
             used_target_list = []
             for target_name in used_targets:
-                target_info = self._get_target_info(target_name)
+                _, target_info = self._get_target_info(target_name)
                 if target_info is None:
                     return None
                 used_target_list.append(target_info[2])

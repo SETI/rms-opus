@@ -1,3 +1,4 @@
+from obs_instrument_ebrocc import ObsInstrumentEBROCC
 from obs_instrument_gossi import ObsInstrumentGOSSI
 from obs_instrument_nhlorri import ObsInstrumentNHLORRI
 from obs_instrument_nhmvic import ObsInstrumentNHMVIC
@@ -5,22 +6,20 @@ from obs_instrument_nhmvic import ObsInstrumentNHMVIC
 # Information about each volume or group of volumes, used to determine
 # which instrument class to use, which index files to read, etc.
 VOLUME_INFO = [
+    (r'EBROCC_0001',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentEBROCC},
+    ),
     (r'GO_00\d\d',
-        {'mission_id': 'GO',
-         'instrument_id': 'GOSSI',
-         'primary_index': '<VOLUME>_index.lbl',
+        {'primary_index': '<VOLUME>_index.lbl',
          'instrument_class': ObsInstrumentGOSSI},
     ),
     (r'NH..LO_[12]001',
-        {'mission_id': 'NH',
-         'instrument_id': 'NHLORRI',
-         'primary_index': '<VOLUME>_index.lbl',
+        {'primary_index': '<VOLUME>_index.lbl',
          'instrument_class': ObsInstrumentNHLORRI},
     ),
     (r'NH..MV_[12]001',
-        {'mission_id': 'NH',
-         'instrument_id': 'NHMVIC',
-         'primary_index': '<VOLUME>_index.lbl',
+        {'primary_index': '<VOLUME>_index.lbl',
          'instrument_class': ObsInstrumentNHMVIC},
     ),
 ]

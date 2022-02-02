@@ -37,10 +37,10 @@ class ObsPds(ObsBase):
     ################################
 
     def field_obs_pds_data_set_id(self):
-        return self._supp_index_or_index_col('DATA_SET_ID')
+        return self._supp_index_or_index_or_label_col('DATA_SET_ID')
 
     def field_obs_pds_product_id(self):
-        return self._supp_index_or_index_col('PRODUCT_ID')
+        return self._supp_index_or_index_or_label_col('PRODUCT_ID')
 
     def field_obs_pds_product_creation_time(self):
         return self._product_creation_time_from_some_index()

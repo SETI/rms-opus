@@ -43,6 +43,11 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
         filespec = self._index_col('PATH_NAME') + self._index_col('FILE_NAME')
         return self.volume + '/' + filespec
 
+    def _convert_filespec_from_lbl(self, filespec):
+        filespec = filespec.replace('.lbl', '.fit')
+        filespec = filespec.replace('.LBL', '.FIT')
+        return filespec
+
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
@@ -93,7 +98,7 @@ class ObsInstrumentNHMVIC(ObsMissionNewHorizons):
 
     def field_obs_general_target_name(self):
         target_name = self._supp_index_col('TARGET_NAME')
-        target_info = self._get_target_info(target_name)
+        target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_name, target_info[2]

@@ -141,10 +141,9 @@ def create_tables_for_import(volume_id, namespace):
        tables because we don't yet know what target names we have."""
 
     vol_info = _lookup_vol_info(volume_id)
-    # XXX Check for None?
-    mission_id = vol_info['mission_id']
-    instrument_id = vol_info['instrument_id']
-    # XXX Handle GB
+    instrument_obj = vol_info['instrument_class'](volume=volume_id)
+    mission_id = instrument_obj.mission_id
+    instrument_id = instrument_obj.instrument_id
     mission_name = MISSION_ID_TO_MISSION_TABLE_SFX[mission_id]
 
     mult_table_schema = import_util.read_schema_for_table('mult_template')
@@ -157,7 +156,8 @@ def create_tables_for_import(volume_id, namespace):
     table_schemas = {}
     table_names_in_order = []
     for table_name in TABLES_TO_POPULATE:
-        table_name = table_name.replace('<INST>', instrument_id.lower())
+        if instrument_id is not None:
+            table_name = table_name.replace('<INST>', instrument_id.lower())
         table_name = table_name.replace('<MISSION>', mission_name.lower())
 
         if table_name.startswith('obs_surface_geometry__'):
@@ -600,8 +600,6 @@ def import_one_volume(volume_id):
 def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_paths,
                      volume_label_path):
     """Import the observations given a single primary index file."""
-    instrument_id = vol_info['instrument_id']
-    mission_id = vol_info['mission_id']
     instrument_class = vol_info['instrument_class']
     # XXX Handle GB
     volset = volume_pdsfile.volset
@@ -621,7 +619,6 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
     # Instantiate the appropriate class that knows how to import this instrument
     instrument_obj = instrument_class(
         volume=volume_id,
-        volset=volset,
         metadata=metadata
     )
 

@@ -17,11 +17,10 @@ from import_util import (log_nonrepeating_error,
 
 
 class ObsBase(object):
-    def __init__(self, volume=None, volset=None, metadata=None, ignore_errors=False):
+    def __init__(self, volume=None, metadata=None, ignore_errors=False):
         """Initialize an ObsBase object.
 
         volume          The PDS3 volume ("COISS_2116")
-        volset          The PDS3 volset ("COISS_2xxx")
         metadata        The collection of metadata available for this observation.
                         This includes rows from the various index as well as additional
                         information. Note that the metadata structure is updated
@@ -35,7 +34,6 @@ class ObsBase(object):
                         complete, even though the answer will be wrong.
         """
         self._volume         = volume
-        self._volset         = volset
         self._metadata       = metadata
         self._ignore_errors  = ignore_errors
 
@@ -75,17 +73,12 @@ class ObsBase(object):
     def __str__(self):
         s  = 'class '+type(self).__name__+'\n'
         s += '  volume = '+str(self._volume)+'\n'
-        s += '  volset = '+str(self._volset)+'\n'
         s += '  ignore_errors = '+str(self._ignore_errors)+'\n'
         return s
 
     @property
     def volume(self):
         return self._volume
-
-    @property
-    def volset(self):
-        return self._volset
 
     @property
     def opus_id(self):
@@ -190,6 +183,12 @@ class ObsBase(object):
     def _supp_index_col(self, col, idx=None):
         return safe_column(self._metadata['supp_index_row'], col, idx=idx)
 
+    def _index_label_col(self, col, idx=None):
+        return safe_column(self._metadata['index_label'], col, idx=idx)
+
+    def _supp_index_label_col(self, col, idx=None):
+        return safe_column(self._metadata['supp_index_label'], col, idx=idx)
+
     def _ring_geo_index_col(self, col, idx=None):
         # ring_geo is an optional index file so we allow it to be missing
         if ('ring_geo_row' not in self._metadata or
@@ -204,17 +203,17 @@ class ObsBase(object):
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
 
-    def _col_in_index(self, col):
-        # Figure out if col is in the supplemental index (first) or normal index
-        # (second) and return the index name as appropriate. If not found anywhere,
-        # return None.
-        for index in ['supp_index_row', 'index_row']:
+    def _col_in_index_or_label(self, col):
+        # Figure out if col is in the supplemental index or normal index
+        # or one of the associated label files and return the index name
+        # as appropriate. If not found anywhere, return None.
+        for index in ['supp_index_row', 'index_row', 'supp_index_label', 'index_label']:
             if index in self._metadata and col in self._metadata[index]:
                 return index
         return None
 
-    def _supp_index_or_index_col(self, col, idx=None):
-        index = self._col_in_index(col)
+    def _supp_index_or_index_or_label_col(self, col, idx=None):
+        index = self._col_in_index_or_label(col)
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "{col}" not found in supp_index or index')
@@ -222,7 +221,7 @@ class ObsBase(object):
         return safe_column(self._metadata[index], col, idx=idx)
 
 
-    ### Other utility functions useful for subclasses ###
+    ### Utility functions useful for subclasses ###
 
     def _get_target_info(self, target_name):
         # Given a target_name, map the name as necessary and return the
@@ -237,7 +236,7 @@ class ObsBase(object):
             if self.ignore_errors:
                 return 'OTHER'
             return None
-        return TARGET_NAME_INFO[target_name]
+        return target_name, TARGET_NAME_INFO[target_name]
 
     def _convert_filespec_from_lbl(self, filespec):
         # If necessary, convert a primary filespec from a .LBL file to some other
@@ -245,9 +244,7 @@ class ObsBase(object):
         # be subclassed as necessary.
         # XXX
         return filespec
-        # if filespec.startswith('NH'):
-        #     filespec = filespec.replace('.lbl', '.fit')
-        #     filespec = filespec.replace('.LBL', '.FIT')
+
         # elif filespec.startswith('COUVIS_0'):
         #     filespec = filespec.replace('.LBL', '.DAT')
         # elif (filespec.startswith('VGISS_5') or
@@ -261,8 +258,7 @@ class ObsBase(object):
         #     filespec = filespec.replace('.LBL', '.TAB')
         # elif filespec.startswith('COVIMS_8'):
         #     filespec = filespec.replace('.LBL', '.TAB')
-        # elif filespec.startswith('EBROCC'):
-        #     filespec = filespec.replace('.LBL', '.TAB')
+
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.
@@ -329,7 +325,7 @@ class ObsBase(object):
         return self._time2_helper('supp_index_row', start_time_sec, column)
 
     def _time1_from_some_index(self):
-        index = self._col_in_index('START_TIME')
+        index = self._col_in_index_or_label('START_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "START_TIME" not found in supp_index or index')
@@ -337,7 +333,7 @@ class ObsBase(object):
         return self._time1_helper(index, 'START_TIME')
 
     def _time2_from_some_index(self):
-        index = self._col_in_index('STOP_TIME')
+        index = self._col_in_index_or_label('STOP_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "STOP_TIME" not found in supp_index or index')
@@ -367,7 +363,7 @@ class ObsBase(object):
         return self._product_creation_time_helper('supp_index_row')
 
     def _product_creation_time_from_some_index(self):
-        index = self._col_in_index('PRODUCT_CREATION_TIME')
+        index = self._col_in_index_or_label('PRODUCT_CREATION_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "PRODUCT_CREATION_TIME" not found in supp_index or index')

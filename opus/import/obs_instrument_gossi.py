@@ -127,7 +127,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     def field_obs_general_target_name(self):
         target_name = self._index_col('TARGET_NAME')
-        target_info = self._get_target_info(target_name)
+        target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_name, target_info[2]
@@ -174,7 +174,7 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
 
     def field_obs_pds_product_creation_time(self):
         return None
-        
+
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###

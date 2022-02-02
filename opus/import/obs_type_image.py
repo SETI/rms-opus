@@ -37,19 +37,19 @@ class ObsTypeImage(ObsBase):
     # we provide a default for all fields and don't require subclasses to
     # override the methods.
 
-    def field_type_image_image_type_id(self):
+    def field_obs_type_image_image_type_id(self):
         return None
 
-    def field_type_image_duration(self):
+    def field_obs_type_image_duration(self):
         # We don't make this field_obs_general_observation_duration by default because
         # we want it to be None if this observation isn't an image at all.
         return None
 
-    def field_type_image_levels(self):
+    def field_obs_type_image_levels(self):
         return None
 
-    def field_type_image_greater_pixel_size(self):
+    def field_obs_type_image_greater_pixel_size(self):
         return None
 
-    def field_type_image_lesser_pixel_size(self):
+    def field_obs_type_image_lesser_pixel_size(self):
         return None

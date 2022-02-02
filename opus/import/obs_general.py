@@ -41,7 +41,7 @@ class ObsGeneral(ObsBase):
 
     def field_obs_general_target_class(self):
         target_name = self.field_obs_general_target_name()[0]
-        target_info = self._get_target_info(target_name)
+        target_name, target_info = self._get_target_info(target_name)
         if target_info is None:
             return None
         return target_info[1]
@@ -104,10 +104,11 @@ class ObsGeneral(ObsBase):
                 }
             else:
                 browse_data = {'viewables': []}
-                if (volset in VOLSETS_WITH_PREVIEWS and
-                    not impglobals.ARGUMENTS.import_ignore_missing_images):
-                    self._log_nonrepeating_warning(
-                        f'Missing all browse/diagram images for "{filespec}"')
+                # # XXX
+                # if (volset in VOLSETS_WITH_PREVIEWS and
+                #     not impglobals.ARGUMENTS.import_ignore_missing_images):
+                self._log_nonrepeating_warning(
+                    f'Missing all browse/diagram images for "{self.primary_filespec}"')
 
         ret = json.dumps(browse_data)
         return ret
@@ -126,7 +127,7 @@ class ObsGeneral(ObsBase):
     def field_obs_general_observation_duration(self):
         # This is the default behavior, but will be overriden for some
         # instruments
-        return self.field_obs_general_time2() - self.field_obs_general_time1()
+        return max(self.field_obs_general_time2() - self.field_obs_general_time1(), 0)
 
     def field_obs_general_right_asc1(self):
         return None
