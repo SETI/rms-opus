@@ -3,6 +3,7 @@ from obs_instrument_ebrocc import ObsInstrumentEBROCC
 from obs_instrument_gossi import ObsInstrumentGOSSI
 from obs_instrument_nhlorri import ObsInstrumentNHLORRI
 from obs_instrument_nhmvic import ObsInstrumentNHMVIC
+from obs_instrument_vgiss import ObsInstrumentVGISS
 
 # Information about each volume or group of volumes, used to determine
 # which instrument class to use, which index files to read, etc.
@@ -26,5 +27,9 @@ VOLUME_INFO = [
     (r'NH..MV_[12]001',
         {'primary_index': '<VOLUME>_index.lbl',
          'instrument_class': ObsInstrumentNHMVIC},
+    ),
+    (r'VGISS_[5678]\d\d\d',
+        {'primary_index': '<VOLUME>_raw_image_index.lbl',
+         'instrument_class': ObsInstrumentVGISS},
     ),
 ]

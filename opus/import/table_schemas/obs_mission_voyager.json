@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,10 +28,7 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
@@ -45,10 +36,7 @@
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_voyager_ert"
-        ],
+        "data_source": "COMPUTE",
         "data_source_order": 10,
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -71,10 +59,7 @@
         "field_type": "real8",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-              "FUNCTION",
-              "obs_mission_voyager_spacecraft_clock_count1"
-        ],
+        "data_source": "COMPUTE",
         "data_source_order": 10,
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -101,10 +86,7 @@
         "field_type": "real8",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-              "FUNCTION",
-              "obs_mission_voyager_spacecraft_clock_count2"
-        ],
+        "data_source": "COMPUTE",
         "data_source_order": 11,
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context_results": "VOYAGER",
@@ -128,10 +110,7 @@
         "field_type": "char32",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_mission_voyager_<INST>_mission_phase_name_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "definition": "The mission phase during which an observation was taken.",
         "pi_category_name": "obs_mission_voyager",
         "pi_dict_context": "VOYAGER",
@@ -156,10 +135,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

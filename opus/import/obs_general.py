@@ -118,6 +118,13 @@ class ObsGeneral(ObsBase):
     ### ! Might override these ! ###
     ################################
 
+    def field_obs_general_target_name(self):
+        target_name = self._some_index_or_label_col('TARGET_NAME')
+        target_name, target_info = self._get_target_info(target_name)
+        if target_info is None:
+            return None
+        return target_name, target_info[2]
+
     def field_obs_general_time1(self):
         return self._time1_from_some_index()
 
@@ -150,9 +157,6 @@ class ObsGeneral(ObsBase):
     ###################################
 
     def field_obs_general_planet_id(self):
-        raise NotImplementedError
-
-    def field_obs_general_target_name(self):
         raise NotImplementedError
 
     def field_obs_general_quantity(self):

@@ -94,13 +94,6 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
             pl_str = 'J'
         return f'{pl_str}_IMG_NH_LORRI_{image_num}'
 
-    def field_obs_general_target_name(self):
-        target_name = self._supp_index_col('TARGET_NAME')
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return None
-        return target_name, target_info[2]
-
     def field_obs_general_quantity(self):
         return 'REFLECT'
 

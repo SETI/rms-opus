@@ -39,6 +39,8 @@ class ObsInstrumentINST(ObsMissionMISSION):
 
     ### Optional
 
+    def field_obs_general_target_name(self):
+
     def field_obs_general_time1(self):
 
     def field_obs_general_time2(self):
@@ -58,8 +60,6 @@ class ObsInstrumentINST(ObsMissionMISSION):
     ### Mandatory
 
     def field_obs_general_planet_id(self):
-
-    def field_obs_general_target_name(self):
 
     def field_obs_general_quantity(self):
 
@@ -173,3 +173,16 @@ class ObsInstrumentINST(ObsMissionMISSION):
 
     # Because overriding these is rare, please refer to obs_surface_geometry_target.py
     # for the method list.
+
+    ####################################
+    ### FIELD METHODS FOR THIS TABLE ###
+    ####################################
+
+    def field_obs_instrument_INST_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_INST_volume_id(self):
+        return self.volume
+
+    def field_obs_instrument_INST_instrument_id(self):
+        return self.instrument_id

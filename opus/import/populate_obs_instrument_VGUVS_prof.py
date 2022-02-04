@@ -56,12 +56,6 @@ def populate_obs_general_VGUVS_time1_PROF(**kwargs):
 def populate_obs_general_VGUVS_time2_PROF(**kwargs):
     return populate_time2_from_index(**kwargs)
 
-def populate_obs_general_VGUVS_target_name_PROF(**kwargs):
-    # Get target name from index table
-    target_name = populate_target_name_from_index(**kwargs)
-    target_name_info = TARGET_NAME_INFO[target_name]
-    return target_name, target_name_info[2]
-
 def populate_obs_general_VGUVS_observation_duration_PROF(**kwargs):
     return populate_observation_duration_from_time(**kwargs)
 
@@ -79,17 +73,6 @@ def populate_obs_general_VGUVS_primary_filespec_PROF(**kwargs):
 
 def populate_obs_pds_VGUVS_primary_filespec_PROF(**kwargs):
     return _VGUVS_filespec_helper(**kwargs)
-
-def populate_obs_pds_VGUVS_product_creation_time_PROF(**kwargs):
-    return populate_product_creation_time_from_supp_index(**kwargs)
-
-# Format: "VG2-SR/UR/NR-UVS-2/4-OCC-V1.0"
-def populate_obs_pds_VGUVS_data_set_id_PROF(**kwargs):
-    return populate_data_set_id_from_index_label(**kwargs)
-
-# Format: "KM001/UU1P01DE.TAB"
-def populate_obs_pds_VGUVS_product_id_PROF(**kwargs):
-    return populate_product_id_from_index(**kwargs)
 
 def populate_obs_general_VGUVS_right_asc1_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[0]

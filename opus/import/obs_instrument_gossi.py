@@ -125,13 +125,6 @@ class ObsInstrumentGOSSI(ObsMissionGalileo):
         # XXX Update for new GOSSI volume list
         return 'JUP'
 
-    def field_obs_general_target_name(self):
-        target_name = self._index_col('TARGET_NAME')
-        target_name, target_info = self._get_target_info(target_name)
-        if target_info is None:
-            return None
-        return target_name, target_info[2]
-
     # We actually have no idea what IMAGE_TIME represents - start, mid, stop?
     # We assume it means stop time like it does for Voyager, and because Mark
     # has done some ring analysis with this assumption and it seemed to work OK.

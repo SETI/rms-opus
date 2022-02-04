@@ -203,6 +203,12 @@ class ObsBase(object):
             return None
         return safe_column(self._metadata['surface_geo_row'], col, idx=idx)
 
+    def _col_in_index(self, col):
+        return col in self._metadata['index_row']
+
+    def _col_in_supp_index(self, col):
+        return col in self._metadata['supp_index_row']
+
     def _col_in_some_index(self, col):
         # Figure out if col is in the supplemental index or normal index
         # and return the index name as appropriate. If not found anywhere,
