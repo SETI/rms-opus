@@ -34,13 +34,6 @@ from obs_common import ObsCommon
 #     '1986-01-24T17:10:13.320'
 # ]
 
-_VG_TARGET_TO_MISSION_PHASE_MAPPING = {
-    'S RINGS': 'SATURN ENCOUNTER',
-    'U RINGS': 'URANUS ENCOUNTER',
-    'N RINGS': 'NEPTUNE ENCOUNTER'
-}
-
-
 class ObsMissionVoyager(ObsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,6 +46,22 @@ class ObsMissionVoyager(ObsCommon):
     @property
     def mission_id(self):
         return 'VG'
+
+    @property
+    def inst_host_id(self):
+        inst_host = self._index_col('INSTRUMENT_HOST_NAME')
+        assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
+        return 'VG'+inst_host[-1]
+
+    @property
+    def primary_filespec(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
+        # This is because this (and the subsequent creation of opus_id) is used
+        # to actually find the matching row in the supplemental index dictionary.
+        # Format: "DATA/C13854XX/C1385455_CALIB.LBL"
+        filespec = self._index_col('FILE_SPECIFICATION_NAME')
+        return self.volume + '/' + filespec
 
 
     ################################

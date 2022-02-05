@@ -1,78 +1,9 @@
-################################################################################
-# populate_obs_instrument_VGUVS_prof.py
-#
-# Routines to populate fields specific to VGUVS.
-################################################################################
-
-import pdsfile
-
-from config_data import *
-import import_util
-
-from populate_obs_mission_voyager import *
-from populate_util import *
-
-################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY INSTRUMENT
-################################################################################
-
-### OBS_GENERAL TABLE ###
-
-def _VGUVS_filespec_helper(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-
-    filespec = index_row['FILE_SPECIFICATION_NAME']
-    volume_id = kwargs['volume_id']
-    return volume_id + '/' + filespec
-
-def populate_obs_general_VGUVS_opus_id_PROF(**kwargs):
-    filespec = _VGUVS_filespec_helper(**kwargs)
-    pds_file = pdsfile.PdsFile.from_filespec(filespec, fix_case=True)
-    opus_id = pds_file.opus_id
-    if not opus_id:
-        import_util.log_nonrepeating_error(
-            f'Unable to create OPUS_ID for FILE_SPEC "{filespec}"')
-        return filespec.split('/')[-1]
-
-    return opus_id
-
-def populate_obs_general_VGUVS_ring_obs_id_PROF(**kwargs):
-    return None
-
-def populate_obs_general_VGUVS_inst_host_id_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    inst_host = index_row['INSTRUMENT_HOST_NAME']
-
-    assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
-
-    return 'VG'+inst_host[-1]
-
-# VGUVS time span is the duration of the observation at the spacecraft
-def populate_obs_general_VGUVS_time1_PROF(**kwargs):
-    return populate_time1_from_index(**kwargs)
-
-def populate_obs_general_VGUVS_time2_PROF(**kwargs):
-    return populate_time2_from_index(**kwargs)
-
-def populate_obs_general_VGUVS_observation_duration_PROF(**kwargs):
-    return populate_observation_duration_from_time(**kwargs)
 
 def populate_obs_general_VGUVS_quantity_PROF(**kwargs):
     return 'OPDEPTH'
 
 def populate_obs_general_VGUVS_observation_type_PROF(**kwargs):
     return 'OCC'
-
-def populate_obs_pds_VGUVS_note_PROF(**kwargs):
-    return None
-
-def populate_obs_general_VGUVS_primary_filespec_PROF(**kwargs):
-    return _VGUVS_filespec_helper(**kwargs)
-
-def populate_obs_pds_VGUVS_primary_filespec_PROF(**kwargs):
-    return _VGUVS_filespec_helper(**kwargs)
 
 def populate_obs_general_VGUVS_right_asc1_PROF(**kwargs):
     return populate_occ_ra_dec_helper_index(**kwargs)[0]
@@ -103,77 +34,6 @@ def populate_obs_type_image_VGUVS_lesser_pixel_size_PROF(**kwargs):
 
 def populate_obs_type_image_VGUVS_greater_pixel_size_PROF(**kwargs):
     return None
-
-
-### OBS_WAVELENGTH TABLE ###
-
-def populate_obs_wavelength_VGUVS_wavelength1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['supp_index_row']
-    wl1 = index_row['MINIMUM_WAVELENGTH']
-    return wl1
-
-def populate_obs_wavelength_VGUVS_wavelength2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['supp_index_row']
-    wl2 = index_row['MAXIMUM_WAVELENGTH']
-    return wl2
-
-def _wave_res_helper(**kwargs):
-    metadata = kwargs['metadata']
-    wl_row = metadata['obs_wavelength_row']
-    wl1 = wl_row['wavelength1']
-    wl2 = wl_row['wavelength2']
-    if wl1 is None or wl2 is None:
-        return None
-    return wl2 - wl1
-
-def populate_obs_wavelength_VGUVS_wave_res1_PROF(**kwargs):
-    return _wave_res_helper(**kwargs)
-
-def populate_obs_wavelength_VGUVS_wave_res2_PROF(**kwargs):
-    return _wave_res_helper(**kwargs)
-
-def populate_obs_wavelength_VGUVS_wave_no1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    wavelength_row = metadata['obs_wavelength_row']
-    wl2 = wavelength_row['wavelength2']
-    if wl2 is None:
-        return None
-    return 10000 / wl2 # cm^-1
-
-def populate_obs_wavelength_VGUVS_wave_no2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    wavelength_row = metadata['obs_wavelength_row']
-    wl1 = wavelength_row['wavelength1']
-    if wl1 is None:
-        return None
-    return 10000 / wl1 # cm^-1
-
-# Same logic as wave_res
-def _wave_no_res_helper(**kwargs):
-    metadata = kwargs['metadata']
-    wl_row = metadata['obs_wavelength_row']
-    wno1 = wl_row['wave_no1']
-    wno2 = wl_row['wave_no2']
-    if wno1 is None or wno2 is None:
-        return None
-    return wno2 - wno1
-
-def populate_obs_wavelength_VGUVS_wave_no_res1_PROF(**kwargs):
-    return _wave_no_res_helper(**kwargs)
-
-def populate_obs_wavelength_VGUVS_wave_no_res2_PROF(**kwargs):
-    return _wave_no_res_helper(**kwargs)
-
-def populate_obs_wavelength_VGUVS_spec_flag_PROF(**kwargs):
-    return 'N'
-
-def populate_obs_wavelength_VGUVS_spec_size_PROF(**kwargs):
-    return None
-
-def populate_obs_wavelength_VGUVS_polarization_type_PROF(**kwargs):
-    return 'NONE'
 
 
 ### OBS_PROFILE TABLE ###
@@ -241,63 +101,6 @@ def populate_obs_occultation_VGUVS_host_PROF(**kwargs):
     receiver_host = index_row['RECEIVER_HOST_NAME']
 
     return receiver_host
-
-
-### OBS_RING_GEOMETRY TABLE ###
-
-def populate_obs_ring_geometry_VGUVS_ring_radius1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    radius1 = import_util.safe_column(index_row, 'MINIMUM_RING_RADIUS')
-
-    return radius1
-
-def populate_obs_ring_geometry_VGUVS_ring_radius2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    radius2 = import_util.safe_column(index_row, 'MAXIMUM_RING_RADIUS')
-
-    return radius2
-
-def populate_obs_ring_geometry_VGUVS_resolution1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    res = import_util.safe_column(index_row, 'MINIMUM_RADIAL_RESOLUTION')
-
-    return res
-
-def populate_obs_ring_geometry_VGUVS_resolution2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    res = import_util.safe_column(index_row, 'MAXIMUM_RADIAL_RESOLUTION')
-
-    return res
-
-def populate_obs_ring_geometry_VGUVS_proj_resolution1_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    res = import_util.safe_column(index_row, 'MINIMUM_RADIAL_RESOLUTION')
-
-    return res
-
-def populate_obs_ring_geometry_VGUVS_proj_resolution2_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    res = import_util.safe_column(index_row, 'MAXIMUM_RADIAL_RESOLUTION')
-
-    return res
-
-def populate_obs_ring_geometry_VGUVS_j2000_longitude1_PROF(**kwargs):
-    return None
-
-def populate_obs_ring_geometry_VGUVS_j2000_longitude2_PROF(**kwargs):
-    return None
-
-def populate_obs_ring_geometry_VGUVS_ring_azimuth_wrt_observer1_PROF(**kwargs):
-    return None
-
-def populate_obs_ring_geometry_VGUVS_ring_azimuth_wrt_observer2_PROF(**kwargs):
-    return None
 
 def populate_obs_ring_geometry_VGUVS_phase1_PROF(**kwargs):
     return 180.
@@ -462,29 +265,6 @@ def populate_obs_ring_geometry_VGUVS_north_based_emission2_PROF(**kwargs):
 
     return ea
 
-# We set the center versions to be the same as the normal versions
-populate_obs_ring_geometry_VGUVS_center_phase1_PROF = \
-    populate_obs_ring_geometry_VGUVS_phase1_PROF
-populate_obs_ring_geometry_VGUVS_center_phase2_PROF = \
-    populate_obs_ring_geometry_VGUVS_phase2_PROF
-populate_obs_ring_geometry_VGUVS_center_incidence1_PROF = \
-    populate_obs_ring_geometry_VGUVS_incidence1_PROF
-populate_obs_ring_geometry_VGUVS_center_incidence2_PROF = \
-    populate_obs_ring_geometry_VGUVS_incidence2_PROF
-populate_obs_ring_geometry_VGUVS_center_emission1_PROF = \
-    populate_obs_ring_geometry_VGUVS_emission1_PROF
-populate_obs_ring_geometry_VGUVS_center_emission2_PROF = \
-    populate_obs_ring_geometry_VGUVS_emission2_PROF
-populate_obs_ring_geometry_VGUVS_center_north_based_incidence1_PROF = \
-    populate_obs_ring_geometry_VGUVS_north_based_incidence1_PROF
-populate_obs_ring_geometry_VGUVS_center_north_based_incidence2_PROF = \
-    populate_obs_ring_geometry_VGUVS_north_based_incidence2_PROF
-populate_obs_ring_geometry_VGUVS_center_north_based_emission1_PROF = \
-    populate_obs_ring_geometry_VGUVS_north_based_emission1_PROF
-populate_obs_ring_geometry_VGUVS_center_north_based_emission2_PROF = \
-    populate_obs_ring_geometry_VGUVS_north_based_emission2_PROF
-
-
 # Opening angle to observer: the angle between the ring surface to the direction
 # where outgoing photons to the observer. Positive if observer is at the north
 # side of the ring, negative if it's at the south side. If observer is at the
@@ -579,30 +359,3 @@ def populate_obs_ring_geometry_VGUVS_solar_ring_elevation2_PROF(**kwargs):
         el = 90. - inc # positive
 
     return el
-
-def populate_obs_ring_geometry_VGUVS_ring_intercept_time1_PROF(**kwargs):
-    return populate_time1_from_index(column='RING_EVENT_START_TIME', **kwargs)
-
-def populate_obs_ring_geometry_VGUVS_ring_intercept_time2_PROF(**kwargs):
-    return populate_time1_from_index(column='RING_EVENT_STOP_TIME', **kwargs)
-
-
-################################################################################
-# THESE NEED TO BE IMPLEMENTED FOR EVERY VOYAGER INSTRUMENT
-################################################################################
-
-def populate_obs_mission_voyager_VGUVS_mission_phase_name_PROF(**kwargs):
-    metadata = kwargs['metadata']
-    index_row = metadata['index_row']
-    target_name = index_row['TARGET_NAME'].upper().strip()
-    mp = VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
-
-    return mp
-
-
-################################################################################
-# THESE ARE SPECIFIC TO OBS_INSTRUMENT_VGUVS
-################################################################################
-
-def populate_obs_instrument_VGUVS_observation_type_PROF(**kwargs):
-    return 'Occultation Profile'

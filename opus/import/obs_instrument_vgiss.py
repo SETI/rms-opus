@@ -36,22 +36,6 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
     def instrument_id(self):
         return 'VGISS'
 
-    @property
-    def inst_host_id(self):
-        inst_host = self._index_col('INSTRUMENT_HOST_NAME')
-        assert inst_host in ['VOYAGER 1', 'VOYAGER 2']
-        return 'VG'+inst_host[-1]
-
-    @property
-    def primary_filespec(self):
-        # Note it's very important that this can be calculated using ONLY
-        # the primary index, not the supplemental index!
-        # This is because this (and the subsequent creation of opus_id) is used
-        # to actually find the matching row in the supplemental index dictionary.
-        # Format: "DATA/C13854XX/C1385455_CALIB.LBL"
-        filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + '/' + filespec
-
     def opus_id_from_supp_index_row(self, supp_row):
         volume_id = supp_row['VOLUME_NAME']
         filespec = supp_row['FILE_SPECIFICATION_NAME']
@@ -192,8 +176,6 @@ class ObsInstrumentVGISS(ObsMissionVoyager):
 
     def field_obs_mission_voyager_mission_phase_name(self):
         return self._index_col('MISSION_PHASE_NAME')
-        # target_name = self._index_col('TARGET_NAME').upper()
-        # return _VG_TARGET_TO_MISSION_PHASE_MAPPING[target_name]
 
 
     ####################################
