@@ -73,11 +73,6 @@ class ObsInstrumentEBROCC(ObsCommon):
     def field_obs_general_declination2(self):
         return self._prof_ra_dec_helper('index_label', 'STAR_NAME')[3]
 
-    def field_obs_general_ring_obs_id(self):
-        return None
-
-    ### Mandatory
-
     def field_obs_general_planet_id(self):
         return 'SAT'
 
@@ -105,8 +100,6 @@ class ObsInstrumentEBROCC(ObsCommon):
     ### OVERRIDE FROM ObsWavelength ###
     ###################################
 
-    ### Optional
-
     def field_obs_wavelength_wavelength1(self):
         return self._supp_index_col('WAVELENGTH')
 
@@ -117,8 +110,6 @@ class ObsInstrumentEBROCC(ObsCommon):
     ################################
     ### OVERRIDE FROM ObsProfile ###
     ################################
-
-    ### Optional
 
     def field_obs_profile_occ_type(self):
         return 'STE'

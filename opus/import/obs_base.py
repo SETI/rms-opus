@@ -90,7 +90,8 @@ class ObsBase(object):
         pdsf = self._pdsfile_from_filespec(filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
-            self._log_nonrepeating_error('Unable to create OPUS_ID')
+            self._log_nonrepeating_error(
+                        f'Unable to create OPUS_ID using filespec {filespec}')
             opus_id = filespec.split('/')[-1]
         self._opus_id_last_filespec = filespec
         self._opus_id_cached = opus_id
@@ -113,8 +114,9 @@ class ObsBase(object):
         pdsf = self._pdsfile_from_filespec(full_filespec)
         opus_id = pdsf.opus_id
         if not opus_id:
-            self._log_nonrepeating_error(
-                        'Unable to create OPUS_ID from supplemental index')
+            self._log_nonrepeating_warning(
+                        'Unable to create OPUS_ID from supplemental index '+
+                       f'using filespec {full_filespec}')
             return filespec.split('/')[-1]
         return opus_id
 
@@ -251,14 +253,14 @@ class ObsBase(object):
         # target_class tuple (planet_id, target_class, pretty name).
         # Example: ('JUP', 'IRR_SAT', 'Callirrhoe')
         if target_name is None:
-            return None
+            return None, None
         if target_name in TARGET_NAME_MAPPING:
             target_name = TARGET_NAME_MAPPING[target_name]
         if target_name not in TARGET_NAME_INFO:
             self._log_unknown_target_name(target_name)
-            if self.ignore_errors:
+            if self._ignore_errors:
                 return 'OTHER'
-            return None
+            return None, None
         return target_name, TARGET_NAME_INFO[target_name]
 
     def _convert_filespec_from_lbl(self, filespec):
@@ -386,7 +388,7 @@ class ObsBase(object):
         return self._product_creation_time_helper('supp_index_row')
 
     def _product_creation_time_from_some_index(self):
-        index = self._col_in_some_index_or_label('PRODUCT_CREATION_TIME')
+        index = self._col_in_some_index('PRODUCT_CREATION_TIME')
         if index is None:
             self._log_nonrepeating_error(
                 f'Column "PRODUCT_CREATION_TIME" not found in supp_index or index')
