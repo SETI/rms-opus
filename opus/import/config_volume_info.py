@@ -4,10 +4,10 @@ from obs_instrument_gossi import ObsInstrumentGOSSI
 from obs_instrument_nhlorri import ObsInstrumentNHLORRI
 from obs_instrument_nhmvic import ObsInstrumentNHMVIC
 from obs_instrument_vgiss import ObsInstrumentVGISS
-from obs_instrument_vg28xx import (ObsInstrumentVG28xxVGISS,
-                                   ObsInstrumentVG28xxVGPPS)
-                                   # ObsInstrumentVG28xxVGRSS,
-                                   # ObsInstrumentVG28xxVGUVS)
+from obs_instrument_vg28xx_vgiss import ObsInstrumentVG28xxVGISS
+from obs_instrument_vg28xx_vgpps_vguvs import (ObsInstrumentVG28xxVGPPS,
+                                               ObsInstrumentVG28xxVGUVS)
+from obs_instrument_vg28xx_vgrss import ObsInstrumentVG28xxVGRSS
 
 
 # Information about each volume or group of volumes, used to determine
@@ -41,14 +41,14 @@ VOLUME_INFO = [
         {'primary_index': '<VOLUME>_profile_index.lbl',
          'instrument_class': ObsInstrumentVG28xxVGPPS},
     ),
-    # (r'VG_2802',
-    #     {'primary_index': '<VOLUME>_profile_index.lbl',
-    #      'instrument_class': ObsInstrumentVG28xxVGUVS},
-    # ),
-    # (r'VG_2803',
-    #     {'primary_index': '<VOLUME>_profile_index.lbl',
-    #      'instrument_class': ObsInstrumentVG28xxVGRSS},
-    # ),
+    (r'VG_2802',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentVG28xxVGUVS},
+    ),
+    (r'VG_2803',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentVG28xxVGRSS},
+    ),
     (r'VG_2810',
         {'primary_index': '<VOLUME>_profile_index.lbl',
          'instrument_class': ObsInstrumentVG28xxVGISS},

@@ -11,6 +11,7 @@ import pdsfile
 from config_targets import (TARGET_NAME_INFO,
                             TARGET_NAME_MAPPING)
 from import_util import (log_nonrepeating_error,
+                         log_warning,
                          log_nonrepeating_warning,
                          log_unknown_target_name,
                          safe_column)
@@ -400,6 +401,9 @@ class ObsBase(object):
 
     def _log_unknown_target_name(self, target_name):
         log_unknown_target_name(target_name)
+
+    def _log_warning(self, *args, **kwargs):
+        log_warning(*args, **kwargs)
 
     def _log_nonrepeating_warning(self, *args, **kwargs):
         log_nonrepeating_warning(*args, **kwargs)

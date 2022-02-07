@@ -192,6 +192,7 @@ TARGET_NAME_MAPPING = {
     'HD 37962':         'HD_37962',
     'HD71334':          'HD_71334',
     'IOTHER':           'IO_HER',
+    'IOTAHER':          'IO_HER',
     'IOTA HER':         'IO_HER',
     'IOTCEN':           'IO_CEN',
     'IOTORI':           'IO_ORI',
