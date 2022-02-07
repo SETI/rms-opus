@@ -55,23 +55,6 @@ class ObsInstrumentVG28xx(ObsMissionVoyager):
         return 'VG'
 
 
-    ################################
-    ### OVERRIDE FROM ObsGeneral ###
-    ################################
-
-    def field_obs_general_right_asc1(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[0]
-
-    def field_obs_general_right_asc2(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[1]
-
-    def field_obs_general_declination1(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[2]
-
-    def field_obs_general_declination2(self):
-        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[3]
-
-
     ############################
     ### OVERRIDE FROM ObsPds ###
     ############################

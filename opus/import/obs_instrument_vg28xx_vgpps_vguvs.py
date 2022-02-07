@@ -28,6 +28,18 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     def field_obs_general_observation_type(self):
         return 'OCC'
 
+    def field_obs_general_right_asc1(self):
+        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[0]
+
+    def field_obs_general_right_asc2(self):
+        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[1]
+
+    def field_obs_general_declination1(self):
+        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[2]
+
+    def field_obs_general_declination2(self):
+        return self._prof_ra_dec_helper('index_row', 'SIGNAL_SOURCE_NAME_1')[3]
+
 
     ################################
     ### OVERRIDE FROM ObsProfile ###
@@ -47,12 +59,6 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
 
     def field_obs_profile_quality_score(self):
         return 'GOOD'
-
-    def field_obs_profile_optical_depth1(self):
-        return None
-
-    def field_obs_profile_optical_depth2(self):
-        return None
 
     def field_obs_profile_host(self):
         return self._index_col('RECEIVER_HOST_NAME')
@@ -127,12 +133,12 @@ class ObsInstrumentVG28xxVGPPSUVS(ObsInstrumentVG28xx):
     # source is at north side of Jupiter, Saturn, and Neptune, and south side of
     # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
     # and north side of Uranus.
-    def field_obs_ring_geometry_solar_ring_elev1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
         if self._is_voyager_at_north_except_uranus():
             return self.field_obs_ring_geometry_incidence1() - 90.
         return 90. - self.field_obs_ring_geometry_incidence2()
 
-    def field_obs_ring_geometry_solar_ring_elev2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         if self._is_voyager_at_north_except_uranus():
             return self.field_obs_ring_geometry_incidence2() - 90.
         return 90. - self.field_obs_ring_geometry_incidence1()

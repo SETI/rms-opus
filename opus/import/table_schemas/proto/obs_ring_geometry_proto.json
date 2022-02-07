@@ -420,7 +420,7 @@
         "pi_units": null
     },
     {
-        "@field_name": "solar_ring_elev1",
+        "@field_name": "solar_ring_elevation1",
         "@field_type": "real8",
         "@field_x_default": null,
         "pi_category_name": "obs_ring_geometry",
@@ -439,7 +439,7 @@
         "pi_units": null
     },
     {
-        "@field_name": "solar_ring_elev2",
+        "@field_name": "solar_ring_elevation2",
         "@field_type": "real8",
         "@field_x_default": null,
         "pi_category_name": "obs_ring_geometry",

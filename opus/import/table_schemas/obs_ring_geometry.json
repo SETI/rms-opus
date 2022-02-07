@@ -752,7 +752,7 @@
         "val_max": 180
     },
     {
-        "field_name": "solar_ring_elev1",
+        "field_name": "solar_ring_elevation1",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
@@ -774,14 +774,14 @@
         "pi_intro": null,
         "pi_label": "Solar Ring Elevation",
         "pi_label_results": "Solar Ring Elevation (Min)",
-        "pi_old_slug": "solarringelev1",
-        "pi_slug": "RINGGEOsolarringelev1",
+        "pi_old_slug": "RINGGEOsolarringelev1",
+        "pi_slug": "RINGGEOsolarringelevation1",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
         "comments": "Definition is from RING_GEO label file."
     },
     {
-        "field_name": "solar_ring_elev2",
+        "field_name": "solar_ring_elevation2",
         "field_type": "real8",
         "field_default": null,
         "field_key": true,
@@ -800,8 +800,8 @@
         "pi_intro": null,
         "pi_label": "Solar Ring Elevation",
         "pi_label_results": "Solar Ring Elevation (Max)",
-        "pi_old_slug": "solarringelev2",
-        "pi_slug": "RINGGEOsolarringelev2",
+        "pi_old_slug": "RINGGEOsolarringelev2",
+        "pi_slug": "RINGGEOsolarringelevation2",
         "pi_sub_heading": "Lighting Geometry - Observed",
         "pi_tooltip": null,
         "comments": "Definition is from RING_GEO label file."

@@ -32,18 +32,6 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     def field_obs_general_observation_type(self):
         return 'REF'
 
-    def field_obs_general_right_asc1(self):
-        return None
-
-    def field_obs_general_right_asc2(self):
-        return None
-
-    def field_obs_general_declination1(self):
-        return None
-
-    def field_obs_general_declination2(self):
-        return None
-
 
     ##################################
     ### OVERRIDE FROM ObsTypeImage ###
@@ -72,23 +60,8 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     def field_obs_profile_occ_type(self):
         return 'REF'
 
-    def field_obs_profile_occ_dir(self):
-        return None
-
-    def field_obs_profile_body_occ_flag(self):
-        return None
-
-    def field_obs_profile_temporal_sampling(self):
-        return None
-
     def field_obs_profile_quality_score(self):
         return 'GOOD'
-
-    def field_obs_profile_optical_depth1(self):
-        return None
-
-    def field_obs_profile_optical_depth2(self):
-        return None
 
     def field_obs_profile_source(self):
         return None
@@ -112,10 +85,10 @@ class ObsInstrumentVG28xxVGISS(ObsInstrumentVG28xx):
     # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
     # and north side of Uranus. In this volume, source is at north of Saturn,
     # so ring elevation will be the same as opening angle.
-    def field_obs_ring_geometry_solar_ring_elev1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
         return 90. - self._index_col('INCIDENCE_ANGLE')
 
-    def field_obs_ring_geometry_solar_ring_elev2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         return 90. - self._index_col('INCIDENCE_ANGLE')
 
     # Ring elevation to observer, same to opening angle except, it's positive if
@@ -353,12 +326,12 @@ class ObsInstrumentVG28xxVGPPS(ObsInstrumentVG28xx):
     # source is at north side of Jupiter, Saturn, and Neptune, and south side of
     # Uranus. Negative if source is at south side of Jupiter, Saturn, and Neptune,
     # and north side of Uranus.
-    def field_obs_ring_geometry_solar_ring_elev1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
         if self._is_voyager_at_north_except_uranus():
             return self.field_obs_ring_geometry_incidence1() - 90.
         return 90. - self.field_obs_ring_geometry_incidence2()
 
-    def field_obs_ring_geometry_solar_ring_elev2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         if self._is_voyager_at_north_except_uranus():
             return self.field_obs_ring_geometry_incidence2() - 90.
         return 90. - self.field_obs_ring_geometry_incidence1()

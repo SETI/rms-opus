@@ -104,10 +104,10 @@ class ObsRingGeometry(ObsBase):
     def field_obs_ring_geometry_sub_observer_ring_long2(self):
         return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
 
-    def field_obs_ring_geometry_solar_ring_elev1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
         return self._ring_geo_index_col('MINIMUM_SOLAR_RING_ELEVATION')
 
-    def field_obs_ring_geometry_solar_ring_elev2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         return self._ring_geo_index_col('MAXIMUM_SOLAR_RING_ELEVATION')
 
     def field_obs_ring_geometry_observer_ring_elevation1(self):

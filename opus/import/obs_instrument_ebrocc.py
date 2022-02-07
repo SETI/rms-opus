@@ -216,12 +216,12 @@ class ObsInstrumentEBROCC(ObsCommon):
     def field_obs_ring_geometry_sub_observer_ring_long2(self):
         return self._ring_geo_index_col('SUB_OBSERVER_RING_LONGITUDE')
 
-    def field_obs_ring_geometry_solar_ring_elev1(self):
+    def field_obs_ring_geometry_solar_ring_elevation1(self):
         # This is only valid for EBROCC 28 Sgr where the star was on the south
         # side of the rings
         return self._supp_index_col('INCIDENCE_ANGLE')-90.
 
-    def field_obs_ring_geometry_solar_ring_elev2(self):
+    def field_obs_ring_geometry_solar_ring_elevation2(self):
         # This is only valid for EBROCC 28 Sgr where the star was on the south
         # side of the rings
         return self._supp_index_col('INCIDENCE_ANGLE')-90.

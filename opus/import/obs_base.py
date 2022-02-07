@@ -112,7 +112,13 @@ class ObsBase(object):
             self._log_nonrepeating_error('Supplemental index missing FILESPEC field')
             return None
         full_filespec = volume_id + '/' + filespec
-        pdsf = self._pdsfile_from_filespec(full_filespec)
+        try:
+            pdsf = self._pdsfile_from_filespec(full_filespec)
+        except KeyError:
+            self._log_nonrepeating_warning(
+                        'Unable to create OPUS_ID from supplemental index '+
+                       f'using filespec {full_filespec} - internal PdsFile crash')
+            return filespec.split('/')[-1]
         opus_id = pdsf.opus_id
         if not opus_id:
             self._log_nonrepeating_warning(
