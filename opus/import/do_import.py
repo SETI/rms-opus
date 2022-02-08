@@ -733,9 +733,15 @@ def import_one_index(volume_id, vol_info, volume_pdsfile, vol_prefix, metadata_p
                     assert assoc_type == 'supp_index'
                     for row in assoc_rows:
                         key = instrument_obj.opus_id_from_supp_index_row(row)
-                        if key is not None:
-                            # Error will already be logged if key is None
-                            assoc_dict[key] = row
+                        # We throw away supplemental index rows where the OPUS ID doesn't
+                        # convert back to the source filespec. In these cases, the
+                        # index row is not the primary one we want to draw information
+                        # from. For example, it might be a description of an occultation
+                        # at a coarser resolution.
+                        if instrument_obj.is_main_supp_index_row(row):
+                            if key is not None:
+                                # Error will already be logged if key is None
+                                assoc_dict[key] = row
 
                 # We need to be able to look things up in both the main tab file and
                 # also the associate label, because different instruments store

@@ -1,4 +1,7 @@
 from obs_instrument_coiss import ObsInstrumentCOISS
+from obs_instrument_corss_occ import ObsInstrumentCORSSOcc
+from obs_instrument_couvis_occ import ObsInstrumentCOUVISOcc
+from obs_instrument_covims_occ import ObsInstrumentCOVIMSOcc
 from obs_instrument_ebrocc import ObsInstrumentEBROCC
 from obs_instrument_gossi import ObsInstrumentGOSSI
 from obs_instrument_nhlorri import ObsInstrumentNHLORRI
@@ -20,6 +23,18 @@ VOLUME_INFO = [
     (r'COISS_[12]\d\d\d',
         {'primary_index': '<VOLUME>_index.lbl',
          'instrument_class': ObsInstrumentCOISS},
+    ),
+    (r'CORSS_8001',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentCORSSOcc},
+    ),
+    (r'COUVIS_8001',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentCOUVISOcc},
+    ),
+    (r'COVIMS_8001',
+        {'primary_index': '<VOLUME>_profile_index.lbl',
+         'instrument_class': ObsInstrumentCOVIMSOcc},
     ),
     (r'GO_00\d\d',
         {'primary_index': '<VOLUME>_index.lbl',

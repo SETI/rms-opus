@@ -716,6 +716,21 @@ class ApiResultsTests(TestCase, ApiTestHelper):
         url = "/api/files/co-uvis-occ-2009-015-gamcas-e.json"
         self._run_json_equal_file(url, "results_co_uvis_occ_2009_015_gamcas_e_files.json")
 
+    def test__results_contents_co_uvis_occ_2009_062_thehya_e_metadata(self):
+        "[test_results_contents.py] co-uvis-occ-2009-062-thehya-e metadata"
+        url = "/api/metadata_v2/co-uvis-occ-2009-062-thehya-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2009_062_thehya_e_metadata.json")
+
+    def test__results_contents_co_uvis_occ_2009_062_thehya_e_files(self):
+        "[test_results_contents.py] co-uvis-occ-2009-062-thehya-e files"
+        url = "/api/files/co-uvis-occ-2009-062-thehya-e.json"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2009_062_thehya_e_files.json")
+
+    def test__results_contents_co_uvis_occ_2009_062_thehya_e_images(self):
+        "[test_results_contents.py] co-uvis-occ-2009-062-thehya-e images"
+        url = "/api/images.json?opusid=co-uvis-occ-2009-062-thehya-e"
+        self._run_json_equal_file(url, "results_co_uvis_occ_2009_062_thehya_e_images.json")
+
     def test__results_contents_co_vims_occ_2006_204_alpori_i_metadata(self):
         "[test_results_contents.py] co-vims-occ-2006-204-alpori-i metadata"
         url = "/api/metadata_v2/co-vims-occ-2006-204-alpori-i.json"

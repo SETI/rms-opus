@@ -1,0 +1,178 @@
+################################################################################
+# obs_instrument_couvis_occ.py
+#
+# Defines the ObsInstrumentCOUVISOcc class, which encapsulates fields in the
+# obs_instrument_couvis table for COUVIS_8001 occultations.
+################################################################################
+
+import opus_support
+
+from obs_instrument_couvis_covims_occ import ObsInstrumentUVISVIMSOcc
+
+
+class ObsInstrumentCOUVISOcc(ObsInstrumentUVISVIMSOcc):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+    #############################
+    ### OVERRIDE FROM ObsBase ###
+    #############################
+
+    @property
+    def instrument_id(self):
+        return 'COUVIS'
+
+    @property
+    def opus_id(self):
+        opus_id = super().opus_id
+
+        # We do this because the filenames are wrong in the archive XXX
+        # if opus_id == 'co-uvis-occ-2005-139-psicen-e':
+        #     opus_id = 'co-uvis-occ-2007-038-psicen-e'
+        # elif opus_id == 'co-uvis-occ-2005-139-thehya-e':
+        #     opus_id = 'co-uvis-occ-2009-062-thehya-e'
+        # elif opus_id == 'co-uvis-occ-2007-038-sao205839-i':
+        #     opus_id = 'co-uvis-occ-2008-026-sao205839-i'
+
+        return opus_id
+
+
+    ###################################
+    ### OVERRIDE FROM ObsWavelength ###
+    ###################################
+
+    def field_obs_wavelength_wavelength1(self):
+        return self._index_col('MINIMUM_WAVELENGTH')
+
+    def field_obs_wavelength_wavelength2(self):
+        return self._index_col('MAXIMUM_WAVELENGTH')
+
+    def field_obs_wavelength_wave_res1(self):
+        wl1 = self.field_obs_wavelength_wavelength1()
+        wl2 = self.field_obs_wavelength_wavelength2()
+        if wl1 is None or wl2 is None:
+            return None
+        return wl2 - wl1
+
+    def field_obs_wavelength_wave_res2(self):
+        return self.field_obs_wavelength_wave_res1()
+
+    def field_obs_wavelength_wave_no_res1(self):
+        wno1 = self.field_obs_wavelength_wave_no1()
+        wno2 = self.field_obs_wavelength_wave_no2()
+        if wno1 is None or wno2 is None:
+            return None
+        return wno2 - wno1
+
+    def field_obs_wavelength_wave_no_res2(self):
+        return self.field_obs_wavelength_wave_no_res1()
+
+
+    ################################
+    ### OVERRIDE FROM ObsProfile ###
+    ################################
+
+    def field_obs_profile_temporal_sampling(self):
+        return self._supp_index_col('INTEGRATION_DURATION') / 1000 # msec -> sec
+
+    def field_obs_profile_wl_band(self):
+        return 'UV'
+
+
+    #######################################
+    ### OVERRIDE FROM ObsMissionCassini ###
+    #######################################
+
+    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')
+        if sc == 'UNK':
+            return None
+        try:
+            sc_cvt = opus_support.parse_cassini_sclk(sc)
+        except Exception as e:
+            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            return None
+        return sc_cvt
+
+    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+        sc = self._supp_index_col('SPACECRAFT_CLOCK_STOP_COUNT')
+        if sc == 'UNK':
+            return None
+        try:
+            sc_cvt = opus_support.parse_cassini_sclk(sc)
+        except Exception as e:
+            self._log_nonrepeating_warning(f'Unable to parse Cassini SCLK "{sc}": {e}')
+            return None
+
+        sc1 = self.field_obs_mission_cassini_spacecraft_clock_count1()
+        if sc1 is not None and sc_cvt < sc1:
+            import_util.log_warning(
+                f'spacecraft_clock_count1 ({sc1}) and spacecraft_clock_count2 ({sc_cvt}) '
+                 +'are in the wrong order - setting to count1')
+            sc_cvt = sc1
+
+        return sc_cvt
+
+    def field_obs_mission_cassini_mission_phase_name(self):
+        return self._cassini_mission_phase_name()
+
+
+    ####################################
+    ### FIELD METHODS FOR THIS TABLE ###
+    ####################################
+
+    def field_obs_instrument_couvis_opus_id(self):
+        return self.opus_id
+
+    def field_obs_instrument_couvis_volume_id(self):
+        return self.volume
+
+    def field_obs_instrument_couvis_instrument_id(self):
+        return self.instrument_id
+
+    def field_obs_instrument_couvis_observation_type(self):
+        return 'NONE'
+
+    def field_obs_instrument_couvis_integration_duration(self):
+        return self.field_obs_profile_temporal_sampling()
+
+    def field_obs_instrument_couvis_compression_type(self):
+        return self._supp_index_col('COMPRESSION_TYPE')
+        return (comp, comp)
+
+    def field_obs_instrument_couvis_occultation_port_state(self):
+        return 'N/A'
+
+    def field_obs_instrument_couvis_slit_state(self):
+        return 'NULL'
+
+    def field_obs_instrument_couvis_test_pulse_state(self):
+        return None
+
+    def field_obs_instrument_couvis_dwell_time(self):
+        return None
+
+    def field_obs_instrument_couvis_channel(self):
+        return ('HSP', 'HSP')
+
+    def field_obs_instrument_couvis_band1(self):
+        return None
+
+    def field_obs_instrument_couvis_band2(self):
+        return None
+
+    def field_obs_instrument_couvis_band_bin(self):
+        return None
+
+    def field_obs_instrument_couvis_line1(self):
+        return None
+
+    def field_obs_instrument_couvis_line2(self):
+        return None
+
+    def field_obs_instrument_couvis_line_bin(self):
+        return None
+
+    def field_obs_instrument_couvis_samples(self):
+        return None

@@ -1,0 +1,33 @@
+{
+    "start_obs": 1,
+    "limit": 100,
+    "count": 1,
+    "available": 1,
+    "order": "time1,opusid",
+    "data": [
+        {
+            "opus_id": "co-uvis-occ-2009-062-thehya-e",
+            "thumb_url": "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_thumb.jpg",
+            "thumb_alt_text": "UVIS_HSP_2009_062_THEHYA_E_thumb.jpg",
+            "thumb_size_bytes": 9419,
+            "thumb_width": 100,
+            "thumb_height": 100,
+            "small_url": "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_small.jpg",
+            "small_alt_text": "UVIS_HSP_2009_062_THEHYA_E_small.jpg",
+            "small_size_bytes": 18755,
+            "small_width": 200,
+            "small_height": 200,
+            "med_url": "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_med.jpg",
+            "med_alt_text": "UVIS_HSP_2009_062_THEHYA_E_med.jpg",
+            "med_size_bytes": 52680,
+            "med_width": 500,
+            "med_height": 500,
+            "full_url": "https://opus.pds-rings.seti.org/holdings/previews/COUVIS_8xxx/COUVIS_8001/data/UVIS_HSP_2009_062_THEHYA_E_full.jpg",
+            "full_alt_text": "UVIS_HSP_2009_062_THEHYA_E_full.jpg",
+            "full_size_bytes": 161760,
+            "full_width": 1375,
+            "full_height": 1000,
+            "ring_obs_id": null
+        }
+    ]
+}

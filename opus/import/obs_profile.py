@@ -20,9 +20,6 @@ class ObsProfile(ObsBase):
     def _star_name_helper(self, index, col):
         target_name = self._metadata[index][col]
         target_name = target_name.replace(' ', '').upper()
-        #     # For VG_28xx
-        #     target_name = index_label['SIGNAL_SOURCE_NAME_1'].upper()
-
         return self._get_target_info(target_name)
 
     _STAR_RA_DEC_SLOP = 0. # Decided at meeting 2020/05/14 to have stars as fixed pts

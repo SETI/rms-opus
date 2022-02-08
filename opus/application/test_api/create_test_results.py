@@ -71,6 +71,7 @@ if __name__ == "__main__":
         # 'co-uvis-occ-2005-139-126tau-e',
         # 'co-uvis-occ-2005-175-126tau-i',
         # 'co-uvis-occ-2009-015-gamcas-e',
+        # 'co-uvis-occ-2009-062-thehya-e',
         # 'co-vims-occ-2006-204-alpori-i',
         # 'co-vims-occ-2014-175-l2pup-e',
         # 'vg-pps-2-s-occ-1981-238-delsco-e',

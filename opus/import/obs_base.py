@@ -98,11 +98,8 @@ class ObsBase(object):
         self._opus_id_cached = opus_id
         return opus_id
 
-    def opus_id_from_supp_index_row(self, supp_row):
-        # This is a helper function used to take a row from the supplemental_index
-        # and convert it to an opus_id so that the supplemental_index and other
-        # index/geo/inventory files can be cross-referenced. We do this here
-        # because the supplemental index files are inconsistent in their formatting.
+    def primary_filespec_from_supp_index_row(self, supp_row):
+        # Given a row from a supplemental_index file, return the primary_filespec
         volume_id = supp_row.get('VOLUME_ID', None)
         if volume_id is None:
             self._log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
@@ -111,7 +108,14 @@ class ObsBase(object):
         if filespec is None:
             self._log_nonrepeating_error('Supplemental index missing FILESPEC field')
             return None
-        full_filespec = volume_id + '/' + filespec
+        return volume_id + '/' + filespec
+
+    def opus_id_from_supp_index_row(self, supp_row):
+        # This is a helper function used to take a row from the supplemental_index
+        # and convert it to an opus_id so that the supplemental_index and other
+        # index/geo/inventory files can be cross-referenced. We do this here
+        # because the supplemental index files are inconsistent in their formatting.
+        full_filespec = self.primary_filespec_from_supp_index_row(supp_row)
         try:
             pdsf = self._pdsfile_from_filespec(full_filespec)
         except KeyError:
@@ -126,6 +130,14 @@ class ObsBase(object):
                        f'using filespec {full_filespec}')
             return filespec.split('/')[-1]
         return opus_id
+
+    def is_main_supp_index_row(self, row):
+        opus_id = self.opus_id_from_supp_index_row(row)
+        primary_filespec = self.primary_filespec_from_supp_index_row(row)
+        trial_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
+        primary_filespec = self._convert_filespec_from_lbl(primary_filespec)
+        print(trial_filespec, primary_filespec)
+        return primary_filespec in trial_filespec
 
 
     ### Helpers for other data_sources ###
@@ -284,12 +296,6 @@ class ObsBase(object):
         #       filespec.startswith('VGISS_7') or
         #       filespec.startswith('VGISS_8')):
         #     filespec = filespec.replace('.LBL', '.IMG')
-        # elif filespec.startswith('CORSS_8'):
-        #     filespec = filespec.replace('.LBL', '.TAB')
-        # elif filespec.startswith('COUVIS_8'):
-        #     filespec = filespec.replace('.LBL', '.TAB')
-        # elif filespec.startswith('COVIMS_8'):
-        #     filespec = filespec.replace('.LBL', '.TAB')
 
 
     def _pdsfile_from_filespec(self, filespec):

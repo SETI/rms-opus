@@ -262,7 +262,7 @@ class ObsMissionCassini(ObsCommon):
         # This is used for COUVIS and COVIMS because they don't include the
         # MISSION_PHASE_NAME in the label files. We deduce it from the observation
         # time based on what we found in COISS.
-        time1 = self.field_obs_general_row('time1')
+        time1 = self.field_obs_general_time1()
         for phase, start_time, stop_time in _CASSINI_PHASE_NAME_MAPPING:
             start_time_sec = start_time
             stop_time_sec = stop_time
@@ -300,6 +300,16 @@ class ObsMissionCassini(ObsCommon):
     @property
     def mission_id(self):
         return 'CO'
+
+    @property
+    def primary_filespec(self):
+        # Note it's very important that this can be calculated using ONLY
+        # the primary index, not the supplemental index!
+        # This is because this (and the subsequent creation of opus_id) is used
+        # to actually find the matching row in the supplemental index dictionary.
+        # Format: "data/1294561143_1295221348/W1294561143_1.IMG"
+        filespec = self._index_col('FILE_SPECIFICATION_NAME')
+        return self.volume + '/' + filespec
 
 
     ####################################
@@ -388,6 +398,18 @@ class ObsMissionCassini(ObsCommon):
 
         return prime_inst_id
 
+    def field_obs_mission_cassini_spacecraft_clock_count1(self):
+        return None
+
+    def field_obs_mission_cassini_spacecraft_clock_count2(self):
+        return None
+
+    def field_obs_mission_cassini_ert1(self):
+        return None
+
+    def field_obs_mission_cassini_ert2(self):
+        return None
+
     def field_obs_mission_cassini_cassini_target_code(self):
         obs_name = self._some_index_col('OBSERVATION_ID')
         if obs_name is None:
@@ -416,3 +438,9 @@ class ObsMissionCassini(ObsCommon):
             return None
         obs_parts = obs_name.split('_')
         return obs_parts[2][:-3]
+
+    def field_obs_mission_cassini_mission_phase_name(self):
+        raise NotImplementedError
+
+    def field_obs_mission_cassini_sequence_id(self):
+        return None

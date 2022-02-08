@@ -8,10 +8,7 @@
             "id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "id"
-        ],
+        "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
@@ -23,10 +20,7 @@
             "opus_id"
         ],
         "field_notnull": true,
-        "data_source": [
-            "TAB:obs_general",
-            "opus_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "This is the secondary key linking the record to obs_general."
     },
     {
@@ -34,20 +28,14 @@
         "field_type": "char11",
         "field_notnull": true,
         "field_key": true,
-        "data_source": [
-            "TAB:obs_general",
-            "volume_id"
-        ],
+        "data_source": "COMPUTE",
         "comments": "The volume_id is included here for ease of database manipulation only."
     },
     {
         "field_name": "observation_type",
         "field_type": "char8",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_couvis_observation_type_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "OBSERVATION_TYPE",
@@ -81,10 +69,7 @@
         "field_type": "real8",
         "field_defalut": null,
         "field_key": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_couvis_integration_duration_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 10000,
         "val_sentinel": -1e32,
@@ -110,12 +95,7 @@
         "field_type": "enum",
         "field_enum_options": "'8_BIT','SQRT_8','SQRT_9','NONE'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "COMPRESSION_TYPE",
-            "FUNCTION",
-            "obs_instrument_couvis_compression_type_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "COMPRESSION_TYPE",
@@ -144,10 +124,7 @@
         "field_type": "enum",
         "field_enum_options": "'OPEN','CLOSED','N/A'",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_couvis_occultation_port_state_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "OCCULTATION_PORT_STATE",
@@ -175,12 +152,7 @@
         "field_type": "enum",
         "field_enum_options": "'HIGH_RESOLUTION','LOW_RESOLUTION','OCCULTATION','NULL'",
         "field_notnull": true,
-        "data_source": [
-            "TAB:index",
-            "SLIT_STATE",
-            "FUNCTION",
-            "obs_instrument_couvis_slit_state_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "SLIT_STATE",
@@ -208,12 +180,7 @@
         "field_name": "test_pulse_state",
         "field_type": "flag_onoff",
         "field_default": null,
-        "data_source": [
-            "TAB:index",
-            "TEST_PULSE_STATE",
-            "FUNCTION",
-            "obs_instrument_couvis_test_pulse_state_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "TEST_PULSE_STATE",
@@ -235,12 +202,7 @@
         "field_name": "dwell_time",
         "field_type": "int4",
         "field_default": null,
-        "data_source": [
-            "TAB:index",
-            "DWELL_TIME",
-            "FUNCTION",
-            "obs_instrument_couvis_dwell_time_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 100,
         "val_sentinel": -999,
@@ -266,10 +228,7 @@
         "field_type": "enum",
         "field_enum_options": "'EUV','FUV','HDAC','HSP'",
         "field_notnull": true,
-        "data_source": [
-            "FUNCTION",
-            "obs_instrument_couvis_channel_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_couvis",
         "pi_dict_context": "COUVIS",
         "pi_dict_name": "CHANNEL",
@@ -297,12 +256,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "MINIMUM_BAND_NUMBER",
-            "FUNCTION",
-            "obs_instrument_couvis_band1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 1023,
@@ -328,12 +282,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "MAXIMUM_BAND_NUMBER",
-            "FUNCTION",
-            "obs_instrument_couvis_band2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 1023,
@@ -359,12 +308,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "BAND_BINNING_FACTOR",
-            "FUNCTION",
-            "obs_instrument_couvis_band_bin_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 1024,
@@ -390,12 +334,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "WINDOW_MINIMUM_LINE_NUMBER",
-            "FUNCTION",
-            "obs_instrument_couvis_line1_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 63,
@@ -424,12 +363,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "WINDOW_MAXIMUM_LINE_NUMBER",
-            "FUNCTION",
-            "obs_instrument_couvis_line2_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 63,
@@ -455,12 +389,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "LINE_BINNING_FACTOR",
-            "FUNCTION",
-            "obs_instrument_couvis_line_bin_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 64,
@@ -486,12 +415,7 @@
         "field_type": "int4",
         "field_default": null,
         "field_key": true,
-        "data_source": [
-            "TAB:supp_index",
-            "LINE_SAMPLES",
-            "FUNCTION",
-            "obs_instrument_couvis_samples_<TYPE>"
-        ],
+        "data_source": "COMPUTE",
         "val_sentinel": -1,
         "val_min": 0,
         "val_max": 1e8,
@@ -520,10 +444,7 @@
         "field_type": "uint4",
         "field_key": "primary",
         "field_notnull": true,
-        "data_source": [
-            "MAX_ID",
-            null
-        ]
+        "data_source": "MAX_ID"
     },
     {
         "field_name": "timestamp",

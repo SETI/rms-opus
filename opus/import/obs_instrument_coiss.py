@@ -190,16 +190,6 @@ class ObsInstrumentCOISS(ObsMissionCassini):
     def instrument_id(self):
         return 'COISS'
 
-    @property
-    def primary_filespec(self):
-        # Note it's very important that this can be calculated using ONLY
-        # the primary index, not the supplemental index!
-        # This is because this (and the subsequent creation of opus_id) is used
-        # to actually find the matching row in the supplemental index dictionary.
-        # Format: "data/1294561143_1295221348/W1294561143_1.IMG"
-        filespec = self._index_col('FILE_SPECIFICATION_NAME')
-        return self.volume + '/' + filespec
-
 
     ################################
     ### OVERRIDE FROM ObsGeneral ###
