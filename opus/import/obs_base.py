@@ -102,6 +102,8 @@ class ObsBase(object):
         # Given a row from a supplemental_index file, return the primary_filespec
         volume_id = supp_row.get('VOLUME_ID', None)
         if volume_id is None:
+            volume_id = supp_row.get('VOLUME_NAME', None) # VG_[5678]xxx
+        if volume_id is None:
             self._log_nonrepeating_error('Supplemental index missing VOLUME_ID field')
             return None
         filespec = supp_row.get('FILE_SPECIFICATION_NAME')
@@ -128,15 +130,16 @@ class ObsBase(object):
             self._log_nonrepeating_warning(
                         'Unable to create OPUS_ID from supplemental index '+
                        f'using filespec {full_filespec}')
-            return filespec.split('/')[-1]
+            return full_filespec.split('/')[-1]
         return opus_id
 
     def is_main_supp_index_row(self, row):
         opus_id = self.opus_id_from_supp_index_row(row)
         primary_filespec = self.primary_filespec_from_supp_index_row(row)
+        if primary_filespec is None:
+            return False
         trial_filespec = pdsfile.PdsFile.from_opus_id(opus_id).abspath
         primary_filespec = self._convert_filespec_from_lbl(primary_filespec)
-        print(trial_filespec, primary_filespec)
         return primary_filespec in trial_filespec
 
 
@@ -200,6 +203,9 @@ class ObsBase(object):
 
     def _index_col(self, col, idx=None):
         return safe_column(self._metadata['index_row'], col, idx=idx)
+
+    def _has_supp_index(self):
+        return 'supp_index_row' in self._metadata
 
     def _supp_index_col(self, col, idx=None):
         return safe_column(self._metadata['supp_index_row'], col, idx=idx)
@@ -286,17 +292,7 @@ class ObsBase(object):
         # If necessary, convert a primary filespec from a .LBL file to some other
         # extension. The extension is instrument-specific, so this function will
         # be subclassed as necessary.
-        # XXX
         return filespec
-
-        # elif filespec.startswith('COUVIS_0'):
-        #     filespec = filespec.replace('.LBL', '.DAT')
-        # elif (filespec.startswith('VGISS_5') or
-        #       filespec.startswith('VGISS_6') or
-        #       filespec.startswith('VGISS_7') or
-        #       filespec.startswith('VGISS_8')):
-        #     filespec = filespec.replace('.LBL', '.IMG')
-
 
     def _pdsfile_from_filespec(self, filespec):
         # Create a PdsFile object from a primary filespec.

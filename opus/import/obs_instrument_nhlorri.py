@@ -46,6 +46,8 @@ class ObsInstrumentNHLORRI(ObsMissionNewHorizons):
     def _convert_filespec_from_lbl(self, filespec):
         filespec = filespec.replace('.lbl', '.fit')
         filespec = filespec.replace('.LBL', '.FIT')
+        filespec = filespec.replace('_sci', '_eng')
+        filespec = filespec.replace('_2001', '_1001')
         return filespec
 
 

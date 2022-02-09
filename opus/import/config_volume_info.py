@@ -1,5 +1,6 @@
 from obs_instrument_coiss import ObsInstrumentCOISS
 from obs_instrument_corss_occ import ObsInstrumentCORSSOcc
+from obs_instrument_couvis import ObsInstrumentCOUVIS
 from obs_instrument_couvis_occ import ObsInstrumentCOUVISOcc
 from obs_instrument_covims_occ import ObsInstrumentCOVIMSOcc
 from obs_instrument_ebrocc import ObsInstrumentEBROCC
@@ -27,6 +28,10 @@ VOLUME_INFO = [
     (r'CORSS_8001',
         {'primary_index': '<VOLUME>_profile_index.lbl',
          'instrument_class': ObsInstrumentCORSSOcc},
+    ),
+    (r'COUVIS_0\d\d\d',
+        {'primary_index': '<VOLUME>_index.lbl',
+         'instrument_class': ObsInstrumentCOUVIS},
     ),
     (r'COUVIS_8001',
         {'primary_index': '<VOLUME>_profile_index.lbl',
